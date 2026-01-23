@@ -7,7 +7,7 @@ interface CourseCardProps {
   hours: string;
   description: string;
   price: number;
-  imageIndex: number;
+  vectorImage: string;
 }
 
 const CourseCard = ({
@@ -17,35 +17,37 @@ const CourseCard = ({
   hours,
   description,
   price,
+  vectorImage,
 }: CourseCardProps) => {
   return (
-    <div className="flex flex-1 flex-col gap-4 min-w-0">
-      {/* Card Header with gradient background */}
-      <div className="relative bg-[var(--surface-container-default)] rounded-2xl p-4 h-[183px] flex flex-col justify-between overflow-hidden">
-        {/* Title */}
+    <div className="flex flex-1 flex-col gap-[16px] items-start min-w-0">
+      {/* Card Header - exact 182.84px height from Figma */}
+      <div className="relative bg-[#eef3f7] rounded-[16px] p-[16px] h-[182.84px] flex flex-col justify-between overflow-hidden w-full">
+        {/* Title - 161px width */}
         <p
-          className="text-[var(--on-surface-default)] font-semibold w-[161px] z-10"
+          className="text-[#06080b] font-semibold w-[161px] z-10 leading-normal"
           style={{
-            fontSize: "var(--typeface-font-styles-heading-h5)",
+            fontSize: "18px",
           }}
         >
           {title}
         </p>
 
-        {/* Course vector decoration */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[146px] h-[217px]">
+        {/* Course vector decoration - positioned exactly as Figma */}
+        <div className="absolute right-0 top-1/2 -translate-y-[calc(50%-0.92px)] w-[146px] h-[217px]">
           <Image
-            src="/images/course-vector.svg"
+            src={vectorImage}
             alt=""
             fill
             className="object-contain"
           />
         </div>
 
-        {/* Bottom row */}
+        {/* Bottom row - flex between */}
         <div className="flex items-center justify-between w-full z-10">
-          {/* Type badge */}
-          <div className="flex items-center gap-2 bg-[var(--surface-container-primary)] rounded-full px-3 py-1">
+          {/* Type badge - pill style */}
+          <div className="flex items-center gap-[8px] bg-[#0b0f17] rounded-full px-[12px] py-[4px]">
+            {/* Video recorder icon */}
             <svg
               width="16"
               height="16"
@@ -54,47 +56,41 @@ const CourseCard = ({
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M14.6667 6V10C14.6667 11.4001 14.6667 12.1002 14.394 12.635C14.1545 13.1054 13.7721 13.4878 13.3016 13.7274C12.7669 14 12.0668 14 10.6667 14H5.33333C3.93319 14 3.23312 14 2.69836 13.7274C2.22794 13.4878 1.84555 13.1054 1.60598 12.635C1.33333 12.1002 1.33333 11.4001 1.33333 10V6M14.6667 6V5.33333C14.6667 4.22909 14.6667 3.67697 14.449 3.24429C14.2569 2.86099 13.9386 2.54267 13.5553 2.35057C13.1226 2.13287 12.5705 2.13287 11.4663 2.13287H4.53373C3.42949 2.13287 2.87737 2.13287 2.44469 2.35057C2.06139 2.54267 1.74307 2.86099 1.55097 3.24429C1.33333 3.67697 1.33333 4.22909 1.33333 5.33333V6M14.6667 6H1.33333"
+                d="M14.6667 5.33333L10.6667 8L14.6667 10.6667V5.33333Z"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M9.33333 4H2.66667C1.93029 4 1.33333 4.59695 1.33333 5.33333V10.6667C1.33333 11.403 1.93029 12 2.66667 12H9.33333C10.0697 12 10.6667 11.403 10.6667 10.6667V5.33333C10.6667 4.59695 10.0697 4 9.33333 4Z"
                 stroke="white"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
-            <span
-              className="text-[var(--on-surface-inverse)] leading-4"
-              style={{
-                fontSize: "var(--typeface-font-styles-paragraph-text-xs)",
-              }}
-            >
+            <span className="text-white text-[12px] leading-[16px]">
               {type}
             </span>
           </div>
 
-          {/* Add button */}
-          <button className="flex items-center justify-center p-2 bg-[var(--blue-blue-50)] rounded-xl">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M8 3.33334V12.6667M3.33333 8H12.6667"
-                stroke="#0b0f17"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          {/* Add to cart button - 8px padding, 12px radius */}
+          <button className="flex items-center justify-center p-[8px] bg-[#f9fbfd] rounded-[12px]">
+            <Image
+              src="/icons/shopping-cart-03.svg"
+              alt="Add to cart"
+              width={16}
+              height={16}
+            />
           </button>
         </div>
       </div>
 
-      {/* Meta tags */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+      {/* Meta tags - gap-16px */}
+      <div className="flex items-center gap-[16px]">
+        {/* Date tag */}
+        <div className="flex items-center gap-[4px] bg-[#f4f4f5] rounded-[8px] px-[8px] py-[4px]">
           <svg
             width="16"
             height="16"
@@ -110,17 +106,13 @@ const CourseCard = ({
               strokeLinejoin="round"
             />
           </svg>
-          <span
-            className="text-[var(--on-surface-variant)] leading-5"
-            style={{
-              fontSize: "var(--typeface-font-styles-paragraph-text-s)",
-            }}
-          >
+          <span className="text-[#4a4c4f] text-[14px] leading-[20px]">
             {date}
           </span>
         </div>
 
-        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+        {/* Hours tag */}
+        <div className="flex items-center gap-[4px] bg-[#f4f4f5] rounded-[8px] px-[8px] py-[4px]">
           <svg
             width="16"
             height="16"
@@ -129,58 +121,56 @@ const CourseCard = ({
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M8 5.33334V8.00001L9.33333 9.33334M14.6667 8.00001C14.6667 11.6819 11.6819 14.6667 8 14.6667C4.3181 14.6667 1.33333 11.6819 1.33333 8.00001C1.33333 4.31811 4.3181 1.33334 8 1.33334C11.6819 1.33334 14.6667 4.31811 14.6667 8.00001Z"
+              d="M13.3333 8.55556C13.3333 11.5111 10.9444 13.9 7.98889 13.9C5.03333 13.9 2.64444 11.5111 2.64444 8.55556C2.64444 5.6 5.03333 3.21111 7.98889 3.21111C10.9444 3.21111 13.3333 5.6 13.3333 8.55556Z"
+              stroke="#4a4c4f"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M8 6V8.66667L9.33333 10"
+              stroke="#4a4c4f"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M10.6667 2.13333L13.3333 4"
               stroke="#4a4c4f"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
-          <span
-            className="text-[var(--on-surface-variant)] leading-5"
-            style={{
-              fontSize: "var(--typeface-font-styles-paragraph-text-s)",
-            }}
-          >
+          <span className="text-[#4a4c4f] text-[14px] leading-[20px]">
             {hours}
           </span>
         </div>
       </div>
 
-      {/* Description */}
-      <p
-        className="text-[var(--on-surface-default)] leading-6 line-clamp-2"
-        style={{
-          fontSize: "var(--typeface-font-styles-paragraph-text)",
-        }}
-      >
+      {/* Description - 16px font, 24px line height */}
+      <p className="text-[#06080b] text-[16px] leading-[24px] w-full line-clamp-2">
         {description}
       </p>
 
       {/* Price and CTA */}
       <div className="flex items-center justify-between w-full">
-        {/* Price */}
-        <div className="flex items-center gap-1">
+        {/* Price with SAR Riyal icon */}
+        <div className="flex items-center gap-[4px]">
           <Image
-            src="/icons/sar-icon.svg"
+            src="/icons/rayal-icon.svg"
             alt="SAR"
-            width={16}
+            width={17}
             height={18}
-            className="scale-y-[-1]"
           />
-          <span
-            className="text-[var(--on-surface-default)] font-semibold"
-            style={{
-              fontSize: "var(--typeface-font-styles-heading-h5)",
-            }}
-          >
+          <span className="text-[#06080b] font-semibold text-[18px] leading-normal">
             {price}
           </span>
         </div>
 
-        {/* Continue button */}
-        <button className="flex items-center gap-2 h-10 px-5 py-2 bg-[var(--surface-container-primary)] text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium">
-          <span>Continue</span>
+        {/* View Details button - 40px height, 20px padding horizontal, 12px radius */}
+        <button className="flex items-center gap-[8px] h-[40px] px-[20px] py-[8px] bg-[#0b0f17] text-white rounded-[12px] text-[14px] font-medium">
+          <span>View Details</span>
           <svg
             width="16"
             height="16"
@@ -190,7 +180,7 @@ const CourseCard = ({
           >
             <path
               d="M2.66675 8H13.3334M13.3334 8L9.33341 4M13.3334 8L9.33341 12"
-              stroke="currentColor"
+              stroke="white"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -212,60 +202,57 @@ const FeaturedCourses = () => {
       description:
         "A comprehensive, evidence-based overview of infection prevention strategies for modern healthcare settings.",
       price: 575,
-      imageIndex: 1,
+      vectorImage: "/featured images/Vector 2.svg",
     },
     {
-      title: "Infection Control (Core / Flagship)",
+      title: "Life Support / Emergency Care",
+      type: "Live Online",
+      date: "18 Jan 2026",
+      hours: "6 CME Hours",
+      description:
+        "Essential life-saving skills for early response, resuscitation, and emergency management.",
+      price: 375,
+      vectorImage: "/featured images/Vector 2 (1).svg",
+    },
+    {
+      title: "Patient Safety & Quality",
       type: "Live Online",
       date: "11 Jan 2026",
       hours: "8 CME Hours",
       description:
-        "A comprehensive, evidence-based overview of infection prevention strategies for modern healthcare settings.",
-      price: 575,
-      imageIndex: 2,
+        "Learn structured approaches to reduce medical errors, improve outcomes, and enhance care quality.",
+      price: 460,
+      vectorImage: "/featured images/Vector 2 (2).svg",
     },
     {
-      title: "Infection Control (Core / Flagship)",
+      title: "Public Health & Preparedness",
       type: "Live Online",
       date: "11 Jan 2026",
       hours: "8 CME Hours",
       description:
-        "A comprehensive, evidence-based overview of infection prevention strategies for modern healthcare settings.",
+        "Principles of surveillance, risk assessment, and coordinated response to health emergencies.",
       price: 575,
-      imageIndex: 3,
-    },
-    {
-      title: "Infection Control (Core / Flagship)",
-      type: "Live Online",
-      date: "11 Jan 2026",
-      hours: "8 CME Hours",
-      description:
-        "A comprehensive, evidence-based overview of infection prevention strategies for modern healthcare settings.",
-      price: 575,
-      imageIndex: 4,
+      vectorImage: "/featured images/Vector 2 (3).svg",
     },
   ];
 
   return (
-    <section className="bg-[var(--surface-intense)] px-16 py-24 overflow-hidden">
-      <div className="flex flex-col gap-10 items-center justify-center w-full">
-        {/* Section Title */}
+    <section className="bg-white px-[64px] py-[96px]">
+      <div className="flex flex-col gap-[40px] items-center justify-center w-full">
+        {/* Section Title - centered, max-width 768px */}
         <div className="flex items-end justify-between w-full">
-          <div className="flex-1 flex flex-col items-center justify-center max-w-[768px]">
-            <div className="flex flex-col gap-4 items-center text-center text-[var(--on-surface-default)]">
+          <div className="flex-1 flex flex-col items-center justify-center max-w-[768px] mx-auto">
+            <div className="flex flex-col gap-[16px] items-center text-center text-black w-full">
               <h2
                 className="font-semibold leading-none tracking-[-0.24px] w-full"
                 style={{
-                  fontSize: "var(--typeface-font-styles-heading-h1)",
+                  fontSize: "48px",
                 }}
               >
                 Featured Programs
               </h2>
               <p
-                className="leading-7 w-full"
-                style={{
-                  fontSize: "var(--typeface-font-styles-heading-subheading)",
-                }}
+                className="leading-[28px] w-full text-[20px]"
               >
                 Accredited, evidence-based healthcare training programs.
               </p>
@@ -273,18 +260,23 @@ const FeaturedCourses = () => {
           </div>
         </div>
 
-        {/* Courses Grid */}
-        <div className="bg-white flex flex-col gap-16 items-start w-full">
-          <div className="flex gap-8 items-start w-full">
+        {/* Courses Grid - gap-32px between cards, gap-64px vertical */}
+        <div className="bg-white flex flex-col gap-[64px] items-start w-full">
+          <div className="flex gap-[32px] items-start w-full">
             {courses.map((course, index) => (
               <CourseCard key={index} {...course} />
             ))}
           </div>
         </div>
 
-        {/* View All Button */}
-        <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]">
-          Continue
+        {/* View All Button - gold gradient */}
+        <button 
+          className="h-[40px] px-[20px] py-[8px] rounded-[12px] text-[14px] font-medium text-white min-w-[80px]"
+          style={{
+            background: "linear-gradient(to right, #a37f49, #6b4e24)",
+          }}
+        >
+          View All Programs
         </button>
       </div>
     </section>

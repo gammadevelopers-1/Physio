@@ -28,7 +28,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[var(--surface-intense)] px-10 py-20">
+    <footer className="bg-[var(--surface-intense)] px-10 pt-20 pb-12">
       <div className="flex flex-col gap-12 items-center">
         {/* Main Footer Content */}
         <div className="flex items-start justify-between w-full">
@@ -226,7 +226,7 @@ const Footer = () => {
         </div>
 
         {/* Divider */}
-        <div className="w-full h-px bg-[#8a6c39]" />
+        <div className="w-full mb-[-6px] h-px bg-[var(--outline-default)]" />
 
         {/* Bottom Row */}
         <div className="flex items-center justify-between w-full">

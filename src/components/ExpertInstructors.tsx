@@ -48,7 +48,7 @@ const ExpertInstructors = () => {
                 key={index}
                 className="p-[5px] bg-[var(--surface-container-default)] rounded-full"
               >
-                <div className="p-[2.5px] bg-[var(--surface-container-high)] rounded-full overflow-hidden">
+                <div className="p-[2.5px] bg-[var(--surface-container-default)] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}

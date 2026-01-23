@@ -1,4 +1,11 @@
+"use client";
+
+import { useState } from "react";
+import { ArrowRight } from "lucide-react";
+
 const Testimonials = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
   const testimonials = [
     {
       quote:
@@ -18,7 +25,37 @@ const Testimonials = () => {
       name: "Faisal Al-Mutairi",
       role: "Healthcare Education Institute",
     },
+    {
+      quote:
+        '"An exceptional training experience that exceeded our expectations. The curriculum is comprehensive and the instructors bring real-world expertise that enriches every session."',
+      name: "Dr. Layla Al-Rashid",
+      role: "Medical Director, Private Clinic",
+    },
+    {
+      quote:
+        '"The certification process was seamless and the course materials were of the highest quality. I highly recommend this platform for any healthcare professional seeking accredited training."',
+      name: "Mohammed Al-Zahrani",
+      role: "Clinical Pharmacist",
+    },
+    {
+      quote:
+        '"Outstanding support from the team and excellent course structure. The interactive modules made learning engaging and the practical assessments ensured we could apply knowledge immediately."',
+      name: "Noura Al-Otaibi",
+      role: "Head Nurse, Regional Hospital",
+    },
   ];
+
+  const totalSlides = Math.ceil(testimonials.length / 3);
+  
+  const handlePrev = () => {
+    setCurrentSlide((prev) => (prev > 0 ? prev - 1 : totalSlides - 1));
+  };
+  
+  const handleNext = () => {
+    setCurrentSlide((prev) => (prev < totalSlides - 1 ? prev + 1 : 0));
+  };
+  
+  const visibleTestimonials = testimonials.slice(currentSlide * 3, currentSlide * 3 + 3);
 
   return (
     <section className="bg-[var(--surface-intense)] px-16 py-24 overflow-hidden">
@@ -47,7 +84,7 @@ const Testimonials = () => {
         {/* Testimonials Card */}
         <div className="bg-[var(--surface-container-low)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
           <div className="flex items-start justify-between w-full">
-            {testimonials.map((testimonial, index) => (
+            {visibleTestimonials.map((testimonial, index) => (
               <div key={index} className="flex items-start">
                 {/* Testimonial Content */}
                 <div className="flex flex-col gap-16 items-start w-[350px] pr-12 overflow-hidden">
@@ -81,7 +118,7 @@ const Testimonials = () => {
                 </div>
 
                 {/* Divider - hide for last item */}
-                {index < testimonials.length - 1 && (
+                {index < visibleTestimonials.length - 1 && (
                   <div className="w-px h-[249px] bg-[#c8d5e1] self-stretch flex items-center justify-center">
                     <div className="w-px h-full bg-[#c8d5e1]" />
                   </div>
@@ -95,47 +132,32 @@ const Testimonials = () => {
         <div className="flex items-center justify-between w-full">
           {/* Dots */}
           <div className="flex gap-2 items-center">
-            <div className="w-6 h-2 bg-[var(--surface-container-primary)] rounded-full" />
-            <div className="w-2 h-2 bg-[var(--surface-container-high)] rounded-full" />
-            <div className="w-2 h-2 bg-[var(--surface-container-high)] rounded-full" />
+            {Array.from({ length: totalSlides }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`${
+                  currentSlide === index
+                    ? "w-6 h-2 bg-[var(--surface-container-primary)]"
+                    : "w-2 h-2 bg-[var(--surface-container-high)]"
+                } rounded-full transition-all duration-300`}
+              />
+            ))}
           </div>
 
           {/* Arrows */}
           <div className="flex gap-4 items-start">
-            <button className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="rotate-180"
-              >
-                <path
-                  d="M2.66675 8H13.3334M13.3334 8L9.33341 4M13.3334 8L9.33341 12"
-                  stroke="#0b0f17"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+            <button 
+              onClick={handlePrev}
+              className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <ArrowRight className="w-4 h-4 text-[#0b0f17] rotate-180" strokeWidth={1.5} />
             </button>
-            <button className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M2.66675 8H13.3334M13.3334 8L9.33341 4M13.3334 8L9.33341 12"
-                  stroke="#0b0f17"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+            <button 
+              onClick={handleNext}
+              className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <ArrowRight className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
             </button>
           </div>
         </div>

@@ -1,8 +1,196 @@
 @import "tailwindcss";
 
+/* ============================================
+   Primitive Tokens
+   ============================================ */
+:root {
+  /* Font Sizes */
+  --font-sizes-12: 0.75rem;
+  --font-sizes-14: 0.875rem;
+  --font-sizes-16: 1rem;
+  --font-sizes-18: 1.125rem;
+  --font-sizes-20: 1.25rem;
+  --font-sizes-24: 1.5rem;
+  --font-sizes-30: 1.875rem;
+  --font-sizes-36: 2.25rem;
+  --font-sizes-48: 3rem;
+  --font-sizes-60: 3.75rem;
+
+  /* Base Colors */
+  --black: #000000;
+  --white: #ffffff;
+
+  /* Blue Palette */
+  --blue-brand-blue: #002d87;
+  --blue-blue-50: #e6f0ff;
+  --blue-blue-100: #cce0ff;
+  --blue-blue-200: #99c2ff;
+  --blue-blue-300: #66a3ff;
+  --blue-blue-400: #3385ff;
+  --blue-blue-500: #0066ff;
+  --blue-blue-600: #0052cc;
+  --blue-blue-700: #003d99;
+  --blue-blue-800: #002966;
+  --blue-blue-900: #001433;
+
+  /* Gold Palette */
+  --gold-gold-100: #fff8e6;
+  --gold-gold-500: #d4a520;
+  --gold-gold-600: #b8920e;
+  --gold-gold-800: #7a6109;
+
+  /* Neutral Palette */
+  --neutral-neutral-800: #333333;
+  --neutral-neutral-900: #1a1a1a;
+  --neutral-neutral-950: #0d0d0d;
+  --neutral-neutral-1000: #000000;
+
+  /* Functional Colors */
+  --functional-red-400: #f87171;
+  --functional-red-600: #dc2626;
+  --functional-blue-400: #60a5fa;
+  --functional-blue-600: #2563eb;
+  --functional-green-400: #4ade80;
+  --functional-green-600: #16a34a;
+  --functional-amber-500: #f59e0b;
+  --functional-amber-600: #d97706;
+}
+
+/* ============================================
+   Type System - Desktop (default)
+   ============================================ */
+:root {
+  /* Typeface Family */
+  --typeface-family: "DM Sans", sans-serif;
+
+  /* Display */
+  --typeface-font-styles-display-base: var(--font-sizes-60);
+
+  /* Headings */
+  --typeface-font-styles-heading-h1: var(--font-sizes-48);
+  --typeface-font-styles-heading-h2: var(--font-sizes-30);
+  --typeface-font-styles-heading-h3: var(--font-sizes-24);
+  --typeface-font-styles-heading-h4: var(--font-sizes-20);
+  --typeface-font-styles-heading-h5: var(--font-sizes-18);
+  --typeface-font-styles-heading-subheading: var(--font-sizes-20);
+
+  /* Paragraph */
+  --typeface-font-styles-paragraph-text: var(--font-sizes-16);
+  --typeface-font-styles-paragraph-text-s: var(--font-sizes-14);
+  --typeface-font-styles-paragraph-text-xs: var(--font-sizes-12);
+}
+
+/* ============================================
+   Type System - Mobile
+   ============================================ */
+@media (max-width: 768px) {
+  :root {
+    /* Display */
+    --typeface-font-styles-display-base: var(--font-sizes-36);
+
+    /* Headings */
+    --typeface-font-styles-heading-h1: var(--font-sizes-30);
+    --typeface-font-styles-heading-h2: var(--font-sizes-24);
+    --typeface-font-styles-heading-h3: var(--font-sizes-20);
+    --typeface-font-styles-heading-h4: var(--font-sizes-18);
+    --typeface-font-styles-heading-h5: var(--font-sizes-14);
+    --typeface-font-styles-heading-subheading: var(--font-sizes-18);
+
+    /* Paragraph */
+    --typeface-font-styles-paragraph-text: var(--font-sizes-16);
+    --typeface-font-styles-paragraph-text-s: var(--font-sizes-14);
+    --typeface-font-styles-paragraph-text-xs: var(--font-sizes-12);
+  }
+}
+
+/* ============================================
+   Semantic Tokens - Light Mode (default)
+   ============================================ */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Feedback */
+  --feedback-error: var(--functional-red-600);
+  --feedback-info: var(--functional-blue-600);
+  --feedback-success: var(--functional-green-600);
+  --feedback-warning: var(--functional-amber-600);
+
+  /* On Surface */
+  --on-surface-default: var(--black);
+  --on-surface-inverse: var(--white);
+  --on-surface-primary: var(--blue-blue-600);
+  --on-surface-secondary: var(--gold-gold-600);
+  --on-surface-variant: var(--neutral-neutral-800);
+
+  /* Outline */
+  --outline-bright: var(--white);
+  --outline-default: var(--gold-gold-600);
+  --outline-focused: var(--blue-blue-600);
+  --outline-hover: var(--blue-blue-300);
+  --outline-subtle: var(--blue-blue-100);
+
+  /* Surface */
+  --surface-default: var(--blue-blue-50);
+  --surface-intense: var(--white);
+  --surface-container-default: var(--blue-blue-100);
+  --surface-container-high: var(--blue-blue-200);
+  --surface-container-low: var(--blue-blue-50);
+  --surface-container-lowest: var(--white);
+  --surface-container-primary: var(--blue-brand-blue);
+  --surface-container-primary-2: var(--gold-gold-500);
+  --surface-container-primary-subtle: var(--blue-blue-900);
+
+  /* Transparent */
+  --transparent-primary: #002d871f;
+  --transparent-surface: #ffffff00;
+  --transparent-surface-40: #06080b66;
+}
+
+/* ============================================
+   Semantic Tokens - Dark Mode
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+
+    /* Feedback */
+    --feedback-error: var(--functional-red-400);
+    --feedback-info: var(--functional-blue-400);
+    --feedback-success: var(--functional-green-400);
+    --feedback-warning: var(--functional-amber-500);
+
+    /* On Surface */
+    --on-surface-default: var(--white);
+    --on-surface-inverse: var(--white);
+    --on-surface-primary: var(--blue-blue-500);
+    --on-surface-secondary: var(--gold-gold-100);
+    --on-surface-variant: var(--blue-blue-200);
+
+    /* Outline */
+    --outline-bright: var(--gold-gold-800);
+    --outline-default: var(--gold-gold-500);
+    --outline-focused: var(--blue-blue-400);
+    --outline-hover: var(--blue-blue-200);
+    --outline-subtle: var(--blue-blue-800);
+
+    /* Surface */
+    --surface-default: var(--blue-blue-800);
+    --surface-intense: var(--blue-blue-900);
+    --surface-container-default: var(--neutral-neutral-950);
+    --surface-container-high: var(--neutral-neutral-900);
+    --surface-container-low: var(--neutral-neutral-1000);
+    --surface-container-lowest: var(--blue-blue-900);
+    --surface-container-primary: var(--blue-blue-500);
+    --surface-container-primary-2: var(--gold-gold-500);
+    --surface-container-primary-subtle: var(--blue-blue-700);
+
+    /* Transparent */
+    --transparent-primary: #002d873d;
+    --transparent-surface: #00153e00;
+    --transparent-surface-40: #06080bcc;
+  }
 }
 
 @theme inline {
@@ -12,15 +200,44 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-dm-sans), var(--typeface-family), Arial, Helvetica, sans-serif;
+}
+
+/* Gold Gradient Button */
+.btn-gold {
+  background: linear-gradient(to right, #a37f49, #6b4e24);
+}
+
+.btn-gold:hover {
+  background: linear-gradient(to right, #8e6d3d, #5a411e);
+}
+
+/* Marquee Animation */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+  }
+}
+
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+  }
+}
+
+.animate-marquee {
+  animation: marquee var(--duration) linear infinite;
+}
+
+.animate-marquee-vertical {
+  animation: marquee-vertical var(--duration) linear infinite;
 }

@@ -1,0 +1,16 @@
+<svg width="140" height="80" viewBox="0 0 140 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Prince Sultan University Logo -->
+  <g>
+    <!-- Shield/Book icon -->
+    <ellipse cx="70" cy="28" rx="18" ry="20" fill="#1a5276" opacity="0.9"/>
+    <path d="M60 20C60 20 65 35 70 35C75 35 80 20 80 20" stroke="white" stroke-width="2" fill="none"/>
+    <circle cx="70" cy="25" r="8" fill="#2874a6"/>
+    <!-- Decorative swoosh -->
+    <path d="M45 35C55 45 85 45 95 35" stroke="#c0392b" stroke-width="2" fill="none"/>
+    <!-- Arabic text -->
+    <text x="70" y="52" font-family="Arial, sans-serif" font-size="6" fill="#1a5276" text-anchor="middle">جامعة الأمير سلطان</text>
+    <!-- English text -->
+    <text x="70" y="62" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1a5276" text-anchor="middle">PRINCE SULTAN</text>
+    <text x="70" y="72" font-family="Arial, sans-serif" font-size="7" fill="#c0392b" text-anchor="middle">UNIVERSITY</text>
+  </g>
+</svg>

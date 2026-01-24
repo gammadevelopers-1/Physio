@@ -133,7 +133,7 @@
   /* Surface */
   --surface-default: var(--blue-blue-50);
   --surface-intense: var(--white);
-  --surface-container-default: var(--blue-blue-100);
+  --surface-container-default: #EEF3F7;
   --surface-container-high: var(--blue-blue-200);
   --surface-container-low: var(--blue-blue-50);
   --surface-container-lowest: var(--white);

@@ -95,7 +95,7 @@ const Testimonials = () => {
           </div>
 
           {/* Testimonials Card */}
-          <div className="bg-[var(--surface-container-low)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <div className="bg-[var(--surface-container-default)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div className="flex items-start justify-between w-full">
               {visibleTestimonials.map((testimonial, index) => (
                 <div key={index} className="flex items-start">
@@ -178,8 +178,8 @@ const Testimonials = () => {
       </section>
 
       {/* Mobile/Tablet Testimonials - Show on screens smaller than 1280px */}
-      <section className="xl:hidden bg-white px-4 py-16 overflow-hidden relative">
-        <div className="flex flex-col gap-5 items-center justify-center max-w-full pb-10 w-full">
+      <section className="xl:hidden bg-white px-4 py-10 overflow-hidden relative">
+        <div className="flex flex-col gap-5 items-center justify-center max-w-full w-full">
           {/* Section Title */}
           <div className="flex flex-col gap-6 items-center justify-center text-center text-black w-full">
             <h2

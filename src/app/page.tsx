@@ -11,7 +11,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[var(--surface)]">
+    <main className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
       <Navbar />
       <Hero />
       <Partners />
@@ -19,8 +19,11 @@ export default function Home() {
       <BecomeTrainer />
       <ExpertInstructors />
       <Testimonials />
-      <CTASection />
-      <Footer />
+      {/* CTASection and Footer only shown on desktop (1024px+) */}
+      <div className="hidden lg:block">
+        <CTASection />
+        <Footer />
+      </div>
       <WhatsAppButton />
     </main>
   );

@@ -57,12 +57,21 @@ export default function AboutPage() {
           </div>
 
           {/* Right Image */}
-          <div className="flex-1 relative min-h-[300px] sm:min-h-[400px] lg:min-h-[600px] order-1 lg:order-2">
+          <div className="flex-1 relative h-[434px] lg:h-auto lg:min-h-[600px] order-1 lg:order-2">
+            {/* Mobile Image */}
+            <Image
+              src="/images/image_486_mobile.png"
+              alt="Healthcare professionals in training"
+              fill
+              className="object-cover lg:hidden"
+              priority
+            />
+            {/* Desktop Image */}
             <Image
               src="/images/image_485.png"
               alt="Healthcare professionals in training"
               fill
-              className="object-cover object-top lg:object-center"
+              className="object-cover object-center hidden lg:block"
               priority
             />
             {/* Gradient overlay for smooth blending - horizontal on desktop */}

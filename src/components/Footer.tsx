@@ -29,8 +29,11 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[var(--surface-intense)] px-10 pt-20 pb-12">
-      <div className="flex flex-col gap-12 items-center">
+    <footer 
+      className="bg-[var(--surface-intense)] pt-20 pb-12"
+      style={{ padding: "80px 64px 48px 64px" }}
+    >
+      <div className="flex flex-col gap-12">
         {/* Main Footer Content */}
         <div className="flex items-start justify-between w-full">
           {/* Logo and Description */}

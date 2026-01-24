@@ -95,7 +95,7 @@ const Testimonials = () => {
           </div>
 
           {/* Testimonials Card */}
-          <div className="bg-[var(--surface-container-low)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <div className="bg-[var(--surface-container-default)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div className="flex items-start justify-between w-full">
               {visibleTestimonials.map((testimonial, index) => (
                 <div key={index} className="flex items-start">

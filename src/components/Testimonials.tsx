@@ -136,11 +136,11 @@ const Testimonials = () => {
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`${
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
                   currentSlide === index
-                    ? "w-6 h-2 bg-[var(--surface-container-primary)]"
-                    : "w-2 h-2 bg-[var(--surface-container-high)]"
-                } rounded-full transition-all duration-300`}
+                    ? "bg-[var(--surface-container-primary)]"
+                    : "bg-transparent border-2 border-[var(--surface-container-primary)]"
+                }`}
               />
             ))}
           </div>

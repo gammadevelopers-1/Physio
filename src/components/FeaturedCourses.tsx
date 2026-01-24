@@ -157,7 +157,7 @@ const FeaturedCourses = () => {
 
   return (
     <section className="bg-white px-[64px] py-[96px]">
-      <div className="flex flex-col gap-[40px] items-center justify-center w-full">
+      <div className="flex flex-col gap-[40px] items-center justify-center w-full max-w-[1440px] mx-auto">
         {/* Section Title - centered, max-width 768px */}
         <div className="flex items-end justify-between w-full">
           <div className="flex-1 flex flex-col items-center justify-center max-w-[768px] mx-auto">

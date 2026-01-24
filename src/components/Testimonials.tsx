@@ -178,8 +178,8 @@ const Testimonials = () => {
       </section>
 
       {/* Mobile/Tablet Testimonials - Show on screens smaller than 1280px */}
-      <section className="xl:hidden bg-white px-4 py-16 overflow-hidden relative">
-        <div className="flex flex-col gap-5 items-center justify-center max-w-full pb-10 w-full">
+      <section className="xl:hidden bg-white px-4 py-10 overflow-hidden relative">
+        <div className="flex flex-col gap-5 items-center justify-center max-w-full w-full">
           {/* Section Title */}
           <div className="flex flex-col gap-6 items-center justify-center text-center text-black w-full">
             <h2

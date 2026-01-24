@@ -52,7 +52,7 @@ const ContactForm = () => {
 
   return (
     <section
-      className="overflow-hidden bg-[#F9FBFD] md:bg-[var(--surface-container-low)]"
+      className="overflow-hidden bg-[#F9FBFD] md:bg-[#EEF3F7]"
     >
       <div
         className="flex flex-col max-w-[1312px] mx-auto px-4 py-16 md:px-16 md:py-20"
@@ -215,7 +215,7 @@ const ContactForm = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--outline-focused)]"
+                    className="w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[#C8D5E1]"
                     style={{
                       padding: "10px 14px",
                       height: "44px",
@@ -248,7 +248,7 @@ const ContactForm = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--outline-focused)]"
+                      className="w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[#C8D5E1]"
                       style={{
                         padding: "10px 14px 10px 48px",
                         height: "44px",
@@ -275,7 +275,7 @@ const ContactForm = () => {
                     <button
                       type="button"
                       onClick={() => setIsIssueTypeOpen(!isIssueTypeOpen)}
-                      className="w-full bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer"
+                      className="w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer"
                       style={{
                         padding: "10px 14px",
                         height: "44px",
@@ -302,7 +302,7 @@ const ContactForm = () => {
                       />
                     </button>
                     {isIssueTypeOpen && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-lg z-10">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#C8D5E1] rounded-[10px] shadow-lg z-10">
                         {issueTypes.map((type) => (
                           <button
                             key={type}
@@ -314,7 +314,7 @@ const ContactForm = () => {
                               }));
                               setIsIssueTypeOpen(false);
                             }}
-                            className="w-full px-3.5 py-2.5 text-left hover:bg-[var(--surface-container-low)] transition-colors"
+                            className="w-full px-3.5 py-2.5 text-left hover:bg-[#C8D5E1] transition-colors"
                             style={{
                               fontFamily: "var(--typeface-family, 'DM Sans')",
                               fontSize: "16px",
@@ -344,12 +344,12 @@ const ContactForm = () => {
                   >
                     Phone number <span style={{ color: "#DC2626" }}>*</span>
                   </label>
-                  <div className="flex bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
+                  <div className="flex bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setIsCountryOpen(!isCountryOpen)}
-                        className="h-full px-3.5 flex items-center gap-1 cursor-pointer border-r border-[var(--outline-hover)]"
+                        className="h-full px-3.5 flex items-center gap-1 cursor-pointer border-r border-[#C8D5E1]"
                       >
                         <span
                           className="text-[#181d27] text-sm md:text-base"
@@ -363,7 +363,7 @@ const ContactForm = () => {
                         />
                       </button>
                       {isCountryOpen && (
-                        <div className="absolute top-full left-0 mt-1 bg-white border border-[var(--outline-hover)] rounded-lg shadow-lg z-10 min-w-[80px]">
+                        <div className="absolute top-full left-0 mt-1 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-10 min-w-[80px]">
                           {["SA", "AE", "US", "UK"].map((code) => (
                             <button
                               key={code}
@@ -375,7 +375,7 @@ const ContactForm = () => {
                                 }));
                                 setIsCountryOpen(false);
                               }}
-                              className="w-full px-3.5 py-2 text-left hover:bg-[var(--surface-container-low)] transition-colors text-sm"
+                              className="w-full px-3.5 py-2 text-left hover:bg-[#C8D5E1] transition-colors text-sm"
                             >
                               {code}
                             </button>
@@ -416,7 +416,7 @@ const ContactForm = () => {
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    className="w-full bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--outline-focused)]"
+                    className="w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[#C8D5E1]"
                     style={{
                       padding: "10px 14px",
                       height: "44px",
@@ -443,7 +443,7 @@ const ContactForm = () => {
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full h-[140px] bg-white border border-[var(--outline-hover)] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[var(--outline-focused)] resize-none"
+                      className="w-full h-[140px] bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[#C8D5E1] resize-none"
                       style={{
                         padding: "10px 14px",
                       }}

@@ -166,49 +166,48 @@ const Footer = () => {
           {/* Payment Methods */}
           <div className="flex gap-4 items-center">
             {/* Visa */}
-            <div className="relative w-[35px] h-6 bg-white border border-[#d9d9d9] rounded">
+            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
               <Image
-                src="/images/visa.svg"
+                src="/payment icons/Visa.svg"
                 alt="Visa"
                 fill
-                className="object-contain p-1"
+                className="object-contain p-[6px]"
               />
             </div>
             {/* Mastercard */}
-            <div className="relative w-[35px] h-6 bg-white border border-[#d9d9d9] rounded">
+            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
               <Image
-                src="/images/mastercard.svg"
+                src="/payment icons/Mastercard.svg"
                 alt="Mastercard"
                 fill
-                className="object-contain p-1"
+                className="object-contain p-[5px]"
               />
             </div>
             {/* Google Pay */}
-            <div className="relative w-[35px] h-6 bg-white border border-[#d9d9d9] rounded flex items-center justify-center">
+            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
               <Image
-                src="/images/google-pay-g.svg"
+                src="/payment icons/GooglePay.svg"
                 alt="Google Pay"
-                width={12}
-                height={12}
-                className="object-contain"
+                fill
+                className="object-contain p-[5px]"
               />
             </div>
             {/* Mada */}
-            <div className="relative w-[35px] h-6 bg-white border border-[#d9d9d9] rounded">
+            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
               <Image
-                src="/images/mada.png"
+                src="/payment icons/image 474.svg"
                 alt="Mada"
                 fill
-                className="object-contain p-1"
+                className="object-contain p-[5px]"
               />
             </div>
             {/* Apple Pay */}
-            <div className="relative w-[35px] h-6 bg-white border border-[#d9d9d9] rounded">
+            <div className="relative w-[35px] h-[24px]">
               <Image
-                src="/images/apple-pay.svg"
+                src="/payment icons/ApplePay.svg"
                 alt="Apple Pay"
                 fill
-                className="object-contain p-1"
+                className="object-contain"
               />
             </div>
           </div>

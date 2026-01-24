@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Globe, Search, ShoppingCart } from "lucide-react";
 
 const Navbar = () => {
+  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
+
   return (
     <nav
       className="sticky top-0 z-50 w-full bg-[var(--surface-intense)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)]"
@@ -33,11 +36,49 @@ const Navbar = () => {
               Home
             </Link>
 
-            <div className="flex items-center gap-1 cursor-pointer group">
-              <span className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 group-hover:text-[var(--on-surface-default)] transition-colors">
-                Courses
-              </span>
-              <ChevronDown className="w-5 h-5 text-[var(--on-surface-variant)]" strokeWidth={1.67} />
+            <div className="relative">
+              <button 
+                onClick={() => setIsCoursesOpen(!isCoursesOpen)}
+                className="flex items-center gap-1 cursor-pointer group"
+              >
+                <span className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 group-hover:text-[var(--on-surface-default)] transition-colors">
+                  Courses
+                </span>
+                <ChevronDown 
+                  className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform duration-200 ${isCoursesOpen ? 'rotate-180' : ''}`} 
+                  strokeWidth={1.67} 
+                />
+              </button>
+              
+              {/* Dropdown Menu */}
+              {isCoursesOpen && (
+                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50">
+                  <Link
+                    href="/courses/accredited"
+                    className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
+                    style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                    onClick={() => setIsCoursesOpen(false)}
+                  >
+                    Accredited courses
+                  </Link>
+                  <Link
+                    href="/courses/my-courses"
+                    className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
+                    style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                    onClick={() => setIsCoursesOpen(false)}
+                  >
+                    My courses
+                  </Link>
+                  <Link
+                    href="/courses/archived"
+                    className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
+                    style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                    onClick={() => setIsCoursesOpen(false)}
+                  >
+                    Archived courses
+                  </Link>
+                </div>
+              )}
             </div>
 
             <Link

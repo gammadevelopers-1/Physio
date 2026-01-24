@@ -16,7 +16,7 @@ const BottomNav = () => {
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--surface-default)] flex justify-between items-start px-3"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white flex justify-between items-start px-3"
       style={{
         boxShadow: "0 -1px 2px 0 rgba(10, 13, 18, 0.05)",
       }}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, Globe, Search, ShoppingCart, Menu, X } from "lucide-react";
+import BottomNav from "./BottomNav";
 
 const Navbar = () => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
@@ -253,6 +254,7 @@ const Navbar = () => {
           </div>
         </div>
       )}
+  <BottomNav/>
     </nav>
   );
 };

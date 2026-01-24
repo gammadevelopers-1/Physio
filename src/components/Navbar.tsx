@@ -10,7 +10,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className="sticky top-0 z-50 w-full bg-[var(--surface-intense)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)]"
+      className="sticky top-0 z-[9999] w-full bg-[var(--surface-intense)] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)]"
       style={{ padding: "20px 64px" }}
     >
       <div className="flex items-center justify-between w-full">

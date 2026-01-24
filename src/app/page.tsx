@@ -7,6 +7,7 @@ import ExpertInstructors from "@/components/ExpertInstructors";
 import Testimonials from "@/components/Testimonials";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function Home() {
   return (
@@ -20,6 +21,7 @@ export default function Home() {
       <Testimonials />
       <CTASection />
       <Footer />
+      <WhatsAppButton />
     </main>
   );
 }

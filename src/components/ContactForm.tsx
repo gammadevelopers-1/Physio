@@ -1,8 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import dynamic from "next/dynamic";
 import { Mail, Phone, MapPin, ChevronRight, ChevronDown } from "lucide-react";
+
+// Dynamically import Map component to avoid SSR issues with Leaflet
+const Map = dynamic(() => import("./Map"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-[var(--surface-container-low)]">
+      <span className="text-[var(--on-surface-variant)]">Loading map...</span>
+    </div>
+  ),
+});
 
 const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -405,17 +415,16 @@ const ContactForm = () => {
 
         {/* Container 2: Map */}
         <div
-          className="w-full h-[400px] rounded-3xl overflow-hidden border border-[var(--outline-hover)] bg-white relative"
+          className="w-full h-[400px] rounded-3xl overflow-hidden border border-[var(--outline-hover)] bg-white relative z-0"
           style={{
             boxShadow:
               "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",
           }}
         >
-          <Image
-            src="/images/map-screenshot.png"
-            alt="Location Map"
-            fill
-            className="object-cover"
+          <Map
+            center={[24.4539, 39.6142]}
+            zoom={14}
+            popupText="PhysioGuidance - Saudi Arabia"
           />
         </div>
       </div>

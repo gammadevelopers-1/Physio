@@ -15,15 +15,24 @@ export default function AboutPage() {
           <div className="flex-1 bg-[var(--surface-intense)] flex items-center justify-center px-6 py-12 md:px-12 md:py-16 lg:px-16 lg:py-20 order-2 lg:order-1">
             <div className="max-w-[480px]">
               <h1
-                className="text-[var(--on-surface-default)] font-bold mb-4 md:mb-6"
-                style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+                className="text-[var(--on-surface-default)] mb-4 md:mb-6"
+                style={{
+                  fontSize: "var(--typeface-font-styles-display-base)",
+                  fontWeight: 600,
+                  lineHeight: "100%",
+                  letterSpacing: "-1.2px"
+                }}
               >
                 About Us
               </h1>
 
               <p
-                className="text-[var(--on-surface-variant)] leading-relaxed mb-6 md:mb-8"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-6 md:mb-8"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-subheading)",
+                  fontWeight: 400,
+                  lineHeight: "28px"
+                }}
               >
                 Our platform is a fully NELC-compliant digital learning ecosystem designed specifically for the health sector. We deliver high-quality, accredited training through a secure, bilingual (Arabic/English) platform that supports self-paced learning, live virtual sessions, and advanced learner analytics — ensuring excellence, accessibility, and regulatory alignment.
               </p>
@@ -32,7 +41,7 @@ export default function AboutPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               <Link
                 href="/courses"
-                className="flex items-center justify-center h-11 md:h-12 px-5 md:px-6 py-3 bg-[var(--surface-container-primary)] text-[var(--on-surface-inverse)] rounded-xl font-medium transition-colors hover:bg-[var(--blue-blue-700)] text-sm md:text-base"
+                className="flex items-center justify-center h-11 md:h-12 px-5 md:px-6 py-3 btn-gold text-[var(--on-surface-inverse)] rounded-xl font-medium transition-colors text-sm md:text-base"
               >
                 Explore Training Programs
               </Link>
@@ -75,11 +84,16 @@ export default function AboutPage() {
       </section>
 
       {/* Compliance & Standards Section */}
-      <section className="bg-[var(--surface-default)] px-6 py-16 md:px-12 md:py-20 lg:px-16 lg:py-24">
+      <section className="bg-[var(--surface-intense)] px-6 py-16 md:px-12 md:py-20 lg:px-16 lg:py-24">
         <div className="flex flex-col items-center justify-center max-w-[800px] mx-auto text-center">
           <h2
-            className="text-[var(--on-surface-default)] font-bold mb-6 md:mb-8"
-            style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
+            className="text-[var(--on-surface-default)] mb-6 md:mb-8"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-h1)",
+              fontWeight: 600,
+              lineHeight: "100%",
+              letterSpacing: "-0.24px"
+            }}
           >
             Compliance & Standards
           </h2>
@@ -87,25 +101,41 @@ export default function AboutPage() {
           <div className="flex flex-col gap-2 mb-8 md:mb-10">
             <p
               className="text-[var(--on-surface-variant)]"
-              style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+              style={{
+                fontSize: "var(--typeface-font-styles-heading-subheading)",
+                fontWeight: 400,
+                lineHeight: "28px"
+              }}
             >
               Fully aligned with NELC eLearning standards for the health sector
             </p>
             <p
               className="text-[var(--on-surface-variant)]"
-              style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+              style={{
+                fontSize: "var(--typeface-font-styles-heading-subheading)",
+                fontWeight: 400,
+                lineHeight: "28px"
+              }}
             >
               Structured learning objectives, assessments, and certification workflows
             </p>
             <p
               className="text-[var(--on-surface-variant)]"
-              style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+              style={{
+                fontSize: "var(--typeface-font-styles-heading-subheading)",
+                fontWeight: 400,
+                lineHeight: "28px"
+              }}
             >
               Comprehensive compliance documentation and audit readiness
             </p>
             <p
               className="text-[var(--on-surface-variant)]"
-              style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+              style={{
+                fontSize: "var(--typeface-font-styles-heading-subheading)",
+                fontWeight: 400,
+                lineHeight: "28px"
+              }}
             >
               Secure data handling and learner privacy controls
             </p>
@@ -124,15 +154,24 @@ export default function AboutPage() {
       <section className="bg-[var(--surface-intense)] px-6 py-16 md:px-12 md:py-20 lg:px-16 lg:py-24">
         <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
           <h2
-            className="text-[var(--on-surface-default)] font-bold mb-3 md:mb-4 text-center"
-            style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
+            className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-h1)",
+              fontWeight: 600,
+              lineHeight: "100%",
+              letterSpacing: "-0.24px"
+            }}
           >
             Learning Experience
           </h2>
 
           <p
             className="text-[var(--on-surface-variant)] mb-10 md:mb-14 text-center"
-            style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-subheading)",
+              fontWeight: 400,
+              lineHeight: "28px"
+            }}
           >
             Flexible Learning for Modern Healthcare Professionals
           </p>
@@ -152,13 +191,13 @@ export default function AboutPage() {
               <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-5 md:p-6 text-center">
                 <h3
                   className="text-[var(--on-surface-default)] font-semibold mb-3"
-                  style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                  style={{ fontSize: "var(--typeface-font-styles-heading-h4)", fontWeight: 600 }}
                 >
                   Self-paced accredited courses
                 </h3>
                 <Link
                   href="/courses"
-                  className="inline-flex items-center gap-1 text-[var(--on-surface-secondary)] font-medium hover:opacity-80 transition-opacity"
+                  className="inline-flex items-center gap-1 text-[var(--on-surface-secondary)] font-medium hover:opacity-80 transition-opacity px-5 py-2"
                   style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
                 >
                   Read more
@@ -180,13 +219,13 @@ export default function AboutPage() {
               <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-5 md:p-6 text-center">
                 <h3
                   className="text-[var(--on-surface-default)] font-semibold mb-3"
-                  style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                  style={{ fontSize: "var(--typeface-font-styles-heading-h4)", fontWeight: 600 }}
                 >
                   Zoom-based live lectures and workshops
                 </h3>
                 <Link
                   href="/workshops"
-                  className="inline-flex items-center gap-1 text-[var(--on-surface-secondary)] font-medium hover:opacity-80 transition-opacity"
+                  className="inline-flex items-center gap-1 text-[var(--on-surface-secondary)] font-medium hover:opacity-80 transition-opacity px-5 py-2"
                   style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
                 >
                   Read more
@@ -208,13 +247,13 @@ export default function AboutPage() {
               <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-5 md:p-6 text-center">
                 <h3
                   className="text-[var(--on-surface-default)] font-semibold mb-3"
-                  style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                  style={{ fontSize: "var(--typeface-font-styles-heading-h4)", fontWeight: 600 }}
                 >
                   Digital certificates upon completion
                 </h3>
                 <Link
                   href="/certificates"
-                  className="inline-flex items-center gap-1 text-[var(--on-surface-secondary)] font-medium hover:opacity-80 transition-opacity"
+                  className="inline-flex items-center gap-1 text-[var(--on-surface-secondary)] font-medium hover:opacity-80 transition-opacity px-5 py-2"
                   style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
                 >
                   Read more
@@ -230,15 +269,24 @@ export default function AboutPage() {
       <section className="bg-[var(--surface-default)] px-6 py-16 md:px-12 md:py-20 lg:px-16 lg:py-24">
         <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
           <h2
-            className="text-[var(--on-surface-default)] font-bold mb-3 md:mb-4 text-center"
-            style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
+            className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-h1)",
+              fontWeight: 600,
+              lineHeight: "100%",
+              letterSpacing: "-0.24px"
+            }}
           >
             Platform Capabilities
           </h2>
 
           <p
-            className="text-[var(--on-surface-variant)] mb-10 md:mb-14 text-center"
-            style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+            className="text-[var(--on-surface-default)] mb-10 md:mb-14 text-center"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-subheading)",
+              fontWeight: 400,
+              lineHeight: "28px"
+            }}
           >
             Powerful Tools for Learners and Administrators
           </p>
@@ -258,14 +306,22 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3
-                className="text-[var(--on-surface-default)] font-semibold mb-2"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-2"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-h5)",
+                  fontWeight: 600,
+                  lineHeight: "normal"
+                }}
               >
                 Bilingual Interface
               </h3>
               <p
                 className="text-[var(--on-surface-variant)]"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
+                style={{
+                  fontSize: "var(--typeface-font-styles-paragraph-text-s)",
+                  fontWeight: 400,
+                  lineHeight: "20px"
+                }}
               >
                 Seamless Arabic and English language support
               </p>
@@ -282,14 +338,22 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3
-                className="text-[var(--on-surface-default)] font-semibold mb-2"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-2"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-h5)",
+                  fontWeight: 600,
+                  lineHeight: "normal"
+                }}
               >
                 Advanced Dashboards
               </h3>
               <p
                 className="text-[var(--on-surface-variant)]"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
+                style={{
+                  fontSize: "var(--typeface-font-styles-paragraph-text-s)",
+                  fontWeight: 400,
+                  lineHeight: "20px"
+                }}
               >
                 Track learner progress, performance, and engagement
               </p>
@@ -304,14 +368,22 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3
-                className="text-[var(--on-surface-default)] font-semibold mb-2"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-2"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-h5)",
+                  fontWeight: 600,
+                  lineHeight: "normal"
+                }}
               >
                 Secure Payments
               </h3>
               <p
                 className="text-[var(--on-surface-variant)]"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
+                style={{
+                  fontSize: "var(--typeface-font-styles-paragraph-text-s)",
+                  fontWeight: 400,
+                  lineHeight: "20px"
+                }}
               >
                 Encrypted transactions and controlled access
               </p>
@@ -328,14 +400,22 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3
-                className="text-[var(--on-surface-default)] font-semibold mb-2"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-2"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-h5)",
+                  fontWeight: 600,
+                  lineHeight: "normal"
+                }}
               >
                 Instructor Management
               </h3>
               <p
                 className="text-[var(--on-surface-variant)]"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
+                style={{
+                  fontSize: "var(--typeface-font-styles-paragraph-text-s)",
+                  fontWeight: 400,
+                  lineHeight: "20px"
+                }}
               >
                 Manage trainers, schedules, and course delivery
               </p>
@@ -353,14 +433,22 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3
-                className="text-[var(--on-surface-default)] font-semibold mb-2"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-2"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-h5)",
+                  fontWeight: 600,
+                  lineHeight: "normal"
+                }}
               >
                 Reporting & Analytics
               </h3>
               <p
                 className="text-[var(--on-surface-variant)]"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
+                style={{
+                  fontSize: "var(--typeface-font-styles-paragraph-text-s)",
+                  fontWeight: 400,
+                  lineHeight: "20px"
+                }}
               >
                 Exportable reports aligned with NELC requirements
               </p>
@@ -375,14 +463,22 @@ export default function AboutPage() {
                 </svg>
               </div>
               <h3
-                className="text-[var(--on-surface-default)] font-semibold mb-2"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
+                className="text-[var(--on-surface-default)] mb-2"
+                style={{
+                  fontSize: "var(--typeface-font-styles-heading-h5)",
+                  fontWeight: 600,
+                  lineHeight: "normal"
+                }}
               >
                 Role-based Access
               </h3>
               <p
                 className="text-[var(--on-surface-variant)]"
-                style={{ fontSize: "var(--typeface-font-styles-paragraph-text-s)" }}
+                style={{
+                  fontSize: "var(--typeface-font-styles-paragraph-text-s)",
+                  fontWeight: 400,
+                  lineHeight: "20px"
+                }}
               >
                 Controlled permissions for learners, instructors, and admins
               </p>

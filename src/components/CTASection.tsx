@@ -2,7 +2,7 @@ import Image from "next/image";
 
 const CTASection = () => {
   return (
-    <section className="relative bg-[var(--surface-container-low)] px-10 py-[120px] overflow-hidden">
+    <section className="relative bg-[var(--surface-container-low)] px-4 lg:px-10 py-16 lg:py-[120px] overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="absolute w-[1440px] h-[1440px]">
@@ -18,7 +18,7 @@ const CTASection = () => {
       {/* Content */}
       <div className="relative z-10 flex flex-col gap-8 items-center justify-center w-full">
         <h2
-          className="text-[var(--on-surface-default)] font-semibold text-center leading-none tracking-[-0.24px] w-[600px]"
+          className="text-[var(--on-surface-default)] font-semibold text-center leading-none tracking-[-0.24px] w-full lg:w-[600px]"
           style={{
             fontSize: "var(--typeface-font-styles-heading-h1)",
           }}
@@ -27,7 +27,7 @@ const CTASection = () => {
         </h2>
 
         <p
-          className="text-[var(--on-surface-default)] text-center leading-7 w-[590px]"
+          className="text-[var(--on-surface-default)] text-center leading-7 w-full lg:w-[590px]"
           style={{
             fontSize: "var(--typeface-font-styles-heading-subheading)",
           }}

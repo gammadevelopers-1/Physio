@@ -29,8 +29,8 @@ const Footer = () => {
   ];
 
   return (
-    <footer 
-      className="bg-[var(--surface-intense)] pt-20 pb-12"
+    <footer
+      className="hidden lg:block bg-[var(--surface-intense)] pt-20 pb-12"
       style={{ padding: "80px 64px 48px 64px" }}
     >
       <div className="flex flex-col gap-12">

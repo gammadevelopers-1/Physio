@@ -57,16 +57,16 @@ const Footer = () => {
 
             {/* Social Icons */}
             <div className="flex gap-4 items-center justify-center">
-              <div className="p-2 bg-[var(--surface-container-low)] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
                 <Facebook className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
               </div>
-              <div className="p-2 bg-[var(--surface-container-low)] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
                 <Linkedin className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
               </div>
-              <div className="p-2 bg-[var(--surface-container-low)] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)] size-10">
+              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)] size-10">
                 <Twitter className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
               </div>
-              <div className="p-2 bg-[var(--surface-container-low)] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
                 <Instagram className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
               </div>
             </div>

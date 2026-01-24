@@ -100,14 +100,14 @@ export default function AboutPage() {
           {/* Mobile Button - Full width gold */}
           <Link
             href="/programs"
-            className="w-full lg:w-auto lg:hidden flex items-center justify-center h-12 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="w-full lg:w-auto lg:hidden flex items-center justify-center h-12 px-5 py-2 btn-gold  rounded-xl font-medium transition-all duration-300 text-white"
           >
             View All Programs
           </Link>
           {/* Desktop Button - Outlined */}
           <Link
             href="/programs"
-            className="hidden lg:flex items-center justify-center h-12 px-8 py-3 bg-transparent text-[var(--on-surface-default)] rounded-xl font-medium border border-[var(--outline-default)] transition-all duration-300 hover:bg-[var(--outline-default)] hover:text-[var(--on-surface-inverse)] hover:scale-105 hover:shadow-lg"
+            className="hidden lg:flex items-center justify-center h-12 px-8 py-3 bg-transparent btn-gold rounded-xl font-medium border  transition-all duration-300 text-white "
           >
             View All Programs
           </Link>

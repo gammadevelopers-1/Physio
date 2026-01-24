@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Video, ShoppingCart, Calendar, Clock, ArrowRight } from "lucide-react";
+import { Video, ShoppingCart, Plus, Calendar, Clock, ArrowRight } from "lucide-react";
 
 interface CourseCardProps {
   title: string;
@@ -11,6 +11,7 @@ interface CourseCardProps {
   vectorImage: string;
 }
 
+// Desktop Course Card
 const CourseCard = ({
   title,
   type,
@@ -111,6 +112,95 @@ const CourseCard = ({
   );
 };
 
+// Mobile Course Card
+const MobileCourseCard = ({
+  title,
+  type,
+  date,
+  hours,
+  description,
+  price,
+  vectorImage,
+}: CourseCardProps) => {
+  return (
+    <div className="flex flex-col gap-4 items-start w-full">
+      {/* Card Header - 182.84px height from Figma */}
+      <div className="relative bg-[#eef3f7] rounded-2xl p-4 h-[182.84px] flex flex-col justify-between overflow-hidden w-full">
+        {/* Title - 161px width */}
+        <p
+          className="text-[#06080b] font-semibold w-[161px] z-10 leading-normal"
+          style={{
+            fontSize: "var(--typeface-font-styles-heading-h5)",
+          }}
+        >
+          {title}
+        </p>
+
+        {/* Course vector decoration - positioned exactly as Figma */}
+        <div className="absolute right-0 top-1/2 -translate-y-[calc(50%-0.92px)] w-[146px] h-[217px]">
+          <Image src={vectorImage} alt="" fill className="object-contain" />
+        </div>
+
+        {/* Bottom row - flex between */}
+        <div className="flex items-center justify-between w-full z-10">
+          {/* Type badge - pill style */}
+          <div className="flex items-center gap-2 bg-[#0b0f17] rounded-full px-3 py-1">
+            <Video className="w-4 h-4 text-white" strokeWidth={1.5} />
+            <span className="text-white text-xs leading-4">{type}</span>
+          </div>
+
+          {/* Add button - 8px padding, 12px radius */}
+          <button className="flex items-center justify-center p-2 bg-[#f9fbfd] rounded-xl">
+            <Plus className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+
+      {/* Meta tags */}
+      <div className="flex items-center gap-4">
+        {/* Date tag */}
+        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+          <Calendar className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
+          <span className="text-[#4a4c4f] text-sm leading-5">{date}</span>
+        </div>
+
+        {/* Hours tag */}
+        <div className="flex items-center gap-1 bg-[#f4f4f5] rounded-lg px-2 py-1">
+          <Clock className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
+          <span className="text-[#4a4c4f] text-sm leading-5">{hours}</span>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-[#06080b] text-base leading-6 w-full">
+        {description}
+      </p>
+
+      {/* Price and CTA */}
+      <div className="flex items-center justify-between w-full">
+        {/* Price with SAR Riyal icon */}
+        <div className="flex items-center gap-1">
+          <Image src="/icons/rayal-icon.svg" alt="SAR" width={16} height={18} />
+          <span
+            className="text-[#06080b] font-semibold leading-normal"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-h5)",
+            }}
+          >
+            {price}
+          </span>
+        </div>
+
+        {/* View Details button */}
+        <button className="flex items-center gap-2 h-10 px-5 py-2 bg-[#0b0f17] text-white rounded-xl text-sm font-medium">
+          <span>View Details</span>
+          <ArrowRight className="w-4 h-4 text-white" strokeWidth={1.5} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const FeaturedCourses = () => {
   const courses = [
     {
@@ -156,10 +246,10 @@ const FeaturedCourses = () => {
   ];
 
   return (
-    <section className="bg-white px-[64px] py-[96px]">
-      <div className="flex flex-col gap-[40px] items-center justify-center w-full max-w-[1440px] mx-auto">
-        {/* Section Title - centered, max-width 768px */}
-        <div className="flex items-end justify-between w-full">
+    <section className="bg-white px-4 xl:px-[64px] py-16 xl:py-[96px] overflow-hidden">
+      <div className="flex flex-col gap-5 xl:gap-[40px] items-center justify-center w-full max-w-[1440px] mx-auto">
+        {/* Section Title - Desktop (1280px+) */}
+        <div className="hidden xl:flex items-end justify-between w-full">
           <div className="flex-1 flex flex-col items-center justify-center max-w-[768px] mx-auto">
             <div className="flex flex-col gap-[16px] items-center text-center text-black w-full">
               <h2
@@ -179,8 +269,28 @@ const FeaturedCourses = () => {
           </div>
         </div>
 
-        {/* Courses Grid - gap-32px between cards, gap-64px vertical */}
-        <div className="bg-white flex flex-col gap-[64px] items-start w-full">
+        {/* Section Title - Mobile/Tablet */}
+        <div className="flex xl:hidden flex-col gap-4 items-center text-center text-black w-full">
+          <h2
+            className="font-semibold leading-none tracking-[-0.15px] w-full"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-h1)",
+            }}
+          >
+            Featured Programs
+          </h2>
+          <p
+            className="leading-7 w-full"
+            style={{
+              fontSize: "var(--typeface-font-styles-heading-subheading)",
+            }}
+          >
+            Accredited, evidence-based healthcare training programs.
+          </p>
+        </div>
+
+        {/* Desktop Courses Grid - 4 columns (1280px+) */}
+        <div className="hidden xl:flex bg-white flex-col gap-[64px] items-start w-full">
           <div className="flex gap-[32px] items-start w-full">
             {courses.map((course, index) => (
               <CourseCard key={index} {...course} />
@@ -188,12 +298,16 @@ const FeaturedCourses = () => {
           </div>
         </div>
 
-        {/* View All Button - gold gradient */}
+        {/* Mobile/Tablet Course Cards - Stacked vertically */}
+        <div className="flex xl:hidden flex-col gap-8 items-start w-full">
+          {courses.map((course, index) => (
+            <MobileCourseCard key={index} {...course} />
+          ))}
+        </div>
+
+        {/* View All Button */}
         <button 
-          className="h-[40px] px-[20px] py-[8px] rounded-[12px] text-[14px] font-medium text-white min-w-[80px]"
-          style={{
-            background: "linear-gradient(to right, #a37f49, #6b4e24)",
-          }}
+          className="h-[40px] px-[20px] py-[8px] rounded-[12px] text-[14px] font-medium text-white min-w-[80px] btn-gold"
         >
           View All Programs
         </button>

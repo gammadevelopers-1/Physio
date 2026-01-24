@@ -83,10 +83,10 @@ const Hero = () => {
 
           {/* Mobile Action Buttons */}
           <div className="flex gap-4 pt-8">
-            <button className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium flex-1">
+            <button className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap">
               Explore Training Programs
             </button>
-            <button className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent flex-1">
+            <button className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
               <span
                 className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
                 style={{ WebkitTextFillColor: "transparent" }}

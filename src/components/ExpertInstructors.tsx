@@ -46,9 +46,9 @@ const ExpertInstructors = () => {
             {row1.map((instructor, index) => (
               <div
                 key={index}
-                className="p-[5px] bg-[var(--surface-container-default)] rounded-full"
+                className="p-[5px] bg-[#EEF3F7] rounded-full"
               >
-                <div className="p-[2.5px] bg-[var(--surface-container-default)] rounded-full overflow-hidden">
+                <div className="p-[2.5px] bg-[#EEF3F7] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
@@ -67,9 +67,9 @@ const ExpertInstructors = () => {
             {row2.map((instructor, index) => (
               <div
                 key={index}
-                className="p-[5px] bg-[var(--surface-container-default)] rounded-full"
+                className="p-[5px] bg-[#EEF3F7] rounded-full"
               >
-                <div className="p-[2.5px] bg-[var(--surface-container-high)] rounded-full overflow-hidden">
+                <div className="p-[2.5px] bg-[#EEF3F7] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
@@ -91,7 +91,7 @@ const ExpertInstructors = () => {
             {row1.map((instructor, index) => (
               <div
                 key={index}
-                className="p-[3.31px] bg-[var(--surface-container-high)] rounded-full"
+                className="p-[3.31px] bg-[var(--surface-container-default)] rounded-full"
               >
                 <div className="p-[1.655px] bg-[var(--surface-container-default)] rounded-full overflow-hidden">
                   <div className="relative w-[62px] h-[62px] rounded-full overflow-hidden">
@@ -112,9 +112,9 @@ const ExpertInstructors = () => {
             {row2.map((instructor, index) => (
               <div
                 key={index}
-                className="p-[3.31px] bg-[var(--surface-container-high)] rounded-full"
+                className="p-[3.31px] bg-[var(--surface-container-default)] rounded-full"
               >
-                <div className="p-[1.655px] bg-[var(--surface-container-default)] rounded-full overflow-hidden">
+                <div className="p-[1.655px] bg-[var(--surface-container-high)] rounded-full overflow-hidden">
                   <div className="relative w-[62px] h-[62px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}

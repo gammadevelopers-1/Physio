@@ -149,9 +149,9 @@ const MobileCourseCard = ({
             <span className="text-white text-xs leading-4">{type}</span>
           </div>
 
-          {/* Add button - 8px padding, 12px radius */}
+          {/* Add to cart button - 8px padding, 12px radius */}
           <button className="flex items-center justify-center p-2 bg-[#f9fbfd] rounded-xl">
-            <Plus className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+            <ShoppingCart className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
           </button>
         </div>
       </div>

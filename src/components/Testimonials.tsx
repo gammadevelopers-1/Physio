@@ -71,7 +71,7 @@ const Testimonials = () => {
   return (
     <>
       {/* Desktop Testimonials - Only show on large screens (1280px+) */}
-      <section className="hidden xl:block bg-[var(--surface-intense)] px-16 py-24 overflow-hidden">
+      <section className="hidden lg:block  px-16 py-24 overflow-hidden">
         <div className="flex flex-col gap-8 items-center justify-center max-w-[1280px] mx-auto w-full">
           {/* Section Title */}
           <div className="flex flex-col gap-6 items-center justify-center max-w-[768px] text-center text-[var(--on-surface-default)]">
@@ -95,7 +95,7 @@ const Testimonials = () => {
           </div>
 
           {/* Testimonials Card */}
-          <div className="bg-[var(--surface-container-low)] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <div className="bg-[#EEF3F7] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div className="flex items-start justify-between w-full">
               {visibleTestimonials.map((testimonial, index) => (
                 <div key={index} className="flex items-start">
@@ -152,7 +152,7 @@ const Testimonials = () => {
                   className={`w-3 h-3 rounded-full transition-all duration-300 ${
                     currentSlide === index
                       ? "bg-[var(--surface-container-primary)]"
-                      : "bg-transparent border-2 border-[var(--surface-container-primary)]"
+                      : "bg-[#EEF3F7] "
                   }`}
                 />
               ))}
@@ -178,8 +178,8 @@ const Testimonials = () => {
       </section>
 
       {/* Mobile/Tablet Testimonials - Show on screens smaller than 1280px */}
-      <section className="xl:hidden bg-white px-4 py-16 overflow-hidden relative">
-        <div className="flex flex-col gap-5 items-center justify-center max-w-full pb-10 w-full">
+      <section className="xl:hidden bg-white px-4 py-10 overflow-hidden relative">
+        <div className="flex flex-col gap-5 items-center justify-center max-w-full w-full">
           {/* Section Title */}
           <div className="flex flex-col gap-6 items-center justify-center text-center text-black w-full">
             <h2
@@ -202,7 +202,7 @@ const Testimonials = () => {
           </div>
 
           {/* Testimonial Card - Single card on mobile/tablet */}
-          <div className="bg-[var(--surface-container-default)] rounded-3xl p-6 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <div className="bg-[#EEF3F7] rounded-3xl p-6 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div className="flex flex-col gap-16 items-start overflow-hidden">
               <p
                 className="text-black font-semibold"
@@ -245,7 +245,7 @@ const Testimonials = () => {
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
                     currentSlide === index
                       ? "bg-[var(--blue-brand-blue)]"
-                      : "bg-transparent border-2 border-[var(--blue-brand-blue)]"
+                      : "bg-[#EEF3F7]"
                   }`}
                 />
               ))}

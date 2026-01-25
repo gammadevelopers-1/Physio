@@ -4,6 +4,8 @@
    Primitive Tokens
    ============================================ */
 :root {
+  color-scheme: light only;
+
   /* Font Sizes */
   --font-sizes-12: 0.75rem;
   --font-sizes-14: 0.875rem;
@@ -147,51 +149,6 @@
   --transparent-surface-40: #06080b66;
 }
 
-/* ============================================
-   Semantic Tokens - Dark Mode
-   ============================================ */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-
-    /* Feedback */
-    --feedback-error: var(--functional-red-400);
-    --feedback-info: var(--functional-blue-400);
-    --feedback-success: var(--functional-green-400);
-    --feedback-warning: var(--functional-amber-500);
-
-    /* On Surface */
-    --on-surface-default: var(--white);
-    --on-surface-inverse: var(--white);
-    --on-surface-primary: var(--blue-blue-500);
-    --on-surface-secondary: var(--gold-gold-100);
-    --on-surface-variant: var(--blue-blue-200);
-
-    /* Outline */
-    --outline-bright: var(--gold-gold-800);
-    --outline-default: var(--gold-gold-500);
-    --outline-focused: var(--blue-blue-400);
-    --outline-hover: var(--blue-blue-200);
-    --outline-subtle: var(--blue-blue-800);
-
-    /* Surface */
-    --surface-default: var(--blue-blue-800);
-    --surface-intense: var(--blue-blue-900);
-    --surface-container-default: var(--neutral-neutral-950);
-    --surface-container-high: var(--neutral-neutral-900);
-    --surface-container-low: var(--neutral-neutral-1000);
-    --surface-container-lowest: var(--blue-blue-900);
-    --surface-container-primary: var(--blue-blue-500);
-    --surface-container-primary-2: var(--gold-gold-500);
-    --surface-container-primary-subtle: var(--blue-blue-700);
-
-    /* Transparent */
-    --transparent-primary: #002d873d;
-    --transparent-surface: #00153e00;
-    --transparent-surface-40: #06080bcc;
-  }
-}
 
 @theme inline {
   --color-background: var(--background);

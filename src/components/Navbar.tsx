@@ -55,7 +55,7 @@ const Navbar = () => {
               {isCoursesOpen && (
                 <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50">
                   <Link
-                    href="/courses/accredited"
+                    href="/courses"
                     className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                     onClick={() => setIsCoursesOpen(false)}
@@ -71,7 +71,7 @@ const Navbar = () => {
                     My courses
                   </Link>
                   <Link
-                    href="/courses/archived"
+                    href="/archived"
                     className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                     onClick={() => setIsCoursesOpen(false)}
@@ -90,7 +90,7 @@ const Navbar = () => {
             </Link>
 
             <Link
-              href="/archive"
+              href="/archived"
               className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
             >
               Archive
@@ -181,7 +181,7 @@ const Navbar = () => {
               {isCoursesOpen && (
                 <div className="pl-4 pb-3 flex flex-col gap-2">
                   <Link
-                    href="/courses/accredited"
+                    href="/courses"
                     className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -195,7 +195,7 @@ const Navbar = () => {
                     My courses
                   </Link>
                   <Link
-                    href="/courses/archived"
+                    href="/archived"
                     className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -214,7 +214,7 @@ const Navbar = () => {
             </Link>
 
             <Link
-              href="/archive"
+              href="/archived"
               className="py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >

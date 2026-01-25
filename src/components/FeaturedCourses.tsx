@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Video, ShoppingCart, Plus, Calendar, Clock, ArrowRight } from "lucide-react";
 
 interface CourseCardProps {
@@ -9,6 +10,7 @@ interface CourseCardProps {
   description: string;
   price: number;
   vectorImage: string;
+  slug: string;
 }
 
 // Desktop Course Card
@@ -20,9 +22,10 @@ const CourseCard = ({
   description,
   price,
   vectorImage,
+  slug,
 }: CourseCardProps) => {
   return (
-    <div className="flex flex-1 flex-col gap-[16px] items-start min-w-0">
+    <Link href={`/courses/${slug}`} className="flex flex-1 flex-col gap-[16px] items-start min-w-0 group">
       {/* Card Header - exact 182.84px height from Figma */}
       <div className="relative bg-[#eef3f7] rounded-[16px] p-[16px] h-[182.84px] flex flex-col justify-between overflow-hidden w-full">
         {/* Title - 161px width */}
@@ -103,12 +106,12 @@ const CourseCard = ({
         </div>
 
         {/* View Details button - 40px height, 20px padding horizontal, 12px radius */}
-        <button className="flex items-center gap-[8px] h-[40px] px-[20px] py-[8px] bg-[#0b0f17] text-white rounded-[12px] text-[14px] font-medium">
+        <span className="flex items-center gap-[8px] h-[40px] px-[20px] py-[8px] bg-[#0b0f17] text-white rounded-[12px] text-[14px] font-medium group-hover:bg-[#1a1f2e] transition-colors">
           <span>View Details</span>
           <ArrowRight className="w-4 h-4 text-white" strokeWidth={1.5} />
-        </button>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -121,9 +124,10 @@ const MobileCourseCard = ({
   description,
   price,
   vectorImage,
+  slug,
 }: CourseCardProps) => {
   return (
-    <div className="flex flex-col gap-4 items-start w-full">
+    <Link href={`/courses/${slug}`} className="flex flex-col gap-4 items-start w-full group">
       {/* Card Header - 182.84px height from Figma */}
       <div className="relative bg-[#eef3f7] rounded-2xl p-4 h-[182.84px] flex flex-col justify-between overflow-hidden w-full">
         {/* Title - 161px width */}
@@ -192,12 +196,12 @@ const MobileCourseCard = ({
         </div>
 
         {/* View Details button */}
-        <button className="flex items-center gap-2 h-10 px-5 py-2 bg-[#0b0f17] text-white rounded-xl text-sm font-medium">
+        <span className="flex items-center gap-2 h-10 px-5 py-2 bg-[#0b0f17] text-white rounded-xl text-sm font-medium group-hover:bg-[#1a1f2e] transition-colors">
           <span>View Details</span>
           <ArrowRight className="w-4 h-4 text-white" strokeWidth={1.5} />
-        </button>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 };
 
@@ -212,6 +216,7 @@ const FeaturedCourses = () => {
         "A comprehensive, evidence-based overview of infection prevention strategies for modern healthcare settings.",
       price: 575,
       vectorImage: "/featured images/Vector 2.svg",
+      slug: "infection-control-flagship",
     },
     {
       title: "Life Support / Emergency Care",
@@ -222,6 +227,7 @@ const FeaturedCourses = () => {
         "Essential life-saving skills for early response, resuscitation, and emergency management.",
       price: 375,
       vectorImage: "/featured images/Vector 2 (1).svg",
+      slug: "life-support-emergency-care",
     },
     {
       title: "Patient Safety & Quality",
@@ -232,6 +238,7 @@ const FeaturedCourses = () => {
         "Learn structured approaches to reduce medical errors, improve outcomes, and enhance care quality.",
       price: 460,
       vectorImage: "/featured images/Vector 2 (2).svg",
+      slug: "patient-safety-quality",
     },
     {
       title: "Public Health & Preparedness",
@@ -242,6 +249,7 @@ const FeaturedCourses = () => {
         "Principles of surveillance, risk assessment, and coordinated response to health emergencies.",
       price: 575,
       vectorImage: "/featured images/Vector 2 (3).svg",
+      slug: "public-health-preparedness",
     },
   ];
 
@@ -306,11 +314,12 @@ const FeaturedCourses = () => {
         </div>
 
         {/* View All Button */}
-        <button 
-          className="h-[40px] px-[20px] py-[8px] rounded-[12px] text-[14px] font-medium text-white min-w-[80px] btn-gold"
+        <Link
+          href="/courses"
+          className="h-[40px] px-[20px] py-[8px] rounded-[12px] text-[14px] font-medium text-white min-w-[80px] btn-gold inline-flex items-center justify-center"
         >
           View All Programs
-        </button>
+        </Link>
       </div>
     </section>
   );

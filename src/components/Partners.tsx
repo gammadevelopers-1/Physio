@@ -115,7 +115,7 @@ const Partners = () => {
             <div
               key={index}
               className="flex items-center justify-center"
-              style={{ 
+              style={{
                 height: 66,
                 marginLeft: 48,
                 marginRight: 48,
@@ -126,8 +126,8 @@ const Partners = () => {
                 alt={partner.name}
                 width={partner.width}
                 height={partner.height}
-                style={{ 
-                  width: partner.width, 
+                style={{
+                  width: partner.width,
                   height: partner.height,
                   objectFit: 'contain',
                 }}

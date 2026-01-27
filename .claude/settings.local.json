@@ -7,7 +7,9 @@
       "mcp__figma-remote-mcp__get_screenshot",
       "Bash(npm run build:*)",
       "mcp__figma-remote-mcp__get_metadata",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }

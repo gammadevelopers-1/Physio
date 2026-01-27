@@ -17,40 +17,86 @@ const CoursePagination = ({
 }: CoursePaginationProps) => {
   if (totalPages <= 1) return null;
 
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  // Generate page numbers to display with ellipsis logic
+  const getVisiblePages = () => {
+    const pages: (number | string)[] = [];
+
+    if (totalPages <= 5) {
+      // Show all pages if 5 or less
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+
+      if (currentPage > 3) {
+        pages.push("...");
+      }
+
+      // Pages around current
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push("...");
+      }
+
+      // Always show last page
+      if (!pages.includes(totalPages)) {
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  const visiblePages = getVisiblePages();
 
   if (variant === "mobile") {
     return (
-      <div className="flex items-center justify-between mt-8">
+      <div className="flex items-center justify-center gap-2 mt-8">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-full bg-[#F4F4F5]"
+          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
         >
           <ChevronLeft className="w-4 h-4" />
           Previous
         </button>
 
-        <div className="flex items-center gap-2">
-          {pages.map((page) => (
-            <button
-              key={page}
-              onClick={() => onPageChange(page)}
-              className={`w-8 h-8 rounded-full text-sm font-medium transition-colors ${
-                currentPage === page
-                  ? "bg-[#06080b] text-white"
-                  : "text-[#06080b] hover:bg-[#F4F4F5]"
-              }`}
-            >
-              {page}
-            </button>
+        <div className="flex items-center gap-1">
+          {visiblePages.map((page, index) => (
+            page === "..." ? (
+              <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-[#71717A] text-sm">
+                ...
+              </span>
+            ) : (
+              <button
+                key={page}
+                onClick={() => onPageChange(page as number)}
+                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                  currentPage === page
+                    ? "bg-[#06080b] text-white"
+                    : "text-[#06080b] hover:bg-[#F4F4F5]"
+                }`}
+              >
+                {page}
+              </button>
+            )
           ))}
         </div>
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-full bg-[#F4F4F5]"
+          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
         >
           Continue
           <ChevronRight className="w-4 h-4" />
@@ -60,7 +106,7 @@ const CoursePagination = ({
   }
 
   return (
-    <div className="flex items-center justify-between mt-12">
+    <div className="flex items-center justify-center gap-4 mt-12">
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
@@ -71,18 +117,24 @@ const CoursePagination = ({
       </button>
 
       <div className="flex items-center gap-2">
-        {pages.map((page) => (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-              currentPage === page
-                ? "bg-[#06080b] text-white"
-                : "text-[#06080b] hover:bg-[#F4F4F5]"
-            }`}
-          >
-            {page}
-          </button>
+        {visiblePages.map((page, index) => (
+          page === "..." ? (
+            <span key={`ellipsis-${index}`} className="w-10 h-10 flex items-center justify-center text-[#71717A] text-sm">
+              ...
+            </span>
+          ) : (
+            <button
+              key={page}
+              onClick={() => onPageChange(page as number)}
+              className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                currentPage === page
+                  ? "bg-[#06080b] text-white"
+                  : "text-[#06080b] hover:bg-[#F4F4F5]"
+              }`}
+            >
+              {page}
+            </button>
+          )
         ))}
       </div>
 

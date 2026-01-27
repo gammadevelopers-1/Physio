@@ -165,8 +165,8 @@ const CoursesPageContent = () => {
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden pb-24">
-        <section className="px-4 py-6">
+      <div className="lg:hidden pb-24 overflow-x-hidden">
+        <section className="px-4 py-6 max-w-full">
           {/* Header */}
           <div className="mb-6">
             <h1

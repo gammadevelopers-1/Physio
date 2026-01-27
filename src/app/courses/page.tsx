@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function CoursesPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
       <CoursesPageContent />
       <Footer />

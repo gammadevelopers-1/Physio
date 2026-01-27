@@ -134,9 +134,12 @@ const Navbar = () => {
           </button>
 
           {/* Get Started Button - Hidden on mobile */}
-          <button className="hidden md:flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium">
+          <Link
+            href="/signup"
+            className="hidden md:flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium"
+          >
             Get started
-          </button>
+          </Link>
 
           {/* Hamburger Menu - Visible only on mobile */}
           <button
@@ -248,9 +251,13 @@ const Navbar = () => {
             </div>
 
             {/* Get Started Button */}
-            <button className="mt-4 flex items-center justify-center h-11 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-full">
+            <Link
+              href="/signup"
+              className="mt-4 flex items-center justify-center h-11 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-full"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               Get started
-            </button>
+            </Link>
           </div>
         </div>
       )}

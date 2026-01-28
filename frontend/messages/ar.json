@@ -262,5 +262,40 @@
       "charactersLeft": "characters left",
       "submit": "يقدم"
     }
+  },
+  "signinPage": {
+    "title": "تسجيل الدخول إلى حسابك",
+    "description": "أدخل بريدك الإلكتروني أدناه لتسجيل الدخول إلى حسابك",
+    "form": {
+      "email": "بريد إلكتروني",
+      "password": "كلمة المرور",
+      "forgotPassword": "نسيت كلمة السر؟",
+      "rememberMe": "تذكر لمدة 30 يومًا",
+      "login": "تسجيل الدخول",
+      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل"
+    },
+    "footer": {
+      "noAccount": "ليس لديك حساب؟",
+      "signUp": "التسجيل"
+    }
+  },
+  "signupPage": {
+    "title": "قم بالتسجيل/التسجيل",
+    "description": "تسجيل حساب جديد.",
+    "form": {
+      "email": "بريد إلكتروني",
+      "password": "كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "acceptTermsPrefix": "أوافق على",
+      "termsAndConditions": "الشروط والأحكام",
+      "and": "و",
+      "privacyPolicy": "سياسة الخصوصية",
+      "register": "يسجل",
+      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل"
+    },
+    "footer": {
+      "hasAccount": "هل لديك حساب بالفعل؟",
+      "logIn": "تسجيل الدخول"
+    }
   }
 }

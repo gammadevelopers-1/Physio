@@ -262,5 +262,40 @@
       "charactersLeft": "characters left",
       "submit": "Submit"
     }
+  },
+  "signinPage": {
+    "title": "Login to your account",
+    "description": "Enter your email below to login to your account",
+    "form": {
+      "email": "Email",
+      "password": "Password",
+      "forgotPassword": "Forgot your password?",
+      "rememberMe": "Remember for 30 days",
+      "login": "Login",
+      "signInWithGoogle": "Sign in with Google"
+    },
+    "footer": {
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign up"
+    }
+  },
+  "signupPage": {
+    "title": "Sign up/Register",
+    "description": "Register new account.",
+    "form": {
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "acceptTermsPrefix": "I accept",
+      "termsAndConditions": "Terms & Conditions",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy",
+      "register": "Register",
+      "signInWithGoogle": "Sign in with Google"
+    },
+    "footer": {
+      "hasAccount": "Already have an account?",
+      "logIn": "Log in"
+    }
   }
 }

@@ -3,11 +3,24 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { ChevronDown, Globe, Search, ShoppingCart, Menu, X } from "lucide-react";
 
 const AuthNavbar = () => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const t = useTranslations("navbar");
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const isRTL = locale === "ar";
+
+  const switchLocale = () => {
+    const newLocale = locale === "en" ? "ar" : "en";
+    const pathWithoutLocale = pathname.replace(`/${locale}`, "");
+    router.push(`/${newLocale}${pathWithoutLocale}`);
+  };
 
   return (
     <nav
@@ -17,7 +30,7 @@ const AuthNavbar = () => {
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center gap-8">
           {/* Logo */}
-          <Link href="/" className="relative h-8 w-8 md:h-12 md:w-12">
+          <Link href={`/${locale}`} className="relative h-8 w-8 md:h-12 md:w-12">
             <Image
               src="/images/logo.png"
               alt="PhysioGuidance Logo"
@@ -30,10 +43,10 @@ const AuthNavbar = () => {
           {/* Nav Links - Hidden on mobile */}
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/"
+              href={`/${locale}`}
               className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
             >
-              Home
+              {t("home")}
             </Link>
 
             <div className="relative">
@@ -42,7 +55,7 @@ const AuthNavbar = () => {
                 className="flex items-center gap-1 cursor-pointer group"
               >
                 <span className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 group-hover:text-[var(--on-surface-default)] transition-colors">
-                  Courses
+                  {t("courses")}
                 </span>
                 <ChevronDown
                   className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform duration-200 ${isCoursesOpen ? 'rotate-180' : ''}`}
@@ -52,70 +65,75 @@ const AuthNavbar = () => {
 
               {/* Dropdown Menu */}
               {isCoursesOpen && (
-                <div className="absolute top-full left-0 mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50">
+                <div className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "right-0" : "left-0"}`}>
                   <Link
-                    href="/courses"
+                    href={`/${locale}/courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                     onClick={() => setIsCoursesOpen(false)}
                   >
-                    Accredited courses
+                    {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href="/courses/my-courses"
+                    href={`/${locale}/courses/my-courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                     onClick={() => setIsCoursesOpen(false)}
                   >
-                    My courses
+                    {t("myCourses")}
                   </Link>
                   <Link
-                    href="/archived"
+                    href={`/${locale}/archived`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     style={{ fontSize: "var(--typeface-font-styles-paragraph-text)" }}
                     onClick={() => setIsCoursesOpen(false)}
                   >
-                    Archived courses
+                    {t("archivedCourses")}
                   </Link>
                 </div>
               )}
             </div>
 
             <Link
-              href="/become-trainer"
+              href={`/${locale}/become-trainer`}
               className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
             >
-              Become a Trainer
+              {t("becomeTrainer")}
             </Link>
 
             <Link
-              href="/archived"
+              href={`/${locale}/archived`}
               className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
             >
-              Archive
+              {t("archive")}
             </Link>
 
             <Link
-              href="/blogs"
+              href={`/${locale}/blogs`}
               className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
             >
-              Blogs
+              {t("blogs")}
             </Link>
 
             <Link
-              href="/about"
+              href={`/${locale}/about`}
               className="text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
             >
-              About
+              {t("about")}
             </Link>
           </div>
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center gap-4">
-          {/* Arabic Language Toggle - Always visible */}
-          <button className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors">
-            <span className="text-[length:var(--typeface-font-styles-paragraph-text)] leading-6">عربي</span>
+          {/* Language Toggle - Always visible */}
+          <button
+            onClick={switchLocale}
+            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+          >
+            <span className="text-[length:var(--typeface-font-styles-paragraph-text)] leading-6">
+              {t("languageToggle")}
+            </span>
             <Globe className="w-5 h-5" strokeWidth={1.67} />
           </button>
 
@@ -128,16 +146,19 @@ const AuthNavbar = () => {
           </button>
 
           {/* Cart Icon - Hidden on mobile */}
-          <button className="hidden md:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors">
+          <Link
+            href={`/${locale}/cart`}
+            className="hidden md:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+          >
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
-          </button>
+          </Link>
 
           {/* Get Started Button - Hidden on mobile */}
           <Link
-            href="/signup"
+            href={`/${locale}/signup`}
             className="hidden md:flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium"
           >
-            Get started
+            {t("getStarted")}
           </Link>
 
           {/* Hamburger Menu - Visible on mobile for auth pages */}
@@ -161,11 +182,11 @@ const AuthNavbar = () => {
           <div className="flex flex-col px-4 py-4">
             {/* Mobile Nav Links */}
             <Link
-              href="/"
+              href={`/${locale}`}
               className="py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Home
+              {t("home")}
             </Link>
 
             {/* Courses with dropdown */}
@@ -174,69 +195,69 @@ const AuthNavbar = () => {
                 onClick={() => setIsCoursesOpen(!isCoursesOpen)}
                 className="flex items-center justify-between w-full py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors"
               >
-                <span>Courses</span>
+                <span>{t("courses")}</span>
                 <ChevronDown
                   className={`w-5 h-5 transition-transform duration-200 ${isCoursesOpen ? "rotate-180" : ""}`}
                   strokeWidth={1.67}
                 />
               </button>
               {isCoursesOpen && (
-                <div className="pl-4 pb-3 flex flex-col gap-2">
+                <div className="pb-3 flex flex-col gap-2 ps-4">
                   <Link
-                    href="/courses"
+                    href={`/${locale}/courses`}
                     className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Accredited courses
+                    {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href="/courses/my-courses"
+                    href={`/${locale}/courses/my-courses`}
                     className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    My courses
+                    {t("myCourses")}
                   </Link>
                   <Link
-                    href="/archived"
+                    href={`/${locale}/archived`}
                     className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Archived courses
+                    {t("archivedCourses")}
                   </Link>
                 </div>
               )}
             </div>
 
             <Link
-              href="/become-trainer"
+              href={`/${locale}/become-trainer`}
               className="py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Become a Trainer
+              {t("becomeTrainer")}
             </Link>
 
             <Link
-              href="/archived"
+              href={`/${locale}/archived`}
               className="py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Archive
+              {t("archive")}
             </Link>
 
             <Link
-              href="/blogs"
+              href={`/${locale}/blogs`}
               className="py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Blogs
+              {t("blogs")}
             </Link>
 
             <Link
-              href="/about"
+              href={`/${locale}/about`}
               className="py-3 text-[var(--on-surface-variant)] text-[length:var(--typeface-font-styles-paragraph-text)] leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              About
+              {t("about")}
             </Link>
 
             {/* Mobile Action Buttons */}
@@ -244,18 +265,21 @@ const AuthNavbar = () => {
               <button className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors">
                 <Search className="w-5 h-5" strokeWidth={1.67} />
               </button>
-              <button className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors">
+              <Link
+                href={`/${locale}/cart`}
+                className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+              >
                 <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
-              </button>
+              </Link>
             </div>
 
             {/* Get Started Button */}
             <Link
-              href="/signup"
+              href={`/${locale}/signup`}
               className="mt-4 flex items-center justify-center h-11 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-full"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Get started
+              {t("getStarted")}
             </Link>
           </div>
         </div>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AuthNavbar from "@/components/AuthNavbar";
 import Footer from "@/components/Footer";
+import { useTranslations, useLocale } from "next-intl";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -16,6 +17,10 @@ const GoogleIcon = () => (
 );
 
 export default function SignInPage() {
+  const t = useTranslations("signinPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -40,35 +45,35 @@ export default function SignInPage() {
               boxShadow: "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)"
             }}
           >
-            {/* Left Side - Form */}
+            {/* Form Side - First in DOM (LEFT in LTR, RIGHT in RTL) */}
             <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-[108px] lg:py-[67px]">
-              <div className="w-full max-w-[400px] bg-white rounded-xl p-6">
+              <div className="w-full max-w-[400px] bg-white rounded-xl p-6" dir={isRTL ? "rtl" : "ltr"}>
                 {/* Header */}
-                <div className="flex flex-col gap-1 mb-6">
+                <div className={`flex flex-col gap-1 mb-6`}>
                   <h1
                     className="font-semibold text-[#171717]"
                     style={{ fontSize: "16px", lineHeight: "24px" }}
                   >
-                    Login to your account
+                    {t("title")}
                   </h1>
                   <p
                     className="text-[#737373]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
-                    Enter your email below to login to your account
+                    {t("description")}
                   </p>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                   {/* Email Field */}
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1.5 w-full">
                     <label
                       htmlFor="email"
                       className="font-medium text-[#0a0a0a]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
-                      Email
+                      {t("form.email")}
                     </label>
                     <input
                       type="email"
@@ -85,21 +90,21 @@ export default function SignInPage() {
                   </div>
 
                   {/* Password Field */}
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <div className="flex items-center justify-between w-full">
                       <label
                         htmlFor="password"
                         className="font-medium text-[#0a0a0a]"
                         style={{ fontSize: "14px", lineHeight: "20px" }}
                       >
-                        Password
+                        {t("form.password")}
                       </label>
                       <Link
-                        href="/forgot-password"
+                        href={`/${locale}/forgot-password`}
                         className="font-medium text-[#06080b] hover:underline"
                         style={{ fontSize: "14px" }}
                       >
-                        Forgot your password?
+                        {t("form.forgotPassword")}
                       </Link>
                     </div>
                     <input
@@ -121,7 +126,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => setRememberMe(!rememberMe)}
-                      className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors`}
+                      className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0`}
                     >
                       {rememberMe && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -133,16 +138,21 @@ export default function SignInPage() {
                       className="font-medium text-[#414651]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
-                      Remember for 30 days
+                      {t("form.rememberMe")}
                     </span>
                   </div>
 
                   {/* Login Button */}
                   <button
                     type="submit"
-                    className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center btn-gold hover:opacity-90 transition-opacity"
+                    className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity"
+                    style={{
+                      background: isRTL
+                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
+                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                    }}
                   >
-                    Login
+                    {t("form.login")}
                   </button>
 
                   {/* Sign in with Google */}
@@ -156,7 +166,7 @@ export default function SignInPage() {
                       className="font-medium text-[#414651]"
                       style={{ fontSize: "14px" }}
                     >
-                      Sign in with Google
+                      {t("form.signInWithGoogle")}
                     </span>
                   </button>
                 </form>
@@ -167,20 +177,20 @@ export default function SignInPage() {
                     className="text-[#171717]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
-                    Don&apos;t have an account?{" "}
+                    {t("footer.noAccount")}{" "}
                   </span>
                   <Link
-                    href="/signup"
+                    href={`/${locale}/signup`}
                     className="text-[#171717] underline hover:text-[var(--on-surface-primary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
-                    Sign up
+                    {t("footer.signUp")}
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* Right Side - Image */}
+            {/* Image Side - Second in DOM (RIGHT in LTR, LEFT in RTL) */}
             <div className="hidden lg:flex flex-1 bg-[#e5edf4] items-center justify-center">
               <div className="relative w-full h-full min-h-[635px]">
                 <Image

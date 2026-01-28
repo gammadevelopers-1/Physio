@@ -1,15 +1,17 @@
 import Navbar from "@/components/Navbar";
 import FeedbackForm from "@/components/FeedbackForm";
 import Footer from "@/components/Footer";
-import BottomNav from "@/components/BottomNav";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function FeedbackPage() {
   return (
-    <main className="min-h-screen bg-[#EEF3F7]">
+    <main className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
       <Navbar />
       <FeedbackForm />
-      <Footer />
-      <BottomNav />
+      <div className="hidden lg:block">
+        <Footer />
+      </div>
+      <WhatsAppButton />
     </main>
   );
 }

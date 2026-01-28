@@ -248,5 +248,19 @@
     },
     "address": "إكسيز، المملكة العربية السعودية",
     "loadingMap": "جاري تحميل الخريطة..."
+  },
+  "feedbackPage": {
+    "title": "نحن نقدر رأيك",
+    "description": "ساعدنا في تحسين التعليم الطبي في المملكة. يتم إرسال تعليقاتك مباشرةً إلى فريق ضمان الجودة لدينا.",
+    "form": {
+      "fullName": "الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "subject": "موضوع",
+      "description": "وصف",
+      "charactersLeftPrefix": "بقي",
+      "charactersLeftSuffix": "حرفا",
+      "charactersLeft": "characters left",
+      "submit": "يقدم"
+    }
   }
 }

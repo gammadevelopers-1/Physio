@@ -248,5 +248,19 @@
     },
     "address": "Xyz, Saudi Arabia",
     "loadingMap": "Loading map..."
+  },
+  "feedbackPage": {
+    "title": "We Value Your Opinion",
+    "description": "Help us improve medical education in the Kingdom. Your feedback goes directly to our Quality Assurance team.",
+    "form": {
+      "fullName": "Full Name",
+      "emailAddress": "Email address",
+      "subject": "Subject",
+      "description": "Description",
+      "charactersLeftPrefix": "",
+      "charactersLeftSuffix": "characters left",
+      "charactersLeft": "characters left",
+      "submit": "Submit"
+    }
   }
 }

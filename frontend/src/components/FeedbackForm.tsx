@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { Mail } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 
 const FeedbackForm = () => {
+  const t = useTranslations("feedbackPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -35,24 +40,23 @@ const FeedbackForm = () => {
       >
         <div className="max-w-[1312px] mx-auto">
           <div className="flex gap-20 items-start">
-            {/* Left Column - Heading & Description */}
-            <div className="flex-1 flex flex-col gap-4">
+            {/* Text Column - First in DOM (appears on LEFT in LTR, RIGHT in RTL) */}
+            <div className="flex-1 flex flex-col gap-4 items-start">
               <h1
                 className="font-semibold text-[var(--on-surface-default)] tracking-[-0.24px] leading-tight"
                 style={{ fontSize: "48px" }}
               >
-                We Value Your Opinion
+                {t("title")}
               </h1>
               <p
                 className="text-[var(--on-surface-default)] leading-7 font-400"
                 style={{ fontSize: "20px" }}
               >
-                Help us improve medical education in the Kingdom. Your feedback
-                goes directly to our Quality Assurance team.
+                {t("description")}
               </p>
             </div>
 
-            {/* Right Column - Form */}
+            {/* Form Column - Second in DOM (appears on RIGHT in LTR, LEFT in RTL) */}
             <div
               className="flex-1 bg-white p-8 rounded-3xl max-w-[500px]"
               style={{
@@ -62,14 +66,14 @@ const FeedbackForm = () => {
             >
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 {/* Full Name */}
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full items-start">
                   <label
                     className="pb-2 text-[var(--on-surface-default)] leading-6"
                     style={{
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    Full Name <span className="text-[#dc2626]">*</span>
+                    {t("form.fullName")} <span className="text-[#dc2626]">*</span>
                   </label>
                   <input
                     type="text"
@@ -77,23 +81,23 @@ const FeedbackForm = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="h-12 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                    className="w-full h-12 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                   />
                 </div>
 
                 {/* Email Address */}
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full items-start">
                   <label
                     className="pb-2 text-[var(--on-surface-default)] leading-6"
                     style={{
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    Email address <span className="text-[#dc2626]">*</span>
+                    {t("form.emailAddress")} <span className="text-[#dc2626]">*</span>
                   </label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <Mail
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1]"
+                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1] ${isRTL ? "right-3.5" : "left-3.5"}`}
                       strokeWidth={1.5}
                     />
                     <input
@@ -102,52 +106,53 @@ const FeedbackForm = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full h-12 pl-12 pr-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                      className={`w-full h-12 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-3.5" : "pl-12 pr-3.5"}`}
                     />
                   </div>
                 </div>
 
                 {/* Subject */}
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full items-start">
                   <label
                     className="pb-2 text-[var(--on-surface-default)] leading-6"
                     style={{
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    Subject
+                    {t("form.subject")}
                   </label>
                   <input
                     type="text"
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    className="h-12 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                    className="w-full h-12 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                   />
                 </div>
 
                 {/* Description */}
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col w-full items-start">
                   <label
                     className="pb-2 text-[var(--on-surface-default)] leading-6"
                     style={{
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    Description
+                    {t("form.description")}
                   </label>
-                  <div className="relative">
+                  <div className="relative w-full">
                     <textarea
                       name="description"
                       value={formData.description}
                       onChange={handleInputChange}
-                      className="w-full h-[120px] px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
+                      className="w-full h-[140px] px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
                     />
                     <span
-                      className="absolute bottom-2.5 right-3.5  leading-4 text-xs"
+                      className={`absolute bottom-2.5 leading-4 text-xs text-[var(--on-surface-variant)] ${isRTL ? "left-3.5" : "right-3.5"}`}
                     >
-                      {maxDescriptionLength - formData.description.length}{" "}
-                      characters left
+                      {isRTL
+                        ? `${t("form.charactersLeftPrefix")} ${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`
+                        : `${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`}
                     </span>
                   </div>
                 </div>
@@ -156,9 +161,14 @@ const FeedbackForm = () => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="h-10 min-w-[80px] px-5 rounded-xl font-medium text-sm text-white btn-gold"
+                    className="h-10 min-w-[80px] px-5 rounded-xl font-medium text-sm text-white"
+                    style={{
+                      background: isRTL
+                        ? "linear-gradient(to left, #a37f49, #6b4e24)"
+                        : "linear-gradient(to right, #a37f49, #6b4e24)",
+                    }}
                   >
-                    Submit
+                    {t("form.submit")}
                   </button>
                 </div>
               </form>
@@ -171,19 +181,18 @@ const FeedbackForm = () => {
       <div className="lg:hidden px-4 py-8 pb-24">
         <div className="flex flex-col gap-6">
           {/* Heading & Description */}
-          <div className="flex flex-col gap-3 ">
+          <div className="flex flex-col gap-3 items-start">
             <h1
               className="font-semibold text-[var(--on-surface-default)] tracking-[-0.24px] leading-tight"
               style={{ fontSize: "30px" }}
             >
-              We Value Your Opinion
+              {t("title")}
             </h1>
             <p
               className="text-[var(--on-surface-default)] leading-7"
               style={{ fontSize: "20px" }}
             >
-              Help us improve medical education in the Kingdom. Your feedback
-              goes directly to our Quality Assurance team.
+              {t("description")}
             </p>
           </div>
 
@@ -197,11 +206,11 @@ const FeedbackForm = () => {
           >
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               {/* Full Name */}
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full items-start">
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  Full Name <span className="text-[#dc2626]">*</span>
+                  {t("form.fullName")} <span className="text-[#dc2626]">*</span>
                 </label>
                 <input
                   type="text"
@@ -209,20 +218,20 @@ const FeedbackForm = () => {
                   value={formData.fullName}
                   onChange={handleInputChange}
                   required
-                  className="h-11 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                  className="w-full h-11 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                 />
               </div>
 
               {/* Email Address */}
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full items-start">
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  Email address <span className="text-[#dc2626]">*</span>
+                  {t("form.emailAddress")} <span className="text-[#dc2626]">*</span>
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <Mail
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1]"
+                    className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1] ${isRTL ? "right-3.5" : "left-3.5"}`}
                     strokeWidth={1.5}
                   />
                   <input
@@ -231,35 +240,35 @@ const FeedbackForm = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full h-11 pl-12 pr-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                    className={`w-full h-11 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-3.5" : "pl-12 pr-3.5"}`}
                   />
                 </div>
               </div>
 
               {/* Subject */}
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full items-start">
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  Subject
+                  {t("form.subject")}
                 </label>
                 <input
                   type="text"
                   name="subject"
                   value={formData.subject}
                   onChange={handleInputChange}
-                  className="h-11 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
+                  className="w-full h-11 px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)]"
                 />
               </div>
 
               {/* Description */}
-              <div className="flex flex-col w-full">
+              <div className="flex flex-col w-full items-start">
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  Description
+                  {t("form.description")}
                 </label>
-                <div className="relative">
+                <div className="relative w-full">
                   <textarea
                     name="description"
                     value={formData.description}
@@ -267,10 +276,11 @@ const FeedbackForm = () => {
                     className="w-full h-[120px] px-3.5 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] resize-none"
                   />
                   <span
-                    className="absolute bottom-2.5 right-3.5  leading-4 text-xs"
+                    className={`absolute bottom-2.5 leading-4 text-xs text-[var(--on-surface-variant)] ${isRTL ? "left-3.5" : "right-3.5"}`}
                   >
-                    {maxDescriptionLength - formData.description.length}{" "}
-                    characters left
+                    {isRTL
+                      ? `${t("form.charactersLeftPrefix")} ${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`
+                      : `${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`}
                   </span>
                 </div>
               </div>
@@ -278,9 +288,14 @@ const FeedbackForm = () => {
               {/* Submit Button - Full Width on Mobile */}
               <button
                 type="submit"
-                className="w-full h-12 rounded-xl font-medium text-base text-white btn-gold"
+                className="w-full h-12 rounded-xl font-medium text-base text-white"
+                style={{
+                  background: isRTL
+                    ? "linear-gradient(to left, #a37f49, #6b4e24)"
+                    : "linear-gradient(to right, #a37f49, #6b4e24)",
+                }}
               >
-                Submit
+                {t("form.submit")}
               </button>
             </form>
           </div>

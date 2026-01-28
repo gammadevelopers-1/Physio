@@ -9,7 +9,7 @@
     "archive": "Archive",
     "blogs": "Blogs",
     "about": "About",
-    "getStarted": "Continue",
+    "getStarted": "Get Started",
     "languageToggle": "عربي"
   },
   "hero": {
@@ -105,7 +105,7 @@
   "cta": {
     "title": "Start Your Healthcare Learning Journey",
     "description": "Access accredited, NELC-aligned training programs designed for healthcare professionals and institutions.",
-    "continueButton": "Continue"
+    "continueButton": "Get Started"
   },
   "footer": {
     "companyDescription": "Nationally aligned healthcare eLearning & training platform",

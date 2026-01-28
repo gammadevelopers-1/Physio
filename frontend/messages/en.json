@@ -155,5 +155,69 @@
     "liveSupport": "Live Support",
     "feedback": "Feedback",
     "faq": "FAQ"
+  },
+  "aboutPage": {
+    "hero": {
+      "title": "About Us",
+      "description": "Our platform is a fully NELC-compliant digital learning ecosystem designed specifically for the health sector. We deliver high-quality, accredited training through a secure, bilingual (Arabic/English) platform that supports self-paced learning, live virtual sessions, and advanced learner analytics — ensuring excellence, accessibility, and regulatory alignment.",
+      "exploreButton": "Explore Training Programs",
+      "getStartedButton": "Get Started"
+    },
+    "compliance": {
+      "title": "Compliance & Standards",
+      "items": {
+        "item1": "Fully aligned with NELC eLearning standards for the health sector",
+        "item2": "Structured learning objectives, assessments, and certification workflows",
+        "item3": "Comprehensive compliance documentation and audit readiness",
+        "item4": "Secure data handling and learner privacy controls"
+      },
+      "viewAllButton": "View All Programs"
+    },
+    "learningExperience": {
+      "title": "Learning Experience",
+      "subtitle": "Flexible Learning for Modern Healthcare Professionals",
+      "cards": {
+        "selfPaced": {
+          "title": "Self-paced accredited courses"
+        },
+        "liveLectures": {
+          "title": "Zoom-based live lectures and workshops"
+        },
+        "certificates": {
+          "title": "Digital certificates upon completion"
+        }
+      },
+      "readMore": "Read more"
+    },
+    "platformCapabilities": {
+      "title": "Platform Capabilities",
+      "subtitle": "Powerful Tools for Learners and Administrators",
+      "features": {
+        "bilingualInterface": {
+          "title": "Bilingual Interface",
+          "description": "Seamless Arabic and English language support"
+        },
+        "advancedDashboards": {
+          "title": "Advanced Dashboards",
+          "description": "Track learner progress, performance, and engagement"
+        },
+        "securePayments": {
+          "title": "Secure Payments",
+          "description": "Encrypted transactions and controlled access"
+        },
+        "instructorManagement": {
+          "title": "Instructor Management",
+          "description": "Manage trainers, schedules, and course delivery"
+        },
+        "reportingAnalytics": {
+          "title": "Reporting & Analytics",
+          "description": "Exportable reports aligned with NELC requirements"
+        },
+        "roleBasedAccess": {
+          "title": "Role-based Access",
+          "description": "Controlled permissions for learners, instructors, and admins"
+        }
+      }
+    }
   }
 }

@@ -279,6 +279,29 @@
       "signUp": "Sign up"
     }
   },
+  "faqPage": {
+    "title": "FAQs",
+    "subtitle": "Still have any questions?",
+    "getInTouch": "Get in touch",
+    "items": {
+      "item1": {
+        "question": "Is PhysioGuidance accredited by SCFHS?",
+        "answer": "Yes, we are a fully accredited provider. All our CME courses are recognized by the Saudi Commission for Health Specialties."
+      },
+      "item2": {
+        "question": "How do I upload my CME hours to Mumaris Plus?",
+        "answer": "We handle this for you! Once you pass the course, our system automatically reports your hours to Mumaris Plus within 48 hours. Please ensure your SCFHS license number is correct in your profile."
+      },
+      "item3": {
+        "question": "My name is spelled wrong on my certificate. How do I fix it?",
+        "answer": "Your certificate uses the name exactly as it appears in your profile. You can edit your profile settings before generating the certificate. If it's already generated, please contact support."
+      },
+      "item4": {
+        "question": "Is PhysioGuidance accredited by SCFHS?",
+        "answer": "Yes, we are a fully accredited provider. All our CME courses are recognized by the Saudi Commission for Health Specialties."
+      }
+    }
+  },
   "signupPage": {
     "title": "Sign up/Register",
     "description": "Register new account.",

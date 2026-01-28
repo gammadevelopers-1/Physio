@@ -219,5 +219,34 @@
         }
       }
     }
+  },
+  "contactPage": {
+    "title": "Contact Us",
+    "subtitle": "We are always ready to answer your questions and inquiries.",
+    "form": {
+      "fullName": "Full Name",
+      "emailAddress": "Email address",
+      "selectIssueType": "Select issue type",
+      "selectAnOption": "Select an option",
+      "phoneNumber": "Phone number",
+      "subject": "Subject",
+      "description": "Description",
+      "charactersLeft": "characters left",
+      "submit": "Submit"
+    },
+    "issueTypes": {
+      "technicalSupport": "Technical Support",
+      "billingIssue": "Billing Issue",
+      "courseInquiry": "Course Inquiry",
+      "partnership": "Partnership",
+      "other": "Other"
+    },
+    "contactInfo": {
+      "generalInquiry": "General Inquiry",
+      "technicalSupport": "Technical Support",
+      "getDirections": "Get Directions"
+    },
+    "address": "Xyz, Saudi Arabia",
+    "loadingMap": "Loading map..."
   }
 }

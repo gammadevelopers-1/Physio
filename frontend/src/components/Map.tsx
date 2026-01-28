@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 
 interface MapProps {
@@ -17,15 +17,21 @@ const Map = ({
   popupText = "PhysioGuidance",
 }: MapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [mapInstance, setMapInstance] = useState<any>(null);
+  const mapInstanceRef = useRef<any>(null);
   const markerPos = markerPosition || center;
 
   useEffect(() => {
-    if (typeof window === "undefined" || !mapRef.current || mapInstance) return;
+    if (typeof window === "undefined" || !mapRef.current) return;
+
+    // If map is already initialized, don't reinitialize
+    if (mapInstanceRef.current) return;
 
     // Dynamically import Leaflet only on client side
     const initMap = async () => {
       const L = (await import("leaflet")).default;
+
+      // Check again after async import
+      if (mapInstanceRef.current || !mapRef.current) return;
 
       // Create custom icon
       const customIcon = L.icon({
@@ -58,18 +64,19 @@ const Map = ({
         .addTo(map)
         .bindPopup(popupText);
 
-      setMapInstance(map);
+      mapInstanceRef.current = map;
     };
 
     initMap();
 
     // Cleanup
     return () => {
-      if (mapInstance) {
-        mapInstance.remove();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
       }
     };
-  }, [center, zoom, markerPos, popupText]);
+  }, []);
 
   return (
     <div

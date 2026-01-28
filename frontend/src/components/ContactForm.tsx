@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { Mail, Phone, MapPin, ChevronRight, ChevronDown } from "lucide-react";
+import { Mail, Phone, MapPin, ChevronRight, ChevronLeft, ChevronDown } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 
 // Dynamically import Map component to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("./Map"), {
   ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[var(--surface-container-low)]">
-      <span className="text-[var(--on-surface-variant)]">Loading map...</span>
-    </div>
-  ),
 });
 
 const ContactForm = () => {
+  const t = useTranslations("contactPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,11 +30,11 @@ const ContactForm = () => {
   const maxDescriptionLength = 275;
 
   const issueTypes = [
-    "Technical Support",
-    "Billing Issue",
-    "Course Inquiry",
-    "Partnership",
-    "Other",
+    { key: "technicalSupport", label: t("issueTypes.technicalSupport") },
+    { key: "billingIssue", label: t("issueTypes.billingIssue") },
+    { key: "courseInquiry", label: t("issueTypes.courseInquiry") },
+    { key: "partnership", label: t("issueTypes.partnership") },
+    { key: "other", label: t("issueTypes.other") },
   ];
 
   const handleInputChange = (
@@ -59,10 +59,10 @@ const ContactForm = () => {
       >
         {/* Main Content: Contact Info + Form */}
         <div className="flex flex-col md:flex-row md:gap-20 md:items-stretch">
-          {/* Left Column - Contact Info */}
-          <div className="flex flex-col md:flex-1 md:justify-between">
+          {/* Left Column - Contact Info (Right in RTL) */}
+          <div className="flex flex-col md:flex-1 md:justify-between items-start">
             {/* Header */}
-            <div className="flex flex-col gap-4 w-full mb-8 md:mb-0">
+            <div className="flex flex-col gap-4 mb-8 md:mb-0 items-start">
               <h1
                 className="font-semibold text-[#06080B] tracking-[-0.15px] md:tracking-[-0.24px]"
                 style={{
@@ -71,7 +71,7 @@ const ContactForm = () => {
                   lineHeight: "100%",
                 }}
               >
-                Contact Us
+                {t("title")}
               </h1>
               <p
                 className="text-[#06080B]"
@@ -82,19 +82,19 @@ const ContactForm = () => {
                   lineHeight: "28px",
                 }}
               >
-                We are always ready to answer your questions and inquiries.
+                {t("subtitle")}
               </p>
             </div>
 
             {/* Contact Info Cards */}
-            <div className="flex flex-col gap-6 md:gap-10 mb-8 md:mb-0 md:flex-1 md:justify-center md:mt-10">
+            <div className="flex flex-col gap-6 md:gap-10 mb-8 md:mb-0 md:flex-1 md:justify-center md:mt-10 items-start">
               {/* General Inquiry */}
-              <div className="flex flex-col gap-2 md:gap-4">
+              <div className="flex flex-col gap-2 md:gap-4 items-start">
                 <Mail
                   className="w-6 h-6 text-[#a37f49]"
                   strokeWidth={1.67}
                 />
-                <div className="flex flex-col gap-1 md:gap-2">
+                <div className="flex flex-col gap-1 md:gap-2 items-start">
                   <h3
                     className="font-semibold text-[#4A4C4F]"
                     style={{
@@ -103,7 +103,7 @@ const ContactForm = () => {
                       lineHeight: "32px",
                     }}
                   >
-                    General Inquiry
+                    {t("contactInfo.generalInquiry")}
                   </h3>
                   <a
                     href="mailto:inquiry@physioguidance.org"
@@ -121,12 +121,12 @@ const ContactForm = () => {
               </div>
 
               {/* Technical Support */}
-              <div className="flex flex-col gap-2 md:gap-4">
+              <div className="flex flex-col gap-2 md:gap-4 items-start">
                 <Phone
                   className="w-6 h-6 text-[#a37f49]"
                   strokeWidth={1.67}
                 />
-                <div className="flex flex-col gap-1 md:gap-2">
+                <div className="flex flex-col gap-1 md:gap-2 items-start">
                   <h3
                     className="font-semibold text-[#4A4C4F]"
                     style={{
@@ -135,7 +135,7 @@ const ContactForm = () => {
                       lineHeight: "32px",
                     }}
                   >
-                    Technical Support
+                    {t("contactInfo.technicalSupport")}
                   </h3>
                   <p
                     className="text-[#06080B]"
@@ -144,6 +144,7 @@ const ContactForm = () => {
                       fontSize: "16px",
                       fontWeight: 400,
                       lineHeight: "24px",
+                      direction: "ltr",
                     }}
                   >
                     +966 920035022
@@ -152,12 +153,12 @@ const ContactForm = () => {
               </div>
 
               {/* Location */}
-              <div className="flex flex-col gap-2 md:gap-4">
+              <div className="flex flex-col gap-2 md:gap-4 items-start">
                 <MapPin
                   className="w-6 h-6 text-[#a37f49]"
                   strokeWidth={1.67}
                 />
-                <div className="flex flex-col gap-2 md:gap-4">
+                <div className="flex flex-col gap-2 md:gap-4 items-start">
                   <h3
                     className="font-semibold text-[#4A4C4F]"
                     style={{
@@ -166,7 +167,7 @@ const ContactForm = () => {
                       lineHeight: "32px",
                     }}
                   >
-                    Xyz ,saudia arabia,
+                    {t("address")}
                   </h3>
                   <a
                     href="#"
@@ -178,15 +179,19 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Get Directions
-                    <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                    {t("contactInfo.getDirections")}
+                    {isRTL ? (
+                      <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                    ) : (
+                      <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                    )}
                   </a>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column - Contact Form */}
+          {/* Right Column - Contact Form (Left in RTL) */}
           <div
             className="bg-white p-5 rounded-3xl shadow-[_-2px_8px_2px_0px_rgba(0,0,0,0),_-1px_5px_2px_0px_rgba(0,0,0,0.01),_-1px_3px_2px_0px_rgba(0,0,0,0.03),_0px_1px_1px_0px_rgba(0,0,0,0.05),_0px_0px_1px_0px_rgba(0,0,0,0.06)] md:flex-1 md:p-8"
           >
@@ -198,7 +203,7 @@ const ContactForm = () => {
                 {/* Full Name */}
                 <div className="flex flex-col w-full gap-2">
                   <label
-                    className="flex items-center gap-2 h-6"
+                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
                       color: "var(--on-surface-default, #06080B)",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
@@ -207,7 +212,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Full Name <span style={{ color: "#DC2626" }}>*</span>
+                    {t("form.fullName")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -219,6 +224,7 @@ const ContactForm = () => {
                     style={{
                       padding: "10px 14px",
                       height: "44px",
+                      textAlign: isRTL ? "right" : "left",
                     }}
                   />
                 </div>
@@ -226,7 +232,7 @@ const ContactForm = () => {
                 {/* Email Address */}
                 <div className="flex flex-col w-full gap-2">
                   <label
-                    className="flex items-center gap-2 h-6"
+                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
                       color: "var(--on-surface-default, #06080B)",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
@@ -235,11 +241,11 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Email address <span style={{ color: "#DC2626" }}>*</span>
+                    {t("form.emailAddress")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <div className="relative">
                     <Mail
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1]"
+                      className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1] ${isRTL ? "right-3.5" : "left-3.5"}`}
                       strokeWidth={1.5}
                     />
                     <input
@@ -250,8 +256,9 @@ const ContactForm = () => {
                       required
                       className="w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[#C8D5E1]"
                       style={{
-                        padding: "10px 14px 10px 48px",
+                        padding: isRTL ? "10px 48px 10px 14px" : "10px 14px 10px 48px",
                         height: "44px",
+                        textAlign: isRTL ? "right" : "left",
                       }}
                     />
                   </div>
@@ -260,7 +267,7 @@ const ContactForm = () => {
                 {/* Select Issue Type */}
                 <div className="flex flex-col w-full gap-2">
                   <label
-                    className="flex items-center gap-2 h-6"
+                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
                       color: "var(--on-surface-default, #06080B)",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
@@ -269,13 +276,13 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Select issue type
+                    {t("form.selectIssueType")}
                   </label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setIsIssueTypeOpen(!isIssueTypeOpen)}
-                      className="w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer"
+                      className={`w-full bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] flex items-center justify-between cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}
                       style={{
                         padding: "10px 14px",
                         height: "44px",
@@ -294,7 +301,7 @@ const ContactForm = () => {
                           lineHeight: "24px",
                         }}
                       >
-                        {formData.issueType || "Select an option"}
+                        {formData.issueType || t("form.selectAnOption")}
                       </span>
                       <ChevronDown
                         className={`w-6 h-6 text-[var(--on-surface-variant)] transition-transform ${isIssueTypeOpen ? "rotate-180" : ""}`}
@@ -305,16 +312,16 @@ const ContactForm = () => {
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#C8D5E1] rounded-[10px] shadow-lg z-10">
                         {issueTypes.map((type) => (
                           <button
-                            key={type}
+                            key={type.key}
                             type="button"
                             onClick={() => {
                               setFormData((prev) => ({
                                 ...prev,
-                                issueType: type,
+                                issueType: type.label,
                               }));
                               setIsIssueTypeOpen(false);
                             }}
-                            className="w-full px-3.5 py-2.5 text-left hover:bg-[#C8D5E1] transition-colors"
+                            className={`w-full px-3.5 py-2.5 hover:bg-[#C8D5E1] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                             style={{
                               fontFamily: "var(--typeface-family, 'DM Sans')",
                               fontSize: "16px",
@@ -322,7 +329,7 @@ const ContactForm = () => {
                               lineHeight: "24px",
                             }}
                           >
-                            {type}
+                            {type.label}
                           </button>
                         ))}
                       </div>
@@ -333,7 +340,7 @@ const ContactForm = () => {
                 {/* Phone Number */}
                 <div className="flex flex-col w-full gap-2">
                   <label
-                    className="flex items-center gap-2 h-6"
+                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
                       color: "var(--on-surface-default, #06080B)",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
@@ -342,14 +349,14 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Phone number <span style={{ color: "#DC2626" }}>*</span>
+                    {t("form.phoneNumber")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <div className="flex bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setIsCountryOpen(!isCountryOpen)}
-                        className="h-full px-3.5 flex items-center gap-1 cursor-pointer border-r border-[#C8D5E1]"
+                        className={`h-full px-3.5 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[#C8D5E1]" : "border-r border-[#C8D5E1]"}`}
                       >
                         <span
                           className="text-[#181d27] text-sm md:text-base"
@@ -363,7 +370,7 @@ const ContactForm = () => {
                         />
                       </button>
                       {isCountryOpen && (
-                        <div className="absolute top-full left-0 mt-1 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-10 min-w-[80px]">
+                        <div className={`absolute top-full mt-1 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-10 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
                           {["SA", "AE", "US", "UK"].map((code) => (
                             <button
                               key={code}
@@ -375,7 +382,7 @@ const ContactForm = () => {
                                 }));
                                 setIsCountryOpen(false);
                               }}
-                              className="w-full px-3.5 py-2 text-left hover:bg-[#C8D5E1] transition-colors text-sm"
+                              className={`w-full px-3.5 py-2 hover:bg-[#C8D5E1] transition-colors text-sm ${isRTL ? "text-right" : "text-left"}`}
                             >
                               {code}
                             </button>
@@ -392,6 +399,8 @@ const ContactForm = () => {
                       className="flex-1 focus:outline-none"
                       style={{
                         padding: "10px 14px",
+                        textAlign: isRTL ? "right" : "left",
+                        direction: "ltr",
                       }}
                     />
                   </div>
@@ -400,7 +409,7 @@ const ContactForm = () => {
                 {/* Subject */}
                 <div className="flex flex-col w-full gap-2">
                   <label
-                    className="flex items-center gap-2 h-6"
+                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
                       color: "var(--on-surface-default, #06080B)",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
@@ -409,7 +418,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Subject
+                    {t("form.subject")}
                   </label>
                   <input
                     type="text"
@@ -420,6 +429,7 @@ const ContactForm = () => {
                     style={{
                       padding: "10px 14px",
                       height: "44px",
+                      textAlign: isRTL ? "right" : "left",
                     }}
                   />
                 </div>
@@ -427,7 +437,7 @@ const ContactForm = () => {
                 {/* Description */}
                 <div className="flex flex-col w-full gap-2">
                   <label
-                    className="flex items-center gap-2 h-6"
+                    className={`flex items-center gap-2 h-6 ${isRTL ? "flex-row-reverse justify-end" : ""}`}
                     style={{
                       color: "var(--on-surface-default, #06080B)",
                       fontFamily: "var(--typeface-family, 'DM Sans')",
@@ -436,7 +446,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    Description
+                    {t("form.description")}
                   </label>
                   <div className="relative">
                     <textarea
@@ -446,31 +456,35 @@ const ContactForm = () => {
                       className="w-full h-[140px] bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] focus:outline-none focus:border-[#C8D5E1] resize-none"
                       style={{
                         padding: "10px 14px",
+                        textAlign: isRTL ? "right" : "left",
                       }}
                     />
                     <span
-                      className="absolute bottom-2.5 right-3.5 text-[var(--on-surface-variant)] leading-4"
+                      className={`absolute bottom-2.5 text-[var(--on-surface-variant)] leading-4 ${isRTL ? "left-3.5" : "right-3.5"}`}
                       style={{
                         fontSize: "12px",
                       }}
                     >
-                      {maxDescriptionLength - formData.description.length}{" "}
-                      characters left
+                      {isRTL
+                        ? `${t("form.charactersLeft")} ${maxDescriptionLength - formData.description.length}`
+                        : `${maxDescriptionLength - formData.description.length} ${t("form.charactersLeft")}`}
                     </span>
                   </div>
                 </div>
               </div>
 
               {/* Submit Button */}
-              <div className="flex md:justify-end mt-2 md:mt-0">
+              <div className={`flex mt-2 md:mt-0 ${isRTL ? "md:justify-start" : "md:justify-end"}`}>
                 <button
                   type="submit"
                   className="w-full md:w-auto h-12 md:h-10 md:min-w-[80px] px-5 rounded-xl font-medium text-sm text-white"
                   style={{
-                    background: "linear-gradient(to right, #a37f49, #6b4e24)",
+                    background: isRTL
+                      ? "linear-gradient(to left, #a37f49, #6b4e24)"
+                      : "linear-gradient(to right, #a37f49, #6b4e24)",
                   }}
                 >
-                  Submit
+                  {t("form.submit")}
                 </button>
               </div>
             </form>
@@ -500,48 +514,6 @@ const ContactForm = () => {
           </div>
         </div>
       </div>
-
-      {/* Mobile Bottom Navigation */}
-      <div
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white flex items-center justify-around py-3 z-50"
-        style={{
-          boxShadow: "0px -1px 4px rgba(0,0,0,0.1)",
-        }}
-      >
-        <a href="/" className="flex flex-col items-center gap-1">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--on-surface-variant)]">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span className="text-xs text-[var(--on-surface-variant)]">Home</span>
-        </a>
-        <a href="/search" className="flex flex-col items-center gap-1">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--on-surface-variant)]">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <span className="text-xs text-[var(--on-surface-variant)]">Search</span>
-        </a>
-        <a href="/cart" className="flex flex-col items-center gap-1">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--on-surface-variant)]">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 0 1-8 0" />
-          </svg>
-          <span className="text-xs text-[var(--on-surface-variant)]">Cart</span>
-        </a>
-        <button className="flex flex-col items-center gap-1">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-[var(--on-surface-variant)]">
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-          <span className="text-xs text-[var(--on-surface-variant)]">More</span>
-        </button>
-      </div>
-
-      {/* Spacer for mobile bottom nav */}
-      <div className="md:hidden h-20" />
     </section>
   );
 };

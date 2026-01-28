@@ -219,5 +219,34 @@
         }
       }
     }
+  },
+  "contactPage": {
+    "title": "اتصل بنا",
+    "subtitle": "نحن دائما جاهزون للرد على أسئلتكم واستفساراتكم.",
+    "form": {
+      "fullName": "الاسم الكامل",
+      "emailAddress": "عنوان البريد الإلكتروني",
+      "selectIssueType": "حدد نوع المشكلة",
+      "selectAnOption": "حدد خيارًا",
+      "phoneNumber": "رقم التليفون",
+      "subject": "موضوع",
+      "description": "وصف",
+      "charactersLeft": "حرفا بقي",
+      "submit": "إرسال"
+    },
+    "issueTypes": {
+      "technicalSupport": "الدعم الفني",
+      "billingIssue": "مشكلة الفواتير",
+      "courseInquiry": "استفسار عن الدورة",
+      "partnership": "شراكة",
+      "other": "أخرى"
+    },
+    "contactInfo": {
+      "generalInquiry": "استفسار عام",
+      "technicalSupport": "الدعم الفني",
+      "getDirections": "الحصول على الاتجاهات"
+    },
+    "address": "إكسيز، المملكة العربية السعودية",
+    "loadingMap": "جاري تحميل الخريطة..."
   }
 }

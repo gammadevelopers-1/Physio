@@ -1,6 +1,13 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 
 const BecomeTrainer = () => {
+  const t = useTranslations("becomeTrainer");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   return (
     <>
       {/* Desktop Version - Only show on large screens (1280px+) */}
@@ -8,10 +15,13 @@ const BecomeTrainer = () => {
         <div className="flex items-center justify-center">
           <div className="relative w-[1312px] h-[625px]">
             {/* Main White Container */}
-            <div className="absolute left-[172px] top-0 w-[1140px] h-[625px] bg-white rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-              
+            <div
+              className={`absolute top-0 w-[1140px] h-[625px] bg-white rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)] ${isRTL ? "right-[172px]" : "left-[172px]"}`}
+            >
               {/* Wavy Pattern - Top Left (positioned at left: -136px, top: -151px from container) */}
-              <div className="absolute left-[-136px] top-[-300px] w-[500px] h-[500px] -rotate-90 -scale-y-100">
+              <div
+                className={`absolute top-[-300px] w-[500px] h-[500px] -rotate-90 -scale-y-100 ${isRTL ? "right-[-136px]" : "left-[-136px]"}`}
+              >
                 <Image
                   src="/images/wavy.svg"
                   alt=""
@@ -19,9 +29,11 @@ const BecomeTrainer = () => {
                   className="object-contain"
                 />
               </div>
-              
+
               {/* Wavy Pattern - Bottom Right (positioned at left: 772px, top: -303px from container = right side, top area) */}
-              <div className="absolute right-[-136px] bottom-[-303px] w-[500px] h-[500px] -rotate-90 -scale-y-100">
+              <div
+                className={`absolute bottom-[-303px] w-[500px] h-[500px] -rotate-90 -scale-y-100 ${isRTL ? "left-[-136px]" : "right-[-136px]"}`}
+              >
                 <Image
                   src="/images/wavy.svg"
                   alt=""
@@ -32,7 +44,9 @@ const BecomeTrainer = () => {
 
               {/* Content - centered in the white container */}
               <div className="flex items-center justify-center h-full">
-                <div className="flex flex-col gap-[32px] items-start w-[600px]">
+                <div
+                  className={`flex flex-col gap-[32px] w-[600px] ${isRTL ? "items-start text-right" : "items-start"}`}
+                >
                   <div className="flex flex-col gap-[16px] text-[#06080b]">
                     <h2
                       className="font-semibold leading-none tracking-[-0.24px] w-[600px]"
@@ -40,28 +54,29 @@ const BecomeTrainer = () => {
                         fontSize: "48px",
                       }}
                     >
-                      Become a Trainer
+                      {t("title")}
                     </h2>
                     <p className="leading-[28px] text-[20px] w-[590px]">
-                      Join a network of accredited trainers delivering NELC-aligned
-                      healthcare education nationwide.
+                      {t("description")}
                     </p>
                   </div>
 
-                  <button 
+                  <button
                     className="h-[40px] px-[20px] py-[8px] text-white rounded-[12px] text-[14px] font-medium min-w-[80px]"
                     style={{
                       background: "linear-gradient(to right, #a37f49, #6b4e24)",
                     }}
                   >
-                    Get Started
+                    {t("getStartedButton")}
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Trainer Image - overlapping the left edge of white container */}
-            <div className="absolute left-0 top-[80px] w-[384px] h-[384px] rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)] z-10">
+            <div
+              className={`absolute top-[80px] w-[384px] h-[384px] rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)] z-10 ${isRTL ? "right-0" : "left-0"}`}
+            >
               <Image
                 src="/images/trainer-image.png"
                 alt="Become a Trainer"
@@ -111,7 +126,9 @@ const BecomeTrainer = () => {
 
         {/* Content Container - 513px height */}
         <div className="bg-[#eef3f7] h-[513px] px-4 py-16 flex flex-col items-center justify-end">
-          <div className="flex flex-col gap-8 items-start justify-center w-full">
+          <div
+            className={`flex flex-col gap-8 justify-center w-full ${isRTL ? "items-start text-right" : "items-start"}`}
+          >
             {/* Text Content */}
             <div className="flex flex-col gap-4 text-[#06080b] w-full">
               <h2
@@ -120,7 +137,7 @@ const BecomeTrainer = () => {
                   fontSize: "var(--typeface-font-styles-heading-h1)",
                 }}
               >
-                Become a Trainer
+                {t("title")}
               </h2>
               <p
                 className="leading-7 w-full"
@@ -128,14 +145,13 @@ const BecomeTrainer = () => {
                   fontSize: "var(--typeface-font-styles-heading-subheading)",
                 }}
               >
-                Join a network of accredited trainers delivering NELC-aligned
-                healthcare education nationwide.
+                {t("description")}
               </p>
             </div>
 
             {/* CTA Button - Full width on mobile */}
             <button className="h-12 px-5 py-2 text-white rounded-xl text-sm font-medium min-w-[80px] w-full btn-gold">
-              Get Started
+              {t("getStartedButton")}
             </button>
           </div>
         </div>

@@ -1,6 +1,13 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 
 const CTASection = () => {
+  const t = useTranslations("cta");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   return (
     <section className="relative bg-[var(--surface-container-low)] px-4 lg:px-10 py-16 lg:py-[120px] overflow-hidden">
       {/* Background Image */}
@@ -23,7 +30,7 @@ const CTASection = () => {
             fontSize: "var(--typeface-font-styles-heading-h1)",
           }}
         >
-          Start Your Healthcare Learning Journey
+          {t("title")}
         </h2>
 
         <p
@@ -32,12 +39,11 @@ const CTASection = () => {
             fontSize: "var(--typeface-font-styles-heading-subheading)",
           }}
         >
-          Access accredited, NELC-aligned training programs designed for
-          healthcare professionals and institutions.
+          {t("description")}
         </p>
 
         <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]">
-          Continue
+          {t("continueButton")}
         </button>
       </div>
     </section>

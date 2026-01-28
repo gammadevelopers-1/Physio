@@ -1,0 +1,159 @@
+{
+  "navbar": {
+    "home": "Home",
+    "courses": "Courses",
+    "accreditedCourses": "Accredited courses",
+    "myCourses": "My courses",
+    "archivedCourses": "Archived courses",
+    "becomeTrainer": "Become a Trainer",
+    "archive": "Archive",
+    "blogs": "Blogs",
+    "about": "About",
+    "getStarted": "Continue",
+    "languageToggle": "عربي"
+  },
+  "hero": {
+    "title": "Health Training &",
+    "titleLine2": "eLearning Courses",
+    "titleMobile": "Health Training & eLearning Courses",
+    "description": "Delivering NELC-compliant training, accredited programs, and live learning experiences for the health sector — all in one secure platform.",
+    "exploreButton": "Explore Training Programs",
+    "getStartedButton": "Get Started"
+  },
+  "partners": {
+    "title": "Our Trusted Partners"
+  },
+  "featuredCourses": {
+    "title": "Featured Programs",
+    "description": "Accredited, evidence-based healthcare training programs.",
+    "viewAllButton": "View All Programs",
+    "viewDetails": "View Details",
+    "liveOnline": "Live Online",
+    "cmeHours": "CME Hours",
+    "courses": {
+      "infectionControl": {
+        "title": "Infection Control (Core / Flagship)",
+        "description": "A comprehensive, evidence-based overview of infection prevention strategies for modern healthcare settings.",
+        "date": "11 Jan 2026",
+        "hours": "8"
+      },
+      "lifeSupport": {
+        "title": "Life Support / Emergency Care",
+        "description": "Essential life-saving skills for early response, resuscitation, and emergency management.",
+        "date": "18 Jan 2026",
+        "hours": "6"
+      },
+      "patientSafety": {
+        "title": "Patient Safety & Quality",
+        "description": "Learn structured approaches to reduce medical errors, improve outcomes, and enhance care quality.",
+        "date": "11 Jan 2026",
+        "hours": "8"
+      },
+      "publicHealth": {
+        "title": "Public Health & Preparedness",
+        "description": "Principles of surveillance, risk assessment, and coordinated response to health emergencies.",
+        "date": "11 Jan 2026",
+        "hours": "8"
+      }
+    }
+  },
+  "becomeTrainer": {
+    "title": "Become a Trainer",
+    "description": "Join a network of accredited trainers delivering NELC-aligned healthcare education nationwide.",
+    "getStartedButton": "Get Started"
+  },
+  "expertInstructors": {
+    "title": "Led by Expert Healthcare Instructors",
+    "description": "Learn from experienced clinicians, certified trainers, and subject-matter experts who deliver nationally aligned, evidence-based healthcare education."
+  },
+  "testimonials": {
+    "title": "What Healthcare Professionals Say",
+    "description": "Feedback from healthcare professionals and institutions who have participated in our accredited training programs.",
+    "items": {
+      "item1": {
+        "quote": "\"The training was well-structured and directly applicable to our clinical practice. The content was aligned with current standards, and the instructors demonstrated strong clinical experience.\"",
+        "name": "Dr. Ahmed Al-Qahtani",
+        "role": "Consultant, Public Hospital"
+      },
+      "item2": {
+        "quote": "\"What stood out was the clarity of the material and the practical focus. The program helped reinforce critical protocols and provided accredited CME hours without compromising quality.\"",
+        "name": "Sara Al-Harthi",
+        "role": "Senior Nursing Specialist"
+      },
+      "item3": {
+        "quote": "\"The platform offers a reliable learning environment that meets national training requirements. It is suitable for both individual professionals and institutional training initiatives.\"",
+        "name": "Faisal Al-Mutairi",
+        "role": "Healthcare Education Institute"
+      },
+      "item4": {
+        "quote": "\"An exceptional training experience that exceeded our expectations. The curriculum is comprehensive and the instructors bring real-world expertise that enriches every session.\"",
+        "name": "Dr. Layla Al-Rashid",
+        "role": "Medical Director, Private Clinic"
+      },
+      "item5": {
+        "quote": "\"The certification process was seamless and the course materials were of the highest quality. I highly recommend this platform for any healthcare professional seeking accredited training.\"",
+        "name": "Mohammed Al-Zahrani",
+        "role": "Clinical Pharmacist"
+      },
+      "item6": {
+        "quote": "\"Outstanding support from the team and excellent course structure. The interactive modules made learning engaging and the practical assessments ensured we could apply knowledge immediately.\"",
+        "name": "Noura Al-Otaibi",
+        "role": "Head Nurse, Regional Hospital"
+      }
+    }
+  },
+  "cta": {
+    "title": "Start Your Healthcare Learning Journey",
+    "description": "Access accredited, NELC-aligned training programs designed for healthcare professionals and institutions.",
+    "continueButton": "Continue"
+  },
+  "footer": {
+    "companyDescription": "Nationally aligned healthcare eLearning & training platform",
+    "platform": "Platform",
+    "myLearning": "My Learning",
+    "becomeTrainer": "Become a Trainer",
+    "courses": "Courses",
+    "archived": "Archived",
+    "certifications": "Certifications & CME",
+    "learningPolicies": "Learning Policies",
+    "organization": "Organization",
+    "aboutUs": "About us",
+    "nelcAlignment": "NELC Alignment",
+    "academicPartners": "Academic Partners",
+    "instructors": "Instructors & Faculty",
+    "termsConditions": "Terms & Conditions",
+    "privacyPolicy": "Privacy Policy",
+    "support": "Support",
+    "contactUs": "Contact Us",
+    "liveSupport": "Live Support",
+    "feedback": "Feedback",
+    "faq": "FAQ",
+    "copyright": "2025, PhysioGuidance"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "search": "Search",
+    "cart": "Cart",
+    "more": "More",
+    "menu": "Menu",
+    "platform": "Platform",
+    "myLearning": "My Learning",
+    "becomeTrainer": "Become a Trainer",
+    "courses": "Courses",
+    "archived": "Archived",
+    "certifications": "Certifications & CME",
+    "learningPolicies": "Learning Policies",
+    "organization": "Organization",
+    "aboutUs": "About us",
+    "nelcAlignment": "NELC Alignment",
+    "academicPartners": "Academic Partners",
+    "instructors": "Instructors & Faculty",
+    "termsConditions": "Terms & Conditions",
+    "privacyPolicy": "Privacy Policy",
+    "support": "Support",
+    "contactUs": "Contact Us",
+    "liveSupport": "Live Support",
+    "feedback": "Feedback",
+    "faq": "FAQ"
+  }
+}

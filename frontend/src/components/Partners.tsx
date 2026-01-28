@@ -1,7 +1,12 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Marquee } from "@/components/ui/marquee";
 
 const Partners = () => {
+  const t = useTranslations("partners");
+
   // Desktop partner dimensions from Figma
   const desktopPartners = [
     {
@@ -105,12 +110,16 @@ const Partners = () => {
               fontSize: "var(--typeface-font-styles-heading-h2)",
             }}
           >
-            Our Trusted Partners
+            {t("title")}
           </h2>
         </div>
 
         {/* Desktop Partner Logos Marquee */}
-        <Marquee pauseOnHover speed={30} className="w-full hidden md:flex">
+        <Marquee
+          pauseOnHover
+          speed={30}
+          className="w-full hidden md:flex"
+        >
           {desktopPartners.map((partner, index) => (
             <div
               key={index}
@@ -129,7 +138,7 @@ const Partners = () => {
                 style={{
                   width: partner.width,
                   height: partner.height,
-                  objectFit: 'contain',
+                  objectFit: "contain",
                 }}
               />
             </div>
@@ -137,7 +146,11 @@ const Partners = () => {
         </Marquee>
 
         {/* Mobile Partner Logos Marquee */}
-        <Marquee pauseOnHover speed={25} className="w-full md:hidden">
+        <Marquee
+          pauseOnHover
+          speed={25}
+          className="w-full md:hidden"
+        >
           {mobilePartners.map((partner, index) => (
             <div
               key={index}

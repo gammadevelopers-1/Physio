@@ -1,35 +1,42 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react";
 
 const Footer = () => {
+  const t = useTranslations("footer");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const platformLinks = [
-    { label: "My Learning", href: "/learning" },
-    { label: "Become a Trainer", href: "/become-trainer" },
-    { label: "Courses", href: "/courses" },
-    { label: "Archived", href: "/archive" },
-    { label: "Certifications & CME", href: "/certifications" },
-    { label: "Learning Policies", href: "/policies" },
+    { label: t("myLearning"), href: `/${locale}/learning` },
+    { label: t("becomeTrainer"), href: `/${locale}/become-trainer` },
+    { label: t("courses"), href: `/${locale}/courses` },
+    { label: t("archived"), href: `/${locale}/archive` },
+    { label: t("certifications"), href: `/${locale}/certifications` },
+    { label: t("learningPolicies"), href: `/${locale}/policies` },
   ];
 
   const organizationLinks = [
-    { label: "About us", href: "/about" },
-    { label: "NELC Alignment", href: "/nelc" },
-    { label: "Academic Partners", href: "/partners" },
-    { label: "Instructors & Faculty", href: "/instructors" },
-    { label: "Terms & Conditions", href: "/terms" },
-    { label: "Privacy Policy", href: "/privacy" },
+    { label: t("aboutUs"), href: `/${locale}/about` },
+    { label: t("nelcAlignment"), href: `/${locale}/nelc` },
+    { label: t("academicPartners"), href: `/${locale}/partners` },
+    { label: t("instructors"), href: `/${locale}/instructors` },
+    { label: t("termsConditions"), href: `/${locale}/terms` },
+    { label: t("privacyPolicy"), href: `/${locale}/privacy` },
   ];
 
   const supportLinks = [
-    { label: "Contact Us", href: "/contact" },
-    { label: "Live Support", href: "/support" },
-    { label: "Feedback", href: "/feedback" },
-    { label: "FAQ", href: "/faq" },
+    { label: t("contactUs"), href: `/${locale}/contact` },
+    { label: t("liveSupport"), href: `/${locale}/support` },
+    { label: t("feedback"), href: `/${locale}/feedback` },
+    { label: t("faq"), href: `/${locale}/faq` },
   ];
 
   return (
-    <footer 
+    <footer
       className="hidden lg:block bg-[var(--surface-intense)] pt-20 pb-12"
       style={{ padding: "80px 64px 48px 64px" }}
     >
@@ -37,7 +44,9 @@ const Footer = () => {
         {/* Main Footer Content */}
         <div className="flex items-start justify-between w-full">
           {/* Logo and Description */}
-          <div className="flex flex-col gap-8 items-start w-[250px]">
+          <div
+            className={`flex flex-col gap-8 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}
+          >
             <div className="relative w-20 h-20">
               <Image
                 src="/images/logo.png"
@@ -52,35 +61,49 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-paragraph-text)",
               }}
             >
-              Nationally aligned healthcare eLearning & training platform
+              {t("companyDescription")}
             </p>
 
             {/* Social Icons */}
-            <div className="flex gap-4 items-center justify-center">
+            <div className="flex gap-4 items-center">
               <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Facebook className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
+                <Facebook
+                  className="w-6 h-6 text-[var(--on-surface-variant)]"
+                  strokeWidth={1.5}
+                />
               </div>
               <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Linkedin className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
+                <Linkedin
+                  className="w-6 h-6 text-[var(--on-surface-variant)]"
+                  strokeWidth={1.5}
+                />
               </div>
               <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)] size-10">
-                <Twitter className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
+                <Twitter
+                  className="w-6 h-6 text-[var(--on-surface-variant)]"
+                  strokeWidth={1.5}
+                />
               </div>
               <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Instagram className="w-6 h-6 text-[var(--on-surface-variant)]" strokeWidth={1.5} />
+                <Instagram
+                  className="w-6 h-6 text-[var(--on-surface-variant)]"
+                  strokeWidth={1.5}
+                />
               </div>
             </div>
           </div>
 
           {/* Platform Links */}
-          <div className="flex flex-col gap-4 items-start w-[250px]">
+          <div
+            className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}
+          >
             <h3
               className="text-[var(--on-surface-variant)] font-semibold"
               style={{
                 fontSize: "var(--typeface-font-styles-heading-h4)",
               }}
             >
-              Platform
+              {t("platform")}
             </h3>
             {platformLinks.map((link, index) => (
               <Link
@@ -97,14 +120,16 @@ const Footer = () => {
           </div>
 
           {/* Organization Links */}
-          <div className="flex flex-col gap-4 items-start w-[250px]">
+          <div
+            className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}
+          >
             <h3
               className="text-[var(--on-surface-variant)] font-semibold"
               style={{
                 fontSize: "var(--typeface-font-styles-heading-h4)",
               }}
             >
-              Organization
+              {t("organization")}
             </h3>
             {organizationLinks.map((link, index) => (
               <Link
@@ -121,14 +146,16 @@ const Footer = () => {
           </div>
 
           {/* Support Links */}
-          <div className="flex flex-col gap-4 items-start w-[250px]">
+          <div
+            className={`flex flex-col gap-4 w-[250px] ${isRTL ? "items-start text-right" : "items-start"}`}
+          >
             <h3
               className="text-[var(--on-surface-variant)] font-semibold"
               style={{
                 fontSize: "var(--typeface-font-styles-heading-h4)",
               }}
             >
-              Support
+              {t("support")}
             </h3>
             {supportLinks.map((link, index) => (
               <Link
@@ -159,7 +186,7 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-paragraph-text)",
               }}
             >
-              2025, PhysioGuidance
+              {t("copyright")}
             </span>
           </div>
 

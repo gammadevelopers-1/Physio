@@ -9,7 +9,18 @@
       "mcp__figma-remote-mcp__get_metadata",
       "Bash(git mv:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout 15 npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(git clean:*)",
+      "Bash(for dir in about archived become-trainer blogs certifications checkout contact courses faq feedback instructors nelc partners policies privacy signin signup terms)",
+      "Bash(do if [ -d \"$dir\" ])",
+      "Bash(then mv \"$dir\" \"[locale]/$dir\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(lsof:*)"
     ]
   }
 }

@@ -1,6 +1,13 @@
+"use client";
+
 import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 
 const ExpertInstructors = () => {
+  const t = useTranslations("expertInstructors");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const instructors = [
     { src: "/images/instructor-1.png", row: 1 },
     { src: "/images/instructor-2.png", row: 1 },
@@ -24,7 +31,7 @@ const ExpertInstructors = () => {
             fontSize: "var(--typeface-font-styles-heading-h1)",
           }}
         >
-          Led by Expert Healthcare Instructors
+          {t("title")}
         </h2>
 
         {/* Description */}
@@ -34,15 +41,15 @@ const ExpertInstructors = () => {
             fontSize: "var(--typeface-font-styles-heading-subheading)",
           }}
         >
-          Learn from experienced clinicians, certified trainers, and
-          subject-matter experts who deliver nationally aligned, evidence-based
-          healthcare education.
+          {t("description")}
         </p>
 
         {/* Desktop Instructor Avatars */}
         <div className="hidden md:flex flex-col gap-6 items-center justify-center">
           {/* Row 1 - 3 instructors */}
-          <div className="flex gap-6 items-center justify-center">
+          <div
+            className={`flex gap-6 items-center justify-center ${isRTL ? "flex-row-reverse" : ""}`}
+          >
             {row1.map((instructor, index) => (
               <div
                 key={index}
@@ -63,7 +70,9 @@ const ExpertInstructors = () => {
           </div>
 
           {/* Row 2 - 4 instructors */}
-          <div className="flex gap-6 items-center">
+          <div
+            className={`flex gap-6 items-center ${isRTL ? "flex-row-reverse" : ""}`}
+          >
             {row2.map((instructor, index) => (
               <div
                 key={index}
@@ -87,7 +96,9 @@ const ExpertInstructors = () => {
         {/* Mobile Instructor Avatars - Smaller sized (~62px avatars) */}
         <div className="flex md:hidden flex-col gap-5 items-center justify-center">
           {/* Row 1 - 3 instructors */}
-          <div className="flex gap-5 items-center justify-center">
+          <div
+            className={`flex gap-5 items-center justify-center ${isRTL ? "flex-row-reverse" : ""}`}
+          >
             {row1.map((instructor, index) => (
               <div
                 key={index}
@@ -108,7 +119,9 @@ const ExpertInstructors = () => {
           </div>
 
           {/* Row 2 - 4 instructors with flex wrap */}
-          <div className="flex flex-wrap gap-4 items-center justify-center">
+          <div
+            className={`flex flex-wrap gap-4 items-center justify-center ${isRTL ? "flex-row-reverse" : ""}`}
+          >
             {row2.map((instructor, index) => (
               <div
                 key={index}

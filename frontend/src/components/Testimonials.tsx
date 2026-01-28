@@ -2,58 +2,56 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 
 const Testimonials = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+  const t = useTranslations("testimonials");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const testimonials = [
     {
-      quote:
-        '"The training was well-structured and directly applicable to our clinical practice. The content was aligned with current standards, and the instructors demonstrated strong clinical experience."',
-      name: "Dr. Ahmed Al-Qahtani",
-      role: "Consultant, Public Hospital",
+      quote: t("items.item1.quote"),
+      name: t("items.item1.name"),
+      role: t("items.item1.role"),
     },
     {
-      quote:
-        '"What stood out was the clarity of the material and the practical focus. The program helped reinforce critical protocols and provided accredited CME hours without compromising quality."',
-      name: "Sara Al-Harthi",
-      role: "Senior Nursing Specialist",
+      quote: t("items.item2.quote"),
+      name: t("items.item2.name"),
+      role: t("items.item2.role"),
     },
     {
-      quote:
-        '"The platform offers a reliable learning environment that meets national training requirements. It is suitable for both individual professionals and institutional training initiatives."',
-      name: "Faisal Al-Mutairi",
-      role: "Healthcare Education Institute",
+      quote: t("items.item3.quote"),
+      name: t("items.item3.name"),
+      role: t("items.item3.role"),
     },
     {
-      quote:
-        '"An exceptional training experience that exceeded our expectations. The curriculum is comprehensive and the instructors bring real-world expertise that enriches every session."',
-      name: "Dr. Layla Al-Rashid",
-      role: "Medical Director, Private Clinic",
+      quote: t("items.item4.quote"),
+      name: t("items.item4.name"),
+      role: t("items.item4.role"),
     },
     {
-      quote:
-        '"The certification process was seamless and the course materials were of the highest quality. I highly recommend this platform for any healthcare professional seeking accredited training."',
-      name: "Mohammed Al-Zahrani",
-      role: "Clinical Pharmacist",
+      quote: t("items.item5.quote"),
+      name: t("items.item5.name"),
+      role: t("items.item5.role"),
     },
     {
-      quote:
-        '"Outstanding support from the team and excellent course structure. The interactive modules made learning engaging and the practical assessments ensured we could apply knowledge immediately."',
-      name: "Noura Al-Otaibi",
-      role: "Head Nurse, Regional Hospital",
+      quote: t("items.item6.quote"),
+      name: t("items.item6.name"),
+      role: t("items.item6.role"),
     },
   ];
 
   // Desktop: 3 per page, Mobile: 1 per page
   const desktopTotalSlides = Math.ceil(testimonials.length / 3);
   const mobileTotalSlides = testimonials.length;
-  
+
   const handlePrev = () => {
     setCurrentSlide((prev) => (prev > 0 ? prev - 1 : desktopTotalSlides - 1));
   };
-  
+
   const handleNext = () => {
     setCurrentSlide((prev) => (prev < desktopTotalSlides - 1 ? prev + 1 : 0));
   };
@@ -65,13 +63,16 @@ const Testimonials = () => {
   const handleMobileNext = () => {
     setCurrentSlide((prev) => (prev < mobileTotalSlides - 1 ? prev + 1 : 0));
   };
-  
-  const visibleTestimonials = testimonials.slice(currentSlide * 3, currentSlide * 3 + 3);
+
+  const visibleTestimonials = testimonials.slice(
+    currentSlide * 3,
+    currentSlide * 3 + 3
+  );
 
   return (
     <>
       {/* Desktop Testimonials - Only show on large screens (1280px+) */}
-      <section className="hidden lg:block  px-16 py-24 overflow-hidden">
+      <section className="hidden lg:block px-16 py-24 overflow-hidden">
         <div className="flex flex-col gap-8 items-center justify-center max-w-[1280px] mx-auto w-full">
           {/* Section Title */}
           <div className="flex flex-col gap-6 items-center justify-center max-w-[768px] text-center text-[var(--on-surface-default)]">
@@ -81,7 +82,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-h1)",
               }}
             >
-              What Healthcare Professionals Say
+              {t("title")}
             </h2>
             <p
               className="leading-7 w-[560px]"
@@ -89,8 +90,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-subheading)",
               }}
             >
-              Feedback from healthcare professionals and institutions who have
-              participated in our accredited training programs.
+              {t("description")}
             </p>
           </div>
 
@@ -98,9 +98,14 @@ const Testimonials = () => {
           <div className="bg-[#EEF3F7] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div className="flex items-start justify-between w-full">
               {visibleTestimonials.map((testimonial, index) => (
-                <div key={index} className="flex items-start">
+                <div
+                  key={index}
+                  className="flex items-start"
+                >
                   {/* Testimonial Content */}
-                  <div className="flex flex-col gap-16 items-start w-[350px] pr-12 overflow-hidden">
+                  <div
+                    className={`flex flex-col gap-16 w-[350px] overflow-hidden ${isRTL ? "items-start text-right pl-12" : "items-start pr-12"}`}
+                  >
                     <p
                       className="text-[var(--on-surface-default)] font-semibold"
                       style={{
@@ -110,7 +115,9 @@ const Testimonials = () => {
                       {testimonial.quote}
                     </p>
 
-                    <div className="flex flex-col items-start text-[var(--on-surface-variant)]">
+                    <div
+                      className="flex flex-col text-[var(--on-surface-variant)] items-start"
+                    >
                       <p
                         className="font-semibold"
                         style={{
@@ -160,17 +167,25 @@ const Testimonials = () => {
 
             {/* Arrows */}
             <div className="flex gap-4 items-start">
-              <button 
+              <button
                 onClick={handlePrev}
                 className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full hover:bg-gray-100 transition-colors"
               >
-                <ArrowRight className="w-4 h-4 text-[#0b0f17] rotate-180" strokeWidth={1.5} />
+                {isRTL ? (
+                  <ArrowRight className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                ) : (
+                  <ArrowLeft className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                )}
               </button>
-              <button 
+              <button
                 onClick={handleNext}
                 className="p-3 bg-[#f9fbfd] border border-[var(--outline-subtle)] rounded-full hover:bg-gray-100 transition-colors"
               >
-                <ArrowRight className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                {isRTL ? (
+                  <ArrowLeft className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                ) : (
+                  <ArrowRight className="w-4 h-4 text-[#0b0f17]" strokeWidth={1.5} />
+                )}
               </button>
             </div>
           </div>
@@ -188,7 +203,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-h1)",
               }}
             >
-              What Healthcare Professionals Say
+              {t("title")}
             </h2>
             <p
               className="leading-7 w-full"
@@ -196,14 +211,15 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-subheading)",
               }}
             >
-              Feedback from healthcare professionals and institutions who have
-              participated in our accredited training programs.
+              {t("description")}
             </p>
           </div>
 
           {/* Testimonial Card - Single card on mobile/tablet */}
           <div className="bg-[#EEF3F7] rounded-3xl p-6 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-            <div className="flex flex-col gap-16 items-start overflow-hidden">
+            <div
+              className={`flex flex-col gap-16 overflow-hidden ${isRTL ? "items-start text-right" : "items-start"}`}
+            >
               <p
                 className="text-black font-semibold"
                 style={{
@@ -213,7 +229,9 @@ const Testimonials = () => {
                 {testimonials[currentSlide].quote}
               </p>
 
-              <div className="flex flex-col items-start text-black">
+              <div
+                className="flex flex-col text-black items-start"
+              >
                 <p
                   className="font-semibold"
                   style={{
@@ -257,13 +275,21 @@ const Testimonials = () => {
                 onClick={handleMobilePrev}
                 className="p-3 rounded-full border border-[var(--outline-subtle)] bg-[#f9fbfd] text-[var(--on-surface-default)]"
               >
-                <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+                {isRTL ? (
+                  <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+                ) : (
+                  <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+                )}
               </button>
               <button
                 onClick={handleMobileNext}
                 className="p-3 rounded-full border border-[var(--outline-subtle)] bg-[#f9fbfd] text-[var(--on-surface-default)]"
               >
-                <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+                {isRTL ? (
+                  <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
+                ) : (
+                  <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+                )}
               </button>
             </div>
           </div>

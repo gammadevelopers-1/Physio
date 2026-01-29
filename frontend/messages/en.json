@@ -601,5 +601,45 @@
   },
   "partnersPage": {
     "title": "Collaborating with Leaders in Healthcare"
+  },
+  "instructorsPage": {
+    "meetExperts": {
+      "title": "Meet the experts",
+      "instructors": {
+        "instructor1": {
+          "name": "Dr. Abdullah Al-Harbi",
+          "title": "Consultant, Orthopedic Surgery"
+        },
+        "instructor2": {
+          "name": "Dr. Sarah Al-Jasser",
+          "title": "Consultant, Pediatric Rheumatology"
+        },
+        "instructor3": {
+          "name": "Dr. Nourah Al-Amri",
+          "title": "Consultant, Family Medicine & Community Health"
+        }
+      }
+    },
+    "mindsBehind": {
+      "title": "Minds Behind Physioguidance",
+      "instructors": {
+        "instructor1": {
+          "name": "Dr. Faisal Al-Otaibi",
+          "title": "Prince Sultan Military Medical City, Riyadh"
+        },
+        "instructor2": {
+          "name": "Dr. Mohammed Al-Ghamdi",
+          "title": "Assistant Professor & Consultant, Emergency Medicine"
+        },
+        "instructor3": {
+          "name": "Dr. Yasser Al-Qahtani",
+          "title": "Senior Registrar, Internal Medicine"
+        },
+        "instructor4": {
+          "name": "Dr. Omar Al-Shehri",
+          "title": "Consultant, Neurology"
+        }
+      }
+    }
   }
 }

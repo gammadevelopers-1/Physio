@@ -404,6 +404,89 @@
       }
     }
   },
+  "learningPoliciesPage": {
+    "title": "Learning Policies",
+    "lastUpdated": "Last Updated: January 2026",
+    "sections": {
+      "general": {
+        "id": "general",
+        "label": "1. General Provisions",
+        "title": "1. General Provisions",
+        "content": "PhysioGuidance is committed to providing high-quality medical education in compliance with the National eLearning Center (NELC) and the Saudi Commission for Health Specialties (SCFHS). By enrolling in our courses, learners agree to adhere to the policies outlined below. These policies are subject to updates in accordance with KSA regulations."
+      },
+      "attendance": {
+        "id": "attendance",
+        "label": "2. Attendance Policy",
+        "title": "2. Attendance Policy (CME Requirements)",
+        "intro": "To ensure the integrity of Continuing Medical Education (CME) hours, strictly monitored attendance is required:",
+        "items": {
+          "item1": "Live Webinars: Learners must attend at least 80% of the live session duration to qualify for a certificate. Attendance is tracked automatically via system logs.",
+          "item2": "Recorded Courses: Learners must view 100% of the video content and complete all interactive modules.",
+          "item3": "Failure to Attend: If the minimum attendance threshold is not met, the learner will not be eligible for CME hours and must retake the course."
+        }
+      },
+      "assessment": {
+        "id": "assessment",
+        "label": "3. Assessment & Grading",
+        "title": "3. Assessment & Grading",
+        "passingScore": "Passing Score: A minimum score of 70% on the final assessment is required to generate a completion certificate.",
+        "retakePolicy": "Retake Policy: Learners are granted three (3) attempts to pass the final exam. If a learner fails all three attempts, they must re-enroll in the course to reset their progress.",
+        "feedback": "Feedback: Automated feedback is provided immediately after quiz submission to facilitate learning retention."
+      },
+      "integrity": {
+        "id": "integrity",
+        "label": "4. Academic Integrity",
+        "title": "4. Academic Integrity",
+        "intro": "PhysioGuidance enforces a zero-tolerance policy towards academic dishonesty.",
+        "items": {
+          "item1": "Identity Verification: Learners must use their own SCFHS license number and legal name. Impersonation is a violation of Saudi law.",
+          "item2": "Plagiarism & Cheating: Any attempt to manipulate assessment scores or share quiz answers will result in immediate account suspension and the revocation of any issued certificates."
+        }
+      },
+      "intellectual": {
+        "id": "intellectual",
+        "label": "5. Intellectual Property",
+        "title": "5. Intellectual Property Rights",
+        "intro": "All course materials, including videos, slides, PDFs, and assessments, are the exclusive property of PhysioGuidance and its instructors.",
+        "items": {
+          "item1": "Usage: Materials are for personal educational use only.",
+          "item2": "Distribution: Unauthorized recording, reproduction, or sharing of course content on public platforms is strictly prohibited and subject to legal action under Saudi Intellectual Property laws."
+        }
+      },
+      "cancellation": {
+        "id": "cancellation",
+        "label": "6. Cancellation & Refunds",
+        "title": "6. Cancellation & Refund Policy",
+        "courseCancel": "Course Cancellation: If PhysioGuidance cancels a live course, learners are entitled to a 100% refund or a credit for future courses.",
+        "learnerWithdrawal": "Learner Withdrawal:",
+        "items": {
+          "item1": "Self-Paced Courses: Refunds are available within 48 hours of purchase, provided the learner has not accessed more than 10% of the content or attempted the final exam.",
+          "item2": "Live Courses: Refunds are available up to 3 days prior to the start date. No refunds will be issued for \"no-shows.\""
+        }
+      },
+      "technical": {
+        "id": "technical",
+        "label": "7. Technical Requirements",
+        "title": "7. Technical Requirements",
+        "intro": "To ensure a seamless learning experience, learners must have:",
+        "items": {
+          "item1": "A stable internet connection (minimum 2 Mbps download speed).",
+          "item2": "A compatible device (Desktop, Laptop, or Tablet) with an updated web browser (Chrome, Edge, or Safari).",
+          "item3": "Speakers or headphones for audio content."
+        }
+      },
+      "privacy": {
+        "id": "privacy",
+        "label": "8. Privacy & Data Protection",
+        "title": "8. Privacy & Data Protection",
+        "intro": "We adhere to the National Data Governance Policies issued by SDAIA (Saudi Data & AI Authority).",
+        "items": {
+          "item1": "Data Usage: Your personal data (Name, License Number, Email) is shared strictly with SCFHS (Mumaris Plus) for the purpose of recording CME hours.",
+          "item2": "Confidentiality: We do not sell or share your data with third-party advertisers."
+        }
+      }
+    }
+  },
   "termsPage": {
     "title": "Terms & Conditions",
     "lastUpdated": "Last Updated: January 2026",

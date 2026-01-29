@@ -20,7 +20,8 @@
       "Bash(then mv \"$dir\" \"[locale]/$dir\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "mcp__figma-remote-mcp__whoami"
     ]
   }
 }

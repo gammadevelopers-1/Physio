@@ -4,6 +4,7 @@ import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BecomeTrainer from "@/components/BecomeTrainer";
+import { useTranslations, useLocale } from "next-intl";
 
 // Partner logos organized by rows - matching Figma design exactly
 const partnerRows = [
@@ -131,19 +132,23 @@ const mobilePartners = [
 ];
 
 const AcademicPartnersPage = () => {
+  const t = useTranslations("partnersPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   return (
     <main className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar />
 
       {/* Partners Section */}
-      <section className="bg-white px-4 md:px-16 py-16 md:py-24">
+      <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
         <div className="max-w-[1312px] mx-auto flex flex-col items-center">
           {/* Header - Title only, no subtitle */}
           <h1
             className="font-semibold tracking-[-0.24px] text-[#06080B] text-center mb-12 md:mb-16 text-[32px] md:text-[48px] leading-none"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            Collaborating with Leaders in Healthcare
+            {t("title")}
           </h1>
 
           {/* Desktop Partner Logos Grid - 3 rows x 3 columns */}

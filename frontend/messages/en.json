@@ -684,5 +684,45 @@
         }
       }
     }
+  },
+  "checkoutPage": {
+    "breadcrumb": {
+      "courses": "Courses",
+      "courseName": "Advanced Cardiovascular Life Support",
+      "buyNow": "Buy now"
+    },
+    "profile": {
+      "title": "Complete profile",
+      "alert": "Fill all required profile information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phoneNumber": "Phone number",
+      "residentQuestion": "Are you a resident or a citizen of the Kingdom of Saudi Arabia?",
+      "healthcareQuestion": "Are you a healthcare practitioner?",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "courseDetails": {
+      "title": "Course Details",
+      "courseTitle": "Infection Control (Core / Flagship)",
+      "liveOnline": "Live Online",
+      "date": "11 Jan 2026",
+      "cmeHours": "8 CME Hours",
+      "price": "575"
+    },
+    "payment": {
+      "title": "Payment",
+      "subtitle": "All transactions are secure and encrypted",
+      "creditCard": "Credit card",
+      "tabby": "Pay later with Tabby",
+      "cardNumber": "Card Number",
+      "expiry": "Expiry",
+      "cvc": "CVC",
+      "nameOnCard": "Name on card",
+      "saveInfo": "Save my information for a faster checkout with a Shop account",
+      "secureEncrypted": "Secure and encrypted",
+      "payNow": "Pay Now",
+      "securePaymentThrough": "Secure payment through"
+    }
   }
 }

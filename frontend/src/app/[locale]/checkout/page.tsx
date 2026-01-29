@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ChevronDown, Calendar, Clock, Trash2, Video, Lock } from "lucide-react";
+import { ChevronDown, Calendar, Clock, Trash2, Video, Lock, ChevronRight, ChevronLeft } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 
 // Sample course data for checkout
 const checkoutCourse = {
@@ -19,6 +20,10 @@ const checkoutCourse = {
 };
 
 export default function CheckoutPage() {
+  const t = useTranslations("checkoutPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -44,7 +49,7 @@ export default function CheckoutPage() {
       <Navbar />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8">
+      <main className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"}>
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm mb-6">
           <Link href="/" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">
@@ -52,16 +57,28 @@ export default function CheckoutPage() {
               <path d="M6.66667 14.1667H13.3333M9.18141 2.30333L3.52949 6.69927C3.15168 6.99312 2.96278 7.14005 2.82669 7.32405C2.70614 7.48704 2.61633 7.67065 2.56169 7.86588C2.5 8.08627 2.5 8.32558 2.5 8.80421V14.8333C2.5 15.7667 2.5 16.2335 2.68166 16.59C2.84144 16.9036 3.09641 17.1585 3.41002 17.3183C3.76654 17.5 4.23325 17.5 5.16667 17.5H14.8333C15.7668 17.5 16.2335 17.5 16.59 17.3183C16.9036 17.1585 17.1586 16.9036 17.3183 16.59C17.5 16.2335 17.5 15.7667 17.5 14.8333V8.80421C17.5 8.32558 17.5 8.08627 17.4383 7.86588C17.3837 7.67065 17.2939 7.48704 17.1733 7.32405C17.0372 7.14005 16.8483 6.99312 16.4705 6.69927L10.8186 2.30333C10.5258 2.07562 10.3794 1.96177 10.2178 1.91918C10.0752 1.88168 9.92484 1.88168 9.78221 1.91918C9.62057 1.96177 9.47418 2.07562 9.18141 2.30333Z" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Link>
-          <span className="text-[var(--on-surface-variant)]">&gt;</span>
+          {isRTL ? (
+            <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" />
+          ) : (
+            <ChevronRight size={14} className="text-[var(--on-surface-variant)]" />
+          )}
           <Link href="/courses" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">
-            Courses
+            {t("breadcrumb.courses")}
           </Link>
-          <span className="text-[var(--on-surface-variant)]">&gt;</span>
+          {isRTL ? (
+            <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" />
+          ) : (
+            <ChevronRight size={14} className="text-[var(--on-surface-variant)]" />
+          )}
           <Link href="/courses/advanced-cardiovascular-life-support" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">
-            Advanced Cardiovascular Life Support
+            {t("breadcrumb.courseName")}
           </Link>
-          <span className="text-[var(--on-surface-variant)]">&gt;</span>
-          <span className="text-[var(--on-surface-default)] font-medium">Buy now</span>
+          {isRTL ? (
+            <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" />
+          ) : (
+            <ChevronRight size={14} className="text-[var(--on-surface-variant)]" />
+          )}
+          <span className="text-[var(--on-surface-default)] font-medium">{t("breadcrumb.buyNow")}</span>
         </nav>
 
         {/* Main Grid */}
@@ -71,13 +88,13 @@ export default function CheckoutPage() {
             {/* Complete Profile Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-[var(--on-surface-default)] mb-4">
-                Complete profile
+                {t("profile.title")}
               </h2>
 
               {/* Alert */}
               <div className="bg-[#FEE2E2] rounded-lg px-4 py-3 mb-6">
                 <p className="text-[#DC2626] text-sm">
-                  Fill all required profile information
+                  {t("profile.alert")}
                 </p>
               </div>
 
@@ -87,24 +104,26 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-[var(--on-surface-default)]">
-                      First Name <span className="text-[#DC2626]">*</span>
+                      {t("profile.firstName")} <span className="text-[#DC2626]">*</span>
                     </label>
                     <input
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       className="w-full h-12 px-4 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      dir={isRTL ? "rtl" : "ltr"}
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-[var(--on-surface-default)]">
-                      Last Name <span className="text-[#DC2626]">*</span>
+                      {t("profile.lastName")} <span className="text-[#DC2626]">*</span>
                     </label>
                     <input
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       className="w-full h-12 px-4 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      dir={isRTL ? "rtl" : "ltr"}
                     />
                   </div>
                 </div>
@@ -112,10 +131,10 @@ export default function CheckoutPage() {
                 {/* Phone Number */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-[var(--on-surface-default)]">
-                    Phone number <span className="text-[#DC2626]">*</span>
+                    {t("profile.phoneNumber")} <span className="text-[#DC2626]">*</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[var(--on-surface-default)]">
+                    <div className={`absolute ${isRTL ? "right-4" : "left-4"} top-1/2 -translate-y-1/2 flex items-center gap-1 text-[var(--on-surface-default)]`}>
                       <span className="text-sm">{countryCode}</span>
                       <ChevronDown className="w-4 h-4" />
                     </div>
@@ -123,7 +142,8 @@ export default function CheckoutPage() {
                       type="tel"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="w-full h-12 pl-16 pr-4 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      className={`w-full h-12 ${isRTL ? "pr-16 pl-4" : "pl-16 pr-4"} bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors`}
+                      dir="ltr"
                     />
                   </div>
                 </div>
@@ -131,38 +151,40 @@ export default function CheckoutPage() {
                 {/* Resident Question */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-[var(--on-surface-default)]">
-                    Are you a resident or a citizen of the Kingdom of Saudi Arabia? <span className="text-[#DC2626]">*</span>
+                    {t("profile.residentQuestion")} <span className="text-[#DC2626]">*</span>
                   </label>
                   <div className="relative">
                     <select
                       value={isResident}
                       onChange={(e) => setIsResident(e.target.value)}
                       className="w-full h-12 px-4 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
+                      dir={isRTL ? "rtl" : "ltr"}
                     >
                       <option value=""></option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
+                      <option value="yes">{t("profile.yes")}</option>
+                      <option value="no">{t("profile.no")}</option>
                     </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] pointer-events-none" />
+                    <ChevronDown className={`absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] pointer-events-none`} />
                   </div>
                 </div>
 
                 {/* Healthcare Practitioner Question */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-[var(--on-surface-default)]">
-                    Are you a healthcare practitioner? <span className="text-[#DC2626]">*</span>
+                    {t("profile.healthcareQuestion")} <span className="text-[#DC2626]">*</span>
                   </label>
                   <div className="relative">
                     <select
                       value={isHealthcarePractitioner}
                       onChange={(e) => setIsHealthcarePractitioner(e.target.value)}
                       className="w-full h-12 px-4 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors appearance-none cursor-pointer"
+                      dir={isRTL ? "rtl" : "ltr"}
                     >
                       <option value=""></option>
-                      <option value="yes">Yes</option>
-                      <option value="no">No</option>
+                      <option value="yes">{t("profile.yes")}</option>
+                      <option value="no">{t("profile.no")}</option>
                     </select>
-                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] pointer-events-none" />
+                    <ChevronDown className={`absolute ${isRTL ? "left-4" : "right-4"} top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--on-surface-variant)] pointer-events-none`} />
                   </div>
                 </div>
               </form>
@@ -170,64 +192,86 @@ export default function CheckoutPage() {
 
             {/* Course Details Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-[#071437] mb-3">
-                Course Details
+              <h2 className={`text-xl font-semibold text-[#071437] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                {t("courseDetails.title")}
               </h2>
 
               {/* Course Card - Vertical Layout matching Figma */}
-              <div className="flex flex-col gap-4 w-full max-w-[304px]">
+              <div className={`flex flex-col gap-4 w-full max-w-[304px] ${isRTL ? "ml-auto" : ""}`}>
                 {/* Course Image Card */}
-                <div className="relative bg-[#eef3f7] rounded-2xl overflow-hidden h-[183px] w-full p-4 flex flex-col justify-between">
-                  <h3 className="text-lg font-semibold text-[#06080b] leading-normal max-w-[161px] z-10">
-                    {checkoutCourse.title}
-                  </h3>
-
-                  {/* Image positioned on the right */}
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[146px] h-[217px]">
+                <div className="relative bg-[#eef3f7] rounded-2xl overflow-hidden h-[183px] w-full p-4">
+                  {/* Image position: LEFT for RTL, RIGHT for LTR */}
+                  <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-1/2 -translate-y-1/2 w-[146px] h-[217px]`}>
                     <Image
                       src={checkoutCourse.image}
-                      alt={checkoutCourse.title}
+                      alt={t("courseDetails.courseTitle")}
                       fill
-                      className="object-contain object-center"
+                      className={`object-contain object-center ${isRTL ? "-scale-x-100" : ""}`}
                     />
                   </div>
 
-                  {/* Badge at bottom */}
-                  <div className="flex items-center gap-2 bg-[#0B0F17] text-white text-xs px-3 py-1 rounded-full w-fit z-10">
+                  {/* Title position: RIGHT for RTL, LEFT for LTR */}
+                  <h3 className={`text-lg font-semibold text-[#06080b] leading-normal max-w-[140px] z-10 absolute top-4 ${isRTL ? "right-4 text-right" : "left-4 text-left"}`}>
+                    {t("courseDetails.courseTitle")}
+                  </h3>
+
+                  {/* Live Online badge position: RIGHT for RTL, LEFT for LTR */}
+                  <div className={`flex items-center gap-2 bg-[#0B0F17] text-white text-xs px-3 py-1 rounded-full w-fit z-10 absolute bottom-4 ${isRTL ? "right-4 flex-row-reverse" : "left-4"}`}>
                     <Video className="w-4 h-4" />
-                    <span>{checkoutCourse.type}</span>
+                    <span>{t("courseDetails.liveOnline")}</span>
                   </div>
                 </div>
 
                 {/* Date and Hours Badges */}
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f]">
+                <div className={`flex w-full ${isRTL ? "flex-col gap-4 items-end" : "flex-row gap-4 items-start"}`}>
+                  <div className={`flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f] ${isRTL ? "flex-row-reverse ml-auto" : ""}`}>
                     <Calendar className="w-4 h-4" />
-                    <span>{checkoutCourse.date}</span>
+                    <span>{t("courseDetails.date")}</span>
                   </div>
-                  <div className="flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f]">
+                  <div className={`flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f] ${isRTL ? "flex-row-reverse ml-auto" : ""}`}>
                     <Clock className="w-4 h-4" />
-                    <span>{checkoutCourse.hours}</span>
+                    <span>{t("courseDetails.cmeHours")}</span>
                   </div>
                 </div>
 
-                {/* Price and Delete */}
+                {/* Price and Delete Row */}
                 <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-1">
-                    <Image
-                      src="/icons/rayal-icon.svg"
-                      alt="SAR"
-                      width={16}
-                      height={18}
-                      className="-scale-y-100"
-                    />
-                    <span className="text-lg font-semibold text-[#06080b]">
-                      {checkoutCourse.price}
-                    </span>
-                  </div>
-                  <button className="p-2 bg-[#f9fbfd] rounded-xl text-[#4a4c4f] hover:text-[#DC2626] transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {isRTL ? (
+                    <>
+                      {/* In RTL: Price on RIGHT (first), Trash on LEFT (second) */}
+                      <div className="flex items-center gap-1">
+                        <Image
+                          src="/icons/rayal-icon.svg"
+                          alt="SAR"
+                          width={16}
+                          height={18}
+                        />
+                        <span className="text-lg font-semibold text-[#06080b]">
+                          {t("courseDetails.price")}
+                        </span>
+                      </div>
+                      <button className="p-2 bg-[#f9fbfd] rounded-xl text-[#4a4c4f] hover:text-[#DC2626] transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1">
+                        <Image
+                          src="/icons/rayal-icon.svg"
+                          alt="SAR"
+                          width={16}
+                          height={18}
+                        />
+                        <span className="text-lg font-semibold text-[#06080b]">
+                          {t("courseDetails.price")}
+                        </span>
+                      </div>
+                      <button className="p-2 bg-[#f9fbfd] rounded-xl text-[#4a4c4f] hover:text-[#DC2626] transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -237,10 +281,10 @@ export default function CheckoutPage() {
           <div className="w-full lg:w-[400px]">
             <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
               <h2 className="text-xl font-semibold text-[var(--on-surface-default)] mb-1">
-                Payment
+                {t("payment.title")}
               </h2>
               <p className="text-sm text-[var(--on-surface-variant)] mb-4">
-                All transactions are secure and encrypted
+                {t("payment.subtitle")}
               </p>
 
               {/* Payment Method Selection */}
@@ -272,7 +316,7 @@ export default function CheckoutPage() {
                         }`}
                       />
                       <span className="font-medium text-[var(--on-surface-default)]">
-                        Credit card
+                        {t("payment.creditCard")}
                       </span>
                     </div>
                     <div className="flex items-center gap-[11px]">
@@ -308,37 +352,41 @@ export default function CheckoutPage() {
                     >
                       <input
                         type="text"
-                        placeholder="Card Number"
+                        placeholder={t("payment.cardNumber")}
                         value={cardNumber}
                         onChange={(e) => setCardNumber(e.target.value)}
-                        className="w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1]"
+                        className={`w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1] ${isRTL ? "text-right" : "text-left"}`}
                         style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
+                        dir="ltr"
                       />
                       <div className="grid grid-cols-2 gap-4">
                         <input
                           type="text"
-                          placeholder="Expiry"
+                          placeholder={t("payment.expiry")}
                           value={expiry}
                           onChange={(e) => setExpiry(e.target.value)}
-                          className="w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1]"
+                          className={`w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1] ${isRTL ? "text-right" : "text-left"}`}
                           style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
+                          dir="ltr"
                         />
                         <input
                           type="text"
-                          placeholder="CVC"
+                          placeholder={t("payment.cvc")}
                           value={cvc}
                           onChange={(e) => setCvc(e.target.value)}
-                          className="w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1]"
+                          className={`w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1] ${isRTL ? "text-right" : "text-left"}`}
                           style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
+                          dir="ltr"
                         />
                       </div>
                       <input
                         type="text"
-                        placeholder="Name on card"
+                        placeholder={t("payment.nameOnCard")}
                         value={nameOnCard}
                         onChange={(e) => setNameOnCard(e.target.value)}
-                        className="w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1]"
+                        className={`w-full h-12 px-[14px] bg-white border border-[#c8d5e1] rounded-lg outline-none focus:border-[#005bd3] transition-colors text-sm placeholder:text-[#c8d5e1] ${isRTL ? "text-right" : "text-left"}`}
                         style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
+                        dir={isRTL ? "rtl" : "ltr"}
                       />
                     </div>
                   )}
@@ -370,7 +418,7 @@ export default function CheckoutPage() {
                         }`}
                       />
                       <span className="font-medium text-[var(--on-surface-default)]">
-                        Pay later with Tabby
+                        {t("payment.tabby")}
                       </span>
                     </div>
                     <Image
@@ -414,14 +462,14 @@ export default function CheckoutPage() {
                   )}
                 </button>
                 <span className="text-sm text-[var(--on-surface-variant)]">
-                  Save my information for a faster checkout with a Shop account
+                  {t("payment.saveInfo")}
                 </span>
               </div>
 
               {/* Secure Text */}
               <div className="flex items-center justify-center gap-1.5 text-sm text-[var(--on-surface-variant)] mb-4">
                 <Lock className="w-4 h-4" />
-                <span>Secure and encrypted</span>
+                <span>{t("payment.secureEncrypted")}</span>
               </div>
 
               {/* Pay Now Button */}
@@ -429,13 +477,13 @@ export default function CheckoutPage() {
                 onClick={handleSubmit}
                 className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4"
               >
-                Pay Now
+                {t("payment.payNow")}
               </button>
 
               {/* Secure Payment Footer */}
               <div className="flex items-center justify-center gap-2 flex-wrap">
                 <span className="text-sm text-[var(--on-surface-variant)]">
-                  Secure payment through
+                  {t("payment.securePaymentThrough")}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <Image

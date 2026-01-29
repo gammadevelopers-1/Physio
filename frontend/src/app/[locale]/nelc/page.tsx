@@ -3,17 +3,22 @@
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useTranslations, useLocale } from "next-intl";
 
 const NELCAgreementPage = () => {
+  const t = useTranslations("nelcPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   return (
     <main className="min-h-screen bg-white pb-20 lg:pb-0">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="bg-white px-4 md:px-16 py-16 md:py-24">
+      <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
         <div className="max-w-[1312px] mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-16">
-            {/* Left Content */}
+            {/* Content - Always on the left visually */}
             <div className="flex flex-col gap-12 w-full md:max-w-[663px]">
               {/* Title and Description */}
               <div className="flex flex-col gap-6">
@@ -21,13 +26,10 @@ const NELCAgreementPage = () => {
                   className="font-semibold text-[#06080B] tracking-[-0.15px] md:tracking-[-0.24px] leading-none text-[30px] md:text-[48px]"
                   style={{ fontFamily: "'DM Sans', sans-serif" }}
                 >
-                  Committed to National Quality Standards
+                  {t("hero.title")}
                 </h1>
-                <p
-                  className="text-[#06080B] leading-7 text-[18px] md:text-[20px]"
-                >
-                  PhysioGuidance is a fully licensed provider under the National
-                  eLearning Center (NELC) of Saudi Arabia.
+                <p className="text-[#06080B] leading-7 text-[18px] md:text-[20px]">
+                  {t("hero.description")}
                 </p>
               </div>
 
@@ -38,10 +40,10 @@ const NELCAgreementPage = () => {
                   <div className="w-1 self-stretch bg-[#C8D5E1] rounded" />
                   <div className="flex flex-col">
                     <span className="font-medium text-[#06080B] text-[14px] leading-5">
-                      License Number
+                      {t("hero.licenseNumber.label")}
                     </span>
                     <span className="text-[#4A4C4F] text-[12px] leading-4">
-                      Al Madinah Al Munawwarah
+                      {t("hero.licenseNumber.value")}
                     </span>
                   </div>
                 </div>
@@ -51,10 +53,10 @@ const NELCAgreementPage = () => {
                   <div className="w-1 self-stretch bg-[#C8D5E1] rounded" />
                   <div className="flex flex-col">
                     <span className="font-medium text-[#06080B] text-[14px] leading-5">
-                      License Type
+                      {t("hero.licenseType.label")}
                     </span>
                     <span className="text-[#4A4C4F] text-[12px] leading-4">
-                      eLearning Training Facility
+                      {t("hero.licenseType.value")}
                     </span>
                   </div>
                 </div>
@@ -64,17 +66,17 @@ const NELCAgreementPage = () => {
                   <div className="w-1 self-stretch bg-[#C8D5E1] rounded" />
                   <div className="flex flex-col">
                     <span className="font-medium text-[#06080B] text-[14px] leading-5">
-                      Status
+                      {t("hero.status.label")}
                     </span>
                     <span className="text-[#4A4C4F] text-[12px] leading-4">
-                      Active
+                      {t("hero.status.value")}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* NELC Logo - Centered on mobile, right on desktop */}
+            {/* NELC Logo - Always on the right visually */}
             <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
               <Image
                 src="/NELC_agreement/image 492 (1).svg"
@@ -89,7 +91,7 @@ const NELCAgreementPage = () => {
       </section>
 
       {/* Our Compliance Section */}
-      <section className="bg-white px-4 md:px-16 py-16 md:py-24">
+      <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
         <div className="max-w-[1312px] mx-auto">
           {/* Title and Subtitle */}
           <div className="flex flex-col items-center gap-4 mb-10 max-w-[768px] mx-auto">
@@ -97,13 +99,10 @@ const NELCAgreementPage = () => {
               className="font-semibold text-[#06080B] text-center tracking-[-0.15px] md:tracking-[-0.24px] leading-none text-[30px] md:text-[48px]"
               style={{ fontFamily: "'DM Sans', sans-serif" }}
             >
-              Our Compliance
+              {t("compliance.title")}
             </h2>
-            <p
-              className="text-[#06080B] text-center leading-7 text-[18px] md:text-[20px]"
-            >
-              We adhere strictly to the NELC&apos;s operational standards to ensure a
-              premium educational experience
+            <p className="text-[#06080B] text-center leading-7 text-[18px] md:text-[20px]">
+              {t("compliance.description")}
             </p>
           </div>
 
@@ -114,19 +113,17 @@ const NELCAgreementPage = () => {
               <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
                 <Image
                   src="/NELC_agreement/image 18.svg"
-                  alt="Governance"
+                  alt={t("compliance.cards.governance.title")}
                   fill
                   className="object-cover"
                 />
               </div>
               <div className="bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] -mt-24 relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-                <h3
-                  className="font-semibold text-[#06080B] text-[18px] md:text-[20px]"
-                >
-                  Governance
+                <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
+                  {t("compliance.cards.governance.title")}
                 </h3>
                 <p className="text-[#06080B] text-[16px] leading-6">
-                  Transparent policies for attendance, grading, and grievances.
+                  {t("compliance.cards.governance.description")}
                 </p>
               </div>
             </div>
@@ -136,20 +133,17 @@ const NELCAgreementPage = () => {
               <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
                 <Image
                   src="/NELC_agreement/image 19.svg"
-                  alt="Technology"
+                  alt={t("compliance.cards.technology.title")}
                   fill
                   className="object-cover"
                 />
               </div>
               <div className="bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] -mt-24 relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-                <h3
-                  className="font-semibold text-[#06080B] text-[18px] md:text-[20px]"
-                >
-                  Technology
+                <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
+                  {t("compliance.cards.technology.title")}
                 </h3>
                 <p className="text-[#06080B] text-[16px] leading-6">
-                  A secure, accessible platform that protects learner data and
-                  intellectual property.
+                  {t("compliance.cards.technology.description")}
                 </p>
               </div>
             </div>
@@ -159,20 +153,17 @@ const NELCAgreementPage = () => {
               <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
                 <Image
                   src="/NELC_agreement/image 20.svg"
-                  alt="Instruction"
+                  alt={t("compliance.cards.instruction.title")}
                   fill
                   className="object-cover"
                 />
               </div>
               <div className="bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] -mt-24 relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-                <h3
-                  className="font-semibold text-[#06080B] text-[18px] md:text-[20px]"
-                >
-                  Instruction
+                <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
+                  {t("compliance.cards.instruction.title")}
                 </h3>
                 <p className="text-[#06080B] text-[16px] leading-6">
-                  All courses are designed by subject matter experts and undergo
-                  rigorous quality review before publication.
+                  {t("compliance.cards.instruction.description")}
                 </p>
               </div>
             </div>

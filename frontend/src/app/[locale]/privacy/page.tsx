@@ -3,34 +3,35 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useTranslations, useLocale } from "next-intl";
+
+const sectionKeys = [
+  "generalTerms",
+  "attendancePolicy",
+  "assessment",
+  "academicIntegrity",
+  "intellectualProperty",
+  "refundPolicy",
+  "technicalRequirements",
+  "privacyData",
+] as const;
 
 const PrivacyPolicy = () => {
-  const [activeSection, setActiveSection] = useState("introduction");
+  const t = useTranslations("privacyPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
 
-  const sections = [
-    { id: "introduction", label: "1. Introduction" },
-    { id: "data-collect", label: "2. Data We Collect" },
-    { id: "purpose", label: "3. Purpose of Collection" },
-    { id: "scfhs", label: "4. Sharing with SCFHS (Mumaris)" },
-    { id: "storage", label: "5. Data Storage & Security" },
-    { id: "rights", label: "6. Your Rights" },
-    { id: "cookies", label: "7. Cookies & Tracking" },
-    { id: "third-party", label: "8. Third-Party Links" },
-    { id: "contact", label: "9. Contact Us" },
-  ];
+  const [activeSection, setActiveSection] = useState(sectionKeys[0]);
 
   useEffect(() => {
     const handleScroll = () => {
-      const sectionElements = sections.map((section) =>
-        document.getElementById(section.id)
-      );
-
-      for (let i = sectionElements.length - 1; i >= 0; i--) {
-        const element = sectionElements[i];
+      for (let i = sectionKeys.length - 1; i >= 0; i--) {
+        const sectionId = t(`sections.${sectionKeys[i]}.id`);
+        const element = document.getElementById(sectionId);
         if (element) {
           const rect = element.getBoundingClientRect();
           if (rect.top <= 200) {
-            setActiveSection(sections[i].id);
+            setActiveSection(sectionKeys[i]);
             break;
           }
         }
@@ -39,10 +40,11 @@ const PrivacyPolicy = () => {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [t]);
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
+  const scrollToSection = (sectionKey: string) => {
+    const sectionId = t(`sections.${sectionKey}.id`);
+    const element = document.getElementById(sectionId);
     if (element) {
       const navbarHeight = 88;
       const elementPosition = element.getBoundingClientRect().top;
@@ -60,20 +62,20 @@ const PrivacyPolicy = () => {
       <Navbar />
 
       {/* Main Content Section */}
-      <section className="bg-[#EEF3F7] px-4 md:px-16 py-12 md:py-24">
+      <section className="bg-[#EEF3F7] px-4 md:px-16 py-12 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
         {/* Header */}
         <div className="flex flex-col gap-1 mb-8 text-[var(--on-surface-default)]">
           <h1
             className="font-semibold tracking-[-0.24px]"
             style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
           >
-            Privacy policy
+            {t("title")}
           </h1>
           <p
             className="leading-7"
             style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
           >
-            Last Updated: January 2026
+            {t("lastUpdated")}
           </p>
         </div>
 
@@ -85,18 +87,18 @@ const PrivacyPolicy = () => {
               className="bg-white rounded-2xl p-8 sticky top-24 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
             >
               <nav className="flex flex-col gap-6">
-                {sections.map((section) => (
+                {sectionKeys.map((sectionKey) => (
                   <button
-                    key={section.id}
-                    onClick={() => scrollToSection(section.id)}
-                    className={`text-left leading-7 transition-colors cursor-pointer ${
-                      activeSection === section.id
+                    key={sectionKey}
+                    onClick={() => scrollToSection(sectionKey)}
+                    className={`text-start leading-7 transition-colors cursor-pointer ${
+                      activeSection === sectionKey
                         ? "text-[var(--on-surface-default)] font-medium"
                         : "text-[var(--on-surface-default)] hover:text-[var(--on-surface-primary)]"
                     }`}
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    {section.label}
+                    {t(`sections.${sectionKey}.label`)}
                   </button>
                 ))}
               </nav>
@@ -109,277 +111,186 @@ const PrivacyPolicy = () => {
               className="bg-white rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
             >
               <div className="flex flex-col gap-12">
-                {/* Section 1: Introduction */}
-                <section id="introduction" className="flex flex-col gap-6">
+                {/* Section 1: General Terms */}
+                <section id={t("sections.generalTerms.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    1. Introduction
+                    {t("sections.generalTerms.title")}
                   </h2>
                   <p
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    PhysioGuidance respects your privacy and is committed to protecting your personal
-                    data. This Privacy Policy outlines how we collect, use, and safeguard your information
-                    in compliance with the Personal Data Protection Law (PDPL) of Saudi Arabia and the
-                    regulations set forth by the Saudi Data & AI Authority (SDAIA).
+                    {t("sections.generalTerms.content")}
                   </p>
                 </section>
 
-                {/* Section 2: Data We Collect */}
-                <section id="data-collect" className="flex flex-col gap-6">
+                {/* Section 2: Attendance Policy */}
+                <section id={t("sections.attendancePolicy.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    2. Data We Collect
+                    {t("sections.attendancePolicy.title")}
                   </h2>
                   <div
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    <p className="mb-4">
-                      To provide accredited medical education, we are required to collect specific personal
-                      information:
-                    </p>
+                    <p className="mb-4">{t("sections.attendancePolicy.intro")}</p>
                     <ul className="list-disc">
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Identity Data:</strong> Full Name (as it appears on your ID), National ID/Iqama Number, and
-                          Date of Birth.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.attendancePolicy.items.item1")}</span>
                       </li>
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Professional Data:</strong> SCFHS Classification Number (Professional License ID), Specialty,
-                          and Job Title.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.attendancePolicy.items.item2")}</span>
                       </li>
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Contact Data:</strong> Email address and Mobile number.
-                        </span>
-                      </li>
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Financial Data:</strong> Payment card details (processed securely via our payment gateway
-                          providers; we do not store raw credit card numbers).
-                        </span>
-                      </li>
-                      <li className="ml-8">
-                        <span className="leading-7">
-                          <strong>Technical Data:</strong> IP address, browser type, and device information used to access our
-                          platform.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
+                        <span className="leading-7">{t("sections.attendancePolicy.items.item3")}</span>
                       </li>
                     </ul>
                   </div>
                 </section>
 
-                {/* Section 3: Purpose of Collection */}
-                <section id="purpose" className="flex flex-col gap-6">
+                {/* Section 3: Assessment & Grades */}
+                <section id={t("sections.assessment.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    3. Purpose of Collection
+                    {t("sections.assessment.title")}
                   </h2>
                   <div
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    <p className="mb-4">We process your data for the following lawful purposes:</p>
+                    <p className="mb-4">{t("sections.assessment.passingGrade")}</p>
+                    <p className="mb-4">{t("sections.assessment.retakePolicy")}</p>
+                    <p>{t("sections.assessment.feedback")}</p>
+                  </div>
+                </section>
+
+                {/* Section 4: Academic Integrity */}
+                <section id={t("sections.academicIntegrity.id")} className="flex flex-col gap-6">
+                  <h2
+                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
+                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
+                  >
+                    {t("sections.academicIntegrity.title")}
+                  </h2>
+                  <div
+                    className="leading-7 text-[var(--on-surface-default)]"
+                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+                  >
+                    <p className="mb-4">{t("sections.academicIntegrity.intro")}</p>
                     <ul className="list-disc">
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Service Delivery:</strong> To enroll you in courses and grant access to learning materials.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.academicIntegrity.items.item1")}</span>
                       </li>
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Accreditation Reporting:</strong> To verify your identity and attendance as required by the
-                          National eLearning Center (NELC).
-                        </span>
-                      </li>
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Certification:</strong> To generate verifiable certificates with your correct legal name and
-                          license number.
-                        </span>
-                      </li>
-                      <li className="ml-8">
-                        <span className="leading-7">
-                          <strong>Communication:</strong> To send course updates, exam results, and renewal reminders.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
+                        <span className="leading-7">{t("sections.academicIntegrity.items.item2")}</span>
                       </li>
                     </ul>
                   </div>
                 </section>
 
-                {/* Section 4: Sharing with SCFHS (Mumaris) */}
-                <section id="scfhs" className="flex flex-col gap-6">
+                {/* Section 5: Intellectual Property */}
+                <section id={t("sections.intellectualProperty.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    4. Sharing with SCFHS (Mumaris)
+                    {t("sections.intellectualProperty.title")}
                   </h2>
                   <div
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    <p className="mb-4">
-                      By using our platform, you explicitly consent to the sharing of your academic data with
-                      the Saudi Commission for Health Specialties (SCFHS).
-                    </p>
+                    <p className="mb-4">{t("sections.intellectualProperty.intro")}</p>
                     <ul className="list-disc">
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>What we share:</strong> Your License Number and the CME hours you have earned.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.intellectualProperty.items.item1")}</span>
                       </li>
-                      <li className="ml-8">
-                        <span className="leading-7">
-                          <strong>Why we share it:</strong> This is strictly for the purpose of updating your CME record in the
-                          Mumaris Plus system to facilitate your professional registration renewal.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
+                        <span className="leading-7">{t("sections.intellectualProperty.items.item2")}</span>
                       </li>
                     </ul>
                   </div>
                 </section>
 
-                {/* Section 5: Data Storage & Security */}
-                <section id="storage" className="flex flex-col gap-6">
+                {/* Section 6: Cancellation & Refunds */}
+                <section id={t("sections.refundPolicy.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    5. Data Storage & Security
+                    {t("sections.refundPolicy.title")}
                   </h2>
                   <div
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    <p className="mb-4">
-                      <strong>Data Localization:</strong> In compliance with Saudi regulations, your primary data is hosted on
-                      secure servers located within the Kingdom of Saudi Arabia.
-                    </p>
-                    <p>
-                      <strong>Security Measures:</strong> We employ SSL encryption, access controls, and regular security
-                      audits to protect your data against unauthorized access or loss.
-                    </p>
-                  </div>
-                </section>
-
-                {/* Section 6: Your Rights */}
-                <section id="rights" className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    6. Your Rights
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
+                    <p className="mb-4">{t("sections.refundPolicy.courseCancel")}</p>
+                    <p className="mb-4">{t("sections.refundPolicy.learnerWithdrawal")}</p>
                     <ul className="list-disc">
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Access:</strong> Request a copy of the personal data we hold about you.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.refundPolicy.items.item1")}</span>
                       </li>
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Correction:</strong> Request correction of any incomplete or inaccurate data (e.g., updating
-                          your License Number).
-                        </span>
-                      </li>
-                      <li className="ml-8">
-                        <span className="leading-7">
-                          <strong>Destruction:</strong> Request the deletion of your data, provided there is no legal obligation
-                          (such as tax records or SCFHS audit trails) requiring us to retain it.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
+                        <span className="leading-7">{t("sections.refundPolicy.items.item2")}</span>
                       </li>
                     </ul>
                   </div>
                 </section>
 
-                {/* Section 7: Cookies & Tracking */}
-                <section id="cookies" className="flex flex-col gap-6">
+                {/* Section 7: Technical Requirements */}
+                <section id={t("sections.technicalRequirements.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    7. Cookies & Tracking
+                    {t("sections.technicalRequirements.title")}
                   </h2>
                   <div
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    <p className="mb-4">We use cookies to improve your user experience:</p>
+                    <p className="mb-4">{t("sections.technicalRequirements.intro")}</p>
                     <ul className="list-disc">
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Essential Cookies:</strong> Required for the website to function (e.g., keeping you logged in
-                          during a quiz).
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.technicalRequirements.items.item1")}</span>
                       </li>
-                      <li className="ml-8">
-                        <span className="leading-7">
-                          <strong>Analytics Cookies:</strong> Help us understand which courses are most popular. You can
-                          manage your cookie preferences in your browser settings.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.technicalRequirements.items.item2")}</span>
+                      </li>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
+                        <span className="leading-7">{t("sections.technicalRequirements.items.item3")}</span>
                       </li>
                     </ul>
                   </div>
                 </section>
 
-                {/* Section 8: Third-Party Links */}
-                <section id="third-party" className="flex flex-col gap-6">
+                {/* Section 8: Privacy & Data Protection */}
+                <section id={t("sections.privacyData.id")} className="flex flex-col gap-6">
                   <h2
                     className="font-semibold leading-8 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
                   >
-                    8. Third-Party Links
-                  </h2>
-                  <p
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    Our website may contain links to external sites (e.g., SCFHS, FutureX). We are not
-                    responsible for the privacy practices or content of these third-party websites.
-                  </p>
-                </section>
-
-                {/* Section 9: Contact Us */}
-                <section id="contact" className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    9. Contact Us
+                    {t("sections.privacyData.title")}
                   </h2>
                   <div
                     className="leading-7 text-[var(--on-surface-default)]"
                     style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
                   >
-                    <p className="mb-4">
-                      If you have any questions regarding this Privacy Policy or wish to exercise your data
-                      rights, please contact our Data Protection Officer:
-                    </p>
+                    <p className="mb-4">{t("sections.privacyData.intro")}</p>
                     <ul className="list-disc">
-                      <li className="ml-8 mb-2">
-                        <span className="leading-7">
-                          <strong>Email:</strong> privacy@physioguidance.sa
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
+                        <span className="leading-7">{t("sections.privacyData.items.item1")}</span>
                       </li>
-                      <li className="ml-8">
-                        <span className="leading-7">
-                          <strong>Address:</strong> [Your Office Address], Riyadh, Saudi Arabia.
-                        </span>
+                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
+                        <span className="leading-7">{t("sections.privacyData.items.item2")}</span>
                       </li>
                     </ul>
                   </div>

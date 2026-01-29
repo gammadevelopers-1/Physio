@@ -641,5 +641,48 @@
         }
       }
     }
+  },
+  "certificationsPage": {
+    "breadcrumb": "Certifications and CME",
+    "hero": {
+      "title": "Certified Continuing Medical Education (CME)",
+      "description": "Fully accredited by the Saudi Commission for Health Specialties (SCFHS) and the National eLearning Center (NELC). Earn recognized hours to renew your professional license.",
+      "button": "Browse Accredited Courses"
+    },
+    "accreditation": {
+      "nelc": {
+        "title": "NELC Licensed",
+        "description": "PhysioGuidance is officially licensed by the National eLearning Center of Saudi Arabia, ensuring the highest standards of digital education quality and compliance.",
+        "licenseLabel": "License No:"
+      },
+      "scfhs": {
+        "title": "SCFHS Approved",
+        "description": "Our medical courses are accredited by the Saudi Commission for Health Specialties. All completion certificates are valid for professional classification and registration renewal via Mumaris Plus.",
+        "accreditationLabel": "Accreditation No:"
+      }
+    },
+    "verification": {
+      "title": "Verify Certificate",
+      "subtitle": "Enter your certificate ID to verify",
+      "placeholder": "PG-2025-X82910",
+      "button": "Verify"
+    },
+    "claimCME": {
+      "title": "How to Claim Your CME Hours",
+      "steps": {
+        "step1": {
+          "title": "Complete the Course",
+          "description": "Watch all required modules and attend 80% of live webinar sessions (if applicable)."
+        },
+        "step2": {
+          "title": "Pass the Assessment",
+          "description": "Achieve a passing score of 70% or higher on the final evaluation quiz."
+        },
+        "step3": {
+          "title": "Upload CME Hours",
+          "description": "Download your certificate instantly and upload the unique ID directly to your Mumaris Plus dashboard."
+        }
+      }
+    }
   }
 }

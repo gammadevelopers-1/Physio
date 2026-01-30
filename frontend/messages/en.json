@@ -721,6 +721,71 @@
     "subtitle": "Explore archived",
     "noCoursesFound": "No archived courses found matching your criteria."
   },
+  "courseDetailPage": {
+    "breadcrumb": {
+      "home": "Home",
+      "courses": "Courses"
+    },
+    "languages": {
+      "english": "English",
+      "arabic": "Arabic"
+    },
+    "statsBar": {
+      "accessCourses": "Access all top-rated courses with a physioguidance.org.",
+      "seePlans": "See Plans & Pricing",
+      "reviews": "reviews",
+      "learners": "learners"
+    },
+    "selectCityMonth": {
+      "title": "Select City and Month:",
+      "cities": {
+        "jeddah": "Jeddah",
+        "riyadh": "Riyadh",
+        "dammam": "Dammam",
+        "madinah": "Al Madinah Al Munawwarah"
+      },
+      "months": {
+        "january": "January",
+        "february": "February",
+        "march": "March",
+        "april": "April"
+      }
+    },
+    "registrationNote": "Registration is confirmed only if the class has 4 or more participants. Classes with fewer than 4 participants will be merged with the next available class and you will be notified in advance.",
+    "pricingCard": {
+      "buyNow": "Buy Now",
+      "addToCart": "Add to cart",
+      "asLowAs": "As low as",
+      "perMonth": "/month",
+      "interestFree": "or 4 interest-free payments.",
+      "shariahCompliant": "Shariah-compliant.",
+      "learnMore": "Learn more",
+      "securePayment": "Secure payment through"
+    },
+    "courseDetails": {
+      "title": "Course Details",
+      "registrationDeadline": "Registration Deadline",
+      "city": "City",
+      "language": "Language",
+      "startTime": "Start time",
+      "duration": "Duration",
+      "endTime": "End time",
+      "venue": "Venue"
+    },
+    "whatYouWillLearn": {
+      "title": "What you will learn?"
+    },
+    "description": {
+      "title": "Description",
+      "viewMore": "View More",
+      "viewLess": "View Less"
+    },
+    "relatedCourses": {
+      "title": "Courses",
+      "subtitle": "Explore similar programs",
+      "viewAllButton": "View All Programs"
+    }
+  },
   "checkoutPage": {
     "breadcrumb": {
       "courses": "Courses",

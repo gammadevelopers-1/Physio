@@ -859,5 +859,101 @@
         "subtitle": "Insights, Updates, and Best Practices in Healthcare Education"
       }
     }
+  },
+  "becomeTrainerPage": {
+    "title": "Become a trainer",
+    "profile": {
+      "title": "Profile",
+      "photo": "Photo",
+      "attachCV": "Attach CV",
+      "fullName": "Full Name",
+      "fullNameArabicPlaceholder": "Arabic (As appears in the certificates)",
+      "fullNameEnglishPlaceholder": "English (As appears in the certificates)",
+      "emailAddress": "Email address",
+      "mobileNumber": "Mobile Number",
+      "gender": "Gender",
+      "nationality": "Nationality",
+      "nationalIqamaId": "National/Iqama ID",
+      "profession": "Profession",
+      "speciality": "Speciality",
+      "qualification": "Qualification",
+      "rank": "Rank",
+      "scfhsQuestion": "Do you have a classification number from scfhs?",
+      "twitter": "Twitter",
+      "linkedIn": "LinkedIn"
+    },
+    "resume": {
+      "title": "Resume",
+      "description": "Select how you'd like to submit your Resume: either create one directly within the app or upload an existing Resume file.",
+      "uploadResume": "Upload your resume",
+      "createResume": "Create your resume",
+      "education": "Education",
+      "professionalSkills": "Professional Skills",
+      "scientificResearches": "Scientific Researches",
+      "trainingExperience": "Training Experience",
+      "clickToUpload": "Click to upload",
+      "orDragAndDrop": "or drag and drop",
+      "pdfMaxSize": "PDF (max. 10MB)"
+    },
+    "bankAccount": {
+      "title": "Bank Account",
+      "accountHolderName": "Account Holder Name",
+      "bankName": "Bank Name",
+      "iban": "IBAN"
+    },
+    "buttons": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "options": {
+      "gender": {
+        "male": "Male",
+        "female": "Female"
+      },
+      "nationality": {
+        "saudiArabia": "Saudi Arabia",
+        "uae": "United Arab Emirates",
+        "egypt": "Egypt",
+        "jordan": "Jordan",
+        "other": "Other"
+      },
+      "profession": {
+        "doctor": "Doctor",
+        "nurse": "Nurse",
+        "physiotherapist": "Physiotherapist",
+        "pharmacist": "Pharmacist",
+        "other": "Other"
+      },
+      "specialty": {
+        "cardiology": "Cardiology",
+        "neurology": "Neurology",
+        "orthopedics": "Orthopedics",
+        "pediatrics": "Pediatrics",
+        "other": "Other"
+      },
+      "qualification": {
+        "bachelor": "Bachelor",
+        "master": "Master",
+        "phd": "PhD",
+        "boardCertified": "Board Certified",
+        "other": "Other"
+      },
+      "rank": {
+        "junior": "Junior",
+        "senior": "Senior",
+        "consultant": "Consultant",
+        "professor": "Professor",
+        "other": "Other"
+      },
+      "bank": {
+        "alRajhi": "Al Rajhi Bank",
+        "snb": "Saudi National Bank",
+        "riyad": "Riyad Bank",
+        "alBilad": "Al Bilad Bank",
+        "other": "Other"
+      }
+    }
   }
 }

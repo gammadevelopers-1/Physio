@@ -1071,5 +1071,101 @@
         "publishDate": "نُشر في 28 يناير 2022"
       }
     }
+  },
+  "becomeTrainerPage": {
+    "title": "كن مدربًا",
+    "profile": {
+      "title": "حسابك تعريفي",
+      "photo": "الصورة",
+      "attachCV": "إرفاق السيرة الذاتية",
+      "fullName": "الاسم الكامل",
+      "fullNameArabicPlaceholder": "بالعربية (كما يظهر في الشهادات)",
+      "fullNameEnglishPlaceholder": "بالإنجليزية (كما يظهر في الشهادات)",
+      "emailAddress": "البريد الإلكتروني",
+      "mobileNumber": "رقم الجوال",
+      "gender": "الجنس",
+      "nationality": "الجنسية",
+      "nationalIqamaId": "رقم الهوية/الإقامة",
+      "profession": "المهنة",
+      "speciality": "التخصص",
+      "qualification": "المؤهل العلمي",
+      "rank": "الرتبة",
+      "scfhsQuestion": "هل لديك رقم تصنيف من الهيئة السعودية للتخصصات الصحية؟",
+      "twitter": "تويتر",
+      "linkedIn": "لينكد إن"
+    },
+    "resume": {
+      "title": "السيرة الذاتية",
+      "description": "حدد الطريقة التي تفضلها لتقديم سيرتك الذاتية: إما إنشاء واحدة مباشرة داخل التطبيق أو تحميل ملف سيرة ذاتية موجود.",
+      "uploadResume": "تحميل السيرة الذاتية",
+      "createResume": "إنشاء السيرة الذاتية",
+      "education": "التعليم",
+      "professionalSkills": "المهارات المهنية",
+      "scientificResearches": "الأبحاث العلمية",
+      "trainingExperience": "الخبرة التدريبية",
+      "clickToUpload": "انقر للتحميل",
+      "orDragAndDrop": "أو اسحب وأفلت",
+      "pdfMaxSize": "PDF (الحد الأقصى 10 ميجابايت)"
+    },
+    "bankAccount": {
+      "title": "الحساب البنكي",
+      "accountHolderName": "اسم صاحب الحساب",
+      "bankName": "اسم البنك",
+      "iban": "رقم الآيبان"
+    },
+    "buttons": {
+      "cancel": "إلغاء",
+      "save": "حفظ",
+      "yes": "نعم",
+      "no": "لا"
+    },
+    "options": {
+      "gender": {
+        "male": "ذكر",
+        "female": "أنثى"
+      },
+      "nationality": {
+        "saudiArabia": "المملكة العربية السعودية",
+        "uae": "الإمارات العربية المتحدة",
+        "egypt": "مصر",
+        "jordan": "الأردن",
+        "other": "أخرى"
+      },
+      "profession": {
+        "doctor": "طبيب",
+        "nurse": "ممرض/ممرضة",
+        "physiotherapist": "أخصائي علاج طبيعي",
+        "pharmacist": "صيدلي",
+        "other": "أخرى"
+      },
+      "specialty": {
+        "cardiology": "أمراض القلب",
+        "neurology": "الأعصاب",
+        "orthopedics": "العظام",
+        "pediatrics": "الأطفال",
+        "other": "أخرى"
+      },
+      "qualification": {
+        "bachelor": "بكالوريوس",
+        "master": "ماجستير",
+        "phd": "دكتوراه",
+        "boardCertified": "البورد",
+        "other": "أخرى"
+      },
+      "rank": {
+        "junior": "مبتدئ",
+        "senior": "أول",
+        "consultant": "استشاري",
+        "professor": "أستاذ",
+        "other": "أخرى"
+      },
+      "bank": {
+        "alRajhi": "بنك الراجحي",
+        "snb": "البنك الأهلي السعودي",
+        "riyad": "بنك الرياض",
+        "alBilad": "بنك البلاد",
+        "other": "أخرى"
+      }
+    }
   }
 }

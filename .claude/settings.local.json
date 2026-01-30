@@ -24,7 +24,8 @@
       "mcp__figma-remote-mcp__whoami",
       "Bash(timeout 15s npm run dev:*)",
       "Bash(node -e:*)",
-      "WebFetch(domain:www.figma.com)"
+      "WebFetch(domain:www.figma.com)",
+      "Bash(node --check:*)"
     ]
   }
 }

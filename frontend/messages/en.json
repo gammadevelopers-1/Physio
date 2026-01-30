@@ -825,5 +825,39 @@
       "payNow": "Pay Now",
       "securePaymentThrough": "Secure payment through"
     }
+  },
+  "blogsPage": {
+    "featuredBlogs": {
+      "title": "Featured Blogs",
+      "subtitle": "Insights, Updates, and Best Practices in Healthcare Education"
+    },
+    "blogs": {
+      "title": "Blogs",
+      "subtitle": "Insights, Updates, and Best Practices in Healthcare Education"
+    },
+    "card": {
+      "readMore": "Read More"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "continue": "Continue"
+    },
+    "categories": {
+      "all": "All",
+      "digitalHealth": "Digital Health",
+      "training": "Training",
+      "medical": "Medical",
+      "research": "Research"
+    },
+    "blogDetail": {
+      "allPost": "All Post",
+      "publishedOn": "Published on",
+      "conclusion": "Conclusion",
+      "publishedBy": "Published by",
+      "latestBlogs": {
+        "title": "Latest Blogs",
+        "subtitle": "Insights, Updates, and Best Practices in Healthcare Education"
+      }
+    }
   }
 }

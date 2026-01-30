@@ -69,17 +69,22 @@ const CoursePagination = ({
       <div className="flex items-center justify-center gap-2 mt-8">
         {isRTL ? (
           <>
-            {/* RTL Mobile: Previous on left, pages in middle, Continue on right */}
+            {/* RTL Mobile: Previous on LEFT, Continue on RIGHT */}
+            {/* Due to parent RTL, flex items are reversed, so we put Continue first in DOM */}
+
+            {/* Continue button - appears on RIGHT due to parent RTL */}
             <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
             >
-              {t("pagination.previous")}
-              <ChevronRight className="w-4 h-4" />
+              <span className="flex items-center gap-1" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
+                {t("pagination.continue")}
+                <ChevronRight className="w-4 h-4" />
+              </span>
             </button>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" dir="ltr" style={{ direction: "ltr" }}>
               {visiblePages.map((page, index) => (
                 page === "..." ? (
                   <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-[#71717A] text-sm">
@@ -101,13 +106,16 @@ const CoursePagination = ({
               ))}
             </div>
 
+            {/* Previous button - appears on LEFT due to parent RTL */}
             <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
             >
-              <ChevronLeft className="w-4 h-4" />
-              {t("pagination.continue")}
+              <span className="flex items-center gap-1" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
+                <ChevronLeft className="w-4 h-4" />
+                {t("pagination.previous")}
+              </span>
             </button>
           </>
         ) : (
@@ -164,17 +172,22 @@ const CoursePagination = ({
     <div className="flex items-center justify-center gap-4 mt-12">
       {isRTL ? (
         <>
-          {/* RTL: Previous on left, pages in middle, Continue on right */}
+          {/* RTL Desktop: Previous on LEFT, Continue on RIGHT */}
+          {/* Due to parent RTL, flex items are reversed, so we put Continue first in DOM */}
+
+          {/* Continue button - appears on RIGHT due to parent RTL */}
           <button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
           >
-            {t("pagination.previous")}
-            <ChevronRight className="w-4 h-4" />
+            <span className="flex items-center gap-2" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
+              {t("pagination.continue")}
+              <ChevronRight className="w-4 h-4" />
+            </span>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" dir="ltr" style={{ direction: "ltr" }}>
             {visiblePages.map((page, index) => (
               page === "..." ? (
                 <span key={`ellipsis-${index}`} className="w-10 h-10 flex items-center justify-center text-[#71717A] text-sm">
@@ -196,13 +209,16 @@ const CoursePagination = ({
             ))}
           </div>
 
+          {/* Previous button - appears on LEFT due to parent RTL */}
           <button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
-            {t("pagination.continue")}
+            <span className="flex items-center gap-2" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
+              <ChevronLeft className="w-4 h-4" />
+              {t("pagination.previous")}
+            </span>
           </button>
         </>
       ) : (

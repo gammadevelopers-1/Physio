@@ -58,6 +58,55 @@ const BlogDetailContent = () => {
     return post.date;
   };
 
+  const getTranslatedAuthor = () => {
+    if (isRTL) {
+      try {
+        return t(`posts.${post.slug}.author`);
+      } catch {
+        return post.author.name;
+      }
+    }
+    return post.author.name;
+  };
+
+  // Helper to get translated content text based on content type and index
+  const getTranslatedContentText = (block: { type: string; text?: string }, index: number) => {
+    if (!isRTL || !block.text) return block.text;
+
+    try {
+      // Count occurrences of each type up to the current index
+      let paragraphCount = 0;
+      let headingCount = 0;
+      let quoteCount = 0;
+
+      for (let i = 0; i <= index; i++) {
+        const currentBlock = post.content[i];
+        if (currentBlock.type === "paragraph") {
+          paragraphCount++;
+        } else if (currentBlock.type === "heading") {
+          headingCount++;
+        } else if (currentBlock.type === "quote") {
+          quoteCount++;
+        }
+      }
+
+      switch (block.type) {
+        case "paragraph":
+          return t(`posts.${post.slug}.content.paragraph${paragraphCount}`);
+        case "heading":
+          return t(`posts.${post.slug}.content.heading${headingCount}`);
+        case "quote":
+          return t(`posts.${post.slug}.content.quote${quoteCount}`);
+        case "conclusion":
+          return t(`posts.${post.slug}.content.conclusion`);
+        default:
+          return block.text;
+      }
+    } catch {
+      return block.text;
+    }
+  };
+
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
       {/* Desktop Layout */}
@@ -126,7 +175,7 @@ const BlogDetailContent = () => {
                       className="text-[var(--on-surface-default)] mb-6"
                       style={{ fontSize: "16px", lineHeight: "1.8" }}
                     >
-                      {block.text}
+                      {getTranslatedContentText(block, index)}
                     </p>
                   );
                 case "heading":
@@ -136,7 +185,7 @@ const BlogDetailContent = () => {
                       className="font-semibold text-[var(--on-surface-default)] mt-10 mb-4"
                       style={{ fontSize: "24px" }}
                     >
-                      {block.text}
+                      {getTranslatedContentText(block, index)}
                     </h2>
                   );
                 case "image":
@@ -163,7 +212,7 @@ const BlogDetailContent = () => {
                         className="text-[var(--on-surface-default)] italic"
                         style={{ fontSize: "16px", lineHeight: "1.8" }}
                       >
-                        &ldquo;{block.text}&rdquo;
+                        &ldquo;{getTranslatedContentText(block, index)}&rdquo;
                       </p>
                     </blockquote>
                   );
@@ -183,7 +232,7 @@ const BlogDetailContent = () => {
                         className="text-[var(--on-surface-default)]"
                         style={{ fontSize: "16px", lineHeight: "1.8" }}
                       >
-                        {block.text}
+                        {getTranslatedContentText(block, index)}
                       </p>
                     </div>
                   );
@@ -196,7 +245,7 @@ const BlogDetailContent = () => {
           {/* Published By */}
           <div className="mt-10 pt-8 border-t border-[#E5E7EB]">
             <p className="text-sm text-[var(--on-surface-variant)]">
-              {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{post.author.name}</span>
+              {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{getTranslatedAuthor()}</span>
             </p>
           </div>
         </article>
@@ -276,7 +325,7 @@ const BlogDetailContent = () => {
                       className="text-[var(--on-surface-default)] mb-5 text-sm"
                       style={{ lineHeight: "1.8" }}
                     >
-                      {block.text}
+                      {getTranslatedContentText(block, index)}
                     </p>
                   );
                 case "heading":
@@ -286,7 +335,7 @@ const BlogDetailContent = () => {
                       className="font-semibold text-[var(--on-surface-default)] mt-8 mb-3"
                       style={{ fontSize: "20px" }}
                     >
-                      {block.text}
+                      {getTranslatedContentText(block, index)}
                     </h2>
                   );
                 case "image":
@@ -313,7 +362,7 @@ const BlogDetailContent = () => {
                         className="text-[var(--on-surface-default)] italic text-sm"
                         style={{ lineHeight: "1.8" }}
                       >
-                        &ldquo;{block.text}&rdquo;
+                        &ldquo;{getTranslatedContentText(block, index)}&rdquo;
                       </p>
                     </blockquote>
                   );
@@ -333,7 +382,7 @@ const BlogDetailContent = () => {
                         className="text-[var(--on-surface-default)] text-sm"
                         style={{ lineHeight: "1.8" }}
                       >
-                        {block.text}
+                        {getTranslatedContentText(block, index)}
                       </p>
                     </div>
                   );
@@ -346,7 +395,7 @@ const BlogDetailContent = () => {
           {/* Published By */}
           <div className="mt-8 pt-6 border-t border-[#E5E7EB]">
             <p className="text-xs text-[var(--on-surface-variant)]">
-              {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{post.author.name}</span>
+              {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{getTranslatedAuthor()}</span>
             </p>
           </div>
         </article>

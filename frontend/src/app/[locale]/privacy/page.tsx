@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const [activeSection, setActiveSection] = useState(sectionKeys[0]);
+  const [activeSection, setActiveSection] = useState<typeof sectionKeys[number]>(sectionKeys[0]);
 
   useEffect(() => {
     const handleScroll = () => {

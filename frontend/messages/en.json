@@ -716,6 +716,11 @@
       "button": "Get Started"
     }
   },
+  "archivedPage": {
+    "title": "Archived",
+    "subtitle": "Explore archived",
+    "noCoursesFound": "No archived courses found matching your criteria."
+  },
   "checkoutPage": {
     "breadcrumb": {
       "courses": "Courses",

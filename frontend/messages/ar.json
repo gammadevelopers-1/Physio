@@ -790,6 +790,11 @@
       }
     }
   },
+  "archivedPage": {
+    "title": "أرشيف",
+    "subtitle": "استكشاف الدورات والأحداث",
+    "noCoursesFound": "لم يتم العثور على دورات مؤرشفة تطابق معاييرك."
+  },
   "checkoutPage": {
     "breadcrumb": {
       "courses": "الدورات",

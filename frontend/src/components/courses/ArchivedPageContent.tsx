@@ -9,8 +9,13 @@ import {
   CourseCTA,
 } from "@/components/courses";
 import { courses, courseTypes, certifications } from "@/data/courses";
+import { useTranslations, useLocale } from "next-intl";
 
 const ArchivedPageContent = () => {
+  const t = useTranslations("archivedPage");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
@@ -104,23 +109,23 @@ const ArchivedPageContent = () => {
   return (
     <>
       {/* Desktop Layout */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block" dir={isRTL ? "rtl" : "ltr"}>
         <section className="px-16 py-12">
           <div className="max-w-[1200px] mx-auto">
             {/* Header */}
-            <div className="mb-8">
+            <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
               <h1
                 className="font-semibold text-[#06080b] mb-2"
                 style={{ fontSize: "48px" }}
               >
-                Archived
+                {t("title")}
               </h1>
               <p className="text-[#4a4c4f]" style={{ fontSize: "20px" }}>
-                Explore archived
+                {t("subtitle")}
               </p>
             </div>
 
-            {/* Main Content */}
+            {/* Main Content - dir=rtl automatically puts sidebar on right */}
             <div className="flex gap-8">
               {/* Sidebar Filters */}
               <CourseFilters
@@ -134,6 +139,7 @@ const ArchivedPageContent = () => {
                 onPricingChange={handlePricingChange}
                 courseTypes={courseTypes}
                 certifications={certifications}
+                isRTL={isRTL}
               />
 
               {/* Course Grid */}
@@ -142,7 +148,7 @@ const ArchivedPageContent = () => {
                   <>
                     <div className="grid grid-cols-3 gap-8">
                       {paginatedCourses.map((course) => (
-                        <CourseCard key={course.id} course={course} />
+                        <CourseCard key={course.id} course={course} isRTL={isRTL} />
                       ))}
                     </div>
 
@@ -150,12 +156,13 @@ const ArchivedPageContent = () => {
                       currentPage={currentPage}
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
+                      isRTL={isRTL}
                     />
                   </>
                 ) : (
                   <div className="text-center py-16">
                     <p className="text-[#4a4c4f] text-lg">
-                      No archived courses found matching your criteria.
+                      {t("noCoursesFound")}
                     </p>
                   </div>
                 )}
@@ -164,21 +171,21 @@ const ArchivedPageContent = () => {
           </div>
         </section>
 
-        <CourseCTA />
+        <CourseCTA isRTL={isRTL} />
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden pb-24">
-        <section className="px-4 py-6">
+      <div className="lg:hidden pb-24 overflow-x-hidden" dir={isRTL ? "rtl" : "ltr"}>
+        <section className="px-4 py-6 max-w-full">
           {/* Header */}
-          <div className="mb-6">
+          <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
             <h1
               className="font-semibold text-[#06080b] mb-1"
               style={{ fontSize: "24px" }}
             >
-              Archived
+              {t("title")}
             </h1>
-            <p className="text-[#4a4c4f] text-sm">Explore archived</p>
+            <p className="text-[#4a4c4f] text-sm">{t("subtitle")}</p>
           </div>
 
           {/* Filters */}
@@ -194,6 +201,7 @@ const ArchivedPageContent = () => {
             courseTypes={courseTypes}
             certifications={certifications}
             variant="mobile"
+            isRTL={isRTL}
           />
 
           {/* Course Cards */}
@@ -201,7 +209,7 @@ const ArchivedPageContent = () => {
             <>
               <div className="flex flex-col gap-6">
                 {paginatedCoursesMobile.map((course) => (
-                  <MobileCourseCard key={course.id} course={course} />
+                  <MobileCourseCard key={course.id} course={course} isRTL={isRTL} />
                 ))}
               </div>
 
@@ -210,18 +218,19 @@ const ArchivedPageContent = () => {
                 totalPages={totalPagesMobile}
                 onPageChange={handlePageChangeMobile}
                 variant="mobile"
+                isRTL={isRTL}
               />
             </>
           ) : (
             <div className="text-center py-12">
               <p className="text-[#4a4c4f] text-base">
-                No archived courses found matching your criteria.
+                {t("noCoursesFound")}
               </p>
             </div>
           )}
         </section>
 
-        <CourseCTA />
+        <CourseCTA isRTL={isRTL} />
       </div>
     </>
   );

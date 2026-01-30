@@ -685,6 +685,37 @@
       }
     }
   },
+  "coursesPage": {
+    "title": "Courses",
+    "subtitle": "Explore courses and events",
+    "searchResults": "Search results",
+    "searchPlaceholder": "Search for",
+    "noCoursesFound": "No courses found matching your criteria.",
+    "filters": {
+      "onlineCourses": "Online Courses",
+      "onSiteCourses": "On-site Courses",
+      "liveOnline": "Live Online",
+      "hybrid": "Hybrid",
+      "bha": "BHA",
+      "nha": "NHA",
+      "scfhs": "SCFHS",
+      "paid": "Paid",
+      "free": "Free"
+    },
+    "card": {
+      "viewDetails": "View Details",
+      "liveOnline": "Live Online"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "continue": "Continue"
+    },
+    "cta": {
+      "title": "Empower Your Workforce with Compliant Healthcare Education",
+      "description": "Join a trusted eLearning platform designed to meet national standards and support continuous professional development in the healthcare sector",
+      "button": "Get Started"
+    }
+  },
   "checkoutPage": {
     "breadcrumb": {
       "courses": "Courses",

@@ -1,12 +1,14 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface CoursePaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   variant?: "desktop" | "mobile";
+  isRTL?: boolean;
 }
 
 const CoursePagination = ({
@@ -14,7 +16,10 @@ const CoursePagination = ({
   totalPages,
   onPageChange,
   variant = "desktop",
+  isRTL = false,
 }: CoursePaginationProps) => {
+  const t = useTranslations("coursesPage");
+
   if (totalPages <= 1) return null;
 
   // Generate page numbers to display with ellipsis logic
@@ -62,90 +67,188 @@ const CoursePagination = ({
   if (variant === "mobile") {
     return (
       <div className="flex items-center justify-center gap-2 mt-8">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Previous
-        </button>
+        {isRTL ? (
+          <>
+            {/* RTL Mobile: Previous on left, pages in middle, Continue on right */}
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
+            >
+              {t("pagination.previous")}
+              <ChevronRight className="w-4 h-4" />
+            </button>
 
-        <div className="flex items-center gap-1">
-          {visiblePages.map((page, index) => (
-            page === "..." ? (
-              <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-[#71717A] text-sm">
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                onClick={() => onPageChange(page as number)}
-                className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === page
-                    ? "bg-[#06080b] text-white"
-                    : "text-[#06080b] hover:bg-[#F4F4F5]"
-                }`}
-              >
-                {page}
-              </button>
-            )
-          ))}
-        </div>
+            <div className="flex items-center gap-1">
+              {visiblePages.map((page, index) => (
+                page === "..." ? (
+                  <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-[#71717A] text-sm">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => onPageChange(page as number)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === page
+                        ? "bg-[#06080b] text-white"
+                        : "text-[#06080b] hover:bg-[#F4F4F5]"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+            </div>
 
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
-        >
-          Continue
-          <ChevronRight className="w-4 h-4" />
-        </button>
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {t("pagination.continue")}
+            </button>
+          </>
+        ) : (
+          <>
+            {/* LTR Mobile: Previous first, pages, Continue */}
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {t("pagination.previous")}
+            </button>
+
+            <div className="flex items-center gap-1">
+              {visiblePages.map((page, index) => (
+                page === "..." ? (
+                  <span key={`ellipsis-${index}`} className="w-8 h-8 flex items-center justify-center text-[#71717A] text-sm">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => onPageChange(page as number)}
+                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === page
+                        ? "bg-[#06080b] text-white"
+                        : "text-[#06080b] hover:bg-[#F4F4F5]"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+            </div>
+
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed rounded-lg bg-[#F4F4F5]"
+            >
+              {t("pagination.continue")}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </>
+        )}
       </div>
     );
   }
 
+  // For RTL: Previous on left, Continue on right (matching Figma exactly)
+  // For LTR: Previous on left, Continue on right
   return (
     <div className="flex items-center justify-center gap-4 mt-12">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Previous
-      </button>
+      {isRTL ? (
+        <>
+          {/* RTL: Previous on left, pages in middle, Continue on right */}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
+          >
+            {t("pagination.previous")}
+            <ChevronRight className="w-4 h-4" />
+          </button>
 
-      <div className="flex items-center gap-2">
-        {visiblePages.map((page, index) => (
-          page === "..." ? (
-            <span key={`ellipsis-${index}`} className="w-10 h-10 flex items-center justify-center text-[#71717A] text-sm">
-              ...
-            </span>
-          ) : (
-            <button
-              key={page}
-              onClick={() => onPageChange(page as number)}
-              className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                currentPage === page
-                  ? "bg-[#06080b] text-white"
-                  : "text-[#06080b] hover:bg-[#F4F4F5]"
-              }`}
-            >
-              {page}
-            </button>
-          )
-        ))}
-      </div>
+          <div className="flex items-center gap-2">
+            {visiblePages.map((page, index) => (
+              page === "..." ? (
+                <span key={`ellipsis-${index}`} className="w-10 h-10 flex items-center justify-center text-[#71717A] text-sm">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page as number)}
+                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                    currentPage === page
+                      ? "bg-[#06080b] text-white"
+                      : "text-[#06080b] hover:bg-[#F4F4F5]"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+          </div>
 
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
-      >
-        Continue
-        <ChevronRight className="w-4 h-4" />
-      </button>
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {t("pagination.continue")}
+          </button>
+        </>
+      ) : (
+        <>
+          {/* LTR: Previous first, then pages, then Continue */}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {t("pagination.previous")}
+          </button>
+
+          <div className="flex items-center gap-2">
+            {visiblePages.map((page, index) => (
+              page === "..." ? (
+                <span key={`ellipsis-${index}`} className="w-10 h-10 flex items-center justify-center text-[#71717A] text-sm">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => onPageChange(page as number)}
+                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
+                    currentPage === page
+                      ? "bg-[#06080b] text-white"
+                      : "text-[#06080b] hover:bg-[#F4F4F5]"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+          </div>
+
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#06080b] disabled:text-[#A1A1AA] disabled:cursor-not-allowed hover:bg-[#F4F4F5] rounded-lg transition-colors"
+          >
+            {t("pagination.continue")}
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </>
+      )}
     </div>
   );
 };

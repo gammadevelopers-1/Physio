@@ -154,7 +154,7 @@ const Navbar = () => {
 
           {/* Cart Icon - Hidden on mobile/tablet */}
           <Link
-            href={`/${locale}/cart`}
+            href={`/${locale}/checkout`}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
@@ -273,7 +273,7 @@ const Navbar = () => {
                 <Search className="w-5 h-5" strokeWidth={1.67} />
               </button>
               <Link
-                href={`/${locale}/cart`}
+                href={`/${locale}/checkout`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
               >
                 <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />

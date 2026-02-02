@@ -18,7 +18,7 @@ const BottomNav = () => {
   const navItems = [
     { href: `/${locale}`, label: t("home"), icon: "/home-01.svg" },
     { href: `/${locale}/search`, label: t("search"), icon: "/search-lg.svg" },
-    { href: `/${locale}/cart`, label: t("cart"), icon: "/file-02.svg" },
+    { href: `/${locale}/checkout`, label: t("cart"), icon: "/file-02.svg" },
   ];
 
   const platformLinks = [

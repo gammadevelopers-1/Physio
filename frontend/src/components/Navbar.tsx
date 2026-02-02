@@ -136,7 +136,7 @@ const Navbar = () => {
           {/* Language Toggle - Always visible */}
           <button
             onClick={switchLocale}
-            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
           >
             <Globe className="w-5 h-5" strokeWidth={1.67} />
             <span className="text-base leading-6">

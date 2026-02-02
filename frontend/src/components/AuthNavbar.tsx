@@ -129,7 +129,7 @@ const AuthNavbar = () => {
           {/* Language Toggle - Always visible */}
           <button
             onClick={switchLocale}
-            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            className="flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors cursor-pointer"
           >
             <span className="text-[length:var(--typeface-font-styles-paragraph-text)] leading-6">
               {t("languageToggle")}

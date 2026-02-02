@@ -5,6 +5,244 @@ import Image from "next/image";
 import { ChevronDown, Trash2, Mail, Image as ImageIcon, CloudUpload } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 
+// InputField component moved outside to prevent re-creation on parent re-render
+const InputField = ({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  placeholder = "",
+  icon,
+  withDivider = true,
+  isRTL = false,
+}: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  icon?: React.ReactNode;
+  withDivider?: boolean;
+  isRTL?: boolean;
+}) => (
+  <>
+    <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
+      <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
+        {label} {required && <span className="text-[#dc2626]">*</span>}
+      </label>
+      <div className="relative w-full lg:w-1/2">
+        {icon && (
+          <div className={`absolute top-1/2 -translate-y-1/2 text-[#C8D5E1] ${isRTL ? "right-4" : "left-4"}`}>
+            {icon}
+          </div>
+        )}
+        <input
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          required={required}
+          placeholder={placeholder}
+          className={`w-full h-12 ${icon ? (isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4') : 'px-4'} py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+          style={{ fontSize: "16px" }}
+        />
+      </div>
+    </div>
+    {withDivider && <div className="w-full h-px bg-[#F0F0F0]" />}
+  </>
+);
+
+// Checkbox component moved outside to prevent re-creation on parent re-render
+const Checkbox = ({
+  label,
+  name,
+  checked,
+  onChange,
+  isRTL = false,
+}: {
+  label: string;
+  name: string;
+  checked: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isRTL?: boolean;
+}) => (
+  <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}>
+    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors bg-white ${checked ? 'border-[#a37f49]' : 'border-[#C8D5E1]'}`}>
+      {checked && (
+        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+          <path d="M1 5L4.5 8.5L11 1.5" stroke="#a37f49" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+    </div>
+    <input
+      type="checkbox"
+      name={name}
+      checked={checked}
+      onChange={onChange}
+      className="hidden"
+    />
+    <span style={{ fontSize: "16px" }}>{label}</span>
+  </label>
+);
+
+// Dropdown component moved outside to prevent re-creation on parent re-render
+const Dropdown = ({
+  label,
+  field,
+  options,
+  translationKey,
+  value,
+  isOpen,
+  onToggle,
+  onSelect,
+  t,
+  required = false,
+  placeholder = "",
+  showFlag = false,
+  withDivider = true,
+}: {
+  label: string;
+  field: string;
+  options: { value: string; key: string }[];
+  translationKey: string;
+  value: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelect: (field: string, value: string) => void;
+  t: (key: string) => string;
+  required?: boolean;
+  placeholder?: string;
+  showFlag?: boolean;
+  withDivider?: boolean;
+}) => {
+  const getTranslatedValue = (val: string) => {
+    const option = options.find(opt => opt.value === val);
+    if (option) {
+      return t(`options.${translationKey}.${option.key}`);
+    }
+    return val;
+  };
+
+  return (
+    <>
+      <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
+        <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
+          {label} {required && <span className="text-[#dc2626]">*</span>}
+        </label>
+        <div className="relative w-full lg:w-1/2">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="w-full h-12 px-4 bg-white border border-[#C8D5E1] rounded-lg flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              {showFlag && value === "Saudi Arabia" && (
+                <Image src="/icons/flag.svg" alt="SA" width={20} height={20} className="rounded-sm" />
+              )}
+              <span className={value ? "text-[var(--on-surface-default)]" : "text-[var(--on-surface-variant)]"} style={{ fontSize: "16px" }}>
+                {value ? getTranslatedValue(value) : placeholder}
+              </span>
+            </div>
+            <ChevronDown className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+          {isOpen && (
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+              {options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => onSelect(field, option.value)}
+                  className="w-full px-4 py-2.5 hover:bg-[#EEF3F7] transition-colors flex items-center gap-2"
+                  style={{ fontSize: "16px" }}
+                >
+                  {showFlag && option.value === "Saudi Arabia" && <Image src="/icons/flag.svg" alt="SA" width={20} height={20} className="rounded-sm" />}
+                  {t(`options.${translationKey}.${option.key}`)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {withDivider && <div className="w-full h-px bg-[#F0F0F0]" />}
+    </>
+  );
+};
+
+// FileUpload component moved outside to prevent re-creation on parent re-render
+const FileUpload = ({
+  label,
+  field,
+  file,
+  onFileChange,
+  t,
+  accept = ".pdf",
+  isRTL = false,
+}: {
+  label: string;
+  field: string;
+  file: File | null;
+  onFileChange: (field: string, file: File | null) => void;
+  t: (key: string) => string;
+  accept?: string;
+  isRTL?: boolean;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className={`flex flex-col gap-3 ${isRTL ? "text-right" : ""}`}>
+      <label className="text-[var(--on-surface-default)] font-semibold" style={{ fontSize: "16px" }}>
+        {label}
+      </label>
+      <div
+        className="bg-[#F8FAFC] border border-[#C8D5E1] rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#F1F5F9] transition-colors"
+        onClick={() => inputRef.current?.click()}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={(e) => onFileChange(field, e.target.files?.[0] || null)}
+        />
+        {file ? (
+          <div className={`flex items-center justify-between w-full ${isRTL ? "flex-row-reverse" : ""}`}>
+            <span className="text-sm text-[var(--on-surface-default)] truncate max-w-[200px]">
+              {file.name}
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onFileChange(field, null);
+              }}
+              className="p-1 text-red-500 hover:bg-red-50 rounded"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center">
+              <CloudUpload className="w-6 h-6 text-[#6B7280]" strokeWidth={1.5} />
+            </div>
+            <div className="text-center">
+              <span className="text-sm text-[#002D87] font-medium">{t("resume.clickToUpload")}</span>
+              <span className="text-sm text-[var(--on-surface-variant)]"> {t("resume.orDragAndDrop")}</span>
+            </div>
+            <p className="text-xs text-[var(--on-surface-variant)]">
+              {t("resume.pdfMaxSize")}
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const BecomeTrainerForm = () => {
   const t = useTranslations("becomeTrainerPage");
   const locale = useLocale();
@@ -138,216 +376,10 @@ const BecomeTrainerForm = () => {
     console.log("Form submitted:", formData, files);
   };
 
-  const FileUpload = ({
-    label,
-    field,
-    accept = ".pdf",
-  }: {
-    label: string;
-    field: keyof typeof files;
-    accept?: string;
-  }) => {
-    const inputRef = useRef<HTMLInputElement>(null);
-    const file = files[field];
-
-    return (
-      <div className={`flex flex-col gap-3 ${isRTL ? "text-right" : ""}`}>
-        <label className="text-[var(--on-surface-default)] font-semibold" style={{ fontSize: "16px" }}>
-          {label}
-        </label>
-        <div
-          className="bg-[#F8FAFC] border border-[#C8D5E1] rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#F1F5F9] transition-colors"
-          onClick={() => inputRef.current?.click()}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            className="hidden"
-            onChange={(e) => handleFileChange(field, e.target.files?.[0] || null)}
-          />
-          {file ? (
-            <div className={`flex items-center justify-between w-full ${isRTL ? "flex-row-reverse" : ""}`}>
-              <span className="text-sm text-[var(--on-surface-default)] truncate max-w-[200px]">
-                {file.name}
-              </span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleFileChange(field, null);
-                }}
-                className="p-1 text-red-500 hover:bg-red-50 rounded"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <div className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center">
-                <CloudUpload className="w-6 h-6 text-[#6B7280]" strokeWidth={1.5} />
-              </div>
-              <div className="text-center">
-                <span className="text-sm text-[#002D87] font-medium">{t("resume.clickToUpload")}</span>
-                <span className="text-sm text-[var(--on-surface-variant)]"> {t("resume.orDragAndDrop")}</span>
-              </div>
-              <p className="text-xs text-[var(--on-surface-variant)]">
-                {t("resume.pdfMaxSize")}
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    );
+  // Helper function to handle file changes with proper typing
+  const handleFileChangeWrapper = (field: string, file: File | null) => {
+    handleFileChange(field as keyof typeof files, file);
   };
-
-  const Dropdown = ({
-    label,
-    field,
-    options,
-    translationKey,
-    required = false,
-    placeholder = "",
-    showFlag = false,
-    withDivider = true,
-  }: {
-    label: string;
-    field: string;
-    options: { value: string; key: string }[];
-    translationKey: string;
-    required?: boolean;
-    placeholder?: string;
-    showFlag?: boolean;
-    withDivider?: boolean;
-  }) => {
-    const isOpen = openDropdown === field;
-    const value = formData[field as keyof typeof formData] as string;
-
-    // Get translated display value
-    const getTranslatedValue = (val: string) => {
-      const option = options.find(opt => opt.value === val);
-      if (option) {
-        return t(`options.${translationKey}.${option.key}`);
-      }
-      return val;
-    };
-
-    return (
-      <>
-        <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
-          <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-            {label} {required && <span className="text-[#dc2626]">*</span>}
-          </label>
-          <div className="relative w-full lg:w-1/2">
-            <button
-              type="button"
-              onClick={() => setOpenDropdown(isOpen ? null : field)}
-              className="w-full h-12 px-4 bg-white border border-[#C8D5E1] rounded-lg flex items-center justify-between cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                {showFlag && value === "Saudi Arabia" && (
-                  <Image src="/icons/flag.svg" alt="SA" width={20} height={20} className="rounded-sm" />
-                )}
-                <span className={value ? "text-[var(--on-surface-default)]" : "text-[var(--on-surface-variant)]"} style={{ fontSize: "16px" }}>
-                  {value ? getTranslatedValue(value) : placeholder}
-                </span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
-            </button>
-            {isOpen && (
-              <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
-                {options.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => handleDropdownSelect(field, option.value)}
-                    className="w-full px-4 py-2.5 hover:bg-[#EEF3F7] transition-colors flex items-center gap-2"
-                    style={{ fontSize: "16px" }}
-                  >
-                    {showFlag && option.value === "Saudi Arabia" && <Image src="/icons/flag.svg" alt="SA" width={20} height={20} className="rounded-sm" />}
-                    {t(`options.${translationKey}.${option.key}`)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        {withDivider && <div className="w-full h-px bg-[#F0F0F0]" />}
-      </>
-    );
-  };
-
-  const InputField = ({
-    label,
-    name,
-    type = "text",
-    required = false,
-    placeholder = "",
-    icon,
-    withDivider = true,
-  }: {
-    label: string;
-    name: string;
-    type?: string;
-    required?: boolean;
-    placeholder?: string;
-    icon?: React.ReactNode;
-    withDivider?: boolean;
-  }) => (
-    <>
-      <div className="flex flex-col lg:flex-row lg:items-start py-4 lg:py-6 gap-2 lg:gap-0 lg:justify-between">
-        <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-          {label} {required && <span className="text-[#dc2626]">*</span>}
-        </label>
-        <div className="relative w-full lg:w-1/2">
-          {icon && (
-            <div className={`absolute top-1/2 -translate-y-1/2 text-[#C8D5E1] ${isRTL ? "right-4" : "left-4"}`}>
-              {icon}
-            </div>
-          )}
-          <input
-            type={type}
-            name={name}
-            value={formData[name as keyof typeof formData] as string}
-            onChange={handleInputChange}
-            required={required}
-            placeholder={placeholder}
-            className={`w-full h-12 ${icon ? (isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4') : 'px-4'} py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
-            style={{ fontSize: "16px" }}
-          />
-        </div>
-      </div>
-      {withDivider && <div className="w-full h-px bg-[#F0F0F0]" />}
-    </>
-  );
-
-  const Checkbox = ({
-    label,
-    name,
-    checked,
-  }: {
-    label: string;
-    name: string;
-    checked: boolean;
-  }) => (
-    <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}>
-      <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors bg-white ${checked ? 'border-[#a37f49]' : 'border-[#C8D5E1]'}`}>
-        {checked && (
-          <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-            <path d="M1 5L4.5 8.5L11 1.5" stroke="#a37f49" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </div>
-      <input
-        type="checkbox"
-        name={name}
-        checked={checked}
-        onChange={handleInputChange}
-        className="hidden"
-      />
-      <span style={{ fontSize: "16px" }}>{label}</span>
-    </label>
-  );
 
   return (
     <section className="bg-[#EEF3F7] min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
@@ -509,13 +541,13 @@ const BecomeTrainerForm = () => {
                 {/* Divider */}
                 <div className="w-full h-px bg-[#F0F0F0]" />
 
-                <Dropdown label={t("profile.gender")} field="gender" options={genderOptions} translationKey="gender" required />
-                <Dropdown label={t("profile.nationality")} field="nationality" options={nationalityOptions} translationKey="nationality" withDivider={false} required showFlag />
-                <InputField label={t("profile.nationalIqamaId")} name="nationalIqamaId" required />
-                <Dropdown label={t("profile.profession")} field="profession" options={professionOptions} translationKey="profession" required withDivider={false}  />
-                <Dropdown label={t("profile.speciality")} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false}  />
-                <Dropdown label={t("profile.qualification")} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false}  />
-                <Dropdown label={t("profile.rank")} field="rank" options={rankOptions} translationKey="rank" required  withDivider={false} />
+                <Dropdown label={t("profile.gender")} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={t("profile.nationality")} field="nationality" options={nationalityOptions} translationKey="nationality" withDivider={false} required showFlag value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
+                <InputField label={t("profile.nationalIqamaId")} name="nationalIqamaId" required value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />
+                <Dropdown label={t("profile.profession")} field="profession" options={professionOptions} translationKey="profession" required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={t("profile.speciality")} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={t("profile.qualification")} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={t("profile.rank")} field="rank" options={rankOptions} translationKey="rank" required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} t={t} />
 
                 {/* SCFHS Number Question */}
                 <div className="flex py-6 justify-between">
@@ -523,14 +555,14 @@ const BecomeTrainerForm = () => {
                     {t("profile.scfhsQuestion")} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="w-1/2 flex gap-8 pt-3">
-                    <Checkbox label={t("buttons.yes")} name="hasScfhsNumber" checked={formData.hasScfhsNumber} />
-                    <Checkbox label={t("buttons.no")} name="noScfhsNumber" checked={formData.noScfhsNumber} />
+                    <Checkbox label={t("buttons.yes")} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                    <Checkbox label={t("buttons.no")} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
                   </div>
                 </div>
                 <div className="w-full h-px bg-[#F0F0F0]" />
 
-                <InputField label={t("profile.twitter")} name="twitter" withDivider={false}  />
-                <InputField label={t("profile.linkedIn")} name="linkedIn" withDivider={false} />
+                <InputField label={t("profile.twitter")} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
+                <InputField label={t("profile.linkedIn")} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               {/* Divider */}
@@ -546,15 +578,15 @@ const BecomeTrainerForm = () => {
 
               {/* Resume Options */}
               <div className="flex gap-8 mb-8">
-                <Checkbox label={t("resume.uploadResume")} name="uploadResume" checked={formData.uploadResume} />
-                <Checkbox label={t("resume.createResume")} name="createResume" checked={formData.createResume} />
+                <Checkbox label={t("resume.uploadResume")} name="uploadResume" checked={formData.uploadResume} onChange={handleInputChange} isRTL={isRTL} />
+                <Checkbox label={t("resume.createResume")} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               <div className="flex flex-col gap-8">
-                <FileUpload label={t("resume.education")} field="education" />
-                <FileUpload label={t("resume.professionalSkills")} field="professionalSkills" />
-                <FileUpload label={t("resume.scientificResearches")} field="scientificResearches" />
-                <FileUpload label={t("resume.trainingExperience")} field="trainingExperience" />
+                <FileUpload label={t("resume.education")} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+                <FileUpload label={t("resume.professionalSkills")} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+                <FileUpload label={t("resume.scientificResearches")} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+                <FileUpload label={t("resume.trainingExperience")} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
               </div>
 
               {/* Divider */}
@@ -579,9 +611,9 @@ const BecomeTrainerForm = () => {
               <div className="w-full h-px bg-[#F0F0F0]" />
 
               <div className="flex flex-col ">
-                <InputField label={t("bankAccount.accountHolderName")} name="accountHolderName" required />
-                <Dropdown label={t("bankAccount.bankName")} field="bankName" options={bankOptions} translationKey="bank" withDivider={false} required />
-                <InputField label={t("bankAccount.iban")} name="iban" required withDivider={false} />
+                <InputField label={t("bankAccount.accountHolderName")} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
+                <Dropdown label={t("bankAccount.bankName")} field="bankName" options={bankOptions} translationKey="bank" withDivider={false} required value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} t={t} />
+                <InputField label={t("bankAccount.iban")} name="iban" required withDivider={false} value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               {/* Divider */}
@@ -676,7 +708,7 @@ const BecomeTrainerForm = () => {
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] my-1" />
 
-              <InputField label={t("profile.emailAddress")} name="email" type="email" required icon={<Mail className="w-5 h-5" strokeWidth={1.5} />} withDivider={false}/>
+              <InputField label={t("profile.emailAddress")} name="email" type="email" required icon={<Mail className="w-5 h-5" strokeWidth={1.5} />} withDivider={false} value={formData.email} onChange={handleInputChange} isRTL={isRTL} />
 
               {/* Mobile Number */}
               <div className="flex flex-col gap-2">
@@ -728,13 +760,13 @@ const BecomeTrainerForm = () => {
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] " />
 
-              <Dropdown label={t("profile.gender")} field="gender" options={genderOptions} translationKey="gender" required />
-              <Dropdown label={t("profile.nationality")} field="nationality" options={nationalityOptions} translationKey="nationality" required showFlag withDivider={false} />
-              <InputField label={t("profile.nationalIqamaId")} name="nationalIqamaId" required withDivider={false}/>
-              <Dropdown label={t("profile.profession")} field="profession" options={professionOptions} translationKey="profession" required withDivider={false}/>
-              <Dropdown label={t("profile.speciality")} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} />
-              <Dropdown label={t("profile.qualification")} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} />
-              <Dropdown label={t("profile.rank")} field="rank" options={rankOptions} translationKey="rank" required  withDivider={false}/>
+              <Dropdown label={t("profile.gender")} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={t("profile.nationality")} field="nationality" options={nationalityOptions} translationKey="nationality" required showFlag withDivider={false} value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
+              <InputField label={t("profile.nationalIqamaId")} name="nationalIqamaId" required withDivider={false} value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />
+              <Dropdown label={t("profile.profession")} field="profession" options={professionOptions} translationKey="profession" required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={t("profile.speciality")} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={t("profile.qualification")} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={t("profile.rank")} field="rank" options={rankOptions} translationKey="rank" required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} t={t} />
 
               {/* SCFHS Number Question */}
               <div className="flex flex-col gap-3">
@@ -742,15 +774,15 @@ const BecomeTrainerForm = () => {
                   {t("profile.scfhsQuestion")} <span className="text-[#dc2626]">*</span>
                 </label>
                 <div className="flex gap-6">
-                  <Checkbox label={t("buttons.yes")} name="hasScfhsNumber" checked={formData.hasScfhsNumber} />
-                  <Checkbox label={t("buttons.no")} name="noScfhsNumber" checked={formData.noScfhsNumber} />
+                  <Checkbox label={t("buttons.yes")} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                  <Checkbox label={t("buttons.no")} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
                 </div>
               </div>
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] " />
 
-              <InputField label={t("profile.twitter")} name="twitter" withDivider={false} />
-              <InputField label={t("profile.linkedIn")} name="linkedIn" withDivider={false} />
+              <InputField label={t("profile.twitter")} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
+              <InputField label={t("profile.linkedIn")} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             {/* Divider */}
@@ -766,15 +798,15 @@ const BecomeTrainerForm = () => {
 
             {/* Resume Options */}
             <div className="flex flex-col gap-6 mb-5">
-              <Checkbox label={t("resume.uploadResume")} name="uploadResume" checked={formData.uploadResume} />
-              <Checkbox label={t("resume.createResume")} name="createResume" checked={formData.createResume} />
+              <Checkbox label={t("resume.uploadResume")} name="uploadResume" checked={formData.uploadResume} onChange={handleInputChange} isRTL={isRTL} />
+              <Checkbox label={t("resume.createResume")} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             <div className="flex flex-col gap-5">
-              <FileUpload label={t("resume.education")} field="education" />
-              <FileUpload label={t("resume.professionalSkills")} field="professionalSkills" />
-              <FileUpload label={t("resume.scientificResearches")} field="scientificResearches" />
-              <FileUpload label={t("resume.trainingExperience")} field="trainingExperience" />
+              <FileUpload label={t("resume.education")} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+              <FileUpload label={t("resume.professionalSkills")} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+              <FileUpload label={t("resume.scientificResearches")} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+              <FileUpload label={t("resume.trainingExperience")} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
             </div>
 
              {/* Divider */}
@@ -799,9 +831,9 @@ const BecomeTrainerForm = () => {
              <div className="w-full h-px bg-[#F0F0F0] " />
 
             <div className="flex flex-col ">
-              <InputField label={t("bankAccount.accountHolderName")} name="accountHolderName" required />
-              <Dropdown label={t("bankAccount.bankName")} field="bankName" options={bankOptions} translationKey="bank" required withDivider={false} />
-              <InputField label={t("bankAccount.iban")} name="iban" required />
+              <InputField label={t("bankAccount.accountHolderName")} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
+              <Dropdown label={t("bankAccount.bankName")} field="bankName" options={bankOptions} translationKey="bank" required withDivider={false} value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} t={t} />
+              <InputField label={t("bankAccount.iban")} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             {/* Cancel/Save Buttons for Bank Account */}

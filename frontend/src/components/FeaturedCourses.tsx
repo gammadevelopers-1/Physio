@@ -328,7 +328,8 @@ const FeaturedCourses = () => {
         {/* Desktop Courses Grid - 4 columns (1280px+) */}
         <div className="hidden xl:flex bg-white flex-col gap-[64px] items-start w-full">
           <div
-            className={`flex gap-[32px] items-start w-full ${isRTL ? "flex-row-reverse" : ""}`}
+            className="flex gap-[32px] items-start w-full"
+            dir={isRTL ? "rtl" : "ltr"}
           >
             {courses.map((course, index) => (
               <CourseCard

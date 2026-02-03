@@ -10,9 +10,9 @@ const CTASection = () => {
 
   return (
     <section className="relative bg-[var(--surface-container-low)] px-4 lg:px-10 py-16 lg:py-[120px] overflow-hidden">
-      {/* Background Image */}
+      {/* Background Image - Flipped horizontally in RTL */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="absolute w-[1440px] h-[1440px]">
+        <div className={`absolute w-[1440px] h-[1440px] ${isRTL ? "-scale-x-100" : ""}`}>
           <Image
             src="/images/cta-bg.png"
             alt=""

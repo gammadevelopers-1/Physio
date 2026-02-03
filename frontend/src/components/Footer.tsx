@@ -65,9 +65,15 @@ const Footer = () => {
             </p>
 
             {/* Social Icons */}
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center" dir={isRTL ? "rtl" : "ltr"}>
               <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Facebook
+                <Instagram
+                  className="w-6 h-6 text-[var(--on-surface-variant)]"
+                  strokeWidth={1.5}
+                />
+              </div>
+              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                <Twitter
                   className="w-6 h-6 text-[var(--on-surface-variant)]"
                   strokeWidth={1.5}
                 />
@@ -78,14 +84,8 @@ const Footer = () => {
                   strokeWidth={1.5}
                 />
               </div>
-              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)] size-10">
-                <Twitter
-                  className="w-6 h-6 text-[var(--on-surface-variant)]"
-                  strokeWidth={1.5}
-                />
-              </div>
               <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Instagram
+                <Facebook
                   className="w-6 h-6 text-[var(--on-surface-variant)]"
                   strokeWidth={1.5}
                 />
@@ -191,7 +191,7 @@ const Footer = () => {
           </div>
 
           {/* Payment Methods */}
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-4 items-center" dir={isRTL ? "rtl" : "ltr"}>
             {/* Visa */}
             <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
               <Image

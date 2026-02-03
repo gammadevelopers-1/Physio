@@ -136,9 +136,9 @@ export default function AboutPage() {
           </p>
 
           {/* Cards Grid - Reversed order for RTL */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 w-full ${isRTL ? "lg:direction-rtl" : ""}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 w-full" dir={isRTL ? "rtl" : "ltr"}>
             {/* Card 1 - Self-paced courses (rightmost in RTL) */}
-            <div className={`relative pb-4 ${isRTL ? "lg:order-3" : "lg:order-1"}`}>
+            <div className="relative pb-4">
               <div className="relative h-[286px] lg:h-[250px] rounded-2xl overflow-hidden shadow-[-2px_8px_2px_0_rgba(0,0,0,0.00),-1px_5px_2px_0_rgba(0,0,0,0.01)] lg:shadow-none">
                 <Image
                   src="/images/learning_exp_m1.png"
@@ -172,7 +172,7 @@ export default function AboutPage() {
             </div>
 
             {/* Card 2 - Live lectures (middle) */}
-            <div className={`relative pb-4 ${isRTL ? "lg:order-2" : "lg:order-2"}`}>
+            <div className="relative pb-4">
               <div className="relative h-[286px] lg:h-[250px] rounded-2xl overflow-hidden shadow-[-2px_8px_2px_0_rgba(0,0,0,0.00),-1px_5px_2px_0_rgba(0,0,0,0.01)] lg:shadow-none">
                 <Image
                   src="/images/learning_exp_m2.png"
@@ -206,7 +206,7 @@ export default function AboutPage() {
             </div>
 
             {/* Card 3 - Digital certificates (leftmost in RTL) */}
-            <div className={`relative pb-4 ${isRTL ? "lg:order-1" : "lg:order-3"}`}>
+            <div className="relative pb-4">
               <div className="relative h-[286px] lg:h-[250px] rounded-2xl overflow-hidden shadow-[-2px_8px_2px_0_rgba(0,0,0,0.00),-1px_5px_2px_0_rgba(0,0,0,0.01)] lg:shadow-none">
                 <Image
                   src="/images/learning_exp_m3.png"
@@ -254,10 +254,10 @@ export default function AboutPage() {
           </p>
 
           {/* Features Grid - First Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8 w-full mb-5 lg:mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8 w-full mb-5 lg:mb-8" dir={isRTL ? "rtl" : "ltr"}>
             {/* Feature 1 - Bilingual Interface (rightmost in RTL) */}
             <div
-              className={`flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)] ${isRTL ? "lg:order-3" : "lg:order-1"}`}
+              className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
               style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
             >
               <div className="w-[38px] h-[38px] lg:w-12 lg:h-12 flex items-center justify-center mb-2 lg:mb-4">
@@ -279,7 +279,7 @@ export default function AboutPage() {
 
             {/* Feature 2 - Advanced Dashboards (middle) */}
             <div
-              className={`flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)] ${isRTL ? "lg:order-2" : "lg:order-2"}`}
+              className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
               style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
             >
               <div className="w-[38px] h-[38px] lg:w-12 lg:h-12 flex items-center justify-center mb-2 lg:mb-4">
@@ -301,7 +301,7 @@ export default function AboutPage() {
 
             {/* Feature 3 - Secure Payments (leftmost in RTL) */}
             <div
-              className={`flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)] ${isRTL ? "lg:order-1" : "lg:order-3"}`}
+              className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
               style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
             >
               <div className="w-[38px] h-[38px] lg:w-12 lg:h-12 flex items-center justify-center mb-2 lg:mb-4">
@@ -323,10 +323,10 @@ export default function AboutPage() {
           </div>
 
           {/* Features Grid - Second Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-8 w-full" dir={isRTL ? "rtl" : "ltr"}>
             {/* Feature 4 - Instructor Management (rightmost in RTL) */}
             <div
-              className={`flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)] ${isRTL ? "lg:order-3" : "lg:order-1"}`}
+              className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
               style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
             >
               <div className="w-[38px] h-[38px] lg:w-12 lg:h-12 flex items-center justify-center mb-2 lg:mb-4">
@@ -348,7 +348,7 @@ export default function AboutPage() {
 
             {/* Feature 5 - Reporting & Analytics (middle) */}
             <div
-              className={`flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)] ${isRTL ? "lg:order-2" : "lg:order-2"}`}
+              className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
               style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
             >
               <div className="w-[38px] h-[38px] lg:w-12 lg:h-12 flex items-center justify-center mb-2 lg:mb-4">
@@ -370,7 +370,7 @@ export default function AboutPage() {
 
             {/* Feature 6 - Role-based Access (leftmost in RTL) */}
             <div
-              className={`flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)] ${isRTL ? "lg:order-1" : "lg:order-3"}`}
+              className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
               style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
             >
               <div className="w-[38px] h-[38px] lg:w-12 lg:h-12 flex items-center justify-center mb-2 lg:mb-4">

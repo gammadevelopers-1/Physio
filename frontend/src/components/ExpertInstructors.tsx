@@ -48,7 +48,8 @@ const ExpertInstructors = () => {
         <div className="hidden md:flex flex-col gap-6 items-center justify-center">
           {/* Row 1 - 3 instructors */}
           <div
-            className={`flex gap-6 items-center justify-center ${isRTL ? "flex-row-reverse" : ""}`}
+            className="flex gap-6 items-center justify-center"
+            dir={isRTL ? "rtl" : "ltr"}
           >
             {row1.map((instructor, index) => (
               <div
@@ -71,7 +72,8 @@ const ExpertInstructors = () => {
 
           {/* Row 2 - 4 instructors */}
           <div
-            className={`flex gap-6 items-center ${isRTL ? "flex-row-reverse" : ""}`}
+            className="flex gap-6 items-center"
+            dir={isRTL ? "rtl" : "ltr"}
           >
             {row2.map((instructor, index) => (
               <div
@@ -97,7 +99,8 @@ const ExpertInstructors = () => {
         <div className="flex md:hidden flex-col gap-5 items-center justify-center">
           {/* Row 1 - 3 instructors */}
           <div
-            className={`flex gap-5 items-center justify-center ${isRTL ? "flex-row-reverse" : ""}`}
+            className="flex gap-5 items-center justify-center"
+            dir={isRTL ? "rtl" : "ltr"}
           >
             {row1.map((instructor, index) => (
               <div
@@ -120,7 +123,8 @@ const ExpertInstructors = () => {
 
           {/* Row 2 - 4 instructors with flex wrap */}
           <div
-            className={`flex flex-wrap gap-4 items-center justify-center ${isRTL ? "flex-row-reverse" : ""}`}
+            className="flex flex-wrap gap-4 items-center justify-center"
+            dir={isRTL ? "rtl" : "ltr"}
           >
             {row2.map((instructor, index) => (
               <div

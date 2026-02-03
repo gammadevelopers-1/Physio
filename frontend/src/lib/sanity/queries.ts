@@ -104,3 +104,30 @@ export const getLatestBlogsQuery = `
     }
   }
 `;
+
+// Search blogs by query (searches title, excerpt, and tags in both languages)
+export const searchBlogsQuery = `
+  *[_type == "blogPost" && (
+    title.en match $searchQuery ||
+    title.ar match $searchQuery ||
+    excerpt.en match $searchQuery ||
+    excerpt.ar match $searchQuery ||
+    $searchQuery in tags[]
+  )] | order(publishedAt desc) {
+    _id,
+    title,
+    slug,
+    excerpt,
+    mainImage,
+    category->{
+      _id,
+      title,
+      slug
+    },
+    publishedAt,
+    readTimeMinutes,
+    featured,
+    author,
+    tags
+  }
+`;

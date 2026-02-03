@@ -860,6 +860,35 @@
       }
     }
   },
+  "searchPage": {
+    "title": "Search",
+    "subtitle": "Find courses, blogs, and more",
+    "placeholder": "Search for courses, blogs...",
+    "placeholderMobile": "Search...",
+    "searchButton": "Search",
+    "clearButton": "Clear",
+    "filters": {
+      "all": "All",
+      "courses": "Courses",
+      "blogs": "Blogs"
+    },
+    "results": {
+      "title": "Search Results",
+      "noResults": "No results found",
+      "noResultsDescription": "Try adjusting your search or filters to find what you're looking for.",
+      "showing": "Showing",
+      "resultsFor": "results for",
+      "course": "Course",
+      "blog": "Blog",
+      "courses": "Courses",
+      "blogs": "Blogs"
+    },
+    "recentSearches": "Recent Searches",
+    "clearAll": "Clear All",
+    "popularSearches": "Popular Searches",
+    "viewDetails": "View Details",
+    "readMore": "Read More"
+  },
   "becomeTrainerPage": {
     "title": "Become a trainer",
     "profile": {

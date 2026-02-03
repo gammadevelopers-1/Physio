@@ -1,4 +1,15 @@
-import { BlogPost } from "@/components/blogs";
+// Legacy mock data interface - blogs are now fetched from Sanity CMS
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  readTime: string;
+  publishDate: string;
+  image: string;
+  featured?: boolean;
+}
 
 export const blogPosts: BlogPost[] = [
   {

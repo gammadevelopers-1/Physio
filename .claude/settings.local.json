@@ -25,7 +25,9 @@
       "Bash(timeout 15s npm run dev:*)",
       "Bash(node -e:*)",
       "WebFetch(domain:www.figma.com)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)"
     ]
   }
 }

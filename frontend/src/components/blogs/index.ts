@@ -7,4 +7,3 @@ export { default as LatestBlogs } from "./LatestBlogs";
 export { default as BlogContent } from "./BlogContent";
 export { default as BlogsPageContent } from "./BlogsPageContent";
 export { default as BlogDetailContent } from "./BlogDetailContent";
-export type { BlogPost } from "./BlogCard";

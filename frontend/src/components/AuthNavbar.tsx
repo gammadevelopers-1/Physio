@@ -141,9 +141,12 @@ const AuthNavbar = () => {
           <div className="hidden md:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />
 
           {/* Search Icon - Hidden on mobile */}
-          <button className="hidden md:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors">
+          <Link
+            href={`/${locale}/search`}
+            className="hidden md:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+          >
             <Search className="w-5 h-5" strokeWidth={1.67} />
-          </button>
+          </Link>
 
           {/* Cart Icon - Hidden on mobile */}
           <Link
@@ -262,9 +265,13 @@ const AuthNavbar = () => {
 
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 pt-4">
-              <button className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors">
+              <Link
+                href={`/${locale}/search`}
+                className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 <Search className="w-5 h-5" strokeWidth={1.67} />
-              </button>
+              </Link>
               <Link
                 href={`/${locale}/checkout`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"

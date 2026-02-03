@@ -1072,6 +1072,35 @@
       }
     }
   },
+  "searchPage": {
+    "title": "البحث",
+    "subtitle": "ابحث عن الدورات والمدونات والمزيد",
+    "placeholder": "ابحث عن الدورات والمدونات...",
+    "placeholderMobile": "بحث...",
+    "searchButton": "بحث",
+    "clearButton": "مسح",
+    "filters": {
+      "all": "الكل",
+      "courses": "الدورات",
+      "blogs": "المدونات"
+    },
+    "results": {
+      "title": "نتائج البحث",
+      "noResults": "لم يتم العثور على نتائج",
+      "noResultsDescription": "حاول تعديل البحث أو الفلاتر للعثور على ما تبحث عنه.",
+      "showing": "عرض",
+      "resultsFor": "نتيجة لـ",
+      "course": "دورة",
+      "blog": "مدونة",
+      "courses": "الدورات",
+      "blogs": "المدونات"
+    },
+    "recentSearches": "عمليات البحث الأخيرة",
+    "clearAll": "مسح الكل",
+    "popularSearches": "عمليات البحث الشائعة",
+    "viewDetails": "عرض التفاصيل",
+    "readMore": "اقرأ المزيد"
+  },
   "becomeTrainerPage": {
     "title": "كن مدربًا",
     "profile": {

@@ -1,10 +1,13 @@
 import { createClient } from "@sanity/client";
 import imageUrlBuilder from "@sanity/image-url";
-import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!;
+// Sanity configuration with fallbacks
+const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "6mumkeub";
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
 const apiVersion = "2024-01-01";
+
+// Type for Sanity image source
+type SanityImageSource = Parameters<ReturnType<typeof imageUrlBuilder>["image"]>[0];
 
 // Public client for reading published content
 export const client = createClient({

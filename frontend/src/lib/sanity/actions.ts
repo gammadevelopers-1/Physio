@@ -10,6 +10,7 @@ import {
     getBlogCategoriesQuery,
     getBlogBySlugQuery,
     getLatestBlogsQuery,
+    searchBlogsQuery,
 } from "@/lib/sanity/queries";
 import type { SanityBlogPost, SanityBlogPostDetail, SanityCategory } from "@/lib/sanity/types";
 
@@ -59,6 +60,18 @@ export async function fetchLatestBlogs(): Promise<SanityBlogPost[]> {
         return posts || [];
     } catch (error) {
         console.error("Error fetching latest blogs from Sanity:", error);
+        return [];
+    }
+}
+
+export async function searchBlogs(query: string): Promise<SanityBlogPost[]> {
+    try {
+        // Add wildcards for partial matching
+        const searchQuery = `*${query}*`;
+        const posts = await client.fetch<SanityBlogPost[]>(searchBlogsQuery, { searchQuery });
+        return posts || [];
+    } catch (error) {
+        console.error("Error searching blogs from Sanity:", error);
         return [];
     }
 }

@@ -984,5 +984,62 @@
         "other": "Other"
       }
     }
+  },
+  "studentDashboard": {
+    "title": "Student Dashboard",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "courses": "Courses",
+      "favorites": "Favorites",
+      "certifications": "Certifications",
+      "badges": "Badges",
+      "invoices": "Invoices",
+      "inviteFriends": "Invite friends",
+      "settings": "Settings",
+      "points": "Points",
+      "profileCompletion": "Profile Completion",
+      "personalInformation": "Personal Information",
+      "contactInformation": "Contact Information",
+      "viewProfile": "View Profile",
+      "editProfile": "Edit Profile"
+    },
+    "stats": {
+      "courses": "Courses",
+      "myCertificates": "My Certificates",
+      "courseCompleted": "Course Completed"
+    },
+    "recentCourses": {
+      "title": "Recent Courses",
+      "noCoursesTitle": "No courses yet",
+      "noCoursesDescription": "Your courses will appear here.",
+      "viewCourses": "View Courses",
+      "viewCourse": "View course",
+      "inProgress": "In progress.",
+      "completed": "Completed",
+      "notStarted": "Not started"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "noNotificationsTitle": "No Notifications",
+      "noNotificationsDescription": "You're all caught up. New notifications will appear here.",
+      "refresh": "Refresh",
+      "courseAdded": "Course Added",
+      "courseAddedMessage": "New course added to your library."
+    },
+    "calendar": {
+      "title": "Calendar",
+      "noEventsTitle": "No Upcoming Event",
+      "noEventsDescription": "You're all caught up. New events will appear here.",
+      "zoom": "Zoom",
+      "today": "Today",
+      "mins": "mins"
+    },
+    "mockData": {
+      "courseTitleACLS": "Advanced Cardiovascular Life Support",
+      "lecture2": "Lecture 2",
+      "lecture3": "Lecture 3",
+      "instructorFaisal": "Dr. Faisal Al-Otaibi",
+      "tuesday": "Tue"
+    }
   }
 }

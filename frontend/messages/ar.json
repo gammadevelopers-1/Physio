@@ -1196,5 +1196,62 @@
         "other": "أخرى"
       }
     }
+  },
+  "studentDashboard": {
+    "title": "لوحة تحكم الطالب",
+    "sidebar": {
+      "dashboard": "لوحة التحكم",
+      "courses": "الدورات",
+      "favorites": "المفضلة",
+      "certifications": "الشهادات",
+      "badges": "الشارات",
+      "invoices": "الفواتير",
+      "inviteFriends": "دعوة الأصدقاء",
+      "settings": "الإعدادات",
+      "points": "نقاط",
+      "profileCompletion": "اكتمال الملف الشخصي",
+      "personalInformation": "المعلومات الشخصية",
+      "contactInformation": "معلومات الاتصال",
+      "viewProfile": "عرض الملف الشخصي",
+      "editProfile": "تعديل الملف الشخصي"
+    },
+    "stats": {
+      "courses": "الدورات",
+      "myCertificates": "شهاداتي",
+      "courseCompleted": "الدورات المكتملة"
+    },
+    "recentCourses": {
+      "title": "الدورات الأخيرة",
+      "noCoursesTitle": "لا توجد دورات بعد",
+      "noCoursesDescription": "ستظهر دوراتك هنا.",
+      "viewCourses": "عرض الدورات",
+      "viewCourse": "عرض الدورة",
+      "inProgress": "قيد التقدم",
+      "completed": "مكتملة",
+      "notStarted": "لم تبدأ"
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "noNotificationsTitle": "لا توجد إشعارات",
+      "noNotificationsDescription": "أنت على اطلاع. ستظهر الإشعارات الجديدة هنا.",
+      "refresh": "تحديث",
+      "courseAdded": "تمت إضافة دورة",
+      "courseAddedMessage": "تمت إضافة دورة جديدة إلى مكتبتك."
+    },
+    "calendar": {
+      "title": "التقويم",
+      "noEventsTitle": "لا توجد أحداث قادمة",
+      "noEventsDescription": "أنت على اطلاع. ستظهر الأحداث الجديدة هنا.",
+      "zoom": "زوم",
+      "today": "اليوم",
+      "mins": "دقيقة"
+    },
+    "mockData": {
+      "courseTitleACLS": "دعم الحياة القلبي الوعائي المتقدم",
+      "lecture2": "المحاضرة 2",
+      "lecture3": "المحاضرة 3",
+      "instructorFaisal": "د. فيصل العتيبي",
+      "tuesday": "الثلاثاء"
+    }
   }
 }

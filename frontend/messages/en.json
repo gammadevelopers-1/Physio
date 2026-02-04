@@ -1124,6 +1124,33 @@
       "moreOptions": "More options",
       "resend": "Resend invite",
       "cancel": "Cancel invite"
+    },
+    "settings": {
+      "title": "Settings",
+      "changePhoto": "Change photo",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "scfhsNumber": "SCFHS Number:",
+      "nationalId": "National ID:",
+      "nationality": "Nationality:",
+      "selectNationality": "Select nationality",
+      "gender": "Gender",
+      "selectGender": "Select gender",
+      "dob": "DOB",
+      "biography": "Biography",
+      "saveChanges": "Save Changes",
+      "nationalities": {
+        "saudiArabia": "Saudi Arabia",
+        "uae": "UAE",
+        "egypt": "Egypt",
+        "jordan": "Jordan",
+        "other": "Other"
+      },
+      "genders": {
+        "male": "Male",
+        "female": "Female"
+      }
     }
   }
 }

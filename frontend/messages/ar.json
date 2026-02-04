@@ -1336,6 +1336,33 @@
       "moreOptions": "المزيد من الخيارات",
       "resend": "إعادة إرسال الدعوة",
       "cancel": "إلغاء الدعوة"
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "changePhoto": "تغيير الصورة",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "scfhsNumber": "رقم الهيئة السعودية:",
+      "nationalId": "رقم الهوية الوطنية:",
+      "nationality": "الجنسية:",
+      "selectNationality": "اختر الجنسية",
+      "gender": "الجنس",
+      "selectGender": "اختر الجنس",
+      "dob": "تاريخ الميلاد",
+      "biography": "السيرة الذاتية",
+      "saveChanges": "حفظ التغييرات",
+      "nationalities": {
+        "saudiArabia": "المملكة العربية السعودية",
+        "uae": "الإمارات",
+        "egypt": "مصر",
+        "jordan": "الأردن",
+        "other": "أخرى"
+      },
+      "genders": {
+        "male": "ذكر",
+        "female": "أنثى"
+      }
     }
   }
 }

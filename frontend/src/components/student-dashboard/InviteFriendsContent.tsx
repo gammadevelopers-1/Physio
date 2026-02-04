@@ -85,9 +85,9 @@ const InviteFriendsContent = () => {
   const getStatusStyles = (status: Invite["status"]) => {
     switch (status) {
       case "sent":
-        return "text-[#10B981] bg-[#D1FAE5]";
+        return "text-[#15803D] bg-[#15803D]/10";
       case "accepted":
-        return "text-[#16A34A] bg-[#DCFCE7]";
+        return "text-[#15803D] bg-[#15803D]/10";
       case "pending":
         return "text-[#6B7280] bg-[#F3F4F6]";
       default:

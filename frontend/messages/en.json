@@ -1083,6 +1083,12 @@
         "courseDescription": "The course aims to enhance healthcare providers' skills in motivating patients and improving treatment adherence. It f...",
         "accreditedByName": "Saudi Commission for Health Specialties (SCFHS)"
       }
+    },
+    "badges": {
+      "title": "Badges",
+      "noBadgesTitle": "No Badges yet",
+      "noBadgesDescription": "Your Badges will appear here.",
+      "viewCourses": "View Courses"
     }
   }
 }

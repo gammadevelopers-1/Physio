@@ -1070,6 +1070,19 @@
       "notStarted": "Not started",
       "removeFromFavourites": "Remove from favorites",
       "addToFavourites": "Add to favorites"
+    },
+    "certifications": {
+      "title": "Certificates",
+      "noCertificatesTitle": "No Certificate yet",
+      "noCertificatesDescription": "Your certificates will appear here.",
+      "viewCourses": "View Courses",
+      "viewCertificate": "View Certificate",
+      "accreditedBy": "Accredited by",
+      "mockData": {
+        "courseTitle": "Advanced Cardiovascular Life Support",
+        "courseDescription": "The course aims to enhance healthcare providers' skills in motivating patients and improving treatment adherence. It f...",
+        "accreditedByName": "Saudi Commission for Health Specialties (SCFHS)"
+      }
     }
   }
 }

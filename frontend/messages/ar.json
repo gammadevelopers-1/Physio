@@ -1282,6 +1282,19 @@
       "notStarted": "لم تبدأ",
       "removeFromFavourites": "إزالة من المفضلة",
       "addToFavourites": "إضافة إلى المفضلة"
+    },
+    "certifications": {
+      "title": "الشهادات",
+      "noCertificatesTitle": "لا توجد شهادات بعد",
+      "noCertificatesDescription": "ستظهر شهاداتك هنا.",
+      "viewCourses": "عرض الدورات",
+      "viewCertificate": "عرض الشهادة",
+      "accreditedBy": "معتمدة من",
+      "mockData": {
+        "courseTitle": "دعم الحياة القلبي الوعائي المتقدم",
+        "courseDescription": "تهدف الدورة إلى تعزيز مهارات مقدمي الرعاية الصحية في تحفيز المرضى وتحسين الالتزام بالعلاج...",
+        "accreditedByName": "الهيئة السعودية للتخصصات الصحية"
+      }
     }
   }
 }

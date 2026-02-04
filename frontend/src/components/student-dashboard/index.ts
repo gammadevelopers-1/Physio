@@ -9,3 +9,4 @@ export { default as DashboardNavbar } from "./DashboardNavbar";
 export { default as DashboardHomeContent } from "./DashboardHomeContent";
 export { default as MyCoursesContent } from "./MyCoursesContent";
 export { default as FavouritesContent } from "./FavouritesContent";
+export { default as CertificationsContent } from "./CertificationsContent";

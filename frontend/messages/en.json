@@ -1058,6 +1058,18 @@
       "inProgress": "In progress.",
       "completed": "Completed",
       "notStarted": "Not started"
+    },
+    "favourites": {
+      "title": "Favorites",
+      "noFavouritesTitle": "No Favorites yet",
+      "noFavouritesDescription": "Your favorite courses will appear here.",
+      "viewCourses": "View Courses",
+      "viewCourse": "View course",
+      "inProgress": "In progress.",
+      "completed": "Completed",
+      "notStarted": "Not started",
+      "removeFromFavourites": "Remove from favorites",
+      "addToFavourites": "Add to favorites"
     }
   }
 }

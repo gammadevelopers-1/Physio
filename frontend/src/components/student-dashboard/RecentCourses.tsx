@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Heart } from "lucide-react";
+import { useFavourites } from "@/contexts/FavouritesContext";
 
 interface Course {
   id: string;
@@ -21,6 +22,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const { isFavourite, toggleFavourite } = useFavourites();
 
   const getStatusLabel = (status: Course["status"]) => {
     switch (status) {
@@ -75,8 +77,23 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
           {courses.map((course) => (
             <div
               key={course.id}
-              className={`flex flex-col sm:flex-row gap-4 p-4 border border-[#E5E7EB] rounded-xl ${isRTL ? "sm:flex-row-reverse" : ""}`}
+              className={`flex flex-col sm:flex-row gap-4 p-4 border border-[#E5E7EB] rounded-xl relative ${isRTL ? "sm:flex-row-reverse" : ""}`}
             >
+              {/* Favourite Button */}
+              <button
+                onClick={() => toggleFavourite(course)}
+                className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors`}
+                aria-label={
+                  isFavourite(course.id)
+                    ? t("favourites.removeFromFavourites")
+                    : t("favourites.addToFavourites")
+                }
+              >
+                <Heart
+                  className={`w-4 h-4 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+                />
+              </button>
+
               {/* Course Thumbnail */}
               <div className="w-full sm:w-[180px] h-[120px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                 <Image

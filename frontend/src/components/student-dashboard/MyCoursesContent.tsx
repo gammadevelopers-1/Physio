@@ -4,10 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Heart } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import { useFavourites } from "@/contexts/FavouritesContext";
 
 interface Course {
   id: string;
@@ -33,6 +34,7 @@ const MyCoursesContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
+  const { isFavourite, toggleFavourite } = useFavourites();
 
   // Mock courses data with translations
   const allCourses: Course[] = [
@@ -167,8 +169,23 @@ const MyCoursesContent = () => {
                     {filteredCourses.map((course) => (
                       <div
                         key={course.id}
-                        className="border border-[#E5E7EB] rounded-xl overflow-hidden"
+                        className="border border-[#E5E7EB] rounded-xl overflow-hidden relative"
                       >
+                        {/* Favourite Button */}
+                        <button
+                          onClick={() => toggleFavourite(course)}
+                          className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors`}
+                          aria-label={
+                            isFavourite(course.id)
+                              ? t("favourites.removeFromFavourites")
+                              : t("favourites.addToFavourites")
+                          }
+                        >
+                          <Heart
+                            className={`w-4 h-4 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+                          />
+                        </button>
+
                         {/* Course Thumbnail */}
                         <div className="w-full h-[120px] sm:h-[140px] bg-gray-100">
                           <Image

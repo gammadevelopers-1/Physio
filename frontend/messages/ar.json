@@ -1270,6 +1270,18 @@
       "inProgress": "قيد التقدم",
       "completed": "مكتملة",
       "notStarted": "لم تبدأ"
+    },
+    "favourites": {
+      "title": "المفضلة",
+      "noFavouritesTitle": "لا توجد مفضلات بعد",
+      "noFavouritesDescription": "ستظهر دوراتك المفضلة هنا.",
+      "viewCourses": "عرض الدورات",
+      "viewCourse": "عرض الدورة",
+      "inProgress": "قيد التقدم",
+      "completed": "مكتملة",
+      "notStarted": "لم تبدأ",
+      "removeFromFavourites": "إزالة من المفضلة",
+      "addToFavourites": "إضافة إلى المفضلة"
     }
   }
 }

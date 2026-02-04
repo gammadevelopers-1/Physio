@@ -1301,6 +1301,21 @@
       "noBadgesTitle": "لا توجد شارات بعد",
       "noBadgesDescription": "ستظهر شاراتك هنا.",
       "viewCourses": "عرض الدورات"
+    },
+    "invoices": {
+      "title": "فواتيري",
+      "noInvoicesTitle": "لا توجد فواتير بعد",
+      "noInvoicesDescription": "ستظهر فواتيرك هنا.",
+      "invoiceNo": "رقم الفاتورة",
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "status": "الحالة",
+      "statusPaid": "مدفوع",
+      "statusPending": "قيد الانتظار",
+      "statusCancelled": "ملغي",
+      "moreOptions": "المزيد من الخيارات",
+      "viewInvoice": "عرض الفاتورة",
+      "downloadInvoice": "تحميل الفاتورة"
     }
   }
 }

@@ -11,3 +11,4 @@ export { default as MyCoursesContent } from "./MyCoursesContent";
 export { default as FavouritesContent } from "./FavouritesContent";
 export { default as CertificationsContent } from "./CertificationsContent";
 export { default as BadgesContent } from "./BadgesContent";
+export { default as InvoicesContent } from "./InvoicesContent";

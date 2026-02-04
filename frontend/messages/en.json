@@ -1089,6 +1089,21 @@
       "noBadgesTitle": "No Badges yet",
       "noBadgesDescription": "Your Badges will appear here.",
       "viewCourses": "View Courses"
+    },
+    "invoices": {
+      "title": "My invoices",
+      "noInvoicesTitle": "No Invoices yet",
+      "noInvoicesDescription": "Your Invoices will appear here.",
+      "invoiceNo": "Invoice No.",
+      "amount": "Amount",
+      "date": "Date",
+      "status": "Status",
+      "statusPaid": "Paid",
+      "statusPending": "Pending",
+      "statusCancelled": "Cancelled",
+      "moreOptions": "More options",
+      "viewInvoice": "View Invoice",
+      "downloadInvoice": "Download Invoice"
     }
   }
 }

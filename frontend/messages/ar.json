@@ -1200,6 +1200,7 @@
   "studentDashboard": {
     "title": "لوحة تحكم الطالب",
     "sidebar": {
+      "studentDashboard": "لوحة تحكم الطالب",
       "dashboard": "لوحة التحكم",
       "courses": "الدورات",
       "favorites": "المفضلة",
@@ -1213,7 +1214,8 @@
       "personalInformation": "المعلومات الشخصية",
       "contactInformation": "معلومات الاتصال",
       "viewProfile": "عرض الملف الشخصي",
-      "editProfile": "تعديل الملف الشخصي"
+      "editProfile": "تعديل الملف الشخصي",
+      "logout": "تسجيل الخروج"
     },
     "stats": {
       "courses": "الدورات",
@@ -1252,6 +1254,22 @@
       "lecture3": "المحاضرة 3",
       "instructorFaisal": "د. فيصل العتيبي",
       "tuesday": "الثلاثاء"
+    },
+    "myCourses": {
+      "title": "دوراتي",
+      "recentCourses": "الدورات الأخيرة",
+      "tabs": {
+        "all": "الكل",
+        "inProgress": "قيد التقدم",
+        "completed": "مكتملة"
+      },
+      "noCoursesTitle": "لا توجد دورات بعد",
+      "noCoursesDescription": "ستظهر دوراتك هنا.",
+      "viewCourses": "عرض الدورات",
+      "viewCourse": "عرض الدورة",
+      "inProgress": "قيد التقدم",
+      "completed": "مكتملة",
+      "notStarted": "لم تبدأ"
     }
   }
 }

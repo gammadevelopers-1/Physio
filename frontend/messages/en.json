@@ -988,6 +988,7 @@
   "studentDashboard": {
     "title": "Student Dashboard",
     "sidebar": {
+      "studentDashboard": "Student Dashboard",
       "dashboard": "Dashboard",
       "courses": "Courses",
       "favorites": "Favorites",
@@ -1001,7 +1002,8 @@
       "personalInformation": "Personal Information",
       "contactInformation": "Contact Information",
       "viewProfile": "View Profile",
-      "editProfile": "Edit Profile"
+      "editProfile": "Edit Profile",
+      "logout": "Logout"
     },
     "stats": {
       "courses": "Courses",
@@ -1040,6 +1042,22 @@
       "lecture3": "Lecture 3",
       "instructorFaisal": "Dr. Faisal Al-Otaibi",
       "tuesday": "Tue"
+    },
+    "myCourses": {
+      "title": "My Courses",
+      "recentCourses": "Recent Courses",
+      "tabs": {
+        "all": "All",
+        "inProgress": "In progress",
+        "completed": "Completed"
+      },
+      "noCoursesTitle": "No courses yet",
+      "noCoursesDescription": "Your courses will appear here.",
+      "viewCourses": "View Courses",
+      "viewCourse": "View course",
+      "inProgress": "In progress.",
+      "completed": "Completed",
+      "notStarted": "Not started"
     }
   }
 }

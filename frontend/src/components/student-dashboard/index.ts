@@ -7,3 +7,4 @@ export { default as CalendarPanel } from "./CalendarPanel";
 export { default as MobileSidebar } from "./MobileSidebar";
 export { default as DashboardNavbar } from "./DashboardNavbar";
 export { default as DashboardHomeContent } from "./DashboardHomeContent";
+export { default as MyCoursesContent } from "./MyCoursesContent";

@@ -15,6 +15,13 @@ import {
   LogOut,
   User,
   Settings,
+  LayoutDashboard,
+  BookOpen,
+  Heart,
+  Award,
+  BadgeCheck,
+  FileText,
+  Users,
 } from "lucide-react";
 
 interface UserProfile {
@@ -31,10 +38,57 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const t = useTranslations("navbar");
+  const tDashboard = useTranslations("studentDashboard");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+
+  // Dashboard navigation items for mobile menu
+  const dashboardNavItems = [
+    {
+      label: tDashboard("sidebar.dashboard"),
+      href: `/${locale}/student-dashboard`,
+      icon: LayoutDashboard,
+    },
+    {
+      label: tDashboard("sidebar.courses"),
+      href: `/${locale}/student-dashboard/courses`,
+      icon: BookOpen,
+    },
+    {
+      label: tDashboard("sidebar.favorites"),
+      href: `/${locale}/student-dashboard/favourites`,
+      icon: Heart,
+    },
+    {
+      label: tDashboard("sidebar.certifications"),
+      href: `/${locale}/student-dashboard/certifications`,
+      icon: Award,
+    },
+    {
+      label: tDashboard("sidebar.badges"),
+      href: `/${locale}/student-dashboard/badges`,
+      icon: BadgeCheck,
+    },
+    {
+      label: tDashboard("sidebar.invoices"),
+      href: `/${locale}/student-dashboard/invoices`,
+      icon: FileText,
+    },
+    {
+      label: tDashboard("sidebar.inviteFriends"),
+      href: `/${locale}/student-dashboard/invite-friends`,
+      icon: Users,
+    },
+    {
+      label: tDashboard("sidebar.settings"),
+      href: `/${locale}/student-dashboard/settings`,
+      icon: Settings,
+    },
+  ];
+
+  const isActiveRoute = (href: string) => pathname === href;
 
   const switchLocale = () => {
     const newLocale = locale === "en" ? "ar" : "en";
@@ -241,7 +295,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg max-h-[calc(100vh-80px)] overflow-y-auto">
           <div className="flex flex-col px-4 py-4">
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">
@@ -258,67 +312,76 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                 <p className="text-sm font-medium text-[#1F2937]">
                   {user.name}
                 </p>
-                <Link
-                  href={`/${locale}/student-dashboard`}
-                  className="text-xs text-[#D4A520]"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  View Dashboard
-                </Link>
+                <p className="text-xs text-[#6B7280]">
+                  {tDashboard("sidebar.studentDashboard")}
+                </p>
               </div>
             </div>
 
-            {/* Mobile Nav Links */}
-            <Link
-              href={`/${locale}`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("home")}
-            </Link>
+            {/* Dashboard Navigation Links */}
+            <div className="space-y-1 mb-4">
+              {dashboardNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = isActiveRoute(item.href);
 
-            <Link
-              href={`/${locale}/courses`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("courses")}
-            </Link>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-[#F0F7FF] text-[#002D87]"
+                        : "text-[#4B5563] hover:bg-[#F9FAFB]"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-5 h-5 ${isActive ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                    />
+                    <span className={`text-sm ${isActive ? "font-medium" : ""}`}>
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
 
-            <Link
-              href={`/${locale}/become-trainer`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("becomeTrainer")}
-            </Link>
+            {/* Divider */}
+            <div className="border-t border-[var(--outline-subtle)] my-2" />
 
-            <Link
-              href={`/${locale}/archived`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("archive")}
-            </Link>
+            {/* Site Navigation Links */}
+            <div className="py-2">
+              <p className="px-3 py-2 text-xs font-medium text-[#9CA3AF] uppercase">
+                {t("home")}
+              </p>
+              <Link
+                href={`/${locale}`}
+                className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="text-sm">{t("home")}</span>
+              </Link>
+              <Link
+                href={`/${locale}/courses`}
+                className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="text-sm">{t("courses")}</span>
+              </Link>
+              <Link
+                href={`/${locale}/about`}
+                className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <span className="text-sm">{t("about")}</span>
+              </Link>
+            </div>
 
-            <Link
-              href={`/${locale}/blogs`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("blogs")}
-            </Link>
-
-            <Link
-              href={`/${locale}/about`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("about")}
-            </Link>
+            {/* Divider */}
+            <div className="border-t border-[var(--outline-subtle)] my-2" />
 
             {/* Mobile Action Buttons */}
-            <div className="flex items-center gap-4 pt-4">
+            <div className="flex items-center gap-4 py-3">
               <Link
                 href={`/${locale}/search`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
@@ -336,9 +399,9 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
             </div>
 
             {/* Logout Button */}
-            <button className="mt-4 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
+            <button className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
-              Logout
+              {tDashboard("sidebar.logout")}
             </button>
           </div>
         </div>

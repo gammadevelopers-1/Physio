@@ -14,7 +14,6 @@ import {
   FileText,
   Users,
   Settings,
-  Menu,
   X,
   Pencil,
   Coins,
@@ -87,15 +86,6 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="lg:hidden fixed bottom-20 left-4 z-40 w-12 h-12 bg-[#002D87] rounded-full flex items-center justify-center shadow-lg"
-        aria-label="Open menu"
-      >
-        <Menu className="w-6 h-6 text-white" />
-      </button>
-
       {/* Overlay */}
       {isOpen && (
         <div

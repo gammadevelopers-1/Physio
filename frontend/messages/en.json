@@ -1104,6 +1104,26 @@
       "moreOptions": "More options",
       "viewInvoice": "View Invoice",
       "downloadInvoice": "Download Invoice"
+    },
+    "inviteFriends": {
+      "title": "Invite friends",
+      "sendAnInvite": "Send an invite.",
+      "sendDescription": "Send invites to your friends and win rewards and points.",
+      "email": "Email",
+      "emailPlaceholder": "Enter email address",
+      "sendInvite": "Send invite",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "invites": "Invites",
+      "noInvites": "No invites sent yet.",
+      "emailAddress": "Email address",
+      "status": "Status",
+      "statusSent": "Invite sent",
+      "statusAccepted": "Accepted",
+      "statusPending": "Pending",
+      "moreOptions": "More options",
+      "resend": "Resend invite",
+      "cancel": "Cancel invite"
     }
   }
 }

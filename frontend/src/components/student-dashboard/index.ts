@@ -12,3 +12,4 @@ export { default as FavouritesContent } from "./FavouritesContent";
 export { default as CertificationsContent } from "./CertificationsContent";
 export { default as BadgesContent } from "./BadgesContent";
 export { default as InvoicesContent } from "./InvoicesContent";
+export { default as InviteFriendsContent } from "./InviteFriendsContent";

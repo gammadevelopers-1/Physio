@@ -1316,6 +1316,26 @@
       "moreOptions": "المزيد من الخيارات",
       "viewInvoice": "عرض الفاتورة",
       "downloadInvoice": "تحميل الفاتورة"
+    },
+    "inviteFriends": {
+      "title": "دعوة الأصدقاء",
+      "sendAnInvite": "أرسل دعوة.",
+      "sendDescription": "أرسل دعوات لأصدقائك واربح مكافآت ونقاط.",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "أدخل البريد الإلكتروني",
+      "sendInvite": "إرسال دعوة",
+      "copy": "نسخ",
+      "copied": "تم النسخ!",
+      "invites": "الدعوات",
+      "noInvites": "لم يتم إرسال دعوات بعد.",
+      "emailAddress": "البريد الإلكتروني",
+      "status": "الحالة",
+      "statusSent": "تم إرسال الدعوة",
+      "statusAccepted": "مقبولة",
+      "statusPending": "قيد الانتظار",
+      "moreOptions": "المزيد من الخيارات",
+      "resend": "إعادة إرسال الدعوة",
+      "cancel": "إلغاء الدعوة"
     }
   }
 }

@@ -13,6 +13,7 @@ import InstructorCalendarWidget from "./InstructorCalendarWidget";
 import AtRiskLearners from "./AtRiskLearners";
 import CertificateQueue from "./CertificateQueue";
 import SessionsCalendarWidget from "./SessionsCalendarWidget";
+import AssessmentAnalysisWidget from "./AssessmentAnalysisWidget";
 
 // Static mock data
 const mockInstructor = {
@@ -69,6 +70,7 @@ const InstructorDashboardContent = () => {
     { name: t("mockData.module2"), percentage: 65 },
     { name: t("mockData.module3"), percentage: 40 },
     { name: t("mockData.module4"), percentage: 20 },
+    { name: t("mockData.module5"), percentage: 10 },
   ];
   const courseOptions = [
     { value: "all", label: t("performance.allCourses") },
@@ -130,6 +132,23 @@ const InstructorDashboardContent = () => {
       description: t("reports.nelcDescription"),
       lastGenerated: "Feb 1, 2026",
     },
+  ];
+
+  // Mock assessment analysis data - Pre/Post score comparison
+  const mockAssessmentScores = [
+    { id: "1", name: t("mockData.module1"), preScore: 58, postScore: 85 },
+    { id: "2", name: t("mockData.module2"), preScore: 45, postScore: 72 },
+    { id: "3", name: t("mockData.module3"), preScore: 52, postScore: 78 },
+    { id: "4", name: t("mockData.module4"), preScore: 40, postScore: 68 },
+  ];
+
+  // Mock question difficulty data
+  const mockQuestionAnalysis = [
+    { id: "1", question: t("assessmentAnalysis.questionSample1"), difficulty: "easy" as const, correctRate: 92 },
+    { id: "2", question: t("assessmentAnalysis.questionSample2"), difficulty: "medium" as const, correctRate: 68 },
+    { id: "3", question: t("assessmentAnalysis.questionSample3"), difficulty: "hard" as const, correctRate: 45 },
+    { id: "4", question: t("assessmentAnalysis.questionSample4"), difficulty: "medium" as const, correctRate: 72 },
+    { id: "5", question: t("assessmentAnalysis.questionSample5"), difficulty: "hard" as const, correctRate: 38 },
   ];
 
   // Mock notifications
@@ -361,6 +380,12 @@ const InstructorDashboardContent = () => {
                 attendanceData={attendanceData}
                 modules={moduleProgress}
                 courses={courseOptions}
+              />
+
+              {/* Assessment & Item Analysis */}
+              <AssessmentAnalysisWidget
+                assessments={mockAssessmentScores}
+                questions={mockQuestionAnalysis}
               />
 
               {/* Tabs Section */}

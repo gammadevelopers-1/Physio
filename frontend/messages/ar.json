@@ -1456,6 +1456,8 @@
       "title": "أداء الدورة",
       "allCourses": "جميع الدورات",
       "export": "تصدير",
+      "exportCSV": "تصدير CSV",
+      "exportPDF": "تصدير PDF",
       "attendanceTrend": "اتجاه الحضور (آخر 7 أيام)",
       "moduleCompletion": "إكمال الوحدات",
       "mon": "الإثنين",
@@ -1479,6 +1481,23 @@
       "contentManagement": "إدارة المحتوى",
       "reports": "التقارير",
       "assessments": "التقييمات"
+    },
+    "assessmentAnalysis": {
+      "title": "تحليل التقييم والأسئلة",
+      "preTest": "الاختبار القبلي",
+      "postTest": "الاختبار البعدي",
+      "scoreComparison": "مقارنة الدرجات القبلية/البعدية",
+      "questionDifficulty": "تحليل صعوبة الأسئلة",
+      "easy": "سهل",
+      "medium": "متوسط",
+      "hard": "صعب",
+      "correctRate": "صحيح",
+      "viewItemAnalysis": "عرض تحليل الأسئلة",
+      "questionSample1": "تقنيات دعم الحياة الأساسية",
+      "questionSample2": "تفسير إيقاع تخطيط القلب",
+      "questionSample3": "إدارة مجرى الهواء المتقدمة",
+      "questionSample4": "حساب جرعات الأدوية",
+      "questionSample5": "اضطرابات نظم القلب المعقدة"
     },
     "calendar": {
       "title": "التقويم",
@@ -1507,7 +1526,8 @@
       "module1": "الوحدة 1: مقدمة",
       "module2": "الوحدة 2: المهارات الأساسية",
       "module3": "الوحدة 3: متقدم",
-      "module4": "الوحدة 4: التقييم"
+      "module4": "الوحدة 4: التقييم",
+      "module5": "الوحدة 5: تطبيقي"
     },
     "myCourses": {
       "title": "دوراتي",

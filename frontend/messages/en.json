@@ -1244,6 +1244,8 @@
       "title": "Course Performance",
       "allCourses": "All Courses",
       "export": "Export",
+      "exportCSV": "Export CSV",
+      "exportPDF": "Export PDF",
       "attendanceTrend": "Attendance Trend (Last 7 Days)",
       "moduleCompletion": "Module Completion",
       "mon": "Mon",
@@ -1267,6 +1269,23 @@
       "contentManagement": "Content Management",
       "reports": "Reports",
       "assessments": "Assessments"
+    },
+    "assessmentAnalysis": {
+      "title": "Assessment & Item Analysis",
+      "preTest": "Pre-Test",
+      "postTest": "Post-Test",
+      "scoreComparison": "Pre/Post Score Comparison",
+      "questionDifficulty": "Question Difficulty Analysis",
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "correctRate": "Correct",
+      "viewItemAnalysis": "View Item Analysis",
+      "questionSample1": "Basic life support techniques",
+      "questionSample2": "ECG rhythm interpretation",
+      "questionSample3": "Advanced airway management",
+      "questionSample4": "Medication dosage calculation",
+      "questionSample5": "Complex cardiac arrhythmias"
     },
     "calendar": {
       "title": "Calendar",
@@ -1295,7 +1314,8 @@
       "module1": "Module 1: Introduction",
       "module2": "Module 2: Basic Skills",
       "module3": "Module 3: Advanced",
-      "module4": "Module 4: Assessment"
+      "module4": "Module 4: Assessment",
+      "module5": "Module 5: Practical"
     },
     "myCourses": {
       "title": "My Courses",

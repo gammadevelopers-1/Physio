@@ -80,7 +80,7 @@ const InstructorDashboardContent = () => {
     { value: "cpr", label: "CPR Certification" },
   ];
 
-  // Mock tabs data
+  // Mock tabs data - 5 content files with different types, statuses, and WCAG compliance
   const contentFiles = [
     {
       id: "1",
@@ -105,6 +105,22 @@ const InstructorDashboardContent = () => {
       version: "v1.2",
       status: "processing" as const,
       wcagCompliant: "warning" as const,
+    },
+    {
+      id: "4",
+      type: "document" as const,
+      name: "Assessment-Guidelines.docx",
+      version: "v1.5",
+      status: "live" as const,
+      wcagCompliant: true as const,
+    },
+    {
+      id: "5",
+      type: "image" as const,
+      name: "Anatomy-Diagram.png",
+      version: "v1.0",
+      status: "draft" as const,
+      wcagCompliant: false as const,
     },
   ];
 

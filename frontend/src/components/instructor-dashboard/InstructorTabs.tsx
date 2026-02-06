@@ -9,7 +9,6 @@ import {
   FileImage,
   File,
   Check,
-  AlertCircle,
   FolderOpen,
   BarChart3,
   ClipboardList,
@@ -21,6 +20,13 @@ import {
   CheckCircle,
   AlertTriangle,
   XCircle,
+  Calendar,
+  Download,
+  ChevronDown,
+  Users,
+  BookOpen,
+  FileBarChart,
+  Loader2,
 } from "lucide-react";
 
 interface ContentFile {
@@ -66,7 +72,15 @@ const InstructorTabs = ({
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<ContentFile[]>([]);
+  const [openExportDropdown, setOpenExportDropdown] = useState<string | null>(null);
+  const [generatingReports, setGeneratingReports] = useState<Set<string>>(new Set());
+  const [dateRanges, setDateRanges] = useState<Record<string, string>>({
+    attendance: "last7days",
+    gradebook: "last7days",
+    assessment: "last7days",
+  });
   const actionMenuRef = useRef<HTMLTableSectionElement>(null);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("instructorDashboard");
 
   // Helper to determine file type from extension
@@ -119,6 +133,18 @@ const InstructorTabs = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
         setOpenActionMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close export dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
+        setOpenExportDropdown(null);
       }
     };
 
@@ -436,28 +462,321 @@ const InstructorTabs = ({
 
         {/* Reports Tab */}
         {activeTab === "reports" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {reports.map((report) => (
-              <div
-                key={report.id}
-                className="p-4 border border-[#E5E7EB] rounded-xl hover:shadow-sm transition-shadow"
-              >
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-1">
-                  {report.title}
-                </h4>
-                <p className="text-xs text-[#6B7280] mb-3">
-                  {report.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#9CA3AF]">
-                    {t("reports.lastGenerated")}: {report.lastGenerated}
-                  </span>
-                  <button className="text-xs font-medium text-[#3B82F6] hover:underline">
-                    {t("reports.export")}
+          <div className="space-y-4">
+            {/* Report Cards Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" ref={exportDropdownRef}>
+              {/* Attendance Report Card */}
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-start gap-3 mb-4 min-h-[60px]">
+                  <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center flex-shrink-0">
+                    <Users className="w-5 h-5 text-[#3B82F6]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                      {t("reportsTab.attendanceReport")}
+                    </h4>
+                    <p className="text-xs text-[#6B7280] mt-0.5">
+                      {t("reportsTab.attendanceDesc")}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="mb-4 flex-1">
+                  <label className="text-xs font-medium text-[#4B5563] mb-1.5 block">
+                    {t("reportsTab.dateRange")}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={dateRanges.attendance}
+                      onChange={(e) => setDateRanges((prev) => ({ ...prev, attendance: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#374151] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    >
+                      <option value="last7days">{t("reportsTab.last7Days")}</option>
+                      <option value="last30days">{t("reportsTab.last30Days")}</option>
+                      <option value="last90days">{t("reportsTab.last90Days")}</option>
+                      <option value="thisMonth">{t("reportsTab.thisMonth")}</option>
+                      <option value="lastMonth">{t("reportsTab.lastMonth")}</option>
+                    </select>
+                    <Calendar className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex items-center gap-2">
+                  {/* Generate Button */}
+                  <button
+                    onClick={() => {
+                      setGeneratingReports((prev) => new Set(prev).add("attendance"));
+                      setTimeout(() => {
+                        setGeneratingReports((prev) => {
+                          const next = new Set(prev);
+                          next.delete("attendance");
+                          return next;
+                        });
+                      }, 2000);
+                    }}
+                    disabled={generatingReports.has("attendance")}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingReports.has("attendance") ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t("reportsTab.generating")}
+                      </>
+                    ) : (
+                      t("reportsTab.generate")
+                    )}
                   </button>
+
+                  {/* Export Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenExportDropdown(openExportDropdown === "attendance" ? null : "attendance")}
+                      className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    {openExportDropdown === "attendance" && (
+                      <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              console.log("Export attendance as CSV");
+                              setOpenExportDropdown(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <FileBarChart className="w-4 h-4 text-[#22C55E]" />
+                            {t("reportsTab.exportCSV")}
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log("Export attendance as PDF");
+                              setOpenExportDropdown(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <FileText className="w-4 h-4 text-[#EF4444]" />
+                            {t("reportsTab.exportPDF")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            ))}
+
+              {/* Gradebook Report Card */}
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-start gap-3 mb-4 min-h-[60px]">
+                  <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
+                    <BookOpen className="w-5 h-5 text-[#D97706]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                      {t("reportsTab.gradebook")}
+                    </h4>
+                    <p className="text-xs text-[#6B7280] mt-0.5">
+                      {t("reportsTab.gradebookDesc")}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="mb-4 flex-1">
+                  <label className="text-xs font-medium text-[#4B5563] mb-1.5 block">
+                    {t("reportsTab.dateRange")}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={dateRanges.gradebook}
+                      onChange={(e) => setDateRanges((prev) => ({ ...prev, gradebook: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#374151] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    >
+                      <option value="last7days">{t("reportsTab.last7Days")}</option>
+                      <option value="last30days">{t("reportsTab.last30Days")}</option>
+                      <option value="last90days">{t("reportsTab.last90Days")}</option>
+                      <option value="thisMonth">{t("reportsTab.thisMonth")}</option>
+                      <option value="lastMonth">{t("reportsTab.lastMonth")}</option>
+                    </select>
+                    <Calendar className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex items-center gap-2">
+                  {/* Generate Button */}
+                  <button
+                    onClick={() => {
+                      setGeneratingReports((prev) => new Set(prev).add("gradebook"));
+                      setTimeout(() => {
+                        setGeneratingReports((prev) => {
+                          const next = new Set(prev);
+                          next.delete("gradebook");
+                          return next;
+                        });
+                      }, 2000);
+                    }}
+                    disabled={generatingReports.has("gradebook")}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingReports.has("gradebook") ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t("reportsTab.generating")}
+                      </>
+                    ) : (
+                      t("reportsTab.generate")
+                    )}
+                  </button>
+
+                  {/* Export Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenExportDropdown(openExportDropdown === "gradebook" ? null : "gradebook")}
+                      className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    {openExportDropdown === "gradebook" && (
+                      <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              console.log("Export gradebook as CSV");
+                              setOpenExportDropdown(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <FileBarChart className="w-4 h-4 text-[#22C55E]" />
+                            {t("reportsTab.exportCSV")}
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log("Export gradebook as PDF");
+                              setOpenExportDropdown(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <FileText className="w-4 h-4 text-[#EF4444]" />
+                            {t("reportsTab.exportPDF")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Assessment Results Report Card */}
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
+                {/* Header */}
+                <div className="flex items-start gap-3 mb-4 min-h-[60px]">
+                  <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center flex-shrink-0">
+                    <ClipboardList className="w-5 h-5 text-[#22C55E]" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                      {t("reportsTab.assessmentResults")}
+                    </h4>
+                    <p className="text-xs text-[#6B7280] mt-0.5">
+                      {t("reportsTab.assessmentDesc")}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Date Range Filter */}
+                <div className="mb-4 flex-1">
+                  <label className="text-xs font-medium text-[#4B5563] mb-1.5 block">
+                    {t("reportsTab.dateRange")}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={dateRanges.assessment}
+                      onChange={(e) => setDateRanges((prev) => ({ ...prev, assessment: e.target.value }))}
+                      className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#374151] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    >
+                      <option value="last7days">{t("reportsTab.last7Days")}</option>
+                      <option value="last30days">{t("reportsTab.last30Days")}</option>
+                      <option value="last90days">{t("reportsTab.last90Days")}</option>
+                      <option value="thisMonth">{t("reportsTab.thisMonth")}</option>
+                      <option value="lastMonth">{t("reportsTab.lastMonth")}</option>
+                    </select>
+                    <Calendar className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Actions Row */}
+                <div className="flex items-center gap-2">
+                  {/* Generate Button */}
+                  <button
+                    onClick={() => {
+                      setGeneratingReports((prev) => new Set(prev).add("assessment"));
+                      setTimeout(() => {
+                        setGeneratingReports((prev) => {
+                          const next = new Set(prev);
+                          next.delete("assessment");
+                          return next;
+                        });
+                      }, 2000);
+                    }}
+                    disabled={generatingReports.has("assessment")}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
+                  >
+                    {generatingReports.has("assessment") ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {t("reportsTab.generating")}
+                      </>
+                    ) : (
+                      t("reportsTab.generate")
+                    )}
+                  </button>
+
+                  {/* Export Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenExportDropdown(openExportDropdown === "assessment" ? null : "assessment")}
+                      className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    {openExportDropdown === "assessment" && (
+                      <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              console.log("Export assessment as CSV");
+                              setOpenExportDropdown(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <FileBarChart className="w-4 h-4 text-[#22C55E]" />
+                            {t("reportsTab.exportCSV")}
+                          </button>
+                          <button
+                            onClick={() => {
+                              console.log("Export assessment as PDF");
+                              setOpenExportDropdown(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <FileText className="w-4 h-4 text-[#EF4444]" />
+                            {t("reportsTab.exportPDF")}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

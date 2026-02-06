@@ -1781,6 +1781,24 @@
       "connect": "Connect",
       "disconnect": "Disconnect"
     },
+    "reportsTab": {
+      "attendanceReport": "Attendance Report",
+      "attendanceDesc": "Track student attendance across all sessions",
+      "gradebook": "Gradebook",
+      "gradebookDesc": "View and export student grades and scores",
+      "assessmentResults": "Assessment Results",
+      "assessmentDesc": "Analyze quiz and exam performance data",
+      "dateRange": "Date Range",
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "generate": "Generate Report",
+      "generating": "Generating...",
+      "exportCSV": "Export CSV",
+      "exportPDF": "Export PDF"
+    },
     "sessionsCalendar": {
       "title": "My Sessions Calendar",
       "today": "Today",

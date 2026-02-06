@@ -1991,6 +1991,24 @@
       "connect": "اتصال",
       "disconnect": "قطع الاتصال"
     },
+    "reportsTab": {
+      "attendanceReport": "تقرير الحضور",
+      "attendanceDesc": "تتبع حضور الطلاب في جميع الجلسات",
+      "gradebook": "سجل الدرجات",
+      "gradebookDesc": "عرض وتصدير درجات ونتائج الطلاب",
+      "assessmentResults": "نتائج التقييم",
+      "assessmentDesc": "تحليل بيانات أداء الاختبارات والامتحانات",
+      "dateRange": "النطاق الزمني",
+      "last7Days": "آخر 7 أيام",
+      "last30Days": "آخر 30 يوم",
+      "last90Days": "آخر 90 يوم",
+      "thisMonth": "هذا الشهر",
+      "lastMonth": "الشهر الماضي",
+      "generate": "إنشاء التقرير",
+      "generating": "جاري الإنشاء...",
+      "exportCSV": "تصدير CSV",
+      "exportPDF": "تصدير PDF"
+    },
     "sessionsCalendar": {
       "title": "تقويم جلساتي",
       "today": "اليوم",

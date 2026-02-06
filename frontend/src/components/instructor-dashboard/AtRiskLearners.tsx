@@ -1,7 +1,14 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { MoreVertical, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+  MoreVertical,
+  ChevronRight,
+  AlertTriangle,
+  Mail,
+  Ticket,
+} from "lucide-react";
 
 interface AtRiskLearner {
   id: string;
@@ -9,15 +16,33 @@ interface AtRiskLearner {
   initials: string;
   riskType: "lowAttendance" | "lowScore" | "inactive";
   riskValue: string;
+  course?: string;
 }
 
 interface AtRiskLearnersProps {
   learners: AtRiskLearner[];
-  totalCount: number;
+visibleCount?: number;
 }
 
-const AtRiskLearners = ({ learners, totalCount }: AtRiskLearnersProps) => {
+const AtRiskLearners = ({
+  learners,
+  visibleCount = 5,
+}: AtRiskLearnersProps) => {
   const t = useTranslations("instructorDashboard");
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const getRiskBadgeStyle = (riskType: string) => {
     switch (riskType) {
@@ -45,22 +70,42 @@ const AtRiskLearners = ({ learners, totalCount }: AtRiskLearnersProps) => {
     }
   };
 
+  const handleSendReminder = (learnerId: string) => {
+    console.log("Sending reminder to learner:", learnerId);
+    setOpenDropdown(null);
+  };
+
+  const handleOpenTicket = (learnerId: string) => {
+    console.log("Opening ticket for learner:", learnerId);
+    setOpenDropdown(null);
+  };
+
+  const displayedLearners = learners.slice(0, visibleCount);
+  const totalCount = learners.length;
+
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       <div className="p-4 sm:p-5">
-        <h3 className="text-base font-semibold text-[#1F2937] mb-4 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-[#F97316]" />
-          {t("atRisk.title")}
-        </h3>
+        {/* Header with Badge Count */}
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-[#F97316]" />
+            {t("atRisk.title")}
+          </h3>
+          {/* Badge Count */}
+          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#FEE2E2] text-[#EF4444] text-xs font-semibold rounded-full">
+            {totalCount}
+          </span>
+        </div>
 
-        <div className="space-y-3">
-          {learners.map((learner) => (
+        <div className="space-y-3" ref={dropdownRef}>
+          {displayedLearners.map((learner) => (
             <div
               key={learner.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]"
+              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] hover:border-[#D1D5DB] transition-colors"
             >
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+              <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
                 {learner.initials}
               </div>
 
@@ -69,6 +114,11 @@ const AtRiskLearners = ({ learners, totalCount }: AtRiskLearnersProps) => {
                 <p className="text-sm font-medium text-[#1F2937] truncate">
                   {learner.name}
                 </p>
+                {learner.course && (
+                  <p className="text-[11px] text-[#6B7280] truncate mb-0.5">
+                    {learner.course}
+                  </p>
+                )}
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${getRiskBadgeStyle(learner.riskType)}`}
                 >
@@ -76,10 +126,37 @@ const AtRiskLearners = ({ learners, totalCount }: AtRiskLearnersProps) => {
                 </span>
               </div>
 
-              {/* Action */}
-              <button className="text-[#9CA3AF] hover:text-[#6B7280] transition-colors">
-                <MoreVertical className="w-4 h-4" />
-              </button>
+              {/* Action Dropdown */}
+              <div className="relative flex-shrink-0">
+                <button
+                  onClick={() => setOpenDropdown(openDropdown === learner.id ? null : learner.id)}
+                  className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+
+                {/* Dropdown Menu */}
+                {openDropdown === learner.id && (
+                  <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleSendReminder(learner.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                      >
+                        <Mail className="w-4 h-4 text-[#6B7280]" />
+                        {t("atRisk.sendReminder")}
+                      </button>
+                      <button
+                        onClick={() => handleOpenTicket(learner.id)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                      >
+                        <Ticket className="w-4 h-4 text-[#6B7280]" />
+                        {t("atRisk.openTicket")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

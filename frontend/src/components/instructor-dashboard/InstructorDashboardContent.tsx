@@ -28,8 +28,8 @@ const mockKPIData = {
   coursesChange: "+2 this month",
   todaysSessions: 3,
   nextSessionTime: "2:00 PM",
-  atRiskLearners: 12,
-  atRiskChange: 3,
+  atRiskLearners: 5,
+  atRiskChange: 2,
   pendingCertificates: 8,
   certificatesStatus: "Awaiting approval",
   avgRating: 4.8,
@@ -180,7 +180,7 @@ const InstructorDashboardContent = () => {
     },
   ];
 
-  // Mock at-risk learners
+  // Mock at-risk learners - 5 learners with different risk types
   const mockAtRiskLearners = [
     {
       id: "1",
@@ -188,6 +188,7 @@ const InstructorDashboardContent = () => {
       initials: "AK",
       riskType: "lowAttendance" as const,
       riskValue: "45%",
+      course: "Advanced Cardiovascular Life Support",
     },
     {
       id: "2",
@@ -195,6 +196,7 @@ const InstructorDashboardContent = () => {
       initials: "SM",
       riskType: "lowScore" as const,
       riskValue: "52%",
+      course: "Basic First Aid Training",
     },
     {
       id: "3",
@@ -202,6 +204,23 @@ const InstructorDashboardContent = () => {
       initials: "KH",
       riskType: "inactive" as const,
       riskValue: "7 days",
+      course: "CPR Certification",
+    },
+    {
+      id: "4",
+      name: "Fatima Al-Zahrani",
+      initials: "FZ",
+      riskType: "lowAttendance" as const,
+      riskValue: "38%",
+      course: "Patient Safety & Quality",
+    },
+    {
+      id: "5",
+      name: "Omar Al-Rashid",
+      initials: "OR",
+      riskType: "lowScore" as const,
+      riskValue: "48%",
+      course: "Infection Control",
     },
   ];
 
@@ -364,10 +383,7 @@ const InstructorDashboardContent = () => {
               <InstructorCalendarWidget events={mockEvents} />
 
               {/* At-Risk Learners */}
-              <AtRiskLearners
-                learners={mockAtRiskLearners}
-                totalCount={12}
-              />
+              <AtRiskLearners learners={mockAtRiskLearners} />
 
               {/* Pending Certificates */}
               <CertificateQueue

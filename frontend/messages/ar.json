@@ -1471,7 +1471,9 @@
       "lowAttendance": "حضور منخفض",
       "lowScore": "درجة منخفضة",
       "inactive": "غير نشط",
-      "viewAll": "عرض الكل"
+      "viewAll": "عرض الكل",
+      "sendReminder": "إرسال تذكير",
+      "openTicket": "فتح تذكرة"
     },
     "tabs": {
       "contentManagement": "إدارة المحتوى",

@@ -1259,7 +1259,9 @@
       "lowAttendance": "Low Attendance",
       "lowScore": "Low Score",
       "inactive": "Inactive",
-      "viewAll": "View All"
+      "viewAll": "View All",
+      "sendReminder": "Send Reminder",
+      "openTicket": "Open Ticket"
     },
     "tabs": {
       "contentManagement": "Content Management",

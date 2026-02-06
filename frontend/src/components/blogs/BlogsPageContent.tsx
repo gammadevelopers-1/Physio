@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import BecomeTrainer from "@/components/BecomeTrainer";
 import Testimonials from "@/components/Testimonials";
@@ -11,20 +11,18 @@ import {
   BlogPagination,
   BlogFilters,
 } from "@/components/blogs";
-import { fetchAllBlogPosts, fetchFeaturedBlog, fetchBlogCategories } from "@/lib/sanity/actions";
-import type { SanityBlogPost, SanityCategory } from "@/lib/sanity/types";
-import { getLocalizedValue } from "@/lib/sanity/types";
+import type { StrapiBlogPost, StrapiBlogCategory } from "@/lib/strapi/types";
 
-const BlogsPageContent = () => {
+interface BlogsPageContentProps {
+  blogPosts: StrapiBlogPost[];
+  featuredBlog: StrapiBlogPost | null;
+  blogCategories: StrapiBlogCategory[];
+}
+
+const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPageContentProps) => {
   const t = useTranslations("blogsPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
-
-  // State for Sanity data
-  const [sanityPosts, setSanityPosts] = useState<SanityBlogPost[]>([]);
-  const [sanityCategories, setSanityCategories] = useState<SanityCategory[]>([]);
-  const [featuredPost, setFeaturedPost] = useState<SanityBlogPost | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Pagination state
   const [activeCategory, setActiveCategory] = useState("All");
@@ -34,64 +32,10 @@ const BlogsPageContent = () => {
   const postsPerPageDesktop = 6;
   const postsPerPageMobile = 3;
 
-  // Fetch data from Sanity using server actions
-  const fetchSanityData = useCallback(async () => {
-    try {
-      const [posts, featured, categories] = await Promise.all([
-        fetchAllBlogPosts(),
-        fetchFeaturedBlog(),
-        fetchBlogCategories(),
-      ]);
-
-      setSanityPosts(posts || []);
-      setFeaturedPost(featured);
-      setSanityCategories(categories || []);
-    } catch (error) {
-      console.error("Error fetching from Sanity:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Fetch data on mount
-  useEffect(() => {
-    fetchSanityData();
-  }, [fetchSanityData]);
-
-  // Get category name for filtering
-  const getCategoryName = (post: SanityBlogPost): string => {
-    if (post.category?.title) {
-      return getLocalizedValue(post.category.title, "en") || "Uncategorized";
-    }
-    return "Uncategorized";
-  };
-
-  // Build categories list
-  const categories = ["All", ...sanityCategories.map(cat => getLocalizedValue(cat.title, "en") || "")];
-
-  // Get translated category name
-  const getTranslatedCategory = (category: string): string => {
-    if (category === "All") return isRTL ? "الكل" : "All";
-
-    const sanityCategory = sanityCategories.find(
-      cat => getLocalizedValue(cat.title, "en") === category
-    );
-    if (sanityCategory) {
-      return getLocalizedValue(sanityCategory.title, locale) || category;
-    }
-    return category;
-  };
-
-  // Filter posts - include ALL posts in the grid (featured + non-featured)
-  // The featured section is separate, but all posts should appear in the main grid
-  const allPosts = sanityPosts;
-
+  // Filter posts by category slug
   const filteredPosts = activeCategory === "All"
-    ? allPosts
-    : allPosts.filter(post => getCategoryName(post) === activeCategory);
-
-  // Featured post for the featured section (most recent featured post)
-  const displayFeaturedPost = featuredPost;
+    ? blogPosts
+    : blogPosts.filter(post => post.category?.slug === activeCategory);
 
   // Desktop pagination
   const totalPages = Math.ceil(filteredPosts.length / postsPerPageDesktop);
@@ -123,19 +67,7 @@ const BlogsPageContent = () => {
     window.scrollTo({ top: 200, behavior: "smooth" });
   };
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg text-[var(--on-surface-variant)]">
-          {isRTL ? "جارٍ التحميل..." : "Loading..."}
-        </div>
-      </div>
-    );
-  }
-
-  // Empty state when no blogs exist
-  const hasNoPosts = sanityPosts.length === 0;
+  const hasNoPosts = blogPosts.length === 0;
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
@@ -150,8 +82,8 @@ const BlogsPageContent = () => {
             <p className={`text-[var(--on-surface-variant)] mb-8 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "20px" }}>
               {t("featuredBlogs.subtitle")}
             </p>
-            {displayFeaturedPost ? (
-              <FeaturedBlog post={displayFeaturedPost} isRTL={isRTL} />
+            {featuredBlog ? (
+              <FeaturedBlog post={featuredBlog} isRTL={isRTL} />
             ) : (
               <div className="text-center py-12 text-[var(--on-surface-variant)] bg-[#F4F4F5] rounded-2xl">
                 {isRTL ? "لا توجد مدونات مميزة حالياً" : "No featured blog available"}
@@ -172,11 +104,10 @@ const BlogsPageContent = () => {
 
             {!hasNoPosts && (
               <BlogFilters
-                categories={categories}
+                categories={blogCategories}
                 activeCategory={activeCategory}
                 onCategoryChange={handleCategoryChange}
                 isRTL={isRTL}
-                translatedCategories={categories.map(c => getTranslatedCategory(c))}
               />
             )}
 
@@ -192,7 +123,7 @@ const BlogsPageContent = () => {
             ) : (
               <div className="grid grid-cols-3 gap-8">
                 {paginatedPosts.map((post) => (
-                  <BlogCard key={post._id} post={post} isRTL={isRTL} />
+                  <BlogCard key={post.documentId} post={post} isRTL={isRTL} />
                 ))}
               </div>
             )}
@@ -221,8 +152,8 @@ const BlogsPageContent = () => {
           <p className={`text-[var(--on-surface-variant)] text-sm mb-6 ${isRTL ? "text-right" : "text-left"}`}>
             {t("featuredBlogs.subtitle")}
           </p>
-          {displayFeaturedPost ? (
-            <FeaturedBlog post={displayFeaturedPost} isRTL={isRTL} />
+          {featuredBlog ? (
+            <FeaturedBlog post={featuredBlog} isRTL={isRTL} />
           ) : (
             <div className="text-center py-8 text-[var(--on-surface-variant)] bg-[#F4F4F5] rounded-xl text-sm">
               {isRTL ? "لا توجد مدونات مميزة حالياً" : "No featured blog available"}
@@ -241,12 +172,11 @@ const BlogsPageContent = () => {
 
           {!hasNoPosts && (
             <BlogFilters
-              categories={categories}
+              categories={blogCategories}
               activeCategory={activeCategory}
               onCategoryChange={handleCategoryChange}
               variant="mobile"
               isRTL={isRTL}
-              translatedCategories={categories.map(c => getTranslatedCategory(c))}
             />
           )}
 
@@ -262,7 +192,7 @@ const BlogsPageContent = () => {
           ) : (
             <div className="flex flex-col gap-6">
               {paginatedPostsMobile.map((post) => (
-                <MobileBlogCard key={post._id} post={post} isRTL={isRTL} />
+                <MobileBlogCard key={post.documentId} post={post} isRTL={isRTL} />
               ))}
             </div>
           )}

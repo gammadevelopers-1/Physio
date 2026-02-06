@@ -6,12 +6,13 @@ import { useTranslations, useLocale } from "next-intl";
 import {
   Video,
   ShoppingCart,
-  Plus,
   Calendar,
   Clock,
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
+import type { FeaturedCourse, HomePage } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
 interface CourseCardProps {
   title: string;
@@ -62,7 +63,7 @@ const CourseCard = ({
         <div
           className={`absolute top-1/2 -translate-y-[calc(50%-0.92px)] w-[146px] h-[217px] ${isRTL ? "left-0 -scale-x-100" : "right-0"}`}
         >
-          <Image src={vectorImage} alt="" fill className="object-contain" />
+          <Image src={vectorImage} alt="" fill unoptimized={vectorImage.startsWith('http')} className="object-contain" />
         </div>
 
         {/* Bottom row - flex between, dir="rtl" handles order automatically */}
@@ -166,7 +167,7 @@ const MobileCourseCard = ({
         <div
           className={`absolute top-1/2 -translate-y-[calc(50%-0.92px)] w-[146px] h-[217px] ${isRTL ? "left-0 -scale-x-100" : "right-0"}`}
         >
-          <Image src={vectorImage} alt="" fill className="object-contain" />
+          <Image src={vectorImage} alt="" fill unoptimized={vectorImage.startsWith('http')} className="object-contain" />
         </div>
 
         {/* Bottom row - flex between, dir="rtl" handles order automatically */}
@@ -237,12 +238,18 @@ const MobileCourseCard = ({
   );
 };
 
-const FeaturedCourses = () => {
+interface FeaturedCoursesProps {
+  courses?: FeaturedCourse[];
+  sectionData?: HomePage | null;
+}
+
+const FeaturedCourses = ({ courses: strapiCourses = [], sectionData }: FeaturedCoursesProps) => {
   const t = useTranslations("featuredCourses");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const courses = [
+  // Fallback courses from translations
+  const fallbackCourses = [
     {
       title: t("courses.infectionControl.title"),
       type: t("liveOnline"),
@@ -285,6 +292,22 @@ const FeaturedCourses = () => {
     },
   ];
 
+  // Map Strapi courses to the format expected by CourseCard
+  const courses = strapiCourses.length > 0
+    ? strapiCourses.map((course) => ({
+        title: course.title,
+        type: course.courseType || t("liveOnline"),
+        date: course.date || "",
+        hours: `${course.hours} ${course.cmeHoursLabel || t("cmeHours")}`,
+        description: course.description || "",
+        price: course.price,
+        vectorImage: course.vectorImage
+          ? getStrapiMediaUrl(course.vectorImage.url)
+          : "/featured images/Vector 2.svg",
+        slug: course.slug,
+      }))
+    : fallbackCourses;
+
   return (
     <section className="bg-white px-4 xl:px-[64px] py-16 xl:py-[96px] overflow-hidden">
       <div className="flex flex-col gap-5 xl:gap-[40px] items-center justify-center w-full max-w-[1440px] mx-auto">
@@ -298,9 +321,11 @@ const FeaturedCourses = () => {
                   fontSize: "48px",
                 }}
               >
-                {t("title")}
+                {sectionData?.featuredCoursesTitle || t("title")}
               </h2>
-              <p className="leading-[28px] w-full text-[20px]">{t("description")}</p>
+              <p className="leading-[28px] w-full text-[20px]">
+                {sectionData?.featuredCoursesDescription || t("description")}
+              </p>
             </div>
           </div>
         </div>
@@ -313,7 +338,7 @@ const FeaturedCourses = () => {
               fontSize: "var(--typeface-font-styles-heading-h1)",
             }}
           >
-            {t("title")}
+            {sectionData?.featuredCoursesTitle || t("title")}
           </h2>
           <p
             className="leading-7 w-full"
@@ -321,7 +346,7 @@ const FeaturedCourses = () => {
               fontSize: "var(--typeface-font-styles-heading-subheading)",
             }}
           >
-            {t("description")}
+            {sectionData?.featuredCoursesDescription || t("description")}
           </p>
         </div>
 
@@ -359,7 +384,7 @@ const FeaturedCourses = () => {
           href={`/${locale}/courses`}
           className="h-[40px] px-[20px] py-[8px] rounded-[12px] text-[14px] font-medium text-white min-w-[80px] btn-gold inline-flex items-center justify-center"
         >
-          {t("viewAllButton")}
+          {sectionData?.featuredCoursesViewAllLabel || t("viewAllButton")}
         </Link>
       </div>
     </section>

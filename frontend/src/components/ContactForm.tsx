@@ -4,16 +4,23 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Mail, Phone, MapPin, ChevronRight, ChevronLeft, ChevronDown } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import type { ContactPage } from "@/lib/strapi/types";
 
 // Dynamically import Map component to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("./Map"), {
   ssr: false,
 });
 
-const ContactForm = () => {
+const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
   const t = useTranslations("contactPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Helper: use Strapi data if available, otherwise fall back to translations
+  const s = (field: keyof ContactPage, translationKey: string) => {
+    const val = strapiData?.[field];
+    return (typeof val === 'string' && val) ? val : t(translationKey);
+  };
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -30,12 +37,18 @@ const ContactForm = () => {
   const maxDescriptionLength = 275;
 
   const issueTypes = [
-    { key: "technicalSupport", label: t("issueTypes.technicalSupport") },
-    { key: "billingIssue", label: t("issueTypes.billingIssue") },
-    { key: "courseInquiry", label: t("issueTypes.courseInquiry") },
-    { key: "partnership", label: t("issueTypes.partnership") },
-    { key: "other", label: t("issueTypes.other") },
+    { key: "technicalSupport", label: s("issueTypeTechnicalSupport", "issueTypes.technicalSupport") },
+    { key: "billingIssue", label: s("issueTypeBillingIssue", "issueTypes.billingIssue") },
+    { key: "courseInquiry", label: s("issueTypeCourseInquiry", "issueTypes.courseInquiry") },
+    { key: "partnership", label: s("issueTypePartnership", "issueTypes.partnership") },
+    { key: "other", label: s("issueTypeOther", "issueTypes.other") },
   ];
+
+  const email = strapiData?.generalInquiryEmail || "inquiry@physioguidance.org";
+  const phone = strapiData?.technicalSupportPhone || "+966 920035022";
+  const mapLat = strapiData?.mapLatitude ?? 24.4539;
+  const mapLng = strapiData?.mapLongitude ?? 39.6142;
+  const mapPopup = s("mapPopupText", "address");
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -71,7 +84,7 @@ const ContactForm = () => {
                   lineHeight: "100%",
                 }}
               >
-                {t("title")}
+                {s("title", "title")}
               </h1>
               <p
                 className="text-[#06080B]"
@@ -82,7 +95,7 @@ const ContactForm = () => {
                   lineHeight: "28px",
                 }}
               >
-                {t("subtitle")}
+                {s("subtitle", "subtitle")}
               </p>
             </div>
 
@@ -103,10 +116,10 @@ const ContactForm = () => {
                       lineHeight: "32px",
                     }}
                   >
-                    {t("contactInfo.generalInquiry")}
+                    {s("generalInquiryLabel", "contactInfo.generalInquiry")}
                   </h3>
                   <a
-                    href="mailto:inquiry@physioguidance.org"
+                    href={`mailto:${email}`}
                     className="text-[#06080B] underline"
                     style={{
                       fontFamily: "Roboto, sans-serif",
@@ -115,7 +128,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    inquiry@physioguidance.org
+                    {email}
                   </a>
                 </div>
               </div>
@@ -135,7 +148,7 @@ const ContactForm = () => {
                       lineHeight: "32px",
                     }}
                   >
-                    {t("contactInfo.technicalSupport")}
+                    {s("technicalSupportLabel", "contactInfo.technicalSupport")}
                   </h3>
                   <p
                     className="text-[#06080B]"
@@ -147,7 +160,7 @@ const ContactForm = () => {
                       direction: "ltr",
                     }}
                   >
-                    +966 920035022
+                    {phone}
                   </p>
                 </div>
               </div>
@@ -167,7 +180,7 @@ const ContactForm = () => {
                       lineHeight: "32px",
                     }}
                   >
-                    {t("address")}
+                    {s("address", "address")}
                   </h3>
                   <a
                     href="#"
@@ -179,7 +192,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("contactInfo.getDirections")}
+                    {s("getDirectionsLabel", "contactInfo.getDirections")}
                     {isRTL ? (
                       <ChevronLeft className="w-4 h-4" strokeWidth={2} />
                     ) : (
@@ -212,7 +225,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("form.fullName")} <span style={{ color: "#DC2626" }}>*</span>
+                    {s("formFullNameLabel", "form.fullName")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <input
                     type="text"
@@ -241,7 +254,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("form.emailAddress")} <span style={{ color: "#DC2626" }}>*</span>
+                    {s("formEmailLabel", "form.emailAddress")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <div className="relative">
                     <Mail
@@ -276,7 +289,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("form.selectIssueType")}
+                    {s("formIssueTypeLabel", "form.selectIssueType")}
                   </label>
                   <div className="relative">
                     <button
@@ -301,7 +314,7 @@ const ContactForm = () => {
                           lineHeight: "24px",
                         }}
                       >
-                        {formData.issueType || t("form.selectAnOption")}
+                        {formData.issueType || s("formSelectOptionLabel", "form.selectAnOption")}
                       </span>
                       <ChevronDown
                         className={`w-6 h-6 text-[var(--on-surface-variant)] transition-transform ${isIssueTypeOpen ? "rotate-180" : ""}`}
@@ -349,7 +362,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("form.phoneNumber")} <span style={{ color: "#DC2626" }}>*</span>
+                    {s("formPhoneLabel", "form.phoneNumber")} <span style={{ color: "#DC2626" }}>*</span>
                   </label>
                   <div className="flex bg-white border border-[#C8D5E1] rounded-[10px] shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] overflow-hidden" style={{ height: "44px" }}>
                     <div className="relative">
@@ -418,7 +431,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("form.subject")}
+                    {s("formSubjectLabel", "form.subject")}
                   </label>
                   <input
                     type="text"
@@ -446,7 +459,7 @@ const ContactForm = () => {
                       lineHeight: "24px",
                     }}
                   >
-                    {t("form.description")}
+                    {s("formDescriptionLabel", "form.description")}
                   </label>
                   <div className="relative">
                     <textarea
@@ -466,8 +479,8 @@ const ContactForm = () => {
                       }}
                     >
                       {isRTL
-                        ? `${t("form.charactersLeft")} ${maxDescriptionLength - formData.description.length}`
-                        : `${maxDescriptionLength - formData.description.length} ${t("form.charactersLeft")}`}
+                        ? `${s("formCharactersLeftLabel", "form.charactersLeft")} ${maxDescriptionLength - formData.description.length}`
+                        : `${maxDescriptionLength - formData.description.length} ${s("formCharactersLeftLabel", "form.charactersLeft")}`}
                     </span>
                   </div>
                 </div>
@@ -484,7 +497,7 @@ const ContactForm = () => {
                       : "linear-gradient(to right, #a37f49, #6b4e24)",
                   }}
                 >
-                  {t("form.submit")}
+                  {s("formSubmitLabel", "form.submit")}
                 </button>
               </div>
             </form>
@@ -507,9 +520,9 @@ const ContactForm = () => {
             }}
           >
             <Map
-              center={[24.4539, 39.6142]}
+              center={[mapLat, mapLng]}
               zoom={14}
-              popupText="PhysioGuidance - Saudi Arabia"
+              popupText={mapPopup}
             />
           </div>
         </div>

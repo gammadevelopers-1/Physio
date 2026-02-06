@@ -1,179 +1,29 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
-import { PortableText, PortableTextComponents } from "@portabletext/react";
+import ReactMarkdown from "react-markdown";
 import { BlogCard, MobileBlogCard } from "@/components/blogs";
-import { urlFor } from "@/lib/sanity";
-import { fetchBlogBySlug, fetchLatestBlogs } from "@/lib/sanity/actions";
-import type { SanityBlogPostDetail, SanityBlogPost } from "@/lib/sanity/types";
-import { getLocalizedValue, formatReadTime, formatPublishDate } from "@/lib/sanity/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import type { StrapiBlogPost } from "@/lib/strapi/types";
 
-const BlogDetailContent = () => {
-  const params = useParams();
-  const slug = params.slug as string;
+interface BlogDetailContentProps {
+  blogPost: StrapiBlogPost | null;
+  latestBlogs: StrapiBlogPost[];
+}
+
+const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) => {
   const t = useTranslations("blogsPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // State for Sanity data
-  const [sanityPost, setSanityPost] = useState<SanityBlogPostDetail | null>(null);
-  const [latestPosts, setLatestPosts] = useState<SanityBlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch data from Sanity using server actions
-  const fetchSanityData = useCallback(async () => {
-    try {
-      const [post, latest] = await Promise.all([
-        fetchBlogBySlug(slug),
-        fetchLatestBlogs(),
-      ]);
-
-      setSanityPost(post);
-      setLatestPosts(latest || []);
-    } catch (error) {
-      console.error("Error fetching from Sanity:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [slug]);
-
-  // Fetch data on mount
-  useEffect(() => {
-    fetchSanityData();
-  }, [fetchSanityData]);
-
   // Back icon based on RTL
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
-  // Get values from Sanity post
-  const getTitle = (): string => {
-    if (sanityPost) {
-      return getLocalizedValue(sanityPost.title, locale) || "";
-    }
-    return "";
-  };
-
-  const getReadTime = (): string => {
-    if (sanityPost) {
-      return formatReadTime(sanityPost.readTimeMinutes, locale);
-    }
-    return "";
-  };
-
-  const getDate = (): string => {
-    if (sanityPost) {
-      return formatPublishDate(sanityPost.publishedAt, locale);
-    }
-    return "";
-  };
-
-  const getAuthor = (): string => {
-    if (sanityPost?.author) {
-      return getLocalizedValue(sanityPost.author.name, locale) || "";
-    }
-    return "";
-  };
-
-  const getImageUrl = (): string => {
-    if (sanityPost?.mainImage) {
-      return urlFor(sanityPost.mainImage).width(1200).height(640).url();
-    }
-    return "/blogs/blog-hero.png";
-  };
-
-  // Portable Text components for rendering Sanity content
-  const portableTextComponents: PortableTextComponents = {
-    block: {
-      h1: ({ children }) => (
-        <h1 className="font-semibold text-[var(--on-surface-default)] mt-10 mb-4" style={{ fontSize: "28px" }}>
-          {children}
-        </h1>
-      ),
-      h2: ({ children }) => (
-        <h2 className="font-semibold text-[var(--on-surface-default)] mt-10 mb-4" style={{ fontSize: "24px" }}>
-          {children}
-        </h2>
-      ),
-      h3: ({ children }) => (
-        <h3 className="font-semibold text-[var(--on-surface-default)] mt-8 mb-3" style={{ fontSize: "20px" }}>
-          {children}
-        </h3>
-      ),
-      normal: ({ children }) => (
-        <p className="text-[var(--on-surface-default)] mb-6" style={{ fontSize: "16px", lineHeight: "1.8" }}>
-          {children}
-        </p>
-      ),
-      blockquote: ({ children }) => (
-        <blockquote className={`border-[#002D87] py-4 my-8 bg-[#F8FAFC] ${isRTL ? "border-r-4 pr-6 rounded-l-xl" : "border-l-4 pl-6 rounded-r-xl"}`}>
-          <p className="text-[var(--on-surface-default)] italic" style={{ fontSize: "16px", lineHeight: "1.8" }}>
-            {children}
-          </p>
-        </blockquote>
-      ),
-    },
-    types: {
-      image: ({ value }) => (
-        <div className="relative w-full h-[350px] rounded-xl overflow-hidden my-8">
-          <Image
-            src={urlFor(value).width(800).height(350).url()}
-            alt={value.alt || "Blog image"}
-            fill
-            className="object-cover"
-          />
-        </div>
-      ),
-    },
-    marks: {
-      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-      em: ({ children }) => <em className="italic">{children}</em>,
-      link: ({ children, value }) => (
-        <a href={value.href} className="text-[#002D87] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
-          {children}
-        </a>
-      ),
-    },
-    list: {
-      bullet: ({ children }) => <ul className="list-disc list-inside mb-6 space-y-2">{children}</ul>,
-      number: ({ children }) => <ol className="list-decimal list-inside mb-6 space-y-2">{children}</ol>,
-    },
-    listItem: {
-      bullet: ({ children }) => <li className="text-[var(--on-surface-default)]">{children}</li>,
-      number: ({ children }) => <li className="text-[var(--on-surface-default)]">{children}</li>,
-    },
-  };
-
-  // Render Sanity content
-  const renderSanityContent = () => {
-    if (!sanityPost?.content) return null;
-    const content = getLocalizedValue(sanityPost.content, locale);
-    if (!content) return null;
-    return <PortableText value={content} components={portableTextComponents} />;
-  };
-
-  // Get latest blog posts for related section (excluding current post)
-  const getLatestBlogs = () => {
-    return latestPosts.filter(p => p.slug.current !== slug).slice(0, 3);
-  };
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-lg text-[var(--on-surface-variant)]">
-          {isRTL ? "جارٍ التحميل..." : "Loading..."}
-        </div>
-      </div>
-    );
-  }
-
   // Not found state
-  if (!sanityPost) {
+  if (!blogPost) {
     return (
       <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="text-lg text-[var(--on-surface-variant)]">
@@ -189,8 +39,28 @@ const BlogDetailContent = () => {
     );
   }
 
-  const title = getTitle();
-  const latestBlogs = getLatestBlogs();
+  const title = blogPost.title || "";
+  const readTime = blogPost.readTimeMinutes
+    ? (locale === "ar" ? `${blogPost.readTimeMinutes} دقائق قراءة` : `${blogPost.readTimeMinutes} min read`)
+    : "";
+  const author = blogPost.authorName || "";
+
+  const getDate = (): string => {
+    if (!blogPost.publishedDate) return "";
+    const date = new Date(blogPost.publishedDate);
+    const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" };
+    if (locale === "ar") {
+      return `نُشر في ${date.toLocaleDateString("ar-SA", options)}`;
+    }
+    return `Published on ${date.toLocaleDateString("en-US", options)}`;
+  };
+
+  const imageUrl = blogPost.mainImage?.url
+    ? getStrapiMediaUrl(blogPost.mainImage.formats?.large?.url || blogPost.mainImage.url)
+    : "/blogs/blog-hero.png";
+
+  // Filter out current post from latest blogs
+  const relatedBlogs = latestBlogs.filter(p => p.slug !== blogPost.slug).slice(0, 3);
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
@@ -215,7 +85,7 @@ const BlogDetailContent = () => {
                   {/* Read Time Pill */}
                   <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded-md mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
                     <Clock className="w-4 h-4" />
-                    {getReadTime()}
+                    {readTime}
                   </div>
 
                   {/* Title */}
@@ -233,7 +103,7 @@ const BlogDetailContent = () => {
               {/* Right - Image */}
               <div className="w-1/2">
                 <div className="relative h-[320px] rounded-2xl overflow-hidden">
-                  <Image src={getImageUrl()} alt={title} fill className="object-cover" />
+                  <Image src={imageUrl} alt={title} fill className="object-cover" />
                 </div>
               </div>
             </div>
@@ -246,21 +116,73 @@ const BlogDetailContent = () => {
         {/* Content Section */}
         <article className={`max-w-[800px] mx-auto px-8 py-12 ${isRTL ? "text-right" : ""}`}>
           <div className="prose max-w-none">
-            {renderSanityContent()}
+            {blogPost.content && (
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="font-semibold text-[var(--on-surface-default)] mt-10 mb-4" style={{ fontSize: "28px" }}>
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="font-semibold text-[var(--on-surface-default)] mt-10 mb-4" style={{ fontSize: "24px" }}>
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="font-semibold text-[var(--on-surface-default)] mt-8 mb-3" style={{ fontSize: "20px" }}>
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="text-[var(--on-surface-default)] mb-6" style={{ fontSize: "16px", lineHeight: "1.8" }}>
+                      {children}
+                    </p>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className={`border-[#002D87] py-4 my-8 bg-[#F8FAFC] ${isRTL ? "border-r-4 pr-6 rounded-l-xl" : "border-l-4 pl-6 rounded-r-xl"}`}>
+                      {children}
+                    </blockquote>
+                  ),
+                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  a: ({ children, href }) => (
+                    <a href={href} className="text-[#002D87] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                  ul: ({ children }) => <ul className="list-disc list-inside mb-6 space-y-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside mb-6 space-y-2">{children}</ol>,
+                  li: ({ children }) => <li className="text-[var(--on-surface-default)]">{children}</li>,
+                  img: ({ src, alt }) => (
+                    <div className="relative w-full h-[350px] rounded-xl overflow-hidden my-8">
+                      <Image
+                        src={String(src || "")}
+                        alt={alt || "Blog image"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ),
+                }}
+              >
+                {blogPost.content}
+              </ReactMarkdown>
+            )}
           </div>
 
           {/* Published By */}
-          {getAuthor() && (
+          {author && (
             <div className="mt-10 pt-8 border-t border-[#E5E7EB]">
               <p className="text-sm text-[var(--on-surface-variant)]">
-                {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{getAuthor()}</span>
+                {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
               </p>
             </div>
           )}
         </article>
 
         {/* Latest Blogs Section */}
-        {latestBlogs.length > 0 && (
+        {relatedBlogs.length > 0 && (
           <section className="px-16 py-16 bg-white">
             <div className="max-w-[1200px] mx-auto">
               <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "48px" }}>
@@ -271,8 +193,8 @@ const BlogDetailContent = () => {
               </p>
 
               <div className="grid grid-cols-3 gap-8">
-                {latestBlogs.map((blog) => (
-                  <BlogCard key={blog._id} post={blog} isRTL={isRTL} />
+                {relatedBlogs.map((blog) => (
+                  <BlogCard key={blog.documentId} post={blog} isRTL={isRTL} />
                 ))}
               </div>
             </div>
@@ -296,7 +218,7 @@ const BlogDetailContent = () => {
           <div className={`flex ${isRTL ? "justify-end" : "justify-start"} mb-3`}>
             <div className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded ${isRTL ? "flex-row-reverse" : ""}`}>
               <Clock className="w-3 h-3" />
-              {getReadTime()}
+              {readTime}
             </div>
           </div>
 
@@ -307,7 +229,7 @@ const BlogDetailContent = () => {
 
           {/* Image */}
           <div className="relative w-full h-[200px] rounded-xl overflow-hidden mb-4">
-            <Image src={getImageUrl()} alt={title} fill className="object-cover" />
+            <Image src={imageUrl} alt={title} fill className="object-cover" />
           </div>
 
           {/* Publish Date */}
@@ -322,21 +244,73 @@ const BlogDetailContent = () => {
         {/* Content Section */}
         <article className={`px-4 py-6 ${isRTL ? "text-right" : ""}`}>
           <div className="prose max-w-none text-sm">
-            {renderSanityContent()}
+            {blogPost.content && (
+              <ReactMarkdown
+                components={{
+                  h1: ({ children }) => (
+                    <h1 className="font-semibold text-[var(--on-surface-default)] mt-8 mb-3" style={{ fontSize: "24px" }}>
+                      {children}
+                    </h1>
+                  ),
+                  h2: ({ children }) => (
+                    <h2 className="font-semibold text-[var(--on-surface-default)] mt-8 mb-3" style={{ fontSize: "20px" }}>
+                      {children}
+                    </h2>
+                  ),
+                  h3: ({ children }) => (
+                    <h3 className="font-semibold text-[var(--on-surface-default)] mt-6 mb-2" style={{ fontSize: "18px" }}>
+                      {children}
+                    </h3>
+                  ),
+                  p: ({ children }) => (
+                    <p className="text-[var(--on-surface-default)] mb-5 text-sm" style={{ lineHeight: "1.8" }}>
+                      {children}
+                    </p>
+                  ),
+                  blockquote: ({ children }) => (
+                    <blockquote className={`border-[#002D87] py-3 my-6 bg-[#F8FAFC] ${isRTL ? "border-r-4 pr-4 rounded-l-xl" : "border-l-4 pl-4 rounded-r-xl"}`}>
+                      {children}
+                    </blockquote>
+                  ),
+                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  a: ({ children, href }) => (
+                    <a href={href} className="text-[#002D87] underline hover:no-underline" target="_blank" rel="noopener noreferrer">
+                      {children}
+                    </a>
+                  ),
+                  ul: ({ children }) => <ul className="list-disc list-inside mb-5 space-y-2">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside mb-5 space-y-2">{children}</ol>,
+                  li: ({ children }) => <li className="text-[var(--on-surface-default)]">{children}</li>,
+                  img: ({ src, alt }) => (
+                    <div className="relative w-full h-[200px] rounded-xl overflow-hidden my-6">
+                      <Image
+                        src={String(src || "")}
+                        alt={alt || "Blog image"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ),
+                }}
+              >
+                {blogPost.content}
+              </ReactMarkdown>
+            )}
           </div>
 
           {/* Published By */}
-          {getAuthor() && (
+          {author && (
             <div className="mt-8 pt-6 border-t border-[#E5E7EB]">
               <p className="text-xs text-[var(--on-surface-variant)]">
-                {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{getAuthor()}</span>
+                {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
               </p>
             </div>
           )}
         </article>
 
         {/* Latest Blogs Section */}
-        {latestBlogs.length > 0 && (
+        {relatedBlogs.length > 0 && (
           <section className="px-4 py-8 bg-white">
             <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "24px" }}>
               {t("blogDetail.latestBlogs.title")}
@@ -346,8 +320,8 @@ const BlogDetailContent = () => {
             </p>
 
             <div className="flex flex-col gap-6">
-              {latestBlogs.map((blog) => (
-                <MobileBlogCard key={blog._id} post={blog} isRTL={isRTL} />
+              {relatedBlogs.map((blog) => (
+                <MobileBlogCard key={blog.documentId} post={blog} isRTL={isRTL} />
               ))}
             </div>
           </section>

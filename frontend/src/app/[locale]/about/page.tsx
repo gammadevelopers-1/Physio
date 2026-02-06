@@ -1,21 +1,66 @@
-"use client";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslations, useLocale } from "next-intl";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
+import { getAboutPageData, getStrapiMediaUrl } from "@/lib/strapi";
 
-export default function AboutPage() {
-  const t = useTranslations("aboutPage");
-  const locale = useLocale();
+export default async function AboutPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  const t = await getTranslations({ locale, namespace: "aboutPage" });
   const isRTL = locale === "ar";
+
+  // Fetch all about page data from Strapi
+  const {
+    aboutPage: data,
+    siteSettings,
+    navbarLinks,
+    footerLinks,
+  } = await getAboutPageData(locale);
+
+  // Helper: check if image is from an external source (Strapi)
+  const isExternal = (src: string) => src.startsWith("http");
+
+  // Hero images: use Strapi media with local fallback
+  const heroImageDesktop = data?.heroImage
+    ? getStrapiMediaUrl(data.heroImage.url)
+    : "/images/image_485.png";
+  const heroImageMobile = data?.heroImageMobile
+    ? getStrapiMediaUrl(data.heroImageMobile.url)
+    : "/images/image_486_mobile.png";
+
+  // Learning card images: use Strapi media with local fallback
+  const card1Desktop = data?.learningCard1Image
+    ? getStrapiMediaUrl(data.learningCard1Image.url)
+    : "/images/learning_exp1.png";
+  const card1Mobile = data?.learningCard1ImageMobile
+    ? getStrapiMediaUrl(data.learningCard1ImageMobile.url)
+    : "/images/learning_exp_m1.png";
+  const card2Desktop = data?.learningCard2Image
+    ? getStrapiMediaUrl(data.learningCard2Image.url)
+    : "/images/learning_exp2.png";
+  const card2Mobile = data?.learningCard2ImageMobile
+    ? getStrapiMediaUrl(data.learningCard2ImageMobile.url)
+    : "/images/learning_exp_m2.png";
+  const card3Desktop = data?.learningCard3Image
+    ? getStrapiMediaUrl(data.learningCard3Image.url)
+    : "/images/learning_exp3.png";
+  const card3Mobile = data?.learningCard3ImageMobile
+    ? getStrapiMediaUrl(data.learningCard3ImageMobile.url)
+    : "/images/learning_exp_m3.png";
 
   return (
     <main className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
-      <Navbar />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
 
       {/* About Hero Section */}
       <section className="bg-[var(--surface-intense)]">
@@ -24,11 +69,11 @@ export default function AboutPage() {
           <div className={`flex-1 bg-[var(--surface-intense)] flex items-center justify-center px-4 py-8 md:px-12 md:py-16 lg:px-16 lg:py-20 order-2 ${isRTL ? "lg:order-2" : "lg:order-1"}`}>
             <div className={`max-w-[480px] w-full ${isRTL ? "text-right" : ""}`}>
               <h1 className="text-[var(--on-surface-default)] mb-4 md:mb-6 text-[36px] lg:text-[60px] font-semibold leading-[100%] tracking-[-0.72px] lg:tracking-[-1.2px]">
-                {t("hero.title")}
+                {data?.heroTitle || t("hero.title")}
               </h1>
 
               <p className="text-[var(--on-surface-default)] mb-6 md:mb-8 text-[18px] lg:text-[20px] font-normal leading-[28px]">
-                {t("hero.description")}
+                {data?.heroDescription || t("hero.description")}
               </p>
 
               {/* Action Buttons */}
@@ -37,13 +82,13 @@ export default function AboutPage() {
                   href={`/${locale}/courses`}
                   className="flex items-center justify-center h-12 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl font-medium transition-colors text-sm md:text-base"
                 >
-                  {t("hero.exploreButton")}
+                  {data?.heroExploreButtonLabel || t("hero.exploreButton")}
                 </Link>
                 <Link
                   href={`/${locale}/get-started`}
                   className="flex items-center justify-center h-12 px-5 py-2 bg-[var(--surface-intense)] text-[var(--on-surface-default)] rounded-xl font-medium border border-[var(--outline-subtle)] transition-colors hover:bg-[var(--surface-container-low)] text-sm md:text-base"
                 >
-                  {t("hero.getStartedButton")}
+                  {data?.heroGetStartedButtonLabel || t("hero.getStartedButton")}
                 </Link>
               </div>
             </div>
@@ -52,18 +97,22 @@ export default function AboutPage() {
           {/* Right Image */}
           <div className={`w-full lg:flex-1 relative h-[434px] lg:h-auto lg:min-h-[600px] order-1 ${isRTL ? "lg:order-1" : "lg:order-2"}`}>
             <Image
-              src="/images/image_486_mobile.png"
+              src={heroImageMobile}
               alt="Healthcare professionals in training"
               fill
+              sizes="100vw"
               className="object-cover lg:hidden"
               priority
+              unoptimized={isExternal(heroImageMobile)}
             />
             <Image
-              src="/images/image_485.png"
+              src={heroImageDesktop}
               alt="Healthcare professionals in training"
               fill
+              sizes="50vw"
               className="object-cover object-center hidden lg:block"
               priority
+              unoptimized={isExternal(heroImageDesktop)}
             />
             {/* Gradient overlay - horizontal on desktop */}
             <div
@@ -89,21 +138,21 @@ export default function AboutPage() {
       <section className="bg-[#EEF3F7] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
         <div className={`flex flex-col items-center justify-center max-w-[800px] mx-auto text-center ${isRTL ? "text-right" : ""}`}>
           <h2 className="text-[var(--on-surface-default)] mb-6 md:mb-8 text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px] text-center w-full">
-            {t("compliance.title")}
+            {data?.complianceTitle || t("compliance.title")}
           </h2>
 
           <div className="flex flex-col mb-8 md:mb-10">
             <p className="text-[#000] lg:text-[var(--on-surface-variant)] text-[18px] lg:text-[20px] font-normal leading-[28px]">
-              {t("compliance.items.item1")}
+              {data?.complianceItem1 || t("compliance.items.item1")}
             </p>
             <p className="text-[#000] lg:text-[var(--on-surface-variant)] text-[18px] lg:text-[20px] font-normal leading-[28px]">
-              {t("compliance.items.item2")}
+              {data?.complianceItem2 || t("compliance.items.item2")}
             </p>
             <p className="text-[#000] lg:text-[var(--on-surface-variant)] text-[18px] lg:text-[20px] font-normal leading-[28px]">
-              {t("compliance.items.item3")}
+              {data?.complianceItem3 || t("compliance.items.item3")}
             </p>
             <p className="text-[#000] lg:text-[var(--on-surface-variant)] text-[18px] lg:text-[20px] font-normal leading-[28px]">
-              {t("compliance.items.item4")}
+              {data?.complianceItem4 || t("compliance.items.item4")}
             </p>
           </div>
 
@@ -112,14 +161,14 @@ export default function AboutPage() {
             href={`/${locale}/programs`}
             className="w-full lg:w-auto lg:hidden flex items-center justify-center h-12 px-5 py-2 btn-gold rounded-xl font-medium transition-all duration-300 text-white"
           >
-            {t("compliance.viewAllButton")}
+            {data?.complianceButtonLabel || t("compliance.viewAllButton")}
           </Link>
           {/* Desktop Button - Outlined */}
           <Link
             href={`/${locale}/programs`}
             className="hidden lg:flex items-center justify-center h-12 px-8 py-3 bg-transparent btn-gold rounded-xl font-medium border transition-all duration-300 text-white"
           >
-            {t("compliance.viewAllButton")}
+            {data?.complianceButtonLabel || t("compliance.viewAllButton")}
           </Link>
         </div>
       </section>
@@ -128,11 +177,11 @@ export default function AboutPage() {
       <section className="bg-[var(--surface-intense)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
         <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
           <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">
-            {t("learningExperience.title")}
+            {data?.learningTitle || t("learningExperience.title")}
           </h2>
 
           <p className="text-[var(--on-surface-default)] lg:text-[var(--on-surface-variant)] mb-10 md:mb-14 text-center text-[18px] lg:text-[20px] font-normal leading-[28px]">
-            {t("learningExperience.subtitle")}
+            {data?.learningSubtitle || t("learningExperience.subtitle")}
           </p>
 
           {/* Cards Grid - Reversed order for RTL */}
@@ -141,27 +190,31 @@ export default function AboutPage() {
             <div className="relative pb-4">
               <div className="relative h-[286px] lg:h-[250px] rounded-2xl overflow-hidden shadow-[-2px_8px_2px_0_rgba(0,0,0,0.00),-1px_5px_2px_0_rgba(0,0,0,0.01)] lg:shadow-none">
                 <Image
-                  src="/images/learning_exp_m1.png"
+                  src={card1Mobile}
                   alt="Self-paced learning"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover lg:hidden"
+                  unoptimized={isExternal(card1Mobile)}
                 />
                 <Image
-                  src="/images/learning_exp1.png"
+                  src={card1Desktop}
                   alt="Self-paced learning"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover hidden lg:block"
+                  unoptimized={isExternal(card1Desktop)}
                 />
               </div>
               <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-4 text-center h-[140px] flex flex-col items-center justify-between">
                 <h3 className="text-[var(--on-surface-default)] font-semibold text-[20px] leading-normal">
-                  {t("learningExperience.cards.selfPaced.title")}
+                  {data?.learningCard1Title || t("learningExperience.cards.selfPaced.title")}
                 </h3>
                 <Link
                   href={`/${locale}/courses`}
                   className={`inline-flex items-center justify-center gap-2 text-[#a37f49] font-medium hover:opacity-80 transition-opacity h-10 px-5 py-2 rounded-xl text-[14px] ${isRTL ? "flex-row-reverse" : ""}`}
                 >
-                  {t("learningExperience.readMore")}
+                  {data?.learningReadMoreLabel || t("learningExperience.readMore")}
                   {isRTL ? (
                     <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                   ) : (
@@ -175,27 +228,31 @@ export default function AboutPage() {
             <div className="relative pb-4">
               <div className="relative h-[286px] lg:h-[250px] rounded-2xl overflow-hidden shadow-[-2px_8px_2px_0_rgba(0,0,0,0.00),-1px_5px_2px_0_rgba(0,0,0,0.01)] lg:shadow-none">
                 <Image
-                  src="/images/learning_exp_m2.png"
+                  src={card2Mobile}
                   alt="Zoom-based live lectures"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover lg:hidden"
+                  unoptimized={isExternal(card2Mobile)}
                 />
                 <Image
-                  src="/images/learning_exp2.png"
+                  src={card2Desktop}
                   alt="Zoom-based live lectures"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover hidden lg:block"
+                  unoptimized={isExternal(card2Desktop)}
                 />
               </div>
               <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-4 text-center h-[140px] flex flex-col items-center justify-between">
                 <h3 className="text-[var(--on-surface-default)] font-semibold text-[20px] leading-normal">
-                  {t("learningExperience.cards.liveLectures.title")}
+                  {data?.learningCard2Title || t("learningExperience.cards.liveLectures.title")}
                 </h3>
                 <Link
                   href={`/${locale}/workshops`}
                   className={`inline-flex items-center justify-center gap-2 text-[#a37f49] font-medium hover:opacity-80 transition-opacity h-10 px-5 py-2 rounded-xl text-[14px] ${isRTL ? "flex-row-reverse" : ""}`}
                 >
-                  {t("learningExperience.readMore")}
+                  {data?.learningReadMoreLabel || t("learningExperience.readMore")}
                   {isRTL ? (
                     <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                   ) : (
@@ -209,27 +266,31 @@ export default function AboutPage() {
             <div className="relative pb-4">
               <div className="relative h-[286px] lg:h-[250px] rounded-2xl overflow-hidden shadow-[-2px_8px_2px_0_rgba(0,0,0,0.00),-1px_5px_2px_0_rgba(0,0,0,0.01)] lg:shadow-none">
                 <Image
-                  src="/images/learning_exp_m3.png"
+                  src={card3Mobile}
                   alt="Digital certificates"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover lg:hidden"
+                  unoptimized={isExternal(card3Mobile)}
                 />
                 <Image
-                  src="/images/learning_exp3.png"
+                  src={card3Desktop}
                   alt="Digital certificates"
                   fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover object-top hidden lg:block"
+                  unoptimized={isExternal(card3Desktop)}
                 />
               </div>
               <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-4 text-center h-[140px] flex flex-col items-center justify-between">
                 <h3 className="text-[var(--on-surface-default)] font-semibold text-[20px] leading-normal">
-                  {t("learningExperience.cards.certificates.title")}
+                  {data?.learningCard3Title || t("learningExperience.cards.certificates.title")}
                 </h3>
                 <Link
                   href={`/${locale}/certificates`}
                   className={`inline-flex items-center justify-center gap-2 text-[#a37f49] font-medium hover:opacity-80 transition-opacity h-10 px-5 py-2 rounded-xl text-[14px] ${isRTL ? "flex-row-reverse" : ""}`}
                 >
-                  {t("learningExperience.readMore")}
+                  {data?.learningReadMoreLabel || t("learningExperience.readMore")}
                   {isRTL ? (
                     <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
                   ) : (
@@ -246,11 +307,11 @@ export default function AboutPage() {
       <section className="bg-[#EEF3F7] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
         <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
           <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">
-            {t("platformCapabilities.title")}
+            {data?.capabilitiesTitle || t("platformCapabilities.title")}
           </h2>
 
           <p className="text-[var(--on-surface-default)] mb-10 md:mb-14 text-center text-[18px] lg:text-[20px] font-normal leading-[28px]">
-            {t("platformCapabilities.subtitle")}
+            {data?.capabilitiesSubtitle || t("platformCapabilities.subtitle")}
           </p>
 
           {/* Features Grid - First Row */}
@@ -270,10 +331,10 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="text-[var(--on-surface-default)] text-[14px] lg:text-[18px] font-semibold mb-2">
-                {t("platformCapabilities.features.bilingualInterface.title")}
+                {data?.feature1Title || t("platformCapabilities.features.bilingualInterface.title")}
               </h3>
               <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
-                {t("platformCapabilities.features.bilingualInterface.description")}
+                {data?.feature1Description || t("platformCapabilities.features.bilingualInterface.description")}
               </p>
             </div>
 
@@ -292,10 +353,10 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="text-[var(--on-surface-default)] text-[14px] lg:text-[18px] font-semibold mb-2">
-                {t("platformCapabilities.features.advancedDashboards.title")}
+                {data?.feature2Title || t("platformCapabilities.features.advancedDashboards.title")}
               </h3>
               <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
-                {t("platformCapabilities.features.advancedDashboards.description")}
+                {data?.feature2Description || t("platformCapabilities.features.advancedDashboards.description")}
               </p>
             </div>
 
@@ -314,10 +375,10 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="text-[var(--on-surface-default)] text-[14px] lg:text-[18px] font-semibold mb-2">
-                {t("platformCapabilities.features.securePayments.title")}
+                {data?.feature3Title || t("platformCapabilities.features.securePayments.title")}
               </h3>
               <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
-                {t("platformCapabilities.features.securePayments.description")}
+                {data?.feature3Description || t("platformCapabilities.features.securePayments.description")}
               </p>
             </div>
           </div>
@@ -339,10 +400,10 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="text-[var(--on-surface-default)] text-[14px] lg:text-[18px] font-semibold mb-2">
-                {t("platformCapabilities.features.instructorManagement.title")}
+                {data?.feature4Title || t("platformCapabilities.features.instructorManagement.title")}
               </h3>
               <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
-                {t("platformCapabilities.features.instructorManagement.description")}
+                {data?.feature4Description || t("platformCapabilities.features.instructorManagement.description")}
               </p>
             </div>
 
@@ -361,10 +422,10 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="text-[var(--on-surface-default)] text-[14px] lg:text-[18px] font-semibold mb-2">
-                {t("platformCapabilities.features.reportingAnalytics.title")}
+                {data?.feature5Title || t("platformCapabilities.features.reportingAnalytics.title")}
               </h3>
               <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
-                {t("platformCapabilities.features.reportingAnalytics.description")}
+                {data?.feature5Description || t("platformCapabilities.features.reportingAnalytics.description")}
               </p>
             </div>
 
@@ -383,17 +444,17 @@ export default function AboutPage() {
                 />
               </div>
               <h3 className="text-[var(--on-surface-default)] text-[14px] lg:text-[18px] font-semibold mb-2">
-                {t("platformCapabilities.features.roleBasedAccess.title")}
+                {data?.feature6Title || t("platformCapabilities.features.roleBasedAccess.title")}
               </h3>
               <p className="text-[#4A4C4F] text-[14px] font-normal leading-[20px] w-[251px] lg:w-auto">
-                {t("platformCapabilities.features.roleBasedAccess.description")}
+                {data?.feature6Description || t("platformCapabilities.features.roleBasedAccess.description")}
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      <Footer />
+      <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />
     </main>
   );

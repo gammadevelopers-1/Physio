@@ -2,11 +2,25 @@
 
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
+import type { HomePage } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const Hero = () => {
+interface HeroProps {
+  data?: HomePage | null;
+}
+
+const Hero = ({ data }: HeroProps) => {
   const t = useTranslations("hero");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Get video URL from Strapi or fallback to local
+  const videoUrl = data?.heroVideo?.url
+    ? getStrapiMediaUrl(data.heroVideo.url)
+    : "/videos/1767191494476407.mp4";
+
+  // Get hero partner logos from Strapi or use defaults (filter out entries without URLs)
+  const heroPartnerLogos = (data?.heroPartnerLogos || []).filter((logo) => logo.url);
 
   return (
     <section className="relative w-full">
@@ -20,7 +34,7 @@ const Hero = () => {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         >
-          <source src="/videos/1767191494476407.mp4" type="video/mp4" />
+          <source src={videoUrl} type="video/mp4" />
         </video>
 
         {/* Partner logos on video - Responsive positioning and sizing */}
@@ -29,41 +43,58 @@ const Hero = () => {
             isRTL ? "left-5 lg:left-16" : "right-5 lg:right-16"
           }`}
         >
-          <div className="relative h-8 w-8 lg:h-16 lg:w-24">
-            <Image
-              src="/images/partner-1.png"
-              alt="BMC"
-              fill
-              className="object-contain"
-              style={{ mixBlendMode: "multiply" }}
-            />
-          </div>
-
-          {/* Separator line */}
-          <div className="h-5 lg:h-12 w-px bg-white/40" />
-
-          <div className="relative h-8 w-8 lg:h-16 lg:w-28">
-            <Image
-              src="/images/partner-2.png"
-              alt="Prince Sultan"
-              fill
-              className="object-contain"
-              style={{ mixBlendMode: "multiply" }}
-            />
-          </div>
-
-          {/* Separator line */}
-          <div className="h-5 lg:h-12 w-px bg-white/40" />
-
-          <div className="relative h-8 w-8 lg:h-16 lg:w-20">
-            <Image
-              src="/images/partner-3.png"
-              alt="Partner 3"
-              fill
-              className="object-contain"
-              style={{ mixBlendMode: "multiply" }}
-            />
-          </div>
+          {heroPartnerLogos.length > 0 ? (
+            heroPartnerLogos.map((logo, index) => (
+              <div key={logo.id || index} className="flex items-center gap-3 lg:gap-6">
+                <div className="relative h-8 w-8 lg:h-16 lg:w-24">
+                  <Image
+                    src={getStrapiMediaUrl(logo.url)}
+                    alt={logo.alternativeText || `Partner ${index + 1}`}
+                    fill
+                    unoptimized
+                    className="object-contain"
+                    style={{ mixBlendMode: "multiply" }}
+                  />
+                </div>
+                {/* Separator line - show between logos */}
+                {index < heroPartnerLogos.length - 1 && (
+                  <div className="h-5 lg:h-12 w-px bg-white/40" />
+                )}
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="relative h-8 w-8 lg:h-16 lg:w-24">
+                <Image
+                  src="/images/partner-1.png"
+                  alt="BMC"
+                  fill
+                  className="object-contain"
+                  style={{ mixBlendMode: "multiply" }}
+                />
+              </div>
+              <div className="h-5 lg:h-12 w-px bg-white/40" />
+              <div className="relative h-8 w-8 lg:h-16 lg:w-28">
+                <Image
+                  src="/images/partner-2.png"
+                  alt="Prince Sultan"
+                  fill
+                  className="object-contain"
+                  style={{ mixBlendMode: "multiply" }}
+                />
+              </div>
+              <div className="h-5 lg:h-12 w-px bg-white/40" />
+              <div className="relative h-8 w-8 lg:h-16 lg:w-20">
+                <Image
+                  src="/images/partner-3.png"
+                  alt="Partner 3"
+                  fill
+                  className="object-contain"
+                  style={{ mixBlendMode: "multiply" }}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -78,7 +109,7 @@ const Hero = () => {
               fontFamily: "Poppins, var(--typeface-family), sans-serif",
             }}
           >
-            {t("titleMobile")}
+            {data?.heroTitleMobile || t("titleMobile")}
           </h1>
 
           <p
@@ -87,20 +118,20 @@ const Hero = () => {
               fontSize: "var(--typeface-font-styles-heading-subheading)",
             }}
           >
-            {t("description")}
+            {data?.heroDescription || t("description")}
           </p>
 
           {/* Mobile Action Buttons */}
           <div className="flex gap-4 pt-8">
             <button className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap">
-              {t("exploreButton")}
+              {data?.heroButton1Label || t("exploreButton")}
             </button>
             <button className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
               <span
                 className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
                 style={{ WebkitTextFillColor: "transparent" }}
               >
-                {t("getStartedButton")}
+                {data?.heroButton2Label || t("getStartedButton")}
               </span>
             </button>
           </div>
@@ -117,9 +148,9 @@ const Hero = () => {
                 fontSize: "60px",
               }}
             >
-              {t("title")}
+              {data?.heroTitle || t("title")}
               <br />
-              {t("titleLine2")}
+              {data?.heroTitleLine2 || t("titleLine2")}
             </h1>
           </div>
 
@@ -128,20 +159,20 @@ const Hero = () => {
             <p
               className="text-[var(--on-surface-default)] leading-7 text-[20px]"
             >
-              {t("description")}
+              {data?.heroDescription || t("description")}
             </p>
 
             {/* Desktop Action Buttons */}
             <div className="flex gap-4">
               <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium whitespace-nowrap">
-                {t("exploreButton")}
+                {data?.heroButton1Label || t("exploreButton")}
               </button>
               <button className="h-10 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
                 <span
                   className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
                   style={{ WebkitTextFillColor: "transparent" }}
                 >
-                  {t("getStartedButton")}
+                  {data?.heroButton2Label || t("getStartedButton")}
                 </span>
               </button>
             </div>

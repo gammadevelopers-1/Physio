@@ -5,14 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { Clock, Calendar, Video, ArrowRight, ArrowLeft, Search, BookOpen, GraduationCap } from "lucide-react";
 import { Course } from "@/data/courses";
-import type { SanityBlogPost } from "@/lib/sanity/types";
-import { getLocalizedValue, formatReadTime } from "@/lib/sanity/types";
-import { urlFor } from "@/lib/sanity";
+import type { StrapiBlogPost } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import HighlightText from "./HighlightText";
 
 interface SearchResultsProps {
   courses: Course[];
-  blogs: SanityBlogPost[];
+  blogs: StrapiBlogPost[];
   query: string;
   isLoading?: boolean;
 }
@@ -130,7 +129,7 @@ const SearchResults = ({
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {blogs.map((blog) => (
-              <BlogResultCard key={blog._id} blog={blog} isRTL={isRTL} searchQuery={query} />
+              <BlogResultCard key={blog.documentId} blog={blog} isRTL={isRTL} searchQuery={query} />
             ))}
           </div>
         </div>
@@ -226,7 +225,7 @@ const CourseResultCard = ({ course, isRTL, searchQuery }: CourseResultCardProps)
 
 // Blog Result Card Component
 interface BlogResultCardProps {
-  blog: SanityBlogPost;
+  blog: StrapiBlogPost;
   isRTL: boolean;
   searchQuery: string;
 }
@@ -236,19 +235,18 @@ const BlogResultCard = ({ blog, isRTL, searchQuery }: BlogResultCardProps) => {
   const locale = useLocale();
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
-  const title = getLocalizedValue(blog.title, locale) || "";
-  const excerpt = getLocalizedValue(blog.excerpt, locale) || "";
-  const readTime = formatReadTime(blog.readTimeMinutes, locale);
+  const title = blog.title || "";
+  const excerpt = blog.excerpt || "";
+  const readTime = blog.readTimeMinutes
+    ? (locale === "ar" ? `${blog.readTimeMinutes} دقائق قراءة` : `${blog.readTimeMinutes} min read`)
+    : "";
 
-  const getImageUrl = () => {
-    if (blog.mainImage) {
-      return urlFor(blog.mainImage).width(400).height(240).url();
-    }
-    return "/blogs/blog-1.png";
-  };
+  const imageUrl = blog.mainImage?.url
+    ? getStrapiMediaUrl(blog.mainImage.formats?.small?.url || blog.mainImage.url)
+    : "/blogs/blog-1.png";
 
   return (
-    <Link href={`/${locale}/blogs/${blog.slug.current}`} className="group block">
+    <Link href={`/${locale}/blogs/${blog.slug}`} className="group block">
       <div className="flex flex-col gap-4 p-4 bg-white border border-[var(--outline-subtle)] rounded-2xl hover:shadow-lg hover:border-[var(--blue-blue-600)]/30 transition-all duration-300">
         {/* Image */}
         <div className="relative h-[140px] overflow-hidden rounded-xl">
@@ -256,7 +254,7 @@ const BlogResultCard = ({ blog, isRTL, searchQuery }: BlogResultCardProps) => {
             {t("results.blog")}
           </span>
           <Image
-            src={getImageUrl()}
+            src={imageUrl}
             alt={title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"

@@ -10,6 +10,7 @@ import Testimonials from "@/components/Testimonials";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import { getHomePageData } from "@/lib/strapi";
 
 export default async function Home({
   params,
@@ -19,19 +20,34 @@ export default async function Home({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  // Fetch all home page data from Strapi
+  const {
+    homePage,
+    siteSettings,
+    partners,
+    featuredCourses,
+    instructors,
+    testimonials,
+    navbarLinks,
+    footerLinks,
+  } = await getHomePageData(locale);
+
   return (
     <main className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
-      <Navbar />
-      <Hero />
-      <Partners />
-      <FeaturedCourses />
-      <BecomeTrainer />
-      <ExpertInstructors />
-      <Testimonials />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <Hero data={homePage} />
+      <Partners partners={partners} sectionTitle={homePage?.partnersSectionTitle} />
+      <FeaturedCourses courses={featuredCourses} sectionData={homePage} />
+      <BecomeTrainer data={homePage} />
+      <ExpertInstructors instructors={instructors} sectionData={homePage} />
+      <Testimonials testimonials={testimonials} sectionData={homePage} />
       {/* CTASection and Footer only shown on desktop (1024px+) */}
       <div className="hidden lg:block">
-        <CTASection />
-        <Footer />
+        <CTASection data={homePage} />
+        <Footer
+          siteSettings={siteSettings}
+          footerLinks={footerLinks}
+        />
       </div>
       <WhatsAppButton />
     </main>

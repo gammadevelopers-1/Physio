@@ -1,309 +1,100 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useTranslations, useLocale } from "next-intl";
+import PolicyPageLayout from "@/components/PolicyPageLayout";
+import { setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
+import { getPrivacyPolicyPageData } from "@/lib/strapi";
 
-const sectionKeys = [
-  "generalTerms",
-  "attendancePolicy",
-  "assessment",
-  "academicIntegrity",
-  "intellectualProperty",
-  "refundPolicy",
-  "technicalRequirements",
-  "privacyData",
-] as const;
+export default async function PrivacyPolicy({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
 
-const PrivacyPolicy = () => {
-  const t = useTranslations("privacyPage");
-  const locale = useLocale();
+  const t = await getTranslations({ locale, namespace: "privacyPage" });
   const isRTL = locale === "ar";
 
-  const [activeSection, setActiveSection] = useState<typeof sectionKeys[number]>(sectionKeys[0]);
+  const {
+    policyPage,
+    siteSettings,
+    navbarLinks,
+    footerLinks,
+  } = await getPrivacyPolicyPageData(locale);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      for (let i = sectionKeys.length - 1; i >= 0; i--) {
-        const sectionId = t(`sections.${sectionKeys[i]}.id`);
-        const element = document.getElementById(sectionId);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          if (rect.top <= 200) {
-            setActiveSection(sectionKeys[i]);
-            break;
-          }
-        }
-      }
-    };
+  // Build sections from Strapi or fall back to translations
+  const sections = policyPage?.sections?.length
+    ? policyPage.sections.map((s) => ({
+        sectionId: s.sectionId,
+        sidebarLabel: s.sidebarLabel,
+        title: s.title,
+        content: s.content,
+      }))
+    : [
+        {
+          sectionId: t("sections.generalTerms.id"),
+          sidebarLabel: t("sections.generalTerms.label"),
+          title: t("sections.generalTerms.title"),
+          content: t("sections.generalTerms.content"),
+        },
+        {
+          sectionId: t("sections.attendancePolicy.id"),
+          sidebarLabel: t("sections.attendancePolicy.label"),
+          title: t("sections.attendancePolicy.title"),
+          content: `${t("sections.attendancePolicy.intro")}\n\n- ${t("sections.attendancePolicy.items.item1")}\n- ${t("sections.attendancePolicy.items.item2")}\n- ${t("sections.attendancePolicy.items.item3")}`,
+        },
+        {
+          sectionId: t("sections.assessment.id"),
+          sidebarLabel: t("sections.assessment.label"),
+          title: t("sections.assessment.title"),
+          content: `${t("sections.assessment.passingGrade")}\n\n${t("sections.assessment.retakePolicy")}\n\n${t("sections.assessment.feedback")}`,
+        },
+        {
+          sectionId: t("sections.academicIntegrity.id"),
+          sidebarLabel: t("sections.academicIntegrity.label"),
+          title: t("sections.academicIntegrity.title"),
+          content: `${t("sections.academicIntegrity.intro")}\n\n- ${t("sections.academicIntegrity.items.item1")}\n- ${t("sections.academicIntegrity.items.item2")}`,
+        },
+        {
+          sectionId: t("sections.intellectualProperty.id"),
+          sidebarLabel: t("sections.intellectualProperty.label"),
+          title: t("sections.intellectualProperty.title"),
+          content: `${t("sections.intellectualProperty.intro")}\n\n- ${t("sections.intellectualProperty.items.item1")}\n- ${t("sections.intellectualProperty.items.item2")}`,
+        },
+        {
+          sectionId: t("sections.refundPolicy.id"),
+          sidebarLabel: t("sections.refundPolicy.label"),
+          title: t("sections.refundPolicy.title"),
+          content: `${t("sections.refundPolicy.courseCancel")}\n\n${t("sections.refundPolicy.learnerWithdrawal")}\n\n- ${t("sections.refundPolicy.items.item1")}\n- ${t("sections.refundPolicy.items.item2")}`,
+        },
+        {
+          sectionId: t("sections.technicalRequirements.id"),
+          sidebarLabel: t("sections.technicalRequirements.label"),
+          title: t("sections.technicalRequirements.title"),
+          content: `${t("sections.technicalRequirements.intro")}\n\n- ${t("sections.technicalRequirements.items.item1")}\n- ${t("sections.technicalRequirements.items.item2")}\n- ${t("sections.technicalRequirements.items.item3")}`,
+        },
+        {
+          sectionId: t("sections.privacyData.id"),
+          sidebarLabel: t("sections.privacyData.label"),
+          title: t("sections.privacyData.title"),
+          content: `${t("sections.privacyData.intro")}\n\n- ${t("sections.privacyData.items.item1")}\n- ${t("sections.privacyData.items.item2")}`,
+        },
+      ];
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [t]);
-
-  const scrollToSection = (sectionKey: string) => {
-    const sectionId = t(`sections.${sectionKey}.id`);
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const navbarHeight = 88;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - navbarHeight - 20;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
-    }
-  };
+  const pageTitle = policyPage?.title || t("title");
+  const pageLastUpdated = policyPage?.lastUpdated || t("lastUpdated");
 
   return (
     <main className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
-      <Navbar />
-
-      {/* Main Content Section */}
-      <section className="bg-[#EEF3F7] px-4 md:px-16 py-12 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
-        {/* Header */}
-        <div className="flex flex-col gap-1 mb-8 text-[var(--on-surface-default)]">
-          <h1
-            className="font-semibold tracking-[-0.24px]"
-            style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
-          >
-            {t("title")}
-          </h1>
-          <p
-            className="leading-7"
-            style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-          >
-            {t("lastUpdated")}
-          </p>
-        </div>
-
-        {/* Content Container */}
-        <div className="flex flex-col lg:flex-row gap-8 w-full">
-          {/* Sidebar Navigation - Hidden on mobile */}
-          <div className="hidden lg:block lg:w-[320px] xl:w-[395px] shrink-0">
-            <div
-              className="bg-white rounded-2xl p-8 sticky top-24 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
-            >
-              <nav className="flex flex-col gap-6">
-                {sectionKeys.map((sectionKey) => (
-                  <button
-                    key={sectionKey}
-                    onClick={() => scrollToSection(sectionKey)}
-                    className={`text-start leading-7 transition-colors cursor-pointer ${
-                      activeSection === sectionKey
-                        ? "text-[var(--on-surface-default)] font-medium"
-                        : "text-[var(--on-surface-default)] hover:text-[var(--on-surface-primary)]"
-                    }`}
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    {t(`sections.${sectionKey}.label`)}
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 min-w-0">
-            <div
-              className="bg-white rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]"
-            >
-              <div className="flex flex-col gap-12">
-                {/* Section 1: General Terms */}
-                <section id={t("sections.generalTerms.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.generalTerms.title")}
-                  </h2>
-                  <p
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    {t("sections.generalTerms.content")}
-                  </p>
-                </section>
-
-                {/* Section 2: Attendance Policy */}
-                <section id={t("sections.attendancePolicy.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.attendancePolicy.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.attendancePolicy.intro")}</p>
-                    <ul className="list-disc">
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.attendancePolicy.items.item1")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.attendancePolicy.items.item2")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
-                        <span className="leading-7">{t("sections.attendancePolicy.items.item3")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Section 3: Assessment & Grades */}
-                <section id={t("sections.assessment.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.assessment.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.assessment.passingGrade")}</p>
-                    <p className="mb-4">{t("sections.assessment.retakePolicy")}</p>
-                    <p>{t("sections.assessment.feedback")}</p>
-                  </div>
-                </section>
-
-                {/* Section 4: Academic Integrity */}
-                <section id={t("sections.academicIntegrity.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.academicIntegrity.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.academicIntegrity.intro")}</p>
-                    <ul className="list-disc">
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.academicIntegrity.items.item1")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
-                        <span className="leading-7">{t("sections.academicIntegrity.items.item2")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Section 5: Intellectual Property */}
-                <section id={t("sections.intellectualProperty.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.intellectualProperty.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.intellectualProperty.intro")}</p>
-                    <ul className="list-disc">
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.intellectualProperty.items.item1")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
-                        <span className="leading-7">{t("sections.intellectualProperty.items.item2")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Section 6: Cancellation & Refunds */}
-                <section id={t("sections.refundPolicy.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.refundPolicy.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.refundPolicy.courseCancel")}</p>
-                    <p className="mb-4">{t("sections.refundPolicy.learnerWithdrawal")}</p>
-                    <ul className="list-disc">
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.refundPolicy.items.item1")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
-                        <span className="leading-7">{t("sections.refundPolicy.items.item2")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Section 7: Technical Requirements */}
-                <section id={t("sections.technicalRequirements.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.technicalRequirements.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.technicalRequirements.intro")}</p>
-                    <ul className="list-disc">
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.technicalRequirements.items.item1")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.technicalRequirements.items.item2")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
-                        <span className="leading-7">{t("sections.technicalRequirements.items.item3")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Section 8: Privacy & Data Protection */}
-                <section id={t("sections.privacyData.id")} className="flex flex-col gap-6">
-                  <h2
-                    className="font-semibold leading-8 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-h3)" }}
-                  >
-                    {t("sections.privacyData.title")}
-                  </h2>
-                  <div
-                    className="leading-7 text-[var(--on-surface-default)]"
-                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-                  >
-                    <p className="mb-4">{t("sections.privacyData.intro")}</p>
-                    <ul className="list-disc">
-                      <li className={`${isRTL ? "mr-8" : "ml-8"} mb-2`}>
-                        <span className="leading-7">{t("sections.privacyData.items.item1")}</span>
-                      </li>
-                      <li className={`${isRTL ? "mr-8" : "ml-8"}`}>
-                        <span className="leading-7">{t("sections.privacyData.items.item2")}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </section>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <Footer />
+      <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <PolicyPageLayout
+        title={pageTitle}
+        lastUpdated={pageLastUpdated}
+        sections={sections}
+        isRTL={isRTL}
+      />
+      <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
     </main>
   );
-};
-
-export default PrivacyPolicy;
+}

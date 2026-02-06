@@ -1,0 +1,496 @@
+// Strapi API Response Types
+
+export interface StrapiMedia {
+  id: number;
+  documentId: string;
+  name: string;
+  alternativeText: string | null;
+  caption: string | null;
+  width: number;
+  height: number;
+  formats: {
+    thumbnail?: StrapiImageFormat;
+    small?: StrapiImageFormat;
+    medium?: StrapiImageFormat;
+    large?: StrapiImageFormat;
+  } | null;
+  hash: string;
+  ext: string;
+  mime: string;
+  size: number;
+  url: string;
+  previewUrl: string | null;
+  provider: string;
+}
+
+export interface StrapiImageFormat {
+  name: string;
+  hash: string;
+  ext: string;
+  mime: string;
+  width: number;
+  height: number;
+  size: number;
+  url: string;
+}
+
+export interface StrapiResponse<T> {
+  data: T;
+  meta: {
+    pagination?: {
+      page: number;
+      pageSize: number;
+      pageCount: number;
+      total: number;
+    };
+  };
+}
+
+export interface StrapiSingleResponse<T> {
+  data: T;
+  meta: Record<string, unknown>;
+}
+
+// Content Types
+
+export interface HomePage {
+  id: number;
+  documentId: string;
+  heroTitle: string;
+  heroTitleLine2: string | null;
+  heroTitleMobile: string | null;
+  heroDescription: string;
+  heroButton1Label: string | null;
+  heroButton1Link: string | null;
+  heroButton2Label: string | null;
+  heroButton2Link: string | null;
+  partnersSectionTitle: string | null;
+  featuredCoursesTitle: string | null;
+  featuredCoursesDescription: string | null;
+  featuredCoursesViewAllLabel: string | null;
+  becomeTrainerTitle: string | null;
+  becomeTrainerDescription: string | null;
+  becomeTrainerButtonLabel: string | null;
+  instructorsTitle: string | null;
+  instructorsDescription: string | null;
+  testimonialsTitle: string | null;
+  testimonialsDescription: string | null;
+  ctaTitle: string | null;
+  ctaDescription: string | null;
+  ctaButtonLabel: string | null;
+  heroVideo: StrapiMedia | null;
+  becomeTrainerImage: StrapiMedia | null;
+  ctaBackgroundImage: StrapiMedia | null;
+  heroPartnerLogos: StrapiMedia[] | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface AboutPage {
+  id: number;
+  documentId: string;
+  heroTitle: string;
+  heroDescription: string;
+  heroExploreButtonLabel: string | null;
+  heroGetStartedButtonLabel: string | null;
+  complianceTitle: string | null;
+  complianceItem1: string | null;
+  complianceItem2: string | null;
+  complianceItem3: string | null;
+  complianceItem4: string | null;
+  complianceButtonLabel: string | null;
+  learningTitle: string | null;
+  learningSubtitle: string | null;
+  learningCard1Title: string | null;
+  learningCard2Title: string | null;
+  learningCard3Title: string | null;
+  learningReadMoreLabel: string | null;
+  capabilitiesTitle: string | null;
+  capabilitiesSubtitle: string | null;
+  feature1Title: string | null;
+  feature1Description: string | null;
+  feature2Title: string | null;
+  feature2Description: string | null;
+  feature3Title: string | null;
+  feature3Description: string | null;
+  feature4Title: string | null;
+  feature4Description: string | null;
+  feature5Title: string | null;
+  feature5Description: string | null;
+  feature6Title: string | null;
+  feature6Description: string | null;
+  learningCard1Image: StrapiMedia | null;
+  learningCard1ImageMobile: StrapiMedia | null;
+  learningCard2Image: StrapiMedia | null;
+  learningCard2ImageMobile: StrapiMedia | null;
+  learningCard3Image: StrapiMedia | null;
+  learningCard3ImageMobile: StrapiMedia | null;
+  heroImage: StrapiMedia | null;
+  heroImageMobile: StrapiMedia | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface SiteSettings {
+  id: number;
+  documentId: string;
+  siteName: string;
+  footerDescription: string | null;
+  copyrightText: string | null;
+  whatsappNumber: string | null;
+  instagramUrl: string | null;
+  twitterUrl: string | null;
+  linkedinUrl: string | null;
+  facebookUrl: string | null;
+  footerPlatformTitle: string | null;
+  footerOrganizationTitle: string | null;
+  footerSupportTitle: string | null;
+  logo: StrapiMedia | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface Partner {
+  id: number;
+  documentId: string;
+  name: string;
+  url: string | null;
+  order: number;
+  isActive: boolean;
+  logo: StrapiMedia;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface FeaturedCourse {
+  id: number;
+  documentId: string;
+  title: string;
+  description: string | null;
+  date: string | null;
+  hours: number;
+  price: number;
+  slug: string;
+  courseType: string | null;
+  order: number;
+  isActive: boolean;
+  cmeHoursLabel: string | null;
+  viewDetailsLabel: string | null;
+  vectorImage: StrapiMedia | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface Instructor {
+  id: number;
+  documentId: string;
+  name: string;
+  title: string | null;
+  bio: string | null;
+  order: number;
+  showOnHomepage: boolean;
+  section: "expert" | "minds" | null;
+  avatar: StrapiMedia;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface Testimonial {
+  id: number;
+  documentId: string;
+  quote: string;
+  authorName: string;
+  authorRole: string | null;
+  order: number;
+  isActive: boolean;
+  authorImage: StrapiMedia | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface BecomeTrainerPage {
+  id: number;
+  documentId: string;
+  pageTitle: string;
+  profileSectionTitle: string | null;
+  profilePhotoLabel: string | null;
+  profileAttachCVLabel: string | null;
+  profileFullNameLabel: string | null;
+  profileFullNameArabicPlaceholder: string | null;
+  profileFullNameEnglishPlaceholder: string | null;
+  profileEmailLabel: string | null;
+  profileMobileLabel: string | null;
+  profileGenderLabel: string | null;
+  profileNationalityLabel: string | null;
+  profileNationalIdLabel: string | null;
+  profileProfessionLabel: string | null;
+  profileSpecialityLabel: string | null;
+  profileQualificationLabel: string | null;
+  profileRankLabel: string | null;
+  profileScfhsQuestion: string | null;
+  profileTwitterLabel: string | null;
+  profileLinkedInLabel: string | null;
+  resumeSectionTitle: string | null;
+  resumeDescription: string | null;
+  resumeUploadLabel: string | null;
+  resumeCreateLabel: string | null;
+  resumeEducationLabel: string | null;
+  resumeProfessionalSkillsLabel: string | null;
+  resumeScientificResearchesLabel: string | null;
+  resumeTrainingExperienceLabel: string | null;
+  resumeClickToUploadLabel: string | null;
+  resumeOrDragDropLabel: string | null;
+  resumePdfMaxSizeLabel: string | null;
+  bankAccountSectionTitle: string | null;
+  bankAccountHolderLabel: string | null;
+  bankNameLabel: string | null;
+  bankIbanLabel: string | null;
+  cancelButtonLabel: string | null;
+  saveButtonLabel: string | null;
+  yesButtonLabel: string | null;
+  noButtonLabel: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface PolicySection {
+  id: number;
+  sectionId: string;
+  sidebarLabel: string;
+  title: string;
+  content: string;
+}
+
+export interface PolicyPage {
+  id: number;
+  documentId: string;
+  title: string;
+  lastUpdated: string | null;
+  sections: PolicySection[];
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface ContactPage {
+  id: number;
+  documentId: string;
+  title: string;
+  subtitle: string | null;
+  formFullNameLabel: string | null;
+  formEmailLabel: string | null;
+  formIssueTypeLabel: string | null;
+  formSelectOptionLabel: string | null;
+  formPhoneLabel: string | null;
+  formSubjectLabel: string | null;
+  formDescriptionLabel: string | null;
+  formCharactersLeftLabel: string | null;
+  formSubmitLabel: string | null;
+  issueTypeTechnicalSupport: string | null;
+  issueTypeBillingIssue: string | null;
+  issueTypeCourseInquiry: string | null;
+  issueTypePartnership: string | null;
+  issueTypeOther: string | null;
+  generalInquiryLabel: string | null;
+  generalInquiryEmail: string | null;
+  technicalSupportLabel: string | null;
+  technicalSupportPhone: string | null;
+  address: string | null;
+  getDirectionsLabel: string | null;
+  loadingMapText: string | null;
+  mapLatitude: number | null;
+  mapLongitude: number | null;
+  mapPopupText: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface FeedbackPage {
+  id: number;
+  documentId: string;
+  title: string;
+  description: string | null;
+  formFullNameLabel: string | null;
+  formEmailLabel: string | null;
+  formSubjectLabel: string | null;
+  formDescriptionLabel: string | null;
+  formCharactersLeftPrefix: string | null;
+  formCharactersLeftSuffix: string | null;
+  formSubmitLabel: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface CertificationsPage {
+  id: number;
+  documentId: string;
+  breadcrumb: string | null;
+  heroTitle: string;
+  heroDescription: string | null;
+  heroButtonLabel: string | null;
+  nelcTitle: string | null;
+  nelcDescription: string | null;
+  nelcLicenseLabel: string | null;
+  nelcLicenseNumber: string | null;
+  scfhsTitle: string | null;
+  scfhsDescription: string | null;
+  scfhsAccreditationLabel: string | null;
+  scfhsAccreditationNumber: string | null;
+  verificationTitle: string | null;
+  verificationSubtitle: string | null;
+  verificationPlaceholder: string | null;
+  verificationButtonLabel: string | null;
+  claimCMETitle: string | null;
+  step1Title: string | null;
+  step1Description: string | null;
+  step2Title: string | null;
+  step2Description: string | null;
+  step3Title: string | null;
+  step3Description: string | null;
+  nelcLogo: StrapiMedia | null;
+  scfhsLogo: StrapiMedia | null;
+  certificateImage: StrapiMedia | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface NELCPage {
+  id: number;
+  documentId: string;
+  heroTitle: string;
+  heroDescription: string | null;
+  licenseNumberLabel: string | null;
+  licenseNumberValue: string | null;
+  licenseTypeLabel: string | null;
+  licenseTypeValue: string | null;
+  statusLabel: string | null;
+  statusValue: string | null;
+  complianceTitle: string | null;
+  complianceDescription: string | null;
+  governanceTitle: string | null;
+  governanceDescription: string | null;
+  technologyTitle: string | null;
+  technologyDescription: string | null;
+  instructionTitle: string | null;
+  instructionDescription: string | null;
+  nelcLogo: StrapiMedia | null;
+  governanceImage: StrapiMedia | null;
+  technologyImage: StrapiMedia | null;
+  instructionImage: StrapiMedia | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface StrapiBlogCategory {
+  id: number;
+  documentId: string;
+  title: string;
+  slug: string;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface StrapiBlogPost {
+  id: number;
+  documentId: string;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string | null;
+  readTimeMinutes: number;
+  featured: boolean;
+  publishedDate: string | null;
+  authorName: string | null;
+  tags: string[] | null;
+  category: StrapiBlogCategory | null;
+  mainImage: StrapiMedia | null;
+  order: number;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface NavigationLink {
+  id: number;
+  documentId: string;
+  label: string;
+  url: string;
+  location: 'navbar' | 'footer-platform' | 'footer-organization' | 'footer-support';
+  order: number;
+  isActive: boolean;
+  hasDropdown: boolean;
+  openInNewTab: boolean;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface PartnersPage {
+  id: number;
+  documentId: string;
+  title: string;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface InstructorsPage {
+  id: number;
+  documentId: string;
+  meetExpertsTitle: string | null;
+  mindsBehindTitle: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface FAQItem {
+  id: number;
+  question: string;
+  answer: string;
+}
+
+export interface FAQPage {
+  id: number;
+  documentId: string;
+  title: string;
+  subtitle: string | null;
+  getInTouchLabel: string | null;
+  items: FAQItem[];
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+

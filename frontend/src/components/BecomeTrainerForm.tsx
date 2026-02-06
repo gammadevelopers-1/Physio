@@ -181,6 +181,9 @@ const FileUpload = ({
   t,
   accept = ".pdf",
   isRTL = false,
+  clickToUploadLabel,
+  orDragDropLabel,
+  pdfMaxSizeLabel,
 }: {
   label: string;
   field: string;
@@ -189,6 +192,9 @@ const FileUpload = ({
   t: (key: string) => string;
   accept?: string;
   isRTL?: boolean;
+  clickToUploadLabel?: string | null;
+  orDragDropLabel?: string | null;
+  pdfMaxSizeLabel?: string | null;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -230,11 +236,11 @@ const FileUpload = ({
               <CloudUpload className="w-6 h-6 text-[#6B7280]" strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <span className="text-sm text-[#002D87] font-medium">{t("resume.clickToUpload")}</span>
-              <span className="text-sm text-[var(--on-surface-variant)]"> {t("resume.orDragAndDrop")}</span>
+              <span className="text-sm text-[#002D87] font-medium">{clickToUploadLabel || t("resume.clickToUpload")}</span>
+              <span className="text-sm text-[var(--on-surface-variant)]"> {orDragDropLabel || t("resume.orDragAndDrop")}</span>
             </div>
             <p className="text-xs text-[var(--on-surface-variant)]">
-              {t("resume.pdfMaxSize")}
+              {pdfMaxSizeLabel || t("resume.pdfMaxSize")}
             </p>
           </>
         )}
@@ -243,10 +249,133 @@ const FileUpload = ({
   );
 };
 
-const BecomeTrainerForm = () => {
+interface BecomeTrainerFormProps {
+  pageTitle?: string | null;
+  profileSectionTitle?: string | null;
+  profilePhotoLabel?: string | null;
+  profileAttachCVLabel?: string | null;
+  profileFullNameLabel?: string | null;
+  profileFullNameArabicPlaceholder?: string | null;
+  profileFullNameEnglishPlaceholder?: string | null;
+  profileEmailLabel?: string | null;
+  profileMobileLabel?: string | null;
+  profileGenderLabel?: string | null;
+  profileNationalityLabel?: string | null;
+  profileNationalIdLabel?: string | null;
+  profileProfessionLabel?: string | null;
+  profileSpecialityLabel?: string | null;
+  profileQualificationLabel?: string | null;
+  profileRankLabel?: string | null;
+  profileScfhsQuestion?: string | null;
+  profileTwitterLabel?: string | null;
+  profileLinkedInLabel?: string | null;
+  resumeSectionTitle?: string | null;
+  resumeDescription?: string | null;
+  resumeUploadLabel?: string | null;
+  resumeCreateLabel?: string | null;
+  resumeEducationLabel?: string | null;
+  resumeProfessionalSkillsLabel?: string | null;
+  resumeScientificResearchesLabel?: string | null;
+  resumeTrainingExperienceLabel?: string | null;
+  resumeClickToUploadLabel?: string | null;
+  resumeOrDragDropLabel?: string | null;
+  resumePdfMaxSizeLabel?: string | null;
+  bankAccountSectionTitle?: string | null;
+  bankAccountHolderLabel?: string | null;
+  bankNameLabel?: string | null;
+  bankIbanLabel?: string | null;
+  cancelButtonLabel?: string | null;
+  saveButtonLabel?: string | null;
+  yesButtonLabel?: string | null;
+  noButtonLabel?: string | null;
+}
+
+const BecomeTrainerForm = ({
+  pageTitle,
+  profileSectionTitle,
+  profilePhotoLabel,
+  profileAttachCVLabel,
+  profileFullNameLabel,
+  profileFullNameArabicPlaceholder,
+  profileFullNameEnglishPlaceholder,
+  profileEmailLabel,
+  profileMobileLabel,
+  profileGenderLabel,
+  profileNationalityLabel,
+  profileNationalIdLabel,
+  profileProfessionLabel,
+  profileSpecialityLabel,
+  profileQualificationLabel,
+  profileRankLabel,
+  profileScfhsQuestion,
+  profileTwitterLabel,
+  profileLinkedInLabel,
+  resumeSectionTitle,
+  resumeDescription,
+  resumeUploadLabel,
+  resumeCreateLabel,
+  resumeEducationLabel,
+  resumeProfessionalSkillsLabel,
+  resumeScientificResearchesLabel,
+  resumeTrainingExperienceLabel,
+  resumeClickToUploadLabel,
+  resumeOrDragDropLabel,
+  resumePdfMaxSizeLabel,
+  bankAccountSectionTitle,
+  bankAccountHolderLabel,
+  bankNameLabel,
+  bankIbanLabel,
+  cancelButtonLabel,
+  saveButtonLabel,
+  yesButtonLabel,
+  noButtonLabel,
+}: BecomeTrainerFormProps) => {
   const t = useTranslations("becomeTrainerPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Resolved labels: Strapi prop || next-intl fallback
+  const labels = {
+    title: pageTitle || t("title"),
+    profileTitle: profileSectionTitle || t("profile.title"),
+    photo: profilePhotoLabel || t("profile.photo"),
+    attachCV: profileAttachCVLabel || t("profile.attachCV"),
+    fullName: profileFullNameLabel || t("profile.fullName"),
+    fullNameArPlaceholder: profileFullNameArabicPlaceholder || t("profile.fullNameArabicPlaceholder"),
+    fullNameEnPlaceholder: profileFullNameEnglishPlaceholder || t("profile.fullNameEnglishPlaceholder"),
+    email: profileEmailLabel || t("profile.emailAddress"),
+    mobile: profileMobileLabel || t("profile.mobileNumber"),
+    gender: profileGenderLabel || t("profile.gender"),
+    nationality: profileNationalityLabel || t("profile.nationality"),
+    nationalId: profileNationalIdLabel || t("profile.nationalIqamaId"),
+    profession: profileProfessionLabel || t("profile.profession"),
+    speciality: profileSpecialityLabel || t("profile.speciality"),
+    qualification: profileQualificationLabel || t("profile.qualification"),
+    rank: profileRankLabel || t("profile.rank"),
+    scfhsQuestion: profileScfhsQuestion || t("profile.scfhsQuestion"),
+    twitter: profileTwitterLabel || t("profile.twitter"),
+    linkedIn: profileLinkedInLabel || t("profile.linkedIn"),
+    resumeTitle: resumeSectionTitle || t("resume.title"),
+    resumeDesc: resumeDescription || t("resume.description"),
+    uploadResume: resumeUploadLabel || t("resume.uploadResume"),
+    createResume: resumeCreateLabel || t("resume.createResume"),
+    education: resumeEducationLabel || t("resume.education"),
+    professionalSkills: resumeProfessionalSkillsLabel || t("resume.professionalSkills"),
+    scientificResearches: resumeScientificResearchesLabel || t("resume.scientificResearches"),
+    trainingExperience: resumeTrainingExperienceLabel || t("resume.trainingExperience"),
+    clickToUpload: resumeClickToUploadLabel || t("resume.clickToUpload"),
+    orDragDrop: resumeOrDragDropLabel || t("resume.orDragAndDrop"),
+    pdfMaxSize: resumePdfMaxSizeLabel || t("resume.pdfMaxSize"),
+    bankTitle: bankAccountSectionTitle || t("bankAccount.title"),
+    accountHolder: bankAccountHolderLabel || t("bankAccount.accountHolderName"),
+    bankName: bankNameLabel || t("bankAccount.bankName"),
+    iban: bankIbanLabel || t("bankAccount.iban"),
+    cancel: cancelButtonLabel || t("buttons.cancel"),
+    save: saveButtonLabel || t("buttons.save"),
+    yes: yesButtonLabel || t("buttons.yes"),
+    no: noButtonLabel || t("buttons.no"),
+  };
+
   const [formData, setFormData] = useState({
     photo: null as File | null,
     photoPreview: "",
@@ -387,7 +516,7 @@ const BecomeTrainerForm = () => {
       <div className="hidden lg:block" style={{ padding: "48px 64px" }}>
         <div className="max-w-[1000px] mx-auto">
           <h1 className="font-semibold text-[var(--on-surface-default)] text-center mb-10" style={{ fontSize: "48px" }}>
-            {t("title")}
+            {labels.title}
           </h1>
 
           {/* Single Card containing all sections */}
@@ -396,7 +525,7 @@ const BecomeTrainerForm = () => {
 
               {/* Profile Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-8" style={{ fontSize: "30px" }}>
-                {t("profile.title")}
+                {labels.profileTitle}
               </h2>
 
                {/* Divider */}
@@ -406,7 +535,7 @@ const BecomeTrainerForm = () => {
                 {/* Photo Upload */}
                 <div className="flex items-center py-6 justify-between">
                   {/* In RTL: first item goes to RIGHT (start), last item goes to LEFT (end) */}
-                  <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>{t("profile.photo")}</span>
+                  <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>{labels.photo}</span>
                   <div className="flex items-center gap-6">
                     <div
                       className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center overflow-hidden cursor-pointer"
@@ -423,7 +552,7 @@ const BecomeTrainerForm = () => {
                       onClick={() => photoInputRef.current?.click()}
                       className="px-5 py-2 border border-[#a37f49] rounded-lg text-sm font-medium text-[#a37f49] hover:bg-[#fdf8f3]"
                     >
-                      {t("profile.attachCV")}
+                      {labels.attachCV}
                     </button>
                     <input
                       ref={photoInputRef}
@@ -441,7 +570,7 @@ const BecomeTrainerForm = () => {
                 {/* Full Name - Two inputs */}
                 <div className="flex items-start py-6 justify-between">
                   <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                    {t("profile.fullName")} <span className="text-[#dc2626]">*</span>
+                    {labels.fullName} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="flex flex-col gap-3 w-1/2">
                     <input
@@ -450,7 +579,7 @@ const BecomeTrainerForm = () => {
                       value={formData.fullNameArabic}
                       onChange={handleInputChange}
                       required
-                      placeholder={t("profile.fullNameArabicPlaceholder")}
+                      placeholder={labels.fullNameArPlaceholder}
                       className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
                     />
@@ -460,7 +589,7 @@ const BecomeTrainerForm = () => {
                       value={formData.fullNameEnglish}
                       onChange={handleInputChange}
                       required
-                      placeholder={t("profile.fullNameEnglishPlaceholder")}
+                      placeholder={labels.fullNameEnPlaceholder}
                       className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
                     />
@@ -473,7 +602,7 @@ const BecomeTrainerForm = () => {
                 {/* Email Address */}
                 <div className="flex items-start py-6 justify-between">
                   <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                    {t("profile.emailAddress")} <span className="text-[#dc2626]">*</span>
+                    {labels.email} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="relative w-1/2">
                     <Mail className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1] ${isRTL ? "right-4" : "left-4"}`} strokeWidth={1.5} />
@@ -494,7 +623,7 @@ const BecomeTrainerForm = () => {
                 {/* Mobile Number with country code */}
                 <div className="flex items-start py-6 justify-between">
                   <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                    {t("profile.mobileNumber")} <span className="text-[#dc2626]">*</span>
+                    {labels.mobile} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className={`w-1/2 flex h-12 bg-white border border-[#C8D5E1] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
                     <div className="relative">
@@ -541,28 +670,28 @@ const BecomeTrainerForm = () => {
                 {/* Divider */}
                 <div className="w-full h-px bg-[#F0F0F0]" />
 
-                <Dropdown label={t("profile.gender")} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
-                <Dropdown label={t("profile.nationality")} field="nationality" options={nationalityOptions} translationKey="nationality" withDivider={false} required showFlag value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
-                <InputField label={t("profile.nationalIqamaId")} name="nationalIqamaId" required value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />
-                <Dropdown label={t("profile.profession")} field="profession" options={professionOptions} translationKey="profession" required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} t={t} />
-                <Dropdown label={t("profile.speciality")} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} t={t} />
-                <Dropdown label={t("profile.qualification")} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} t={t} />
-                <Dropdown label={t("profile.rank")} field="rank" options={rankOptions} translationKey="rank" required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={labels.gender} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={labels.nationality} field="nationality" options={nationalityOptions} translationKey="nationality" withDivider={false} required showFlag value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
+                <InputField label={labels.nationalId} name="nationalIqamaId" required value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />
+                <Dropdown label={labels.profession} field="profession" options={professionOptions} translationKey="profession" required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={labels.speciality} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={labels.qualification} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} t={t} />
+                <Dropdown label={labels.rank} field="rank" options={rankOptions} translationKey="rank" required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} t={t} />
 
                 {/* SCFHS Number Question */}
                 <div className="flex py-6 justify-between">
                   <label className="shrink-0 text-[var(--on-surface-default)] pt-1" style={{ fontSize: "16px" }}>
-                    {t("profile.scfhsQuestion")} <span className="text-[#dc2626]">*</span>
+                    {labels.scfhsQuestion} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="w-1/2 flex gap-8 pt-3">
-                    <Checkbox label={t("buttons.yes")} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
-                    <Checkbox label={t("buttons.no")} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                    <Checkbox label={labels.yes} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                    <Checkbox label={labels.no} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
                   </div>
                 </div>
                 <div className="w-full h-px bg-[#F0F0F0]" />
 
-                <InputField label={t("profile.twitter")} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
-                <InputField label={t("profile.linkedIn")} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
+                <InputField label={labels.twitter} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
+                <InputField label={labels.linkedIn} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               {/* Divider */}
@@ -570,23 +699,23 @@ const BecomeTrainerForm = () => {
 
               {/* Resume Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-3" style={{ fontSize: "30px" }}>
-                {t("resume.title")}
+                {labels.resumeTitle}
               </h2>
               <p className="text-[var(--on-surface-variant)] mb-6" style={{ fontSize: "16px" }}>
-                {t("resume.description")}
+                {labels.resumeDesc}
               </p>
 
               {/* Resume Options */}
               <div className="flex gap-8 mb-8">
-                <Checkbox label={t("resume.uploadResume")} name="uploadResume" checked={formData.uploadResume} onChange={handleInputChange} isRTL={isRTL} />
-                <Checkbox label={t("resume.createResume")} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
+                <Checkbox label={labels.uploadResume} name="uploadResume" checked={formData.uploadResume} onChange={handleInputChange} isRTL={isRTL} />
+                <Checkbox label={labels.createResume} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               <div className="flex flex-col gap-8">
-                <FileUpload label={t("resume.education")} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
-                <FileUpload label={t("resume.professionalSkills")} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
-                <FileUpload label={t("resume.scientificResearches")} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
-                <FileUpload label={t("resume.trainingExperience")} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+                <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
               </div>
 
               {/* Divider */}
@@ -595,25 +724,25 @@ const BecomeTrainerForm = () => {
               {/* Cancel/Save for Resume */}
               <div className="flex gap-3 mb-10 justify-end">
                 <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                  {t("buttons.cancel")}
+                  {labels.cancel}
                 </button>
                 <button type="button" className="h-11 px-6 rounded-lg font-medium text-white btn-gold">
-                  {t("buttons.save")}
+                  {labels.save}
                 </button>
               </div>
 
               {/* Bank Account Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-3" style={{ fontSize: "30px" }}>
-                {t("bankAccount.title")}
+                {labels.bankTitle}
               </h2>
 
               {/* Thin divider under heading */}
               <div className="w-full h-px bg-[#F0F0F0]" />
 
               <div className="flex flex-col ">
-                <InputField label={t("bankAccount.accountHolderName")} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
-                <Dropdown label={t("bankAccount.bankName")} field="bankName" options={bankOptions} translationKey="bank" withDivider={false} required value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} t={t} />
-                <InputField label={t("bankAccount.iban")} name="iban" required withDivider={false} value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
+                <InputField label={labels.accountHolder} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
+                <Dropdown label={labels.bankName} field="bankName" options={bankOptions} translationKey="bank" withDivider={false} required value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} t={t} />
+                <InputField label={labels.iban} name="iban" required withDivider={false} value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
               {/* Divider */}
@@ -622,10 +751,10 @@ const BecomeTrainerForm = () => {
               {/* Submit Buttons */}
               <div className="flex gap-3 justify-end">
                 <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                  {t("buttons.cancel")}
+                  {labels.cancel}
                 </button>
                 <button type="submit" className="h-11 px-6 rounded-lg font-medium text-white btn-gold">
-                  {t("buttons.save")}
+                  {labels.save}
                 </button>
               </div>
             </div>
@@ -636,7 +765,7 @@ const BecomeTrainerForm = () => {
       {/* Mobile Layout */}
       <div className="lg:hidden px-4 py-6 pb-24">
         <h1 className="font-semibold text-[var(--on-surface-default)] mb-6 text-center" style={{ fontSize: "30px" }}>
-          {t("title")}
+          {labels.title}
         </h1>
 
         {/* Single Card containing all sections */}
@@ -645,7 +774,7 @@ const BecomeTrainerForm = () => {
 
             {/* Profile Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] mb-5" style={{ fontSize: "24px" }}>
-              {t("profile.title")}
+              {labels.profileTitle}
             </h2>
              {/* Divider */}
              <div className="w-full h-px bg-[#F0F0F0] my-2" />
@@ -653,14 +782,14 @@ const BecomeTrainerForm = () => {
             <div className="flex flex-col gap-5">
               {/* Photo Upload */}
               <div className="flex flex-col gap-3">
-                <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>{t("profile.photo")}</span>
+                <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>{labels.photo}</span>
                 <div className="flex items-center gap-4">
                   <button
                     type="button"
                     onClick={() => photoInputRef.current?.click()}
                     className="px-5 py-2 border border-[#a37f49] rounded-lg text-sm font-medium text-[#a37f49] hover:bg-[#fdf8f3]"
                   >
-                    {t("profile.attachCV")}
+                    {labels.attachCV}
                   </button>
                   <div
                     className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center overflow-hidden cursor-pointer"
@@ -681,7 +810,7 @@ const BecomeTrainerForm = () => {
               {/* Full Name */}
               <div className="flex flex-col gap-3">
                 <label className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                  {t("profile.fullName")} <span className="text-[#dc2626]">*</span>
+                  {labels.fullName} <span className="text-[#dc2626]">*</span>
                 </label>
                 <input
                   type="text"
@@ -689,7 +818,7 @@ const BecomeTrainerForm = () => {
                   value={formData.fullNameArabic}
                   onChange={handleInputChange}
                   required
-                  placeholder={t("profile.fullNameArabicPlaceholder")}
+                  placeholder={labels.fullNameArPlaceholder}
                   className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
                 />
@@ -699,7 +828,7 @@ const BecomeTrainerForm = () => {
                   value={formData.fullNameEnglish}
                   onChange={handleInputChange}
                   required
-                  placeholder={t("profile.fullNameEnglishPlaceholder")}
+                  placeholder={labels.fullNameEnPlaceholder}
                   className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
                 />
@@ -708,12 +837,12 @@ const BecomeTrainerForm = () => {
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] my-1" />
 
-              <InputField label={t("profile.emailAddress")} name="email" type="email" required icon={<Mail className="w-5 h-5" strokeWidth={1.5} />} withDivider={false} value={formData.email} onChange={handleInputChange} isRTL={isRTL} />
+              <InputField label={labels.email} name="email" type="email" required icon={<Mail className="w-5 h-5" strokeWidth={1.5} />} withDivider={false} value={formData.email} onChange={handleInputChange} isRTL={isRTL} />
 
               {/* Mobile Number */}
               <div className="flex flex-col gap-2">
                 <label className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                  {t("profile.mobileNumber")} <span className="text-[#dc2626]">*</span>
+                  {labels.mobile} <span className="text-[#dc2626]">*</span>
                 </label>
                 <div className={`flex h-12 bg-white border border-[#C8D5E1] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
                   <div className="relative">
@@ -760,29 +889,29 @@ const BecomeTrainerForm = () => {
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] " />
 
-              <Dropdown label={t("profile.gender")} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
-              <Dropdown label={t("profile.nationality")} field="nationality" options={nationalityOptions} translationKey="nationality" required showFlag withDivider={false} value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
-              <InputField label={t("profile.nationalIqamaId")} name="nationalIqamaId" required withDivider={false} value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />
-              <Dropdown label={t("profile.profession")} field="profession" options={professionOptions} translationKey="profession" required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} t={t} />
-              <Dropdown label={t("profile.speciality")} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} t={t} />
-              <Dropdown label={t("profile.qualification")} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} t={t} />
-              <Dropdown label={t("profile.rank")} field="rank" options={rankOptions} translationKey="rank" required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={labels.gender} field="gender" options={genderOptions} translationKey="gender" required value={formData.gender} isOpen={openDropdown === "gender"} onToggle={() => setOpenDropdown(openDropdown === "gender" ? null : "gender")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={labels.nationality} field="nationality" options={nationalityOptions} translationKey="nationality" required showFlag withDivider={false} value={formData.nationality} isOpen={openDropdown === "nationality"} onToggle={() => setOpenDropdown(openDropdown === "nationality" ? null : "nationality")} onSelect={handleDropdownSelect} t={t} />
+              <InputField label={labels.nationalId} name="nationalIqamaId" required withDivider={false} value={formData.nationalIqamaId} onChange={handleInputChange} isRTL={isRTL} />
+              <Dropdown label={labels.profession} field="profession" options={professionOptions} translationKey="profession" required withDivider={false} value={formData.profession} isOpen={openDropdown === "profession"} onToggle={() => setOpenDropdown(openDropdown === "profession" ? null : "profession")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={labels.speciality} field="specialty" options={specialtyOptions} translationKey="specialty" required withDivider={false} value={formData.specialty} isOpen={openDropdown === "specialty"} onToggle={() => setOpenDropdown(openDropdown === "specialty" ? null : "specialty")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={labels.qualification} field="qualification" options={qualificationOptions} translationKey="qualification" required withDivider={false} value={formData.qualification} isOpen={openDropdown === "qualification"} onToggle={() => setOpenDropdown(openDropdown === "qualification" ? null : "qualification")} onSelect={handleDropdownSelect} t={t} />
+              <Dropdown label={labels.rank} field="rank" options={rankOptions} translationKey="rank" required withDivider={false} value={formData.rank} isOpen={openDropdown === "rank"} onToggle={() => setOpenDropdown(openDropdown === "rank" ? null : "rank")} onSelect={handleDropdownSelect} t={t} />
 
               {/* SCFHS Number Question */}
               <div className="flex flex-col gap-3">
                 <label className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
-                  {t("profile.scfhsQuestion")} <span className="text-[#dc2626]">*</span>
+                  {labels.scfhsQuestion} <span className="text-[#dc2626]">*</span>
                 </label>
                 <div className="flex gap-6">
-                  <Checkbox label={t("buttons.yes")} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
-                  <Checkbox label={t("buttons.no")} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                  <Checkbox label={labels.yes} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                  <Checkbox label={labels.no} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
                 </div>
               </div>
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] " />
 
-              <InputField label={t("profile.twitter")} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
-              <InputField label={t("profile.linkedIn")} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
+              <InputField label={labels.twitter} name="twitter" withDivider={false} value={formData.twitter} onChange={handleInputChange} isRTL={isRTL} />
+              <InputField label={labels.linkedIn} name="linkedIn" withDivider={false} value={formData.linkedIn} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             {/* Divider */}
@@ -790,23 +919,23 @@ const BecomeTrainerForm = () => {
 
             {/* Resume Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] mb-2" style={{ fontSize: "24px" }}>
-              {t("resume.title")}
+              {labels.resumeTitle}
             </h2>
             <p className="text-[var(--on-surface-variant)] mb-5" style={{ fontSize: "14px" }}>
-              {t("resume.description")}
+              {labels.resumeDesc}
             </p>
 
             {/* Resume Options */}
             <div className="flex flex-col gap-6 mb-5">
-              <Checkbox label={t("resume.uploadResume")} name="uploadResume" checked={formData.uploadResume} onChange={handleInputChange} isRTL={isRTL} />
-              <Checkbox label={t("resume.createResume")} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
+              <Checkbox label={labels.uploadResume} name="uploadResume" checked={formData.uploadResume} onChange={handleInputChange} isRTL={isRTL} />
+              <Checkbox label={labels.createResume} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             <div className="flex flex-col gap-5">
-              <FileUpload label={t("resume.education")} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
-              <FileUpload label={t("resume.professionalSkills")} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
-              <FileUpload label={t("resume.scientificResearches")} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
-              <FileUpload label={t("resume.trainingExperience")} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} />
+              <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+              <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+              <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+              <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
             </div>
 
              {/* Divider */}
@@ -815,34 +944,34 @@ const BecomeTrainerForm = () => {
             {/* Cancel/Save Buttons for Resume */}
             <div className="flex gap-3 mt-6">
               <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                {t("buttons.cancel")}
+                {labels.cancel}
               </button>
               <button type="button" className="flex-1 h-12 rounded-xl font-medium text-white btn-gold">
-                {t("buttons.save")}
+                {labels.save}
               </button>
             </div>
 
             {/* Bank Account Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] my-6 pt-6" style={{ fontSize: "24px" }}>
-              {t("bankAccount.title")}
+              {labels.bankTitle}
             </h2>
 
              {/* Divider */}
              <div className="w-full h-px bg-[#F0F0F0] " />
 
             <div className="flex flex-col ">
-              <InputField label={t("bankAccount.accountHolderName")} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
-              <Dropdown label={t("bankAccount.bankName")} field="bankName" options={bankOptions} translationKey="bank" required withDivider={false} value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} t={t} />
-              <InputField label={t("bankAccount.iban")} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
+              <InputField label={labels.accountHolder} name="accountHolderName" required value={formData.accountHolderName} onChange={handleInputChange} isRTL={isRTL} />
+              <Dropdown label={labels.bankName} field="bankName" options={bankOptions} translationKey="bank" required withDivider={false} value={formData.bankName} isOpen={openDropdown === "bankName"} onToggle={() => setOpenDropdown(openDropdown === "bankName" ? null : "bankName")} onSelect={handleDropdownSelect} t={t} />
+              <InputField label={labels.iban} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
             {/* Cancel/Save Buttons for Bank Account */}
             <div className="flex gap-3 mt-6">
               <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                {t("buttons.cancel")}
+                {labels.cancel}
               </button>
               <button type="submit" className="flex-1 h-12 rounded-xl font-medium text-white btn-gold">
-                {t("buttons.save")}
+                {labels.save}
               </button>
             </div>
           </div>

@@ -10,8 +10,8 @@ import MobileFilterDrawer from "./MobileFilterDrawer";
 import RecentSearches from "./RecentSearches";
 import { useRecentSearches } from "./useRecentSearches";
 import { courses } from "@/data/courses";
-import { searchBlogs } from "@/lib/sanity/actions";
-import type { SanityBlogPost } from "@/lib/sanity/types";
+import { searchBlogs } from "@/lib/strapi/api";
+import type { StrapiBlogPost } from "@/lib/strapi/types";
 import type { Course } from "@/data/courses";
 
 const DEFAULT_FILTERS: FilterState = {
@@ -33,7 +33,7 @@ const SearchPageContent = () => {
   const [query, setQuery] = useState(initialQuery);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [isLoading, setIsLoading] = useState(false);
-  const [blogResults, setBlogResults] = useState<SanityBlogPost[]>([]);
+  const [blogResults, setBlogResults] = useState<StrapiBlogPost[]>([]);
   const [hasSearched, setHasSearched] = useState(!!initialQuery);
 
   // Recent searches hook
@@ -107,7 +107,7 @@ const SearchPageContent = () => {
     return results;
   }, [query, filters.courseTypes, filters.certifications, filters.priceRange, filters.sortBy]);
 
-  // Search for blogs from Sanity
+  // Search for blogs from Strapi
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setBlogResults([]);
@@ -119,7 +119,7 @@ const SearchPageContent = () => {
     setHasSearched(true);
 
     try {
-      const blogs = await searchBlogs(searchQuery);
+      const blogs = await searchBlogs(searchQuery, locale);
       setBlogResults(blogs);
     } catch (error) {
       console.error("Search error:", error);
@@ -127,7 +127,7 @@ const SearchPageContent = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   // Perform search on initial load if query exists
   useEffect(() => {
@@ -201,7 +201,7 @@ const SearchPageContent = () => {
     return filteredCourses;
   }, [filters.contentType, filteredCourses]);
 
-  const displayedBlogs: SanityBlogPost[] = useMemo(() => {
+  const displayedBlogs: StrapiBlogPost[] = useMemo(() => {
     if (filters.contentType === "courses") return [];
     return blogResults;
   }, [filters.contentType, blogResults]);

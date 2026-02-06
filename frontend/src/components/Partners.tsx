@@ -3,8 +3,15 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Marquee } from "@/components/ui/marquee";
+import type { Partner } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const Partners = () => {
+interface PartnersProps {
+  partners?: Partner[];
+  sectionTitle?: string | null;
+}
+
+const Partners = ({ partners = [], sectionTitle }: PartnersProps) => {
   const t = useTranslations("partners");
 
   // Desktop partner dimensions from Figma
@@ -99,6 +106,9 @@ const Partners = () => {
     },
   ];
 
+  // Only use Strapi partners that have logos uploaded
+  const partnersWithLogos = partners.filter((p) => p.logo?.url);
+
   return (
     <section className="bg-[#EEF3F7] py-8 md:py-20 px-4 md:px-0 overflow-hidden">
       <div className="flex flex-col gap-6 md:gap-12 items-center">
@@ -110,7 +120,7 @@ const Partners = () => {
               fontSize: "var(--typeface-font-styles-heading-h2)",
             }}
           >
-            {t("title")}
+            {sectionTitle || t("title")}
           </h2>
         </div>
 
@@ -120,29 +130,56 @@ const Partners = () => {
           speed={30}
           className="w-full hidden md:flex"
         >
-          {desktopPartners.map((partner, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-center"
-              style={{
-                height: 66,
-                marginLeft: 48,
-                marginRight: 48,
-              }}
-            >
-              <Image
-                src={partner.src}
-                alt={partner.name}
-                width={partner.width}
-                height={partner.height}
-                style={{
-                  width: partner.width,
-                  height: partner.height,
-                  objectFit: "contain",
-                }}
-              />
-            </div>
-          ))}
+          {partnersWithLogos.length > 0
+            ? partnersWithLogos.map((partner) => (
+                <div
+                  key={partner.id}
+                  className="flex items-center justify-center"
+                  style={{
+                    height: 66,
+                    marginLeft: 48,
+                    marginRight: 48,
+                  }}
+                >
+                  <Image
+                    src={getStrapiMediaUrl(partner.logo?.url)}
+                    alt={partner.name}
+                    width={partner.logo?.width || 95}
+                    height={partner.logo?.height || 66}
+                    unoptimized
+                    style={{
+                      width: "auto",
+                      height: "auto",
+                      maxWidth: 175,
+                      maxHeight: 66,
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              ))
+            : desktopPartners.map((partner, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-center"
+                  style={{
+                    height: 66,
+                    marginLeft: 48,
+                    marginRight: 48,
+                  }}
+                >
+                  <Image
+                    src={partner.src}
+                    alt={partner.name}
+                    width={partner.width}
+                    height={partner.height}
+                    style={{
+                      width: partner.width,
+                      height: partner.height,
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              ))}
         </Marquee>
 
         {/* Mobile Partner Logos Marquee */}
@@ -151,29 +188,56 @@ const Partners = () => {
           speed={25}
           className="w-full md:hidden"
         >
-          {mobilePartners.map((partner, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-center"
-              style={{
-                height: 32,
-                marginLeft: 23,
-                marginRight: 23,
-              }}
-            >
-              <Image
-                src={partner.src}
-                alt={partner.name}
-                width={partner.width}
-                height={partner.height}
-                style={{
-                  width: partner.width,
-                  height: partner.height,
-                  objectFit: "contain",
-                }}
-              />
-            </div>
-          ))}
+          {partnersWithLogos.length > 0
+            ? partnersWithLogos.map((partner) => (
+                <div
+                  key={partner.id}
+                  className="flex items-center justify-center"
+                  style={{
+                    height: 32,
+                    marginLeft: 23,
+                    marginRight: 23,
+                  }}
+                >
+                  <Image
+                    src={getStrapiMediaUrl(partner.logo?.url)}
+                    alt={partner.name}
+                    width={partner.logo?.width || 46}
+                    height={partner.logo?.height || 32}
+                    unoptimized
+                    style={{
+                      width: "auto",
+                      height: "auto",
+                      maxWidth: 85,
+                      maxHeight: 32,
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              ))
+            : mobilePartners.map((partner, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-center"
+                  style={{
+                    height: 32,
+                    marginLeft: 23,
+                    marginRight: 23,
+                  }}
+                >
+                  <Image
+                    src={partner.src}
+                    alt={partner.name}
+                    width={partner.width}
+                    height={partner.height}
+                    style={{
+                      width: partner.width,
+                      height: partner.height,
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              ))}
         </Marquee>
       </div>
     </section>

@@ -2,13 +2,21 @@
 
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
+import type { Instructor, HomePage } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const ExpertInstructors = () => {
+interface ExpertInstructorsProps {
+  instructors?: Instructor[];
+  sectionData?: HomePage | null;
+}
+
+const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }: ExpertInstructorsProps) => {
   const t = useTranslations("expertInstructors");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const instructors = [
+  // Fallback instructors
+  const fallbackInstructors = [
     { src: "/images/instructor-1.png", row: 1 },
     { src: "/images/instructor-2.png", row: 1 },
     { src: "/images/instructor-3.png", row: 1 },
@@ -18,8 +26,20 @@ const ExpertInstructors = () => {
     { src: "/images/instructor-7.png", row: 2 },
   ];
 
-  const row1 = instructors.filter((i) => i.row === 1);
-  const row2 = instructors.filter((i) => i.row === 2);
+  // Map Strapi instructors or use fallback — only use Strapi data if avatars are uploaded
+  const instructorsWithAvatars = strapiInstructors.filter((i) => i.avatar?.url);
+  const hasInstructors = instructorsWithAvatars.length > 0;
+  const instructorsList = hasInstructors
+    ? instructorsWithAvatars.map((instructor, index) => ({
+        id: instructor.id,
+        src: getStrapiMediaUrl(instructor.avatar?.url),
+        name: instructor.name,
+        row: index < 3 ? 1 : 2,
+      }))
+    : fallbackInstructors.map((inst, index) => ({ ...inst, id: index, name: `Instructor ${index + 1}` }));
+
+  const row1 = instructorsList.filter((i) => i.row === 1);
+  const row2 = instructorsList.filter((i) => i.row === 2);
 
   return (
     <section className="bg-[var(--surface-intense)] px-4 md:px-10 py-16 md:py-24 overflow-hidden">
@@ -31,7 +51,7 @@ const ExpertInstructors = () => {
             fontSize: "var(--typeface-font-styles-heading-h1)",
           }}
         >
-          {t("title")}
+          {sectionData?.instructorsTitle || t("title")}
         </h2>
 
         {/* Description */}
@@ -41,7 +61,7 @@ const ExpertInstructors = () => {
             fontSize: "var(--typeface-font-styles-heading-subheading)",
           }}
         >
-          {t("description")}
+          {sectionData?.instructorsDescription || t("description")}
         </p>
 
         {/* Desktop Instructor Avatars */}
@@ -51,17 +71,18 @@ const ExpertInstructors = () => {
             className="flex gap-6 items-center justify-center"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            {row1.map((instructor, index) => (
+            {row1.map((instructor) => (
               <div
-                key={index}
+                key={instructor.id}
                 className="p-[5px] bg-[#EEF3F7] rounded-full"
               >
                 <div className="p-[2.5px] bg-[#EEF3F7] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
-                      alt={`Instructor ${index + 1}`}
+                      alt={instructor.name}
                       fill
+                      unoptimized={instructor.src.startsWith('http')}
                       className="object-cover"
                     />
                   </div>
@@ -75,17 +96,18 @@ const ExpertInstructors = () => {
             className="flex gap-6 items-center"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            {row2.map((instructor, index) => (
+            {row2.map((instructor) => (
               <div
-                key={index}
+                key={instructor.id}
                 className="p-[5px] bg-[#EEF3F7] rounded-full"
               >
                 <div className="p-[2.5px] bg-[#EEF3F7] rounded-full overflow-hidden">
                   <div className="relative w-[93px] h-[93px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
-                      alt={`Instructor ${index + 4}`}
+                      alt={instructor.name}
                       fill
+                      unoptimized={instructor.src.startsWith('http')}
                       className="object-cover"
                     />
                   </div>
@@ -102,17 +124,18 @@ const ExpertInstructors = () => {
             className="flex gap-5 items-center justify-center"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            {row1.map((instructor, index) => (
+            {row1.map((instructor) => (
               <div
-                key={index}
+                key={instructor.id}
                 className="p-[3.31px] bg-[var(--surface-container-default)] rounded-full"
               >
                 <div className="p-[1.655px] bg-[var(--surface-container-default)] rounded-full overflow-hidden">
                   <div className="relative w-[62px] h-[62px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
-                      alt={`Instructor ${index + 1}`}
+                      alt={instructor.name}
                       fill
+                      unoptimized={instructor.src.startsWith('http')}
                       className="object-cover"
                     />
                   </div>
@@ -126,17 +149,18 @@ const ExpertInstructors = () => {
             className="flex flex-wrap gap-4 items-center justify-center"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            {row2.map((instructor, index) => (
+            {row2.map((instructor) => (
               <div
-                key={index}
+                key={instructor.id}
                 className="p-[3.31px] bg-[var(--surface-container-default)] rounded-full"
               >
                 <div className="p-[1.655px] bg-[var(--surface-container-high)] rounded-full overflow-hidden">
                   <div className="relative w-[62px] h-[62px] rounded-full overflow-hidden">
                     <Image
                       src={instructor.src}
-                      alt={`Instructor ${index + 4}`}
+                      alt={instructor.name}
                       fill
+                      unoptimized={instructor.src.startsWith('http')}
                       className="object-cover"
                     />
                   </div>

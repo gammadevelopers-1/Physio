@@ -14,8 +14,15 @@ import {
   X,
 } from "lucide-react";
 import BottomNav from "./BottomNav";
+import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const Navbar = () => {
+interface NavbarProps {
+  siteSettings?: SiteSettings | null;
+  navLinks?: NavigationLink[];
+}
+
+const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = useTranslations("navbar");
@@ -23,6 +30,11 @@ const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+
+  // Get logo URL from Strapi or use fallback
+  const logoUrl = siteSettings?.logo?.url
+    ? getStrapiMediaUrl(siteSettings.logo.url)
+    : "/images/logo.png";
 
   const switchLocale = () => {
     const newLocale = locale === "en" ? "ar" : "en";
@@ -39,10 +51,11 @@ const Navbar = () => {
           {/* Logo */}
           <Link href={`/${locale}`} className="relative h-10 w-10 lg:h-12 lg:w-12 shrink-0">
             <Image
-              src="/images/logo.png"
-              alt="PhysioGuidance Logo"
+              src={logoUrl}
+              alt={siteSettings?.siteName || "PhysioGuidance Logo"}
               width={48}
               height={48}
+              unoptimized={logoUrl.startsWith('http')}
               className="object-contain"
             />
           </Link>

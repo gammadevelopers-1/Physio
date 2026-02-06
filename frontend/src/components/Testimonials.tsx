@@ -4,14 +4,21 @@ import { useState } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import type { Testimonial, HomePage } from "@/lib/strapi/types";
 
-const Testimonials = () => {
+interface TestimonialsProps {
+  testimonials?: Testimonial[];
+  sectionData?: HomePage | null;
+}
+
+const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: TestimonialsProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const t = useTranslations("testimonials");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const testimonials = [
+  // Fallback testimonials from translations
+  const fallbackTestimonials = [
     {
       quote: t("items.item1.quote"),
       name: t("items.item1.name"),
@@ -43,6 +50,15 @@ const Testimonials = () => {
       role: t("items.item6.role"),
     },
   ];
+
+  // Use Strapi testimonials if available, otherwise fallback
+  const testimonials = strapiTestimonials.length > 0
+    ? strapiTestimonials.map((t) => ({
+        quote: t.quote,
+        name: t.authorName,
+        role: t.authorRole || "",
+      }))
+    : fallbackTestimonials;
 
   // Desktop: 3 per page, Mobile: 1 per page
   const desktopTotalSlides = Math.ceil(testimonials.length / 3);
@@ -82,7 +98,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-h1)",
               }}
             >
-              {t("title")}
+              {sectionData?.testimonialsTitle || t("title")}
             </h2>
             <p
               className="leading-7 w-[560px]"
@@ -90,7 +106,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-subheading)",
               }}
             >
-              {t("description")}
+              {sectionData?.testimonialsDescription || t("description")}
             </p>
           </div>
 
@@ -203,7 +219,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-h1)",
               }}
             >
-              {t("title")}
+              {sectionData?.testimonialsTitle || t("title")}
             </h2>
             <p
               className="leading-7 w-full"
@@ -211,7 +227,7 @@ const Testimonials = () => {
                 fontSize: "var(--typeface-font-styles-heading-subheading)",
               }}
             >
-              {t("description")}
+              {sectionData?.testimonialsDescription || t("description")}
             </p>
           </div>
 

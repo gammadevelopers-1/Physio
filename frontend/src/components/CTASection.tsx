@@ -2,11 +2,22 @@
 
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
+import type { HomePage } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const CTASection = () => {
+interface CTASectionProps {
+  data?: HomePage | null;
+}
+
+const CTASection = ({ data }: CTASectionProps) => {
   const t = useTranslations("cta");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Get CTA background image from Strapi or use fallback
+  const ctaBackgroundImage = data?.ctaBackgroundImage?.url
+    ? getStrapiMediaUrl(data.ctaBackgroundImage.url)
+    : "/images/cta-bg.png";
 
   return (
     <section className="relative bg-[var(--surface-container-low)] px-4 lg:px-10 py-16 lg:py-[120px] overflow-hidden">
@@ -14,9 +25,10 @@ const CTASection = () => {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className={`absolute w-[1440px] h-[1440px] ${isRTL ? "-scale-x-100" : ""}`}>
           <Image
-            src="/images/cta-bg.png"
+            src={ctaBackgroundImage}
             alt=""
             fill
+            unoptimized={ctaBackgroundImage.startsWith('http')}
             className="object-cover opacity-10"
           />
         </div>
@@ -30,7 +42,7 @@ const CTASection = () => {
             fontSize: "var(--typeface-font-styles-heading-h1)",
           }}
         >
-          {t("title")}
+          {data?.ctaTitle || t("title")}
         </h2>
 
         <p
@@ -39,11 +51,11 @@ const CTASection = () => {
             fontSize: "var(--typeface-font-styles-heading-subheading)",
           }}
         >
-          {t("description")}
+          {data?.ctaDescription || t("description")}
         </p>
 
         <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]">
-          {t("continueButton")}
+          {data?.ctaButtonLabel || t("continueButton")}
         </button>
       </div>
     </section>

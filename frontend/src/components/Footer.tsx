@@ -4,13 +4,25 @@ import Image from "next/image";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { Copyright, Facebook, Linkedin, Twitter, Instagram } from "lucide-react";
+import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const Footer = () => {
+interface FooterProps {
+  siteSettings?: SiteSettings | null;
+  footerLinks?: {
+    platform: NavigationLink[];
+    organization: NavigationLink[];
+    support: NavigationLink[];
+  };
+}
+
+const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
   const t = useTranslations("footer");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const platformLinks = [
+  // Fallback links from translations
+  const fallbackPlatformLinks = [
     { label: t("myLearning"), href: `/${locale}/learning` },
     { label: t("becomeTrainer"), href: `/${locale}/become-trainer` },
     { label: t("courses"), href: `/${locale}/courses` },
@@ -19,7 +31,7 @@ const Footer = () => {
     { label: t("learningPolicies"), href: `/${locale}/policies` },
   ];
 
-  const organizationLinks = [
+  const fallbackOrganizationLinks = [
     { label: t("aboutUs"), href: `/${locale}/about` },
     { label: t("nelcAlignment"), href: `/${locale}/nelc` },
     { label: t("academicPartners"), href: `/${locale}/partners` },
@@ -28,11 +40,38 @@ const Footer = () => {
     { label: t("privacyPolicy"), href: `/${locale}/privacy` },
   ];
 
-  const supportLinks = [
+  const fallbackSupportLinks = [
     { label: t("contactUs"), href: `/${locale}/contact` },
     { label: t("liveSupport"), href: `/${locale}/support` },
     { label: t("feedback"), href: `/${locale}/feedback` },
     { label: t("faq"), href: `/${locale}/faq` },
+  ];
+
+  // Map Strapi links or use fallbacks
+  const platformLinks = footerLinks?.platform?.length
+    ? footerLinks.platform.map((link) => ({ label: link.label, href: link.url }))
+    : fallbackPlatformLinks;
+
+  const organizationLinks = footerLinks?.organization?.length
+    ? footerLinks.organization.map((link) => ({ label: link.label, href: link.url }))
+    : fallbackOrganizationLinks;
+
+  const supportLinks = footerLinks?.support?.length
+    ? footerLinks.support.map((link) => ({ label: link.label, href: link.url }))
+    : fallbackSupportLinks;
+
+  // Get logo URL
+  const logoUrl = siteSettings?.logo?.url
+    ? getStrapiMediaUrl(siteSettings.logo.url)
+    : "/images/logo.png";
+
+  // Fallback payment methods
+  const defaultPaymentMethods = [
+    { name: "Visa", icon: "/payment icons/Visa.svg", padding: "6px" },
+    { name: "Mastercard", icon: "/payment icons/Mastercard.svg", padding: "5px" },
+    { name: "Google Pay", icon: "/payment icons/GooglePay.svg", padding: "5px" },
+    { name: "Mada", icon: "/payment icons/image 474.svg", padding: "5px" },
+    { name: "Apple Pay", icon: "/payment icons/ApplePay.svg", padding: "0px", noBorder: true },
   ];
 
   return (
@@ -49,9 +88,10 @@ const Footer = () => {
           >
             <div className="relative w-20 h-20">
               <Image
-                src="/images/logo.png"
-                alt="PhysioGuidance Logo"
+                src={logoUrl}
+                alt={siteSettings?.siteName || "PhysioGuidance Logo"}
                 fill
+                unoptimized={logoUrl.startsWith('http')}
                 className="object-contain"
               />
             </div>
@@ -61,35 +101,83 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-paragraph-text)",
               }}
             >
-              {t("companyDescription")}
+              {siteSettings?.footerDescription || t("companyDescription")}
             </p>
 
             {/* Social Icons */}
             <div className="flex gap-4 items-center" dir={isRTL ? "rtl" : "ltr"}>
-              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Instagram
-                  className="w-6 h-6 text-[var(--on-surface-variant)]"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Twitter
-                  className="w-6 h-6 text-[var(--on-surface-variant)]"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Linkedin
-                  className="w-6 h-6 text-[var(--on-surface-variant)]"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
-                <Facebook
-                  className="w-6 h-6 text-[var(--on-surface-variant)]"
-                  strokeWidth={1.5}
-                />
-              </div>
+              {siteSettings?.instagramUrl && (
+                <Link href={siteSettings.instagramUrl} target="_blank" rel="noopener noreferrer">
+                  <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                    <Instagram
+                      className="w-6 h-6 text-[var(--on-surface-variant)]"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </Link>
+              )}
+              {!siteSettings?.instagramUrl && (
+                <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                  <Instagram
+                    className="w-6 h-6 text-[var(--on-surface-variant)]"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )}
+              {siteSettings?.twitterUrl && (
+                <Link href={siteSettings.twitterUrl} target="_blank" rel="noopener noreferrer">
+                  <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                    <Twitter
+                      className="w-6 h-6 text-[var(--on-surface-variant)]"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </Link>
+              )}
+              {!siteSettings?.twitterUrl && (
+                <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                  <Twitter
+                    className="w-6 h-6 text-[var(--on-surface-variant)]"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )}
+              {siteSettings?.linkedinUrl && (
+                <Link href={siteSettings.linkedinUrl} target="_blank" rel="noopener noreferrer">
+                  <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                    <Linkedin
+                      className="w-6 h-6 text-[var(--on-surface-variant)]"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </Link>
+              )}
+              {!siteSettings?.linkedinUrl && (
+                <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                  <Linkedin
+                    className="w-6 h-6 text-[var(--on-surface-variant)]"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )}
+              {siteSettings?.facebookUrl && (
+                <Link href={siteSettings.facebookUrl} target="_blank" rel="noopener noreferrer">
+                  <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                    <Facebook
+                      className="w-6 h-6 text-[var(--on-surface-variant)]"
+                      strokeWidth={1.5}
+                    />
+                  </div>
+                </Link>
+              )}
+              {!siteSettings?.facebookUrl && (
+                <div className="p-2 bg-[#EEF3F7] rounded-full shadow-[0px_20px_80px_0px_rgba(0,0,0,0.12)]">
+                  <Facebook
+                    className="w-6 h-6 text-[var(--on-surface-variant)]"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -103,7 +191,7 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-heading-h4)",
               }}
             >
-              {t("platform")}
+              {siteSettings?.footerPlatformTitle || t("platform")}
             </h3>
             {platformLinks.map((link, index) => (
               <Link
@@ -129,7 +217,7 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-heading-h4)",
               }}
             >
-              {t("organization")}
+              {siteSettings?.footerOrganizationTitle || t("organization")}
             </h3>
             {organizationLinks.map((link, index) => (
               <Link
@@ -155,7 +243,7 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-heading-h4)",
               }}
             >
-              {t("support")}
+              {siteSettings?.footerSupportTitle || t("support")}
             </h3>
             {supportLinks.map((link, index) => (
               <Link
@@ -186,57 +274,27 @@ const Footer = () => {
                 fontSize: "var(--typeface-font-styles-paragraph-text)",
               }}
             >
-              {t("copyright")}
+              {siteSettings?.copyrightText || t("copyright")}
             </span>
           </div>
 
           {/* Payment Methods */}
           <div className="flex gap-4 items-center" dir={isRTL ? "rtl" : "ltr"}>
-            {/* Visa */}
-            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-              <Image
-                src="/payment icons/Visa.svg"
-                alt="Visa"
-                fill
-                className="object-contain p-[6px]"
-              />
-            </div>
-            {/* Mastercard */}
-            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-              <Image
-                src="/payment icons/Mastercard.svg"
-                alt="Mastercard"
-                fill
-                className="object-contain p-[5px]"
-              />
-            </div>
-            {/* Google Pay */}
-            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-              <Image
-                src="/payment icons/GooglePay.svg"
-                alt="Google Pay"
-                fill
-                className="object-contain p-[5px]"
-              />
-            </div>
-            {/* Mada */}
-            <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-              <Image
-                src="/payment icons/image 474.svg"
-                alt="Mada"
-                fill
-                className="object-contain p-[5px]"
-              />
-            </div>
-            {/* Apple Pay */}
-            <div className="relative w-[35px] h-[24px]">
-              <Image
-                src="/payment icons/ApplePay.svg"
-                alt="Apple Pay"
-                fill
-                className="object-contain"
-              />
-            </div>
+            {defaultPaymentMethods.map((method, index) => (
+              <div
+                key={index}
+                className={`relative w-[35px] h-[24px] ${
+                  !method.noBorder ? "bg-white border border-[#d9d9d9] rounded overflow-hidden" : ""
+                }`}
+              >
+                <Image
+                  src={method.icon}
+                  alt={method.name}
+                  fill
+                  className={`object-contain ${method.padding !== "0px" ? `p-[${method.padding}]` : ""}`}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

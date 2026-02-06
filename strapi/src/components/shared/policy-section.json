@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_shared_policy_sections",
+  "info": {
+    "displayName": "Policy Section"
+  },
+  "attributes": {
+    "sectionId": {
+      "type": "string",
+      "required": true
+    },
+    "sidebarLabel": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "content": {
+      "type": "richtext",
+      "required": true
+    }
+  }
+}

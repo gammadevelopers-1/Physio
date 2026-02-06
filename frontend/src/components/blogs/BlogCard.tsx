@@ -4,12 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Clock } from "lucide-react";
 import { useLocale } from "next-intl";
-import { urlFor } from "@/lib/sanity";
-import type { SanityBlogPost } from "@/lib/sanity/types";
-import { getLocalizedValue, formatReadTime } from "@/lib/sanity/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import type { StrapiBlogPost } from "@/lib/strapi/types";
 
 interface BlogCardProps {
-  post: SanityBlogPost;
+  post: StrapiBlogPost;
   isRTL?: boolean;
 }
 
@@ -17,37 +16,22 @@ const BlogCard = ({ post, isRTL: isRTLProp }: BlogCardProps) => {
   const locale = useLocale();
   const isRTL = isRTLProp ?? locale === "ar";
 
-  const getTitle = (): string => {
-    return getLocalizedValue(post.title, locale) || "";
-  };
-
-  const getExcerpt = (): string => {
-    return getLocalizedValue(post.excerpt, locale) || "";
-  };
-
-  const getReadTime = (): string => {
-    return formatReadTime(post.readTimeMinutes, locale);
-  };
-
-  const getSlug = (): string => {
-    return post.slug.current;
-  };
-
-  const getImageUrl = (): string => {
-    if (post.mainImage) {
-      return urlFor(post.mainImage).width(440).height(440).url();
-    }
-    return "/blogs/blog-1.png"; // Fallback placeholder
-  };
-
-  const title = getTitle();
+  const title = post.title || "";
+  const excerpt = post.excerpt || "";
+  const readTime = post.readTimeMinutes
+    ? (locale === "ar" ? `${post.readTimeMinutes} دقائق قراءة` : `${post.readTimeMinutes} min read`)
+    : "";
+  const slug = post.slug;
+  const imageUrl = post.mainImage?.url
+    ? getStrapiMediaUrl(post.mainImage.formats?.medium?.url || post.mainImage.url)
+    : "/blogs/blog-1.png";
 
   return (
-    <Link href={`/${locale}/blogs/${getSlug()}`} className="group block">
+    <Link href={`/${locale}/blogs/${slug}`} className="group block">
       <div className="overflow-hidden">
         <div className="relative h-[220px] overflow-hidden rounded-xl">
           <Image
-            src={getImageUrl()}
+            src={imageUrl}
             alt={title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -58,11 +42,11 @@ const BlogCard = ({ post, isRTL: isRTLProp }: BlogCardProps) => {
             {title}
           </h3>
           <p className="text-[var(--on-surface-variant)] line-clamp-2 mb-3" style={{ fontSize: "14px" }}>
-            {getExcerpt()}
+            {excerpt}
           </p>
           <div className={`flex items-center gap-1.5 text-sm text-[var(--on-surface-variant)] ${isRTL ? "flex-row-reverse justify-end" : ""}`}>
             <Clock className="w-4 h-4" />
-            <span>{getReadTime()}</span>
+            <span>{readTime}</span>
           </div>
         </div>
       </div>

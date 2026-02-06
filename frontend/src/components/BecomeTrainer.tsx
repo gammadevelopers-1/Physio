@@ -2,11 +2,22 @@
 
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
+import type { HomePage } from "@/lib/strapi/types";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
-const BecomeTrainer = () => {
+interface BecomeTrainerProps {
+  data?: HomePage | null;
+}
+
+const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
   const t = useTranslations("becomeTrainer");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Get trainer image from Strapi or use fallback
+  const trainerImage = data?.becomeTrainerImage?.url
+    ? getStrapiMediaUrl(data.becomeTrainerImage.url)
+    : "/images/trainer-image.png";
 
   return (
     <>
@@ -54,10 +65,10 @@ const BecomeTrainer = () => {
                         fontSize: "48px",
                       }}
                     >
-                      {t("title")}
+                      {data?.becomeTrainerTitle || t("title")}
                     </h2>
                     <p className="leading-[28px] text-[20px] w-[590px]">
-                      {t("description")}
+                      {data?.becomeTrainerDescription || t("description")}
                     </p>
                   </div>
 
@@ -67,7 +78,7 @@ const BecomeTrainer = () => {
                       background: "linear-gradient(to right, #a37f49, #6b4e24)",
                     }}
                   >
-                    {t("getStartedButton")}
+                    {data?.becomeTrainerButtonLabel || t("getStartedButton")}
                   </button>
                 </div>
               </div>
@@ -78,9 +89,10 @@ const BecomeTrainer = () => {
               className={`absolute top-[80px] w-[384px] h-[384px] rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)] z-10 ${isRTL ? "right-0" : "left-0"}`}
             >
               <Image
-                src="/images/trainer-image.png"
+                src={trainerImage}
                 alt="Become a Trainer"
                 fill
+                unoptimized={trainerImage.startsWith('http')}
                 className="object-cover"
               />
             </div>
@@ -137,7 +149,7 @@ const BecomeTrainer = () => {
                   fontSize: "var(--typeface-font-styles-heading-h1)",
                 }}
               >
-                {t("title")}
+                {data?.becomeTrainerTitle || t("title")}
               </h2>
               <p
                 className="leading-7 w-full"
@@ -145,13 +157,13 @@ const BecomeTrainer = () => {
                   fontSize: "var(--typeface-font-styles-heading-subheading)",
                 }}
               >
-                {t("description")}
+                {data?.becomeTrainerDescription || t("description")}
               </p>
             </div>
 
             {/* CTA Button - Full width on mobile */}
             <button className="h-12 px-5 py-2 text-white rounded-xl text-sm font-medium min-w-[80px] w-full btn-gold">
-              {t("getStartedButton")}
+              {data?.becomeTrainerButtonLabel || t("getStartedButton")}
             </button>
           </div>
         </div>
@@ -159,7 +171,7 @@ const BecomeTrainer = () => {
         {/* Trainer Image - Centered, overlapping between gold and content sections */}
         <div className="absolute left-4 right-4 top-[calc(50%-140px)] -translate-y-1/2 h-[331px] rounded-3xl overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
           <Image
-            src="/images/trainer-image.png"
+            src={trainerImage}
             alt="Become a Trainer"
             fill
             className="object-cover"

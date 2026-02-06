@@ -3,11 +3,18 @@
 import { useState } from "react";
 import { Mail } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import type { FeedbackPage } from "@/lib/strapi/types";
 
-const FeedbackForm = () => {
+const FeedbackForm = ({ strapiData }: { strapiData?: FeedbackPage | null }) => {
   const t = useTranslations("feedbackPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Helper: use Strapi data if available, otherwise fall back to translations
+  const s = (field: keyof FeedbackPage, translationKey: string) => {
+    const val = strapiData?.[field];
+    return (typeof val === 'string' && val) ? val : t(translationKey);
+  };
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -31,6 +38,16 @@ const FeedbackForm = () => {
     console.log("Feedback submitted:", formData);
   };
 
+  const titleText = s("title", "title");
+  const descriptionText = s("description", "description");
+  const fullNameLabel = s("formFullNameLabel", "form.fullName");
+  const emailLabel = s("formEmailLabel", "form.emailAddress");
+  const subjectLabel = s("formSubjectLabel", "form.subject");
+  const descLabel = s("formDescriptionLabel", "form.description");
+  const submitLabel = s("formSubmitLabel", "form.submit");
+  const charsPrefix = s("formCharactersLeftPrefix", "form.charactersLeftPrefix");
+  const charsSuffix = s("formCharactersLeftSuffix", "form.charactersLeftSuffix");
+
   return (
     <section className="bg-[#EEF3F7] min-h-[calc(100vh-80px)] lg:min-h-0">
       {/* Desktop Layout */}
@@ -46,13 +63,13 @@ const FeedbackForm = () => {
                 className="font-semibold text-[var(--on-surface-default)] tracking-[-0.24px] leading-tight"
                 style={{ fontSize: "48px" }}
               >
-                {t("title")}
+                {titleText}
               </h1>
               <p
                 className="text-[var(--on-surface-default)] leading-7 font-400"
                 style={{ fontSize: "20px" }}
               >
-                {t("description")}
+                {descriptionText}
               </p>
             </div>
 
@@ -73,7 +90,7 @@ const FeedbackForm = () => {
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    {t("form.fullName")} <span className="text-[#dc2626]">*</span>
+                    {fullNameLabel} <span className="text-[#dc2626]">*</span>
                   </label>
                   <input
                     type="text"
@@ -93,7 +110,7 @@ const FeedbackForm = () => {
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    {t("form.emailAddress")} <span className="text-[#dc2626]">*</span>
+                    {emailLabel} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="relative w-full">
                     <Mail
@@ -119,7 +136,7 @@ const FeedbackForm = () => {
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    {t("form.subject")}
+                    {subjectLabel}
                   </label>
                   <input
                     type="text"
@@ -138,7 +155,7 @@ const FeedbackForm = () => {
                       fontSize: "var(--typeface-font-styles-paragraph-text)",
                     }}
                   >
-                    {t("form.description")}
+                    {descLabel}
                   </label>
                   <div className="relative w-full">
                     <textarea
@@ -151,8 +168,8 @@ const FeedbackForm = () => {
                       className={`absolute bottom-2.5 leading-4 text-xs text-[var(--on-surface-variant)] ${isRTL ? "left-3.5" : "right-3.5"}`}
                     >
                       {isRTL
-                        ? `${t("form.charactersLeftPrefix")} ${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`
-                        : `${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`}
+                        ? `${charsPrefix} ${maxDescriptionLength - formData.description.length} ${charsSuffix}`
+                        : `${maxDescriptionLength - formData.description.length} ${charsSuffix}`}
                     </span>
                   </div>
                 </div>
@@ -168,7 +185,7 @@ const FeedbackForm = () => {
                         : "linear-gradient(to right, #a37f49, #6b4e24)",
                     }}
                   >
-                    {t("form.submit")}
+                    {submitLabel}
                   </button>
                 </div>
               </form>
@@ -186,13 +203,13 @@ const FeedbackForm = () => {
               className="font-semibold text-[var(--on-surface-default)] tracking-[-0.24px] leading-tight"
               style={{ fontSize: "30px" }}
             >
-              {t("title")}
+              {titleText}
             </h1>
             <p
               className="text-[var(--on-surface-default)] leading-7"
               style={{ fontSize: "20px" }}
             >
-              {t("description")}
+              {descriptionText}
             </p>
           </div>
 
@@ -210,7 +227,7 @@ const FeedbackForm = () => {
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  {t("form.fullName")} <span className="text-[#dc2626]">*</span>
+                  {fullNameLabel} <span className="text-[#dc2626]">*</span>
                 </label>
                 <input
                   type="text"
@@ -227,7 +244,7 @@ const FeedbackForm = () => {
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  {t("form.emailAddress")} <span className="text-[#dc2626]">*</span>
+                  {emailLabel} <span className="text-[#dc2626]">*</span>
                 </label>
                 <div className="relative w-full">
                   <Mail
@@ -250,7 +267,7 @@ const FeedbackForm = () => {
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  {t("form.subject")}
+                  {subjectLabel}
                 </label>
                 <input
                   type="text"
@@ -266,7 +283,7 @@ const FeedbackForm = () => {
                 <label
                   className="pb-2 text-[var(--on-surface-default)] leading-6 text-sm"
                 >
-                  {t("form.description")}
+                  {descLabel}
                 </label>
                 <div className="relative w-full">
                   <textarea
@@ -279,8 +296,8 @@ const FeedbackForm = () => {
                     className={`absolute bottom-2.5 leading-4 text-xs text-[var(--on-surface-variant)] ${isRTL ? "left-3.5" : "right-3.5"}`}
                   >
                     {isRTL
-                      ? `${t("form.charactersLeftPrefix")} ${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`
-                      : `${maxDescriptionLength - formData.description.length} ${t("form.charactersLeftSuffix")}`}
+                      ? `${charsPrefix} ${maxDescriptionLength - formData.description.length} ${charsSuffix}`
+                      : `${maxDescriptionLength - formData.description.length} ${charsSuffix}`}
                   </span>
                 </div>
               </div>
@@ -295,7 +312,7 @@ const FeedbackForm = () => {
                     : "linear-gradient(to right, #a37f49, #6b4e24)",
                 }}
               >
-                {t("form.submit")}
+                {submitLabel}
               </button>
             </form>
           </div>

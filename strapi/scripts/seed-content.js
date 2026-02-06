@@ -450,6 +450,36 @@ const enContent = {
     technologyDescription: "A secure, accessible platform that protects learner data and intellectual property.",
     instructionTitle: "Instruction",
     instructionDescription: "All courses are designed by subject matter experts and undergo rigorous quality review before publication."
+  },
+  partnersPage: {
+    title: "Collaborating with Leaders in Healthcare"
+  },
+  instructorsPage: {
+    meetExpertsTitle: "Meet the experts",
+    mindsBehindTitle: "Minds Behind Physioguidance"
+  },
+  faqPage: {
+    title: "FAQs",
+    subtitle: "Still have any questions?",
+    getInTouchLabel: "Get in touch",
+    items: [
+      {
+        question: "Is PhysioGuidance accredited by SCFHS?",
+        answer: "Yes, we are a fully accredited provider. All our CME courses are recognized by the Saudi Commission for Health Specialties."
+      },
+      {
+        question: "How do I upload my CME hours to Mumaris Plus?",
+        answer: "We handle this for you! Once you pass the course, our system automatically reports your hours to Mumaris Plus within 48 hours. Please ensure your SCFHS license number is correct in your profile."
+      },
+      {
+        question: "My name is spelled wrong on my certificate. How do I fix it?",
+        answer: "Your certificate uses the name exactly as it appears in your profile. You can edit your profile settings before generating the certificate. If it's already generated, please contact support."
+      },
+      {
+        question: "Is PhysioGuidance accredited by SCFHS?",
+        answer: "Yes, we are a fully accredited provider. All our CME courses are recognized by the Saudi Commission for Health Specialties."
+      }
+    ]
   }
 };
 
@@ -887,6 +917,36 @@ const arContent = {
     technologyDescription: "\u0646\u0638\u0627\u0645 \u0623\u0633\u0627\u0633\u064a \u0622\u0645\u0646 \u064a\u0633\u0647\u0644 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u064a\u0647 \u0648\u064a\u062d\u0645\u064a \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0645\u062a\u0639\u0644\u0645 \u0648\u0627\u0644\u0645\u0644\u0643\u064a\u0629 \u0627\u0644\u0641\u0643\u0631\u064a\u0629.",
     instructionTitle: "\u062a\u0639\u0644\u064a\u0645\u0627\u062a",
     instructionDescription: "\u062a\u0645 \u062a\u0635\u0645\u064a\u0645 \u062c\u0645\u064a\u0639 \u0627\u0644\u062f\u0648\u0631\u0627\u062a \u0627\u0644\u062a\u062f\u0631\u064a\u0628\u064a\u0629 \u0645\u0646 \u0642\u0628\u0644 \u062e\u0628\u0631\u0627\u0621 \u0641\u064a \u0627\u0644\u0645\u0648\u0636\u0648\u0639 \u0648\u062a\u062e\u0636\u0639 \u0644\u0645\u0631\u0627\u062c\u0639\u0629 \u0635\u0627\u0631\u0645\u0629 \u0644\u0644\u062c\u0648\u062f\u0629 \u0642\u0628\u0644 \u0627\u0644\u0646\u0634\u0631."
+  },
+  partnersPage: {
+    title: "\u0627\u0644\u062a\u0639\u0627\u0648\u0646 \u0645\u0639 \u0627\u0644\u0642\u0627\u062f\u0629 \u0641\u064a \u0645\u062c\u0627\u0644 \u0627\u0644\u0631\u0639\u0627\u064a\u0629 \u0627\u0644\u0635\u062d\u064a\u0629"
+  },
+  instructorsPage: {
+    meetExpertsTitle: "\u062a\u0639\u0631\u0641 \u0639\u0644\u0649 \u0627\u0644\u062e\u0628\u0631\u0627\u0621",
+    mindsBehindTitle: "\u0627\u0644\u0639\u0642\u0648\u0644 \u0648\u0631\u0627\u0621 \u0627\u0644\u062a\u0648\u062c\u064a\u0647 \u0627\u0644\u0637\u0628\u064a\u0639\u064a"
+  },
+  faqPage: {
+    title: "\u0627\u0644\u0623\u0633\u0626\u0644\u0629 \u0627\u0644\u0634\u0627\u0626\u0639\u0629",
+    subtitle: "\u0644\u0627 \u064a\u0632\u0627\u0644 \u0644\u062f\u064a\u0643 \u0623\u064a \u0623\u0633\u0626\u0644\u0629\u061f",
+    getInTouchLabel: "\u062a\u0648\u0627\u0635\u0644 \u0645\u0639\u0646\u0627",
+    items: [
+      {
+        question: "\u0647\u0644 PhysioGuidance \u0645\u0639\u062a\u0645\u062f \u0645\u0646 \u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0644\u0644\u062a\u062e\u0635\u0635\u0627\u062a \u0627\u0644\u0635\u062d\u064a\u0629 (SCFHS)\u061f",
+        answer: "\u0646\u0639\u0645\u060c \u0646\u062d\u0646 \u0645\u0632\u0648\u062f \u0645\u0639\u062a\u0645\u062f \u0628\u0627\u0644\u0643\u0627\u0645\u0644. \u062c\u0645\u064a\u0639 \u062f\u0648\u0631\u0627\u062a \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0637\u0628\u064a \u0627\u0644\u0645\u0633\u062a\u0645\u0631 \u0644\u062f\u064a\u0646\u0627 \u0645\u0639\u062a\u0631\u0641 \u0628\u0647\u0627 \u0645\u0646 \u0642\u0628\u0644 \u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0644\u0644\u062a\u062e\u0635\u0635\u0627\u062a \u0627\u0644\u0635\u062d\u064a\u0629."
+      },
+      {
+        question: "\u0643\u064a\u0641 \u064a\u0645\u0643\u0646\u0646\u064a \u062a\u062d\u0645\u064a\u0644 \u0633\u0627\u0639\u0627\u062a \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0637\u0628\u064a \u0627\u0644\u0645\u0633\u062a\u0645\u0631 \u0627\u0644\u062e\u0627\u0635\u0629 \u0628\u064a \u0625\u0644\u0649 Mumaris Plus\u061f",
+        answer: "\u0646\u062d\u0646 \u0646\u062a\u0639\u0627\u0645\u0644 \u0645\u0639 \u0647\u0630\u0627 \u0645\u0646 \u0623\u062c\u0644\u0643! \u0628\u0645\u062c\u0631\u062f \u0627\u062c\u062a\u064a\u0627\u0632\u0643 \u0627\u0644\u062f\u0648\u0631\u0629\u060c \u064a\u0642\u0648\u0645 \u0646\u0638\u0627\u0645\u0646\u0627 \u062a\u0644\u0642\u0627\u0626\u064a\u0627\u064b \u0628\u0625\u0628\u0644\u0627\u063a \u0633\u0627\u0639\u0627\u062a\u0643 \u0625\u0644\u0649 Mumaris Plus \u062e\u0644\u0627\u0644 48 \u0633\u0627\u0639\u0629. \u064a\u0631\u062c\u0649 \u0627\u0644\u062a\u0623\u0643\u062f \u0645\u0646 \u0635\u062d\u0629 \u0631\u0642\u0645 \u062a\u0631\u062e\u064a\u0635 \u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0644\u0644\u062a\u062e\u0635\u0635\u0627\u062a \u0627\u0644\u0635\u062d\u064a\u0629 (SCFHS) \u0641\u064a \u0645\u0644\u0641\u0643 \u0627\u0644\u0634\u062e\u0635\u064a."
+      },
+      {
+        question: "\u0627\u0633\u0645\u064a \u0645\u0643\u062a\u0648\u0628 \u0628\u0634\u0643\u0644 \u062e\u0627\u0637\u0626 \u0641\u064a \u0634\u0647\u0627\u062f\u062a\u064a. \u0643\u064a\u0641 \u064a\u0645\u0643\u0646\u0646\u064a \u0627\u0635\u0644\u0627\u062d\u0647\u0627\u061f",
+        answer: "\u062a\u0633\u062a\u062e\u062f\u0645 \u0634\u0647\u0627\u062f\u062a\u0643 \u0627\u0644\u0627\u0633\u0645 \u062a\u0645\u0627\u0645\u0627\u064b \u0643\u0645\u0627 \u064a\u0638\u0647\u0631 \u0641\u064a \u0645\u0644\u0641 \u0627\u0644\u062a\u0639\u0631\u064a\u0641 \u0627\u0644\u062e\u0627\u0635 \u0628\u0643. \u064a\u0645\u0643\u0646\u0643 \u062a\u0639\u062f\u064a\u0644 \u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0645\u0644\u0641 \u0627\u0644\u062a\u0639\u0631\u064a\u0641 \u0627\u0644\u062e\u0627\u0635 \u0628\u0643 \u0642\u0628\u0644 \u0625\u0646\u0634\u0627\u0621 \u0627\u0644\u0634\u0647\u0627\u062f\u0629. \u0625\u0630\u0627 \u062a\u0645 \u0625\u0646\u0634\u0627\u0624\u0647 \u0628\u0627\u0644\u0641\u0639\u0644\u060c \u0641\u064a\u0631\u062c\u0649 \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u062f\u0639\u0645."
+      },
+      {
+        question: "\u0647\u0644 PhysioGuidance \u0645\u0639\u062a\u0645\u062f \u0645\u0646 \u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0644\u0644\u062a\u062e\u0635\u0635\u0627\u062a \u0627\u0644\u0635\u062d\u064a\u0629 (SCFHS)\u061f",
+        answer: "\u0646\u0639\u0645\u060c \u0646\u062d\u0646 \u0645\u0632\u0648\u062f \u0645\u0639\u062a\u0645\u062f \u0628\u0627\u0644\u0643\u0627\u0645\u0644. \u062c\u0645\u064a\u0639 \u062f\u0648\u0631\u0627\u062a \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0637\u0628\u064a \u0627\u0644\u0645\u0633\u062a\u0645\u0631 \u0644\u062f\u064a\u0646\u0627 \u0645\u0639\u062a\u0631\u0641 \u0628\u0647\u0627 \u0645\u0646 \u0642\u0628\u0644 \u0627\u0644\u0647\u064a\u0626\u0629 \u0627\u0644\u0633\u0639\u0648\u062f\u064a\u0629 \u0644\u0644\u062a\u062e\u0635\u0635\u0627\u062a \u0627\u0644\u0635\u062d\u064a\u0629."
+      }
+    ]
   }
 };
 
@@ -978,13 +1038,13 @@ const arPartners = [
 
 // Arabic instructors
 const arInstructors = [
-  { name: "\u062f. \u0639\u0628\u062f\u0627\u0644\u0644\u0647 \u0627\u0644\u062d\u0631\u0628\u064a", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u060c \u062c\u0631\u0627\u062d\u0629 \u0627\u0644\u0639\u0638\u0627\u0645" },
-  { name: "\u062f. \u0633\u0627\u0631\u0629 \u0627\u0644\u062c\u0627\u0633\u0631", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u0629\u060c \u0637\u0628 \u0627\u0644\u0631\u0648\u0645\u0627\u062a\u064a\u0632\u0645 \u0644\u0644\u0623\u0637\u0641\u0627\u0644" },
-  { name: "\u062f. \u0646\u0648\u0631\u0629 \u0627\u0644\u0639\u0645\u0631\u064a", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u0629\u060c \u0637\u0628 \u0627\u0644\u0623\u0633\u0631\u0629 \u0648\u0635\u062d\u0629 \u0627\u0644\u0645\u062c\u062a\u0645\u0639" },
-  { name: "\u062f. \u0641\u064a\u0635\u0644 \u0627\u0644\u0639\u062a\u064a\u0628\u064a", title: "\u0645\u062f\u064a\u0646\u0629 \u0627\u0644\u0623\u0645\u064a\u0631 \u0633\u0644\u0637\u0627\u0646 \u0627\u0644\u0637\u0628\u064a\u0629 \u0627\u0644\u0639\u0633\u0643\u0631\u064a\u0629\u060c \u0627\u0644\u0631\u064a\u0627\u0636" },
-  { name: "\u062f. \u0645\u062d\u0645\u062f \u0627\u0644\u063a\u0627\u0645\u062f\u064a", title: "\u0623\u0633\u062a\u0627\u0630 \u0645\u0633\u0627\u0639\u062f \u0648\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u060c \u0637\u0628 \u0627\u0644\u0637\u0648\u0627\u0631\u0626" },
-  { name: "\u062f. \u064a\u0627\u0633\u0631 \u0627\u0644\u0642\u062d\u0637\u0627\u0646\u064a", title: "\u0645\u0633\u062c\u0644 \u0623\u0648\u0644\u060c \u0627\u0644\u0637\u0628 \u0627\u0644\u0628\u0627\u0637\u0646\u064a" },
-  { name: "\u062f. \u0639\u0645\u0631 \u0627\u0644\u0634\u0647\u0631\u064a", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u060c \u0637\u0628 \u0627\u0644\u0623\u0639\u0635\u0627\u0628" }
+  { name: "\u062f. \u0639\u0628\u062f\u0627\u0644\u0644\u0647 \u0627\u0644\u062d\u0631\u0628\u064a", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u060c \u062c\u0631\u0627\u062d\u0629 \u0627\u0644\u0639\u0638\u0627\u0645", section: "expert" },
+  { name: "\u062f. \u0633\u0627\u0631\u0629 \u0627\u0644\u062c\u0627\u0633\u0631", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u0629\u060c \u0637\u0628 \u0627\u0644\u0631\u0648\u0645\u0627\u062a\u064a\u0632\u0645 \u0644\u0644\u0623\u0637\u0641\u0627\u0644", section: "expert" },
+  { name: "\u062f. \u0646\u0648\u0631\u0629 \u0627\u0644\u0639\u0645\u0631\u064a", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u0629\u060c \u0637\u0628 \u0627\u0644\u0623\u0633\u0631\u0629 \u0648\u0635\u062d\u0629 \u0627\u0644\u0645\u062c\u062a\u0645\u0639", section: "expert" },
+  { name: "\u062f. \u0641\u064a\u0635\u0644 \u0627\u0644\u0639\u062a\u064a\u0628\u064a", title: "\u0645\u062f\u064a\u0646\u0629 \u0627\u0644\u0623\u0645\u064a\u0631 \u0633\u0644\u0637\u0627\u0646 \u0627\u0644\u0637\u0628\u064a\u0629 \u0627\u0644\u0639\u0633\u0643\u0631\u064a\u0629\u060c \u0627\u0644\u0631\u064a\u0627\u0636", section: "minds" },
+  { name: "\u062f. \u0645\u062d\u0645\u062f \u0627\u0644\u063a\u0627\u0645\u062f\u064a", title: "\u0623\u0633\u062a\u0627\u0630 \u0645\u0633\u0627\u0639\u062f \u0648\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u060c \u0637\u0628 \u0627\u0644\u0637\u0648\u0627\u0631\u0626", section: "minds" },
+  { name: "\u062f. \u064a\u0627\u0633\u0631 \u0627\u0644\u0642\u062d\u0637\u0627\u0646\u064a", title: "\u0645\u0633\u062c\u0644 \u0623\u0648\u0644\u060c \u0627\u0644\u0637\u0628 \u0627\u0644\u0628\u0627\u0637\u0646\u064a", section: "minds" },
+  { name: "\u062f. \u0639\u0645\u0631 \u0627\u0644\u0634\u0647\u0631\u064a", title: "\u0627\u0633\u062a\u0634\u0627\u0631\u064a\u060c \u0637\u0628 \u0627\u0644\u0623\u0639\u0635\u0627\u0628", section: "minds" }
 ];
 
 async function apiRequest(endpoint, method = 'GET', data = null) {
@@ -1224,6 +1284,26 @@ async function seedNELCPage(locale, content) {
   await seedSingleType('/nelc-page', locale, data, 'NELC page');
 }
 
+async function seedPartnersPage(locale, content) {
+  const data = { ...content.partnersPage };
+  await seedSingleType('/partners-page', locale, data, 'partners page');
+}
+
+async function seedInstructorsPage(locale, content) {
+  const data = { ...content.instructorsPage };
+  await seedSingleType('/instructors-page', locale, data, 'instructors page');
+}
+
+async function seedFAQPage(locale, content) {
+  const data = {
+    title: content.faqPage.title,
+    subtitle: content.faqPage.subtitle,
+    getInTouchLabel: content.faqPage.getInTouchLabel,
+    items: content.faqPage.items,
+  };
+  await seedSingleType('/faq-page', locale, data, 'FAQ page');
+}
+
 async function seedSiteSettings(locale, content) {
   const siteSettingsData = {
     siteName: 'PhysioGuidance',
@@ -1349,6 +1429,7 @@ async function seedInstructors(locale, instructors) {
     const instructorData = {
       name: instructor.name,
       title: instructor.title,
+      section: instructor.section || 'expert',
       order: i + 1,
       showOnHomepage: true,
     };
@@ -1645,13 +1726,13 @@ async function seedBlogPosts(locale, posts, categoryMap) {
 
 // English instructors
 const enInstructors = [
-  { name: "Dr. Abdullah Al-Harbi", title: "Consultant, Orthopedic Surgery" },
-  { name: "Dr. Sarah Al-Jasser", title: "Consultant, Pediatric Rheumatology" },
-  { name: "Dr. Nourah Al-Amri", title: "Consultant, Family Medicine & Community Health" },
-  { name: "Dr. Faisal Al-Otaibi", title: "Prince Sultan Military Medical City, Riyadh" },
-  { name: "Dr. Mohammed Al-Ghamdi", title: "Assistant Professor & Consultant, Emergency Medicine" },
-  { name: "Dr. Yasser Al-Qahtani", title: "Senior Registrar, Internal Medicine" },
-  { name: "Dr. Omar Al-Shehri", title: "Consultant, Neurology" }
+  { name: "Dr. Abdullah Al-Harbi", title: "Consultant, Orthopedic Surgery", section: "expert" },
+  { name: "Dr. Sarah Al-Jasser", title: "Consultant, Pediatric Rheumatology", section: "expert" },
+  { name: "Dr. Nourah Al-Amri", title: "Consultant, Family Medicine & Community Health", section: "expert" },
+  { name: "Dr. Faisal Al-Otaibi", title: "Prince Sultan Military Medical City, Riyadh", section: "minds" },
+  { name: "Dr. Mohammed Al-Ghamdi", title: "Assistant Professor & Consultant, Emergency Medicine", section: "minds" },
+  { name: "Dr. Yasser Al-Qahtani", title: "Senior Registrar, Internal Medicine", section: "minds" },
+  { name: "Dr. Omar Al-Shehri", title: "Consultant, Neurology", section: "minds" }
 ];
 
 async function main() {
@@ -1696,6 +1777,9 @@ async function main() {
     await seedFeedbackPage('en', enContent);
     await seedCertificationsPage('en', enContent);
     await seedNELCPage('en', enContent);
+    await seedPartnersPage('en', enContent);
+    await seedInstructorsPage('en', enContent);
+    await seedFAQPage('en', enContent);
     await seedSiteSettings('en', enContent);
     await seedFeaturedCourses('en', enContent.courses, {
       cmeHours: 'CME Hours',
@@ -1722,6 +1806,9 @@ async function main() {
     await seedFeedbackPage('ar', arContent);
     await seedCertificationsPage('ar', arContent);
     await seedNELCPage('ar', arContent);
+    await seedPartnersPage('ar', arContent);
+    await seedInstructorsPage('ar', arContent);
+    await seedFAQPage('ar', arContent);
     await seedSiteSettings('ar', arContent);
     await seedFeaturedCourses('ar', arContent.courses, {
       cmeHours: '\u0633\u0627\u0639\u0627\u062a \u0627\u0644\u062a\u0639\u0644\u064a\u0645 \u0627\u0644\u0637\u0628\u064a \u0627\u0644\u0645\u0633\u062a\u0645\u0631',

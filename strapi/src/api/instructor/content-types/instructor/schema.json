@@ -54,6 +54,11 @@
     "showOnHomepage": {
       "type": "boolean",
       "default": true
+    },
+    "section": {
+      "type": "enumeration",
+      "enum": ["expert", "minds"],
+      "default": "expert"
     }
   }
 }

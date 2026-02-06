@@ -107,6 +107,24 @@
     "step3Description": {
       "type": "text",
       "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "nelcLogo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "scfhsLogo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "certificateImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
     }
   }
 }

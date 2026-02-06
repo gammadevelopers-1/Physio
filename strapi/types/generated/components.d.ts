@@ -1,5 +1,16 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface SharedFaqItem extends Struct.ComponentSchema {
+  collectionName: 'components_shared_faq_items';
+  info: {
+    displayName: 'FAQ Item';
+  };
+  attributes: {
+    answer: Schema.Attribute.Text & Schema.Attribute.Required;
+    question: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface SharedPolicySection extends Struct.ComponentSchema {
   collectionName: 'components_shared_policy_sections';
   info: {
@@ -16,6 +27,7 @@ export interface SharedPolicySection extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'shared.faq-item': SharedFaqItem;
       'shared.policy-section': SharedPolicySection;
     }
   }

@@ -1,0 +1,36 @@
+{
+  "kind": "singleType",
+  "collectionName": "instructors_pages",
+  "info": {
+    "singularName": "instructors-page",
+    "pluralName": "instructors-pages",
+    "displayName": "Instructors Page",
+    "description": "Instructors page content management"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "meetExpertsTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "mindsBehindTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

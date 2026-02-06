@@ -243,24 +243,41 @@ const InstructorDashboardContent = () => {
     },
   ];
 
-  // Mock pending certificates
+  // Mock pending certificates - 5 certificates with varying eligibility
   const mockCertificates = [
     {
       id: "1",
       studentName: "Fatima Al-Rashid",
       courseName: t("mockData.aclsTraining"),
+      completionDate: "Feb 5, 2026",
       checks: { attendance: true, assessment: true, completion: true },
     },
     {
       id: "2",
       studentName: "Omar Abdullah",
       courseName: "First Aid",
+      completionDate: "Feb 4, 2026",
       checks: { attendance: true, assessment: true, completion: false },
     },
     {
       id: "3",
       studentName: "Layla Hassan",
       courseName: "CPR Certification",
+      completionDate: "Feb 3, 2026",
+      checks: { attendance: true, assessment: true, completion: true },
+    },
+    {
+      id: "4",
+      studentName: "Mohammed Al-Farsi",
+      courseName: "Patient Safety & Quality",
+      completionDate: "Feb 2, 2026",
+      checks: { attendance: true, assessment: false, completion: true },
+    },
+    {
+      id: "5",
+      studentName: "Nora Al-Qasim",
+      courseName: "Infection Control",
+      completionDate: "Feb 1, 2026",
       checks: { attendance: true, assessment: true, completion: true },
     },
   ];
@@ -411,10 +428,7 @@ const InstructorDashboardContent = () => {
               <AtRiskLearners learners={mockAtRiskLearners} />
 
               {/* Pending Certificates */}
-              <CertificateQueue
-                certificates={mockCertificates}
-                totalCount={8}
-              />
+              <CertificateQueue certificates={mockCertificates} />
             </div>
           </div>
         </div>

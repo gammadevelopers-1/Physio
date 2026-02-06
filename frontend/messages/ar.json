@@ -1808,7 +1808,11 @@
       "required": "المطلوب",
       "notFullyEligible": "الطالب لا يستوفي جميع متطلبات الأهلية",
       "notFullyEligibleDesc": "يمكنك الموافقة مع ملاحظة توضح الاستثناء.",
-      "cancel": "إلغاء"
+      "cancel": "إلغاء",
+      "selectAll": "تحديد الكل",
+      "selected": "محدد",
+      "hold": "تعليق",
+      "preview": "معاينة"
     },
     "content": {
       "title": "إدارة المحتوى",

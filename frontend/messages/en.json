@@ -1598,7 +1598,11 @@
       "required": "Required",
       "notFullyEligible": "Student does not meet all eligibility requirements",
       "notFullyEligibleDesc": "You can still approve with a note explaining the exception.",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "selectAll": "Select All",
+      "selected": "selected",
+      "hold": "Hold",
+      "preview": "Preview"
     },
     "content": {
       "title": "Content Management",

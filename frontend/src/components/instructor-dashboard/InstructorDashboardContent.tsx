@@ -14,6 +14,7 @@ import AtRiskLearners from "./AtRiskLearners";
 import CertificateQueue from "./CertificateQueue";
 import SessionsCalendarWidget from "./SessionsCalendarWidget";
 import AssessmentAnalysisWidget from "./AssessmentAnalysisWidget";
+import RecentFeedbackWidget from "./RecentFeedbackWidget";
 
 // Static mock data
 const mockInstructor = {
@@ -282,6 +283,40 @@ const InstructorDashboardContent = () => {
     },
   ];
 
+  // Mock feedback data - 3 feedback cards with different sentiments
+  const mockFeedbackItems = [
+    {
+      id: "1",
+      learnerName: "Sarah Al-Harthi",
+      learnerInitials: "SH",
+      courseName: t("mockData.aclsTraining"),
+      rating: 5,
+      comment: t("feedback.comment1"),
+      sentiment: "positive" as const,
+      date: "Feb 5, 2026",
+    },
+    {
+      id: "2",
+      learnerName: "Ahmed Al-Farsi",
+      learnerInitials: "AF",
+      courseName: "First Aid Training",
+      rating: 3,
+      comment: t("feedback.comment2"),
+      sentiment: "neutral" as const,
+      date: "Feb 4, 2026",
+    },
+    {
+      id: "3",
+      learnerName: "Khalid Al-Dosari",
+      learnerInitials: "KD",
+      courseName: "CPR Certification",
+      rating: 2,
+      comment: t("feedback.comment3"),
+      sentiment: "negative" as const,
+      date: "Feb 3, 2026",
+    },
+  ];
+
   const handleRefreshNotifications = () => {
     console.log("Refreshing notifications...");
   };
@@ -404,6 +439,15 @@ const InstructorDashboardContent = () => {
                 assessments={mockAssessmentScores}
                 questions={mockQuestionAnalysis}
               />
+
+              {/* Recent Feedback */}
+              <div className="mb-6">
+                <RecentFeedbackWidget
+                  overallRating={mockKPIData.avgRating}
+                  totalReviews={mockKPIData.totalReviews}
+                  feedbackItems={mockFeedbackItems}
+                />
+              </div>
 
               {/* Tabs Section */}
               <InstructorTabs

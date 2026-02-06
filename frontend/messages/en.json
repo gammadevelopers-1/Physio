@@ -1308,6 +1308,18 @@
       "reviewRequested": "Review Requested",
       "reviewRequestedMessage": "Certificate approval pending for 2 students"
     },
+    "feedback": {
+      "title": "Recent Feedback",
+      "overallRating": "Overall Rating",
+      "reviews": "reviews",
+      "positive": "Positive",
+      "neutral": "Neutral",
+      "negative": "Negative",
+      "viewAll": "View All Feedback",
+      "comment1": "Excellent course! The instructor explained complex topics in a very clear and practical way. Highly recommended.",
+      "comment2": "The course content was good but could use more hands-on exercises. The pace was appropriate.",
+      "comment3": "I had difficulty following some modules. The material needs to be updated with more recent guidelines."
+    },
     "mockData": {
       "aclsTraining": "Advanced Cardiovascular Life Support",
       "firstAidModule": "Basic First Aid Training - Module 3",

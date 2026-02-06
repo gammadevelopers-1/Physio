@@ -1214,11 +1214,13 @@
       "logout": "Logout"
     },
     "kpi": {
-      "myCourses": "My Courses",
+      "activeCourses": "Active Courses",
       "todaysSessions": "Today's Sessions",
       "atRiskLearners": "At-Risk Learners",
       "pendingCertificates": "Pending Certificates",
-      "next": "Next"
+      "avgRating": "Avg Course Rating",
+      "next": "Next",
+      "needAttention": "need attention"
     },
     "sessions": {
       "zoomSession": "Zoom Session",

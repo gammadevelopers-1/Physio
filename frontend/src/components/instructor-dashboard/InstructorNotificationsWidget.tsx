@@ -23,7 +23,7 @@ const InstructorNotificationsWidget = ({
   const t = useTranslations("instructorDashboard");
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
       <h3 className="text-base font-semibold text-[#1F2937] mb-4">
         {t("notifications.title")}
       </h3>

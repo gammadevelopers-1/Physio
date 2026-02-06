@@ -1426,11 +1426,13 @@
       "logout": "تسجيل الخروج"
     },
     "kpi": {
-      "myCourses": "دوراتي",
+      "activeCourses": "الدورات النشطة",
       "todaysSessions": "جلسات اليوم",
       "atRiskLearners": "المتعلمون المعرضون للخطر",
       "pendingCertificates": "الشهادات المعلقة",
-      "next": "التالي"
+      "avgRating": "متوسط تقييم الدورة",
+      "next": "التالي",
+      "needAttention": "بحاجة للاهتمام"
     },
     "sessions": {
       "zoomSession": "جلسة زوم",

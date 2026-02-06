@@ -27,7 +27,7 @@ const CertificateQueue = ({
 
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         <h3 className="text-base font-semibold text-[#1F2937] mb-4 flex items-center gap-2">
           <GraduationCap className="w-5 h-5 text-[#D4A520]" />
           {t("certificates.pendingTitle")}

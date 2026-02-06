@@ -34,19 +34,19 @@ const CoursePerformance = ({
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border-b border-[#E5E7EB] gap-3">
-        <h2 className="text-lg font-semibold text-[#1F2937]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB] gap-3">
+        <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
           {t("performance.title")}
         </h2>
-        <div className="flex items-center gap-2">
-          <select className="px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <select className="flex-1 sm:flex-none px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors">
             {courses.map((course) => (
               <option key={course.value} value={course.value}>
                 {course.label}
               </option>
             ))}
           </select>
-          <button className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+          <button className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
             <Download className="w-4 h-4" />
             {t("performance.export")}
           </button>
@@ -54,8 +54,8 @@ const CoursePerformance = ({
       </div>
 
       {/* Content */}
-      <div className="p-5">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="p-4 sm:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Attendance Chart */}
           <div>
             <h4 className="text-sm text-[#4B5563] mb-3">

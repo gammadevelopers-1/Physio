@@ -23,14 +23,16 @@ const mockInstructor = {
 };
 
 const mockKPIData = {
-  myCourses: 5,
+  activeCourses: 5,
   coursesChange: "+2 this month",
   todaysSessions: 3,
   nextSessionTime: "2:00 PM",
   atRiskLearners: 12,
-  atRiskChange: "+3 need attention",
+  atRiskChange: 3,
   pendingCertificates: 8,
   certificatesStatus: "Awaiting approval",
+  avgRating: 4.8,
+  totalReviews: 156,
 };
 
 const InstructorDashboardContent = () => {
@@ -248,7 +250,7 @@ const InstructorDashboardContent = () => {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Title */}
-              <h1 className="text-2xl font-bold text-[#1F2937] mb-6">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6">
                 {t("title")}
               </h1>
 

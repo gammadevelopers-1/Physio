@@ -47,7 +47,7 @@ const AtRiskLearners = ({ learners, totalCount }: AtRiskLearnersProps) => {
 
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         <h3 className="text-base font-semibold text-[#1F2937] mb-4 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-[#F97316]" />
           {t("atRisk.title")}

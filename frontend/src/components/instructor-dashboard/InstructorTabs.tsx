@@ -63,30 +63,32 @@ const InstructorTabs = ({
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       {/* Tab Headers */}
-      <div className="flex border-b border-[#E5E7EB]">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-5 py-3 text-sm font-medium relative transition-colors ${
-              activeTab === tab.id
-                ? "text-[#3B82F6]"
-                : "text-[#6B7280] hover:text-[#374151]"
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </span>
-            {activeTab === tab.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6] rounded-t" />
-            )}
-          </button>
-        ))}
+      <div className="overflow-x-auto scrollbar-hide">
+        <div className="flex border-b border-[#E5E7EB] min-w-max">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 sm:px-5 py-3 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "text-[#3B82F6]"
+                  : "text-[#6B7280] hover:text-[#374151]"
+              }`}
+            >
+              <span className="flex items-center gap-1 sm:gap-1.5">
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+              </span>
+              {activeTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#3B82F6] rounded-t" />
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {/* Content Management Tab */}
         {activeTab === "content" && (
           <div className="overflow-x-auto">

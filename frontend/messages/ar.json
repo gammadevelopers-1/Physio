@@ -1565,6 +1565,7 @@
       "title": "الجلسات",
       "subtitle": "جدولة وإدارة جلسات التدريب",
       "scheduleSession": "جدولة جلسة",
+      "scheduleSessionTitle": "جدولة جلسة جديدة",
       "calendarView": "التقويم",
       "listView": "القائمة",
       "today": "اليوم",
@@ -1575,6 +1576,7 @@
       "hybrid": "هجين",
       "upcoming": "القادمة",
       "past": "السابقة",
+      "more": "المزيد",
       "noSessions": "لا توجد جلسات",
       "noSessionsDesc": "جدول جلسة جديدة للبدء",
       "enrolled": "مسجل",
@@ -1602,6 +1604,24 @@
         "zoom": "زوم",
         "onsite": "حضوري",
         "hybrid": "هجين"
+      },
+      "form": {
+        "course": "الدورة",
+        "selectCourse": "اختر دورة",
+        "sessionTitle": "عنوان الجلسة",
+        "sessionTitlePlaceholder": "أدخل عنوان الجلسة",
+        "date": "التاريخ",
+        "time": "الوقت",
+        "duration": "المدة",
+        "minutes": "دقيقة",
+        "hours": "ساعات",
+        "custom": "مخصص",
+        "sessionType": "نوع الجلسة",
+        "onsite": "حضوري",
+        "hybrid": "هجين",
+        "notifyStudents": "إشعار الطلاب المسجلين بهذه الجلسة",
+        "cancel": "إلغاء",
+        "schedule": "جدولة الجلسة"
       }
     },
     "students": {
@@ -1927,6 +1947,30 @@
       "notConnected": "غير متصل",
       "connect": "اتصال",
       "disconnect": "قطع الاتصال"
+    },
+    "sessionsCalendar": {
+      "title": "تقويم جلساتي",
+      "today": "اليوم",
+      "todayLabel": "اليوم",
+      "zoom": "زوم",
+      "onsite": "حضوري",
+      "zoomSession": "جلسة زوم",
+      "onsiteSession": "جلسة حضورية",
+      "noSessions": "لا توجد جلسات",
+      "enrolled": "مسجل",
+      "startSession": "بدء الجلسة",
+      "attendance": "الحضور",
+      "shareMaterials": "مشاركة المواد",
+      "start": "بدء",
+      "days": {
+        "sun": "الأحد",
+        "mon": "الإثنين",
+        "tue": "الثلاثاء",
+        "wed": "الأربعاء",
+        "thu": "الخميس",
+        "fri": "الجمعة",
+        "sat": "السبت"
+      }
     }
   }
 }

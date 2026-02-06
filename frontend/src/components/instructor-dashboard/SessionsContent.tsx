@@ -54,6 +54,7 @@ const SessionsContent = () => {
   const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedSessionType, setSelectedSessionType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
 
   // Mock sessions data
   const sessions: Session[] = [
@@ -510,10 +511,10 @@ const SessionsContent = () => {
                 <label className="block text-sm font-medium text-[#374151] mb-1.5">
                   {t("sessionsPage.form.duration")}
                 </label>
-                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm">
+                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm" defaultValue="90">
                   <option value="30">30 {t("sessionsPage.form.minutes")}</option>
                   <option value="60">60 {t("sessionsPage.form.minutes")}</option>
-                  <option value="90" selected>90 {t("sessionsPage.form.minutes")}</option>
+                  <option value="90">90 {t("sessionsPage.form.minutes")}</option>
                   <option value="120">2 {t("sessionsPage.form.hours")}</option>
                   <option value="custom">{t("sessionsPage.form.custom")}</option>
                 </select>
@@ -523,15 +524,39 @@ const SessionsContent = () => {
                   {t("sessionsPage.form.sessionType")}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  <button className="flex flex-col items-center gap-1.5 p-3 border-2 border-[#3B82F6] bg-[#EFF6FF] rounded-lg text-[#3B82F6]">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSessionType("zoom")}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
+                      selectedSessionType === "zoom"
+                        ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
+                        : "border border-[#E5E7EB] text-[#6B7280] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6]"
+                    }`}
+                  >
                     <Video className="w-5 h-5" />
                     <span className="text-xs font-medium">Zoom</span>
                   </button>
-                  <button className="flex flex-col items-center gap-1.5 p-3 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6] transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSessionType("onsite")}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
+                      selectedSessionType === "onsite"
+                        ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
+                        : "border border-[#E5E7EB] text-[#6B7280] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6]"
+                    }`}
+                  >
                     <MapPin className="w-5 h-5" />
                     <span className="text-xs font-medium">{t("sessionsPage.form.onsite")}</span>
                   </button>
-                  <button className="flex flex-col items-center gap-1.5 p-3 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6] transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSessionType("hybrid")}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
+                      selectedSessionType === "hybrid"
+                        ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
+                        : "border border-[#E5E7EB] text-[#6B7280] hover:border-[#3B82F6] hover:bg-[#EFF6FF] hover:text-[#3B82F6]"
+                    }`}
+                  >
                     <RefreshCw className="w-5 h-5" />
                     <span className="text-xs font-medium">{t("sessionsPage.form.hybrid")}</span>
                   </button>

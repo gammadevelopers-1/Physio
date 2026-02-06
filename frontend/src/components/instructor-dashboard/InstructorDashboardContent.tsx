@@ -12,6 +12,7 @@ import InstructorNotificationsWidget from "./InstructorNotificationsWidget";
 import InstructorCalendarWidget from "./InstructorCalendarWidget";
 import AtRiskLearners from "./AtRiskLearners";
 import CertificateQueue from "./CertificateQueue";
+import SessionsCalendarWidget from "./SessionsCalendarWidget";
 
 // Static mock data
 const mockInstructor = {
@@ -230,6 +231,72 @@ const InstructorDashboardContent = () => {
     console.log("Refreshing notifications...");
   };
 
+  // Get today's day index (0 = Sunday)
+  const today = new Date().getDay();
+
+  // Mock calendar sessions data - 5 sessions distributed across the week
+  const mockCalendarSessions = [
+    {
+      id: "cal-session-1",
+      title: t("mockData.aclsTraining"),
+      time: "9:00 AM - 10:30 AM",
+      duration: "90 mins",
+      type: "zoom" as const,
+      enrolled: 25,
+      dayIndex: today, // Today
+    },
+    {
+      id: "cal-session-2",
+      title: t("mockData.firstAidModule"),
+      time: "2:00 PM - 3:30 PM",
+      duration: "90 mins",
+      type: "onsite" as const,
+      venue: "Room 204, Building A",
+      enrolled: 18,
+      dayIndex: today, // Today
+    },
+    {
+      id: "cal-session-3",
+      title: "CPR Certification",
+      time: "10:00 AM - 12:00 PM",
+      duration: "120 mins",
+      type: "zoom" as const,
+      enrolled: 32,
+      dayIndex: (today + 1) % 7, // Tomorrow
+    },
+    {
+      id: "cal-session-4",
+      title: "Emergency Response",
+      time: "3:00 PM - 5:00 PM",
+      duration: "120 mins",
+      type: "onsite" as const,
+      venue: "Training Center",
+      enrolled: 15,
+      dayIndex: (today + 2) % 7, // Day after tomorrow
+    },
+    {
+      id: "cal-session-5",
+      title: "Patient Safety Workshop",
+      time: "1:00 PM - 2:30 PM",
+      duration: "90 mins",
+      type: "zoom" as const,
+      enrolled: 28,
+      dayIndex: (today + 4) % 7, // 4 days from now
+    },
+  ];
+
+  const handleStartSession = (sessionId: string) => {
+    console.log("Starting session:", sessionId);
+  };
+
+  const handleSessionAttendance = (sessionId: string) => {
+    console.log("Opening attendance for:", sessionId);
+  };
+
+  const handleShareSessionMaterials = (sessionId: string) => {
+    console.log("Sharing materials for:", sessionId);
+  };
+
   return (
     <>
       {/* Dashboard Navbar */}
@@ -259,6 +326,16 @@ const InstructorDashboardContent = () => {
 
               {/* Today's Sessions */}
               <TodaysSessions sessions={mockSessions} />
+
+              {/* Sessions Calendar Widget */}
+              <div className="mb-6">
+                <SessionsCalendarWidget
+                  sessions={mockCalendarSessions}
+                  onStartSession={handleStartSession}
+                  onAttendance={handleSessionAttendance}
+                  onShareMaterials={handleShareSessionMaterials}
+                />
+              </div>
 
               {/* Course Performance */}
               <CoursePerformance

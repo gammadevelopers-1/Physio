@@ -1353,6 +1353,7 @@
       "title": "Sessions",
       "subtitle": "Schedule and manage your training sessions",
       "scheduleSession": "Schedule Session",
+      "scheduleSessionTitle": "Schedule New Session",
       "calendarView": "Calendar",
       "listView": "List",
       "today": "Today",
@@ -1363,6 +1364,7 @@
       "hybrid": "Hybrid",
       "upcoming": "Upcoming",
       "past": "Past",
+      "more": "more",
       "noSessions": "No sessions found",
       "noSessionsDesc": "Schedule a new session to get started",
       "enrolled": "enrolled",
@@ -1390,6 +1392,24 @@
         "zoom": "Zoom",
         "onsite": "On-site",
         "hybrid": "Hybrid"
+      },
+      "form": {
+        "course": "Course",
+        "selectCourse": "Select a course",
+        "sessionTitle": "Session Title",
+        "sessionTitlePlaceholder": "Enter session title",
+        "date": "Date",
+        "time": "Time",
+        "duration": "Duration",
+        "minutes": "minutes",
+        "hours": "hours",
+        "custom": "Custom",
+        "sessionType": "Session Type",
+        "onsite": "On-site",
+        "hybrid": "Hybrid",
+        "notifyStudents": "Notify enrolled students about this session",
+        "cancel": "Cancel",
+        "schedule": "Schedule Session"
       }
     },
     "students": {
@@ -1717,6 +1737,30 @@
       "notConnected": "Not connected",
       "connect": "Connect",
       "disconnect": "Disconnect"
+    },
+    "sessionsCalendar": {
+      "title": "My Sessions Calendar",
+      "today": "Today",
+      "todayLabel": "Today",
+      "zoom": "Zoom",
+      "onsite": "On-site",
+      "zoomSession": "Zoom Session",
+      "onsiteSession": "On-site Session",
+      "noSessions": "No sessions",
+      "enrolled": "enrolled",
+      "startSession": "Start Session",
+      "attendance": "Attendance",
+      "shareMaterials": "Share Materials",
+      "start": "Start",
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
     }
   }
 }

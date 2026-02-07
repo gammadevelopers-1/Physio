@@ -1926,6 +1926,311 @@
       "noSessionsDesc": "You have no sessions scheduled for the coming days.",
       "enrolled": "enrolled",
       "viewAll": "View All Sessions"
+    },
+    "coursesPage": {
+      "title": "Courses",
+      "subtitle": "Manage all courses in the training program",
+      "createCourse": "Create Course",
+      "searchPlaceholder": "Search courses...",
+      "manage": "Manage",
+      "completion": "Completion",
+      "noCourses": "No Courses Found",
+      "noCoursesDesc": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total Courses",
+        "active": "Active Courses",
+        "totalEnrollments": "Total Enrollments",
+        "avgRating": "Avg Rating"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "active": "Active",
+        "draft": "Draft",
+        "completed": "Completed",
+        "archived": "Archived",
+        "allCategories": "All Categories"
+      },
+      "status": {
+        "active": "Active",
+        "draft": "Draft",
+        "completed": "Completed",
+        "archived": "Archived"
+      },
+      "delivery": {
+        "zoom": "Zoom",
+        "onsite": "On-site",
+        "blended": "Blended"
+      }
+    },
+    "sessionsPage": {
+      "title": "Sessions",
+      "subtitle": "Manage all training sessions",
+      "listView": "List",
+      "calendarView": "Calendar",
+      "scheduleSession": "Schedule Session",
+      "today": "Today's Sessions",
+      "upcoming": "Upcoming Sessions",
+      "past": "Past Sessions",
+      "noSessionsToday": "No sessions scheduled for today",
+      "start": "Start",
+      "viewRecording": "View Recording",
+      "statusUpcoming": "Upcoming",
+      "statusLive": "Live",
+      "statusCompleted": "Completed",
+      "statusCancelled": "Cancelled",
+      "scheduleSessionTitle": "Schedule New Session",
+      "type": {
+        "zoom": "Zoom",
+        "onsite": "On-site",
+        "hybrid": "Hybrid"
+      },
+      "form": {
+        "course": "Course",
+        "selectCourse": "Select a course",
+        "instructor": "Instructor",
+        "selectInstructor": "Select an instructor",
+        "sessionTitle": "Session Title",
+        "sessionTitlePlaceholder": "Enter session title",
+        "date": "Date",
+        "time": "Time",
+        "cancel": "Cancel",
+        "schedule": "Schedule"
+      }
+    },
+    "instructorsPage": {
+      "title": "Instructors",
+      "subtitle": "Manage instructors and their assignments",
+      "addInstructor": "Add Instructor",
+      "searchPlaceholder": "Search instructors...",
+      "courses": "Courses",
+      "students": "Students",
+      "weekly": "Weekly",
+      "workload": "Workload",
+      "viewProfile": "View Profile",
+      "noInstructors": "No Instructors Found",
+      "noInstructorsDesc": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total Instructors",
+        "available": "Available",
+        "overloaded": "Overloaded",
+        "avgRating": "Avg Rating"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "available": "Available",
+        "busy": "Busy",
+        "overloaded": "Overloaded",
+        "onLeave": "On Leave"
+      },
+      "status": {
+        "available": "Available",
+        "busy": "Busy",
+        "overloaded": "Overloaded",
+        "on_leave": "On Leave"
+      }
+    },
+    "contentReviewPage": {
+      "title": "Content Review",
+      "subtitle": "Review and approve course content submissions",
+      "searchPlaceholder": "Search content...",
+      "submittedOn": "Submitted on",
+      "preview": "Preview",
+      "approve": "Approve",
+      "reject": "Reject",
+      "noContent": "No Content Found",
+      "noContentDesc": "No content items match your filters",
+      "stats": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "total": "Total"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "allTypes": "All Types",
+        "video": "Video",
+        "pdf": "PDF",
+        "quiz": "Quiz",
+        "document": "Document"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      }
+    },
+    "assessmentsPage": {
+      "title": "Assessments",
+      "subtitle": "Manage course assessments and quizzes",
+      "createAssessment": "Create Assessment",
+      "searchPlaceholder": "Search assessments...",
+      "noAssessments": "No Assessments Found",
+      "noAssessmentsDesc": "Try adjusting your search or filters",
+      "stats": {
+        "total": "Total Assessments",
+        "totalAttempts": "Total Attempts",
+        "avgScore": "Avg Score",
+        "avgCompletion": "Avg Completion"
+      },
+      "filters": {
+        "allTypes": "All Types",
+        "quiz": "Quiz",
+        "exam": "Exam",
+        "assignment": "Assignment",
+        "practical": "Practical",
+        "allStatus": "All Status",
+        "active": "Active",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "type": {
+        "quiz": "Quiz",
+        "exam": "Exam",
+        "assignment": "Assignment",
+        "practical": "Practical"
+      },
+      "status": {
+        "active": "Active",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "table": {
+        "assessment": "Assessment",
+        "type": "Type",
+        "questions": "Questions",
+        "attempts": "Attempts",
+        "avgScore": "Avg Score",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "analytics": "Analytics",
+        "duplicate": "Duplicate"
+      }
+    },
+    "reportsPage": {
+      "title": "Reports & Analytics",
+      "subtitle": "View insights and generate reports",
+      "exportReport": "Export Report",
+      "types": {
+        "overview": "Overview",
+        "enrollment": "Enrollment",
+        "completion": "Completion",
+        "assessment": "Assessment",
+        "instructor": "Instructor"
+      },
+      "period": {
+        "week": "This Week",
+        "month": "This Month",
+        "quarter": "This Quarter",
+        "year": "This Year"
+      },
+      "overview": {
+        "totalEnrollments": "Total Enrollments",
+        "completionRate": "Completion Rate",
+        "avgScore": "Avg Assessment Score",
+        "certifications": "Certifications Issued"
+      },
+      "topCourses": "Top Performing Courses",
+      "enrolled": "enrolled",
+      "completion": "completion",
+      "enrollmentTrend": "Enrollment Trend",
+      "chartPlaceholder": "Chart visualization will appear here",
+      "recentReports": "Recent Reports",
+      "viewAll": "View All"
+    },
+    "settingsPage": {
+      "title": "Settings",
+      "subtitle": "Manage your account and preferences",
+      "saveChanges": "Save Changes",
+      "tabs": {
+        "profile": "Profile",
+        "notifications": "Notifications",
+        "security": "Security",
+        "preferences": "Preferences",
+        "integrations": "Integrations"
+      },
+      "profile": {
+        "title": "Profile Information",
+        "avatar": "Profile Photo",
+        "avatarDesc": "JPG, PNG or GIF. Max 5MB",
+        "fullName": "Full Name",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "department": "Department",
+        "location": "Location",
+        "language": "Language",
+        "bio": "Bio",
+        "personalInfo": "Personal Information"
+      },
+      "notifications": {
+        "title": "Notification Settings",
+        "emailTitle": "Email Notifications",
+        "pushTitle": "Push Notifications",
+        "digestTitle": "Email Digest",
+        "email": "Email Notifications",
+        "emailDesc": "Receive email updates about your courses",
+        "push": "Push Notifications",
+        "pushDesc": "Receive push notifications in browser",
+        "contentReview": "Content Review Alerts",
+        "contentReviewDesc": "Get notified when new content needs review",
+        "weeklyDigest": "Weekly Digest",
+        "weeklyDigestDesc": "Receive a weekly summary of activity",
+        "monthlyDigest": "Monthly Digest",
+        "newCourse": "New course created",
+        "instructorAssignment": "Instructor assignment changes",
+        "complianceAlert": "NELC compliance alerts",
+        "newSubmission": "New content submission",
+        "approvalRequired": "Approval required notifications",
+        "systemUpdates": "System updates"
+      },
+      "security": {
+        "title": "Security Settings",
+        "changePassword": "Change Password",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm New Password",
+        "updatePassword": "Update Password",
+        "twoFactor": "Two-Factor Authentication",
+        "twoFactorDesc": "Add an extra layer of security to your account",
+        "activeSessions": "Active Sessions",
+        "currentDevice": "Current"
+      },
+      "preferences": {
+        "title": "Preferences",
+        "language": "Language",
+        "timezone": "Timezone",
+        "theme": "Theme",
+        "themeLight": "Light",
+        "themeDark": "Dark",
+        "themeSystem": "System",
+        "dateFormat": "Date Format",
+        "timeFormat": "Time Format",
+        "time12h": "12-hour",
+        "time24h": "24-hour",
+        "compactMode": "Compact Mode",
+        "compactModeDesc": "Use smaller spacing and condensed layouts",
+        "showTips": "Show Tips",
+        "showTipsDesc": "Display helpful tips and suggestions",
+        "savePreferences": "Save Preferences"
+      },
+      "integrations": {
+        "title": "Integrations",
+        "videoConferencing": "Video Conferencing",
+        "calendar": "Calendar",
+        "cloudStorage": "Cloud Storage",
+        "connected": "Connected",
+        "notConnected": "Not connected",
+        "connect": "Connect",
+        "disconnect": "Disconnect"
+      }
     }
   }
 }

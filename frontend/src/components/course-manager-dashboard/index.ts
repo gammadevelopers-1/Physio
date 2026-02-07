@@ -11,3 +11,12 @@ export { default as NELCComplianceWidget } from "./NELCComplianceWidget";
 export { default as CourseStatsWidget } from "./CourseStatsWidget";
 export { default as UpcomingSessionsWidget } from "./UpcomingSessionsWidget";
 export { default as CourseManagerDashboardContent } from "./CourseManagerDashboardContent";
+
+// Page Content Components
+export { default as CoursesContent } from "./CoursesContent";
+export { default as SessionsContent } from "./SessionsContent";
+export { default as InstructorsContent } from "./InstructorsContent";
+export { default as ContentReviewContent } from "./ContentReviewContent";
+export { default as AssessmentsContent } from "./AssessmentsContent";
+export { default as ReportsContent } from "./ReportsContent";
+export { default as SettingsContent } from "./SettingsContent";

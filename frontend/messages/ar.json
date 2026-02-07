@@ -2136,6 +2136,311 @@
       "noSessionsDesc": "ليس لديك جلسات مجدولة للأيام القادمة.",
       "enrolled": "مسجل",
       "viewAll": "عرض جميع الجلسات"
+    },
+    "coursesPage": {
+      "title": "الدورات",
+      "subtitle": "إدارة جميع الدورات في برنامج التدريب",
+      "createCourse": "إنشاء دورة",
+      "searchPlaceholder": "البحث في الدورات...",
+      "manage": "إدارة",
+      "completion": "الإكمال",
+      "noCourses": "لم يتم العثور على دورات",
+      "noCoursesDesc": "حاول تعديل البحث أو الفلاتر",
+      "stats": {
+        "total": "إجمالي الدورات",
+        "active": "الدورات النشطة",
+        "totalEnrollments": "إجمالي التسجيلات",
+        "avgRating": "متوسط التقييم"
+      },
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "active": "نشط",
+        "draft": "مسودة",
+        "completed": "مكتمل",
+        "archived": "مؤرشف",
+        "allCategories": "جميع الفئات"
+      },
+      "status": {
+        "active": "نشط",
+        "draft": "مسودة",
+        "completed": "مكتمل",
+        "archived": "مؤرشف"
+      },
+      "delivery": {
+        "zoom": "زوم",
+        "onsite": "حضوري",
+        "blended": "مدمج"
+      }
+    },
+    "sessionsPage": {
+      "title": "الجلسات",
+      "subtitle": "إدارة جميع جلسات التدريب",
+      "listView": "قائمة",
+      "calendarView": "تقويم",
+      "scheduleSession": "جدولة جلسة",
+      "today": "جلسات اليوم",
+      "upcoming": "الجلسات القادمة",
+      "past": "الجلسات السابقة",
+      "noSessionsToday": "لا توجد جلسات مجدولة لليوم",
+      "start": "بدء",
+      "viewRecording": "عرض التسجيل",
+      "statusUpcoming": "قادمة",
+      "statusLive": "مباشر",
+      "statusCompleted": "مكتملة",
+      "statusCancelled": "ملغاة",
+      "scheduleSessionTitle": "جدولة جلسة جديدة",
+      "type": {
+        "zoom": "زوم",
+        "onsite": "حضوري",
+        "hybrid": "هجين"
+      },
+      "form": {
+        "course": "الدورة",
+        "selectCourse": "اختر دورة",
+        "instructor": "المدرب",
+        "selectInstructor": "اختر مدرب",
+        "sessionTitle": "عنوان الجلسة",
+        "sessionTitlePlaceholder": "أدخل عنوان الجلسة",
+        "date": "التاريخ",
+        "time": "الوقت",
+        "cancel": "إلغاء",
+        "schedule": "جدولة"
+      }
+    },
+    "instructorsPage": {
+      "title": "المدربون",
+      "subtitle": "إدارة المدربين ومهامهم",
+      "addInstructor": "إضافة مدرب",
+      "searchPlaceholder": "البحث في المدربين...",
+      "courses": "الدورات",
+      "students": "الطلاب",
+      "weekly": "أسبوعياً",
+      "workload": "عبء العمل",
+      "viewProfile": "عرض الملف",
+      "noInstructors": "لم يتم العثور على مدربين",
+      "noInstructorsDesc": "حاول تعديل البحث أو الفلاتر",
+      "stats": {
+        "total": "إجمالي المدربين",
+        "available": "متاح",
+        "overloaded": "مثقل",
+        "avgRating": "متوسط التقييم"
+      },
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "available": "متاح",
+        "busy": "مشغول",
+        "overloaded": "مثقل",
+        "onLeave": "في إجازة"
+      },
+      "status": {
+        "available": "متاح",
+        "busy": "مشغول",
+        "overloaded": "مثقل",
+        "on_leave": "في إجازة"
+      }
+    },
+    "contentReviewPage": {
+      "title": "مراجعة المحتوى",
+      "subtitle": "مراجعة واعتماد محتوى الدورات المقدم",
+      "searchPlaceholder": "البحث في المحتوى...",
+      "submittedOn": "تم التقديم في",
+      "preview": "معاينة",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "noContent": "لم يتم العثور على محتوى",
+      "noContentDesc": "لا توجد عناصر محتوى تطابق الفلاتر",
+      "stats": {
+        "pending": "قيد الانتظار",
+        "approved": "معتمد",
+        "rejected": "مرفوض",
+        "total": "الإجمالي"
+      },
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "pending": "قيد الانتظار",
+        "approved": "معتمد",
+        "rejected": "مرفوض",
+        "allTypes": "جميع الأنواع",
+        "video": "فيديو",
+        "pdf": "PDF",
+        "quiz": "اختبار",
+        "document": "مستند"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "approved": "معتمد",
+        "rejected": "مرفوض"
+      }
+    },
+    "assessmentsPage": {
+      "title": "التقييمات",
+      "subtitle": "إدارة تقييمات واختبارات الدورات",
+      "createAssessment": "إنشاء تقييم",
+      "searchPlaceholder": "البحث في التقييمات...",
+      "noAssessments": "لم يتم العثور على تقييمات",
+      "noAssessmentsDesc": "حاول تعديل البحث أو الفلاتر",
+      "stats": {
+        "total": "إجمالي التقييمات",
+        "totalAttempts": "إجمالي المحاولات",
+        "avgScore": "متوسط الدرجة",
+        "avgCompletion": "متوسط الإكمال"
+      },
+      "filters": {
+        "allTypes": "جميع الأنواع",
+        "quiz": "اختبار قصير",
+        "exam": "امتحان",
+        "assignment": "واجب",
+        "practical": "عملي",
+        "allStatus": "جميع الحالات",
+        "active": "نشط",
+        "draft": "مسودة",
+        "archived": "مؤرشف"
+      },
+      "type": {
+        "quiz": "اختبار قصير",
+        "exam": "امتحان",
+        "assignment": "واجب",
+        "practical": "عملي"
+      },
+      "status": {
+        "active": "نشط",
+        "draft": "مسودة",
+        "archived": "مؤرشف"
+      },
+      "table": {
+        "assessment": "التقييم",
+        "type": "النوع",
+        "questions": "الأسئلة",
+        "attempts": "المحاولات",
+        "avgScore": "متوسط الدرجة",
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "analytics": "التحليلات",
+        "duplicate": "نسخ"
+      }
+    },
+    "reportsPage": {
+      "title": "التقارير والتحليلات",
+      "subtitle": "عرض الرؤى وإنشاء التقارير",
+      "exportReport": "تصدير التقرير",
+      "types": {
+        "overview": "نظرة عامة",
+        "enrollment": "التسجيل",
+        "completion": "الإكمال",
+        "assessment": "التقييم",
+        "instructor": "المدرب"
+      },
+      "period": {
+        "week": "هذا الأسبوع",
+        "month": "هذا الشهر",
+        "quarter": "هذا الربع",
+        "year": "هذا العام"
+      },
+      "overview": {
+        "totalEnrollments": "إجمالي التسجيلات",
+        "completionRate": "معدل الإكمال",
+        "avgScore": "متوسط درجة التقييم",
+        "certifications": "الشهادات الصادرة"
+      },
+      "topCourses": "أفضل الدورات أداءً",
+      "enrolled": "مسجل",
+      "completion": "الإكمال",
+      "enrollmentTrend": "اتجاه التسجيل",
+      "chartPlaceholder": "سيظهر الرسم البياني هنا",
+      "recentReports": "التقارير الأخيرة",
+      "viewAll": "عرض الكل"
+    },
+    "settingsPage": {
+      "title": "الإعدادات",
+      "subtitle": "إدارة حسابك وتفضيلاتك",
+      "saveChanges": "حفظ التغييرات",
+      "tabs": {
+        "profile": "الملف الشخصي",
+        "notifications": "الإشعارات",
+        "security": "الأمان",
+        "preferences": "التفضيلات",
+        "integrations": "التكاملات"
+      },
+      "profile": {
+        "title": "معلومات الملف الشخصي",
+        "avatar": "صورة الملف",
+        "avatarDesc": "JPG أو PNG أو GIF. الحد الأقصى 5 ميجابايت",
+        "fullName": "الاسم الكامل",
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "email": "البريد الإلكتروني",
+        "phone": "رقم الهاتف",
+        "department": "القسم",
+        "location": "الموقع",
+        "language": "اللغة",
+        "bio": "نبذة عني",
+        "personalInfo": "المعلومات الشخصية"
+      },
+      "notifications": {
+        "title": "إعدادات الإشعارات",
+        "emailTitle": "إشعارات البريد الإلكتروني",
+        "pushTitle": "إشعارات الدفع",
+        "digestTitle": "ملخص البريد الإلكتروني",
+        "email": "إشعارات البريد الإلكتروني",
+        "emailDesc": "تلقي تحديثات البريد الإلكتروني حول دوراتك",
+        "push": "إشعارات الدفع",
+        "pushDesc": "تلقي إشعارات الدفع في المتصفح",
+        "contentReview": "تنبيهات مراجعة المحتوى",
+        "contentReviewDesc": "الحصول على إشعار عندما يحتاج محتوى جديد للمراجعة",
+        "weeklyDigest": "الملخص الأسبوعي",
+        "weeklyDigestDesc": "تلقي ملخص أسبوعي للنشاط",
+        "monthlyDigest": "الملخص الشهري",
+        "newCourse": "إنشاء دورة جديدة",
+        "instructorAssignment": "تغييرات تعيين المدرب",
+        "complianceAlert": "تنبيهات الامتثال NELC",
+        "newSubmission": "تقديم محتوى جديد",
+        "approvalRequired": "إشعارات تتطلب الموافقة",
+        "systemUpdates": "تحديثات النظام"
+      },
+      "security": {
+        "title": "إعدادات الأمان",
+        "changePassword": "تغيير كلمة المرور",
+        "currentPassword": "كلمة المرور الحالية",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmPassword": "تأكيد كلمة المرور الجديدة",
+        "updatePassword": "تحديث كلمة المرور",
+        "twoFactor": "المصادقة الثنائية",
+        "twoFactorDesc": "أضف طبقة إضافية من الأمان لحسابك",
+        "activeSessions": "الجلسات النشطة",
+        "currentDevice": "الحالي"
+      },
+      "preferences": {
+        "title": "التفضيلات",
+        "language": "اللغة",
+        "timezone": "المنطقة الزمنية",
+        "theme": "المظهر",
+        "themeLight": "فاتح",
+        "themeDark": "داكن",
+        "themeSystem": "النظام",
+        "dateFormat": "تنسيق التاريخ",
+        "timeFormat": "تنسيق الوقت",
+        "time12h": "12 ساعة",
+        "time24h": "24 ساعة",
+        "compactMode": "الوضع المضغوط",
+        "compactModeDesc": "استخدام مسافات أصغر وتخطيطات مضغوطة",
+        "showTips": "إظهار النصائح",
+        "showTipsDesc": "عرض النصائح والاقتراحات المفيدة",
+        "savePreferences": "حفظ التفضيلات"
+      },
+      "integrations": {
+        "title": "التكاملات",
+        "videoConferencing": "مؤتمرات الفيديو",
+        "calendar": "التقويم",
+        "cloudStorage": "التخزين السحابي",
+        "connected": "متصل",
+        "notConnected": "غير متصل",
+        "connect": "ربط",
+        "disconnect": "قطع الاتصال"
+      }
     }
   }
 }

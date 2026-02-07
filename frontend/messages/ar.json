@@ -2033,5 +2033,109 @@
         "sat": "السبت"
       }
     }
+  },
+  "courseManagerDashboard": {
+    "title": "لوحة تحكم مدير الدورات",
+    "subtitle": "مرحباً بعودتك، {name}! إليك نظرة عامة على الدورات.",
+    "sidebar": {
+      "courseManagerDashboard": "لوحة تحكم مدير الدورات",
+      "dashboard": "لوحة التحكم",
+      "courses": "الدورات",
+      "sessions": "الجلسات",
+      "instructors": "المدربين",
+      "contentReview": "مراجعة المحتوى",
+      "assessments": "التقييمات",
+      "nelcCompliance": "امتثال NELC",
+      "reports": "التقارير",
+      "settings": "الإعدادات",
+      "courseManager": "مدير الدورات",
+      "nelc": "NELC",
+      "viewProfile": "عرض الملف الشخصي",
+      "editProfile": "تعديل الملف الشخصي",
+      "logout": "تسجيل الخروج"
+    },
+    "kpi": {
+      "totalCourses": "إجمالي الدورات",
+      "active": "نشطة",
+      "draft": "مسودة",
+      "completed": "مكتملة",
+      "totalEnrollments": "إجمالي التسجيلات",
+      "vsLastMonth": "مقارنة بالشهر الماضي",
+      "avgCompletion": "متوسط الإكمال",
+      "pendingReviews": "مراجعات معلقة",
+      "urgentItems": "عناصر عاجلة",
+      "avgRating": "متوسط التقييم"
+    },
+    "catalog": {
+      "title": "نظرة عامة على الكتالوج",
+      "viewAll": "عرض الكل",
+      "allStatus": "جميع الحالات",
+      "allCategories": "جميع الفئات",
+      "searchPlaceholder": "البحث في الدورات...",
+      "course": "الدورة",
+      "instructor": "المدرب",
+      "status": "الحالة",
+      "enrolled": "المسجلين",
+      "completion": "الإكمال",
+      "rating": "التقييم",
+      "active": "نشطة",
+      "preparing": "قيد التحضير",
+      "completed": "مكتملة",
+      "archived": "مؤرشفة"
+    },
+    "schedules": {
+      "title": "الجداول والجلسات",
+      "schedule": "جدولة",
+      "zoom": "زوم",
+      "onsite": "حضوري",
+      "conflict": "تعارض في الجدول"
+    },
+    "calendar": {
+      "february2026": "فبراير 2026",
+      "sun": "الأحد",
+      "mon": "الإثنين",
+      "tue": "الثلاثاء",
+      "wed": "الأربعاء",
+      "thu": "الخميس",
+      "fri": "الجمعة",
+      "sat": "السبت"
+    },
+    "contentReview": {
+      "title": "مراجعة المحتوى",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "preview": "معاينة",
+      "viewAll": "عرض جميع المعلقة"
+    },
+    "instructors": {
+      "title": "المدربين",
+      "courses": "دورات",
+      "hrsWeek": "ساعة/أسبوع",
+      "available": "متاح",
+      "busy": "مشغول",
+      "overloaded": "مثقل",
+      "manageAll": "إدارة المدربين"
+    },
+    "nelc": {
+      "title": "امتثال NELC والتقارير",
+      "viewMatrix": "عرض المصفوفة الكاملة",
+      "compliant": "ممتثل لـ NELC",
+      "passed": "ناجح",
+      "review": "مراجعة",
+      "failed": "فاشل"
+    },
+    "courseStats": {
+      "title": "إحصائيات الدورات",
+      "breakdown": "حالة الدورات",
+      "avgCompletion": "متوسط معدل الإكمال",
+      "avgRating": "متوسط التقييم"
+    },
+    "upcomingSessions": {
+      "title": "الجلسات القادمة",
+      "noSessions": "لا توجد جلسات قادمة",
+      "noSessionsDesc": "ليس لديك جلسات مجدولة للأيام القادمة.",
+      "enrolled": "مسجل",
+      "viewAll": "عرض جميع الجلسات"
+    }
   }
 }

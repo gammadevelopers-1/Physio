@@ -1823,5 +1823,109 @@
         "sat": "Sat"
       }
     }
+  },
+  "courseManagerDashboard": {
+    "title": "Course Manager Dashboard",
+    "subtitle": "Welcome back, {name}! Here's your course overview.",
+    "sidebar": {
+      "courseManagerDashboard": "Course Manager Dashboard",
+      "dashboard": "Dashboard",
+      "courses": "Courses",
+      "sessions": "Sessions",
+      "instructors": "Instructors",
+      "contentReview": "Content Review",
+      "assessments": "Assessments",
+      "nelcCompliance": "NELC Compliance",
+      "reports": "Reports",
+      "settings": "Settings",
+      "courseManager": "Course Manager",
+      "nelc": "NELC",
+      "viewProfile": "View Profile",
+      "editProfile": "Edit Profile",
+      "logout": "Logout"
+    },
+    "kpi": {
+      "totalCourses": "Total Courses",
+      "active": "Active",
+      "draft": "Draft",
+      "completed": "Completed",
+      "totalEnrollments": "Total Enrollments",
+      "vsLastMonth": "vs last month",
+      "avgCompletion": "Avg Completion",
+      "pendingReviews": "Pending Reviews",
+      "urgentItems": "urgent items",
+      "avgRating": "Avg Rating"
+    },
+    "catalog": {
+      "title": "Catalog Overview",
+      "viewAll": "View All",
+      "allStatus": "All Status",
+      "allCategories": "All Categories",
+      "searchPlaceholder": "Search courses...",
+      "course": "Course",
+      "instructor": "Instructor",
+      "status": "Status",
+      "enrolled": "Enrolled",
+      "completion": "Completion",
+      "rating": "Rating",
+      "active": "Active",
+      "preparing": "Preparing",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "schedules": {
+      "title": "Schedules & Sessions",
+      "schedule": "Schedule",
+      "zoom": "Zoom",
+      "onsite": "On-site",
+      "conflict": "Schedule Conflict"
+    },
+    "calendar": {
+      "february2026": "February 2026",
+      "sun": "SUN",
+      "mon": "MON",
+      "tue": "TUE",
+      "wed": "WED",
+      "thu": "THU",
+      "fri": "FRI",
+      "sat": "SAT"
+    },
+    "contentReview": {
+      "title": "Content Review",
+      "approve": "Approve",
+      "reject": "Reject",
+      "preview": "Preview",
+      "viewAll": "View All Pending"
+    },
+    "instructors": {
+      "title": "Instructors",
+      "courses": "courses",
+      "hrsWeek": "hrs/week",
+      "available": "Available",
+      "busy": "Busy",
+      "overloaded": "Overloaded",
+      "manageAll": "Manage Instructors"
+    },
+    "nelc": {
+      "title": "NELC Compliance & Reports",
+      "viewMatrix": "View Full Matrix",
+      "compliant": "NELC Compliant",
+      "passed": "Passed",
+      "review": "Review",
+      "failed": "Failed"
+    },
+    "courseStats": {
+      "title": "Course Statistics",
+      "breakdown": "Course Status",
+      "avgCompletion": "Avg Completion Rate",
+      "avgRating": "Average Rating"
+    },
+    "upcomingSessions": {
+      "title": "Upcoming Sessions",
+      "noSessions": "No Upcoming Sessions",
+      "noSessionsDesc": "You have no sessions scheduled for the coming days.",
+      "enrolled": "enrolled",
+      "viewAll": "View All Sessions"
+    }
   }
 }

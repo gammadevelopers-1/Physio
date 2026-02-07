@@ -27,7 +27,9 @@
       "WebFetch(domain:www.figma.com)",
       "Bash(node --check:*)",
       "Bash(git fetch:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(wc:*)",
+      "Bash(npx next lint:*)"
     ]
   }
 }

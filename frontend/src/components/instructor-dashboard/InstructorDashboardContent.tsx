@@ -27,13 +27,12 @@ const mockInstructor = {
 
 const mockKPIData = {
   activeCourses: 5,
-  coursesChange: "+2 this month",
   todaysSessions: 3,
-  nextSessionTime: "2:00 PM",
   atRiskLearners: 5,
-  atRiskChange: 2,
-  pendingCertificates: 8,
-  certificatesStatus: "Awaiting approval",
+};
+
+// Separate data for feedback widget
+const mockFeedbackData = {
   avgRating: 4.8,
   totalReviews: 156,
 };
@@ -459,8 +458,8 @@ const InstructorDashboardContent = () => {
               {/* Recent Feedback */}
               <div className="mb-6">
                 <RecentFeedbackWidget
-                  overallRating={mockKPIData.avgRating}
-                  totalReviews={mockKPIData.totalReviews}
+                  overallRating={mockFeedbackData.avgRating}
+                  totalReviews={mockFeedbackData.totalReviews}
                   feedbackItems={mockFeedbackItems}
                 />
               </div>

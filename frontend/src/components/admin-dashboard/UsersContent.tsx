@@ -28,74 +28,76 @@ const mockAdmin = {
   uptime: 99.9,
 };
 
-// Mock Users Data
-const mockUsers = [
-  {
-    id: "1",
-    name: "Dr. Faisal Ahmed",
-    email: "faisal.ahmed@physio.edu.sa",
-    initials: "FA",
-    role: "instructor",
-    status: "active",
-    lastLogin: "2 hours ago",
-    created: "Jan 15, 2026",
-  },
-  {
-    id: "2",
-    name: "Sara Mohammed",
-    email: "sara.m@student.physio.edu.sa",
-    initials: "SM",
-    role: "student",
-    status: "active",
-    lastLogin: "5 min ago",
-    created: "Feb 1, 2026",
-  },
-  {
-    id: "3",
-    name: "Mohammed Al-Khalid",
-    email: "m.alkhalid@physio.edu.sa",
-    initials: "MK",
-    role: "manager",
-    status: "active",
-    lastLogin: "1 day ago",
-    created: "Dec 10, 2025",
-  },
-  {
-    id: "4",
-    name: "Khalid Hassan",
-    email: "k.hassan@student.physio.edu.sa",
-    initials: "KH",
-    role: "student",
-    status: "pending",
-    lastLogin: "Never",
-    created: "Feb 8, 2026",
-  },
-  {
-    id: "5",
-    name: "Fatima Noor",
-    email: "f.noor@physio.edu.sa",
-    initials: "FN",
-    role: "instructor",
-    status: "suspended",
-    lastLogin: "1 week ago",
-    created: "Nov 20, 2025",
-  },
-  {
-    id: "6",
-    name: "Ahmed Al-Saud",
-    email: "ahmed.saud@student.physio.edu.sa",
-    initials: "AS",
-    role: "student",
-    status: "active",
-    lastLogin: "3 hours ago",
-    created: "Jan 28, 2026",
-  },
-];
+// Mock Users Data - will be translated in component
 
 const UsersContent = () => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Mock Users Data with translations
+  const mockUsers = [
+    {
+      id: "1",
+      name: t("usersPage.sampleUsers.drFaisal"),
+      email: "faisal.ahmed@physio.edu.sa",
+      initials: "FA",
+      role: "instructor",
+      status: "active",
+      lastLogin: t("usersPage.time.hoursAgo", { count: 2 }),
+      created: "Jan 15, 2026",
+    },
+    {
+      id: "2",
+      name: t("usersPage.sampleUsers.saraMohammed"),
+      email: "sara.m@student.physio.edu.sa",
+      initials: "SM",
+      role: "student",
+      status: "active",
+      lastLogin: t("usersPage.time.minAgo", { count: 5 }),
+      created: "Feb 1, 2026",
+    },
+    {
+      id: "3",
+      name: t("usersPage.sampleUsers.mohammedAlKhalid"),
+      email: "m.alkhalid@physio.edu.sa",
+      initials: "MK",
+      role: "manager",
+      status: "active",
+      lastLogin: t("usersPage.time.dayAgo", { count: 1 }),
+      created: "Dec 10, 2025",
+    },
+    {
+      id: "4",
+      name: t("usersPage.sampleUsers.khalidHassan"),
+      email: "k.hassan@student.physio.edu.sa",
+      initials: "KH",
+      role: "student",
+      status: "pending",
+      lastLogin: t("usersPage.time.never"),
+      created: "Feb 8, 2026",
+    },
+    {
+      id: "5",
+      name: t("usersPage.sampleUsers.fatimaNoor"),
+      email: "f.noor@physio.edu.sa",
+      initials: "FN",
+      role: "instructor",
+      status: "suspended",
+      lastLogin: t("usersPage.time.weekAgo", { count: 1 }),
+      created: "Nov 20, 2025",
+    },
+    {
+      id: "6",
+      name: t("usersPage.sampleUsers.ahmedAlSaud"),
+      email: "ahmed.saud@student.physio.edu.sa",
+      initials: "AS",
+      role: "student",
+      status: "active",
+      lastLogin: t("usersPage.time.hoursAgo", { count: 3 }),
+      created: "Jan 28, 2026",
+    },
+  ];
 
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");

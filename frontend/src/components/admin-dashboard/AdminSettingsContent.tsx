@@ -65,9 +65,7 @@ const AdminSettingsContent = () => {
 
   // Maintenance Mode
   const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState(
-    "We are currently performing scheduled maintenance. Please check back soon."
-  );
+  const [maintenanceMessage, setMaintenanceMessage] = useState("");
 
   return (
     <>
@@ -95,33 +93,34 @@ const AdminSettingsContent = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Settings Tabs */}
-                <div className="lg:w-64 flex-shrink-0">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-2">
-                    {settingsTabs.map((tab) => {
-                      const Icon = tab.icon;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveTab(tab.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors ${
-                            activeTab === tab.id
-                              ? "bg-[#F0F7FF] text-[#002D87] font-medium"
-                              : "text-[#4B5563] hover:bg-[#F9FAFB]"
-                          }`}
-                        >
-                          <Icon className={`w-5 h-5 ${activeTab === tab.id ? "text-[#002D87]" : "text-[#6B7280]"}`} />
-                          {tab.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+              {/* Settings Card with Horizontal Tabs */}
+              <div className="bg-white rounded-xl border border-[#E5E7EB]">
+                {/* Horizontal Tabs - Compact & Wrapped */}
+                <div className="flex flex-wrap border-b border-[#E5E7EB]">
+                  {settingsTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`px-3 py-2.5 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
+                          activeTab === tab.id
+                            ? "text-[#a37f49]"
+                            : "text-[#6B7280] hover:text-[#374151]"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        {t(`settingsPage.tabs.${tab.id}`)}
+                        {activeTab === tab.id && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a37f49] rounded-t" />
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Settings Content */}
-                <div className="flex-1">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="p-6">
                     {activeTab === "general" && (
                       <div className="space-y-6">
                         <h2 className="text-lg font-semibold text-[#1F2937]">
@@ -200,9 +199,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setRequire2FA(!require2FA)}
-                            className={`w-12 h-6 rounded-full transition-colors ${require2FA ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${require2FA ? "translate-x-6" : "translate-x-0.5"}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${require2FA ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -257,9 +256,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setEmailNotifications(!emailNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors ${emailNotifications ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${emailNotifications ? "translate-x-6" : "translate-x-0.5"}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -274,9 +273,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setSmsNotifications(!smsNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors ${smsNotifications ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[#a37f49]" : "bg-[#E5E7EB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${smsNotifications ? "translate-x-6" : "translate-x-0.5"}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
                       </div>
@@ -299,9 +298,9 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setMaintenanceMode(!maintenanceMode)}
-                            className={`w-12 h-6 rounded-full transition-colors ${maintenanceMode ? "bg-[#DC2626]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${maintenanceMode ? "bg-[#DC2626]" : "bg-[#E5E7EB]"}`}
                           >
-                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${maintenanceMode ? "translate-x-6" : "translate-x-0.5"}`} />
+                            <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${maintenanceMode ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
@@ -314,6 +313,7 @@ const AdminSettingsContent = () => {
                               value={maintenanceMessage}
                               onChange={(e) => setMaintenanceMessage(e.target.value)}
                               rows={4}
+                              placeholder={t("settingsPage.maintenance.defaultMessage")}
                               className="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
                             />
                           </div>
@@ -334,7 +334,7 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#3B82F6]">Z</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">Zoom</p>
+                                <p className="text-sm font-medium text-[#1F2937]">{t("settingsPage.integrations.zoom")}</p>
                                 <p className="text-xs text-[#6B7280]">{t("settingsPage.integrations.connected")}</p>
                               </div>
                             </div>
@@ -349,7 +349,7 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#16A34A]">T</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">Tap Payments</p>
+                                <p className="text-sm font-medium text-[#1F2937]">{t("settingsPage.integrations.tapPayments")}</p>
                                 <p className="text-xs text-[#6B7280]">{t("settingsPage.integrations.connected")}</p>
                               </div>
                             </div>
@@ -364,7 +364,7 @@ const AdminSettingsContent = () => {
                                 <span className="text-sm font-bold text-[#6B7280]">U</span>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-[#1F2937]">Unifonic SMS</p>
+                                <p className="text-sm font-medium text-[#1F2937]">{t("settingsPage.integrations.unifonicSms")}</p>
                                 <p className="text-xs text-[#9CA3AF]">{t("settingsPage.integrations.notConnected")}</p>
                               </div>
                             </div>
@@ -376,13 +376,12 @@ const AdminSettingsContent = () => {
                       </div>
                     )}
 
-                    {/* Save Button */}
-                    <div className="mt-8 pt-6 border-t border-[#E5E7EB] flex justify-end">
-                      <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg transition-colors">
-                        <Save className="w-5 h-5" />
-                        <span className="text-sm font-medium">{t("settingsPage.saveChanges")}</span>
-                      </button>
-                    </div>
+                  {/* Save Button */}
+                  <div className="mt-8 pt-6 border-t border-[#E5E7EB] flex justify-end">
+                    <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg transition-colors">
+                      <Save className="w-5 h-5" />
+                      <span className="text-sm font-medium">{t("settingsPage.saveChanges")}</span>
+                    </button>
                   </div>
                 </div>
               </div>

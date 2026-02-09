@@ -27,99 +27,7 @@ const mockAdmin = {
   uptime: 99.9,
 };
 
-// Mock Roles Data
-const mockRoles = [
-  {
-    id: "1",
-    name: "Super Admin",
-    description: "Full platform access and control",
-    usersCount: 2,
-    color: "#1F2937",
-    permissions: {
-      users: { view: true, create: true, edit: true, delete: true },
-      courses: { view: true, create: true, edit: true, delete: true },
-      content: { view: true, create: true, edit: true, delete: true },
-      assessments: { view: true, create: true, edit: true, delete: true },
-      certificates: { view: true, create: true, edit: true, delete: true },
-      finance: { view: true, create: true, edit: true, delete: true },
-      reports: { view: true, create: true, edit: true, delete: true },
-      settings: { view: true, create: true, edit: true, delete: true },
-      security: { view: true, create: true, edit: true, delete: true },
-    },
-  },
-  {
-    id: "2",
-    name: "Course Manager",
-    description: "Manage courses, instructors, and content",
-    usersCount: 5,
-    color: "#8B5CF6",
-    permissions: {
-      users: { view: true, create: false, edit: false, delete: false },
-      courses: { view: true, create: true, edit: true, delete: false },
-      content: { view: true, create: true, edit: true, delete: true },
-      assessments: { view: true, create: true, edit: true, delete: false },
-      certificates: { view: true, create: false, edit: false, delete: false },
-      finance: { view: true, create: false, edit: false, delete: false },
-      reports: { view: true, create: true, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
-      security: { view: false, create: false, edit: false, delete: false },
-    },
-  },
-  {
-    id: "3",
-    name: "Instructor",
-    description: "Create and manage own courses",
-    usersCount: 15,
-    color: "#3B82F6",
-    permissions: {
-      users: { view: false, create: false, edit: false, delete: false },
-      courses: { view: true, create: true, edit: true, delete: false },
-      content: { view: true, create: true, edit: true, delete: false },
-      assessments: { view: true, create: true, edit: true, delete: false },
-      certificates: { view: true, create: false, edit: false, delete: false },
-      finance: { view: false, create: false, edit: false, delete: false },
-      reports: { view: true, create: false, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
-      security: { view: false, create: false, edit: false, delete: false },
-    },
-  },
-  {
-    id: "4",
-    name: "Student",
-    description: "Access courses and assessments",
-    usersCount: 1200,
-    color: "#22C55E",
-    permissions: {
-      users: { view: false, create: false, edit: false, delete: false },
-      courses: { view: true, create: false, edit: false, delete: false },
-      content: { view: true, create: false, edit: false, delete: false },
-      assessments: { view: true, create: false, edit: false, delete: false },
-      certificates: { view: true, create: false, edit: false, delete: false },
-      finance: { view: false, create: false, edit: false, delete: false },
-      reports: { view: false, create: false, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
-      security: { view: false, create: false, edit: false, delete: false },
-    },
-  },
-  {
-    id: "5",
-    name: "Finance",
-    description: "Access financial data and reports",
-    usersCount: 3,
-    color: "#F59E0B",
-    permissions: {
-      users: { view: true, create: false, edit: false, delete: false },
-      courses: { view: true, create: false, edit: false, delete: false },
-      content: { view: false, create: false, edit: false, delete: false },
-      assessments: { view: false, create: false, edit: false, delete: false },
-      certificates: { view: true, create: false, edit: false, delete: false },
-      finance: { view: true, create: true, edit: true, delete: false },
-      reports: { view: true, create: true, edit: false, delete: false },
-      settings: { view: false, create: false, edit: false, delete: false },
-      security: { view: false, create: false, edit: false, delete: false },
-    },
-  },
-];
+// Mock Roles Data - will be translated in component
 
 const permissionCategories = [
   "users",
@@ -139,6 +47,100 @@ const RolesContent = () => {
   const isRTL = locale === "ar";
 
   const [expandedRole, setExpandedRole] = useState<string | null>("1");
+
+  // Mock Roles Data with translations
+  const mockRoles = [
+    {
+      id: "1",
+      name: t("rolesPage.roles.superAdmin.name"),
+      description: t("rolesPage.roles.superAdmin.description"),
+      usersCount: 2,
+      color: "#1F2937",
+      permissions: {
+        users: { view: true, create: true, edit: true, delete: true },
+        courses: { view: true, create: true, edit: true, delete: true },
+        content: { view: true, create: true, edit: true, delete: true },
+        assessments: { view: true, create: true, edit: true, delete: true },
+        certificates: { view: true, create: true, edit: true, delete: true },
+        finance: { view: true, create: true, edit: true, delete: true },
+        reports: { view: true, create: true, edit: true, delete: true },
+        settings: { view: true, create: true, edit: true, delete: true },
+        security: { view: true, create: true, edit: true, delete: true },
+      },
+    },
+    {
+      id: "2",
+      name: t("rolesPage.roles.courseManager.name"),
+      description: t("rolesPage.roles.courseManager.description"),
+      usersCount: 5,
+      color: "#8B5CF6",
+      permissions: {
+        users: { view: true, create: false, edit: false, delete: false },
+        courses: { view: true, create: true, edit: true, delete: false },
+        content: { view: true, create: true, edit: true, delete: true },
+        assessments: { view: true, create: true, edit: true, delete: false },
+        certificates: { view: true, create: false, edit: false, delete: false },
+        finance: { view: true, create: false, edit: false, delete: false },
+        reports: { view: true, create: true, edit: false, delete: false },
+        settings: { view: false, create: false, edit: false, delete: false },
+        security: { view: false, create: false, edit: false, delete: false },
+      },
+    },
+    {
+      id: "3",
+      name: t("rolesPage.roles.instructor.name"),
+      description: t("rolesPage.roles.instructor.description"),
+      usersCount: 15,
+      color: "#3B82F6",
+      permissions: {
+        users: { view: false, create: false, edit: false, delete: false },
+        courses: { view: true, create: true, edit: true, delete: false },
+        content: { view: true, create: true, edit: true, delete: false },
+        assessments: { view: true, create: true, edit: true, delete: false },
+        certificates: { view: true, create: false, edit: false, delete: false },
+        finance: { view: false, create: false, edit: false, delete: false },
+        reports: { view: true, create: false, edit: false, delete: false },
+        settings: { view: false, create: false, edit: false, delete: false },
+        security: { view: false, create: false, edit: false, delete: false },
+      },
+    },
+    {
+      id: "4",
+      name: t("rolesPage.roles.student.name"),
+      description: t("rolesPage.roles.student.description"),
+      usersCount: 1200,
+      color: "#22C55E",
+      permissions: {
+        users: { view: false, create: false, edit: false, delete: false },
+        courses: { view: true, create: false, edit: false, delete: false },
+        content: { view: true, create: false, edit: false, delete: false },
+        assessments: { view: true, create: false, edit: false, delete: false },
+        certificates: { view: true, create: false, edit: false, delete: false },
+        finance: { view: false, create: false, edit: false, delete: false },
+        reports: { view: false, create: false, edit: false, delete: false },
+        settings: { view: false, create: false, edit: false, delete: false },
+        security: { view: false, create: false, edit: false, delete: false },
+      },
+    },
+    {
+      id: "5",
+      name: t("rolesPage.roles.finance.name"),
+      description: t("rolesPage.roles.finance.description"),
+      usersCount: 3,
+      color: "#F59E0B",
+      permissions: {
+        users: { view: true, create: false, edit: false, delete: false },
+        courses: { view: true, create: false, edit: false, delete: false },
+        content: { view: false, create: false, edit: false, delete: false },
+        assessments: { view: false, create: false, edit: false, delete: false },
+        certificates: { view: true, create: false, edit: false, delete: false },
+        finance: { view: true, create: true, edit: true, delete: false },
+        reports: { view: true, create: true, edit: false, delete: false },
+        settings: { view: false, create: false, edit: false, delete: false },
+        security: { view: false, create: false, edit: false, delete: false },
+      },
+    },
+  ];
 
   return (
     <>

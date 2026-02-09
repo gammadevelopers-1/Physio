@@ -2311,6 +2311,12 @@
         "suspended": "Suspended",
         "pending": "Pending",
         "inactive": "Inactive"
+      },
+      "sampleUsers": {
+        "faisal": "Faisal A.",
+        "sara": "Sara M.",
+        "mohammed": "Mohammed K.",
+        "khalid": "Khalid H."
       }
     },
     "compliance": {
@@ -2319,7 +2325,13 @@
       "overallCompliance": "Overall Compliance",
       "pass": "Pass",
       "review": "Review",
-      "fail": "Fail"
+      "fail": "Fail",
+      "areas": {
+        "accessibility": "Accessibility",
+        "contentStandards": "Content Standards",
+        "dataProtection": "Data Protection",
+        "governance": "Governance"
+      }
     },
     "finance": {
       "title": "Finance",
@@ -2332,11 +2344,42 @@
       "chargebackRate": "Chargeback"
     },
     "alerts": {
-      "title": "Alerts"
+      "title": "Alerts",
+      "items": {
+        "highFailedLogins": "High Failed Logins",
+        "highFailedLoginsDesc": "23 failed attempts from IP 192.168.x.x",
+        "nelcReviewRequired": "NELC Review Required",
+        "nelcReviewRequiredDesc": "2 compliance items need attention",
+        "newUserRegistrations": "New User Registrations",
+        "newUserRegistrationsDesc": "5 users pending approval"
+      },
+      "time": {
+        "minutesAgo": "{count} minutes ago",
+        "hourAgo": "{count} hour ago",
+        "hoursAgo": "{count} hours ago"
+      }
     },
     "activity": {
       "title": "Recent Activity",
-      "viewAll": "View All Activity"
+      "viewAll": "View All Activity",
+      "actions": {
+        "registered": "registered",
+        "updatedRolePermissions": "updated role permissions",
+        "paymentReceived": "received",
+        "coursePublished": "published by",
+        "certificateIssued": "issued to"
+      },
+      "users": {
+        "admin": "Admin",
+        "payment": "Payment",
+        "newCourse": "New Course",
+        "certificate": "Certificate"
+      },
+      "time": {
+        "minAgo": "{count} min ago",
+        "hourAgo": "{count} hour ago",
+        "hoursAgo": "{count} hours ago"
+      }
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -2379,6 +2422,21 @@
         "impersonate": "Impersonate",
         "suspend": "Suspend",
         "delete": "Delete"
+      },
+      "sampleUsers": {
+        "drFaisal": "Dr. Faisal Ahmed",
+        "saraMohammed": "Sara Mohammed",
+        "mohammedAlKhalid": "Mohammed Al-Khalid",
+        "khalidHassan": "Khalid Hassan",
+        "fatimaNoor": "Fatima Noor",
+        "ahmedAlSaud": "Ahmed Al-Saud"
+      },
+      "time": {
+        "hoursAgo": "{count} hours ago",
+        "minAgo": "{count} min ago",
+        "dayAgo": "{count} day ago",
+        "weekAgo": "{count} week ago",
+        "never": "Never"
       }
     },
     "rolesPage": {
@@ -2402,6 +2460,28 @@
         "reports": "Reports",
         "settings": "Settings",
         "security": "Security"
+      },
+      "roles": {
+        "superAdmin": {
+          "name": "Super Admin",
+          "description": "Full platform access and control"
+        },
+        "courseManager": {
+          "name": "Course Manager",
+          "description": "Manage courses, instructors, and content"
+        },
+        "instructor": {
+          "name": "Instructor",
+          "description": "Create and manage own courses"
+        },
+        "student": {
+          "name": "Student",
+          "description": "Access courses and assessments"
+        },
+        "finance": {
+          "name": "Finance",
+          "description": "Access financial data and reports"
+        }
       }
     },
     "coursesPage": {
@@ -2435,6 +2515,27 @@
         "view": "View",
         "edit": "Edit",
         "archive": "Archive"
+      },
+      "sampleCourses": {
+        "acls": "ACLS Training",
+        "firstAid": "First Aid Certification",
+        "cpr": "CPR Certification",
+        "emergency": "Emergency Response",
+        "infection": "Infection Control",
+        "patientSafety": "Patient Safety"
+      },
+      "sampleInstructors": {
+        "drFaisal": "Dr. Faisal Ahmed",
+        "drSara": "Dr. Sara Al-Rashid",
+        "drKhalid": "Dr. Khalid Hassan",
+        "drFatima": "Dr. Fatima Noor",
+        "drMohammed": "Dr. Mohammed Ali",
+        "drAisha": "Dr. Aisha Khan"
+      },
+      "categories": {
+        "emergency": "Emergency Care",
+        "safety": "Safety",
+        "healthcare": "Healthcare"
       }
     },
     "financePage": {
@@ -2473,6 +2574,17 @@
         "completed": "Completed",
         "pending": "Pending",
         "failed": "Failed"
+      },
+      "transactionTypes": {
+        "enrollment": "Course Enrollment",
+        "refund": "Course Refund"
+      },
+      "sampleUsers": {
+        "ahmedK": "Ahmed K.",
+        "saraM": "Sara M.",
+        "mohammedH": "Mohammed H.",
+        "fatimaN": "Fatima N.",
+        "khalidA": "Khalid A."
       }
     },
     "securityPage": {
@@ -2526,6 +2638,28 @@
         "blockIp": "Block IP",
         "unblock": "Unblock",
         "terminate": "Terminate"
+      },
+      "time": {
+        "minAgo": "{count} min ago",
+        "hourAgo": "{count} hour ago",
+        "hoursAgo": "{count} hours ago",
+        "dayAgo": "{count} day ago",
+        "now": "Now"
+      },
+      "reasons": {
+        "bruteForce": "Brute force attack",
+        "suspicious": "Suspicious activity",
+        "rateLimit": "Rate limit exceeded"
+      },
+      "types": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
+      "sampleUsers": {
+        "drFaisal": "Dr. Faisal Ahmed",
+        "saraMohammed": "Sara Mohammed",
+        "mohammedAlKhalid": "Mohammed Al-Khalid",
+        "admin": "Admin"
       }
     },
     "compliancePage": {
@@ -2542,7 +2676,40 @@
       },
       "uploaded": "Uploaded",
       "missing": "Missing",
-      "uploadEvidence": "Upload"
+      "uploadEvidence": "Upload",
+      "categories": {
+        "accessibility": "Accessibility (WCAG 2.1 AA)",
+        "dataProtection": "Data Protection (PDP Law)",
+        "governance": "Governance",
+        "content": "Content Standards",
+        "assessment": "Assessment",
+        "certification": "Certification"
+      },
+      "clauses": {
+        "A1": "Perceivable Content",
+        "A2": "Operable Interface",
+        "A3": "Understandable Content",
+        "A4": "Robust Implementation",
+        "D1": "Data Collection Consent",
+        "D2": "Data Storage Security",
+        "D3": "User Data Rights",
+        "D4": "Data Retention Policy",
+        "G1": "Platform Policies",
+        "G2": "User Agreements",
+        "G3": "Audit Trail",
+        "G4": "Change Management",
+        "C1": "Learning Objectives",
+        "C2": "Assessment Validity",
+        "C3": "Content Accuracy",
+        "C4": "Media Quality",
+        "AS1": "Assessment Integrity",
+        "AS2": "Grading Standards",
+        "AS3": "Feedback Requirements",
+        "CE1": "Certificate Validity",
+        "CE2": "Verification System",
+        "CE3": "Expiry Management",
+        "CE4": "Records Retention"
+      }
     },
     "reportsPage": {
       "title": "Reports",
@@ -2569,6 +2736,46 @@
       "actions": {
         "edit": "Edit",
         "delete": "Delete"
+      },
+      "reportTypes": {
+        "users": {
+          "title": "User Reports",
+          "description": "Registrations, activity, role distribution"
+        },
+        "enrollment": {
+          "title": "Enrollment Reports",
+          "description": "By course, date, conversion funnel"
+        },
+        "completion": {
+          "title": "Completion Reports",
+          "description": "Rates, trends, dropout analysis"
+        },
+        "financial": {
+          "title": "Financial Reports",
+          "description": "Revenue, payments, refunds, profitability"
+        },
+        "instructor": {
+          "title": "Instructor Reports",
+          "description": "Performance, load, ratings"
+        },
+        "compliance": {
+          "title": "Compliance Reports",
+          "description": "NELC evidence, audit snapshots"
+        },
+        "certificate": {
+          "title": "Certificate Reports",
+          "description": "Issuance, verification stats"
+        }
+      },
+      "frequencies": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "scheduledReportNames": {
+        "weeklyUserActivity": "Weekly User Activity",
+        "monthlyRevenue": "Monthly Revenue Summary",
+        "dailySecurity": "Daily Security Audit"
       }
     },
     "logsPage": {
@@ -2601,12 +2808,61 @@
         "resource": "Resource",
         "details": "Details",
         "ip": "IP Address"
+      },
+      "actions": {
+        "login": "Login",
+        "logout": "Logout",
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete",
+        "export": "Export",
+        "block": "Block"
+      },
+      "resources": {
+        "authentication": "Authentication",
+        "user": "User",
+        "course": "Course",
+        "report": "Report",
+        "content": "Content",
+        "payment": "Payment",
+        "settings": "Settings",
+        "security": "Security"
+      },
+      "sampleUsers": {
+        "abdullahAlRashid": "Abdullah Al-Rashid",
+        "mohammedAlKhalid": "Mohammed Al-Khalid",
+        "drFaisalAhmed": "Dr. Faisal Ahmed",
+        "saraMohammed": "Sara Mohammed",
+        "system": "System",
+        "paymentGateway": "Payment Gateway",
+        "securitySystem": "Security System"
+      },
+      "logDetails": {
+        "successfulLogin": "Successful login via 2FA",
+        "roleUpdate": "Updated role from Student to Instructor for user ID 245",
+        "courseCreated": "Created new course: Advanced CPR Training",
+        "backupCompleted": "Automated daily backup completed",
+        "contentDeleted": "Deleted draft video from First Aid course",
+        "paymentReceived": "Payment received: SAR 1,200 from Ahmed K.",
+        "settingsUpdated": "Updated platform notification settings",
+        "ipBlocked": "Blocked IP 103.45.67.89 for suspicious activity"
       }
     },
     "settingsPage": {
       "title": "Settings",
       "subtitle": "Configure platform settings",
       "saveChanges": "Save Changes",
+      "tabs": {
+        "general": "General",
+        "localization": "Localization",
+        "authentication": "Authentication",
+        "notifications": "Notifications",
+        "payments": "Payments",
+        "integrations": "Integrations",
+        "backup": "Backup",
+        "policies": "Policies",
+        "maintenance": "Maintenance"
+      },
       "general": {
         "title": "General Settings",
         "platformName": "Platform Name",
@@ -2633,14 +2889,18 @@
         "title": "Maintenance",
         "mode": "Maintenance Mode",
         "modeDesc": "Enable to put the platform in maintenance mode",
-        "message": "Maintenance Message"
+        "message": "Maintenance Message",
+        "defaultMessage": "We are currently performing scheduled maintenance. Please check back soon."
       },
       "integrations": {
         "title": "Integrations",
         "connected": "Connected",
         "notConnected": "Not Connected",
         "connect": "Connect",
-        "disconnect": "Disconnect"
+        "disconnect": "Disconnect",
+        "zoom": "Zoom",
+        "tapPayments": "Tap Payments",
+        "unifonicSms": "Unifonic SMS"
       }
     }
   }

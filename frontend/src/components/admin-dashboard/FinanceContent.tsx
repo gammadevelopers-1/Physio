@@ -27,64 +27,64 @@ const mockAdmin = {
   uptime: 99.9,
 };
 
-// Mock Finance Data
-const mockTransactions = [
-  {
-    id: "1",
-    date: "Feb 9, 2026",
-    description: "Course Enrollment - ACLS Training",
-    user: "Ahmed K.",
-    amount: 1200,
-    type: "payment",
-    status: "completed",
-    gateway: "Tap",
-  },
-  {
-    id: "2",
-    date: "Feb 9, 2026",
-    description: "Course Refund - First Aid",
-    user: "Sara M.",
-    amount: -800,
-    type: "refund",
-    status: "completed",
-    gateway: "Tap",
-  },
-  {
-    id: "3",
-    date: "Feb 8, 2026",
-    description: "Course Enrollment - CPR Certification",
-    user: "Mohammed H.",
-    amount: 950,
-    type: "payment",
-    status: "completed",
-    gateway: "Tamara",
-  },
-  {
-    id: "4",
-    date: "Feb 8, 2026",
-    description: "Course Enrollment - Emergency Response",
-    user: "Fatima N.",
-    amount: 1500,
-    type: "payment",
-    status: "pending",
-    gateway: "Moyasar",
-  },
-  {
-    id: "5",
-    date: "Feb 7, 2026",
-    description: "Course Enrollment - Infection Control",
-    user: "Khalid A.",
-    amount: 1100,
-    type: "payment",
-    status: "completed",
-    gateway: "Tap",
-  },
-];
-
 const FinanceContent = () => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Mock Finance Data with translations
+  const mockTransactions = [
+    {
+      id: "1",
+      date: "Feb 9, 2026",
+      description: `${t("financePage.transactionTypes.enrollment")} - ${t("coursesPage.sampleCourses.acls")}`,
+      user: t("financePage.sampleUsers.ahmedK"),
+      amount: 1200,
+      type: "payment",
+      status: "completed",
+      gateway: "Tap",
+    },
+    {
+      id: "2",
+      date: "Feb 9, 2026",
+      description: `${t("financePage.transactionTypes.refund")} - ${t("coursesPage.sampleCourses.firstAid")}`,
+      user: t("financePage.sampleUsers.saraM"),
+      amount: -800,
+      type: "refund",
+      status: "completed",
+      gateway: "Tap",
+    },
+    {
+      id: "3",
+      date: "Feb 8, 2026",
+      description: `${t("financePage.transactionTypes.enrollment")} - ${t("coursesPage.sampleCourses.cpr")}`,
+      user: t("financePage.sampleUsers.mohammedH"),
+      amount: 950,
+      type: "payment",
+      status: "completed",
+      gateway: "Tamara",
+    },
+    {
+      id: "4",
+      date: "Feb 8, 2026",
+      description: `${t("financePage.transactionTypes.enrollment")} - ${t("coursesPage.sampleCourses.emergency")}`,
+      user: t("financePage.sampleUsers.fatimaN"),
+      amount: 1500,
+      type: "payment",
+      status: "pending",
+      gateway: "Moyasar",
+    },
+    {
+      id: "5",
+      date: "Feb 7, 2026",
+      description: `${t("financePage.transactionTypes.enrollment")} - ${t("coursesPage.sampleCourses.infection")}`,
+      user: t("financePage.sampleUsers.khalidA"),
+      amount: 1100,
+      type: "payment",
+      status: "completed",
+      gateway: "Tap",
+    },
+  ];
 
   const [dateRange, setDateRange] = useState("mtd");
   const [transactionFilter, setTransactionFilter] = useState("all");

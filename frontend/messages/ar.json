@@ -2521,6 +2521,12 @@
         "suspended": "موقوف",
         "pending": "قيد الانتظار",
         "inactive": "غير نشط"
+      },
+      "sampleUsers": {
+        "faisal": "فيصل أ.",
+        "sara": "سارة م.",
+        "mohammed": "محمد ك.",
+        "khalid": "خالد ح."
       }
     },
     "compliance": {
@@ -2529,7 +2535,13 @@
       "overallCompliance": "الامتثال الإجمالي",
       "pass": "ناجح",
       "review": "مراجعة",
-      "fail": "فاشل"
+      "fail": "فاشل",
+      "areas": {
+        "accessibility": "إمكانية الوصول",
+        "contentStandards": "معايير المحتوى",
+        "dataProtection": "حماية البيانات",
+        "governance": "الحوكمة"
+      }
     },
     "finance": {
       "title": "المالية",
@@ -2542,11 +2554,42 @@
       "chargebackRate": "رد المبالغ"
     },
     "alerts": {
-      "title": "التنبيهات"
+      "title": "التنبيهات",
+      "items": {
+        "highFailedLogins": "محاولات تسجيل دخول فاشلة عالية",
+        "highFailedLoginsDesc": "23 محاولة فاشلة من IP 192.168.x.x",
+        "nelcReviewRequired": "مراجعة NELC مطلوبة",
+        "nelcReviewRequiredDesc": "عنصران للامتثال يحتاجان اهتماماً",
+        "newUserRegistrations": "تسجيلات مستخدمين جدد",
+        "newUserRegistrationsDesc": "5 مستخدمين في انتظار الموافقة"
+      },
+      "time": {
+        "minutesAgo": "منذ {count} دقيقة",
+        "hourAgo": "منذ {count} ساعة",
+        "hoursAgo": "منذ {count} ساعات"
+      }
     },
     "activity": {
       "title": "النشاط الأخير",
-      "viewAll": "عرض كل النشاط"
+      "viewAll": "عرض كل النشاط",
+      "actions": {
+        "registered": "سجّل",
+        "updatedRolePermissions": "حدّث صلاحيات الأدوار",
+        "paymentReceived": "تم استلام",
+        "coursePublished": "نشرت بواسطة",
+        "certificateIssued": "صدرت لـ"
+      },
+      "users": {
+        "admin": "المسؤول",
+        "payment": "الدفع",
+        "newCourse": "دورة جديدة",
+        "certificate": "شهادة"
+      },
+      "time": {
+        "minAgo": "منذ {count} دقيقة",
+        "hourAgo": "منذ {count} ساعة",
+        "hoursAgo": "منذ {count} ساعات"
+      }
     },
     "quickActions": {
       "title": "إجراءات سريعة",
@@ -2589,6 +2632,21 @@
         "impersonate": "انتحال الشخصية",
         "suspend": "إيقاف",
         "delete": "حذف"
+      },
+      "sampleUsers": {
+        "drFaisal": "د. فيصل أحمد",
+        "saraMohammed": "سارة محمد",
+        "mohammedAlKhalid": "محمد الخالد",
+        "khalidHassan": "خالد حسن",
+        "fatimaNoor": "فاطمة نور",
+        "ahmedAlSaud": "أحمد آل سعود"
+      },
+      "time": {
+        "hoursAgo": "منذ {count} ساعات",
+        "minAgo": "منذ {count} دقيقة",
+        "dayAgo": "منذ {count} يوم",
+        "weekAgo": "منذ {count} أسبوع",
+        "never": "أبداً"
       }
     },
     "rolesPage": {
@@ -2612,6 +2670,28 @@
         "reports": "التقارير",
         "settings": "الإعدادات",
         "security": "الأمان"
+      },
+      "roles": {
+        "superAdmin": {
+          "name": "المشرف العام",
+          "description": "وصول كامل والتحكم في المنصة"
+        },
+        "courseManager": {
+          "name": "مدير الدورات",
+          "description": "إدارة الدورات والمدربين والمحتوى"
+        },
+        "instructor": {
+          "name": "مدرب",
+          "description": "إنشاء وإدارة الدورات الخاصة"
+        },
+        "student": {
+          "name": "طالب",
+          "description": "الوصول إلى الدورات والتقييمات"
+        },
+        "finance": {
+          "name": "المالية",
+          "description": "الوصول إلى البيانات المالية والتقارير"
+        }
       }
     },
     "coursesPage": {
@@ -2645,6 +2725,27 @@
         "view": "عرض",
         "edit": "تعديل",
         "archive": "أرشفة"
+      },
+      "sampleCourses": {
+        "acls": "تدريب ACLS",
+        "firstAid": "شهادة الإسعافات الأولية",
+        "cpr": "شهادة الإنعاش القلبي الرئوي",
+        "emergency": "الاستجابة للطوارئ",
+        "infection": "مكافحة العدوى",
+        "patientSafety": "سلامة المرضى"
+      },
+      "sampleInstructors": {
+        "drFaisal": "د. فيصل أحمد",
+        "drSara": "د. سارة الراشد",
+        "drKhalid": "د. خالد حسن",
+        "drFatima": "د. فاطمة نور",
+        "drMohammed": "د. محمد علي",
+        "drAisha": "د. عائشة خان"
+      },
+      "categories": {
+        "emergency": "رعاية الطوارئ",
+        "safety": "السلامة",
+        "healthcare": "الرعاية الصحية"
       }
     },
     "financePage": {
@@ -2683,6 +2784,17 @@
         "completed": "مكتمل",
         "pending": "قيد الانتظار",
         "failed": "فاشل"
+      },
+      "transactionTypes": {
+        "enrollment": "تسجيل في دورة",
+        "refund": "استرداد دورة"
+      },
+      "sampleUsers": {
+        "ahmedK": "أحمد ك.",
+        "saraM": "سارة م.",
+        "mohammedH": "محمد ح.",
+        "fatimaN": "فاطمة ن.",
+        "khalidA": "خالد أ."
       }
     },
     "securityPage": {
@@ -2736,6 +2848,28 @@
         "blockIp": "حظر IP",
         "unblock": "إلغاء الحظر",
         "terminate": "إنهاء"
+      },
+      "time": {
+        "minAgo": "منذ {count} دقيقة",
+        "hourAgo": "منذ {count} ساعة",
+        "hoursAgo": "منذ {count} ساعات",
+        "dayAgo": "منذ {count} يوم",
+        "now": "الآن"
+      },
+      "reasons": {
+        "bruteForce": "هجوم القوة الغاشمة",
+        "suspicious": "نشاط مشبوه",
+        "rateLimit": "تجاوز حد المعدل"
+      },
+      "types": {
+        "auto": "تلقائي",
+        "manual": "يدوي"
+      },
+      "sampleUsers": {
+        "drFaisal": "د. فيصل أحمد",
+        "saraMohammed": "سارة محمد",
+        "mohammedAlKhalid": "محمد الخالد",
+        "admin": "المشرف"
       }
     },
     "compliancePage": {
@@ -2752,7 +2886,40 @@
       },
       "uploaded": "تم الرفع",
       "missing": "مفقود",
-      "uploadEvidence": "رفع"
+      "uploadEvidence": "رفع",
+      "categories": {
+        "accessibility": "إمكانية الوصول (WCAG 2.1 AA)",
+        "dataProtection": "حماية البيانات (قانون PDP)",
+        "governance": "الحوكمة",
+        "content": "معايير المحتوى",
+        "assessment": "التقييم",
+        "certification": "الشهادات"
+      },
+      "clauses": {
+        "A1": "المحتوى المدرك",
+        "A2": "الواجهة القابلة للتشغيل",
+        "A3": "المحتوى المفهوم",
+        "A4": "التنفيذ المتين",
+        "D1": "موافقة جمع البيانات",
+        "D2": "أمان تخزين البيانات",
+        "D3": "حقوق بيانات المستخدم",
+        "D4": "سياسة الاحتفاظ بالبيانات",
+        "G1": "سياسات المنصة",
+        "G2": "اتفاقيات المستخدم",
+        "G3": "سجل التدقيق",
+        "G4": "إدارة التغيير",
+        "C1": "أهداف التعلم",
+        "C2": "صلاحية التقييم",
+        "C3": "دقة المحتوى",
+        "C4": "جودة الوسائط",
+        "AS1": "نزاهة التقييم",
+        "AS2": "معايير التقييم",
+        "AS3": "متطلبات التغذية الراجعة",
+        "CE1": "صلاحية الشهادة",
+        "CE2": "نظام التحقق",
+        "CE3": "إدارة انتهاء الصلاحية",
+        "CE4": "الاحتفاظ بالسجلات"
+      }
     },
     "reportsPage": {
       "title": "التقارير",
@@ -2779,6 +2946,46 @@
       "actions": {
         "edit": "تعديل",
         "delete": "حذف"
+      },
+      "reportTypes": {
+        "users": {
+          "title": "تقارير المستخدمين",
+          "description": "التسجيلات، النشاط، توزيع الأدوار"
+        },
+        "enrollment": {
+          "title": "تقارير التسجيل",
+          "description": "حسب الدورة، التاريخ، مسار التحويل"
+        },
+        "completion": {
+          "title": "تقارير الإكمال",
+          "description": "المعدلات، الاتجاهات، تحليل التسرب"
+        },
+        "financial": {
+          "title": "التقارير المالية",
+          "description": "الإيرادات، المدفوعات، المستردات، الربحية"
+        },
+        "instructor": {
+          "title": "تقارير المدربين",
+          "description": "الأداء، العبء، التقييمات"
+        },
+        "compliance": {
+          "title": "تقارير الامتثال",
+          "description": "أدلة NELC، لقطات المراجعة"
+        },
+        "certificate": {
+          "title": "تقارير الشهادات",
+          "description": "الإصدار، إحصائيات التحقق"
+        }
+      },
+      "frequencies": {
+        "daily": "يومي",
+        "weekly": "أسبوعي",
+        "monthly": "شهري"
+      },
+      "scheduledReportNames": {
+        "weeklyUserActivity": "نشاط المستخدم الأسبوعي",
+        "monthlyRevenue": "ملخص الإيرادات الشهري",
+        "dailySecurity": "مراجعة الأمان اليومية"
       }
     },
     "logsPage": {
@@ -2811,12 +3018,61 @@
         "resource": "المورد",
         "details": "التفاصيل",
         "ip": "عنوان IP"
+      },
+      "actions": {
+        "login": "دخول",
+        "logout": "خروج",
+        "create": "إنشاء",
+        "update": "تحديث",
+        "delete": "حذف",
+        "export": "تصدير",
+        "block": "حظر"
+      },
+      "resources": {
+        "authentication": "المصادقة",
+        "user": "المستخدم",
+        "course": "الدورة",
+        "report": "التقرير",
+        "content": "المحتوى",
+        "payment": "الدفع",
+        "settings": "الإعدادات",
+        "security": "الأمان"
+      },
+      "sampleUsers": {
+        "abdullahAlRashid": "عبدالله الراشد",
+        "mohammedAlKhalid": "محمد الخالد",
+        "drFaisalAhmed": "د. فيصل أحمد",
+        "saraMohammed": "سارة محمد",
+        "system": "النظام",
+        "paymentGateway": "بوابة الدفع",
+        "securitySystem": "نظام الأمان"
+      },
+      "logDetails": {
+        "successfulLogin": "تسجيل دخول ناجح عبر المصادقة الثنائية",
+        "roleUpdate": "تم تحديث الدور من طالب إلى مدرب للمستخدم رقم 245",
+        "courseCreated": "تم إنشاء دورة جديدة: تدريب الإنعاش القلبي المتقدم",
+        "backupCompleted": "اكتمل النسخ الاحتياطي اليومي التلقائي",
+        "contentDeleted": "تم حذف فيديو مسودة من دورة الإسعافات الأولية",
+        "paymentReceived": "تم استلام دفعة: 1,200 ريال من أحمد ك.",
+        "settingsUpdated": "تم تحديث إعدادات إشعارات المنصة",
+        "ipBlocked": "تم حظر IP 103.45.67.89 بسبب نشاط مشبوه"
       }
     },
     "settingsPage": {
       "title": "الإعدادات",
       "subtitle": "تكوين إعدادات المنصة",
       "saveChanges": "حفظ التغييرات",
+      "tabs": {
+        "general": "عام",
+        "localization": "التوطين",
+        "authentication": "المصادقة",
+        "notifications": "الإشعارات",
+        "payments": "المدفوعات",
+        "integrations": "التكاملات",
+        "backup": "النسخ الاحتياطي",
+        "policies": "السياسات",
+        "maintenance": "الصيانة"
+      },
       "general": {
         "title": "الإعدادات العامة",
         "platformName": "اسم المنصة",
@@ -2843,14 +3099,18 @@
         "title": "الصيانة",
         "mode": "وضع الصيانة",
         "modeDesc": "تفعيل لوضع المنصة في وضع الصيانة",
-        "message": "رسالة الصيانة"
+        "message": "رسالة الصيانة",
+        "defaultMessage": "نحن نقوم حالياً بإجراء صيانة مجدولة. يرجى المحاولة مرة أخرى قريباً."
       },
       "integrations": {
         "title": "التكاملات",
         "connected": "متصل",
         "notConnected": "غير متصل",
         "connect": "ربط",
-        "disconnect": "قطع الاتصال"
+        "disconnect": "قطع الاتصال",
+        "zoom": "زووم",
+        "tapPayments": "تاب للمدفوعات",
+        "unifonicSms": "يونيفونيك للرسائل"
       }
     }
   }

@@ -28,75 +28,77 @@ const mockAdmin = {
   uptime: 99.9,
 };
 
-const reportTypes = [
-  {
-    id: "users",
-    title: "User Reports",
-    description: "Registrations, activity, role distribution",
-    icon: Users,
-    color: "#3B82F6",
-    bgColor: "#DBEAFE",
-  },
-  {
-    id: "enrollment",
-    title: "Enrollment Reports",
-    description: "By course, date, conversion funnel",
-    icon: BookOpen,
-    color: "#8B5CF6",
-    bgColor: "#EDE9FE",
-  },
-  {
-    id: "completion",
-    title: "Completion Reports",
-    description: "Rates, trends, dropout analysis",
-    icon: Award,
-    color: "#16A34A",
-    bgColor: "#DCFCE7",
-  },
-  {
-    id: "financial",
-    title: "Financial Reports",
-    description: "Revenue, payments, refunds, profitability",
-    icon: DollarSign,
-    color: "#D4A520",
-    bgColor: "var(--gold-gold-100)",
-  },
-  {
-    id: "instructor",
-    title: "Instructor Reports",
-    description: "Performance, load, ratings",
-    icon: Users,
-    color: "#EC4899",
-    bgColor: "#FCE7F3",
-  },
-  {
-    id: "compliance",
-    title: "Compliance Reports",
-    description: "NELC evidence, audit snapshots",
-    icon: FileText,
-    color: "#002D87",
-    bgColor: "#F0F7FF",
-  },
-  {
-    id: "certificate",
-    title: "Certificate Reports",
-    description: "Issuance, verification stats",
-    icon: Award,
-    color: "#F59E0B",
-    bgColor: "#FEF3C7",
-  },
-];
-
-const scheduledReports = [
-  { id: "1", name: "Weekly User Activity", frequency: "Weekly", nextRun: "Feb 10, 2026", recipients: 2 },
-  { id: "2", name: "Monthly Revenue Summary", frequency: "Monthly", nextRun: "Mar 1, 2026", recipients: 3 },
-  { id: "3", name: "Daily Security Audit", frequency: "Daily", nextRun: "Feb 10, 2026", recipients: 1 },
-];
-
 const ReportsContent = () => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Report types with translations
+  const reportTypes = [
+    {
+      id: "users",
+      title: t("reportsPage.reportTypes.users.title"),
+      description: t("reportsPage.reportTypes.users.description"),
+      icon: Users,
+      color: "#3B82F6",
+      bgColor: "#DBEAFE",
+    },
+    {
+      id: "enrollment",
+      title: t("reportsPage.reportTypes.enrollment.title"),
+      description: t("reportsPage.reportTypes.enrollment.description"),
+      icon: BookOpen,
+      color: "#8B5CF6",
+      bgColor: "#EDE9FE",
+    },
+    {
+      id: "completion",
+      title: t("reportsPage.reportTypes.completion.title"),
+      description: t("reportsPage.reportTypes.completion.description"),
+      icon: Award,
+      color: "#16A34A",
+      bgColor: "#DCFCE7",
+    },
+    {
+      id: "financial",
+      title: t("reportsPage.reportTypes.financial.title"),
+      description: t("reportsPage.reportTypes.financial.description"),
+      icon: DollarSign,
+      color: "#D4A520",
+      bgColor: "var(--gold-gold-100)",
+    },
+    {
+      id: "instructor",
+      title: t("reportsPage.reportTypes.instructor.title"),
+      description: t("reportsPage.reportTypes.instructor.description"),
+      icon: Users,
+      color: "#EC4899",
+      bgColor: "#FCE7F3",
+    },
+    {
+      id: "compliance",
+      title: t("reportsPage.reportTypes.compliance.title"),
+      description: t("reportsPage.reportTypes.compliance.description"),
+      icon: FileText,
+      color: "#002D87",
+      bgColor: "#F0F7FF",
+    },
+    {
+      id: "certificate",
+      title: t("reportsPage.reportTypes.certificate.title"),
+      description: t("reportsPage.reportTypes.certificate.description"),
+      icon: Award,
+      color: "#F59E0B",
+      bgColor: "#FEF3C7",
+    },
+  ];
+
+  // Scheduled reports with translations
+  const scheduledReports = [
+    { id: "1", name: t("reportsPage.scheduledReportNames.weeklyUserActivity"), frequency: t("reportsPage.frequencies.weekly"), nextRun: "Feb 10, 2026", recipients: 2 },
+    { id: "2", name: t("reportsPage.scheduledReportNames.monthlyRevenue"), frequency: t("reportsPage.frequencies.monthly"), nextRun: "Mar 1, 2026", recipients: 3 },
+    { id: "3", name: t("reportsPage.scheduledReportNames.dailySecurity"), frequency: t("reportsPage.frequencies.daily"), nextRun: "Feb 10, 2026", recipients: 1 },
+  ];
 
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");

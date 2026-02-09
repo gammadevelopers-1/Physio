@@ -26,73 +26,73 @@ const mockAdmin = {
   uptime: 99.9,
 };
 
-// Mock Compliance Data
-const complianceCategories = [
-  {
-    id: "accessibility",
-    name: "Accessibility (WCAG 2.1 AA)",
-    clauses: [
-      { id: "A1", title: "Perceivable Content", status: "pass", evidence: true },
-      { id: "A2", title: "Operable Interface", status: "pass", evidence: true },
-      { id: "A3", title: "Understandable Content", status: "pass", evidence: true },
-      { id: "A4", title: "Robust Implementation", status: "pass", evidence: true },
-    ],
-  },
-  {
-    id: "dataProtection",
-    name: "Data Protection (PDP Law)",
-    clauses: [
-      { id: "D1", title: "Data Collection Consent", status: "pass", evidence: true },
-      { id: "D2", title: "Data Storage Security", status: "pass", evidence: true },
-      { id: "D3", title: "User Data Rights", status: "pass", evidence: true },
-      { id: "D4", title: "Data Retention Policy", status: "review", evidence: false },
-    ],
-  },
-  {
-    id: "governance",
-    name: "Governance",
-    clauses: [
-      { id: "G1", title: "Platform Policies", status: "pass", evidence: true },
-      { id: "G2", title: "User Agreements", status: "pass", evidence: true },
-      { id: "G3", title: "Audit Trail", status: "pass", evidence: true },
-      { id: "G4", title: "Change Management", status: "review", evidence: false },
-    ],
-  },
-  {
-    id: "content",
-    name: "Content Standards",
-    clauses: [
-      { id: "C1", title: "Learning Objectives", status: "pass", evidence: true },
-      { id: "C2", title: "Assessment Validity", status: "review", evidence: false },
-      { id: "C3", title: "Content Accuracy", status: "pass", evidence: true },
-      { id: "C4", title: "Media Quality", status: "pass", evidence: true },
-    ],
-  },
-  {
-    id: "assessment",
-    name: "Assessment",
-    clauses: [
-      { id: "AS1", title: "Assessment Integrity", status: "pass", evidence: true },
-      { id: "AS2", title: "Grading Standards", status: "pass", evidence: true },
-      { id: "AS3", title: "Feedback Requirements", status: "review", evidence: false },
-    ],
-  },
-  {
-    id: "certification",
-    name: "Certification",
-    clauses: [
-      { id: "CE1", title: "Certificate Validity", status: "pass", evidence: true },
-      { id: "CE2", title: "Verification System", status: "pass", evidence: true },
-      { id: "CE3", title: "Expiry Management", status: "fail", evidence: false },
-      { id: "CE4", title: "Records Retention", status: "fail", evidence: false },
-    ],
-  },
-];
-
 const ComplianceContent = () => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Mock Compliance Data with translations
+  const complianceCategories = [
+    {
+      id: "accessibility",
+      name: t("compliancePage.categories.accessibility"),
+      clauses: [
+        { id: "A1", title: t("compliancePage.clauses.A1"), status: "pass", evidence: true },
+        { id: "A2", title: t("compliancePage.clauses.A2"), status: "pass", evidence: true },
+        { id: "A3", title: t("compliancePage.clauses.A3"), status: "pass", evidence: true },
+        { id: "A4", title: t("compliancePage.clauses.A4"), status: "pass", evidence: true },
+      ],
+    },
+    {
+      id: "dataProtection",
+      name: t("compliancePage.categories.dataProtection"),
+      clauses: [
+        { id: "D1", title: t("compliancePage.clauses.D1"), status: "pass", evidence: true },
+        { id: "D2", title: t("compliancePage.clauses.D2"), status: "pass", evidence: true },
+        { id: "D3", title: t("compliancePage.clauses.D3"), status: "pass", evidence: true },
+        { id: "D4", title: t("compliancePage.clauses.D4"), status: "review", evidence: false },
+      ],
+    },
+    {
+      id: "governance",
+      name: t("compliancePage.categories.governance"),
+      clauses: [
+        { id: "G1", title: t("compliancePage.clauses.G1"), status: "pass", evidence: true },
+        { id: "G2", title: t("compliancePage.clauses.G2"), status: "pass", evidence: true },
+        { id: "G3", title: t("compliancePage.clauses.G3"), status: "pass", evidence: true },
+        { id: "G4", title: t("compliancePage.clauses.G4"), status: "review", evidence: false },
+      ],
+    },
+    {
+      id: "content",
+      name: t("compliancePage.categories.content"),
+      clauses: [
+        { id: "C1", title: t("compliancePage.clauses.C1"), status: "pass", evidence: true },
+        { id: "C2", title: t("compliancePage.clauses.C2"), status: "review", evidence: false },
+        { id: "C3", title: t("compliancePage.clauses.C3"), status: "pass", evidence: true },
+        { id: "C4", title: t("compliancePage.clauses.C4"), status: "pass", evidence: true },
+      ],
+    },
+    {
+      id: "assessment",
+      name: t("compliancePage.categories.assessment"),
+      clauses: [
+        { id: "AS1", title: t("compliancePage.clauses.AS1"), status: "pass", evidence: true },
+        { id: "AS2", title: t("compliancePage.clauses.AS2"), status: "pass", evidence: true },
+        { id: "AS3", title: t("compliancePage.clauses.AS3"), status: "review", evidence: false },
+      ],
+    },
+    {
+      id: "certification",
+      name: t("compliancePage.categories.certification"),
+      clauses: [
+        { id: "CE1", title: t("compliancePage.clauses.CE1"), status: "pass", evidence: true },
+        { id: "CE2", title: t("compliancePage.clauses.CE2"), status: "pass", evidence: true },
+        { id: "CE3", title: t("compliancePage.clauses.CE3"), status: "fail", evidence: false },
+        { id: "CE4", title: t("compliancePage.clauses.CE4"), status: "fail", evidence: false },
+      ],
+    },
+  ];
 
   const [expandedCategory, setExpandedCategory] = useState<string | null>("accessibility");
 

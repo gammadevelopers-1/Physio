@@ -27,30 +27,30 @@ const mockAdmin = {
   uptime: 99.9,
 };
 
-// Mock Security Data
-const mockFailedLogins = [
-  { id: "1", user: "sara.m@student.physio.edu.sa", ip: "192.168.1.105", time: "5 min ago", attempts: 5 },
-  { id: "2", user: "unknown@test.com", ip: "103.45.67.89", time: "15 min ago", attempts: 12 },
-  { id: "3", user: "ahmed.k@physio.edu.sa", ip: "192.168.1.42", time: "1 hour ago", attempts: 3 },
-];
-
-const mockBlockedIPs = [
-  { id: "1", ip: "103.45.67.89", reason: "Brute force attack", blockedAt: "15 min ago", type: "auto" },
-  { id: "2", ip: "45.33.22.11", reason: "Suspicious activity", blockedAt: "2 hours ago", type: "manual" },
-  { id: "3", ip: "89.123.45.67", reason: "Rate limit exceeded", blockedAt: "1 day ago", type: "auto" },
-];
-
-const mockActiveSessions = [
-  { id: "1", user: "Dr. Faisal Ahmed", device: "Chrome / Windows", ip: "192.168.1.50", lastActive: "2 min ago" },
-  { id: "2", user: "Sara Mohammed", device: "Safari / iOS", ip: "192.168.1.102", lastActive: "5 min ago" },
-  { id: "3", user: "Mohammed Al-Khalid", device: "Firefox / macOS", ip: "192.168.1.78", lastActive: "10 min ago" },
-  { id: "4", user: "Admin", device: "Chrome / Windows", ip: "192.168.1.1", lastActive: "Now" },
-];
-
 const SecurityContent = () => {
   const t = useTranslations("adminDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Mock Security Data with translations
+  const mockFailedLogins = [
+    { id: "1", user: "sara.m@student.physio.edu.sa", ip: "192.168.1.105", time: t("securityPage.time.minAgo", { count: 5 }), attempts: 5 },
+    { id: "2", user: "unknown@test.com", ip: "103.45.67.89", time: t("securityPage.time.minAgo", { count: 15 }), attempts: 12 },
+    { id: "3", user: "ahmed.k@physio.edu.sa", ip: "192.168.1.42", time: t("securityPage.time.hourAgo", { count: 1 }), attempts: 3 },
+  ];
+
+  const mockBlockedIPs = [
+    { id: "1", ip: "103.45.67.89", reason: t("securityPage.reasons.bruteForce"), blockedAt: t("securityPage.time.minAgo", { count: 15 }), type: t("securityPage.types.auto") },
+    { id: "2", ip: "45.33.22.11", reason: t("securityPage.reasons.suspicious"), blockedAt: t("securityPage.time.hoursAgo", { count: 2 }), type: t("securityPage.types.manual") },
+    { id: "3", ip: "89.123.45.67", reason: t("securityPage.reasons.rateLimit"), blockedAt: t("securityPage.time.dayAgo", { count: 1 }), type: t("securityPage.types.auto") },
+  ];
+
+  const mockActiveSessions = [
+    { id: "1", user: t("securityPage.sampleUsers.drFaisal"), device: "Chrome / Windows", ip: "192.168.1.50", lastActive: t("securityPage.time.minAgo", { count: 2 }) },
+    { id: "2", user: t("securityPage.sampleUsers.saraMohammed"), device: "Safari / iOS", ip: "192.168.1.102", lastActive: t("securityPage.time.minAgo", { count: 5 }) },
+    { id: "3", user: t("securityPage.sampleUsers.mohammedAlKhalid"), device: "Firefox / macOS", ip: "192.168.1.78", lastActive: t("securityPage.time.minAgo", { count: 10 }) },
+    { id: "4", user: t("securityPage.sampleUsers.admin"), device: "Chrome / Windows", ip: "192.168.1.1", lastActive: t("securityPage.time.now") },
+  ];
 
   const [activeTab, setActiveTab] = useState<"overview" | "logins" | "blocked" | "sessions">("overview");
 
@@ -164,7 +164,7 @@ const SecurityContent = () => {
                               <p className="text-sm font-medium text-[#991B1B]">
                                 {t("securityPage.alertMessages.bruteForce")}
                               </p>
-                              <p className="text-xs text-[#B91C1C] mt-1">5 min ago</p>
+                              <p className="text-xs text-[#B91C1C] mt-1">{t("securityPage.time.minAgo", { count: 5 })}</p>
                             </div>
                           </div>
                           <div className="flex items-start gap-3 p-4 bg-[#FEF3C7] rounded-lg border border-[#FCD34D]">
@@ -173,7 +173,7 @@ const SecurityContent = () => {
                               <p className="text-sm font-medium text-[#92400E]">
                                 {t("securityPage.alertMessages.lowTwoFa")}
                               </p>
-                              <p className="text-xs text-[#A16207] mt-1">1 hour ago</p>
+                              <p className="text-xs text-[#A16207] mt-1">{t("securityPage.time.hourAgo", { count: 1 })}</p>
                             </div>
                           </div>
                         </div>

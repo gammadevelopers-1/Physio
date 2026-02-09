@@ -2232,5 +2232,416 @@
         "disconnect": "Disconnect"
       }
     }
+  },
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "subtitle": "Welcome back, {name}! Here's your platform overview.",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "roles": "Roles & Permissions",
+      "courses": "All Courses",
+      "finance": "Finance",
+      "security": "Security",
+      "compliance": "NELC Compliance",
+      "reports": "Reports",
+      "logs": "Audit Logs",
+      "settings": "Settings",
+      "superAdmin": "Super Admin",
+      "uptime": "Uptime",
+      "viewProfile": "View Profile",
+      "editProfile": "Edit Profile",
+      "logout": "Logout"
+    },
+    "kpi": {
+      "activeUsers": "Active Users",
+      "mau": "MAU",
+      "totalUsers": "Total Users",
+      "thisWeek": "this week",
+      "revenueMTD": "Revenue (MTD)",
+      "sar": "SAR",
+      "nelcCompliance": "NELC Compliance",
+      "systemUptime": "System Uptime",
+      "healthy": "Healthy",
+      "warning": "Warning",
+      "critical": "Critical",
+      "certificates": "Certificates",
+      "thisMonth": "This month"
+    },
+    "analytics": {
+      "title": "Platform Analytics",
+      "viewDetails": "View Details",
+      "enrollmentFunnel": "Enrollment Funnel",
+      "userGrowth": "User Growth",
+      "visitorToSignup": "Visitor → Signup",
+      "signupToEnroll": "Signup → Enroll",
+      "enrollToPaid": "Enroll → Paid",
+      "completionRate": "Completion Rate"
+    },
+    "securityHealth": {
+      "title": "Security & Health",
+      "viewLogs": "View Logs",
+      "security": "SECURITY",
+      "system": "SYSTEM",
+      "failedLogins": "Failed Logins (24h)",
+      "ipsBlocked": "IPs Blocked",
+      "activeSessions": "Active Sessions",
+      "twoFaAdoption": "2FA Adoption",
+      "apiLatency": "API Latency",
+      "errorRate": "Error Rate",
+      "lastBackup": "Last Backup",
+      "dbHealth": "DB Health",
+      "good": "Good"
+    },
+    "userManagement": {
+      "title": "Users",
+      "addUser": "Add User",
+      "viewAllUsers": "View All Users",
+      "user": "User",
+      "role": "Role",
+      "status": "Status",
+      "roles": {
+        "admin": "Admin",
+        "instructor": "Instructor",
+        "student": "Student",
+        "manager": "Manager"
+      },
+      "statuses": {
+        "active": "Active",
+        "suspended": "Suspended",
+        "pending": "Pending",
+        "inactive": "Inactive"
+      }
+    },
+    "compliance": {
+      "title": "NELC Compliance",
+      "fullMatrix": "Full Matrix",
+      "overallCompliance": "Overall Compliance",
+      "pass": "Pass",
+      "review": "Review",
+      "fail": "Fail"
+    },
+    "finance": {
+      "title": "Finance",
+      "viewReports": "View Reports",
+      "gross": "Gross",
+      "net": "Net",
+      "sar": "SAR",
+      "byGateway": "BY GATEWAY",
+      "refundRate": "Refund Rate",
+      "chargebackRate": "Chargeback"
+    },
+    "alerts": {
+      "title": "Alerts"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "viewAll": "View All Activity"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addUser": "Add User",
+      "newCourse": "New Course",
+      "runBackup": "Run Backup",
+      "generateReport": "Generate Report",
+      "viewLogs": "View Logs",
+      "settings": "Settings"
+    },
+    "usersPage": {
+      "title": "Users Management",
+      "subtitle": "Manage all platform users",
+      "addUser": "Add User",
+      "searchPlaceholder": "Search users...",
+      "export": "Export",
+      "noUsers": "No users found",
+      "stats": {
+        "total": "Total Users",
+        "active": "Active",
+        "pending": "Pending",
+        "suspended": "Suspended"
+      },
+      "filters": {
+        "allRoles": "All Roles",
+        "allStatus": "All Status"
+      },
+      "table": {
+        "user": "User",
+        "role": "Role",
+        "status": "Status",
+        "lastLogin": "Last Login",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "resetPassword": "Reset Password",
+        "impersonate": "Impersonate",
+        "suspend": "Suspend",
+        "delete": "Delete"
+      }
+    },
+    "rolesPage": {
+      "title": "Roles & Permissions",
+      "subtitle": "Manage roles and access control",
+      "createRole": "Create Role",
+      "users": "users",
+      "permissions": "Permissions",
+      "module": "Module",
+      "view": "View",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "categories": {
+        "users": "Users",
+        "courses": "Courses",
+        "content": "Content",
+        "assessments": "Assessments",
+        "certificates": "Certificates",
+        "finance": "Finance",
+        "reports": "Reports",
+        "settings": "Settings",
+        "security": "Security"
+      }
+    },
+    "coursesPage": {
+      "title": "All Courses",
+      "subtitle": "Manage all platform courses",
+      "createCourse": "Create Course",
+      "searchPlaceholder": "Search courses...",
+      "noCourses": "No courses found",
+      "stats": {
+        "total": "Total Courses",
+        "active": "Active",
+        "enrollments": "Enrollments",
+        "revenue": "Revenue (SAR)"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "active": "Active",
+        "draft": "Draft",
+        "completed": "Completed",
+        "archived": "Archived"
+      },
+      "table": {
+        "course": "Course",
+        "instructor": "Instructor",
+        "status": "Status",
+        "enrolled": "Enrolled",
+        "rating": "Rating",
+        "revenue": "Revenue"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "archive": "Archive"
+      }
+    },
+    "financePage": {
+      "title": "Finance",
+      "subtitle": "Revenue, payments, and financial reports",
+      "export": "Export",
+      "dateRange": {
+        "today": "Today",
+        "week": "This Week",
+        "mtd": "This Month",
+        "ytd": "This Year"
+      },
+      "stats": {
+        "gross": "Gross Revenue",
+        "net": "Net Revenue",
+        "refunds": "Refunds",
+        "aov": "Avg Order Value"
+      },
+      "revenueChart": "Revenue Trend",
+      "gatewayBreakdown": "Payment Gateway Breakdown",
+      "recentTransactions": "Recent Transactions",
+      "filters": {
+        "all": "All",
+        "payments": "Payments",
+        "refunds": "Refunds"
+      },
+      "table": {
+        "date": "Date",
+        "description": "Description",
+        "user": "User",
+        "gateway": "Gateway",
+        "status": "Status",
+        "amount": "Amount"
+      },
+      "status": {
+        "completed": "Completed",
+        "pending": "Pending",
+        "failed": "Failed"
+      }
+    },
+    "securityPage": {
+      "title": "Security",
+      "subtitle": "Monitor and manage platform security",
+      "stats": {
+        "failedLogins": "Failed Logins (24h)",
+        "ipsBlocked": "IPs Blocked",
+        "activeSessions": "Active Sessions",
+        "twoFa": "2FA Adoption",
+        "score": "Security Score"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "logins": "Failed Logins",
+        "blocked": "Blocked IPs",
+        "sessions": "Active Sessions"
+      },
+      "alerts": "Security Alerts",
+      "alertMessages": {
+        "bruteForce": "High number of failed login attempts detected from IP 103.45.67.89",
+        "lowTwoFa": "2FA adoption is below recommended threshold (80%)"
+      },
+      "owaspCompliance": "OWASP Compliance",
+      "owasp": {
+        "injection": "SQL Injection",
+        "authentication": "Authentication",
+        "xss": "XSS Protection",
+        "csrf": "CSRF Protection",
+        "encryption": "Encryption",
+        "logging": "Security Logging"
+      },
+      "failedLoginAttempts": "Failed Login Attempts",
+      "blockedIps": "Blocked IP Addresses",
+      "addToBlocklist": "Add to Blocklist",
+      "activeSessions": "Active Sessions",
+      "terminateAll": "Terminate All",
+      "table": {
+        "user": "User",
+        "ip": "IP Address",
+        "attempts": "Attempts",
+        "time": "Time",
+        "reason": "Reason",
+        "type": "Type",
+        "blockedAt": "Blocked At",
+        "device": "Device",
+        "lastActive": "Last Active",
+        "actions": "Actions"
+      },
+      "actions": {
+        "blockIp": "Block IP",
+        "unblock": "Unblock",
+        "terminate": "Terminate"
+      }
+    },
+    "compliancePage": {
+      "title": "NELC Compliance",
+      "subtitle": "Track and manage NELC compliance requirements",
+      "exportReport": "Export Report",
+      "categorySummary": "Category Summary",
+      "complianceMatrix": "Full Compliance Matrix",
+      "table": {
+        "clause": "Clause",
+        "status": "Status",
+        "evidence": "Evidence",
+        "actions": "Actions"
+      },
+      "uploaded": "Uploaded",
+      "missing": "Missing",
+      "uploadEvidence": "Upload"
+    },
+    "reportsPage": {
+      "title": "Reports",
+      "subtitle": "Generate and schedule platform reports",
+      "dateRange": "Date Range",
+      "presets": {
+        "today": "Today",
+        "week": "This Week",
+        "month": "This Month",
+        "year": "This Year"
+      },
+      "generateReport": "Generate Report",
+      "readyToGenerate": "Ready to generate report with selected date range",
+      "generate": "Generate",
+      "schedule": "Schedule",
+      "scheduledReports": "Scheduled Reports",
+      "table": {
+        "reportName": "Report Name",
+        "frequency": "Frequency",
+        "nextRun": "Next Run",
+        "recipients": "Recipients",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      }
+    },
+    "logsPage": {
+      "title": "Audit Logs",
+      "subtitle": "View platform activity and audit trail",
+      "exportLogs": "Export Logs",
+      "searchPlaceholder": "Search logs...",
+      "noLogs": "No logs found",
+      "showing": "Showing {count} logs",
+      "previous": "Previous",
+      "next": "Next",
+      "filters": {
+        "allActions": "All Actions",
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete",
+        "login": "Login",
+        "export": "Export",
+        "allResources": "All Resources",
+        "users": "Users",
+        "courses": "Courses",
+        "payments": "Payments",
+        "security": "Security",
+        "settings": "Settings"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "user": "User",
+        "action": "Action",
+        "resource": "Resource",
+        "details": "Details",
+        "ip": "IP Address"
+      }
+    },
+    "settingsPage": {
+      "title": "Settings",
+      "subtitle": "Configure platform settings",
+      "saveChanges": "Save Changes",
+      "general": {
+        "title": "General Settings",
+        "platformName": "Platform Name",
+        "contactEmail": "Contact Email",
+        "timezone": "Timezone",
+        "logo": "Platform Logo",
+        "uploadLogo": "Upload Logo"
+      },
+      "auth": {
+        "title": "Authentication Settings",
+        "require2FA": "Require 2FA for all users",
+        "require2FADesc": "Enforce two-factor authentication for enhanced security",
+        "sessionTimeout": "Session Timeout",
+        "passwordMinLength": "Minimum Password Length"
+      },
+      "notifications": {
+        "title": "Notification Settings",
+        "email": "Email Notifications",
+        "emailDesc": "Send notifications via email",
+        "sms": "SMS Notifications",
+        "smsDesc": "Send notifications via SMS"
+      },
+      "maintenance": {
+        "title": "Maintenance",
+        "mode": "Maintenance Mode",
+        "modeDesc": "Enable to put the platform in maintenance mode",
+        "message": "Maintenance Message"
+      },
+      "integrations": {
+        "title": "Integrations",
+        "connected": "Connected",
+        "notConnected": "Not Connected",
+        "connect": "Connect",
+        "disconnect": "Disconnect"
+      }
+    }
   }
 }

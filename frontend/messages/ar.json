@@ -2442,5 +2442,416 @@
         "disconnect": "قطع الاتصال"
       }
     }
+  },
+  "adminDashboard": {
+    "title": "لوحة تحكم المشرف",
+    "subtitle": "مرحباً بعودتك، {name}! إليك نظرة عامة على المنصة.",
+    "sidebar": {
+      "dashboard": "لوحة التحكم",
+      "users": "المستخدمون",
+      "roles": "الأدوار والصلاحيات",
+      "courses": "جميع الدورات",
+      "finance": "المالية",
+      "security": "الأمان",
+      "compliance": "الامتثال لـ NELC",
+      "reports": "التقارير",
+      "logs": "سجلات المراجعة",
+      "settings": "الإعدادات",
+      "superAdmin": "مشرف عام",
+      "uptime": "وقت التشغيل",
+      "viewProfile": "عرض الملف الشخصي",
+      "editProfile": "تعديل الملف الشخصي",
+      "logout": "تسجيل الخروج"
+    },
+    "kpi": {
+      "activeUsers": "المستخدمون النشطون",
+      "mau": "شهرياً",
+      "totalUsers": "إجمالي المستخدمين",
+      "thisWeek": "هذا الأسبوع",
+      "revenueMTD": "الإيرادات (الشهر)",
+      "sar": "ريال",
+      "nelcCompliance": "امتثال NELC",
+      "systemUptime": "وقت التشغيل",
+      "healthy": "سليم",
+      "warning": "تحذير",
+      "critical": "حرج",
+      "certificates": "الشهادات",
+      "thisMonth": "هذا الشهر"
+    },
+    "analytics": {
+      "title": "تحليلات المنصة",
+      "viewDetails": "عرض التفاصيل",
+      "enrollmentFunnel": "قمع التسجيل",
+      "userGrowth": "نمو المستخدمين",
+      "visitorToSignup": "زائر ← تسجيل",
+      "signupToEnroll": "تسجيل ← التحاق",
+      "enrollToPaid": "التحاق ← دفع",
+      "completionRate": "معدل الإكمال"
+    },
+    "securityHealth": {
+      "title": "الأمان والصحة",
+      "viewLogs": "عرض السجلات",
+      "security": "الأمان",
+      "system": "النظام",
+      "failedLogins": "محاولات فاشلة (24س)",
+      "ipsBlocked": "IPs محظورة",
+      "activeSessions": "الجلسات النشطة",
+      "twoFaAdoption": "اعتماد 2FA",
+      "apiLatency": "تأخير API",
+      "errorRate": "معدل الأخطاء",
+      "lastBackup": "آخر نسخة احتياطية",
+      "dbHealth": "صحة قاعدة البيانات",
+      "good": "جيد"
+    },
+    "userManagement": {
+      "title": "المستخدمون",
+      "addUser": "إضافة مستخدم",
+      "viewAllUsers": "عرض جميع المستخدمين",
+      "user": "المستخدم",
+      "role": "الدور",
+      "status": "الحالة",
+      "roles": {
+        "admin": "مشرف",
+        "instructor": "مدرب",
+        "student": "طالب",
+        "manager": "مدير"
+      },
+      "statuses": {
+        "active": "نشط",
+        "suspended": "موقوف",
+        "pending": "قيد الانتظار",
+        "inactive": "غير نشط"
+      }
+    },
+    "compliance": {
+      "title": "امتثال NELC",
+      "fullMatrix": "المصفوفة الكاملة",
+      "overallCompliance": "الامتثال الإجمالي",
+      "pass": "ناجح",
+      "review": "مراجعة",
+      "fail": "فاشل"
+    },
+    "finance": {
+      "title": "المالية",
+      "viewReports": "عرض التقارير",
+      "gross": "الإجمالي",
+      "net": "الصافي",
+      "sar": "ريال",
+      "byGateway": "حسب البوابة",
+      "refundRate": "معدل الاسترداد",
+      "chargebackRate": "رد المبالغ"
+    },
+    "alerts": {
+      "title": "التنبيهات"
+    },
+    "activity": {
+      "title": "النشاط الأخير",
+      "viewAll": "عرض كل النشاط"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "addUser": "إضافة مستخدم",
+      "newCourse": "دورة جديدة",
+      "runBackup": "تشغيل النسخ الاحتياطي",
+      "generateReport": "إنشاء تقرير",
+      "viewLogs": "عرض السجلات",
+      "settings": "الإعدادات"
+    },
+    "usersPage": {
+      "title": "إدارة المستخدمين",
+      "subtitle": "إدارة جميع مستخدمي المنصة",
+      "addUser": "إضافة مستخدم",
+      "searchPlaceholder": "البحث في المستخدمين...",
+      "export": "تصدير",
+      "noUsers": "لم يتم العثور على مستخدمين",
+      "stats": {
+        "total": "إجمالي المستخدمين",
+        "active": "نشط",
+        "pending": "قيد الانتظار",
+        "suspended": "موقوف"
+      },
+      "filters": {
+        "allRoles": "جميع الأدوار",
+        "allStatus": "جميع الحالات"
+      },
+      "table": {
+        "user": "المستخدم",
+        "role": "الدور",
+        "status": "الحالة",
+        "lastLogin": "آخر دخول",
+        "created": "تاريخ الإنشاء",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "resetPassword": "إعادة تعيين كلمة المرور",
+        "impersonate": "انتحال الشخصية",
+        "suspend": "إيقاف",
+        "delete": "حذف"
+      }
+    },
+    "rolesPage": {
+      "title": "الأدوار والصلاحيات",
+      "subtitle": "إدارة الأدوار والتحكم في الوصول",
+      "createRole": "إنشاء دور",
+      "users": "مستخدمين",
+      "permissions": "الصلاحيات",
+      "module": "الوحدة",
+      "view": "عرض",
+      "create": "إنشاء",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "categories": {
+        "users": "المستخدمون",
+        "courses": "الدورات",
+        "content": "المحتوى",
+        "assessments": "التقييمات",
+        "certificates": "الشهادات",
+        "finance": "المالية",
+        "reports": "التقارير",
+        "settings": "الإعدادات",
+        "security": "الأمان"
+      }
+    },
+    "coursesPage": {
+      "title": "جميع الدورات",
+      "subtitle": "إدارة جميع دورات المنصة",
+      "createCourse": "إنشاء دورة",
+      "searchPlaceholder": "البحث في الدورات...",
+      "noCourses": "لم يتم العثور على دورات",
+      "stats": {
+        "total": "إجمالي الدورات",
+        "active": "نشطة",
+        "enrollments": "التسجيلات",
+        "revenue": "الإيرادات (ريال)"
+      },
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "active": "نشط",
+        "draft": "مسودة",
+        "completed": "مكتمل",
+        "archived": "مؤرشف"
+      },
+      "table": {
+        "course": "الدورة",
+        "instructor": "المدرب",
+        "status": "الحالة",
+        "enrolled": "المسجلون",
+        "rating": "التقييم",
+        "revenue": "الإيرادات"
+      },
+      "actions": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "archive": "أرشفة"
+      }
+    },
+    "financePage": {
+      "title": "المالية",
+      "subtitle": "الإيرادات والمدفوعات والتقارير المالية",
+      "export": "تصدير",
+      "dateRange": {
+        "today": "اليوم",
+        "week": "هذا الأسبوع",
+        "mtd": "هذا الشهر",
+        "ytd": "هذا العام"
+      },
+      "stats": {
+        "gross": "الإيرادات الإجمالية",
+        "net": "الإيرادات الصافية",
+        "refunds": "المستردات",
+        "aov": "متوسط قيمة الطلب"
+      },
+      "revenueChart": "اتجاه الإيرادات",
+      "gatewayBreakdown": "توزيع بوابات الدفع",
+      "recentTransactions": "المعاملات الأخيرة",
+      "filters": {
+        "all": "الكل",
+        "payments": "المدفوعات",
+        "refunds": "المستردات"
+      },
+      "table": {
+        "date": "التاريخ",
+        "description": "الوصف",
+        "user": "المستخدم",
+        "gateway": "البوابة",
+        "status": "الحالة",
+        "amount": "المبلغ"
+      },
+      "status": {
+        "completed": "مكتمل",
+        "pending": "قيد الانتظار",
+        "failed": "فاشل"
+      }
+    },
+    "securityPage": {
+      "title": "الأمان",
+      "subtitle": "مراقبة وإدارة أمان المنصة",
+      "stats": {
+        "failedLogins": "محاولات فاشلة (24س)",
+        "ipsBlocked": "IPs محظورة",
+        "activeSessions": "الجلسات النشطة",
+        "twoFa": "اعتماد 2FA",
+        "score": "نقاط الأمان"
+      },
+      "tabs": {
+        "overview": "نظرة عامة",
+        "logins": "محاولات الدخول الفاشلة",
+        "blocked": "IPs المحظورة",
+        "sessions": "الجلسات النشطة"
+      },
+      "alerts": "تنبيهات الأمان",
+      "alertMessages": {
+        "bruteForce": "تم اكتشاف عدد كبير من محاولات الدخول الفاشلة من IP 103.45.67.89",
+        "lowTwoFa": "اعتماد 2FA أقل من العتبة الموصى بها (80%)"
+      },
+      "owaspCompliance": "امتثال OWASP",
+      "owasp": {
+        "injection": "SQL Injection",
+        "authentication": "المصادقة",
+        "xss": "حماية XSS",
+        "csrf": "حماية CSRF",
+        "encryption": "التشفير",
+        "logging": "تسجيل الأمان"
+      },
+      "failedLoginAttempts": "محاولات الدخول الفاشلة",
+      "blockedIps": "عناوين IP المحظورة",
+      "addToBlocklist": "إضافة للقائمة المحظورة",
+      "activeSessions": "الجلسات النشطة",
+      "terminateAll": "إنهاء الكل",
+      "table": {
+        "user": "المستخدم",
+        "ip": "عنوان IP",
+        "attempts": "المحاولات",
+        "time": "الوقت",
+        "reason": "السبب",
+        "type": "النوع",
+        "blockedAt": "تاريخ الحظر",
+        "device": "الجهاز",
+        "lastActive": "آخر نشاط",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "blockIp": "حظر IP",
+        "unblock": "إلغاء الحظر",
+        "terminate": "إنهاء"
+      }
+    },
+    "compliancePage": {
+      "title": "امتثال NELC",
+      "subtitle": "تتبع وإدارة متطلبات الامتثال لـ NELC",
+      "exportReport": "تصدير التقرير",
+      "categorySummary": "ملخص الفئات",
+      "complianceMatrix": "مصفوفة الامتثال الكاملة",
+      "table": {
+        "clause": "البند",
+        "status": "الحالة",
+        "evidence": "الدليل",
+        "actions": "الإجراءات"
+      },
+      "uploaded": "تم الرفع",
+      "missing": "مفقود",
+      "uploadEvidence": "رفع"
+    },
+    "reportsPage": {
+      "title": "التقارير",
+      "subtitle": "إنشاء وجدولة تقارير المنصة",
+      "dateRange": "نطاق التاريخ",
+      "presets": {
+        "today": "اليوم",
+        "week": "هذا الأسبوع",
+        "month": "هذا الشهر",
+        "year": "هذا العام"
+      },
+      "generateReport": "إنشاء تقرير",
+      "readyToGenerate": "جاهز لإنشاء التقرير بالنطاق الزمني المحدد",
+      "generate": "إنشاء",
+      "schedule": "جدولة",
+      "scheduledReports": "التقارير المجدولة",
+      "table": {
+        "reportName": "اسم التقرير",
+        "frequency": "التكرار",
+        "nextRun": "التشغيل التالي",
+        "recipients": "المستلمون",
+        "actions": "الإجراءات"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      }
+    },
+    "logsPage": {
+      "title": "سجلات المراجعة",
+      "subtitle": "عرض نشاط المنصة وسجل المراجعة",
+      "exportLogs": "تصدير السجلات",
+      "searchPlaceholder": "البحث في السجلات...",
+      "noLogs": "لم يتم العثور على سجلات",
+      "showing": "عرض {count} سجل",
+      "previous": "السابق",
+      "next": "التالي",
+      "filters": {
+        "allActions": "جميع الإجراءات",
+        "create": "إنشاء",
+        "update": "تحديث",
+        "delete": "حذف",
+        "login": "دخول",
+        "export": "تصدير",
+        "allResources": "جميع الموارد",
+        "users": "المستخدمون",
+        "courses": "الدورات",
+        "payments": "المدفوعات",
+        "security": "الأمان",
+        "settings": "الإعدادات"
+      },
+      "table": {
+        "timestamp": "الوقت",
+        "user": "المستخدم",
+        "action": "الإجراء",
+        "resource": "المورد",
+        "details": "التفاصيل",
+        "ip": "عنوان IP"
+      }
+    },
+    "settingsPage": {
+      "title": "الإعدادات",
+      "subtitle": "تكوين إعدادات المنصة",
+      "saveChanges": "حفظ التغييرات",
+      "general": {
+        "title": "الإعدادات العامة",
+        "platformName": "اسم المنصة",
+        "contactEmail": "البريد الإلكتروني للتواصل",
+        "timezone": "المنطقة الزمنية",
+        "logo": "شعار المنصة",
+        "uploadLogo": "رفع الشعار"
+      },
+      "auth": {
+        "title": "إعدادات المصادقة",
+        "require2FA": "طلب 2FA لجميع المستخدمين",
+        "require2FADesc": "فرض المصادقة الثنائية لتعزيز الأمان",
+        "sessionTimeout": "مهلة الجلسة",
+        "passwordMinLength": "الحد الأدنى لطول كلمة المرور"
+      },
+      "notifications": {
+        "title": "إعدادات الإشعارات",
+        "email": "إشعارات البريد الإلكتروني",
+        "emailDesc": "إرسال الإشعارات عبر البريد الإلكتروني",
+        "sms": "إشعارات الرسائل النصية",
+        "smsDesc": "إرسال الإشعارات عبر الرسائل النصية"
+      },
+      "maintenance": {
+        "title": "الصيانة",
+        "mode": "وضع الصيانة",
+        "modeDesc": "تفعيل لوضع المنصة في وضع الصيانة",
+        "message": "رسالة الصيانة"
+      },
+      "integrations": {
+        "title": "التكاملات",
+        "connected": "متصل",
+        "notConnected": "غير متصل",
+        "connect": "ربط",
+        "disconnect": "قطع الاتصال"
+      }
+    }
   }
 }

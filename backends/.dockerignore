@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+
+# Build
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+
+# Environment
+.env*
+!.env.example
+
+# Docker
+docker-compose*
+.dockerignore
+
+# Tests
+coverage/
+*.spec.ts
+
+# Docs
+*.md

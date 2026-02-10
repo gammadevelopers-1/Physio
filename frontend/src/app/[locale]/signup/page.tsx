@@ -3,9 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AuthNavbar from "@/components/AuthNavbar";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts";
+import { ApiError } from "@/lib/api";
+import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -19,18 +23,87 @@ const GoogleIcon = () => (
 export default function SignUpPage() {
   const t = useTranslations("signupPage");
   const locale = useLocale();
+  const router = useRouter();
   const isRTL = locale === "ar";
+  const { register, isLoading } = useAuth();
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle sign up logic here
-    console.log({ email, password, confirmPassword, acceptTerms });
+    setError(null);
+
+    // Validation
+    if (!email || !password || !confirmPassword) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    if (!acceptTerms) {
+      setError("Please accept the terms and conditions");
+      return;
+    }
+
+    try {
+      await register({
+        email,
+        password,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+      });
+      setSuccess(true);
+      // Redirect to signin after 2 seconds
+      setTimeout(() => {
+        router.push(`/${locale}/signin`);
+      }, 2000);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("An error occurred. Please try again.");
+      }
+    }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+        <AuthNavbar />
+        <main className="flex-1 bg-[#EEF3F7] flex items-center justify-center px-4 py-10">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              Registration Successful!
+            </h1>
+            <p className="text-gray-600 mb-4">
+              Your account has been created. Redirecting to sign in...
+            </p>
+            <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
@@ -65,8 +138,61 @@ export default function SignUpPage() {
                   </p>
                 </div>
 
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                  {/* Name Fields */}
+                  <div className="flex gap-3">
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <label
+                        htmlFor="firstName"
+                        className="font-medium text-[#0a0a0a]"
+                        style={{ fontSize: "14px", lineHeight: "20px" }}
+                      >
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                        style={{
+                          boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                          fontSize: "14px"
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5 flex-1">
+                      <label
+                        htmlFor="lastName"
+                        className="font-medium text-[#0a0a0a]"
+                        style={{ fontSize: "14px", lineHeight: "20px" }}
+                      >
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                        style={{
+                          boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                          fontSize: "14px"
+                        }}
+                      />
+                    </div>
+                  </div>
+
                   {/* Email Field */}
                   <div className="flex flex-col gap-1.5 w-full">
                     <label
@@ -74,19 +200,21 @@ export default function SignUpPage() {
                       className="font-medium text-[#0a0a0a]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
-                      {t("form.email")}
+                      {t("form.email")} *
                     </label>
                     <input
                       type="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      disabled={isLoading}
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                         fontSize: "14px"
                       }}
                       placeholder=""
+                      required
                     />
                   </div>
 
@@ -97,20 +225,38 @@ export default function SignUpPage() {
                       className="font-medium text-[#0a0a0a]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
-                      {t("form.password")}
+                      {t("form.password")} *
                     </label>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
-                      style={{
-                        boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
-                        fontSize: "14px"
-                      }}
-                      placeholder=""
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                        style={{
+                          boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                          fontSize: "14px"
+                        }}
+                        placeholder=""
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Must contain uppercase, lowercase, and number
+                    </p>
                   </div>
 
                   {/* Confirm Password Field */}
@@ -120,28 +266,44 @@ export default function SignUpPage() {
                       className="font-medium text-[#0a0a0a]"
                       style={{ fontSize: "14px", lineHeight: "20px" }}
                     >
-                      {t("form.confirmPassword")}
+                      {t("form.confirmPassword")} *
                     </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
-                      style={{
-                        boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
-                        fontSize: "14px"
-                      }}
-                      placeholder=""
-                    />
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                        style={{
+                          boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                          fontSize: "14px"
+                        }}
+                        placeholder=""
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Terms Checkbox */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-start gap-2">
                     <button
                       type="button"
                       onClick={() => setAcceptTerms(!acceptTerms)}
-                      className={`w-4 h-4 rounded border ${acceptTerms ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0`}
+                      disabled={isLoading}
+                      className={`w-4 h-4 mt-0.5 rounded border ${acceptTerms ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
                     >
                       {acceptTerms && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -168,20 +330,23 @@ export default function SignUpPage() {
                   {/* Register Button */}
                   <button
                     type="submit"
-                    className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity"
+                    disabled={isLoading}
+                    className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
                         ? "linear-gradient(to left, #a37f49, #6b4e24)"
                         : "linear-gradient(to right, #a37f49, #6b4e24)",
                     }}
                   >
+                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     {t("form.register")}
                   </button>
 
                   {/* Sign in with Google */}
                   <button
                     type="button"
-                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
+                    disabled={isLoading}
+                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors disabled:opacity-50"
                     style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                   >
                     <GoogleIcon />

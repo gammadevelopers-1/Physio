@@ -1,5 +1,3 @@
-//layout 
-//locale
 import type { Metadata } from "next";
 import { DM_Sans, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
@@ -27,5 +25,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return children;
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${notoSansArabic.variable} antialiased`}>
+        {children}
+      </body>
+    </html>
+  );
 }

@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# ===========================================
+# Strapi CMS Deployment Script
+# ===========================================
+# Deploys Strapi to Cloud Run
+
+set -e
+
+# Get script directory and load config
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "${SCRIPT_DIR}/../config.sh"
+
+# Parse arguments
+SKIP_PULL=false
+SKIP_BUILD=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --skip-pull) SKIP_PULL=true; shift ;;
+        --skip-build) SKIP_BUILD=true; shift ;;
+        *) shift ;;
+    esac
+done
+
+# Variables
+IMAGE_TAG="${DOCKER_REGISTRY}/${STRAPI_SERVICE_NAME}:${TIMESTAMP}"
+IMAGE_LATEST="${DOCKER_REGISTRY}/${STRAPI_SERVICE_NAME}:latest"
+STRAPI_DIR="${SCRIPT_DIR}/../../strapi"
+
+print_banner
+log_info "Deploying: Strapi CMS"
+echo ""
+
+# Pre-flight checks
+check_command gcloud
+check_command docker
+check_docker
+check_gcp_auth
+
+# Set project
+gcloud config set project ${GCP_PROJECT_ID} --quiet
+
+# Step 1: Pull latest code
+if [ "$SKIP_PULL" = false ]; then
+    log_step "Pulling latest code..."
+    cd "${SCRIPT_DIR}/../.."
+    git pull origin main 2>/dev/null || log_warning "Git pull skipped"
+fi
+
+# Step 2: Configure Docker for GCP
+log_step "Configuring Docker for GCP..."
+gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+
+# Step 3: Build Docker image
+if [ "$SKIP_BUILD" = false ]; then
+    log_step "Building Docker image..."
+    cd "${STRAPI_DIR}"
+
+    docker build \
+        --platform linux/amd64 \
+        -f ../infra/strapi/Dockerfile \
+        -t ${IMAGE_TAG} \
+        -t ${IMAGE_LATEST} \
+        .
+
+    log_success "Image built: ${IMAGE_TAG}"
+fi
+
+# Step 4: Push to Artifact Registry
+log_step "Pushing to Artifact Registry..."
+docker push ${IMAGE_TAG}
+docker push ${IMAGE_LATEST}
+log_success "Image pushed"
+
+# Step 5: Deploy to Cloud Run
+log_step "Deploying to Cloud Run..."
+
+# Check if Cloud SQL instance exists
+CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
+
+if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
+    log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
+    gcloud run deploy ${STRAPI_SERVICE_NAME} \
+        --image=${IMAGE_TAG} \
+        --region=${GCP_REGION} \
+        --platform=managed \
+        --allow-unauthenticated \
+        --port=${STRAPI_PORT} \
+        --memory=${STRAPI_MEMORY} \
+        --cpu=${STRAPI_CPU} \
+        --min-instances=${STRAPI_MIN_INSTANCES} \
+        --max-instances=${STRAPI_MAX_INSTANCES} \
+        --add-cloudsql-instances=${CONNECTION_NAME} \
+        --set-env-vars="NODE_ENV=production,DATABASE_CLIENT=postgres" \
+        --set-secrets="DATABASE_HOST=STRAPI_DATABASE_HOST:latest,DATABASE_PORT=STRAPI_DATABASE_PORT:latest,DATABASE_NAME=STRAPI_DATABASE_NAME:latest,DATABASE_USERNAME=STRAPI_DATABASE_USERNAME:latest,DATABASE_PASSWORD=STRAPI_DATABASE_PASSWORD:latest,APP_KEYS=STRAPI_APP_KEYS:latest,API_TOKEN_SALT=STRAPI_API_TOKEN_SALT:latest,ADMIN_JWT_SECRET=STRAPI_ADMIN_JWT_SECRET:latest,TRANSFER_TOKEN_SALT=STRAPI_TRANSFER_TOKEN_SALT:latest,JWT_SECRET=STRAPI_JWT_SECRET:latest" \
+        --quiet
+else
+    log_warning "No Cloud SQL instance found. Deploying without database."
+    gcloud run deploy ${STRAPI_SERVICE_NAME} \
+        --image=${IMAGE_TAG} \
+        --region=${GCP_REGION} \
+        --platform=managed \
+        --allow-unauthenticated \
+        --port=${STRAPI_PORT} \
+        --memory=${STRAPI_MEMORY} \
+        --cpu=${STRAPI_CPU} \
+        --min-instances=${STRAPI_MIN_INSTANCES} \
+        --max-instances=${STRAPI_MAX_INSTANCES} \
+        --set-env-vars="NODE_ENV=production" \
+        --quiet
+fi
+
+# Get service URL
+SERVICE_URL=$(gcloud run services describe ${STRAPI_SERVICE_NAME} \
+    --region=${GCP_REGION} \
+    --format='value(status.url)')
+
+echo ""
+log_success "==========================================="
+log_success "Strapi CMS deployed successfully!"
+log_success "==========================================="
+echo ""
+log_info "URL: ${SERVICE_URL}"
+log_info "Admin: ${SERVICE_URL}/admin"
+echo ""

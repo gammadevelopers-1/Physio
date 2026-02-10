@@ -16,6 +16,8 @@ import {
 import BottomNav from "./BottomNav";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { UserMenu } from "./UserMenu";
+import { useAuth } from "@/contexts";
 
 interface NavbarProps {
   siteSettings?: SiteSettings | null;
@@ -30,6 +32,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Get logo URL from Strapi or use fallback
   const logoUrl = siteSettings?.logo?.url
@@ -176,13 +179,21 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
           </Link>
 
-          {/* Get Started Button - Hidden on mobile/tablet */}
-          <Link
-            href={`/${locale}/signup`}
-            className="hidden lg:flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]"
-          >
-            {t("getStarted")}
-          </Link>
+          {/* User Menu or Get Started Button - Hidden on mobile/tablet */}
+          {!isLoading && (
+            isAuthenticated ? (
+              <div className="hidden lg:block">
+                <UserMenu />
+              </div>
+            ) : (
+              <Link
+                href={`/${locale}/signup`}
+                className="hidden lg:flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]"
+              >
+                {t("getStarted")}
+              </Link>
+            )
+          )}
 
           {/* Hamburger Menu - Visible only on mobile/tablet */}
           <button
@@ -300,14 +311,22 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
               </Link>
             </div>
 
-            {/* Get Started Button */}
-            <Link
-              href={`/${locale}/signup`}
-              className="mt-4 flex items-center justify-center h-11 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-full"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("getStarted")}
-            </Link>
+            {/* User Menu or Get Started Button */}
+            {!isLoading && (
+              isAuthenticated ? (
+                <div className="mt-4 pt-4 border-t border-[var(--outline-subtle)]">
+                  <UserMenu />
+                </div>
+              ) : (
+                <Link
+                  href={`/${locale}/signup`}
+                  className="mt-4 flex items-center justify-center h-11 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-full"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {t("getStarted")}
+                </Link>
+              )
+            )}
           </div>
         </div>
       )}

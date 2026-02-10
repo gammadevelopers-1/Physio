@@ -1,0 +1,34 @@
+# ===========================================
+# Frontend Development Dockerfile
+# ===========================================
+# Hot-reload enabled for development
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies first (cached layer)
+COPY package*.json ./
+RUN npm install
+
+# Copy config files
+COPY tsconfig.json ./
+COPY next.config.ts ./
+COPY postcss.config.mjs ./
+COPY middleware.ts ./
+COPY eslint.config.mjs ./
+
+# Copy i18n config
+COPY src/i18n ./src/i18n
+
+# Source code is mounted as volume for hot reload
+# Copy initially for first build
+COPY src ./src
+COPY public ./public
+COPY messages ./messages
+
+# Expose port
+EXPOSE 3000
+
+# Start in dev mode with hot reload
+CMD ["npm", "run", "dev"]

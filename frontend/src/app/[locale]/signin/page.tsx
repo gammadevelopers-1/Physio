@@ -6,6 +6,9 @@ import Link from "next/link";
 import AuthNavbar from "@/components/AuthNavbar";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts";
+import { ApiError } from "@/lib/api";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -20,15 +23,33 @@ export default function SignInPage() {
   const t = useTranslations("signinPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { login, isLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle sign in logic here
-    console.log({ email, password, rememberMe });
+    setError(null);
+
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await login(email, password);
+      // Redirect is handled by the auth context
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("An error occurred. Please try again.");
+      }
+    }
   };
 
   return (
@@ -64,6 +85,13 @@ export default function SignInPage() {
                   </p>
                 </div>
 
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                  </div>
+                )}
+
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                   {/* Email Field */}
@@ -80,7 +108,8 @@ export default function SignInPage() {
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
+                      disabled={isLoading}
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                         fontSize: "14px"
@@ -107,18 +136,32 @@ export default function SignInPage() {
                         {t("form.forgotPassword")}
                       </Link>
                     </div>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors"
-                      style={{
-                        boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
-                        fontSize: "14px"
-                      }}
-                      placeholder=""
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isLoading}
+                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                          fontSize: "14px"
+                        }}
+                        placeholder=""
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Remember Me Checkbox */}
@@ -126,7 +169,8 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => setRememberMe(!rememberMe)}
-                      className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0`}
+                      disabled={isLoading}
+                      className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
                     >
                       {rememberMe && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -145,20 +189,23 @@ export default function SignInPage() {
                   {/* Login Button */}
                   <button
                     type="submit"
-                    className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity"
+                    disabled={isLoading}
+                    className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
                         ? "linear-gradient(to left, #a37f49, #6b4e24)"
                         : "linear-gradient(to right, #a37f49, #6b4e24)",
                     }}
                   >
+                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                     {t("form.login")}
                   </button>
 
                   {/* Sign in with Google */}
                   <button
                     type="button"
-                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
+                    disabled={isLoading}
+                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                   >
                     <GoogleIcon />

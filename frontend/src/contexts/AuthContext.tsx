@@ -3,21 +3,13 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useState,
   useCallback,
   ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import {
-  authApi,
-  User,
-  setAccessToken,
-  getAccessToken,
-  removeAccessToken,
-  ApiError,
-} from '@/lib/api';
+import type { User } from '@/lib/api';
 
 // ===========================================
 // Types
@@ -66,141 +58,71 @@ function getDashboardPath(role: string): string {
 }
 
 // ===========================================
+// Mock user for demo mode (no backend required)
+// ===========================================
+const MOCK_USER: User = {
+  id: 'mock-user-1',
+  email: 'demo@physioguidance.org',
+  firstName: 'Demo',
+  lastName: 'User',
+  roles: ['ADMIN', 'STUDENT', 'INSTRUCTOR', 'MANAGER', 'FINANCE', 'SUPPORT'],
+  activeRole: 'ADMIN',
+};
+
+// ===========================================
 // Provider
 // ===========================================
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const locale = useLocale();
   const [state, setState] = useState<AuthState>({
-    user: null,
-    isLoading: true,
-    isAuthenticated: false,
+    user: MOCK_USER,
+    isLoading: false,
+    isAuthenticated: true,
   });
 
-  // Check for existing session on mount
-  useEffect(() => {
-    const initAuth = async () => {
-      const token = getAccessToken();
-      if (!token) {
-        setState({ user: null, isLoading: false, isAuthenticated: false });
-        return;
-      }
-
-      try {
-        const user = await authApi.me();
-        setState({ user, isLoading: false, isAuthenticated: true });
-      } catch (error) {
-        // Token invalid or expired, try refresh
-        try {
-          const { accessToken } = await authApi.refresh();
-          setAccessToken(accessToken);
-          const user = await authApi.me();
-          setState({ user, isLoading: false, isAuthenticated: true });
-        } catch {
-          // Refresh also failed, clear everything
-          removeAccessToken();
-          setState({ user: null, isLoading: false, isAuthenticated: false });
-        }
-      }
-    };
-
-    initAuth();
-  }, []);
-
-  // Login
+  // Login (mock - no backend call)
   const login = useCallback(
-    async (email: string, password: string) => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      try {
-        const { user, accessToken } = await authApi.login({ email, password });
-        setAccessToken(accessToken);
-        setState({ user, isLoading: false, isAuthenticated: true });
-
-        // Redirect to appropriate dashboard based on active role
-        const dashboardPath = getDashboardPath(user.activeRole);
-        router.push(`/${locale}${dashboardPath}`);
-      } catch (error) {
-        setState((prev) => ({ ...prev, isLoading: false }));
-        throw error;
-      }
+    async (email: string, _password: string) => {
+      setState({
+        user: { ...MOCK_USER, email },
+        isLoading: false,
+        isAuthenticated: true,
+      });
+      const dashboardPath = getDashboardPath(MOCK_USER.activeRole);
+      router.push(`/${locale}${dashboardPath}`);
     },
     [router, locale]
   );
 
-  // Register
+  // Register (mock - no backend call)
   const register = useCallback(
-    async (data: RegisterData) => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      try {
-        await authApi.register(data);
-        setState((prev) => ({ ...prev, isLoading: false }));
-        // After registration, redirect to signin
-        router.push(`/${locale}/signin`);
-      } catch (error) {
-        setState((prev) => ({ ...prev, isLoading: false }));
-        throw error;
-      }
+    async (_data: RegisterData) => {
+      router.push(`/${locale}/signin`);
     },
     [router, locale]
   );
 
-  // Logout
+  // Logout (mock - just redirect)
   const logout = useCallback(async () => {
-    try {
-      await authApi.logout();
-    } catch {
-      // Ignore logout errors
-    } finally {
-      removeAccessToken();
-      setState({ user: null, isLoading: false, isAuthenticated: false });
-      router.push(`/${locale}/signin`);
-    }
+    router.push(`/${locale}`);
   }, [router, locale]);
 
-  // Switch Role
+  // Switch Role (mock - just update local state)
   const switchRole = useCallback(
     async (role: string) => {
-      if (!state.user) return;
-
-      // Check if user has this role
-      if (!state.user.roles.includes(role)) {
-        throw new Error(`You don't have the ${role} role`);
-      }
-
-      setState((prev) => ({ ...prev, isLoading: true }));
-      try {
-        const { accessToken, activeRole } = await authApi.switchRole(role);
-        setAccessToken(accessToken);
-
-        // Update user with new active role
-        setState((prev) => ({
-          ...prev,
-          user: prev.user ? { ...prev.user, activeRole } : null,
-          isLoading: false,
-        }));
-
-        // Redirect to new dashboard
-        const dashboardPath = getDashboardPath(activeRole);
-        router.push(`/${locale}${dashboardPath}`);
-      } catch (error) {
-        setState((prev) => ({ ...prev, isLoading: false }));
-        throw error;
-      }
+      setState((prev) => ({
+        ...prev,
+        user: prev.user ? { ...prev.user, activeRole: role } : null,
+      }));
+      const dashboardPath = getDashboardPath(role);
+      router.push(`/${locale}${dashboardPath}`);
     },
-    [state.user, router, locale]
+    [router, locale]
   );
 
-  // Refresh user data
-  const refreshUser = useCallback(async () => {
-    try {
-      const user = await authApi.me();
-      setState((prev) => ({ ...prev, user }));
-    } catch {
-      // If refresh fails, logout
-      removeAccessToken();
-      setState({ user: null, isLoading: false, isAuthenticated: false });
-    }
-  }, []);
+  // Refresh user data (mock - no-op)
+  const refreshUser = useCallback(async () => {}, []);
 
   return (
     <AuthContext.Provider

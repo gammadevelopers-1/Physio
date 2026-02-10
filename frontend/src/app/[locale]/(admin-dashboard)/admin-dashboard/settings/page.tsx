@@ -1,0 +1,22 @@
+import { setRequestLocale } from "next-intl/server";
+import { AdminSettingsContent } from "@/components/admin-dashboard";
+
+export const metadata = {
+  title: "Settings | Admin Dashboard | PhysioGuidance",
+  description: "Platform configuration and settings management",
+};
+
+export default async function SettingsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  return (
+    <main className="min-h-screen bg-[#F9FAFB]">
+      <AdminSettingsContent />
+    </main>
+  );
+}

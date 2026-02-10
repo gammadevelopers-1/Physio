@@ -1,0 +1,22 @@
+import { setRequestLocale } from "next-intl/server";
+import { InstructorsContent } from "@/components/course-manager-dashboard";
+
+export const metadata = {
+  title: "Instructors | Course Manager Dashboard | PhysioGuidance",
+  description: "Manage instructors and their assignments",
+};
+
+export default async function CourseManagerInstructorsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  return (
+    <main className="min-h-screen bg-[#F9FAFB]">
+      <InstructorsContent />
+    </main>
+  );
+}

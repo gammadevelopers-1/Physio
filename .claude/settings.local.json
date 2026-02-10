@@ -40,7 +40,9 @@
       "Bash(STRAPI_API_TOKEN=\"8f41457b95b507a18e639cb788fc73a6655affac446cf5b6d3cf99d37b32a5db5c43346a196278e43c26661c939fdd752276beefcae02c07caf77405602f6ef6650a56b53b636c49552d68700ec8c75459d65fd2a6a471d09dd88f1e8e4914501c2f426fa2e706761fc1f8a7fed043c9ea5a750ad6a0972df4bf9764c86d78e9\" node:*)",
       "Bash(node:*)",
       "Bash(cd:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(wc:*)",
+      "Bash(npx next lint:*)"
     ]
   }
 }

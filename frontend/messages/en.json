@@ -1477,9 +1477,7 @@
       "showing": "Showing",
       "of": "of",
       "students": "students",
-      "statusGood": "Good",
-      "statusAtrisk": "At Risk",
-      "statusInactive": "Inactive"
+      "statusAtrisk": "At Risk"
     },
     "studentDetail": {
       "backToStudents": "Back to Students",
@@ -3300,6 +3298,561 @@
       "khalidHassan": "Khalid Hassan",
       "laylaNoor": "Layla Noor",
       "omarFahad": "Omar Fahad"
+    }
+  },
+  "supportDashboard": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "allTickets": "All Tickets",
+      "myTickets": "My Tickets",
+      "team": "Team",
+      "knowledgeBase": "Knowledge Base",
+      "reports": "Reports",
+      "settings": "Settings",
+      "supportLead": "Support Lead",
+      "resolved": "Resolved",
+      "csat": "CSAT",
+      "avgFRT": "Avg FRT",
+      "onlineAvailable": "Online - Available",
+      "editProfile": "Edit Profile",
+      "viewProfile": "View Profile",
+      "logout": "Logout"
+    },
+    "navbar": {
+      "toggleMenu": "Toggle menu",
+      "closeMenu": "Close menu"
+    },
+    "title": "Support Dashboard",
+    "subtitle": "Welcome back, {name}! Here's your support overview.",
+    "kpi": {
+      "openTickets": "Open Tickets",
+      "avgResponseTime": "Avg Response Time",
+      "avgResolution": "Avg Resolution",
+      "csatScore": "CSAT Score",
+      "slaCompliance": "SLA Compliance",
+      "highMedLow": "{high} High, {med} Med, {low} Low",
+      "vsLastWeek": "vs last week",
+      "target": "Target: {value}",
+      "breachesToday": "{count} breaches today",
+      "escalatedTickets": "Escalated Tickets"
+    },
+    "ticketsBoard": {
+      "title": "Recent Tickets",
+      "viewAll": "View All",
+      "columns": {
+        "ticket": "Ticket",
+        "subject": "Subject",
+        "customer": "Customer",
+        "category": "Category",
+        "priority": "Priority",
+        "status": "Status",
+        "assignedTo": "Assigned To",
+        "date": "Date",
+        "id": "ID",
+        "actions": "Actions"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "allPriority": "All Priority",
+        "allCategories": "All Categories",
+        "searchPlaceholder": "Search tickets...",
+        "allStatuses": "All Statuses",
+        "allPriorities": "All Priorities"
+      },
+      "subjects": {
+        "cannotAccessCourse": "Cannot access course",
+        "certificateNotReceived": "Certificate not received",
+        "paymentFailedTwice": "Payment failed twice",
+        "videoNotPlaying": "Video not playing",
+        "refundRequest": "Refund request",
+        "loginIssue": "Login issue after update",
+        "loginIssueAfterUpdate": "Login issue after update"
+      },
+      "categories": {
+        "billing": "Billing",
+        "login": "Login",
+        "certificate": "Certificate",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "priorities": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "statuses": {
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      }
+    },
+    "sla": {
+      "title": "SLA & Team",
+      "viewDetails": "View Details",
+      "frt": "First Response Time",
+      "ttr": "Resolution Time",
+      "breaches": "SLA Breaches",
+      "backlogAge": "Backlog Age",
+      "target": "Target: {value}",
+      "today": "Today",
+      "oldestTicket": "Oldest ticket",
+      "openTickets": "{count} open tickets",
+      "avg": "Avg",
+      "csatPercent": "{value}%",
+      "firstResponseTime": "First Response Time",
+      "resolutionTime": "Resolution Time",
+      "slaBreaches": "SLA Breaches",
+      "targetLabel": "Target: {value}",
+      "agentPerformance": "Agent Performance",
+      "agents": {
+        "hanaAlSaud": "Hana Al-Saud",
+        "mohammedAli": "Mohammed Ali",
+        "laylaAhmed": "Layla Ahmed"
+      },
+      "agentStatus": {
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "open": "Open",
+      "csat": "CSAT"
+    },
+    "rightSidebar": {
+      "csatScore": "CSAT Score",
+      "customerSatisfaction": "Customer Satisfaction",
+      "responses": "Responses",
+      "nps": "NPS",
+      "avgRating": "Avg Rating",
+      "recentActivity": "Recent Activity",
+      "viewAllActivity": "View All Activity",
+      "alerts": "Alerts",
+      "quickActions": "Quick Actions",
+      "newTicket": "New Ticket",
+      "knowledgeBase": "Knowledge Base",
+      "exportReport": "Export Report",
+      "teamChat": "Team Chat"
+    },
+    "activity": {
+      "ticketCreated": "#1234 created by Ahmed K.",
+      "repliedTo": "{name} replied to #{id}",
+      "ticketResolved": "#1231 resolved",
+      "ratingReceived": "5-star rating received",
+      "title": "Recent Activity",
+      "hanaReplied": "Hana replied to #1232",
+      "fiveStarRating": "5-star rating received",
+      "time": {
+        "2min": "2 min ago",
+        "15min": "15 min ago",
+        "32min": "32 min ago",
+        "1hour": "1 hour ago"
+      },
+      "viewAll": "View All Activity"
+    },
+    "alerts": {
+      "slaBreaches": "2 SLA Breaches",
+      "slaBreachTickets": "Tickets #{ids}",
+      "unassignedTickets": "3 Unassigned Tickets",
+      "assignToAgents": "Assign to agents",
+      "highPriorityWaiting": "2 High Priority Waiting",
+      "waitingOver1Hour": "Waiting > 1 hour",
+      "title": "Alerts",
+      "slaBreachesDesc": "Tickets #1234, #1232 approaching breach",
+      "unassignedTicketsDesc": "Assign to available agents",
+      "highPriorityWaitingDesc": "Waiting over 1 hour"
+    },
+    "allTicketsPage": {
+      "title": "All Tickets",
+      "subtitle": "Manage and track all support tickets",
+      "createTicket": "New Ticket",
+      "stats": {
+        "totalTickets": "Total Tickets",
+        "open": "Open",
+        "resolvedThisWeek": "Resolved This Week",
+        "avgResolution": "Avg Resolution"
+      },
+      "tabs": {
+        "all": "All",
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "bulkActions": "Bulk Actions",
+      "assign": "Assign",
+      "close": "Close",
+      "merge": "Merge",
+      "showing": "Showing {from} to {to} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "unassigned": "--",
+      "actions": {
+        "view": "View",
+        "assign": "Assign",
+        "close": "Close"
+      },
+      "newTicket": "New Ticket",
+      "searchPlaceholder": "Search tickets...",
+      "filters": {
+        "allCategories": "All Categories",
+        "allPriorities": "All Priorities",
+        "categories": {
+          "billing": "Billing",
+          "login": "Login",
+          "certificate": "Certificate",
+          "content": "Content",
+          "technical": "Technical"
+        },
+        "priorities": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        }
+      },
+      "columns": {
+        "ticketId": "Ticket #",
+        "subject": "Subject",
+        "customer": "Customer",
+        "category": "Category",
+        "priority": "Priority",
+        "status": "Status",
+        "assignedTo": "Assigned To",
+        "date": "Date"
+      },
+      "statuses": {
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "pagination": {
+        "showing": "Showing {from} to {to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "myTicketsPage": {
+      "title": "My Tickets",
+      "subtitle": "Your assigned tickets and personal queue",
+      "stats": {
+        "assigned": "Assigned",
+        "inProgress": "In Progress",
+        "dueToday": "Due Today",
+        "overdue": "Overdue"
+      },
+      "slaRemaining": "remaining",
+      "slaWarning": "SLA Warning",
+      "quickReply": "Quick Reply",
+      "replyPlaceholder": "Type your reply...",
+      "macros": {
+        "greeting": "Greeting",
+        "followUp": "Follow Up",
+        "closing": "Closing",
+        "acknowledgement": "Acknowledgement",
+        "needMoreInfo": "Need More Info",
+        "resolved": "Resolved"
+      },
+      "sendReply": "Send Reply",
+      "tabs": {
+        "all": "All",
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting"
+      },
+      "searchPlaceholder": "Search my tickets...",
+      "noTickets": "No tickets found matching your filters.",
+      "quickReplyPlaceholder": "Type your reply...",
+      "send": "Send"
+    },
+    "teamPage": {
+      "title": "Team",
+      "subtitle": "Team management and performance monitoring",
+      "addAgent": "Add Agent",
+      "stats": {
+        "totalAgents": "Total Agents",
+        "online": "Online",
+        "avgResponseTime": "Avg Response",
+        "teamCSAT": "Team CSAT",
+        "avgResponse": "Avg Response"
+      },
+      "tabs": {
+        "all": "All",
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "roles": {
+        "seniorAgent": "Senior Agent",
+        "agent": "Agent",
+        "juniorAgent": "Junior Agent"
+      },
+      "agents": {
+        "saraKhan": "Sara Khan",
+        "ahmedNasser": "Ahmed Nasser",
+        "fatimaOmar": "Fatima Omar"
+      },
+      "openTickets": "Open Tickets",
+      "avgResponse": "Avg Response",
+      "csatLabel": "CSAT",
+      "workload": "Workload",
+      "statuses": {
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "performance": "Performance Overview",
+      "bestResponseTime": "Best Response Time",
+      "highestCSAT": "Highest CSAT",
+      "mostResolved": "Most Resolved",
+      "schedule": "Schedule",
+      "status": {
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "agentCard": {
+        "openTickets": "Open Tickets",
+        "avgResponse": "Avg Response",
+        "csat": "CSAT",
+        "workload": "Workload"
+      },
+      "performanceCards": {
+        "bestResponseTime": "Best Response Time",
+        "highestCSAT": "Highest CSAT",
+        "mostResolved": "Most Resolved"
+      },
+      "searchPlaceholder": "Search agents...",
+      "actions": {
+        "message": "Message",
+        "stats": "Statistics",
+        "more": "More"
+      }
+    },
+    "kbPage": {
+      "title": "Knowledge Base",
+      "subtitle": "Internal and public knowledge base management",
+      "createArticle": "New Article",
+      "stats": {
+        "totalArticles": "Total Articles",
+        "published": "Published",
+        "drafts": "Drafts",
+        "totalViews": "Total Views"
+      },
+      "tabs": {
+        "all": "All",
+        "billing": "Billing",
+        "login": "Login",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "visibility": {
+        "public": "Public",
+        "internal": "Internal"
+      },
+      "statusLabels": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "views": "views",
+      "helpful": "helpful",
+      "articles": {
+        "howToResetPassword": "How to Reset Your Password",
+        "paymentMethods": "Payment Methods & Billing FAQ",
+        "certificateDownload": "How to Download Your Certificate",
+        "refundPolicy": "Refund Policy & Process",
+        "troubleshootVideo": "Troubleshooting Video Playback",
+        "escalationProcess": "Internal Escalation Process"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "searchPlaceholder": "Search articles...",
+      "newArticle": "New Article",
+      "categories": {
+        "billing": "Billing",
+        "login": "Login",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      }
+    },
+    "reportsPage": {
+      "title": "Reports",
+      "subtitle": "Support analytics and performance reports",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "reportTypes": {
+        "ticketVolume": "Ticket Volume",
+        "ticketVolumeDesc": "Daily/weekly ticket trends",
+        "slaCompliance": "SLA Compliance",
+        "slaComplianceDesc": "SLA target vs actual performance",
+        "agentPerformance": "Agent Performance",
+        "agentPerformanceDesc": "Individual agent metrics",
+        "csatNps": "CSAT & NPS",
+        "csatNpsDesc": "Customer satisfaction trends"
+      },
+      "filters": {
+        "period": "Period",
+        "thisWeek": "This Week",
+        "lastWeek": "Last Week",
+        "thisMonth": "This Month",
+        "lastMonth": "Last Month",
+        "custom": "Custom",
+        "groupBy": "Group By",
+        "byCategory": "By Category",
+        "byAgent": "By Agent",
+        "byPriority": "By Priority",
+        "byChannel": "By Channel",
+        "title": "Filters"
+      },
+      "generateReport": "Generate Report",
+      "columns": {
+        "category": "Category",
+        "tickets": "Tickets",
+        "avgResponse": "Avg Response",
+        "avgResolution": "Avg Resolution",
+        "satisfaction": "Satisfaction"
+      }
+    },
+    "settingsPage": {
+      "title": "Settings",
+      "subtitle": "Configure support workflows and automation",
+      "tabs": {
+        "sla": "SLA Targets",
+        "assignment": "Auto-Assignment",
+        "macros": "Canned Responses",
+        "notifications": "Notifications",
+        "categories": "Categories"
+      },
+      "sla": {
+        "title": "SLA Target Configuration",
+        "priority": "Priority",
+        "firstResponse": "First Response",
+        "resolution": "Resolution",
+        "hours": "hours",
+        "save": "Save Changes",
+        "firstResponseTarget": "First Response Target",
+        "resolutionTarget": "Resolution Target",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "assignment": {
+        "title": "Auto-Assignment Rules",
+        "roundRobin": "Round Robin",
+        "roundRobinDesc": "Distribute tickets evenly across online agents",
+        "leastBusy": "Least Busy",
+        "leastBusyDesc": "Assign to agent with fewest open tickets",
+        "skillBased": "Skill-Based",
+        "skillBasedDesc": "Match ticket category to agent expertise",
+        "rules": {
+          "roundRobin": "Round Robin",
+          "roundRobinDesc": "Distribute tickets evenly across online agents",
+          "leastBusy": "Least Busy",
+          "leastBusyDesc": "Assign to agent with fewest open tickets",
+          "skillBased": "Skill-Based",
+          "skillBasedDesc": "Match ticket category to agent expertise"
+        }
+      },
+      "macros": {
+        "title": "Canned Responses / Macros",
+        "addMacro": "Add Macro",
+        "name": "Name",
+        "content": "Content",
+        "category": "Category",
+        "items": {
+          "greeting": "Welcome Greeting",
+          "refundProcess": "Refund Process",
+          "passwordReset": "Password Reset Steps",
+          "escalation": "Escalation Notice"
+        },
+        "contents": {
+          "greeting": "Hello! Thank you for contacting PhysioGuidance support. How can I help you today?",
+          "refundProcess": "I understand you'd like a refund. Let me guide you through our refund process...",
+          "passwordReset": "To reset your password, please follow these steps: 1. Go to login page 2. Click 'Forgot Password'...",
+          "escalation": "I'm escalating this to our senior team for further investigation. You'll hear back within 24 hours."
+        }
+      },
+      "notifications": {
+        "title": "Notification Settings",
+        "email": "Email Notifications",
+        "emailDesc": "Receive ticket updates via email",
+        "sms": "SMS Notifications",
+        "smsDesc": "Get SMS alerts for high priority tickets",
+        "whatsapp": "WhatsApp Notifications",
+        "whatsappDesc": "WhatsApp alerts for SLA breaches"
+      },
+      "categories": {
+        "title": "Categories & Tags",
+        "addCategory": "Add Category",
+        "name": "Name",
+        "description": "Description",
+        "ticketCount": "Tickets",
+        "descriptions": {
+          "billing": "Payment and refund issues",
+          "login": "Account access problems",
+          "certificate": "Certificate generation and delivery",
+          "content": "Course content issues",
+          "technical": "Technical and platform issues"
+        },
+        "actions": "Actions",
+        "tickets": "Tickets"
+      },
+      "save": "Save Changes"
+    },
+    "names": {
+      "hanaAlSaud": "Hana Al-Saud",
+      "mohammedAli": "Mohammed Ali",
+      "laylaAhmed": "Layla Ahmed",
+      "ahmedK": "Ahmed K.",
+      "saraM": "Sara M.",
+      "omarA": "Omar A.",
+      "fatimaN": "Fatima N.",
+      "khalidH": "Khalid H.",
+      "nouraS": "Noura S."
+    },
+    "time": {
+      "minAgo": "{count} min ago",
+      "hourAgo": "{count} hour ago",
+      "hoursAgo": "{count} hours ago"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "mockDates": {
+      "feb10_2026": "Feb 10, 2026",
+      "feb9_2026": "Feb 9, 2026",
+      "feb8_2026": "Feb 8, 2026",
+      "feb7_2026": "Feb 7, 2026",
+      "feb6_2026": "Feb 6, 2026",
+      "feb5_2026": "Feb 5, 2026"
+    },
+    "csatSection": {
+      "title": "CSAT Score",
+      "responses": "Responses",
+      "nps": "NPS",
+      "avgRating": "Avg Rating"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "newTicket": "New Ticket",
+      "knowledgeBase": "Knowledge Base",
+      "exportReport": "Export Report",
+      "teamChat": "Team Chat"
     }
   }
 }

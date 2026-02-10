@@ -1477,9 +1477,7 @@
       "showing": "Showing",
       "of": "of",
       "students": "students",
-      "statusGood": "Good",
-      "statusAtrisk": "At Risk",
-      "statusInactive": "Inactive"
+      "statusAtrisk": "At Risk"
     },
     "studentDetail": {
       "backToStudents": "Back to Students",
@@ -2902,6 +2900,959 @@
         "tapPayments": "Tap Payments",
         "unifonicSms": "Unifonic SMS"
       }
+    }
+  },
+  "financeDashboard": {
+    "title": "Finance Dashboard",
+    "subtitle": "Welcome back, {name}! Here's your financial overview.",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "payments": "Payments",
+      "invoices": "Invoices",
+      "refunds": "Refunds",
+      "discounts": "Discounts",
+      "reports": "Reports",
+      "settings": "Settings",
+      "financeManager": "Finance Manager",
+      "revenue": "Revenue",
+      "invoicesCount": "Invoices",
+      "refundRate": "Refunds",
+      "viewProfile": "View Profile",
+      "editProfile": "Edit Profile",
+      "logout": "Logout"
+    },
+    "kpi": {
+      "revenueMTD": "Revenue (MTD)",
+      "netRevenue": "Net Revenue",
+      "avgOrderValue": "Avg Order Value",
+      "pendingInvoices": "Pending Invoices",
+      "refundRate": "Refund Rate",
+      "totalTransactions": "Total Transactions",
+      "sar": "SAR",
+      "afterRefunds": "After refunds",
+      "totalPending": "SAR {amount} pending",
+      "thisMonth": "This month"
+    },
+    "revenueSummary": {
+      "title": "Revenue Summary",
+      "viewDetails": "View Details",
+      "chartPlaceholder": "Revenue Trend Chart",
+      "byGateway": "BY GATEWAY",
+      "topCourses": "TOP COURSES",
+      "tapMoyasar": "Tap/Moyasar",
+      "bnplTamara": "BNPL (Tamara/Tabby)",
+      "timeFilters": {
+        "week": "7D",
+        "month": "30D",
+        "quarter": "90D",
+        "year": "1Y"
+      }
+    },
+    "paymentsTable": {
+      "title": "Recent Payments & Invoices",
+      "export": "Export",
+      "searchPlaceholder": "Search invoices...",
+      "filters": {
+        "allStatus": "All Status",
+        "paid": "Paid",
+        "pending": "Pending",
+        "failed": "Failed",
+        "allGateways": "All Gateways"
+      },
+      "columns": {
+        "invoice": "Invoice #",
+        "date": "Date",
+        "customer": "Customer",
+        "course": "Course",
+        "amount": "Amount",
+        "gateway": "Gateway",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "statuses": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "actions": {
+        "view": "View",
+        "download": "Download",
+        "resend": "Resend",
+        "refund": "Refund"
+      },
+      "pagination": {
+        "showing": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "refundsQueue": {
+      "title": "Refunds Queue",
+      "viewAll": "View All",
+      "approve": "Approve",
+      "reject": "Reject",
+      "deduction": "Deduction: {amount}",
+      "reasons": {
+        "personal": "Personal reasons",
+        "courseIssue": "Course issue",
+        "technical": "Technical issue",
+        "duplicate": "Duplicate payment",
+        "dissatisfied": "Dissatisfied with content"
+      }
+    },
+    "discounts": {
+      "title": "Active Coupons",
+      "createCoupon": "Create Coupon",
+      "usage": "{used}/{limit} used",
+      "expired": "Expired",
+      "active": "Active",
+      "disabled": "Disabled",
+      "off": "{amount}% off",
+      "fixedOff": "SAR {amount} off",
+      "minOrder": "Min: SAR {amount}"
+    },
+    "transactionFeed": {
+      "title": "Recent Transactions",
+      "viewAll": "View All Transactions",
+      "income": "paid",
+      "paid": "paid",
+      "refund": "refund",
+      "failed": "failed"
+    },
+    "financialAlerts": {
+      "title": "Financial Alerts",
+      "failedPayments": "{count} Failed Payments",
+      "failedPaymentsDesc": "Retry or contact customers",
+      "pendingInvoices": "{count} Pending Invoices",
+      "pendingInvoicesDesc": "Total: SAR {amount}",
+      "chargeback": "{count} Chargeback",
+      "chargebackDesc": "Respond within 7 days"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "createInvoice": "Create Invoice",
+      "exportReport": "Export Report",
+      "addCoupon": "Add Coupon",
+      "processRefund": "Process Refund"
+    },
+    "paymentsPage": {
+      "title": "Payments Management",
+      "subtitle": "Manage all transactions and payment processing",
+      "retryPayment": "Retry Payment",
+      "exportTransactions": "Export Transactions",
+      "stats": {
+        "totalPayments": "Total Payments",
+        "successRate": "Success Rate",
+        "failedPayments": "Failed",
+        "totalVolume": "Total Volume"
+      }
+    },
+    "invoicesPage": {
+      "title": "Invoice Management",
+      "subtitle": "Create, manage, and track all invoices",
+      "createInvoice": "Create Invoice",
+      "downloadPdf": "Download PDF",
+      "resendEmail": "Resend Email",
+      "statuses": {
+        "issued": "Issued",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "draft": "Draft"
+      },
+      "stats": {
+        "totalInvoices": "Total Invoices",
+        "paidInvoices": "Paid",
+        "overdueInvoices": "Overdue",
+        "totalAmount": "Total Amount"
+      },
+      "agingReport": "Aging Report",
+      "agingCategories": {
+        "current": "Current (0-30 days)",
+        "days30": "31-60 days",
+        "days60": "61-90 days",
+        "overdue90": "90+ days"
+      }
+    },
+    "refundsPage": {
+      "title": "Refund Management",
+      "subtitle": "Process, track, and analyze refund requests",
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "stats": {
+        "totalRefunds": "Total Refunds",
+        "pendingRefunds": "Pending",
+        "approvedRefunds": "Approved",
+        "refundRate": "Refund Rate"
+      },
+      "deductionRules": "Deduction Rules",
+      "bnplFees": "BNPL processing fees: {percent}%",
+      "adminFee": "Admin fee: SAR {amount}",
+      "addNote": "Add Note",
+      "notePlaceholder": "Enter rejection reason or notes..."
+    },
+    "discountsPage": {
+      "title": "Discount & Coupon Management",
+      "subtitle": "Create and manage coupons, track usage analytics",
+      "createCoupon": "Create Coupon",
+      "tabs": {
+        "active": "Active",
+        "expired": "Expired",
+        "disabled": "Disabled",
+        "all": "All Coupons"
+      },
+      "stats": {
+        "activeCoupons": "Active Coupons",
+        "totalRedemptions": "Total Redemptions",
+        "revenueLift": "Revenue Lift",
+        "avgDiscount": "Avg Discount"
+      },
+      "form": {
+        "code": "Coupon Code",
+        "codePlaceholder": "e.g., PHYSIO25",
+        "type": "Discount Type",
+        "percentage": "Percentage (%)",
+        "fixedAmount": "Fixed Amount (SAR)",
+        "courseSpecific": "Course Specific",
+        "usageLimit": "Usage Limit",
+        "expiryDate": "Expiry Date",
+        "minOrder": "Minimum Order (SAR)",
+        "create": "Create Coupon",
+        "cancel": "Cancel"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "analytics": {
+        "title": "Usage Analytics",
+        "totalUsage": "Total Usage",
+        "revenueLift": "Revenue Lift",
+        "cannibalization": "Cannibalization"
+      }
+    },
+    "reportsPage": {
+      "title": "Financial Reports",
+      "subtitle": "Generate and export financial reports for analysis and audits",
+      "generateReport": "Generate Report",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "reportTypes": {
+        "revenue": "Revenue Report",
+        "revenueDesc": "Revenue by course, instructor, and period",
+        "payments": "Payments Report",
+        "paymentsDesc": "Payments by gateway and status",
+        "refunds": "Refunds Report",
+        "refundsDesc": "Refund trends, reasons, and analytics",
+        "summary": "Executive Summary",
+        "summaryDesc": "High-level financial overview"
+      },
+      "filters": {
+        "period": "Period",
+        "thisMonth": "This Month",
+        "lastMonth": "Last Month",
+        "thisQuarter": "This Quarter",
+        "thisYear": "This Year",
+        "custom": "Custom Range",
+        "groupBy": "Group By",
+        "byCourse": "By Course",
+        "byInstructor": "By Instructor",
+        "byGateway": "By Gateway",
+        "byStatus": "By Status"
+      },
+      "columns": {
+        "transactions": "Transactions",
+        "growth": "Growth"
+      }
+    },
+    "navbar": {
+      "toggleMenu": "Toggle menu",
+      "closeMenu": "Close menu"
+    },
+    "settingsPage": {
+      "title": "Finance Settings",
+      "subtitle": "Configure payment gateways, currency, tax, and refund policies",
+      "tabs": {
+        "gateways": "Payment Gateways",
+        "currency": "Currency",
+        "tax": "Tax Configuration",
+        "refundPolicy": "Refund Policy"
+      },
+      "gateways": {
+        "title": "Payment Gateway Configuration",
+        "tap": "Tap Payments",
+        "moyasar": "Moyasar",
+        "tamara": "Tamara (BNPL)",
+        "tabby": "Tabby (BNPL)",
+        "apiKey": "API Key",
+        "secretKey": "Secret Key",
+        "merchantId": "Merchant ID",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "testMode": "Test Mode",
+        "liveMode": "Live Mode",
+        "save": "Save Configuration"
+      },
+      "currency": {
+        "title": "Currency Settings",
+        "primaryCurrency": "Primary Currency",
+        "sar": "Saudi Riyal (SAR)",
+        "displayFormat": "Display Format",
+        "decimalPlaces": "Decimal Places"
+      },
+      "tax": {
+        "title": "Tax Configuration",
+        "vatEnabled": "VAT Enabled",
+        "vatRate": "VAT Rate (%)",
+        "taxInclusive": "Prices Include Tax",
+        "taxNumber": "Tax Registration Number"
+      },
+      "refundPolicy": {
+        "title": "Refund Policy Rules",
+        "fullRefundDays": "Full Refund Period (days)",
+        "partialRefundDays": "Partial Refund Period (days)",
+        "partialRefundPercent": "Partial Refund Percentage (%)",
+        "bnplDeduction": "BNPL Processing Deduction (%)",
+        "adminFee": "Admin Processing Fee (SAR)",
+        "autoApproveBelow": "Auto-approve Refunds Below (SAR)",
+        "save": "Save Policy"
+      }
+    },
+    "courses": {
+      "aclsTraining": "ACLS Training",
+      "firstAidCert": "First Aid Certification",
+      "cprCert": "CPR Certification",
+      "emergencyResponse": "Emergency Response",
+      "infectionControl": "Infection Control"
+    },
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "gateways": {
+      "tap": "Tap",
+      "moyasar": "Moyasar",
+      "tamara": "Tamara",
+      "tabby": "Tabby"
+    },
+    "refundNotes": {
+      "bnplFee": "BNPL fee",
+      "adminFee": "Admin fee",
+      "exceededPeriod": "Exceeded refund period"
+    },
+    "invoicesLabel": "invoices",
+    "time": {
+      "minAgo": "{count} min ago",
+      "hourAgo": "{count} hour ago",
+      "hoursAgo": "{count} hours ago",
+      "daysAgo": "{count} days ago"
+    },
+    "mockDates": {
+      "feb5_2026": "Feb 5, 2026",
+      "feb6_2026": "Feb 6, 2026",
+      "feb7_2026": "Feb 7, 2026",
+      "feb8_2026": "Feb 8, 2026",
+      "feb9_2026": "Feb 9, 2026",
+      "feb10_2026": "Feb 10, 2026",
+      "feb20_2026": "Feb 20, 2026",
+      "feb22_2026": "Feb 22, 2026",
+      "feb23_2026": "Feb 23, 2026",
+      "feb24_2026": "Feb 24, 2026",
+      "feb25_2026": "Feb 25, 2026",
+      "feb28_2026": "Feb 28, 2026",
+      "mar15_2026": "Mar 15, 2026",
+      "mar31_2026": "Mar 31, 2026",
+      "apr15_2026": "Apr 15, 2026",
+      "jun30_2026": "Jun 30, 2026",
+      "dec31_2025": "Dec 31, 2025",
+      "jan15_2026": "Jan 15, 2026"
+    },
+    "currencyFormats": {
+      "sarFirst": "SAR 1,234.56",
+      "sarLast": "1,234.56 SAR"
+    },
+    "names": {
+      "noraAlFahad": "Nora Al-Fahad",
+      "fatimaAlNoor": "Fatima Al-Noor",
+      "omarAbdullah": "Omar Abdullah",
+      "laylaHassan": "Layla Hassan",
+      "ahmedKhalid": "Ahmed Khalid",
+      "saraMohammed": "Sara Mohammed",
+      "mohammedAlHarbi": "Mohammed Al-Harbi",
+      "nouraAlQahtani": "Noura Al-Qahtani",
+      "yusufAlRashid": "Yusuf Al-Rashid",
+      "ahmedAlRashid": "Ahmed Al-Rashid",
+      "khalidHassan": "Khalid Hassan",
+      "laylaNoor": "Layla Noor",
+      "omarFahad": "Omar Fahad"
+    }
+  },
+  "supportDashboard": {
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "allTickets": "All Tickets",
+      "myTickets": "My Tickets",
+      "team": "Team",
+      "knowledgeBase": "Knowledge Base",
+      "reports": "Reports",
+      "settings": "Settings",
+      "supportLead": "Support Lead",
+      "resolved": "Resolved",
+      "csat": "CSAT",
+      "avgFRT": "Avg FRT",
+      "onlineAvailable": "Online - Available",
+      "editProfile": "Edit Profile",
+      "viewProfile": "View Profile",
+      "logout": "Logout"
+    },
+    "navbar": {
+      "toggleMenu": "Toggle menu",
+      "closeMenu": "Close menu"
+    },
+    "title": "Support Dashboard",
+    "subtitle": "Welcome back, {name}! Here's your support overview.",
+    "kpi": {
+      "openTickets": "Open Tickets",
+      "avgResponseTime": "Avg Response Time",
+      "avgResolution": "Avg Resolution",
+      "csatScore": "CSAT Score",
+      "slaCompliance": "SLA Compliance",
+      "highMedLow": "{high} High, {med} Med, {low} Low",
+      "vsLastWeek": "vs last week",
+      "target": "Target: {value}",
+      "breachesToday": "{count} breaches today",
+      "escalatedTickets": "Escalated Tickets"
+    },
+    "ticketsBoard": {
+      "title": "Recent Tickets",
+      "viewAll": "View All",
+      "columns": {
+        "ticket": "Ticket",
+        "subject": "Subject",
+        "customer": "Customer",
+        "category": "Category",
+        "priority": "Priority",
+        "status": "Status",
+        "assignedTo": "Assigned To",
+        "date": "Date",
+        "id": "ID",
+        "actions": "Actions"
+      },
+      "filters": {
+        "allStatus": "All Status",
+        "allPriority": "All Priority",
+        "allCategories": "All Categories",
+        "searchPlaceholder": "Search tickets...",
+        "allStatuses": "All Statuses",
+        "allPriorities": "All Priorities"
+      },
+      "subjects": {
+        "cannotAccessCourse": "Cannot access course",
+        "certificateNotReceived": "Certificate not received",
+        "paymentFailedTwice": "Payment failed twice",
+        "videoNotPlaying": "Video not playing",
+        "refundRequest": "Refund request",
+        "loginIssue": "Login issue after update",
+        "loginIssueAfterUpdate": "Login issue after update"
+      },
+      "categories": {
+        "billing": "Billing",
+        "login": "Login",
+        "certificate": "Certificate",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "priorities": {
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "statuses": {
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      }
+    },
+    "sla": {
+      "title": "SLA & Team",
+      "viewDetails": "View Details",
+      "frt": "First Response Time",
+      "ttr": "Resolution Time",
+      "breaches": "SLA Breaches",
+      "backlogAge": "Backlog Age",
+      "target": "Target: {value}",
+      "today": "Today",
+      "oldestTicket": "Oldest ticket",
+      "openTickets": "{count} open tickets",
+      "avg": "Avg",
+      "csatPercent": "{value}%",
+      "firstResponseTime": "First Response Time",
+      "resolutionTime": "Resolution Time",
+      "slaBreaches": "SLA Breaches",
+      "targetLabel": "Target: {value}",
+      "agentPerformance": "Agent Performance",
+      "agents": {
+        "hanaAlSaud": "Hana Al-Saud",
+        "mohammedAli": "Mohammed Ali",
+        "laylaAhmed": "Layla Ahmed"
+      },
+      "agentStatus": {
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "open": "Open",
+      "csat": "CSAT"
+    },
+    "rightSidebar": {
+      "csatScore": "CSAT Score",
+      "customerSatisfaction": "Customer Satisfaction",
+      "responses": "Responses",
+      "nps": "NPS",
+      "avgRating": "Avg Rating",
+      "recentActivity": "Recent Activity",
+      "viewAllActivity": "View All Activity",
+      "alerts": "Alerts",
+      "quickActions": "Quick Actions",
+      "newTicket": "New Ticket",
+      "knowledgeBase": "Knowledge Base",
+      "exportReport": "Export Report",
+      "teamChat": "Team Chat"
+    },
+    "activity": {
+      "ticketCreated": "#1234 created by Ahmed K.",
+      "repliedTo": "{name} replied to #{id}",
+      "ticketResolved": "#1231 resolved",
+      "ratingReceived": "5-star rating received",
+      "title": "Recent Activity",
+      "hanaReplied": "Hana replied to #1232",
+      "fiveStarRating": "5-star rating received",
+      "time": {
+        "2min": "2 min ago",
+        "15min": "15 min ago",
+        "32min": "32 min ago",
+        "1hour": "1 hour ago"
+      },
+      "viewAll": "View All Activity"
+    },
+    "alerts": {
+      "slaBreaches": "2 SLA Breaches",
+      "slaBreachTickets": "Tickets #{ids}",
+      "unassignedTickets": "3 Unassigned Tickets",
+      "assignToAgents": "Assign to agents",
+      "highPriorityWaiting": "2 High Priority Waiting",
+      "waitingOver1Hour": "Waiting > 1 hour",
+      "title": "Alerts",
+      "slaBreachesDesc": "Tickets #1234, #1232 approaching breach",
+      "unassignedTicketsDesc": "Assign to available agents",
+      "highPriorityWaitingDesc": "Waiting over 1 hour"
+    },
+    "allTicketsPage": {
+      "title": "All Tickets",
+      "subtitle": "Manage and track all support tickets",
+      "createTicket": "New Ticket",
+      "stats": {
+        "totalTickets": "Total Tickets",
+        "open": "Open",
+        "resolvedThisWeek": "Resolved This Week",
+        "avgResolution": "Avg Resolution"
+      },
+      "tabs": {
+        "all": "All",
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "bulkActions": "Bulk Actions",
+      "assign": "Assign",
+      "close": "Close",
+      "merge": "Merge",
+      "showing": "Showing {from} to {to} of {total}",
+      "previous": "Previous",
+      "next": "Next",
+      "unassigned": "--",
+      "actions": {
+        "view": "View",
+        "assign": "Assign",
+        "close": "Close"
+      },
+      "newTicket": "New Ticket",
+      "searchPlaceholder": "Search tickets...",
+      "filters": {
+        "allCategories": "All Categories",
+        "allPriorities": "All Priorities",
+        "categories": {
+          "billing": "Billing",
+          "login": "Login",
+          "certificate": "Certificate",
+          "content": "Content",
+          "technical": "Technical"
+        },
+        "priorities": {
+          "high": "High",
+          "medium": "Medium",
+          "low": "Low"
+        }
+      },
+      "columns": {
+        "ticketId": "Ticket #",
+        "subject": "Subject",
+        "customer": "Customer",
+        "category": "Category",
+        "priority": "Priority",
+        "status": "Status",
+        "assignedTo": "Assigned To",
+        "date": "Date"
+      },
+      "statuses": {
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved",
+        "closed": "Closed"
+      },
+      "pagination": {
+        "showing": "Showing {from} to {to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "myTicketsPage": {
+      "title": "My Tickets",
+      "subtitle": "Your assigned tickets and personal queue",
+      "stats": {
+        "assigned": "Assigned",
+        "inProgress": "In Progress",
+        "dueToday": "Due Today",
+        "overdue": "Overdue"
+      },
+      "slaRemaining": "remaining",
+      "slaWarning": "SLA Warning",
+      "quickReply": "Quick Reply",
+      "replyPlaceholder": "Type your reply...",
+      "macros": {
+        "greeting": "Greeting",
+        "followUp": "Follow Up",
+        "closing": "Closing",
+        "acknowledgement": "Acknowledgement",
+        "needMoreInfo": "Need More Info",
+        "resolved": "Resolved"
+      },
+      "sendReply": "Send Reply",
+      "tabs": {
+        "all": "All",
+        "new": "New",
+        "inProgress": "In Progress",
+        "waiting": "Waiting"
+      },
+      "searchPlaceholder": "Search my tickets...",
+      "noTickets": "No tickets found matching your filters.",
+      "quickReplyPlaceholder": "Type your reply...",
+      "send": "Send"
+    },
+    "teamPage": {
+      "title": "Team",
+      "subtitle": "Team management and performance monitoring",
+      "addAgent": "Add Agent",
+      "stats": {
+        "totalAgents": "Total Agents",
+        "online": "Online",
+        "avgResponseTime": "Avg Response",
+        "teamCSAT": "Team CSAT",
+        "avgResponse": "Avg Response"
+      },
+      "tabs": {
+        "all": "All",
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "roles": {
+        "seniorAgent": "Senior Agent",
+        "agent": "Agent",
+        "juniorAgent": "Junior Agent"
+      },
+      "agents": {
+        "saraKhan": "Sara Khan",
+        "ahmedNasser": "Ahmed Nasser",
+        "fatimaOmar": "Fatima Omar"
+      },
+      "openTickets": "Open Tickets",
+      "avgResponse": "Avg Response",
+      "csatLabel": "CSAT",
+      "workload": "Workload",
+      "statuses": {
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "performance": "Performance Overview",
+      "bestResponseTime": "Best Response Time",
+      "highestCSAT": "Highest CSAT",
+      "mostResolved": "Most Resolved",
+      "schedule": "Schedule",
+      "status": {
+        "online": "Online",
+        "away": "Away",
+        "offline": "Offline"
+      },
+      "agentCard": {
+        "openTickets": "Open Tickets",
+        "avgResponse": "Avg Response",
+        "csat": "CSAT",
+        "workload": "Workload"
+      },
+      "performanceCards": {
+        "bestResponseTime": "Best Response Time",
+        "highestCSAT": "Highest CSAT",
+        "mostResolved": "Most Resolved"
+      },
+      "searchPlaceholder": "Search agents...",
+      "actions": {
+        "message": "Message",
+        "stats": "Statistics",
+        "more": "More"
+      }
+    },
+    "kbPage": {
+      "title": "Knowledge Base",
+      "subtitle": "Internal and public knowledge base management",
+      "createArticle": "New Article",
+      "stats": {
+        "totalArticles": "Total Articles",
+        "published": "Published",
+        "drafts": "Drafts",
+        "totalViews": "Total Views"
+      },
+      "tabs": {
+        "all": "All",
+        "billing": "Billing",
+        "login": "Login",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "visibility": {
+        "public": "Public",
+        "internal": "Internal"
+      },
+      "statusLabels": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "views": "views",
+      "helpful": "helpful",
+      "articles": {
+        "howToResetPassword": "How to Reset Your Password",
+        "paymentMethods": "Payment Methods & Billing FAQ",
+        "certificateDownload": "How to Download Your Certificate",
+        "refundPolicy": "Refund Policy & Process",
+        "troubleshootVideo": "Troubleshooting Video Playback",
+        "escalationProcess": "Internal Escalation Process"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "searchPlaceholder": "Search articles...",
+      "newArticle": "New Article",
+      "categories": {
+        "billing": "Billing",
+        "login": "Login",
+        "content": "Content",
+        "technical": "Technical"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft"
+      }
+    },
+    "reportsPage": {
+      "title": "Reports",
+      "subtitle": "Support analytics and performance reports",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "reportTypes": {
+        "ticketVolume": "Ticket Volume",
+        "ticketVolumeDesc": "Daily/weekly ticket trends",
+        "slaCompliance": "SLA Compliance",
+        "slaComplianceDesc": "SLA target vs actual performance",
+        "agentPerformance": "Agent Performance",
+        "agentPerformanceDesc": "Individual agent metrics",
+        "csatNps": "CSAT & NPS",
+        "csatNpsDesc": "Customer satisfaction trends"
+      },
+      "filters": {
+        "period": "Period",
+        "thisWeek": "This Week",
+        "lastWeek": "Last Week",
+        "thisMonth": "This Month",
+        "lastMonth": "Last Month",
+        "custom": "Custom",
+        "groupBy": "Group By",
+        "byCategory": "By Category",
+        "byAgent": "By Agent",
+        "byPriority": "By Priority",
+        "byChannel": "By Channel",
+        "title": "Filters"
+      },
+      "generateReport": "Generate Report",
+      "columns": {
+        "category": "Category",
+        "tickets": "Tickets",
+        "avgResponse": "Avg Response",
+        "avgResolution": "Avg Resolution",
+        "satisfaction": "Satisfaction"
+      }
+    },
+    "settingsPage": {
+      "title": "Settings",
+      "subtitle": "Configure support workflows and automation",
+      "tabs": {
+        "sla": "SLA Targets",
+        "assignment": "Auto-Assignment",
+        "macros": "Canned Responses",
+        "notifications": "Notifications",
+        "categories": "Categories"
+      },
+      "sla": {
+        "title": "SLA Target Configuration",
+        "priority": "Priority",
+        "firstResponse": "First Response",
+        "resolution": "Resolution",
+        "hours": "hours",
+        "save": "Save Changes",
+        "firstResponseTarget": "First Response Target",
+        "resolutionTarget": "Resolution Target",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "assignment": {
+        "title": "Auto-Assignment Rules",
+        "roundRobin": "Round Robin",
+        "roundRobinDesc": "Distribute tickets evenly across online agents",
+        "leastBusy": "Least Busy",
+        "leastBusyDesc": "Assign to agent with fewest open tickets",
+        "skillBased": "Skill-Based",
+        "skillBasedDesc": "Match ticket category to agent expertise",
+        "rules": {
+          "roundRobin": "Round Robin",
+          "roundRobinDesc": "Distribute tickets evenly across online agents",
+          "leastBusy": "Least Busy",
+          "leastBusyDesc": "Assign to agent with fewest open tickets",
+          "skillBased": "Skill-Based",
+          "skillBasedDesc": "Match ticket category to agent expertise"
+        }
+      },
+      "macros": {
+        "title": "Canned Responses / Macros",
+        "addMacro": "Add Macro",
+        "name": "Name",
+        "content": "Content",
+        "category": "Category",
+        "items": {
+          "greeting": "Welcome Greeting",
+          "refundProcess": "Refund Process",
+          "passwordReset": "Password Reset Steps",
+          "escalation": "Escalation Notice"
+        },
+        "contents": {
+          "greeting": "Hello! Thank you for contacting PhysioGuidance support. How can I help you today?",
+          "refundProcess": "I understand you'd like a refund. Let me guide you through our refund process...",
+          "passwordReset": "To reset your password, please follow these steps: 1. Go to login page 2. Click 'Forgot Password'...",
+          "escalation": "I'm escalating this to our senior team for further investigation. You'll hear back within 24 hours."
+        }
+      },
+      "notifications": {
+        "title": "Notification Settings",
+        "email": "Email Notifications",
+        "emailDesc": "Receive ticket updates via email",
+        "sms": "SMS Notifications",
+        "smsDesc": "Get SMS alerts for high priority tickets",
+        "whatsapp": "WhatsApp Notifications",
+        "whatsappDesc": "WhatsApp alerts for SLA breaches"
+      },
+      "categories": {
+        "title": "Categories & Tags",
+        "addCategory": "Add Category",
+        "name": "Name",
+        "description": "Description",
+        "ticketCount": "Tickets",
+        "descriptions": {
+          "billing": "Payment and refund issues",
+          "login": "Account access problems",
+          "certificate": "Certificate generation and delivery",
+          "content": "Course content issues",
+          "technical": "Technical and platform issues"
+        },
+        "actions": "Actions",
+        "tickets": "Tickets"
+      },
+      "save": "Save Changes"
+    },
+    "names": {
+      "hanaAlSaud": "Hana Al-Saud",
+      "mohammedAli": "Mohammed Ali",
+      "laylaAhmed": "Layla Ahmed",
+      "ahmedK": "Ahmed K.",
+      "saraM": "Sara M.",
+      "omarA": "Omar A.",
+      "fatimaN": "Fatima N.",
+      "khalidH": "Khalid H.",
+      "nouraS": "Noura S."
+    },
+    "time": {
+      "minAgo": "{count} min ago",
+      "hourAgo": "{count} hour ago",
+      "hoursAgo": "{count} hours ago"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "mockDates": {
+      "feb10_2026": "Feb 10, 2026",
+      "feb9_2026": "Feb 9, 2026",
+      "feb8_2026": "Feb 8, 2026",
+      "feb7_2026": "Feb 7, 2026",
+      "feb6_2026": "Feb 6, 2026",
+      "feb5_2026": "Feb 5, 2026"
+    },
+    "csatSection": {
+      "title": "CSAT Score",
+      "responses": "Responses",
+      "nps": "NPS",
+      "avgRating": "Avg Rating"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "newTicket": "New Ticket",
+      "knowledgeBase": "Knowledge Base",
+      "exportReport": "Export Report",
+      "teamChat": "Team Chat"
     }
   }
 }

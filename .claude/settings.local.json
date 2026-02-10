@@ -42,7 +42,11 @@
       "Bash(cd:*)",
       "WebSearch",
       "Bash(wc:*)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(npx next build:*)",
+      "Bash(cat:*)",
+      "Bash(xargs:*)",
+      "Bash(cd:*)"
     ]
   }
 }

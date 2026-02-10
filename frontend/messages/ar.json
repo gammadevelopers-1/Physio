@@ -3113,5 +3113,958 @@
         "unifonicSms": "يونيفونيك للرسائل"
       }
     }
+  },
+  "financeDashboard": {
+    "title": "لوحة المالية",
+    "subtitle": "مرحبا بعودتك، {name}! إليك نظرتك المالية العامة.",
+    "sidebar": {
+      "dashboard": "لوحة التحكم",
+      "payments": "المدفوعات",
+      "invoices": "الفواتير",
+      "refunds": "المبالغ المستردة",
+      "discounts": "الخصومات",
+      "reports": "التقارير",
+      "settings": "الإعدادات",
+      "financeManager": "مدير المالية",
+      "revenue": "الإيرادات",
+      "invoicesCount": "الفواتير",
+      "refundRate": "المستردات",
+      "viewProfile": "عرض الملف الشخصي",
+      "editProfile": "تعديل الملف الشخصي",
+      "logout": "تسجيل الخروج"
+    },
+    "kpi": {
+      "revenueMTD": "الإيرادات (الشهر الحالي)",
+      "netRevenue": "صافي الإيرادات",
+      "avgOrderValue": "متوسط قيمة الطلب",
+      "pendingInvoices": "الفواتير المعلقة",
+      "refundRate": "معدل الاسترداد",
+      "totalTransactions": "إجمالي المعاملات",
+      "sar": "ر.س",
+      "afterRefunds": "بعد الاستردادات",
+      "totalPending": "ر.س {amount} معلق",
+      "thisMonth": "هذا الشهر"
+    },
+    "revenueSummary": {
+      "title": "ملخص الإيرادات",
+      "viewDetails": "عرض التفاصيل",
+      "chartPlaceholder": "مخطط اتجاه الإيرادات",
+      "byGateway": "حسب البوابة",
+      "topCourses": "أعلى الدورات",
+      "tapMoyasar": "تاب/ميسر",
+      "bnplTamara": "الدفع الآجل (تمارا/تابي)",
+      "timeFilters": {
+        "week": "7 أيام",
+        "month": "30 يوم",
+        "quarter": "90 يوم",
+        "year": "سنة"
+      }
+    },
+    "paymentsTable": {
+      "title": "المدفوعات والفواتير الأخيرة",
+      "export": "تصدير",
+      "searchPlaceholder": "بحث في الفواتير...",
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "paid": "مدفوع",
+        "pending": "معلق",
+        "failed": "فشل",
+        "allGateways": "جميع البوابات"
+      },
+      "columns": {
+        "invoice": "رقم الفاتورة",
+        "date": "التاريخ",
+        "customer": "العميل",
+        "course": "الدورة",
+        "amount": "المبلغ",
+        "gateway": "البوابة",
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "statuses": {
+        "paid": "مدفوع",
+        "pending": "معلق",
+        "failed": "فشل",
+        "refunded": "مسترد"
+      },
+      "actions": {
+        "view": "عرض",
+        "download": "تحميل",
+        "resend": "إعادة إرسال",
+        "refund": "استرداد"
+      },
+      "pagination": {
+        "showing": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "refundsQueue": {
+      "title": "قائمة الاستردادات",
+      "viewAll": "عرض الكل",
+      "approve": "الموافقة",
+      "reject": "الرفض",
+      "deduction": "الخصم: {amount}",
+      "reasons": {
+        "personal": "أسباب شخصية",
+        "courseIssue": "مشكلة في الدورة",
+        "technical": "مشكلة تقنية",
+        "duplicate": "دفع مكرر",
+        "dissatisfied": "غير راضٍ عن المحتوى"
+      }
+    },
+    "discounts": {
+      "title": "القسائم النشطة",
+      "createCoupon": "إنشاء قسيمة",
+      "usage": "{used}/{limit} مستخدم",
+      "expired": "منتهية",
+      "active": "نشطة",
+      "disabled": "معطلة",
+      "off": "خصم {amount}%",
+      "fixedOff": "خصم ر.س {amount}",
+      "minOrder": "الحد الأدنى: ر.س {amount}"
+    },
+    "transactionFeed": {
+      "title": "المعاملات الأخيرة",
+      "viewAll": "عرض جميع المعاملات",
+      "income": "دفع",
+      "paid": "دفع",
+      "refund": "استرداد",
+      "failed": "فشل"
+    },
+    "financialAlerts": {
+      "title": "التنبيهات المالية",
+      "failedPayments": "{count} مدفوعات فاشلة",
+      "failedPaymentsDesc": "أعد المحاولة أو تواصل مع العملاء",
+      "pendingInvoices": "{count} فاتورة معلقة",
+      "pendingInvoicesDesc": "الإجمالي: ر.س {amount}",
+      "chargeback": "{count} رد مبالغ",
+      "chargebackDesc": "الرد خلال 7 أيام"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "createInvoice": "إنشاء فاتورة",
+      "exportReport": "تصدير تقرير",
+      "addCoupon": "إضافة قسيمة",
+      "processRefund": "معالجة استرداد"
+    },
+    "paymentsPage": {
+      "title": "إدارة المدفوعات",
+      "subtitle": "إدارة جميع المعاملات ومعالجة المدفوعات",
+      "retryPayment": "إعادة المحاولة",
+      "exportTransactions": "تصدير المعاملات",
+      "stats": {
+        "totalPayments": "إجمالي المدفوعات",
+        "successRate": "معدل النجاح",
+        "failedPayments": "فاشلة",
+        "totalVolume": "إجمالي الحجم"
+      }
+    },
+    "invoicesPage": {
+      "title": "إدارة الفواتير",
+      "subtitle": "إنشاء وإدارة وتتبع جميع الفواتير",
+      "createInvoice": "إنشاء فاتورة",
+      "downloadPdf": "تحميل PDF",
+      "resendEmail": "إعادة إرسال البريد",
+      "statuses": {
+        "issued": "صادرة",
+        "paid": "مدفوعة",
+        "overdue": "متأخرة",
+        "draft": "مسودة"
+      },
+      "stats": {
+        "totalInvoices": "إجمالي الفواتير",
+        "paidInvoices": "مدفوعة",
+        "overdueInvoices": "متأخرة",
+        "totalAmount": "إجمالي المبلغ"
+      },
+      "agingReport": "تقرير التقادم",
+      "agingCategories": {
+        "current": "حالي (0-30 يوم)",
+        "days30": "31-60 يوم",
+        "days60": "61-90 يوم",
+        "overdue90": "أكثر من 90 يوم"
+      }
+    },
+    "refundsPage": {
+      "title": "إدارة الاستردادات",
+      "subtitle": "معالجة وتتبع وتحليل طلبات الاسترداد",
+      "tabs": {
+        "pending": "معلقة",
+        "approved": "موافق عليها",
+        "rejected": "مرفوضة"
+      },
+      "stats": {
+        "totalRefunds": "إجمالي الاستردادات",
+        "pendingRefunds": "معلقة",
+        "approvedRefunds": "موافق عليها",
+        "refundRate": "معدل الاسترداد"
+      },
+      "deductionRules": "قواعد الخصم",
+      "bnplFees": "رسوم الدفع الآجل: {percent}%",
+      "adminFee": "رسوم إدارية: ر.س {amount}",
+      "addNote": "إضافة ملاحظة",
+      "notePlaceholder": "أدخل سبب الرفض أو الملاحظات..."
+    },
+    "discountsPage": {
+      "title": "إدارة الخصومات والقسائم",
+      "subtitle": "إنشاء وإدارة القسائم، تتبع تحليلات الاستخدام",
+      "createCoupon": "إنشاء قسيمة",
+      "tabs": {
+        "active": "نشطة",
+        "expired": "منتهية",
+        "disabled": "معطلة",
+        "all": "جميع القسائم"
+      },
+      "stats": {
+        "activeCoupons": "القسائم النشطة",
+        "totalRedemptions": "إجمالي الاستخدامات",
+        "revenueLift": "زيادة الإيرادات",
+        "avgDiscount": "متوسط الخصم"
+      },
+      "form": {
+        "code": "رمز القسيمة",
+        "codePlaceholder": "مثال: PHYSIO25",
+        "type": "نوع الخصم",
+        "percentage": "نسبة مئوية (%)",
+        "fixedAmount": "مبلغ ثابت (ر.س)",
+        "courseSpecific": "خاص بدورة معينة",
+        "usageLimit": "حد الاستخدام",
+        "expiryDate": "تاريخ الانتهاء",
+        "minOrder": "الحد الأدنى للطلب (ر.س)",
+        "create": "إنشاء القسيمة",
+        "cancel": "إلغاء"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "analytics": {
+        "title": "تحليلات الاستخدام",
+        "totalUsage": "إجمالي الاستخدام",
+        "revenueLift": "زيادة الإيرادات",
+        "cannibalization": "تأثير سلبي"
+      }
+    },
+    "reportsPage": {
+      "title": "التقارير المالية",
+      "subtitle": "إنشاء وتصدير التقارير المالية للتحليل والتدقيق",
+      "generateReport": "إنشاء تقرير",
+      "exportExcel": "تصدير Excel",
+      "exportPdf": "تصدير PDF",
+      "reportTypes": {
+        "revenue": "تقرير الإيرادات",
+        "revenueDesc": "الإيرادات حسب الدورة والمدرب والفترة",
+        "payments": "تقرير المدفوعات",
+        "paymentsDesc": "المدفوعات حسب البوابة والحالة",
+        "refunds": "تقرير الاستردادات",
+        "refundsDesc": "اتجاهات الاسترداد والأسباب والتحليلات",
+        "summary": "الملخص التنفيذي",
+        "summaryDesc": "نظرة مالية عامة عالية المستوى"
+      },
+      "filters": {
+        "period": "الفترة",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي",
+        "thisQuarter": "هذا الربع",
+        "thisYear": "هذا العام",
+        "custom": "نطاق مخصص",
+        "groupBy": "تجميع حسب",
+        "byCourse": "حسب الدورة",
+        "byInstructor": "حسب المدرب",
+        "byGateway": "حسب البوابة",
+        "byStatus": "حسب الحالة"
+      },
+      "columns": {
+        "transactions": "المعاملات",
+        "growth": "النمو"
+      }
+    },
+    "navbar": {
+      "toggleMenu": "تبديل القائمة",
+      "closeMenu": "إغلاق القائمة"
+    },
+    "settingsPage": {
+      "title": "إعدادات المالية",
+      "subtitle": "تكوين بوابات الدفع والعملة والضرائب وسياسات الاسترداد",
+      "tabs": {
+        "gateways": "بوابات الدفع",
+        "currency": "العملة",
+        "tax": "تكوين الضرائب",
+        "refundPolicy": "سياسة الاسترداد"
+      },
+      "gateways": {
+        "title": "تكوين بوابات الدفع",
+        "tap": "تاب للمدفوعات",
+        "moyasar": "ميسر",
+        "tamara": "تمارا (الدفع الآجل)",
+        "tabby": "تابي (الدفع الآجل)",
+        "apiKey": "مفتاح API",
+        "secretKey": "المفتاح السري",
+        "merchantId": "معرف التاجر",
+        "enabled": "مفعل",
+        "disabled": "معطل",
+        "testMode": "وضع الاختبار",
+        "liveMode": "الوضع المباشر",
+        "save": "حفظ الإعدادات"
+      },
+      "currency": {
+        "title": "إعدادات العملة",
+        "primaryCurrency": "العملة الرئيسية",
+        "sar": "الريال السعودي (ر.س)",
+        "displayFormat": "تنسيق العرض",
+        "decimalPlaces": "المنازل العشرية"
+      },
+      "tax": {
+        "title": "تكوين الضرائب",
+        "vatEnabled": "ضريبة القيمة المضافة مفعلة",
+        "vatRate": "نسبة الضريبة (%)",
+        "taxInclusive": "الأسعار شاملة الضريبة",
+        "taxNumber": "رقم التسجيل الضريبي"
+      },
+      "refundPolicy": {
+        "title": "قواعد سياسة الاسترداد",
+        "fullRefundDays": "فترة الاسترداد الكامل (أيام)",
+        "partialRefundDays": "فترة الاسترداد الجزئي (أيام)",
+        "partialRefundPercent": "نسبة الاسترداد الجزئي (%)",
+        "bnplDeduction": "خصم معالجة الدفع الآجل (%)",
+        "adminFee": "رسوم المعالجة الإدارية (ر.س)",
+        "autoApproveBelow": "الموافقة التلقائية أقل من (ر.س)",
+        "save": "حفظ السياسة"
+      }
+    },
+    "courses": {
+      "aclsTraining": "تدريب دعم الحياة القلبي المتقدم",
+      "firstAidCert": "شهادة الإسعافات الأولية",
+      "cprCert": "شهادة الإنعاش القلبي",
+      "emergencyResponse": "الاستجابة للطوارئ",
+      "infectionControl": "مكافحة العدوى"
+    },
+    "months": {
+      "jan": "يناير",
+      "feb": "فبراير",
+      "mar": "مارس",
+      "apr": "أبريل",
+      "may": "مايو",
+      "jun": "يونيو",
+      "jul": "يوليو",
+      "aug": "أغسطس",
+      "sep": "سبتمبر",
+      "oct": "أكتوبر",
+      "nov": "نوفمبر",
+      "dec": "ديسمبر"
+    },
+    "gateways": {
+      "tap": "تاب",
+      "moyasar": "ميسر",
+      "tamara": "تمارا",
+      "tabby": "تابي"
+    },
+    "refundNotes": {
+      "bnplFee": "رسوم الدفع الآجل",
+      "adminFee": "رسوم إدارية",
+      "exceededPeriod": "تجاوز فترة الاسترداد"
+    },
+    "invoicesLabel": "فاتورة",
+    "time": {
+      "minAgo": "منذ {count} دقيقة",
+      "hourAgo": "منذ {count} ساعة",
+      "hoursAgo": "منذ {count} ساعات",
+      "daysAgo": "منذ {count} أيام"
+    },
+    "mockDates": {
+      "feb5_2026": "5 فبراير 2026",
+      "feb6_2026": "6 فبراير 2026",
+      "feb7_2026": "7 فبراير 2026",
+      "feb8_2026": "8 فبراير 2026",
+      "feb9_2026": "9 فبراير 2026",
+      "feb10_2026": "10 فبراير 2026",
+      "feb20_2026": "20 فبراير 2026",
+      "feb22_2026": "22 فبراير 2026",
+      "feb23_2026": "23 فبراير 2026",
+      "feb24_2026": "24 فبراير 2026",
+      "feb25_2026": "25 فبراير 2026",
+      "feb28_2026": "28 فبراير 2026",
+      "mar15_2026": "15 مارس 2026",
+      "mar31_2026": "31 مارس 2026",
+      "apr15_2026": "15 أبريل 2026",
+      "jun30_2026": "30 يونيو 2026",
+      "dec31_2025": "31 ديسمبر 2025",
+      "jan15_2026": "15 يناير 2026"
+    },
+    "currencyFormats": {
+      "sarFirst": "ر.س 1,234.56",
+      "sarLast": "1,234.56 ر.س"
+    },
+    "names": {
+      "noraAlFahad": "نورة الفهد",
+      "fatimaAlNoor": "فاطمة النور",
+      "omarAbdullah": "عمر عبدالله",
+      "laylaHassan": "ليلى حسن",
+      "ahmedKhalid": "أحمد خالد",
+      "saraMohammed": "سارة محمد",
+      "mohammedAlHarbi": "محمد الحربي",
+      "nouraAlQahtani": "نورة القحطاني",
+      "yusufAlRashid": "يوسف الرشيد",
+      "ahmedAlRashid": "أحمد الرشيد",
+      "khalidHassan": "خالد حسن",
+      "laylaNoor": "ليلى نور",
+      "omarFahad": "عمر فهد"
+    }
+  },
+  "supportDashboard": {
+    "sidebar": {
+      "dashboard": "لوحة التحكم",
+      "allTickets": "جميع التذاكر",
+      "myTickets": "تذاكري",
+      "team": "الفريق",
+      "knowledgeBase": "قاعدة المعرفة",
+      "reports": "التقارير",
+      "settings": "الإعدادات",
+      "supportLead": "قائد الدعم",
+      "resolved": "تم الحل",
+      "csat": "رضا العملاء",
+      "avgFRT": "متوسط الاستجابة",
+      "onlineAvailable": "متصل - متاح",
+      "editProfile": "تعديل الملف",
+      "viewProfile": "عرض الملف الشخصي",
+      "logout": "تسجيل الخروج"
+    },
+    "navbar": {
+      "toggleMenu": "تبديل القائمة",
+      "closeMenu": "إغلاق القائمة"
+    },
+    "title": "لوحة تحكم الدعم",
+    "subtitle": "مرحباً بعودتك، {name}! إليك نظرة عامة على الدعم.",
+    "kpi": {
+      "openTickets": "التذاكر المفتوحة",
+      "avgResponseTime": "متوسط وقت الاستجابة",
+      "avgResolution": "متوسط وقت الحل",
+      "csatScore": "درجة رضا العملاء",
+      "slaCompliance": "الامتثال لاتفاقية مستوى الخدمة",
+      "highMedLow": "{high} عالية، {med} متوسطة، {low} منخفضة",
+      "vsLastWeek": "مقارنة بالأسبوع الماضي",
+      "target": "الهدف: {value}",
+      "breachesToday": "{count} انتهاكات اليوم",
+      "escalatedTickets": "التذاكر المُصعّدة"
+    },
+    "ticketsBoard": {
+      "title": "التذاكر الأخيرة",
+      "viewAll": "عرض الكل",
+      "columns": {
+        "ticket": "التذكرة",
+        "subject": "الموضوع",
+        "customer": "العميل",
+        "category": "الفئة",
+        "priority": "الأولوية",
+        "status": "الحالة",
+        "assignedTo": "مُسند إلى",
+        "date": "التاريخ",
+        "id": "المعرف",
+        "actions": "الإجراءات"
+      },
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "allPriority": "جميع الأولويات",
+        "allCategories": "جميع الفئات",
+        "searchPlaceholder": "البحث في التذاكر...",
+        "allStatuses": "جميع الحالات",
+        "allPriorities": "جميع الأولويات"
+      },
+      "subjects": {
+        "cannotAccessCourse": "لا يمكن الوصول إلى الدورة",
+        "certificateNotReceived": "لم يتم استلام الشهادة",
+        "paymentFailedTwice": "فشل الدفع مرتين",
+        "videoNotPlaying": "الفيديو لا يعمل",
+        "refundRequest": "طلب استرداد",
+        "loginIssue": "مشكلة في تسجيل الدخول بعد التحديث",
+        "loginIssueAfterUpdate": "مشكلة في تسجيل الدخول بعد التحديث"
+      },
+      "categories": {
+        "billing": "الفواتير",
+        "login": "تسجيل الدخول",
+        "certificate": "الشهادات",
+        "content": "المحتوى",
+        "technical": "تقني"
+      },
+      "priorities": {
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة"
+      },
+      "statuses": {
+        "new": "جديد",
+        "inProgress": "قيد التنفيذ",
+        "waiting": "في الانتظار",
+        "resolved": "تم الحل",
+        "closed": "مغلق"
+      }
+    },
+    "sla": {
+      "title": "اتفاقية الخدمة والفريق",
+      "viewDetails": "عرض التفاصيل",
+      "frt": "وقت الاستجابة الأولى",
+      "ttr": "وقت الحل",
+      "breaches": "انتهاكات اتفاقية الخدمة",
+      "backlogAge": "عمر التراكم",
+      "target": "الهدف: {value}",
+      "today": "اليوم",
+      "oldestTicket": "أقدم تذكرة",
+      "openTickets": "{count} تذاكر مفتوحة",
+      "avg": "المتوسط",
+      "csatPercent": "{value}%",
+      "firstResponseTime": "وقت الاستجابة الأولى",
+      "resolutionTime": "وقت الحل",
+      "slaBreaches": "انتهاكات اتفاقية الخدمة",
+      "targetLabel": "الهدف: {value}",
+      "agentPerformance": "أداء الوكلاء",
+      "agents": {
+        "hanaAlSaud": "هنا السعود",
+        "mohammedAli": "محمد علي",
+        "laylaAhmed": "ليلى أحمد"
+      },
+      "agentStatus": {
+        "online": "متصل",
+        "away": "بعيد",
+        "offline": "غير متصل"
+      },
+      "open": "مفتوح",
+      "csat": "رضا العملاء"
+    },
+    "rightSidebar": {
+      "csatScore": "درجة رضا العملاء",
+      "customerSatisfaction": "رضا العملاء",
+      "responses": "الاستجابات",
+      "nps": "صافي نقاط الترويج",
+      "avgRating": "متوسط التقييم",
+      "recentActivity": "النشاط الأخير",
+      "viewAllActivity": "عرض كل النشاط",
+      "alerts": "التنبيهات",
+      "quickActions": "إجراءات سريعة",
+      "newTicket": "تذكرة جديدة",
+      "knowledgeBase": "قاعدة المعرفة",
+      "exportReport": "تصدير التقرير",
+      "teamChat": "محادثة الفريق"
+    },
+    "activity": {
+      "ticketCreated": "#1234 أنشأها أحمد ك.",
+      "repliedTo": "{name} رد على #{id}",
+      "ticketResolved": "#1231 تم الحل",
+      "ratingReceived": "تم استلام تقييم 5 نجوم",
+      "title": "النشاط الأخير",
+      "hanaReplied": "هنا ردت على #1232",
+      "fiveStarRating": "تم استلام تقييم 5 نجوم",
+      "time": {
+        "2min": "منذ 2 دقيقة",
+        "15min": "منذ 15 دقيقة",
+        "32min": "منذ 32 دقيقة",
+        "1hour": "منذ ساعة"
+      },
+      "viewAll": "عرض كل النشاط"
+    },
+    "alerts": {
+      "slaBreaches": "2 انتهاكات اتفاقية الخدمة",
+      "slaBreachTickets": "التذاكر #{ids}",
+      "unassignedTickets": "3 تذاكر غير مُسندة",
+      "assignToAgents": "إسناد للوكلاء",
+      "highPriorityWaiting": "2 عالية الأولوية في الانتظار",
+      "waitingOver1Hour": "في الانتظار > ساعة واحدة",
+      "title": "التنبيهات",
+      "slaBreachesDesc": "التذاكر #1234، #1232 تقترب من الانتهاك",
+      "unassignedTicketsDesc": "إسناد للوكلاء المتاحين",
+      "highPriorityWaitingDesc": "في الانتظار أكثر من ساعة"
+    },
+    "allTicketsPage": {
+      "title": "جميع التذاكر",
+      "subtitle": "إدارة وتتبع جميع تذاكر الدعم",
+      "createTicket": "تذكرة جديدة",
+      "stats": {
+        "totalTickets": "إجمالي التذاكر",
+        "open": "مفتوحة",
+        "resolvedThisWeek": "تم حلها هذا الأسبوع",
+        "avgResolution": "متوسط وقت الحل"
+      },
+      "tabs": {
+        "all": "الكل",
+        "new": "جديد",
+        "inProgress": "قيد التنفيذ",
+        "waiting": "في الانتظار",
+        "resolved": "تم الحل",
+        "closed": "مغلق"
+      },
+      "bulkActions": "إجراءات جماعية",
+      "assign": "إسناد",
+      "close": "إغلاق",
+      "merge": "دمج",
+      "showing": "عرض {from} إلى {to} من {total}",
+      "previous": "السابق",
+      "next": "التالي",
+      "unassigned": "--",
+      "actions": {
+        "view": "عرض",
+        "assign": "إسناد",
+        "close": "إغلاق"
+      },
+      "newTicket": "تذكرة جديدة",
+      "searchPlaceholder": "البحث في التذاكر...",
+      "filters": {
+        "allCategories": "جميع الفئات",
+        "allPriorities": "جميع الأولويات",
+        "categories": {
+          "billing": "الفواتير",
+          "login": "تسجيل الدخول",
+          "certificate": "الشهادات",
+          "content": "المحتوى",
+          "technical": "تقني"
+        },
+        "priorities": {
+          "high": "عالية",
+          "medium": "متوسطة",
+          "low": "منخفضة"
+        }
+      },
+      "columns": {
+        "ticketId": "رقم التذكرة",
+        "subject": "الموضوع",
+        "customer": "العميل",
+        "category": "الفئة",
+        "priority": "الأولوية",
+        "status": "الحالة",
+        "assignedTo": "مُسند إلى",
+        "date": "التاريخ"
+      },
+      "statuses": {
+        "new": "جديد",
+        "inProgress": "قيد التنفيذ",
+        "waiting": "في الانتظار",
+        "resolved": "تم الحل",
+        "closed": "مغلق"
+      },
+      "pagination": {
+        "showing": "عرض {from} إلى {to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "myTicketsPage": {
+      "title": "تذاكري",
+      "subtitle": "التذاكر المُسندة إليك وقائمتك الشخصية",
+      "stats": {
+        "assigned": "مُسندة",
+        "inProgress": "قيد التنفيذ",
+        "dueToday": "مستحقة اليوم",
+        "overdue": "متأخرة"
+      },
+      "slaRemaining": "متبقي",
+      "slaWarning": "تحذير اتفاقية الخدمة",
+      "quickReply": "رد سريع",
+      "replyPlaceholder": "اكتب ردك...",
+      "macros": {
+        "greeting": "ترحيب",
+        "followUp": "متابعة",
+        "closing": "إغلاق",
+        "acknowledgement": "إقرار",
+        "needMoreInfo": "نحتاج معلومات إضافية",
+        "resolved": "تم الحل"
+      },
+      "sendReply": "إرسال الرد",
+      "tabs": {
+        "all": "الكل",
+        "new": "جديد",
+        "inProgress": "قيد التنفيذ",
+        "waiting": "في الانتظار"
+      },
+      "searchPlaceholder": "البحث في تذاكري...",
+      "noTickets": "لم يتم العثور على تذاكر تطابق الفلاتر.",
+      "quickReplyPlaceholder": "اكتب ردك...",
+      "send": "إرسال"
+    },
+    "teamPage": {
+      "title": "الفريق",
+      "subtitle": "إدارة الفريق ومراقبة الأداء",
+      "addAgent": "إضافة وكيل",
+      "stats": {
+        "totalAgents": "إجمالي الوكلاء",
+        "online": "متصل",
+        "avgResponseTime": "متوسط الاستجابة",
+        "teamCSAT": "رضا العملاء للفريق",
+        "avgResponse": "متوسط الاستجابة"
+      },
+      "tabs": {
+        "all": "الكل",
+        "online": "متصل",
+        "away": "بعيد",
+        "offline": "غير متصل"
+      },
+      "roles": {
+        "seniorAgent": "وكيل أول",
+        "agent": "وكيل",
+        "juniorAgent": "وكيل مبتدئ"
+      },
+      "agents": {
+        "saraKhan": "سارة خان",
+        "ahmedNasser": "أحمد ناصر",
+        "fatimaOmar": "فاطمة عمر"
+      },
+      "openTickets": "التذاكر المفتوحة",
+      "avgResponse": "متوسط الاستجابة",
+      "csatLabel": "رضا العملاء",
+      "workload": "حجم العمل",
+      "statuses": {
+        "online": "متصل",
+        "away": "بعيد",
+        "offline": "غير متصل"
+      },
+      "performance": "نظرة عامة على الأداء",
+      "bestResponseTime": "أفضل وقت استجابة",
+      "highestCSAT": "أعلى رضا عملاء",
+      "mostResolved": "الأكثر حلاً",
+      "schedule": "الجدول",
+      "status": {
+        "online": "متصل",
+        "away": "بعيد",
+        "offline": "غير متصل"
+      },
+      "agentCard": {
+        "openTickets": "التذاكر المفتوحة",
+        "avgResponse": "متوسط الاستجابة",
+        "csat": "رضا العملاء",
+        "workload": "حجم العمل"
+      },
+      "performanceCards": {
+        "bestResponseTime": "أفضل وقت استجابة",
+        "highestCSAT": "أعلى رضا عملاء",
+        "mostResolved": "الأكثر حلاً"
+      },
+      "searchPlaceholder": "البحث عن الوكلاء...",
+      "actions": {
+        "message": "رسالة",
+        "stats": "الإحصائيات",
+        "more": "المزيد"
+      }
+    },
+    "kbPage": {
+      "title": "قاعدة المعرفة",
+      "subtitle": "إدارة قاعدة المعرفة الداخلية والعامة",
+      "createArticle": "مقال جديد",
+      "stats": {
+        "totalArticles": "إجمالي المقالات",
+        "published": "منشورة",
+        "drafts": "مسودات",
+        "totalViews": "إجمالي المشاهدات"
+      },
+      "tabs": {
+        "all": "الكل",
+        "billing": "الفواتير",
+        "login": "تسجيل الدخول",
+        "content": "المحتوى",
+        "technical": "تقني"
+      },
+      "visibility": {
+        "public": "عام",
+        "internal": "داخلي"
+      },
+      "statusLabels": {
+        "published": "منشور",
+        "draft": "مسودة"
+      },
+      "views": "مشاهدات",
+      "helpful": "مفيد",
+      "articles": {
+        "howToResetPassword": "كيفية إعادة تعيين كلمة المرور",
+        "paymentMethods": "طرق الدفع والأسئلة الشائعة عن الفواتير",
+        "certificateDownload": "كيفية تحميل شهادتك",
+        "refundPolicy": "سياسة وعملية الاسترداد",
+        "troubleshootVideo": "استكشاف أخطاء تشغيل الفيديو",
+        "escalationProcess": "عملية التصعيد الداخلية"
+      },
+      "actions": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "delete": "حذف"
+      },
+      "searchPlaceholder": "البحث في المقالات...",
+      "newArticle": "مقال جديد",
+      "categories": {
+        "billing": "الفواتير",
+        "login": "تسجيل الدخول",
+        "content": "المحتوى",
+        "technical": "تقني"
+      },
+      "status": {
+        "published": "منشور",
+        "draft": "مسودة"
+      }
+    },
+    "reportsPage": {
+      "title": "التقارير",
+      "subtitle": "تحليلات الدعم وتقارير الأداء",
+      "exportExcel": "تصدير إكسل",
+      "exportPdf": "تصدير PDF",
+      "reportTypes": {
+        "ticketVolume": "حجم التذاكر",
+        "ticketVolumeDesc": "اتجاهات التذاكر اليومية/الأسبوعية",
+        "slaCompliance": "الامتثال لاتفاقية الخدمة",
+        "slaComplianceDesc": "هدف اتفاقية الخدمة مقابل الأداء الفعلي",
+        "agentPerformance": "أداء الوكلاء",
+        "agentPerformanceDesc": "مقاييس الوكلاء الفردية",
+        "csatNps": "رضا العملاء وصافي الترويج",
+        "csatNpsDesc": "اتجاهات رضا العملاء"
+      },
+      "filters": {
+        "period": "الفترة",
+        "thisWeek": "هذا الأسبوع",
+        "lastWeek": "الأسبوع الماضي",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي",
+        "custom": "مخصص",
+        "groupBy": "تجميع حسب",
+        "byCategory": "حسب الفئة",
+        "byAgent": "حسب الوكيل",
+        "byPriority": "حسب الأولوية",
+        "byChannel": "حسب القناة",
+        "title": "الفلاتر"
+      },
+      "generateReport": "إنشاء التقرير",
+      "columns": {
+        "category": "الفئة",
+        "tickets": "التذاكر",
+        "avgResponse": "متوسط الاستجابة",
+        "avgResolution": "متوسط الحل",
+        "satisfaction": "الرضا"
+      }
+    },
+    "settingsPage": {
+      "title": "الإعدادات",
+      "subtitle": "تكوين سير عمل الدعم والأتمتة",
+      "tabs": {
+        "sla": "أهداف اتفاقية الخدمة",
+        "assignment": "الإسناد التلقائي",
+        "macros": "الردود الجاهزة",
+        "notifications": "الإشعارات",
+        "categories": "الفئات"
+      },
+      "sla": {
+        "title": "تكوين أهداف اتفاقية مستوى الخدمة",
+        "priority": "الأولوية",
+        "firstResponse": "الاستجابة الأولى",
+        "resolution": "الحل",
+        "hours": "ساعات",
+        "save": "حفظ التغييرات",
+        "firstResponseTarget": "هدف الاستجابة الأولى",
+        "resolutionTarget": "هدف الحل",
+        "high": "عالية",
+        "medium": "متوسطة",
+        "low": "منخفضة"
+      },
+      "assignment": {
+        "title": "قواعد الإسناد التلقائي",
+        "roundRobin": "التوزيع الدوري",
+        "roundRobinDesc": "توزيع التذاكر بالتساوي على الوكلاء المتصلين",
+        "leastBusy": "الأقل انشغالاً",
+        "leastBusyDesc": "إسناد للوكيل الذي لديه أقل عدد من التذاكر المفتوحة",
+        "skillBased": "حسب المهارة",
+        "skillBasedDesc": "مطابقة فئة التذكرة مع خبرة الوكيل",
+        "rules": {
+          "roundRobin": "التوزيع الدوري",
+          "roundRobinDesc": "توزيع التذاكر بالتساوي على الوكلاء المتصلين",
+          "leastBusy": "الأقل انشغالاً",
+          "leastBusyDesc": "إسناد للوكيل الذي لديه أقل عدد من التذاكر المفتوحة",
+          "skillBased": "حسب المهارة",
+          "skillBasedDesc": "مطابقة فئة التذكرة مع خبرة الوكيل"
+        }
+      },
+      "macros": {
+        "title": "الردود الجاهزة / الماكرو",
+        "addMacro": "إضافة ماكرو",
+        "name": "الاسم",
+        "content": "المحتوى",
+        "category": "الفئة",
+        "items": {
+          "greeting": "ترحيب",
+          "refundProcess": "عملية الاسترداد",
+          "passwordReset": "خطوات إعادة تعيين كلمة المرور",
+          "escalation": "إشعار التصعيد"
+        },
+        "contents": {
+          "greeting": "مرحباً! شكراً لتواصلك مع دعم فيزيو جايدنس. كيف يمكنني مساعدتك اليوم؟",
+          "refundProcess": "أفهم أنك ترغب في استرداد المبلغ. دعني أرشدك خلال عملية الاسترداد...",
+          "passwordReset": "لإعادة تعيين كلمة المرور، يرجى اتباع هذه الخطوات: 1. اذهب إلى صفحة تسجيل الدخول 2. انقر على 'نسيت كلمة المرور'...",
+          "escalation": "سأقوم بتصعيد هذا إلى فريقنا الأول لمزيد من التحقيق. ستسمع منا خلال 24 ساعة."
+        }
+      },
+      "notifications": {
+        "title": "إعدادات الإشعارات",
+        "email": "إشعارات البريد الإلكتروني",
+        "emailDesc": "تلقي تحديثات التذاكر عبر البريد الإلكتروني",
+        "sms": "إشعارات الرسائل القصيرة",
+        "smsDesc": "تنبيهات SMS للتذاكر عالية الأولوية",
+        "whatsapp": "إشعارات واتساب",
+        "whatsappDesc": "تنبيهات واتساب لانتهاكات اتفاقية الخدمة"
+      },
+      "categories": {
+        "title": "الفئات والعلامات",
+        "addCategory": "إضافة فئة",
+        "name": "الاسم",
+        "description": "الوصف",
+        "ticketCount": "التذاكر",
+        "descriptions": {
+          "billing": "مشاكل الدفع والاسترداد",
+          "login": "مشاكل الوصول إلى الحساب",
+          "certificate": "إنشاء وتسليم الشهادات",
+          "content": "مشاكل محتوى الدورات",
+          "technical": "مشاكل تقنية والمنصة"
+        },
+        "actions": "الإجراءات",
+        "tickets": "التذاكر"
+      },
+      "save": "حفظ التغييرات"
+    },
+    "names": {
+      "hanaAlSaud": "هنا السعود",
+      "mohammedAli": "محمد علي",
+      "laylaAhmed": "ليلى أحمد",
+      "ahmedK": "أحمد ك.",
+      "saraM": "سارة م.",
+      "omarA": "عمر أ.",
+      "fatimaN": "فاطمة ن.",
+      "khalidH": "خالد ح.",
+      "nouraS": "نورة س."
+    },
+    "time": {
+      "minAgo": "منذ {count} دقيقة",
+      "hourAgo": "منذ {count} ساعة",
+      "hoursAgo": "منذ {count} ساعات"
+    },
+    "days": {
+      "mon": "الإثنين",
+      "tue": "الثلاثاء",
+      "wed": "الأربعاء",
+      "thu": "الخميس",
+      "fri": "الجمعة",
+      "sat": "السبت",
+      "sun": "الأحد"
+    },
+    "mockDates": {
+      "feb10_2026": "١٠ فبراير ٢٠٢٦",
+      "feb9_2026": "٩ فبراير ٢٠٢٦",
+      "feb8_2026": "٨ فبراير ٢٠٢٦",
+      "feb7_2026": "٧ فبراير ٢٠٢٦",
+      "feb6_2026": "٦ فبراير ٢٠٢٦",
+      "feb5_2026": "٥ فبراير ٢٠٢٦"
+    },
+    "csatSection": {
+      "title": "درجة رضا العملاء",
+      "responses": "الاستجابات",
+      "nps": "صافي نقاط الترويج",
+      "avgRating": "متوسط التقييم"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "newTicket": "تذكرة جديدة",
+      "knowledgeBase": "قاعدة المعرفة",
+      "exportReport": "تصدير التقرير",
+      "teamChat": "محادثة الفريق"
+    }
   }
 }

@@ -1,0 +1,14 @@
+export { default as SupportSidebar } from "./SupportSidebar";
+export { default as SupportMobileSidebar } from "./SupportMobileSidebar";
+export { default as SupportNavbar } from "./SupportNavbar";
+export { default as SupportKPICards } from "./SupportKPICards";
+export { default as TicketsBoardWidget } from "./TicketsBoardWidget";
+export { default as SLAPerformanceWidget } from "./SLAPerformanceWidget";
+export { default as SupportRightSidebar } from "./SupportRightSidebar";
+export { default as SupportDashboardContent } from "./SupportDashboardContent";
+export { default as AllTicketsContent } from "./AllTicketsContent";
+export { default as MyTicketsContent } from "./MyTicketsContent";
+export { default as TeamContent } from "./TeamContent";
+export { default as KnowledgeBaseContent } from "./KnowledgeBaseContent";
+export { default as SupportReportsContent } from "./SupportReportsContent";
+export { default as SupportSettingsContent } from "./SupportSettingsContent";

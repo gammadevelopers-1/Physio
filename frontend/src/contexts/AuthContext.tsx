@@ -67,6 +67,9 @@ const MOCK_USER: User = {
   lastName: 'User',
   roles: ['ADMIN', 'STUDENT', 'INSTRUCTOR', 'MANAGER', 'FINANCE', 'SUPPORT'],
   activeRole: 'ADMIN',
+  isActive: true,
+  isVerified: true,
+  createdAt: new Date().toISOString(),
 };
 
 // ===========================================

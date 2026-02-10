@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   FileText,
   RotateCcw,
+  CreditCard,
 } from "lucide-react";
 
 interface FinanceKPIData {
@@ -21,6 +22,8 @@ interface FinanceKPIData {
   pendingInvoicesAmount: number;
   refundRate: number;
   refundRateTrend: number;
+  totalTransactions: number;
+  totalTransactionsPeriod: string;
 }
 
 interface FinanceKPICardsProps {
@@ -88,51 +91,62 @@ const FinanceKPICards = ({ data }: FinanceKPICardsProps) => {
       iconBg: "bg-[#FEE2E2]",
       iconColor: "text-[#DC2626]",
     },
+    {
+      id: "totalTransactions",
+      label: t("kpi.totalTransactions"),
+      value: data.totalTransactions.toLocaleString(),
+      subLabel: data.totalTransactionsPeriod,
+      icon: CreditCard,
+      iconBg: "bg-[#EDE9FE]",
+      iconColor: "text-[#8B5CF6]",
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
         return (
           <div
             key={card.id}
-            className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3.5 hover:shadow-md transition-all cursor-pointer"
+            className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3 hover:shadow-md transition-all cursor-pointer"
           >
-            <div
-              className={`w-11 h-11 ${card.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
-            >
-              <Icon className={`w-5 h-5 ${card.iconColor}`} />
+            <div className="flex items-start justify-between">
+              <div
+                className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}
+              >
+                <Icon className={`w-5 h-5 ${card.iconColor}`} />
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-[var(--on-surface-variant)] font-medium mb-1">
+            <div>
+              <p className="text-sm text-[var(--on-surface-variant)]">
                 {card.label}
               </p>
-              <p className="text-xl font-bold text-[var(--on-surface-default)] leading-tight">
+              <p className="text-2xl font-bold text-[var(--on-surface-default)]">
                 {card.value}
               </p>
-              <div className="flex items-center gap-1 mt-1">
-                {card.trend !== undefined && (
-                  <>
-                    {card.trend > 0 ? (
-                      <TrendingUp className="w-3 h-3 text-[#16A34A]" />
-                    ) : (
-                      <TrendingDown className="w-3 h-3 text-[#DC2626]" />
-                    )}
-                  </>
-                )}
-                <span
-                  className={`text-[11px] ${
-                    card.trend !== undefined
-                      ? card.trend > 0
-                        ? "text-[#16A34A] font-semibold"
-                        : "text-[#DC2626] font-semibold"
-                      : "text-[var(--on-surface-variant)]"
-                  }`}
-                >
-                  {card.subLabel}
-                </span>
-              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              {card.trend !== undefined && (
+                <>
+                  {card.trend > 0 ? (
+                    <TrendingUp className="w-3 h-3 text-[#16A34A]" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3 text-[#DC2626]" />
+                  )}
+                </>
+              )}
+              <span
+                className={`text-xs ${
+                  card.trend !== undefined
+                    ? card.trend > 0
+                      ? "text-[#16A34A]"
+                      : "text-[#DC2626]"
+                    : "text-[var(--on-surface-variant)]"
+                }`}
+              >
+                {card.subLabel}
+              </span>
             </div>
           </div>
         );

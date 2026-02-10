@@ -46,6 +46,7 @@ const DiscountsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
   const [activeTab, setActiveTab] = useState("active");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
@@ -82,14 +83,14 @@ const DiscountsContent = () => {
   ];
 
   const coupons: Coupon[] = [
-    { id: "1", code: "PHYSIO25", type: "percentage", value: 25, usedCount: 45, usageLimit: 100, expiryDate: "Mar 31, 2026", status: "active" },
-    { id: "2", code: "NEWUSER50", type: "fixed", value: 50, usedCount: 120, usageLimit: 200, expiryDate: "Apr 15, 2026", status: "active" },
-    { id: "3", code: "ACLS2024", type: "percentage", value: 15, usedCount: 30, usageLimit: 50, expiryDate: "Feb 28, 2026", status: "active", courseSpecific: "ACLS Training" },
-    { id: "4", code: "FIRSTAID10", type: "percentage", value: 10, usedCount: 65, usageLimit: 100, expiryDate: "Mar 15, 2026", status: "active", courseSpecific: "First Aid Cert" },
-    { id: "5", code: "EARLYBIRD", type: "fixed", value: 100, usedCount: 25, usageLimit: 50, expiryDate: "Feb 20, 2026", status: "active", minOrder: 500 },
-    { id: "6", code: "SUMMER23", type: "percentage", value: 20, usedCount: 100, usageLimit: 100, expiryDate: "Dec 31, 2025", status: "expired" },
-    { id: "7", code: "FLASH50", type: "percentage", value: 50, usedCount: 200, usageLimit: 200, expiryDate: "Jan 15, 2026", status: "expired" },
-    { id: "8", code: "PROMO2024", type: "fixed", value: 75, usedCount: 10, usageLimit: 100, expiryDate: "Jun 30, 2026", status: "disabled" },
+    { id: "1", code: "PHYSIO25", type: "percentage", value: 25, usedCount: 45, usageLimit: 100, expiryDate: t("mockDates.mar31_2026"), status: "active" },
+    { id: "2", code: "NEWUSER50", type: "fixed", value: 50, usedCount: 120, usageLimit: 200, expiryDate: t("mockDates.apr15_2026"), status: "active" },
+    { id: "3", code: "ACLS2024", type: "percentage", value: 15, usedCount: 30, usageLimit: 50, expiryDate: t("mockDates.feb28_2026"), status: "active", courseSpecific: t("courses.aclsTraining") },
+    { id: "4", code: "FIRSTAID10", type: "percentage", value: 10, usedCount: 65, usageLimit: 100, expiryDate: t("mockDates.mar15_2026"), status: "active", courseSpecific: t("courses.firstAidCert") },
+    { id: "5", code: "EARLYBIRD", type: "fixed", value: 100, usedCount: 25, usageLimit: 50, expiryDate: t("mockDates.feb20_2026"), status: "active", minOrder: 500 },
+    { id: "6", code: "SUMMER23", type: "percentage", value: 20, usedCount: 100, usageLimit: 100, expiryDate: t("mockDates.dec31_2025"), status: "expired" },
+    { id: "7", code: "FLASH50", type: "percentage", value: 50, usedCount: 200, usageLimit: 200, expiryDate: t("mockDates.jan15_2026"), status: "expired" },
+    { id: "8", code: "PROMO2024", type: "fixed", value: 75, usedCount: 10, usageLimit: 100, expiryDate: t("mockDates.jun30_2026"), status: "disabled" },
   ];
 
   const tabs = [
@@ -111,16 +112,16 @@ const DiscountsContent = () => {
 
   return (
     <>
-      <FinanceNavbar profile={mockProfile} />
+      <FinanceNavbar profile={profile} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={mockProfile} />
+              <FinanceSidebar profile={profile} />
             </div>
 
-            <FinanceMobileSidebar profile={mockProfile} />
+            <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}
@@ -187,8 +188,8 @@ const DiscountsContent = () => {
                     <div key={coupon.id} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6] relative">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 bg-[#ECFDF5] rounded-lg flex items-center justify-center">
-                            <Tag className="w-5 h-5 text-[#059669]" />
+                          <div className="w-10 h-10 bg-[#FDF6EC] rounded-lg flex items-center justify-center">
+                            <Tag className="w-5 h-5 text-[#a37f49]" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -224,11 +225,11 @@ const DiscountsContent = () => {
                                 </button>
                                 <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB]">
                                   <Pencil className="w-3.5 h-3.5" />
-                                  Edit
+                                  {t("discountsPage.actions.edit")}
                                 </button>
                                 <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#DC2626] hover:bg-[#FEE2E2]">
                                   <Trash2 className="w-3.5 h-3.5" />
-                                  Delete
+                                  {t("discountsPage.actions.delete")}
                                 </button>
                               </div>
                             )}
@@ -244,7 +245,7 @@ const DiscountsContent = () => {
                         </div>
                         <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-[#059669] rounded-full"
+                            className="h-full bg-[#a37f49] rounded-full"
                             style={{ width: `${Math.min((coupon.usedCount / coupon.usageLimit) * 100, 100)}%` }}
                           />
                         </div>
@@ -257,7 +258,7 @@ const DiscountsContent = () => {
                           {coupon.expiryDate}
                         </span>
                         {coupon.minOrder && (
-                          <span>Min: SAR {coupon.minOrder}</span>
+                          <span>{t("discounts.minOrder", { amount: coupon.minOrder })}</span>
                         )}
                       </div>
                     </div>
@@ -268,7 +269,7 @@ const DiscountsContent = () => {
               {/* Usage Analytics */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-[#059669]" />
+                  <BarChart3 className="w-5 h-5 text-[#a37f49]" />
                   <h3 className="text-base font-semibold text-[#111827]">{t("discountsPage.analytics.title")}</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -278,7 +279,7 @@ const DiscountsContent = () => {
                   </div>
                   <div className="p-4 bg-[#DCFCE7] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#16A34A]">+12%</p>
-                    <p className="text-[12px] text-[#059669]">{t("discountsPage.analytics.revenueLift")}</p>
+                    <p className="text-[12px] text-[#a37f49]">{t("discountsPage.analytics.revenueLift")}</p>
                   </div>
                   <div className="p-4 bg-[#FEF9C3] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[#CA8A04]">3.2%</p>
@@ -304,11 +305,11 @@ const DiscountsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.code")}</label>
-                <input type="text" placeholder="e.g., PHYSIO25" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#059669]" />
+                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.type")}</label>
-                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#059669]">
+                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]">
                   <option value="percentage">{t("discountsPage.form.percentage")}</option>
                   <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
                 </select>
@@ -316,16 +317,16 @@ const DiscountsContent = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.usageLimit")}</label>
-                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#059669]" />
+                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.expiryDate")}</label>
-                  <input type="date" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#059669]" />
+                  <input type="date" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.minOrder")}</label>
-                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#059669]" />
+                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]" />
               </div>
             </div>
             <div className="flex gap-3 mt-6">

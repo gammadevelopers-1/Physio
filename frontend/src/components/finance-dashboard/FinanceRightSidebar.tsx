@@ -78,7 +78,7 @@ const FinanceRightSidebar = ({
       {/* Recent Transactions */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <CreditCard className="w-4 h-4 text-[#059669]" />
+          <CreditCard className="w-4 h-4 text-[#a37f49]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("transactionFeed.title")}
           </h3>
@@ -181,7 +181,7 @@ const FinanceRightSidebar = ({
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-[#059669]" />
+            <Tag className="w-4 h-4 text-[#a37f49]" />
             <h3 className="text-[15px] font-semibold text-[#111827]">
               {t("discounts.title")}
             </h3>
@@ -226,7 +226,7 @@ const FinanceRightSidebar = ({
       {/* Quick Actions */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Zap className="w-4 h-4 text-[#059669]" />
+          <Zap className="w-4 h-4 text-[#a37f49]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
             {t("quickActions.title")}
           </h3>

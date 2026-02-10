@@ -30,6 +30,7 @@ const FinanceReportsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
   const [selectedReport, setSelectedReport] = useState("revenue");
   const [period, setPeriod] = useState("thisMonth");
   const [groupBy, setGroupBy] = useState("byCourse");
@@ -69,27 +70,64 @@ const FinanceReportsContent = () => {
     },
   ];
 
+  // Report chart data
+  const reportChartData = [32, 45, 38, 52, 48, 65, 58, 72, 68, 85, 78, 92];
+  const reportChartLabels = [t("months.jan"), t("months.feb"), t("months.mar"), t("months.apr"), t("months.may"), t("months.jun"), t("months.jul"), t("months.aug"), t("months.sep"), t("months.oct"), t("months.nov"), t("months.dec")];
+
+  const generateLinePath = (chartData: number[]) => {
+    const width = 100;
+    const height = 100;
+    const padding = 5;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+
+    const maxValue = Math.max(...chartData) * 1.1;
+    const minValue = Math.min(...chartData) * 0.9;
+    const range = maxValue - minValue || 1;
+
+    const pts = chartData.map((value, index) => {
+      const x = padding + (index / (chartData.length - 1)) * chartWidth;
+      const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+      return { x, y };
+    });
+
+    let path = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1];
+      const curr = pts[i];
+      const cpx = (prev.x + curr.x) / 2;
+      path += ` Q ${prev.x + (cpx - prev.x) * 0.5} ${prev.y}, ${cpx} ${(prev.y + curr.y) / 2}`;
+      path += ` Q ${cpx + (curr.x - cpx) * 0.5} ${curr.y}, ${curr.x} ${curr.y}`;
+    }
+
+    const areaPath = path + ` L ${pts[pts.length - 1].x} ${height - padding} L ${pts[0].x} ${height - padding} Z`;
+
+    return { linePath: path, areaPath, points: pts };
+  };
+
+  const { linePath: reportLinePath, areaPath: reportAreaPath, points: reportPoints } = generateLinePath(reportChartData);
+
   // Mock report data
   const mockRevenueReport = [
-    { name: "ACLS Training", revenue: "SAR 52,000", transactions: 48, growth: "+15%" },
-    { name: "First Aid Certification", revenue: "SAR 38,000", transactions: 45, growth: "+8%" },
-    { name: "CPR Certification", revenue: "SAR 28,000", transactions: 43, growth: "+12%" },
-    { name: "Emergency Response", revenue: "SAR 24,000", transactions: 24, growth: "+5%" },
-    { name: "Infection Control", revenue: "SAR 18,000", transactions: 24, growth: "+3%" },
+    { name: t("courses.aclsTraining"), revenue: `${t("kpi.sar")} 52,000`, transactions: 48, growth: "+15%" },
+    { name: t("courses.firstAidCert"), revenue: `${t("kpi.sar")} 38,000`, transactions: 45, growth: "+8%" },
+    { name: t("courses.cprCert"), revenue: `${t("kpi.sar")} 28,000`, transactions: 43, growth: "+12%" },
+    { name: t("courses.emergencyResponse"), revenue: `${t("kpi.sar")} 24,000`, transactions: 24, growth: "+5%" },
+    { name: t("courses.infectionControl"), revenue: `${t("kpi.sar")} 18,000`, transactions: 24, growth: "+3%" },
   ];
 
   return (
     <>
-      <FinanceNavbar profile={mockProfile} />
+      <FinanceNavbar profile={profile} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={mockProfile} />
+              <FinanceSidebar profile={profile} />
             </div>
 
-            <FinanceMobileSidebar profile={mockProfile} />
+            <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}
@@ -153,7 +191,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#059669]"
+                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
                     >
                       <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
                       <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
@@ -167,7 +205,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#059669]"
+                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
                     >
                       <option value="byCourse">{t("reportsPage.filters.byCourse")}</option>
                       <option value="byInstructor">{t("reportsPage.filters.byInstructor")}</option>
@@ -192,11 +230,74 @@ const FinanceReportsContent = () => {
                   </h3>
                 </div>
 
-                {/* Chart Placeholder */}
+                {/* Report Line Chart */}
                 <div className="px-5 py-4">
-                  <div className="h-[200px] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] flex flex-col items-center justify-center text-[#9CA3AF] mb-4">
-                    <BarChart3 className="w-8 h-8 mb-2" />
-                    <span className="text-sm">{t("revenueSummary.chartPlaceholder")}</span>
+                  <div className="h-[200px] bg-gradient-to-b from-[#EFF6FF] to-transparent rounded-xl p-4 relative">
+                    <svg
+                      viewBox="0 0 100 100"
+                      className="w-full h-full"
+                      preserveAspectRatio="none"
+                    >
+                      <defs>
+                        <linearGradient id="reportAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
+                        </linearGradient>
+                      </defs>
+
+                      {[0, 25, 50, 75, 100].map((y) => (
+                        <line
+                          key={y}
+                          x1="5"
+                          y1={5 + (90 * (100 - y)) / 100}
+                          x2="95"
+                          y2={5 + (90 * (100 - y)) / 100}
+                          stroke="#E5E7EB"
+                          strokeWidth="0.3"
+                          strokeDasharray="2,2"
+                        />
+                      ))}
+
+                      <path d={reportAreaPath} fill="url(#reportAreaGradient)" />
+
+                      <path
+                        d={reportLinePath}
+                        fill="none"
+                        stroke="#3B82F6"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+
+                      {reportPoints.map((point, index) => (
+                        <g key={index}>
+                          <circle
+                            cx={point.x}
+                            cy={point.y}
+                            r="3"
+                            fill="white"
+                            stroke="#3B82F6"
+                            strokeWidth="2"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                          <circle
+                            cx={point.x}
+                            cy={point.y}
+                            r="8"
+                            fill="transparent"
+                            className="cursor-pointer"
+                          >
+                            <title>{`${reportChartLabels[index]}: ${t("kpi.sar")} ${reportChartData[index]}K`}</title>
+                          </circle>
+                        </g>
+                      ))}
+                    </svg>
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
+                    {reportChartLabels.map((label, index) => (
+                      <span key={index} className="text-center">{label}</span>
+                    ))}
                   </div>
                 </div>
 
@@ -207,8 +308,8 @@ const FinanceReportsContent = () => {
                       <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("sidebar.revenue")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>Transactions</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>Growth</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.transactions")}</th>
+                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.growth")}</th>
                       </tr>
                     </thead>
                     <tbody>

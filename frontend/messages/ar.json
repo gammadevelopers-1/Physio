@@ -3139,9 +3139,11 @@
       "avgOrderValue": "متوسط قيمة الطلب",
       "pendingInvoices": "الفواتير المعلقة",
       "refundRate": "معدل الاسترداد",
+      "totalTransactions": "إجمالي المعاملات",
       "sar": "ر.س",
       "afterRefunds": "بعد الاستردادات",
-      "totalPending": "ر.س {amount} معلق"
+      "totalPending": "ر.س {amount} معلق",
+      "thisMonth": "هذا الشهر"
     },
     "revenueSummary": {
       "title": "ملخص الإيرادات",
@@ -3219,7 +3221,8 @@
       "active": "نشطة",
       "disabled": "معطلة",
       "off": "خصم {amount}%",
-      "fixedOff": "خصم ر.س {amount}"
+      "fixedOff": "خصم ر.س {amount}",
+      "minOrder": "الحد الأدنى: ر.س {amount}"
     },
     "transactionFeed": {
       "title": "المعاملات الأخيرة",
@@ -3321,6 +3324,7 @@
       },
       "form": {
         "code": "رمز القسيمة",
+        "codePlaceholder": "مثال: PHYSIO25",
         "type": "نوع الخصم",
         "percentage": "نسبة مئوية (%)",
         "fixedAmount": "مبلغ ثابت (ر.س)",
@@ -3330,6 +3334,10 @@
         "minOrder": "الحد الأدنى للطلب (ر.س)",
         "create": "إنشاء القسيمة",
         "cancel": "إلغاء"
+      },
+      "actions": {
+        "edit": "تعديل",
+        "delete": "حذف"
       },
       "analytics": {
         "title": "تحليلات الاستخدام",
@@ -3366,7 +3374,15 @@
         "byInstructor": "حسب المدرب",
         "byGateway": "حسب البوابة",
         "byStatus": "حسب الحالة"
+      },
+      "columns": {
+        "transactions": "المعاملات",
+        "growth": "النمو"
       }
+    },
+    "navbar": {
+      "toggleMenu": "تبديل القائمة",
+      "closeMenu": "إغلاق القائمة"
     },
     "settingsPage": {
       "title": "إعدادات المالية",
@@ -3424,11 +3440,76 @@
       "emergencyResponse": "الاستجابة للطوارئ",
       "infectionControl": "مكافحة العدوى"
     },
+    "months": {
+      "jan": "يناير",
+      "feb": "فبراير",
+      "mar": "مارس",
+      "apr": "أبريل",
+      "may": "مايو",
+      "jun": "يونيو",
+      "jul": "يوليو",
+      "aug": "أغسطس",
+      "sep": "سبتمبر",
+      "oct": "أكتوبر",
+      "nov": "نوفمبر",
+      "dec": "ديسمبر"
+    },
+    "gateways": {
+      "tap": "تاب",
+      "moyasar": "ميسر",
+      "tamara": "تمارا",
+      "tabby": "تابي"
+    },
+    "refundNotes": {
+      "bnplFee": "رسوم الدفع الآجل",
+      "adminFee": "رسوم إدارية",
+      "exceededPeriod": "تجاوز فترة الاسترداد"
+    },
+    "invoicesLabel": "فاتورة",
     "time": {
       "minAgo": "منذ {count} دقيقة",
       "hourAgo": "منذ {count} ساعة",
       "hoursAgo": "منذ {count} ساعات",
       "daysAgo": "منذ {count} أيام"
+    },
+    "mockDates": {
+      "feb5_2026": "5 فبراير 2026",
+      "feb6_2026": "6 فبراير 2026",
+      "feb7_2026": "7 فبراير 2026",
+      "feb8_2026": "8 فبراير 2026",
+      "feb9_2026": "9 فبراير 2026",
+      "feb10_2026": "10 فبراير 2026",
+      "feb20_2026": "20 فبراير 2026",
+      "feb22_2026": "22 فبراير 2026",
+      "feb23_2026": "23 فبراير 2026",
+      "feb24_2026": "24 فبراير 2026",
+      "feb25_2026": "25 فبراير 2026",
+      "feb28_2026": "28 فبراير 2026",
+      "mar15_2026": "15 مارس 2026",
+      "mar31_2026": "31 مارس 2026",
+      "apr15_2026": "15 أبريل 2026",
+      "jun30_2026": "30 يونيو 2026",
+      "dec31_2025": "31 ديسمبر 2025",
+      "jan15_2026": "15 يناير 2026"
+    },
+    "currencyFormats": {
+      "sarFirst": "ر.س 1,234.56",
+      "sarLast": "1,234.56 ر.س"
+    },
+    "names": {
+      "noraAlFahad": "نورة الفهد",
+      "fatimaAlNoor": "فاطمة النور",
+      "omarAbdullah": "عمر عبدالله",
+      "laylaHassan": "ليلى حسن",
+      "ahmedKhalid": "أحمد خالد",
+      "saraMohammed": "سارة محمد",
+      "mohammedAlHarbi": "محمد الحربي",
+      "nouraAlQahtani": "نورة القحطاني",
+      "yusufAlRashid": "يوسف الرشيد",
+      "ahmedAlRashid": "أحمد الرشيد",
+      "khalidHassan": "خالد حسن",
+      "laylaNoor": "ليلى نور",
+      "omarFahad": "عمر فهد"
     }
   }
 }

@@ -74,14 +74,14 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
             </div>
 
             {/* Deduction info + Actions */}
-            <div className="mt-2 flex items-center justify-between">
+            <div className="mt-2 space-y-2">
               {refund.deduction && (
                 <div className="flex items-center gap-1 text-[11px] text-[#D97706]">
                   <AlertCircle className="w-3 h-3" />
                   {refund.deduction}
                 </div>
               )}
-              <div className={`flex gap-2 ${!refund.deduction ? "w-full" : ""}`}>
+              <div className="flex gap-2 w-full">
                 <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#16A34A] text-white text-[11px] font-medium rounded-md hover:bg-[#15803D] transition-colors">
                   <Check className="w-3 h-3" />
                   {t("refundsQueue.approve")}

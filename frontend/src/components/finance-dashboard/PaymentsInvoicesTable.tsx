@@ -76,7 +76,7 @@ const PaymentsInvoicesTable = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 border-b border-[#F3F4F6] gap-3">
         <div className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-[#059669]" />
+          <CreditCard className="w-5 h-5 text-[#a37f49]" />
           <h3 className="text-base font-semibold text-[#111827]">
             {t("paymentsTable.title")}
           </h3>
@@ -95,7 +95,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20"
+            className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49]/20"
           >
             <option value="all">{t("paymentsTable.filters.allStatus")}</option>
             <option value="paid">{t("paymentsTable.filters.paid")}</option>
@@ -107,15 +107,15 @@ const PaymentsInvoicesTable = ({
           <select
             value={gatewayFilter}
             onChange={(e) => setGatewayFilter(e.target.value)}
-            className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20"
+            className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49]/20"
           >
             <option value="all">
               {t("paymentsTable.filters.allGateways")}
             </option>
-            <option value="Tap">Tap</option>
-            <option value="Moyasar">Moyasar</option>
-            <option value="Tamara">Tamara</option>
-            <option value="Tabby">Tabby</option>
+            <option value="Tap">{t("gateways.tap")}</option>
+            <option value="Moyasar">{t("gateways.moyasar")}</option>
+            <option value="Tamara">{t("gateways.tamara")}</option>
+            <option value="Tabby">{t("gateways.tabby")}</option>
           </select>
           <div className="flex-1 relative">
             <Search
@@ -126,7 +126,7 @@ const PaymentsInvoicesTable = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("paymentsTable.searchPlaceholder")}
-              className={`w-full py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+              className={`w-full py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ const PaymentsInvoicesTable = ({
                 className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors"
               >
                 <td className="py-3 px-4">
-                  <span className="text-[13px] font-medium text-[#059669]">
+                  <span className="text-[13px] font-medium text-[#a37f49]">
                     {tx.invoiceNumber}
                   </span>
                 </td>

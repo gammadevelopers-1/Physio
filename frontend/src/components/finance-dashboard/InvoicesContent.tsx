@@ -45,6 +45,7 @@ const InvoicesContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [openActionId, setOpenActionId] = useState<string | null>(null);
@@ -73,7 +74,7 @@ const InvoicesContent = () => {
     },
     {
       label: t("invoicesPage.stats.totalAmount"),
-      value: "SAR 245K",
+      value: `${t("kpi.sar")} 245K`,
       icon: DollarSign,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#16A34A]",
@@ -81,12 +82,12 @@ const InvoicesContent = () => {
   ];
 
   const invoices: Invoice[] = [
-    { id: "1", invoiceNumber: "INV-2024-0156", date: "Feb 10, 2026", dueDate: "Feb 25, 2026", customer: "Fatima Al-Noor", course: "ACLS Training", amount: "SAR 1,200", status: "issued" },
-    { id: "2", invoiceNumber: "INV-2024-0155", date: "Feb 10, 2026", dueDate: "Feb 25, 2026", customer: "Omar Abdullah", course: "First Aid Cert", amount: "SAR 850", status: "paid" },
-    { id: "3", invoiceNumber: "INV-2024-0154", date: "Feb 9, 2026", dueDate: "Feb 24, 2026", customer: "Layla Hassan", course: "CPR Certification", amount: "SAR 650", status: "paid" },
-    { id: "4", invoiceNumber: "INV-2024-0153", date: "Feb 5, 2026", dueDate: "Feb 20, 2026", customer: "Ahmed Khalid", course: "Emergency Response", amount: "SAR 980", status: "overdue" },
-    { id: "5", invoiceNumber: "INV-2024-0152", date: "Feb 8, 2026", dueDate: "Feb 23, 2026", customer: "Sara Mohammed", course: "ACLS Training", amount: "SAR 1,200", status: "paid" },
-    { id: "6", invoiceNumber: "INV-2024-0151", date: "Feb 7, 2026", dueDate: "Feb 22, 2026", customer: "Mohammed Al-Harbi", course: "Infection Control", amount: "SAR 750", status: "draft" },
+    { id: "1", invoiceNumber: "INV-2024-0156", date: t("mockDates.feb10_2026"), dueDate: t("mockDates.feb25_2026"), customer: t("names.fatimaAlNoor"), course: t("courses.aclsTraining"), amount: `${t("kpi.sar")} 1,200`, status: "issued" },
+    { id: "2", invoiceNumber: "INV-2024-0155", date: t("mockDates.feb10_2026"), dueDate: t("mockDates.feb25_2026"), customer: t("names.omarAbdullah"), course: t("courses.firstAidCert"), amount: `${t("kpi.sar")} 850`, status: "paid" },
+    { id: "3", invoiceNumber: "INV-2024-0154", date: t("mockDates.feb9_2026"), dueDate: t("mockDates.feb24_2026"), customer: t("names.laylaHassan"), course: t("courses.cprCert"), amount: `${t("kpi.sar")} 650`, status: "paid" },
+    { id: "4", invoiceNumber: "INV-2024-0153", date: t("mockDates.feb5_2026"), dueDate: t("mockDates.feb20_2026"), customer: t("names.ahmedKhalid"), course: t("courses.emergencyResponse"), amount: `${t("kpi.sar")} 980`, status: "overdue" },
+    { id: "5", invoiceNumber: "INV-2024-0152", date: t("mockDates.feb8_2026"), dueDate: t("mockDates.feb23_2026"), customer: t("names.saraMohammed"), course: t("courses.aclsTraining"), amount: `${t("kpi.sar")} 1,200`, status: "paid" },
+    { id: "6", invoiceNumber: "INV-2024-0151", date: t("mockDates.feb7_2026"), dueDate: t("mockDates.feb22_2026"), customer: t("names.mohammedAlHarbi"), course: t("courses.infectionControl"), amount: `${t("kpi.sar")} 750`, status: "draft" },
   ];
 
   const statusStyles: Record<string, string> = {
@@ -115,24 +116,24 @@ const InvoicesContent = () => {
 
   // Aging Report data
   const agingData = [
-    { label: t("invoicesPage.agingCategories.current"), count: 4, amount: "SAR 3,680", color: "bg-[#16A34A]" },
-    { label: t("invoicesPage.agingCategories.days30"), count: 3, amount: "SAR 2,450", color: "bg-[#D97706]" },
-    { label: t("invoicesPage.agingCategories.days60"), count: 2, amount: "SAR 1,800", color: "bg-[#EA580C]" },
-    { label: t("invoicesPage.agingCategories.overdue90"), count: 3, amount: "SAR 7,750", color: "bg-[#DC2626]" },
+    { label: t("invoicesPage.agingCategories.current"), count: 4, amount: `${t("kpi.sar")} 3,680`, color: "bg-[#16A34A]" },
+    { label: t("invoicesPage.agingCategories.days30"), count: 3, amount: `${t("kpi.sar")} 2,450`, color: "bg-[#D97706]" },
+    { label: t("invoicesPage.agingCategories.days60"), count: 2, amount: `${t("kpi.sar")} 1,800`, color: "bg-[#EA580C]" },
+    { label: t("invoicesPage.agingCategories.overdue90"), count: 3, amount: `${t("kpi.sar")} 7,750`, color: "bg-[#DC2626]" },
   ];
 
   return (
     <>
-      <FinanceNavbar profile={mockProfile} />
+      <FinanceNavbar profile={profile} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={mockProfile} />
+              <FinanceSidebar profile={profile} />
             </div>
 
-            <FinanceMobileSidebar profile={mockProfile} />
+            <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}
@@ -196,7 +197,7 @@ const InvoicesContent = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("paymentsTable.searchPlaceholder")}
-                        className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#059669] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                        className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                       />
                     </div>
                   </div>
@@ -220,7 +221,7 @@ const InvoicesContent = () => {
                       {filteredInvoices.map((inv) => (
                         <tr key={inv.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors">
                           <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[#059669]">{inv.invoiceNumber}</span>
+                            <span className="text-[13px] font-medium text-[#a37f49]">{inv.invoiceNumber}</span>
                           </td>
                           <td className="py-3 px-4 text-[13px] text-[#4B5563]">{inv.date}</td>
                           <td className="py-3 px-4 text-[13px] text-[#374151] font-medium">{inv.customer}</td>
@@ -294,7 +295,7 @@ const InvoicesContent = () => {
                         <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
                         <p className="text-[12px] text-[#6B7280] font-medium">{item.label}</p>
                       </div>
-                      <p className="text-lg font-bold text-[#111827]">{item.count} invoices</p>
+                      <p className="text-lg font-bold text-[#111827]">{item.count} {t("invoicesLabel")}</p>
                       <p className="text-[13px] text-[#6B7280]">{item.amount}</p>
                     </div>
                   ))}

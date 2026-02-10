@@ -229,7 +229,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB] bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB] bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
                 {profile.avatar ? (
                   <Image
                     src={profile.avatar}
@@ -287,7 +287,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
           <button
             className="flex lg:hidden items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
+            aria-label={tDashboard("navbar.toggleMenu")}
           >
             {isMobileMenuOpen ? (
               <X className="w-6 h-6" strokeWidth={1.67} />
@@ -304,7 +304,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
           <div className="flex flex-col px-4 py-4">
             {/* User Info */}
             <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[var(--outline-subtle)]">
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
                 {profile.avatar ? (
                   <Image
                     src={profile.avatar}
@@ -346,12 +346,12 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
-                        ? "bg-[#ECFDF5] text-[#059669]"
+                        ? "bg-[#F0F7FF] text-[#002D87]"
                         : "text-[#4B5563] hover:bg-[#F9FAFB]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${isActive ? "text-[#059669]" : "text-[#6B7280]"}`}
+                      className={`w-5 h-5 ${isActive ? "text-[#002D87]" : "text-[#6B7280]"}`}
                     />
                     <span
                       className={`text-sm ${isActive ? "font-medium" : ""}`}

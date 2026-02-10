@@ -44,12 +44,13 @@ const RefundsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
   const [activeTab, setActiveTab] = useState("pending");
 
   const stats = [
     {
       label: t("refundsPage.stats.totalRefunds"),
-      value: "SAR 17K",
+      value: `${t("kpi.sar")} 17K`,
       icon: DollarSign,
       iconBg: "bg-[#FFEDD5]",
       iconColor: "text-[#EA580C]",
@@ -78,14 +79,14 @@ const RefundsContent = () => {
   ];
 
   const refunds: RefundRequest[] = [
-    { id: "1", customer: "Ahmed Al-Rashid", course: "ACLS Training", originalAmount: "SAR 950", refundAmount: "SAR 850", reason: t("refundsQueue.reasons.personal"), date: "Feb 10, 2026", status: "pending", deduction: "SAR 100 (BNPL fee)" },
-    { id: "2", customer: "Sara Mohammed", course: "First Aid Cert", originalAmount: "SAR 500", refundAmount: "SAR 450", reason: t("refundsQueue.reasons.courseIssue"), date: "Feb 9, 2026", status: "pending", deduction: "SAR 50 (Admin fee)" },
-    { id: "3", customer: "Khalid Hassan", course: "CPR Certification", originalAmount: "SAR 380", refundAmount: "SAR 380", reason: t("refundsQueue.reasons.technical"), date: "Feb 9, 2026", status: "pending" },
-    { id: "4", customer: "Layla Noor", course: "Emergency Response", originalAmount: "SAR 980", refundAmount: "SAR 880", reason: t("refundsQueue.reasons.duplicate"), date: "Feb 8, 2026", status: "pending", deduction: "SAR 100 (BNPL fee)" },
-    { id: "5", customer: "Omar Fahad", course: "Infection Control", originalAmount: "SAR 750", refundAmount: "SAR 750", reason: t("refundsQueue.reasons.dissatisfied"), date: "Feb 8, 2026", status: "pending" },
-    { id: "6", customer: "Fatima Al-Noor", course: "ACLS Training", originalAmount: "SAR 1,200", refundAmount: "SAR 1,080", reason: t("refundsQueue.reasons.personal"), date: "Feb 7, 2026", status: "approved", deduction: "SAR 120 (BNPL fee)" },
-    { id: "7", customer: "Mohammed Al-Harbi", course: "First Aid Cert", originalAmount: "SAR 500", refundAmount: "SAR 500", reason: t("refundsQueue.reasons.technical"), date: "Feb 6, 2026", status: "approved" },
-    { id: "8", customer: "Noura Al-Qahtani", course: "CPR Certification", originalAmount: "SAR 650", refundAmount: "SAR 0", reason: t("refundsQueue.reasons.personal"), date: "Feb 5, 2026", status: "rejected", note: "Exceeded refund period" },
+    { id: "1", customer: t("names.ahmedAlRashid"), course: t("courses.aclsTraining"), originalAmount: `${t("kpi.sar")} 950`, refundAmount: `${t("kpi.sar")} 850`, reason: t("refundsQueue.reasons.personal"), date: t("mockDates.feb10_2026"), status: "pending", deduction: `${t("kpi.sar")} 100 (${t("refundNotes.bnplFee")})` },
+    { id: "2", customer: t("names.saraMohammed"), course: t("courses.firstAidCert"), originalAmount: `${t("kpi.sar")} 500`, refundAmount: `${t("kpi.sar")} 450`, reason: t("refundsQueue.reasons.courseIssue"), date: t("mockDates.feb9_2026"), status: "pending", deduction: `${t("kpi.sar")} 50 (${t("refundNotes.adminFee")})` },
+    { id: "3", customer: t("names.khalidHassan"), course: t("courses.cprCert"), originalAmount: `${t("kpi.sar")} 380`, refundAmount: `${t("kpi.sar")} 380`, reason: t("refundsQueue.reasons.technical"), date: t("mockDates.feb9_2026"), status: "pending" },
+    { id: "4", customer: t("names.laylaNoor"), course: t("courses.emergencyResponse"), originalAmount: `${t("kpi.sar")} 980`, refundAmount: `${t("kpi.sar")} 880`, reason: t("refundsQueue.reasons.duplicate"), date: t("mockDates.feb8_2026"), status: "pending", deduction: `${t("kpi.sar")} 100 (${t("refundNotes.bnplFee")})` },
+    { id: "5", customer: t("names.omarFahad"), course: t("courses.infectionControl"), originalAmount: `${t("kpi.sar")} 750`, refundAmount: `${t("kpi.sar")} 750`, reason: t("refundsQueue.reasons.dissatisfied"), date: t("mockDates.feb8_2026"), status: "pending" },
+    { id: "6", customer: t("names.fatimaAlNoor"), course: t("courses.aclsTraining"), originalAmount: `${t("kpi.sar")} 1,200`, refundAmount: `${t("kpi.sar")} 1,080`, reason: t("refundsQueue.reasons.personal"), date: t("mockDates.feb7_2026"), status: "approved", deduction: `${t("kpi.sar")} 120 (${t("refundNotes.bnplFee")})` },
+    { id: "7", customer: t("names.mohammedAlHarbi"), course: t("courses.firstAidCert"), originalAmount: `${t("kpi.sar")} 500`, refundAmount: `${t("kpi.sar")} 500`, reason: t("refundsQueue.reasons.technical"), date: t("mockDates.feb6_2026"), status: "approved" },
+    { id: "8", customer: t("names.nouraAlQahtani"), course: t("courses.cprCert"), originalAmount: `${t("kpi.sar")} 650`, refundAmount: `${t("kpi.sar")} 0`, reason: t("refundsQueue.reasons.personal"), date: t("mockDates.feb5_2026"), status: "rejected", note: t("refundNotes.exceededPeriod") },
   ];
 
   const tabs = [
@@ -104,16 +105,16 @@ const RefundsContent = () => {
 
   return (
     <>
-      <FinanceNavbar profile={mockProfile} />
+      <FinanceNavbar profile={profile} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={mockProfile} />
+              <FinanceSidebar profile={profile} />
             </div>
 
-            <FinanceMobileSidebar profile={mockProfile} />
+            <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}

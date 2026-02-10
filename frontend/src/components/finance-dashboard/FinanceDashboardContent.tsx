@@ -30,106 +30,110 @@ const mockKPIData = {
   pendingInvoicesAmount: 15680,
   refundRate: 2.1,
   refundRateTrend: -0.3,
+  totalTransactions: 384,
+  totalTransactionsPeriod: "",
 };
-
-// Mock Revenue Data
-const mockRevenueData = {
-  gateways: [
-    { name: "Tap/Moyasar", percentage: 72, color: "bg-[#3B82F6]" },
-    { name: "BNPL (Tamara/Tabby)", percentage: 28, color: "bg-[#22C55E]" },
-  ],
-  topCourses: [
-    { name: "ACLS Training", revenue: "SAR 52K" },
-    { name: "First Aid Cert", revenue: "SAR 38K" },
-    { name: "CPR Certification", revenue: "SAR 28K" },
-    { name: "Emergency Response", revenue: "SAR 24K" },
-    { name: "Infection Control", revenue: "SAR 18K" },
-  ],
-};
-
-// Mock Transactions
-const mockTransactions = [
-  {
-    id: "1",
-    invoiceNumber: "INV-2024-0156",
-    date: "Feb 10, 2026",
-    customer: "Fatima Al-Noor",
-    course: "ACLS Training",
-    amount: "SAR 1,200",
-    gateway: "Tap" as const,
-    status: "paid" as const,
-  },
-  {
-    id: "2",
-    invoiceNumber: "INV-2024-0155",
-    date: "Feb 10, 2026",
-    customer: "Omar Abdullah",
-    course: "First Aid Cert",
-    amount: "SAR 850",
-    gateway: "Tamara" as const,
-    status: "paid" as const,
-  },
-  {
-    id: "3",
-    invoiceNumber: "INV-2024-0154",
-    date: "Feb 9, 2026",
-    customer: "Layla Hassan",
-    course: "CPR Certification",
-    amount: "SAR 650",
-    gateway: "Moyasar" as const,
-    status: "pending" as const,
-  },
-  {
-    id: "4",
-    invoiceNumber: "INV-2024-0153",
-    date: "Feb 9, 2026",
-    customer: "Ahmed Khalid",
-    course: "Emergency Response",
-    amount: "SAR 980",
-    gateway: "Tap" as const,
-    status: "failed" as const,
-  },
-  {
-    id: "5",
-    invoiceNumber: "INV-2024-0152",
-    date: "Feb 8, 2026",
-    customer: "Sara Mohammed",
-    course: "ACLS Training",
-    amount: "SAR 1,200",
-    gateway: "Tamara" as const,
-    status: "refunded" as const,
-  },
-];
 
 const FinanceDashboardContent = () => {
   const t = useTranslations("financeDashboard");
+
+  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+
+  // Mock Revenue Data
+  const mockRevenueData = {
+    gateways: [
+      { name: t("revenueSummary.tapMoyasar"), percentage: 72, color: "bg-[#3B82F6]" },
+      { name: t("revenueSummary.bnplTamara"), percentage: 28, color: "bg-[#22C55E]" },
+    ],
+    topCourses: [
+      { name: t("courses.aclsTraining"), revenue: `${t("kpi.sar")} 52K` },
+      { name: t("courses.firstAidCert"), revenue: `${t("kpi.sar")} 38K` },
+      { name: t("courses.cprCert"), revenue: `${t("kpi.sar")} 28K` },
+      { name: t("courses.emergencyResponse"), revenue: `${t("kpi.sar")} 24K` },
+      { name: t("courses.infectionControl"), revenue: `${t("kpi.sar")} 18K` },
+    ],
+  };
+
+  // Mock Transactions
+  const mockTransactions = [
+    {
+      id: "1",
+      invoiceNumber: "INV-2024-0156",
+      date: t("mockDates.feb10_2026"),
+      customer: t("names.fatimaAlNoor"),
+      course: t("courses.aclsTraining"),
+      amount: `${t("kpi.sar")} 1,200`,
+      gateway: "Tap" as const,
+      status: "paid" as const,
+    },
+    {
+      id: "2",
+      invoiceNumber: "INV-2024-0155",
+      date: t("mockDates.feb10_2026"),
+      customer: t("names.omarAbdullah"),
+      course: t("courses.firstAidCert"),
+      amount: `${t("kpi.sar")} 850`,
+      gateway: "Tamara" as const,
+      status: "paid" as const,
+    },
+    {
+      id: "3",
+      invoiceNumber: "INV-2024-0154",
+      date: t("mockDates.feb9_2026"),
+      customer: t("names.laylaHassan"),
+      course: t("courses.cprCert"),
+      amount: `${t("kpi.sar")} 650`,
+      gateway: "Moyasar" as const,
+      status: "pending" as const,
+    },
+    {
+      id: "4",
+      invoiceNumber: "INV-2024-0153",
+      date: t("mockDates.feb9_2026"),
+      customer: t("names.ahmedKhalid"),
+      course: t("courses.emergencyResponse"),
+      amount: `${t("kpi.sar")} 980`,
+      gateway: "Tap" as const,
+      status: "failed" as const,
+    },
+    {
+      id: "5",
+      invoiceNumber: "INV-2024-0152",
+      date: t("mockDates.feb8_2026"),
+      customer: t("names.saraMohammed"),
+      course: t("courses.aclsTraining"),
+      amount: `${t("kpi.sar")} 1,200`,
+      gateway: "Tamara" as const,
+      status: "refunded" as const,
+    },
+  ];
 
   // Mock Refunds Data
   const mockRefunds = [
     {
       id: "1",
-      customer: "Ahmed Al-Rashid",
+      customer: t("names.ahmedAlRashid"),
       course: t("courses.aclsTraining"),
-      originalAmount: "SAR 950",
-      refundAmount: "SAR 850",
+      originalAmount: `${t("kpi.sar")} 950`,
+      refundAmount: `${t("kpi.sar")} 850`,
       reason: t("refundsQueue.reasons.personal"),
-      deduction: t("refundsQueue.deduction", { amount: "SAR 100" }),
+      deduction: t("refundsQueue.deduction", { amount: `${t("kpi.sar")} 100` }),
     },
     {
       id: "2",
-      customer: "Sara Mohammed",
+      customer: t("names.saraMohammed"),
       course: t("courses.firstAidCert"),
-      originalAmount: "SAR 500",
-      refundAmount: "SAR 450",
+      originalAmount: `${t("kpi.sar")} 500`,
+      refundAmount: `${t("kpi.sar")} 450`,
       reason: t("refundsQueue.reasons.courseIssue"),
-      deduction: t("refundsQueue.deduction", { amount: "SAR 50" }),
+      deduction: t("refundsQueue.deduction", { amount: `${t("kpi.sar")} 50` }),
     },
     {
       id: "3",
-      customer: "Khalid Hassan",
+      customer: t("names.khalidHassan"),
       course: t("courses.cprCert"),
-      originalAmount: "SAR 380",
-      refundAmount: "SAR 380",
+      originalAmount: `${t("kpi.sar")} 380`,
+      refundAmount: `${t("kpi.sar")} 380`,
       reason: t("refundsQueue.reasons.technical"),
     },
   ];
@@ -138,30 +142,30 @@ const FinanceDashboardContent = () => {
   const mockTransactionFeed = [
     {
       id: "1",
-      customer: "Fatima Al-Noor",
+      customer: t("names.fatimaAlNoor"),
       type: "income" as const,
-      amount: "SAR 1,200",
+      amount: `${t("kpi.sar")} 1,200`,
       time: t("time.minAgo", { count: 5 }),
     },
     {
       id: "2",
-      customer: "Omar Abdullah",
+      customer: t("names.omarAbdullah"),
       type: "income" as const,
-      amount: "SAR 850",
+      amount: `${t("kpi.sar")} 850`,
       time: t("time.minAgo", { count: 15 }),
     },
     {
       id: "3",
-      customer: "Sara Mohammed",
+      customer: t("names.saraMohammed"),
       type: "refund" as const,
-      amount: "SAR 500",
+      amount: `${t("kpi.sar")} 500`,
       time: t("time.hourAgo", { count: 1 }),
     },
     {
       id: "4",
-      customer: "Ahmed Khalid",
+      customer: t("names.ahmedKhalid"),
       type: "failed" as const,
-      amount: "SAR 980",
+      amount: `${t("kpi.sar")} 980`,
       time: t("time.hoursAgo", { count: 2 }),
     },
   ];
@@ -195,7 +199,7 @@ const FinanceDashboardContent = () => {
     {
       id: "1",
       code: "PHYSIO25",
-      discount: "25% off",
+      discount: t("discounts.off", { amount: 25 }),
       used: 45,
       limit: 100,
       status: "active" as const,
@@ -203,7 +207,7 @@ const FinanceDashboardContent = () => {
     {
       id: "2",
       code: "NEWUSER50",
-      discount: "SAR 50 off",
+      discount: t("discounts.fixedOff", { amount: 50 }),
       used: 120,
       limit: 200,
       status: "active" as const,
@@ -211,7 +215,7 @@ const FinanceDashboardContent = () => {
     {
       id: "3",
       code: "ACLS2024",
-      discount: "15% off",
+      discount: t("discounts.off", { amount: 15 }),
       used: 30,
       limit: 50,
       status: "active" as const,
@@ -219,7 +223,7 @@ const FinanceDashboardContent = () => {
     {
       id: "4",
       code: "SUMMER23",
-      discount: "20% off",
+      discount: t("discounts.off", { amount: 20 }),
       used: 100,
       limit: 100,
       status: "expired" as const,
@@ -229,7 +233,7 @@ const FinanceDashboardContent = () => {
   return (
     <>
       {/* Dashboard Navbar */}
-      <FinanceNavbar profile={mockProfile} />
+      <FinanceNavbar profile={profile} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -237,11 +241,11 @@ const FinanceDashboardContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={mockProfile} />
+              <FinanceSidebar profile={profile} />
             </div>
 
             {/* Mobile Sidebar */}
-            <FinanceMobileSidebar profile={mockProfile} />
+            <FinanceMobileSidebar profile={profile} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -252,13 +256,13 @@ const FinanceDashboardContent = () => {
                 </h1>
                 <p className="text-sm text-[var(--on-surface-variant)] mt-1">
                   {t("subtitle", {
-                    name: mockProfile.name.split(" ")[0],
+                    name: profile.name.split(" ")[0],
                   })}
                 </p>
               </div>
 
               {/* KPI Cards */}
-              <FinanceKPICards data={mockKPIData} />
+              <FinanceKPICards data={{ ...mockKPIData, totalTransactionsPeriod: t("kpi.thisMonth") }} />
 
               {/* Revenue Summary + Refunds Queue */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">

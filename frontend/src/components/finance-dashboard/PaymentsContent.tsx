@@ -28,6 +28,7 @@ const PaymentsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
 
   const stats = [
     {
@@ -59,7 +60,7 @@ const PaymentsContent = () => {
     },
     {
       label: t("paymentsPage.stats.totalVolume"),
-      value: "SAR 892K",
+      value: `${t("kpi.sar")} 892K`,
       icon: DollarSign,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#16A34A]",
@@ -69,28 +70,28 @@ const PaymentsContent = () => {
   ];
 
   const allTransactions = [
-    { id: "1", invoiceNumber: "INV-2024-0156", date: "Feb 10, 2026", customer: "Fatima Al-Noor", course: "ACLS Training", amount: "SAR 1,200", gateway: "Tap" as const, status: "paid" as const },
-    { id: "2", invoiceNumber: "INV-2024-0155", date: "Feb 10, 2026", customer: "Omar Abdullah", course: "First Aid Cert", amount: "SAR 850", gateway: "Tamara" as const, status: "paid" as const },
-    { id: "3", invoiceNumber: "INV-2024-0154", date: "Feb 9, 2026", customer: "Layla Hassan", course: "CPR Certification", amount: "SAR 650", gateway: "Moyasar" as const, status: "pending" as const },
-    { id: "4", invoiceNumber: "INV-2024-0153", date: "Feb 9, 2026", customer: "Ahmed Khalid", course: "Emergency Response", amount: "SAR 980", gateway: "Tap" as const, status: "failed" as const },
-    { id: "5", invoiceNumber: "INV-2024-0152", date: "Feb 8, 2026", customer: "Sara Mohammed", course: "ACLS Training", amount: "SAR 1,200", gateway: "Tamara" as const, status: "refunded" as const },
-    { id: "6", invoiceNumber: "INV-2024-0151", date: "Feb 8, 2026", customer: "Mohammed Al-Harbi", course: "Infection Control", amount: "SAR 750", gateway: "Tap" as const, status: "paid" as const },
-    { id: "7", invoiceNumber: "INV-2024-0150", date: "Feb 7, 2026", customer: "Noura Al-Qahtani", course: "CPR Certification", amount: "SAR 650", gateway: "Tabby" as const, status: "paid" as const },
-    { id: "8", invoiceNumber: "INV-2024-0149", date: "Feb 7, 2026", customer: "Yusuf Al-Rashid", course: "Emergency Response", amount: "SAR 980", gateway: "Moyasar" as const, status: "pending" as const },
+    { id: "1", invoiceNumber: "INV-2024-0156", date: t("mockDates.feb10_2026"), customer: t("names.fatimaAlNoor"), course: t("courses.aclsTraining"), amount: `${t("kpi.sar")} 1,200`, gateway: "Tap" as const, status: "paid" as const },
+    { id: "2", invoiceNumber: "INV-2024-0155", date: t("mockDates.feb10_2026"), customer: t("names.omarAbdullah"), course: t("courses.firstAidCert"), amount: `${t("kpi.sar")} 850`, gateway: "Tamara" as const, status: "paid" as const },
+    { id: "3", invoiceNumber: "INV-2024-0154", date: t("mockDates.feb9_2026"), customer: t("names.laylaHassan"), course: t("courses.cprCert"), amount: `${t("kpi.sar")} 650`, gateway: "Moyasar" as const, status: "pending" as const },
+    { id: "4", invoiceNumber: "INV-2024-0153", date: t("mockDates.feb9_2026"), customer: t("names.ahmedKhalid"), course: t("courses.emergencyResponse"), amount: `${t("kpi.sar")} 980`, gateway: "Tap" as const, status: "failed" as const },
+    { id: "5", invoiceNumber: "INV-2024-0152", date: t("mockDates.feb8_2026"), customer: t("names.saraMohammed"), course: t("courses.aclsTraining"), amount: `${t("kpi.sar")} 1,200`, gateway: "Tamara" as const, status: "refunded" as const },
+    { id: "6", invoiceNumber: "INV-2024-0151", date: t("mockDates.feb8_2026"), customer: t("names.mohammedAlHarbi"), course: t("courses.infectionControl"), amount: `${t("kpi.sar")} 750`, gateway: "Tap" as const, status: "paid" as const },
+    { id: "7", invoiceNumber: "INV-2024-0150", date: t("mockDates.feb7_2026"), customer: t("names.nouraAlQahtani"), course: t("courses.cprCert"), amount: `${t("kpi.sar")} 650`, gateway: "Tabby" as const, status: "paid" as const },
+    { id: "8", invoiceNumber: "INV-2024-0149", date: t("mockDates.feb7_2026"), customer: t("names.yusufAlRashid"), course: t("courses.emergencyResponse"), amount: `${t("kpi.sar")} 980`, gateway: "Moyasar" as const, status: "pending" as const },
   ];
 
   return (
     <>
-      <FinanceNavbar profile={mockProfile} />
+      <FinanceNavbar profile={profile} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={mockProfile} />
+              <FinanceSidebar profile={profile} />
             </div>
 
-            <FinanceMobileSidebar profile={mockProfile} />
+            <FinanceMobileSidebar profile={profile} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}

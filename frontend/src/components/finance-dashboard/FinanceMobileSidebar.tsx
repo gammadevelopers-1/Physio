@@ -104,7 +104,7 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
         <button
           onClick={() => setIsOpen(false)}
           className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} w-8 h-8 flex items-center justify-center`}
-          aria-label="Close menu"
+          aria-label={t("navbar.closeMenu")}
         >
           <X className="w-6 h-6 text-[#6B7280]" />
         </button>
@@ -115,7 +115,7 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
             {/* Profile Section */}
             <div className="flex flex-col items-center">
               <div className="relative mb-3">
-                <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center relative">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center relative">
                   {profile.avatar ? (
                     <Image
                       src={profile.avatar}
@@ -140,7 +140,7 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
                   </div>
                 </div>
                 <button
-                  className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#059669] rounded-full flex items-center justify-center border-2 border-white`}
+                  className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white`}
                 >
                   <Pencil className="w-3.5 h-3.5 text-white" />
                 </button>
@@ -151,9 +151,9 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
               </h3>
               <p className="text-sm text-[#6B7280] mb-2">{profile.email}</p>
 
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#DCFCE7] rounded-full">
-                <Wallet className="w-4 h-4 text-[#059669]" />
-                <span className="text-sm font-medium text-[#059669]">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FDF6EC] rounded-full">
+                <Wallet className="w-4 h-4 text-[#a37f49]" />
+                <span className="text-sm font-medium text-[#a37f49]">
                   {t("sidebar.financeManager")}
                 </span>
               </div>
@@ -207,12 +207,12 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
                     onClick={() => setIsOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
-                        ? "bg-[#ECFDF5] text-[#059669]"
+                        ? "bg-[#F0F7FF] text-[#002D87]"
                         : "text-[#4B5563] hover:bg-[#F9FAFB]"
                     }`}
                   >
                     <Icon
-                      className={`w-5 h-5 ${active ? "text-[#059669]" : "text-[#6B7280]"}`}
+                      className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[#6B7280]"}`}
                     />
                     <span
                       className={`text-sm flex-1 ${active ? "font-medium" : ""}`}

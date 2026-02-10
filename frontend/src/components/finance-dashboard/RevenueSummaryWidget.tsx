@@ -30,6 +30,44 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
   const isRTL = locale === "ar";
   const [timeFilter, setTimeFilter] = useState("month");
 
+  // Revenue trend data (SAR in thousands)
+  const revenueData = [120, 145, 135, 170, 190, 210, 245];
+  const chartLabels = [t("months.sep"), t("months.oct"), t("months.nov"), t("months.dec"), t("months.jan"), t("months.feb"), t("months.mar")];
+
+  // Generate SVG path for line chart
+  const generateLinePath = (chartData: number[]) => {
+    const width = 100;
+    const height = 100;
+    const padding = 5;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+
+    const maxValue = Math.max(...chartData) * 1.1;
+    const minValue = Math.min(...chartData) * 0.9;
+    const range = maxValue - minValue || 1;
+
+    const points = chartData.map((value, index) => {
+      const x = padding + (index / (chartData.length - 1)) * chartWidth;
+      const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+      return { x, y };
+    });
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const cpx = (prev.x + curr.x) / 2;
+      path += ` Q ${prev.x + (cpx - prev.x) * 0.5} ${prev.y}, ${cpx} ${(prev.y + curr.y) / 2}`;
+      path += ` Q ${cpx + (curr.x - cpx) * 0.5} ${curr.y}, ${curr.x} ${curr.y}`;
+    }
+
+    const areaPath = path + ` L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
+
+    return { linePath: path, areaPath, points };
+  };
+
+  const { linePath, areaPath, points } = generateLinePath(revenueData);
+
   const timeFilters = [
     { key: "week", label: t("revenueSummary.timeFilters.week") },
     { key: "month", label: t("revenueSummary.timeFilters.month") },
@@ -42,7 +80,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-[#059669]" />
+          <TrendingUp className="w-5 h-5 text-[#a37f49]" />
           <h3 className="text-base font-semibold text-[#111827]">
             {t("revenueSummary.title")}
           </h3>
@@ -72,10 +110,75 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
 
       {/* Body */}
       <div className="p-5">
-        {/* Chart Placeholder */}
-        <div className="h-[200px] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB] flex flex-col items-center justify-center text-[#9CA3AF] mb-5">
-          <BarChart3 className="w-8 h-8 mb-2" />
-          <span className="text-sm">{t("revenueSummary.chartPlaceholder")}</span>
+        {/* Revenue Line Chart */}
+        <div className="mb-5">
+          <div className="h-[200px] bg-gradient-to-b from-[#EFF6FF] to-transparent rounded-xl p-4 relative">
+            <svg
+              viewBox="0 0 100 100"
+              className="w-full h-full"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="revenueAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
+                </linearGradient>
+              </defs>
+
+              {[0, 25, 50, 75, 100].map((y) => (
+                <line
+                  key={y}
+                  x1="5"
+                  y1={5 + (90 * (100 - y)) / 100}
+                  x2="95"
+                  y2={5 + (90 * (100 - y)) / 100}
+                  stroke="#E5E7EB"
+                  strokeWidth="0.3"
+                  strokeDasharray="2,2"
+                />
+              ))}
+
+              <path d={areaPath} fill="url(#revenueAreaGradient)" />
+
+              <path
+                d={linePath}
+                fill="none"
+                stroke="#3B82F6"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+
+              {points.map((point, index) => (
+                <g key={index}>
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r="3"
+                    fill="white"
+                    stroke="#3B82F6"
+                    strokeWidth="2"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle
+                    cx={point.x}
+                    cy={point.y}
+                    r="8"
+                    fill="transparent"
+                    className="cursor-pointer"
+                  >
+                    <title>{`${chartLabels[index]}: ${t("kpi.sar")} ${revenueData[index]}K`}</title>
+                  </circle>
+                </g>
+              ))}
+            </svg>
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
+            {chartLabels.map((label, index) => (
+              <span key={index} className="text-center">{label}</span>
+            ))}
+          </div>
         </div>
 
         {/* Breakdown Grid */}

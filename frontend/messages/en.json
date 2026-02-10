@@ -2929,9 +2929,11 @@
       "avgOrderValue": "Avg Order Value",
       "pendingInvoices": "Pending Invoices",
       "refundRate": "Refund Rate",
+      "totalTransactions": "Total Transactions",
       "sar": "SAR",
       "afterRefunds": "After refunds",
-      "totalPending": "SAR {amount} pending"
+      "totalPending": "SAR {amount} pending",
+      "thisMonth": "This month"
     },
     "revenueSummary": {
       "title": "Revenue Summary",
@@ -3009,7 +3011,8 @@
       "active": "Active",
       "disabled": "Disabled",
       "off": "{amount}% off",
-      "fixedOff": "SAR {amount} off"
+      "fixedOff": "SAR {amount} off",
+      "minOrder": "Min: SAR {amount}"
     },
     "transactionFeed": {
       "title": "Recent Transactions",
@@ -3111,6 +3114,7 @@
       },
       "form": {
         "code": "Coupon Code",
+        "codePlaceholder": "e.g., PHYSIO25",
         "type": "Discount Type",
         "percentage": "Percentage (%)",
         "fixedAmount": "Fixed Amount (SAR)",
@@ -3120,6 +3124,10 @@
         "minOrder": "Minimum Order (SAR)",
         "create": "Create Coupon",
         "cancel": "Cancel"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete"
       },
       "analytics": {
         "title": "Usage Analytics",
@@ -3156,7 +3164,15 @@
         "byInstructor": "By Instructor",
         "byGateway": "By Gateway",
         "byStatus": "By Status"
+      },
+      "columns": {
+        "transactions": "Transactions",
+        "growth": "Growth"
       }
+    },
+    "navbar": {
+      "toggleMenu": "Toggle menu",
+      "closeMenu": "Close menu"
     },
     "settingsPage": {
       "title": "Finance Settings",
@@ -3214,11 +3230,76 @@
       "emergencyResponse": "Emergency Response",
       "infectionControl": "Infection Control"
     },
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    },
+    "gateways": {
+      "tap": "Tap",
+      "moyasar": "Moyasar",
+      "tamara": "Tamara",
+      "tabby": "Tabby"
+    },
+    "refundNotes": {
+      "bnplFee": "BNPL fee",
+      "adminFee": "Admin fee",
+      "exceededPeriod": "Exceeded refund period"
+    },
+    "invoicesLabel": "invoices",
     "time": {
       "minAgo": "{count} min ago",
       "hourAgo": "{count} hour ago",
       "hoursAgo": "{count} hours ago",
       "daysAgo": "{count} days ago"
+    },
+    "mockDates": {
+      "feb5_2026": "Feb 5, 2026",
+      "feb6_2026": "Feb 6, 2026",
+      "feb7_2026": "Feb 7, 2026",
+      "feb8_2026": "Feb 8, 2026",
+      "feb9_2026": "Feb 9, 2026",
+      "feb10_2026": "Feb 10, 2026",
+      "feb20_2026": "Feb 20, 2026",
+      "feb22_2026": "Feb 22, 2026",
+      "feb23_2026": "Feb 23, 2026",
+      "feb24_2026": "Feb 24, 2026",
+      "feb25_2026": "Feb 25, 2026",
+      "feb28_2026": "Feb 28, 2026",
+      "mar15_2026": "Mar 15, 2026",
+      "mar31_2026": "Mar 31, 2026",
+      "apr15_2026": "Apr 15, 2026",
+      "jun30_2026": "Jun 30, 2026",
+      "dec31_2025": "Dec 31, 2025",
+      "jan15_2026": "Jan 15, 2026"
+    },
+    "currencyFormats": {
+      "sarFirst": "SAR 1,234.56",
+      "sarLast": "1,234.56 SAR"
+    },
+    "names": {
+      "noraAlFahad": "Nora Al-Fahad",
+      "fatimaAlNoor": "Fatima Al-Noor",
+      "omarAbdullah": "Omar Abdullah",
+      "laylaHassan": "Layla Hassan",
+      "ahmedKhalid": "Ahmed Khalid",
+      "saraMohammed": "Sara Mohammed",
+      "mohammedAlHarbi": "Mohammed Al-Harbi",
+      "nouraAlQahtani": "Noura Al-Qahtani",
+      "yusufAlRashid": "Yusuf Al-Rashid",
+      "ahmedAlRashid": "Ahmed Al-Rashid",
+      "khalidHassan": "Khalid Hassan",
+      "laylaNoor": "Layla Noor",
+      "omarFahad": "Omar Fahad"
     }
   }
 }

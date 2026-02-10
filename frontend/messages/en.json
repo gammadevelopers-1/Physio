@@ -2903,5 +2903,322 @@
         "unifonicSms": "Unifonic SMS"
       }
     }
+  },
+  "financeDashboard": {
+    "title": "Finance Dashboard",
+    "subtitle": "Welcome back, {name}! Here's your financial overview.",
+    "sidebar": {
+      "dashboard": "Dashboard",
+      "payments": "Payments",
+      "invoices": "Invoices",
+      "refunds": "Refunds",
+      "discounts": "Discounts",
+      "reports": "Reports",
+      "settings": "Settings",
+      "financeManager": "Finance Manager",
+      "revenue": "Revenue",
+      "invoicesCount": "Invoices",
+      "refundRate": "Refunds",
+      "viewProfile": "View Profile",
+      "editProfile": "Edit Profile",
+      "logout": "Logout"
+    },
+    "kpi": {
+      "revenueMTD": "Revenue (MTD)",
+      "netRevenue": "Net Revenue",
+      "avgOrderValue": "Avg Order Value",
+      "pendingInvoices": "Pending Invoices",
+      "refundRate": "Refund Rate",
+      "sar": "SAR",
+      "afterRefunds": "After refunds",
+      "totalPending": "SAR {amount} pending"
+    },
+    "revenueSummary": {
+      "title": "Revenue Summary",
+      "viewDetails": "View Details",
+      "chartPlaceholder": "Revenue Trend Chart",
+      "byGateway": "BY GATEWAY",
+      "topCourses": "TOP COURSES",
+      "tapMoyasar": "Tap/Moyasar",
+      "bnplTamara": "BNPL (Tamara/Tabby)",
+      "timeFilters": {
+        "week": "7D",
+        "month": "30D",
+        "quarter": "90D",
+        "year": "1Y"
+      }
+    },
+    "paymentsTable": {
+      "title": "Recent Payments & Invoices",
+      "export": "Export",
+      "searchPlaceholder": "Search invoices...",
+      "filters": {
+        "allStatus": "All Status",
+        "paid": "Paid",
+        "pending": "Pending",
+        "failed": "Failed",
+        "allGateways": "All Gateways"
+      },
+      "columns": {
+        "invoice": "Invoice #",
+        "date": "Date",
+        "customer": "Customer",
+        "course": "Course",
+        "amount": "Amount",
+        "gateway": "Gateway",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "statuses": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "actions": {
+        "view": "View",
+        "download": "Download",
+        "resend": "Resend",
+        "refund": "Refund"
+      },
+      "pagination": {
+        "showing": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "refundsQueue": {
+      "title": "Refunds Queue",
+      "viewAll": "View All",
+      "approve": "Approve",
+      "reject": "Reject",
+      "deduction": "Deduction: {amount}",
+      "reasons": {
+        "personal": "Personal reasons",
+        "courseIssue": "Course issue",
+        "technical": "Technical issue",
+        "duplicate": "Duplicate payment",
+        "dissatisfied": "Dissatisfied with content"
+      }
+    },
+    "discounts": {
+      "title": "Active Coupons",
+      "createCoupon": "Create Coupon",
+      "usage": "{used}/{limit} used",
+      "expired": "Expired",
+      "active": "Active",
+      "disabled": "Disabled",
+      "off": "{amount}% off",
+      "fixedOff": "SAR {amount} off"
+    },
+    "transactionFeed": {
+      "title": "Recent Transactions",
+      "viewAll": "View All Transactions",
+      "income": "paid",
+      "paid": "paid",
+      "refund": "refund",
+      "failed": "failed"
+    },
+    "financialAlerts": {
+      "title": "Financial Alerts",
+      "failedPayments": "{count} Failed Payments",
+      "failedPaymentsDesc": "Retry or contact customers",
+      "pendingInvoices": "{count} Pending Invoices",
+      "pendingInvoicesDesc": "Total: SAR {amount}",
+      "chargeback": "{count} Chargeback",
+      "chargebackDesc": "Respond within 7 days"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "createInvoice": "Create Invoice",
+      "exportReport": "Export Report",
+      "addCoupon": "Add Coupon",
+      "processRefund": "Process Refund"
+    },
+    "paymentsPage": {
+      "title": "Payments Management",
+      "subtitle": "Manage all transactions and payment processing",
+      "retryPayment": "Retry Payment",
+      "exportTransactions": "Export Transactions",
+      "stats": {
+        "totalPayments": "Total Payments",
+        "successRate": "Success Rate",
+        "failedPayments": "Failed",
+        "totalVolume": "Total Volume"
+      }
+    },
+    "invoicesPage": {
+      "title": "Invoice Management",
+      "subtitle": "Create, manage, and track all invoices",
+      "createInvoice": "Create Invoice",
+      "downloadPdf": "Download PDF",
+      "resendEmail": "Resend Email",
+      "statuses": {
+        "issued": "Issued",
+        "paid": "Paid",
+        "overdue": "Overdue",
+        "draft": "Draft"
+      },
+      "stats": {
+        "totalInvoices": "Total Invoices",
+        "paidInvoices": "Paid",
+        "overdueInvoices": "Overdue",
+        "totalAmount": "Total Amount"
+      },
+      "agingReport": "Aging Report",
+      "agingCategories": {
+        "current": "Current (0-30 days)",
+        "days30": "31-60 days",
+        "days60": "61-90 days",
+        "overdue90": "90+ days"
+      }
+    },
+    "refundsPage": {
+      "title": "Refund Management",
+      "subtitle": "Process, track, and analyze refund requests",
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "stats": {
+        "totalRefunds": "Total Refunds",
+        "pendingRefunds": "Pending",
+        "approvedRefunds": "Approved",
+        "refundRate": "Refund Rate"
+      },
+      "deductionRules": "Deduction Rules",
+      "bnplFees": "BNPL processing fees: {percent}%",
+      "adminFee": "Admin fee: SAR {amount}",
+      "addNote": "Add Note",
+      "notePlaceholder": "Enter rejection reason or notes..."
+    },
+    "discountsPage": {
+      "title": "Discount & Coupon Management",
+      "subtitle": "Create and manage coupons, track usage analytics",
+      "createCoupon": "Create Coupon",
+      "tabs": {
+        "active": "Active",
+        "expired": "Expired",
+        "disabled": "Disabled",
+        "all": "All Coupons"
+      },
+      "stats": {
+        "activeCoupons": "Active Coupons",
+        "totalRedemptions": "Total Redemptions",
+        "revenueLift": "Revenue Lift",
+        "avgDiscount": "Avg Discount"
+      },
+      "form": {
+        "code": "Coupon Code",
+        "type": "Discount Type",
+        "percentage": "Percentage (%)",
+        "fixedAmount": "Fixed Amount (SAR)",
+        "courseSpecific": "Course Specific",
+        "usageLimit": "Usage Limit",
+        "expiryDate": "Expiry Date",
+        "minOrder": "Minimum Order (SAR)",
+        "create": "Create Coupon",
+        "cancel": "Cancel"
+      },
+      "analytics": {
+        "title": "Usage Analytics",
+        "totalUsage": "Total Usage",
+        "revenueLift": "Revenue Lift",
+        "cannibalization": "Cannibalization"
+      }
+    },
+    "reportsPage": {
+      "title": "Financial Reports",
+      "subtitle": "Generate and export financial reports for analysis and audits",
+      "generateReport": "Generate Report",
+      "exportExcel": "Export Excel",
+      "exportPdf": "Export PDF",
+      "reportTypes": {
+        "revenue": "Revenue Report",
+        "revenueDesc": "Revenue by course, instructor, and period",
+        "payments": "Payments Report",
+        "paymentsDesc": "Payments by gateway and status",
+        "refunds": "Refunds Report",
+        "refundsDesc": "Refund trends, reasons, and analytics",
+        "summary": "Executive Summary",
+        "summaryDesc": "High-level financial overview"
+      },
+      "filters": {
+        "period": "Period",
+        "thisMonth": "This Month",
+        "lastMonth": "Last Month",
+        "thisQuarter": "This Quarter",
+        "thisYear": "This Year",
+        "custom": "Custom Range",
+        "groupBy": "Group By",
+        "byCourse": "By Course",
+        "byInstructor": "By Instructor",
+        "byGateway": "By Gateway",
+        "byStatus": "By Status"
+      }
+    },
+    "settingsPage": {
+      "title": "Finance Settings",
+      "subtitle": "Configure payment gateways, currency, tax, and refund policies",
+      "tabs": {
+        "gateways": "Payment Gateways",
+        "currency": "Currency",
+        "tax": "Tax Configuration",
+        "refundPolicy": "Refund Policy"
+      },
+      "gateways": {
+        "title": "Payment Gateway Configuration",
+        "tap": "Tap Payments",
+        "moyasar": "Moyasar",
+        "tamara": "Tamara (BNPL)",
+        "tabby": "Tabby (BNPL)",
+        "apiKey": "API Key",
+        "secretKey": "Secret Key",
+        "merchantId": "Merchant ID",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "testMode": "Test Mode",
+        "liveMode": "Live Mode",
+        "save": "Save Configuration"
+      },
+      "currency": {
+        "title": "Currency Settings",
+        "primaryCurrency": "Primary Currency",
+        "sar": "Saudi Riyal (SAR)",
+        "displayFormat": "Display Format",
+        "decimalPlaces": "Decimal Places"
+      },
+      "tax": {
+        "title": "Tax Configuration",
+        "vatEnabled": "VAT Enabled",
+        "vatRate": "VAT Rate (%)",
+        "taxInclusive": "Prices Include Tax",
+        "taxNumber": "Tax Registration Number"
+      },
+      "refundPolicy": {
+        "title": "Refund Policy Rules",
+        "fullRefundDays": "Full Refund Period (days)",
+        "partialRefundDays": "Partial Refund Period (days)",
+        "partialRefundPercent": "Partial Refund Percentage (%)",
+        "bnplDeduction": "BNPL Processing Deduction (%)",
+        "adminFee": "Admin Processing Fee (SAR)",
+        "autoApproveBelow": "Auto-approve Refunds Below (SAR)",
+        "save": "Save Policy"
+      }
+    },
+    "courses": {
+      "aclsTraining": "ACLS Training",
+      "firstAidCert": "First Aid Certification",
+      "cprCert": "CPR Certification",
+      "emergencyResponse": "Emergency Response",
+      "infectionControl": "Infection Control"
+    },
+    "time": {
+      "minAgo": "{count} min ago",
+      "hourAgo": "{count} hour ago",
+      "hoursAgo": "{count} hours ago",
+      "daysAgo": "{count} days ago"
+    }
   }
 }

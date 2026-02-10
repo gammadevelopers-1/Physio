@@ -29,7 +29,8 @@
       "Bash(git fetch:*)",
       "Bash(git pull:*)",
       "Bash(wc:*)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

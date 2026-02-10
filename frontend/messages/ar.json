@@ -3113,5 +3113,322 @@
         "unifonicSms": "يونيفونيك للرسائل"
       }
     }
+  },
+  "financeDashboard": {
+    "title": "لوحة المالية",
+    "subtitle": "مرحبا بعودتك، {name}! إليك نظرتك المالية العامة.",
+    "sidebar": {
+      "dashboard": "لوحة التحكم",
+      "payments": "المدفوعات",
+      "invoices": "الفواتير",
+      "refunds": "المبالغ المستردة",
+      "discounts": "الخصومات",
+      "reports": "التقارير",
+      "settings": "الإعدادات",
+      "financeManager": "مدير المالية",
+      "revenue": "الإيرادات",
+      "invoicesCount": "الفواتير",
+      "refundRate": "المستردات",
+      "viewProfile": "عرض الملف الشخصي",
+      "editProfile": "تعديل الملف الشخصي",
+      "logout": "تسجيل الخروج"
+    },
+    "kpi": {
+      "revenueMTD": "الإيرادات (الشهر الحالي)",
+      "netRevenue": "صافي الإيرادات",
+      "avgOrderValue": "متوسط قيمة الطلب",
+      "pendingInvoices": "الفواتير المعلقة",
+      "refundRate": "معدل الاسترداد",
+      "sar": "ر.س",
+      "afterRefunds": "بعد الاستردادات",
+      "totalPending": "ر.س {amount} معلق"
+    },
+    "revenueSummary": {
+      "title": "ملخص الإيرادات",
+      "viewDetails": "عرض التفاصيل",
+      "chartPlaceholder": "مخطط اتجاه الإيرادات",
+      "byGateway": "حسب البوابة",
+      "topCourses": "أعلى الدورات",
+      "tapMoyasar": "تاب/ميسر",
+      "bnplTamara": "الدفع الآجل (تمارا/تابي)",
+      "timeFilters": {
+        "week": "7 أيام",
+        "month": "30 يوم",
+        "quarter": "90 يوم",
+        "year": "سنة"
+      }
+    },
+    "paymentsTable": {
+      "title": "المدفوعات والفواتير الأخيرة",
+      "export": "تصدير",
+      "searchPlaceholder": "بحث في الفواتير...",
+      "filters": {
+        "allStatus": "جميع الحالات",
+        "paid": "مدفوع",
+        "pending": "معلق",
+        "failed": "فشل",
+        "allGateways": "جميع البوابات"
+      },
+      "columns": {
+        "invoice": "رقم الفاتورة",
+        "date": "التاريخ",
+        "customer": "العميل",
+        "course": "الدورة",
+        "amount": "المبلغ",
+        "gateway": "البوابة",
+        "status": "الحالة",
+        "actions": "الإجراءات"
+      },
+      "statuses": {
+        "paid": "مدفوع",
+        "pending": "معلق",
+        "failed": "فشل",
+        "refunded": "مسترد"
+      },
+      "actions": {
+        "view": "عرض",
+        "download": "تحميل",
+        "resend": "إعادة إرسال",
+        "refund": "استرداد"
+      },
+      "pagination": {
+        "showing": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
+    },
+    "refundsQueue": {
+      "title": "قائمة الاستردادات",
+      "viewAll": "عرض الكل",
+      "approve": "الموافقة",
+      "reject": "الرفض",
+      "deduction": "الخصم: {amount}",
+      "reasons": {
+        "personal": "أسباب شخصية",
+        "courseIssue": "مشكلة في الدورة",
+        "technical": "مشكلة تقنية",
+        "duplicate": "دفع مكرر",
+        "dissatisfied": "غير راضٍ عن المحتوى"
+      }
+    },
+    "discounts": {
+      "title": "القسائم النشطة",
+      "createCoupon": "إنشاء قسيمة",
+      "usage": "{used}/{limit} مستخدم",
+      "expired": "منتهية",
+      "active": "نشطة",
+      "disabled": "معطلة",
+      "off": "خصم {amount}%",
+      "fixedOff": "خصم ر.س {amount}"
+    },
+    "transactionFeed": {
+      "title": "المعاملات الأخيرة",
+      "viewAll": "عرض جميع المعاملات",
+      "income": "دفع",
+      "paid": "دفع",
+      "refund": "استرداد",
+      "failed": "فشل"
+    },
+    "financialAlerts": {
+      "title": "التنبيهات المالية",
+      "failedPayments": "{count} مدفوعات فاشلة",
+      "failedPaymentsDesc": "أعد المحاولة أو تواصل مع العملاء",
+      "pendingInvoices": "{count} فاتورة معلقة",
+      "pendingInvoicesDesc": "الإجمالي: ر.س {amount}",
+      "chargeback": "{count} رد مبالغ",
+      "chargebackDesc": "الرد خلال 7 أيام"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "createInvoice": "إنشاء فاتورة",
+      "exportReport": "تصدير تقرير",
+      "addCoupon": "إضافة قسيمة",
+      "processRefund": "معالجة استرداد"
+    },
+    "paymentsPage": {
+      "title": "إدارة المدفوعات",
+      "subtitle": "إدارة جميع المعاملات ومعالجة المدفوعات",
+      "retryPayment": "إعادة المحاولة",
+      "exportTransactions": "تصدير المعاملات",
+      "stats": {
+        "totalPayments": "إجمالي المدفوعات",
+        "successRate": "معدل النجاح",
+        "failedPayments": "فاشلة",
+        "totalVolume": "إجمالي الحجم"
+      }
+    },
+    "invoicesPage": {
+      "title": "إدارة الفواتير",
+      "subtitle": "إنشاء وإدارة وتتبع جميع الفواتير",
+      "createInvoice": "إنشاء فاتورة",
+      "downloadPdf": "تحميل PDF",
+      "resendEmail": "إعادة إرسال البريد",
+      "statuses": {
+        "issued": "صادرة",
+        "paid": "مدفوعة",
+        "overdue": "متأخرة",
+        "draft": "مسودة"
+      },
+      "stats": {
+        "totalInvoices": "إجمالي الفواتير",
+        "paidInvoices": "مدفوعة",
+        "overdueInvoices": "متأخرة",
+        "totalAmount": "إجمالي المبلغ"
+      },
+      "agingReport": "تقرير التقادم",
+      "agingCategories": {
+        "current": "حالي (0-30 يوم)",
+        "days30": "31-60 يوم",
+        "days60": "61-90 يوم",
+        "overdue90": "أكثر من 90 يوم"
+      }
+    },
+    "refundsPage": {
+      "title": "إدارة الاستردادات",
+      "subtitle": "معالجة وتتبع وتحليل طلبات الاسترداد",
+      "tabs": {
+        "pending": "معلقة",
+        "approved": "موافق عليها",
+        "rejected": "مرفوضة"
+      },
+      "stats": {
+        "totalRefunds": "إجمالي الاستردادات",
+        "pendingRefunds": "معلقة",
+        "approvedRefunds": "موافق عليها",
+        "refundRate": "معدل الاسترداد"
+      },
+      "deductionRules": "قواعد الخصم",
+      "bnplFees": "رسوم الدفع الآجل: {percent}%",
+      "adminFee": "رسوم إدارية: ر.س {amount}",
+      "addNote": "إضافة ملاحظة",
+      "notePlaceholder": "أدخل سبب الرفض أو الملاحظات..."
+    },
+    "discountsPage": {
+      "title": "إدارة الخصومات والقسائم",
+      "subtitle": "إنشاء وإدارة القسائم، تتبع تحليلات الاستخدام",
+      "createCoupon": "إنشاء قسيمة",
+      "tabs": {
+        "active": "نشطة",
+        "expired": "منتهية",
+        "disabled": "معطلة",
+        "all": "جميع القسائم"
+      },
+      "stats": {
+        "activeCoupons": "القسائم النشطة",
+        "totalRedemptions": "إجمالي الاستخدامات",
+        "revenueLift": "زيادة الإيرادات",
+        "avgDiscount": "متوسط الخصم"
+      },
+      "form": {
+        "code": "رمز القسيمة",
+        "type": "نوع الخصم",
+        "percentage": "نسبة مئوية (%)",
+        "fixedAmount": "مبلغ ثابت (ر.س)",
+        "courseSpecific": "خاص بدورة معينة",
+        "usageLimit": "حد الاستخدام",
+        "expiryDate": "تاريخ الانتهاء",
+        "minOrder": "الحد الأدنى للطلب (ر.س)",
+        "create": "إنشاء القسيمة",
+        "cancel": "إلغاء"
+      },
+      "analytics": {
+        "title": "تحليلات الاستخدام",
+        "totalUsage": "إجمالي الاستخدام",
+        "revenueLift": "زيادة الإيرادات",
+        "cannibalization": "تأثير سلبي"
+      }
+    },
+    "reportsPage": {
+      "title": "التقارير المالية",
+      "subtitle": "إنشاء وتصدير التقارير المالية للتحليل والتدقيق",
+      "generateReport": "إنشاء تقرير",
+      "exportExcel": "تصدير Excel",
+      "exportPdf": "تصدير PDF",
+      "reportTypes": {
+        "revenue": "تقرير الإيرادات",
+        "revenueDesc": "الإيرادات حسب الدورة والمدرب والفترة",
+        "payments": "تقرير المدفوعات",
+        "paymentsDesc": "المدفوعات حسب البوابة والحالة",
+        "refunds": "تقرير الاستردادات",
+        "refundsDesc": "اتجاهات الاسترداد والأسباب والتحليلات",
+        "summary": "الملخص التنفيذي",
+        "summaryDesc": "نظرة مالية عامة عالية المستوى"
+      },
+      "filters": {
+        "period": "الفترة",
+        "thisMonth": "هذا الشهر",
+        "lastMonth": "الشهر الماضي",
+        "thisQuarter": "هذا الربع",
+        "thisYear": "هذا العام",
+        "custom": "نطاق مخصص",
+        "groupBy": "تجميع حسب",
+        "byCourse": "حسب الدورة",
+        "byInstructor": "حسب المدرب",
+        "byGateway": "حسب البوابة",
+        "byStatus": "حسب الحالة"
+      }
+    },
+    "settingsPage": {
+      "title": "إعدادات المالية",
+      "subtitle": "تكوين بوابات الدفع والعملة والضرائب وسياسات الاسترداد",
+      "tabs": {
+        "gateways": "بوابات الدفع",
+        "currency": "العملة",
+        "tax": "تكوين الضرائب",
+        "refundPolicy": "سياسة الاسترداد"
+      },
+      "gateways": {
+        "title": "تكوين بوابات الدفع",
+        "tap": "تاب للمدفوعات",
+        "moyasar": "ميسر",
+        "tamara": "تمارا (الدفع الآجل)",
+        "tabby": "تابي (الدفع الآجل)",
+        "apiKey": "مفتاح API",
+        "secretKey": "المفتاح السري",
+        "merchantId": "معرف التاجر",
+        "enabled": "مفعل",
+        "disabled": "معطل",
+        "testMode": "وضع الاختبار",
+        "liveMode": "الوضع المباشر",
+        "save": "حفظ الإعدادات"
+      },
+      "currency": {
+        "title": "إعدادات العملة",
+        "primaryCurrency": "العملة الرئيسية",
+        "sar": "الريال السعودي (ر.س)",
+        "displayFormat": "تنسيق العرض",
+        "decimalPlaces": "المنازل العشرية"
+      },
+      "tax": {
+        "title": "تكوين الضرائب",
+        "vatEnabled": "ضريبة القيمة المضافة مفعلة",
+        "vatRate": "نسبة الضريبة (%)",
+        "taxInclusive": "الأسعار شاملة الضريبة",
+        "taxNumber": "رقم التسجيل الضريبي"
+      },
+      "refundPolicy": {
+        "title": "قواعد سياسة الاسترداد",
+        "fullRefundDays": "فترة الاسترداد الكامل (أيام)",
+        "partialRefundDays": "فترة الاسترداد الجزئي (أيام)",
+        "partialRefundPercent": "نسبة الاسترداد الجزئي (%)",
+        "bnplDeduction": "خصم معالجة الدفع الآجل (%)",
+        "adminFee": "رسوم المعالجة الإدارية (ر.س)",
+        "autoApproveBelow": "الموافقة التلقائية أقل من (ر.س)",
+        "save": "حفظ السياسة"
+      }
+    },
+    "courses": {
+      "aclsTraining": "تدريب دعم الحياة القلبي المتقدم",
+      "firstAidCert": "شهادة الإسعافات الأولية",
+      "cprCert": "شهادة الإنعاش القلبي",
+      "emergencyResponse": "الاستجابة للطوارئ",
+      "infectionControl": "مكافحة العدوى"
+    },
+    "time": {
+      "minAgo": "منذ {count} دقيقة",
+      "hourAgo": "منذ {count} ساعة",
+      "hoursAgo": "منذ {count} ساعات",
+      "daysAgo": "منذ {count} أيام"
+    }
   }
 }

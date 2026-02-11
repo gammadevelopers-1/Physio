@@ -47,37 +47,37 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/finance-dashboard`,
+      href: `/${locale}/dashboard/finance`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.payments"),
-      href: `/${locale}/finance-dashboard/payments`,
+      href: `/${locale}/dashboard/finance/payments`,
       icon: CreditCard,
     },
     {
       label: tDashboard("sidebar.invoices"),
-      href: `/${locale}/finance-dashboard/invoices`,
+      href: `/${locale}/dashboard/finance/invoices`,
       icon: FileText,
     },
     {
       label: tDashboard("sidebar.refunds"),
-      href: `/${locale}/finance-dashboard/refunds`,
+      href: `/${locale}/dashboard/finance/refunds`,
       icon: RotateCcw,
     },
     {
       label: tDashboard("sidebar.discounts"),
-      href: `/${locale}/finance-dashboard/discounts`,
+      href: `/${locale}/dashboard/finance/discounts`,
       icon: Tag,
     },
     {
       label: tDashboard("sidebar.reports"),
-      href: `/${locale}/finance-dashboard/reports`,
+      href: `/${locale}/dashboard/finance/reports`,
       icon: BarChart3,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/finance-dashboard/settings`,
+      href: `/${locale}/dashboard/finance/settings`,
       icon: Settings,
     },
   ];
@@ -259,7 +259,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/finance-dashboard`}
+                  href={`/${locale}/dashboard/finance`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -267,7 +267,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
                   {tDashboard("sidebar.dashboard")}
                 </Link>
                 <Link
-                  href={`/${locale}/finance-dashboard/settings`}
+                  href={`/${locale}/dashboard/finance/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >

@@ -42,42 +42,42 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/student-dashboard`,
+      href: `/${locale}/dashboard/student`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.courses"),
-      href: `/${locale}/student-dashboard/courses`,
+      href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
     },
     {
       label: t("sidebar.favorites"),
-      href: `/${locale}/student-dashboard/favourites`,
+      href: `/${locale}/dashboard/student/favourites`,
       icon: Heart,
     },
     {
       label: t("sidebar.certifications"),
-      href: `/${locale}/student-dashboard/certifications`,
+      href: `/${locale}/dashboard/student/certifications`,
       icon: Award,
     },
     {
       label: t("sidebar.badges"),
-      href: `/${locale}/student-dashboard/badges`,
+      href: `/${locale}/dashboard/student/badges`,
       icon: BadgeCheck,
     },
     {
       label: t("sidebar.invoices"),
-      href: `/${locale}/student-dashboard/invoices`,
+      href: `/${locale}/dashboard/student/invoices`,
       icon: FileText,
     },
     {
       label: t("sidebar.inviteFriends"),
-      href: `/${locale}/student-dashboard/invite-friends`,
+      href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/student-dashboard/settings`,
+      href: `/${locale}/dashboard/student/settings`,
       icon: Settings,
     },
   ];

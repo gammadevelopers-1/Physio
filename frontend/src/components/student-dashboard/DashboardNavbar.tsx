@@ -48,42 +48,42 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/student-dashboard`,
+      href: `/${locale}/dashboard/student`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.courses"),
-      href: `/${locale}/student-dashboard/courses`,
+      href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
     },
     {
       label: tDashboard("sidebar.favorites"),
-      href: `/${locale}/student-dashboard/favourites`,
+      href: `/${locale}/dashboard/student/favourites`,
       icon: Heart,
     },
     {
       label: tDashboard("sidebar.certifications"),
-      href: `/${locale}/student-dashboard/certifications`,
+      href: `/${locale}/dashboard/student/certifications`,
       icon: Award,
     },
     {
       label: tDashboard("sidebar.badges"),
-      href: `/${locale}/student-dashboard/badges`,
+      href: `/${locale}/dashboard/student/badges`,
       icon: BadgeCheck,
     },
     {
       label: tDashboard("sidebar.invoices"),
-      href: `/${locale}/student-dashboard/invoices`,
+      href: `/${locale}/dashboard/student/invoices`,
       icon: FileText,
     },
     {
       label: tDashboard("sidebar.inviteFriends"),
-      href: `/${locale}/student-dashboard/invite-friends`,
+      href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/student-dashboard/settings`,
+      href: `/${locale}/dashboard/student/settings`,
       icon: Settings,
     },
   ];
@@ -151,7 +151,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                     {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href={`/${locale}/student-dashboard/courses`}
+                    href={`/${locale}/dashboard/student/courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsCoursesOpen(false)}
                   >
@@ -254,7 +254,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/student-dashboard`}
+                  href={`/${locale}/dashboard/student`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -262,7 +262,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                   Dashboard
                 </Link>
                 <Link
-                  href={`/${locale}/student-dashboard/settings`}
+                  href={`/${locale}/dashboard/student/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >

@@ -45,7 +45,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
           </h3>
         </div>
         <Link
-          href={`/${locale}/admin-dashboard/finance`}
+          href={`/${locale}/dashboard/admin/finance`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           {t("finance.viewReports")}

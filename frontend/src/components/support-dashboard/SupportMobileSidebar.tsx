@@ -41,39 +41,39 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/support-dashboard`,
+      href: `/${locale}/dashboard/support`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.allTickets"),
-      href: `/${locale}/support-dashboard/tickets`,
+      href: `/${locale}/dashboard/support/tickets`,
       icon: ClipboardList,
       badge: 23,
     },
     {
       label: t("sidebar.myTickets"),
-      href: `/${locale}/support-dashboard/my-tickets`,
+      href: `/${locale}/dashboard/support/my-tickets`,
       icon: Inbox,
       badge: 8,
     },
     {
       label: t("sidebar.team"),
-      href: `/${locale}/support-dashboard/team`,
+      href: `/${locale}/dashboard/support/team`,
       icon: Users,
     },
     {
       label: t("sidebar.knowledgeBase"),
-      href: `/${locale}/support-dashboard/kb`,
+      href: `/${locale}/dashboard/support/kb`,
       icon: BookOpen,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/support-dashboard/reports`,
+      href: `/${locale}/dashboard/support/reports`,
       icon: BarChart3,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/support-dashboard/settings`,
+      href: `/${locale}/dashboard/support/settings`,
       icon: Settings,
     },
   ];

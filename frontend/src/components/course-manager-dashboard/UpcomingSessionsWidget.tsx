@@ -103,7 +103,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
         {/* View All Link */}
         <div className="text-center pt-4 border-t border-[#E5E7EB] mt-4">
           <Link
-            href={`/${locale}/course-manager-dashboard/sessions`}
+            href={`/${locale}/dashboard/manager/sessions`}
             className="text-[13px] font-medium text-[var(--blue-brand-blue)] hover:underline inline-flex items-center gap-1"
           >
             {t("upcomingSessions.viewAll")}

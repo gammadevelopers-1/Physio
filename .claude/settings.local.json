@@ -46,7 +46,8 @@
       "Bash(npx next build:*)",
       "Bash(cat:*)",
       "Bash(xargs:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(/tmp/fix-imports.js << 'SCRIPT'\nconst fs = require\\('fs'\\);\nconst path = require\\('path'\\);\nconst { execSync } = require\\('child_process'\\);\n\nconst cwd = '/home/haseeb-raza/Desktop/physioguidance/frontend';\n\n// Only fix page files in \\(dashboards\\) — component imports got wrongly changed\nconst pageFiles = execSync\\(\n  'find \"src/app/[locale]/\\(dashboards\\)\" -name \"*.tsx\"',\n  { encoding: 'utf-8', cwd }\n\\).trim\\(\\).split\\('\\\\n'\\).filter\\(Boolean\\);\n\n// Reverse the import path changes \\(restore @/components/{name}-dashboard\\)\nconst importFixes = [\n  [/@\\\\/components\\\\/dashboard\\\\/manager/g, '@/components/course-manager-dashboard'],\n  [/@\\\\/components\\\\/dashboard\\\\/instructor/g, '@/components/instructor-dashboard'],\n  [/@\\\\/components\\\\/dashboard\\\\/student/g, '@/components/student-dashboard'],\n  [/@\\\\/components\\\\/dashboard\\\\/support/g, '@/components/support-dashboard'],\n  [/@\\\\/components\\\\/dashboard\\\\/finance/g, '@/components/finance-dashboard'],\n  [/@\\\\/components\\\\/dashboard\\\\/admin/g, '@/components/admin-dashboard'],\n];\n\nlet totalChanges = 0;\nlet changedFiles = [];\n\nfor \\(const file of pageFiles\\) {\n  const filePath = path.join\\(cwd, file\\);\n  if \\(!fs.existsSync\\(filePath\\)\\) continue;\n\n  let content = fs.readFileSync\\(filePath, 'utf-8'\\);\n  let original = content;\n\n  for \\(const [pattern, replacement] of importFixes\\) {\n    content = content.replace\\(pattern, replacement\\);\n  }\n\n  if \\(content !== original\\) {\n    fs.writeFileSync\\(filePath, content, 'utf-8'\\);\n    changedFiles.push\\(file\\);\n    totalChanges++;\n  }\n}\n\nconsole.log\\('Fixed ' + totalChanges + ' files:'\\);\nchangedFiles.forEach\\(f => console.log\\('  ' + f\\)\\);\nSCRIPT)"
     ]
   }
 }

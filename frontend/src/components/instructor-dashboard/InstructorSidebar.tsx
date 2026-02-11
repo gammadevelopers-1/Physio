@@ -39,47 +39,47 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/instructor-dashboard`,
+      href: `/${locale}/dashboard/instructor`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.myCourses"),
-      href: `/${locale}/instructor-dashboard/courses`,
+      href: `/${locale}/dashboard/instructor/courses`,
       icon: BookOpen,
     },
     {
       label: t("sidebar.sessions"),
-      href: `/${locale}/instructor-dashboard/sessions`,
+      href: `/${locale}/dashboard/instructor/sessions`,
       icon: Calendar,
     },
     {
       label: t("sidebar.students"),
-      href: `/${locale}/instructor-dashboard/students`,
+      href: `/${locale}/dashboard/instructor/students`,
       icon: Users,
     },
     {
       label: t("sidebar.assessments"),
-      href: `/${locale}/instructor-dashboard/assessments`,
+      href: `/${locale}/dashboard/instructor/assessments`,
       icon: ClipboardCheck,
     },
     {
       label: t("sidebar.certificates"),
-      href: `/${locale}/instructor-dashboard/certificates`,
+      href: `/${locale}/dashboard/instructor/certificates`,
       icon: Award,
     },
     {
       label: t("sidebar.content"),
-      href: `/${locale}/instructor-dashboard/content`,
+      href: `/${locale}/dashboard/instructor/content`,
       icon: Upload,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/instructor-dashboard/reports`,
+      href: `/${locale}/dashboard/instructor/reports`,
       icon: BarChart3,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/instructor-dashboard/settings`,
+      href: `/${locale}/dashboard/instructor/settings`,
       icon: Settings,
     },
   ];

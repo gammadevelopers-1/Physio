@@ -70,7 +70,7 @@ const NELCComplianceOverviewWidget = ({
           </h3>
         </div>
         <Link
-          href={`/${locale}/admin-dashboard/compliance`}
+          href={`/${locale}/dashboard/admin/compliance`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           {t("compliance.fullMatrix")}

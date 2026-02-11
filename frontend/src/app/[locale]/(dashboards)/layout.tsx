@@ -1,6 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 
-export default async function CourseManagerDashboardLayout({
+export default async function DashboardsLayout({
   children,
   params,
 }: {

@@ -127,7 +127,7 @@ const FinanceRightSidebar = ({
 
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
           <Link
-            href={`/${locale}/finance-dashboard/payments`}
+            href={`/${locale}/dashboard/finance/payments`}
             className="text-[13px] font-medium text-[#a37f49] hover:text-[#6b4e24] hover:underline"
           >
             {t("transactionFeed.viewAll")}

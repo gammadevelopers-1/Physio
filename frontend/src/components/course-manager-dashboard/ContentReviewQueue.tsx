@@ -130,7 +130,7 @@ const ContentReviewQueue = ({
         {/* View All Link */}
         <div className="text-center pt-3 border-t border-[#E5E7EB] mt-3">
           <Link
-            href={`/${locale}/course-manager-dashboard/content-review`}
+            href={`/${locale}/dashboard/manager/content-review`}
             className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"
           >
             {t("contentReview.viewAll")}

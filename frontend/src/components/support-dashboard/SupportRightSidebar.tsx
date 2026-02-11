@@ -174,7 +174,7 @@ const SupportRightSidebar = () => {
 
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
           <Link
-            href={`/${locale}/support-dashboard/activity`}
+            href={`/${locale}/dashboard/support/activity`}
             className="text-[13px] font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center justify-center gap-1"
           >
             {t("activity.viewAll")}

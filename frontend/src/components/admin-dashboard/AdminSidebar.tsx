@@ -41,54 +41,54 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/admin-dashboard`,
+      href: `/${locale}/dashboard/admin`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.users"),
-      href: `/${locale}/admin-dashboard/users`,
+      href: `/${locale}/dashboard/admin/users`,
       icon: Users,
       badge: 5,
     },
     {
       label: t("sidebar.roles"),
-      href: `/${locale}/admin-dashboard/roles`,
+      href: `/${locale}/dashboard/admin/roles`,
       icon: Shield,
     },
     {
       label: t("sidebar.courses"),
-      href: `/${locale}/admin-dashboard/courses`,
+      href: `/${locale}/dashboard/admin/courses`,
       icon: BookOpen,
     },
     {
       label: t("sidebar.finance"),
-      href: `/${locale}/admin-dashboard/finance`,
+      href: `/${locale}/dashboard/admin/finance`,
       icon: DollarSign,
     },
     {
       label: t("sidebar.security"),
-      href: `/${locale}/admin-dashboard/security`,
+      href: `/${locale}/dashboard/admin/security`,
       icon: Lock,
       badge: 2,
     },
     {
       label: t("sidebar.compliance"),
-      href: `/${locale}/admin-dashboard/compliance`,
+      href: `/${locale}/dashboard/admin/compliance`,
       icon: FileText,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/admin-dashboard/reports`,
+      href: `/${locale}/dashboard/admin/reports`,
       icon: BarChart3,
     },
     {
       label: t("sidebar.logs"),
-      href: `/${locale}/admin-dashboard/logs`,
+      href: `/${locale}/dashboard/admin/logs`,
       icon: ClipboardList,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/admin-dashboard/settings`,
+      href: `/${locale}/dashboard/admin/settings`,
       icon: Settings,
     },
   ];

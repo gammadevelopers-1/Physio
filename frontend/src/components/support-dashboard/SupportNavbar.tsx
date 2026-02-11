@@ -47,39 +47,39 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/support-dashboard`,
+      href: `/${locale}/dashboard/support`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.allTickets"),
-      href: `/${locale}/support-dashboard/tickets`,
+      href: `/${locale}/dashboard/support/tickets`,
       icon: ClipboardList,
       badge: 23,
     },
     {
       label: tDashboard("sidebar.myTickets"),
-      href: `/${locale}/support-dashboard/my-tickets`,
+      href: `/${locale}/dashboard/support/my-tickets`,
       icon: Inbox,
       badge: 8,
     },
     {
       label: tDashboard("sidebar.team"),
-      href: `/${locale}/support-dashboard/team`,
+      href: `/${locale}/dashboard/support/team`,
       icon: Users,
     },
     {
       label: tDashboard("sidebar.knowledgeBase"),
-      href: `/${locale}/support-dashboard/kb`,
+      href: `/${locale}/dashboard/support/kb`,
       icon: BookOpen,
     },
     {
       label: tDashboard("sidebar.reports"),
-      href: `/${locale}/support-dashboard/reports`,
+      href: `/${locale}/dashboard/support/reports`,
       icon: BarChart3,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/support-dashboard/settings`,
+      href: `/${locale}/dashboard/support/settings`,
       icon: Settings,
     },
   ];
@@ -261,7 +261,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/support-dashboard`}
+                  href={`/${locale}/dashboard/support`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -269,7 +269,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
                   {tDashboard("sidebar.dashboard")}
                 </Link>
                 <Link
-                  href={`/${locale}/support-dashboard/settings`}
+                  href={`/${locale}/dashboard/support/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >

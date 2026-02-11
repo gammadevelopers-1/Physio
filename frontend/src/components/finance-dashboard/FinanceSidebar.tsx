@@ -38,39 +38,39 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/finance-dashboard`,
+      href: `/${locale}/dashboard/finance`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.payments"),
-      href: `/${locale}/finance-dashboard/payments`,
+      href: `/${locale}/dashboard/finance/payments`,
       icon: CreditCard,
     },
     {
       label: t("sidebar.invoices"),
-      href: `/${locale}/finance-dashboard/invoices`,
+      href: `/${locale}/dashboard/finance/invoices`,
       icon: FileText,
       badge: 12,
     },
     {
       label: t("sidebar.refunds"),
-      href: `/${locale}/finance-dashboard/refunds`,
+      href: `/${locale}/dashboard/finance/refunds`,
       icon: RotateCcw,
       badge: 5,
     },
     {
       label: t("sidebar.discounts"),
-      href: `/${locale}/finance-dashboard/discounts`,
+      href: `/${locale}/dashboard/finance/discounts`,
       icon: Tag,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/finance-dashboard/reports`,
+      href: `/${locale}/dashboard/finance/reports`,
       icon: BarChart3,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/finance-dashboard/settings`,
+      href: `/${locale}/dashboard/finance/settings`,
       icon: Settings,
     },
   ];

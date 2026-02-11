@@ -60,7 +60,7 @@ const CatalogOverviewWidget = ({ courses }: CatalogOverviewWidgetProps) => {
           </h3>
         </div>
         <Link
-          href={`/${locale}/course-manager-dashboard/courses`}
+          href={`/${locale}/dashboard/manager/courses`}
           className="flex items-center gap-1 text-sm font-medium text-[var(--blue-brand-blue)] hover:underline"
         >
           {t("catalog.viewAll")}

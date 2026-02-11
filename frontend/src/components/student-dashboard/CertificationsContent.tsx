@@ -162,7 +162,7 @@ const CertificationsContent = () => {
 
                           {/* View Certificate Button */}
                           <Link
-                            href={`/${locale}/student-dashboard/certifications/${certificate.id}`}
+                            href={`/${locale}/dashboard/student/certifications/${certificate.id}`}
                             className="block w-full py-2 sm:py-2.5 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
                           >
                             {t("certifications.viewCertificate")}

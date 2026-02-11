@@ -46,6 +46,8 @@ COPY --from=builder --chown=strapi:nodejs /app/database ./database
 # Copy compiled JS config files so Strapi can load them in production
 COPY --from=builder --chown=strapi:nodejs /app/dist/config ./config
 COPY --from=builder --chown=strapi:nodejs /app/dist/src ./src
+# Copy admin panel build to where @strapi/admin server expects it
+COPY --from=builder --chown=strapi:nodejs /app/dist/build ./node_modules/@strapi/admin/dist/server/server/build
 
 # Create uploads directory
 RUN mkdir -p /app/public/uploads && chown -R strapi:nodejs /app/public/uploads

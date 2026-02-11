@@ -23,6 +23,7 @@ import {
   BarChart3,
   Bell,
 } from "lucide-react";
+import { useAuth } from "@/contexts";
 
 interface FinanceProfile {
   name: string;
@@ -43,6 +44,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+  const { logout } = useAuth();
 
   const dashboardNavItems = [
     {
@@ -275,7 +277,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
                   {tDashboard("sidebar.settings")}
                 </Link>
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
-                <button className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
+                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
                   {tDashboard("sidebar.logout")}
                 </button>
@@ -416,7 +418,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
             </div>
 
             {/* Logout Button */}
-            <button className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
+            <button onClick={logout} className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
               {tDashboard("sidebar.logout")}
             </button>

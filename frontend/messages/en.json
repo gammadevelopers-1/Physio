@@ -2302,7 +2302,10 @@
         "admin": "Admin",
         "instructor": "Instructor",
         "student": "Student",
-        "manager": "Manager"
+        "manager": "Manager",
+        "finance": "Finance",
+        "support": "Support",
+        "super_admin": "Super Admin"
       },
       "statuses": {
         "active": "Active",

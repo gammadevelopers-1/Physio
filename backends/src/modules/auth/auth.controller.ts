@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Delete,
+  Patch,
   Body,
   Req,
   Res,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, SwitchRoleDto, AssignRoleDto } from './dto';
+import { RegisterDto, LoginDto, SwitchRoleDto, AssignRoleDto, CreateUserDto, UpdateUserDto, CreateRoleDto, UpdateRoleDto } from './dto';
 import { JwtAuthGuard, RolesGuard } from './guards';
 import { CurrentUser, Public, Roles } from './decorators';
 import { UserRole, RoleName } from '../../database/schema';
@@ -51,7 +52,7 @@ export class AuthController {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: '/api/auth',
     });
@@ -81,7 +82,7 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       path: '/api/auth',
     });
 
@@ -117,7 +118,7 @@ export class AuthController {
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/api/auth',
     });
@@ -172,7 +173,7 @@ export class AuthController {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
       path: '/api/auth',
     });
 
@@ -229,5 +230,87 @@ export class AuthController {
     @Param('role') role: string,
   ) {
     return this.authService.removeRole(userId, role as RoleName);
+  }
+
+  // ===========================================
+  // Admin: Create User
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Post('users')
+  async createUser(
+    @Body() dto: CreateUserDto,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.authService.createUser(dto, adminId);
+  }
+
+  // ===========================================
+  // Admin: Update User
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Patch('users/:id')
+  async updateUser(
+    @Param('id') userId: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.authService.updateUser(userId, dto);
+  }
+
+  // ===========================================
+  // Admin: Delete User
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Delete('users/:id')
+  async deleteUser(
+    @Param('id') userId: string,
+    @CurrentUser('id') adminId: string,
+  ) {
+    return this.authService.deleteUser(userId, adminId);
+  }
+
+  // ===========================================
+  // Admin: Get All Roles (with user counts)
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('roles')
+  async getAllRoles() {
+    return this.authService.getAllRoles();
+  }
+
+  // ===========================================
+  // Admin: Create Role
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Post('roles')
+  async createRole(@Body() dto: CreateRoleDto) {
+    return this.authService.createRole(dto);
+  }
+
+  // ===========================================
+  // Admin: Update Role
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Patch('roles/:id')
+  async updateRole(
+    @Param('id') roleId: string,
+    @Body() dto: UpdateRoleDto,
+  ) {
+    return this.authService.updateRole(roleId, dto);
+  }
+
+  // ===========================================
+  // Admin: Delete Role
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Delete('roles/:id')
+  async deleteRole(@Param('id') roleId: string) {
+    return this.authService.deleteRole(roleId);
   }
 }

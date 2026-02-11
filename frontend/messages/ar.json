@@ -2514,7 +2514,10 @@
         "admin": "مشرف",
         "instructor": "مدرب",
         "student": "طالب",
-        "manager": "مدير"
+        "manager": "مدير",
+        "finance": "مالية",
+        "support": "دعم",
+        "super_admin": "مشرف أعلى"
       },
       "statuses": {
         "active": "نشط",

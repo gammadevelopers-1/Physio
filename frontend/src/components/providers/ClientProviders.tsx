@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts';
 
 interface ClientProvidersProps {
@@ -8,5 +9,17 @@ interface ClientProvidersProps {
 }
 
 export function ClientProviders({ children }: ClientProvidersProps) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return (
+    <AuthProvider>
+      {children}
+      <Toaster
+        position="top-right"
+        richColors
+        closeButton
+        toastOptions={{
+          duration: 4000,
+        }}
+      />
+    </AuthProvider>
+  );
 }

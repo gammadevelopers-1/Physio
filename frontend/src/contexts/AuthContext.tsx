@@ -5,10 +5,14 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
+  useRef,
   ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import { toast } from 'sonner';
+import { authApi, setAccessToken, removeAccessToken } from '@/lib/api';
 import type { User } from '@/lib/api';
 
 // ===========================================
@@ -20,12 +24,20 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+interface TwoFactorPending {
+  challengeId: string;
+  email: string;
+}
+
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
+  verify2FA: (challengeId: string, code: string) => Promise<void>;
+  resend2FA: (challengeId: string) => Promise<{ challengeId: string }>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (role: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+  twoFactorPending: TwoFactorPending | null;
 }
 
 interface RegisterData {
@@ -57,20 +69,15 @@ function getDashboardPath(role: string): string {
   return ROLE_DASHBOARD_PATHS[role] || '/dashboard/student';
 }
 
-// ===========================================
-// Mock user for demo mode (no backend required)
-// ===========================================
-const MOCK_USER: User = {
-  id: 'mock-user-1',
-  email: 'demo@physioguidance.org',
-  firstName: 'Demo',
-  lastName: 'User',
-  roles: ['ADMIN', 'STUDENT', 'INSTRUCTOR', 'MANAGER', 'FINANCE', 'SUPPORT'],
-  activeRole: 'ADMIN',
-  isActive: true,
-  isVerified: true,
-  createdAt: new Date().toISOString(),
-};
+// Session cookie helpers — used by Next.js middleware to gate protected routes.
+// This is NOT a security token; actual auth is validated via JWT + httpOnly refresh cookie.
+function setSessionCookie() {
+  document.cookie = 'session=active; path=/; max-age=604800; SameSite=Lax';
+}
+
+function clearSessionCookie() {
+  document.cookie = 'session=; path=/; max-age=0; SameSite=Lax';
+}
 
 // ===========================================
 // Provider
@@ -79,63 +86,252 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const locale = useLocale();
   const [state, setState] = useState<AuthState>({
-    user: MOCK_USER,
-    isLoading: false,
-    isAuthenticated: true,
+    user: null,
+    isLoading: true,
+    isAuthenticated: false,
   });
+  const [twoFactorPending, setTwoFactorPending] = useState<TwoFactorPending | null>(null);
+  const initAttempted = useRef(false);
 
-  // Login (mock - no backend call)
+  // On mount: try to restore session via refresh token cookie
+  useEffect(() => {
+    if (initAttempted.current) return;
+    initAttempted.current = true;
+
+    const initAuth = async () => {
+      try {
+        const refreshResponse = await authApi.refresh();
+        setAccessToken(refreshResponse.accessToken);
+
+        const user = await authApi.me();
+        setSessionCookie();
+        setState({
+          user,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+      } catch {
+        removeAccessToken();
+        clearSessionCookie();
+        setState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+        });
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  // Login — may return user tokens OR trigger 2FA
   const login = useCallback(
-    async (email: string, _password: string) => {
-      setState({
-        user: { ...MOCK_USER, email },
-        isLoading: false,
-        isAuthenticated: true,
+    async (email: string, password: string, redirectTo?: string) => {
+      setState((prev) => ({ ...prev, isLoading: true }));
+      try {
+        const response = await authApi.login({ email, password });
+
+        // 2FA required — redirect to verification page
+        if (response.requiresTwoFactor && response.challengeId) {
+          setTwoFactorPending({
+            challengeId: response.challengeId,
+            email,
+          });
+          setState((prev) => ({ ...prev, isLoading: false }));
+
+          // Navigate to the OTP verification page
+          const params = new URLSearchParams({
+            challengeId: response.challengeId,
+          });
+          if (redirectTo) {
+            params.set('redirect', redirectTo);
+          }
+          router.push(`/${locale}/signin/verify?${params.toString()}`);
+          return;
+        }
+
+        // No 2FA — normal login flow
+        if (response.accessToken) {
+          setAccessToken(response.accessToken);
+        }
+
+        let user = response.user as User;
+        try {
+          user = await authApi.me();
+        } catch {
+          // Use login response data as fallback
+        }
+
+        setSessionCookie();
+        setState({
+          user,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+
+        const displayName = user.firstName || user.email;
+        toast.success(`Welcome back, ${displayName}!`);
+
+        const dashboardPath = getDashboardPath(user.activeRole);
+        let targetPath = `/${locale}${dashboardPath}`;
+
+        if (redirectTo) {
+          const dashboardMatch = redirectTo.match(/\/dashboard\/(\w+)/);
+          if (dashboardMatch) {
+            const redirectDashboard = dashboardMatch[1];
+            const userDashboard = dashboardPath.split('/').pop();
+            if (redirectDashboard === userDashboard) {
+              targetPath = redirectTo;
+            }
+          } else {
+            targetPath = redirectTo;
+          }
+        }
+
+        router.push(targetPath);
+      } catch (error) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        throw error;
+      }
+    },
+    [router, locale],
+  );
+
+  // Verify 2FA OTP — called from the verification page
+  const verify2FA = useCallback(
+    async (challengeId: string, code: string) => {
+      setState((prev) => ({ ...prev, isLoading: true }));
+      try {
+        const response = await authApi.verify2FA(challengeId, code);
+
+        setAccessToken(response.accessToken);
+
+        let user = response.user as User;
+        try {
+          user = await authApi.me();
+        } catch {
+          // Use verify response data as fallback
+        }
+
+        setSessionCookie();
+        setTwoFactorPending(null);
+        setState({
+          user,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+
+        const displayName = user.firstName || user.email;
+        toast.success(`Welcome back, ${displayName}!`);
+
+        // Navigate to the user's correct dashboard
+        const dashboardPath = getDashboardPath(user.activeRole);
+        router.push(`/${locale}${dashboardPath}`);
+      } catch (error) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        throw error;
+      }
+    },
+    [router, locale],
+  );
+
+  // Resend 2FA OTP
+  const resend2FA = useCallback(async (challengeId: string) => {
+    const response = await authApi.resend2FA(challengeId);
+    if (response.challengeId) {
+      setTwoFactorPending((prev) =>
+        prev ? { ...prev, challengeId: response.challengeId } : null,
+      );
+    }
+    return response;
+  }, []);
+
+  // Register
+  const register = useCallback(async (data: RegisterData) => {
+    setState((prev) => ({ ...prev, isLoading: true }));
+    try {
+      await authApi.register({
+        email: data.email,
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
       });
-      const dashboardPath = getDashboardPath(MOCK_USER.activeRole);
-      router.push(`/${locale}${dashboardPath}`);
-    },
-    [router, locale]
-  );
+      setState((prev) => ({ ...prev, isLoading: false }));
+    } catch (error) {
+      setState((prev) => ({ ...prev, isLoading: false }));
+      throw error;
+    }
+  }, []);
 
-  // Register (mock - no backend call)
-  const register = useCallback(
-    async (_data: RegisterData) => {
-      router.push(`/${locale}/signin`);
-    },
-    [router, locale]
-  );
-
-  // Logout (mock - just redirect)
+  // Logout
   const logout = useCallback(async () => {
-    router.push(`/${locale}`);
+    try {
+      await authApi.logout();
+    } catch {
+      // Even if backend call fails, clear local state
+    }
+    removeAccessToken();
+    clearSessionCookie();
+    setTwoFactorPending(null);
+    setState({ user: null, isLoading: false, isAuthenticated: false });
+    toast.success('Signed out successfully');
+    router.push(`/${locale}/signin`);
   }, [router, locale]);
 
-  // Switch Role (mock - just update local state)
+  // Switch Role
   const switchRole = useCallback(
     async (role: string) => {
-      setState((prev) => ({
-        ...prev,
-        user: prev.user ? { ...prev.user, activeRole: role } : null,
-      }));
-      const dashboardPath = getDashboardPath(role);
-      router.push(`/${locale}${dashboardPath}`);
+      try {
+        const response = await authApi.switchRole(role);
+        setAccessToken(response.accessToken);
+
+        setState((prev) => ({
+          ...prev,
+          user: prev.user
+            ? { ...prev.user, activeRole: response.activeRole }
+            : null,
+        }));
+
+        const roleName =
+          response.activeRole.charAt(0) +
+          response.activeRole.slice(1).toLowerCase();
+        toast.success(`Switched to ${roleName} dashboard`);
+
+        const dashboardPath = getDashboardPath(response.activeRole);
+        router.push(`/${locale}${dashboardPath}`);
+      } catch (error) {
+        throw error;
+      }
     },
-    [router, locale]
+    [router, locale],
   );
 
-  // Refresh user data (mock - no-op)
-  const refreshUser = useCallback(async () => {}, []);
+  // Refresh user data
+  const refreshUser = useCallback(async () => {
+    try {
+      const user = await authApi.me();
+      setState((prev) => ({
+        ...prev,
+        user,
+        isAuthenticated: true,
+      }));
+    } catch {
+      // Silent fail — the 401 interceptor handles token refresh
+    }
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         ...state,
         login,
+        verify2FA,
+        resend2FA,
         register,
         logout,
         switchRole,
         refreshUser,
+        twoFactorPending,
       }}
     >
       {children}

@@ -35,6 +35,9 @@ export const users = pgTable('users', {
   lastLoginAt: timestamp('last_login_at'),
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
 
+  // Two-Factor Authentication
+  twoFactorEnabled: boolean('two_factor_enabled').notNull().default(true),
+
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

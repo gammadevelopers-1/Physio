@@ -1,6 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
+import { DashboardAuthGuard } from "@/components/DashboardAuthGuard";
 
-export default async function CourseManagerDashboardLayout({
+export default async function DashboardsLayout({
   children,
   params,
 }: {
@@ -10,5 +11,5 @@ export default async function CourseManagerDashboardLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <>{children}</>;
+  return <DashboardAuthGuard>{children}</DashboardAuthGuard>;
 }

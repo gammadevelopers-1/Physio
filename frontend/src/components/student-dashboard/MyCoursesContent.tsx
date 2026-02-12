@@ -223,7 +223,7 @@ const MyCoursesContent = () => {
 
                           {/* View Course Button */}
                           <Link
-                            href={`/${locale}/student-dashboard/courses/${course.id}`}
+                            href={`/${locale}/dashboard/student/courses/${course.id}`}
                             className="block w-full py-1.5 sm:py-2 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
                           >
                             {t("myCourses.viewCourse")}

@@ -24,6 +24,7 @@ import {
   Upload,
   BarChart3,
 } from "lucide-react";
+import { useAuth } from "@/contexts";
 
 interface InstructorProfile {
   name: string;
@@ -44,52 +45,53 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+  const { logout } = useAuth();
 
   // Dashboard navigation items for mobile menu
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/instructor-dashboard`,
+      href: `/${locale}/dashboard/instructor`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.myCourses"),
-      href: `/${locale}/instructor-dashboard/courses`,
+      href: `/${locale}/dashboard/instructor/courses`,
       icon: BookOpen,
     },
     {
       label: tDashboard("sidebar.sessions"),
-      href: `/${locale}/instructor-dashboard/sessions`,
+      href: `/${locale}/dashboard/instructor/sessions`,
       icon: Calendar,
     },
     {
       label: tDashboard("sidebar.students"),
-      href: `/${locale}/instructor-dashboard/students`,
+      href: `/${locale}/dashboard/instructor/students`,
       icon: Users,
     },
     {
       label: tDashboard("sidebar.assessments"),
-      href: `/${locale}/instructor-dashboard/assessments`,
+      href: `/${locale}/dashboard/instructor/assessments`,
       icon: ClipboardCheck,
     },
     {
       label: tDashboard("sidebar.certificates"),
-      href: `/${locale}/instructor-dashboard/certificates`,
+      href: `/${locale}/dashboard/instructor/certificates`,
       icon: Award,
     },
     {
       label: tDashboard("sidebar.content"),
-      href: `/${locale}/instructor-dashboard/content`,
+      href: `/${locale}/dashboard/instructor/content`,
       icon: Upload,
     },
     {
       label: tDashboard("sidebar.reports"),
-      href: `/${locale}/instructor-dashboard/reports`,
+      href: `/${locale}/dashboard/instructor/reports`,
       icon: BarChart3,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/instructor-dashboard/settings`,
+      href: `/${locale}/dashboard/instructor/settings`,
       icon: Settings,
     },
   ];
@@ -157,7 +159,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                     {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href={`/${locale}/instructor-dashboard/courses`}
+                    href={`/${locale}/dashboard/instructor/courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsCoursesOpen(false)}
                   >
@@ -260,7 +262,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/instructor-dashboard`}
+                  href={`/${locale}/dashboard/instructor`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -268,7 +270,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                   {tDashboard("sidebar.dashboard")}
                 </Link>
                 <Link
-                  href={`/${locale}/instructor-dashboard/settings`}
+                  href={`/${locale}/dashboard/instructor/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -276,7 +278,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                   {tDashboard("sidebar.settings")}
                 </Link>
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
-                <button className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
+                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
                   {tDashboard("sidebar.logout")}
                 </button>
@@ -405,7 +407,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
             </div>
 
             {/* Logout Button */}
-            <button className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
+            <button onClick={logout} className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
               {tDashboard("sidebar.logout")}
             </button>

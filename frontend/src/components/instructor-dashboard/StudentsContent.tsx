@@ -574,7 +574,7 @@ const StudentsContent = () => {
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-1">
                               <Link
-                                href={`/${locale}/instructor-dashboard/students/${student.id}`}
+                                href={`/${locale}/dashboard/instructor/students/${student.id}`}
                                 className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
                                 title={t("students.viewProfile")}
                               >
@@ -702,7 +702,7 @@ const StudentsContent = () => {
 
                     <div className="flex gap-2">
                       <Link
-                        href={`/${locale}/instructor-dashboard/students/${student.id}`}
+                        href={`/${locale}/dashboard/instructor/students/${student.id}`}
                         className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] transition-colors"
                       >
                         <Eye className="w-4 h-4" />

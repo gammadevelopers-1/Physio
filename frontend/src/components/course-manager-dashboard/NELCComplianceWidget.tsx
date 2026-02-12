@@ -56,7 +56,7 @@ const NELCComplianceWidget = ({
           </h3>
         </div>
         <Link
-          href={`/${locale}/course-manager-dashboard/nelc-compliance`}
+          href={`/${locale}/dashboard/manager/nelc-compliance`}
           className="flex items-center gap-1 text-sm font-medium text-[var(--blue-brand-blue)] hover:underline"
         >
           {t("nelc.viewMatrix")}

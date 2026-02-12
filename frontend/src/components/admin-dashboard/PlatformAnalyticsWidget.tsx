@@ -55,7 +55,7 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
           </h3>
         </div>
         <Link
-          href={`/${locale}/admin-dashboard/reports`}
+          href={`/${locale}/dashboard/admin/reports`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           {t("analytics.viewDetails")}

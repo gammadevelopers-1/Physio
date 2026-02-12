@@ -23,6 +23,7 @@ import {
   ClipboardCheck,
   BarChart3,
 } from "lucide-react";
+import { useAuth } from "@/contexts";
 
 interface CourseManagerProfile {
   name: string;
@@ -43,47 +44,48 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+  const { logout } = useAuth();
 
   // Dashboard navigation items for mobile menu
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/course-manager-dashboard`,
+      href: `/${locale}/dashboard/manager`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.courses"),
-      href: `/${locale}/course-manager-dashboard/courses`,
+      href: `/${locale}/dashboard/manager/courses`,
       icon: BookOpen,
     },
     {
       label: tDashboard("sidebar.sessions"),
-      href: `/${locale}/course-manager-dashboard/sessions`,
+      href: `/${locale}/dashboard/manager/sessions`,
       icon: Calendar,
     },
     {
       label: tDashboard("sidebar.instructors"),
-      href: `/${locale}/course-manager-dashboard/instructors`,
+      href: `/${locale}/dashboard/manager/instructors`,
       icon: Users,
     },
     {
       label: tDashboard("sidebar.contentReview"),
-      href: `/${locale}/course-manager-dashboard/content-review`,
+      href: `/${locale}/dashboard/manager/content-review`,
       icon: FileCheck,
     },
     {
       label: tDashboard("sidebar.assessments"),
-      href: `/${locale}/course-manager-dashboard/assessments`,
+      href: `/${locale}/dashboard/manager/assessments`,
       icon: ClipboardCheck,
     },
     {
       label: tDashboard("sidebar.reports"),
-      href: `/${locale}/course-manager-dashboard/reports`,
+      href: `/${locale}/dashboard/manager/reports`,
       icon: BarChart3,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/course-manager-dashboard/settings`,
+      href: `/${locale}/dashboard/manager/settings`,
       icon: Settings,
     },
   ];
@@ -151,7 +153,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                     {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href={`/${locale}/course-manager-dashboard/courses`}
+                    href={`/${locale}/dashboard/manager/courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsCoursesOpen(false)}
                   >
@@ -254,7 +256,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/course-manager-dashboard`}
+                  href={`/${locale}/dashboard/manager`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -262,7 +264,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                   {tDashboard("sidebar.dashboard")}
                 </Link>
                 <Link
-                  href={`/${locale}/course-manager-dashboard/settings`}
+                  href={`/${locale}/dashboard/manager/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -270,7 +272,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                   {tDashboard("sidebar.settings")}
                 </Link>
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
-                <button className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
+                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
                   {tDashboard("sidebar.logout")}
                 </button>
@@ -399,7 +401,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
             </div>
 
             {/* Logout Button */}
-            <button className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
+            <button onClick={logout} className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
               {tDashboard("sidebar.logout")}
             </button>

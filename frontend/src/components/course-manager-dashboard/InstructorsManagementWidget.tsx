@@ -111,7 +111,7 @@ const InstructorsManagementWidget = ({
         {/* View All Link */}
         <div className="text-center pt-3 border-t border-[#E5E7EB] mt-3">
           <Link
-            href={`/${locale}/course-manager-dashboard/instructors`}
+            href={`/${locale}/dashboard/manager/instructors`}
             className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"
           >
             {t("instructors.manageAll")}

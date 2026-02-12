@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { HealthModule } from './modules/health/health.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { EmailModule } from './modules/email/email.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -25,6 +26,7 @@ import storageConfig from './config/storage.config';
     }),
 
     // Feature modules
+    EmailModule,
     AuthModule,
     HealthModule,
     StorageModule,

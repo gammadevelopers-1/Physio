@@ -4,25 +4,46 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
-// Token storage keys
-const ACCESS_TOKEN_KEY = 'accessToken';
+// ===========================================
+// In-Memory Token Storage (OWASP compliant)
+// ===========================================
+let accessToken: string | null = null;
 
-// ===========================================
-// Token Management
-// ===========================================
 export function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return accessToken;
 }
 
 export function setAccessToken(token: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  accessToken = token;
 }
 
 export function removeAccessToken(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  accessToken = null;
+}
+
+// ===========================================
+// Device ID Cookie (persistent, 1 year)
+// Used for 2FA device trust fingerprinting
+// ===========================================
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export function getDeviceId(): string {
+  if (typeof document === 'undefined') return '';
+
+  const match = document.cookie.match(/(?:^|; )device_id=([^;]*)/);
+  if (match) return match[1];
+
+  // Generate and persist a new device ID
+  const deviceId = generateUUID();
+  const maxAge = 365 * 24 * 60 * 60; // 1 year in seconds
+  document.cookie = `device_id=${deviceId}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  return deviceId;
 }
 
 // ===========================================
@@ -40,36 +61,107 @@ export class ApiError extends Error {
 }
 
 // ===========================================
-// Fetch Wrapper
+// Fetch Wrapper with 401 Interceptor
 // ===========================================
 interface FetchOptions extends RequestInit {
   skipAuth?: boolean;
+  _isRetry?: boolean;
+}
+
+// Refresh state management
+let isRefreshing = false;
+let refreshQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: Error) => void;
+}> = [];
+
+function processQueue(error: Error | null, token: string | null) {
+  refreshQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else if (token) {
+      resolve(token);
+    }
+  });
+  refreshQueue = [];
 }
 
 async function fetchApi<T>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { skipAuth = false, headers: customHeaders, ...fetchOptions } = options;
+  const { skipAuth = false, _isRetry = false, headers: customHeaders, ...fetchOptions } = options;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...customHeaders,
+    ...(customHeaders as Record<string, string>),
   };
 
   // Add auth token if available and not skipped
   if (!skipAuth) {
     const token = getAccessToken();
     if (token) {
-      (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`;
     }
+  }
+
+  // Always send device ID for 2FA device fingerprinting
+  const deviceId = getDeviceId();
+  if (deviceId) {
+    headers['X-Device-Id'] = deviceId;
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,
-    credentials: 'include', // Important for cookies (refresh token)
+    credentials: 'include', // Important for httpOnly refresh cookie
   });
+
+  // Handle 401 - attempt token refresh once
+  if (response.status === 401 && !skipAuth && !_isRetry) {
+    if (isRefreshing) {
+      // Another refresh is in-flight; queue this request
+      return new Promise<T>((resolve, reject) => {
+        refreshQueue.push({
+          resolve: (newToken: string) => {
+            headers['Authorization'] = `Bearer ${newToken}`;
+            fetchApi<T>(endpoint, { ...options, _isRetry: true })
+              .then(resolve)
+              .catch(reject);
+          },
+          reject,
+        });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      const refreshResponse = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!refreshResponse.ok) {
+        throw new Error('Refresh failed');
+      }
+
+      const data = await refreshResponse.json();
+      setAccessToken(data.accessToken);
+      processQueue(null, data.accessToken);
+
+      // Retry original request with new token
+      headers['Authorization'] = `Bearer ${data.accessToken}`;
+      return fetchApi<T>(endpoint, { ...options, _isRetry: true });
+    } catch (refreshError) {
+      processQueue(refreshError as Error, null);
+      removeAccessToken();
+      throw new ApiError(401, 'Session expired. Please log in again.');
+    } finally {
+      isRefreshing = false;
+    }
+  }
 
   // Handle non-JSON responses
   const contentType = response.headers.get('content-type');
@@ -143,8 +235,10 @@ export interface User {
 }
 
 export interface LoginResponse {
-  user: User;
-  accessToken: string;
+  user?: User;
+  accessToken?: string;
+  requiresTwoFactor?: boolean;
+  challengeId?: string;
 }
 
 export interface RegisterResponse {
@@ -155,6 +249,19 @@ export interface RegisterResponse {
 export interface SwitchRoleResponse {
   accessToken: string;
   activeRole: string;
+}
+
+export interface Verify2FAResponse {
+  user: User;
+  accessToken: string;
+}
+
+export interface TrustedDevice {
+  id: string;
+  deviceName: string | null;
+  ipAddress: string | null;
+  lastUsedAt: string;
+  createdAt: string;
 }
 
 // ===========================================
@@ -181,7 +288,50 @@ export const authApi = {
     api.post<SwitchRoleResponse>('/auth/switch-role', { role }),
 
   logoutAll: () => api.post<{ message: string }>('/auth/logout-all'),
+
+  // 2FA
+  verify2FA: (challengeId: string, code: string) =>
+    api.post<Verify2FAResponse>('/auth/verify-2fa', { challengeId, code }, { skipAuth: true }),
+
+  resend2FA: (challengeId: string) =>
+    api.post<{ challengeId: string }>('/auth/resend-2fa', { challengeId }, { skipAuth: true }),
+
+  // Trusted Devices
+  getTrustedDevices: () => api.get<TrustedDevice[]>('/auth/trusted-devices'),
+
+  revokeDevice: (deviceId: string) =>
+    api.delete<{ message: string }>(`/auth/trusted-devices/${deviceId}`),
+
+  revokeAllDevices: () =>
+    api.delete<{ message: string }>('/auth/trusted-devices'),
+
+  // 2FA Settings
+  get2FAStatus: () => api.get<{ twoFactorEnabled: boolean }>('/auth/2fa/status'),
+
+  toggle2FA: (enabled: boolean) =>
+    api.post<{ twoFactorEnabled: boolean }>('/auth/2fa/toggle', { enabled }),
 };
+
+// ===========================================
+// Admin API Types
+// ===========================================
+export interface CreateUserData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  role: string;
+}
+
+export interface UpdateUserData {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  activeRole?: string;
+}
 
 // ===========================================
 // Admin API Calls
@@ -201,6 +351,43 @@ export const adminApi = {
   // Remove a role from a user
   removeRole: (userId: string, role: string) =>
     api.delete<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles/${role}`),
+
+  // Create a new user (admin only)
+  createUser: (data: CreateUserData) =>
+    api.post<User>('/auth/users', data),
+
+  // Update user details (admin only)
+  updateUser: (userId: string, data: UpdateUserData) =>
+    api.patch<User>(`/auth/users/${userId}`, data),
+
+  // Delete a user (admin only)
+  deleteUser: (userId: string) =>
+    api.delete<{ message: string }>(`/auth/users/${userId}`),
+
+  // Get all roles with user counts (admin only)
+  getRoles: () =>
+    api.get<RoleWithCount[]>('/auth/roles'),
+
+  // Create a new role (admin only)
+  createRole: (data: { name: string; displayName: string; description?: string }) =>
+    api.post<RoleWithCount>('/auth/roles', data),
+
+  // Update role details (admin only)
+  updateRole: (roleId: string, data: { displayName?: string; description?: string }) =>
+    api.patch<{ id: string; name: string; displayName: string; description: string | null }>(`/auth/roles/${roleId}`, data),
+
+  // Delete a role (admin only)
+  deleteRole: (roleId: string) =>
+    api.delete<{ message: string }>(`/auth/roles/${roleId}`),
 };
+
+export interface RoleWithCount {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string | null;
+  createdAt: string;
+  usersCount: number;
+}
 
 export default api;

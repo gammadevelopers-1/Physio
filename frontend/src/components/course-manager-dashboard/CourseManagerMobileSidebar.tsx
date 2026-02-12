@@ -44,44 +44,44 @@ const CourseManagerMobileSidebar = ({
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/course-manager-dashboard`,
+      href: `/${locale}/dashboard/manager`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.courses"),
-      href: `/${locale}/course-manager-dashboard/courses`,
+      href: `/${locale}/dashboard/manager/courses`,
       icon: BookOpen,
       badge: manager.totalCourses,
     },
     {
       label: t("sidebar.sessions"),
-      href: `/${locale}/course-manager-dashboard/sessions`,
+      href: `/${locale}/dashboard/manager/sessions`,
       icon: Calendar,
     },
     {
       label: t("sidebar.instructors"),
-      href: `/${locale}/course-manager-dashboard/instructors`,
+      href: `/${locale}/dashboard/manager/instructors`,
       icon: Users,
     },
     {
       label: t("sidebar.contentReview"),
-      href: `/${locale}/course-manager-dashboard/content-review`,
+      href: `/${locale}/dashboard/manager/content-review`,
       icon: FileCheck,
       badge: 5,
     },
     {
       label: t("sidebar.assessments"),
-      href: `/${locale}/course-manager-dashboard/assessments`,
+      href: `/${locale}/dashboard/manager/assessments`,
       icon: ClipboardCheck,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/course-manager-dashboard/reports`,
+      href: `/${locale}/dashboard/manager/reports`,
       icon: BarChart3,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/course-manager-dashboard/settings`,
+      href: `/${locale}/dashboard/manager/settings`,
       icon: Settings,
     },
   ];

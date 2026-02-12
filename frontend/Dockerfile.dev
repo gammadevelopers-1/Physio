@@ -15,7 +15,6 @@ RUN npm install
 COPY tsconfig.json ./
 COPY next.config.ts ./
 COPY postcss.config.mjs ./
-COPY middleware.ts ./
 COPY eslint.config.mjs ./
 
 # Copy i18n config

@@ -146,7 +146,7 @@ const SecurityHealthWidget = ({
           </h3>
         </div>
         <Link
-          href={`/${locale}/admin-dashboard/logs`}
+          href={`/${locale}/dashboard/admin/logs`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           {t("securityHealth.viewLogs")}

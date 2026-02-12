@@ -138,37 +138,37 @@ const AlertsActivitySidebar = ({
       id: "addUser",
       label: t("quickActions.addUser"),
       icon: UserPlus,
-      href: `/${locale}/admin-dashboard/users`,
+      href: `/${locale}/dashboard/admin/users`,
     },
     {
       id: "newCourse",
       label: t("quickActions.newCourse"),
       icon: BookOpen,
-      href: `/${locale}/admin-dashboard/courses`,
+      href: `/${locale}/dashboard/admin/courses`,
     },
     {
       id: "runBackup",
       label: t("quickActions.runBackup"),
       icon: HardDrive,
-      href: `/${locale}/admin-dashboard/settings`,
+      href: `/${locale}/dashboard/admin/settings`,
     },
     {
       id: "generateReport",
       label: t("quickActions.generateReport"),
       icon: BarChart3,
-      href: `/${locale}/admin-dashboard/reports`,
+      href: `/${locale}/dashboard/admin/reports`,
     },
     {
       id: "viewLogs",
       label: t("quickActions.viewLogs"),
       icon: ClipboardList,
-      href: `/${locale}/admin-dashboard/logs`,
+      href: `/${locale}/dashboard/admin/logs`,
     },
     {
       id: "settings",
       label: t("quickActions.settings"),
       icon: Settings,
-      href: `/${locale}/admin-dashboard/settings`,
+      href: `/${locale}/dashboard/admin/settings`,
     },
   ];
 
@@ -240,7 +240,7 @@ const AlertsActivitySidebar = ({
         </div>
 
         <Link
-          href={`/${locale}/admin-dashboard/logs`}
+          href={`/${locale}/dashboard/admin/logs`}
           className="mt-4 text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           {t("activity.viewAll")}
@@ -286,7 +286,7 @@ const AlertsActivitySidebar = ({
               </h3>
             </div>
             <Link
-              href={`/${locale}/admin-dashboard/finance`}
+              href={`/${locale}/dashboard/admin/finance`}
               className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
             >
               {t("finance.viewReports")}

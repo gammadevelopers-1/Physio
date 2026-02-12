@@ -138,7 +138,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
             <div className="flex-1 min-w-0">
               {/* Back Button */}
               <Link
-                href={`/${locale}/instructor-dashboard/courses`}
+                href={`/${locale}/dashboard/instructor/courses`}
                 className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -354,7 +354,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               </td>
                               <td className="py-3">
                                 <Link
-                                  href={`/${locale}/instructor-dashboard/students/${student.id}`}
+                                  href={`/${locale}/dashboard/instructor/students/${student.id}`}
                                   className="text-xs text-[#3B82F6] hover:underline"
                                 >
                                   {t("courseDetail.viewProfile")}

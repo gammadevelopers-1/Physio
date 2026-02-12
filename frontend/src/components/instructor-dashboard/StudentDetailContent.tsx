@@ -171,7 +171,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
             <div className="flex-1 min-w-0 space-y-6">
               {/* Back Button */}
               <Link
-                href={`/${locale}/instructor-dashboard/students`}
+                href={`/${locale}/dashboard/instructor/students`}
                 className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#374151] transition-colors"
               >
                 {isRTL ? (
@@ -348,7 +348,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 </span>
                               </div>
                               <Link
-                                href={`/${locale}/instructor-dashboard/courses/${course.id}`}
+                                href={`/${locale}/dashboard/instructor/courses/${course.id}`}
                                 className="text-[#3B82F6] hover:underline text-sm font-medium flex items-center gap-1"
                               >
                                 {t("studentDetail.viewCourse")}

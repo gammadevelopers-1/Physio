@@ -14,6 +14,7 @@ RUN npm install
 # Copy config files
 COPY tsconfig.json ./
 COPY nest-cli.json ./
+COPY drizzle.config.ts ./
 
 # Source code is mounted as volume for hot reload
 COPY src ./src

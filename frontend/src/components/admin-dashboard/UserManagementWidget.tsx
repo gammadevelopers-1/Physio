@@ -76,7 +76,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
           </h3>
         </div>
         <Link
-          href={`/${locale}/admin-dashboard/users`}
+          href={`/${locale}/dashboard/admin/users`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           <Plus className="w-4 h-4" />
@@ -149,7 +149,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       {/* View All Link */}
       <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
         <Link
-          href={`/${locale}/admin-dashboard/users`}
+          href={`/${locale}/dashboard/admin/users`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"
         >
           {t("userManagement.viewAllUsers")}

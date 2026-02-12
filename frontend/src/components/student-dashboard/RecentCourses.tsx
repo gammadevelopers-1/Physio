@@ -133,7 +133,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
 
                 {/* View Course Button */}
                 <Link
-                  href={`/${locale}/student-dashboard/courses/${course.id}`}
+                  href={`/${locale}/dashboard/student/courses/${course.id}`}
                   className="mt-3 w-full sm:w-auto px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
                 >
                   {t("recentCourses.viewCourse")}

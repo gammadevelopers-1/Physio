@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import AuthNavbar from "@/components/AuthNavbar";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts";
 import { ApiError } from "@/lib/api";
+import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
 const GoogleIcon = () => (
@@ -19,17 +21,20 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function SignInPage() {
+function SignInForm() {
   const t = useTranslations("signinPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { login, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,20 +42,25 @@ export default function SignInPage() {
 
     if (!email || !password) {
       setError("Please fill in all fields");
+      toast.error("Please fill in all fields");
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      await login(email, password);
-      // Redirect is handled by the auth context
+      await login(email, password, redirectTo || undefined);
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("An error occurred. Please try again.");
-      }
+      const message = err instanceof ApiError
+        ? err.message
+        : "An error occurred. Please try again.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const loading = isLoading || isSubmitting;
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
@@ -87,7 +97,7 @@ export default function SignInPage() {
 
                 {/* Error Message */}
                 {error && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg" role="alert" aria-live="polite">
                     <p className="text-sm text-red-600">{error}</p>
                   </div>
                 )}
@@ -108,7 +118,7 @@ export default function SignInPage() {
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      disabled={isLoading}
+                      disabled={loading}
                       className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
@@ -142,7 +152,7 @@ export default function SignInPage() {
                         id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        disabled={isLoading}
+                        disabled={loading}
                         className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
@@ -169,7 +179,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => setRememberMe(!rememberMe)}
-                      disabled={isLoading}
+                      disabled={loading}
                       className={`w-4 h-4 rounded border ${rememberMe ? 'bg-[#a37f49] border-[#a37f49]' : 'bg-white border-[#d5d7da]'} flex items-center justify-center transition-colors shrink-0 disabled:opacity-50`}
                     >
                       {rememberMe && (
@@ -189,7 +199,7 @@ export default function SignInPage() {
                   {/* Login Button */}
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={loading}
                     className="w-full h-10 px-5 py-2 rounded-xl text-white font-medium text-sm text-center hover:opacity-90 transition-opacity disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       background: isRTL
@@ -197,15 +207,15 @@ export default function SignInPage() {
                         : "linear-gradient(to right, #a37f49, #6b4e24)",
                     }}
                   >
-                    {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                     {t("form.login")}
                   </button>
 
-                  {/* Sign in with Google */}
+                  {/* Sign in with Google (Coming Soon) */}
                   <button
                     type="button"
-                    disabled={isLoading}
-                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={true}
+                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 opacity-50 cursor-not-allowed relative"
                     style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
                   >
                     <GoogleIcon />
@@ -214,6 +224,9 @@ export default function SignInPage() {
                       style={{ fontSize: "14px" }}
                     >
                       {t("form.signInWithGoogle")}
+                    </span>
+                    <span className="absolute -top-2 -end-2 bg-gray-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                      Soon
                     </span>
                   </button>
                 </form>
@@ -255,5 +268,13 @@ export default function SignInPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense>
+      <SignInForm />
+    </Suspense>
   );
 }

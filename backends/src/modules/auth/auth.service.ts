@@ -9,7 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, count, sql } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import { db } from '../../database';
 import {
@@ -18,10 +18,11 @@ import {
   refreshTokens,
   roles,
   userRoles,
+  twoFactorChallenges,
   ROLE_NAMES,
   RoleName,
 } from '../../database/schema';
-import { RegisterDto, LoginDto } from './dto';
+import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto } from './dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 
 @Injectable()
@@ -164,7 +165,7 @@ export class AuthService {
     // Get user's roles
     const userRolesList = await this.getUserRoles(user.id);
 
-    // Reset failed attempts and update last login
+    // Reset failed attempts, verify user, and update last login
     await db
       .update(users)
       .set({
@@ -172,6 +173,7 @@ export class AuthService {
         lockedUntil: null,
         lastLoginAt: new Date(),
         lastLoginIp: ipAddress,
+        isVerified: true,
       })
       .where(eq(users.id, user.id));
 
@@ -285,6 +287,14 @@ export class AuthService {
       roleId: role.id,
       assignedBy,
     });
+
+    // Admin-assigned roles implicitly verify the user
+    if (!user.isVerified) {
+      await db
+        .update(users)
+        .set({ isVerified: true, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+    }
 
     // Get updated roles list
     const updatedRoles = await this.getUserRoles(userId);
@@ -540,6 +550,162 @@ export class AuthService {
   }
 
   // ===========================================
+  // Admin: Create User
+  // ===========================================
+  async createUser(
+    dto: CreateUserDto,
+    createdBy: string,
+  ): Promise<Partial<User> & { roles: string[] }> {
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, dto.email.toLowerCase()))
+      .limit(1);
+
+    if (existingUser) {
+      throw new ConflictException('Email already registered');
+    }
+
+    // Hash password
+    const passwordHash = await argon2.hash(dto.password);
+
+    // Get the requested role
+    const [role] = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.name, dto.role))
+      .limit(1);
+
+    if (!role) {
+      throw new BadRequestException(`Role ${dto.role} does not exist`);
+    }
+
+    // Create user with the specified active role
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email: dto.email.toLowerCase(),
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        phone: dto.phone,
+        activeRole: dto.role,
+        isVerified: true, // Admin-created users are pre-verified
+      })
+      .returning({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        activeRole: users.activeRole,
+        isActive: users.isActive,
+        isVerified: users.isVerified,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+      });
+
+    // Assign the role
+    await db.insert(userRoles).values({
+      userId: newUser.id,
+      roleId: role.id,
+      assignedBy: createdBy,
+    });
+
+    return {
+      ...newUser,
+      roles: [dto.role],
+    };
+  }
+
+  // ===========================================
+  // Admin: Update User
+  // ===========================================
+  async updateUser(
+    userId: string,
+    dto: UpdateUserDto,
+  ): Promise<Partial<User> & { roles: string[] }> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Build update object with only provided fields
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
+    if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
+    if (dto.phone !== undefined) updateData.phone = dto.phone;
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+    if (dto.isVerified !== undefined) updateData.isVerified = dto.isVerified;
+    if (dto.activeRole !== undefined) {
+      // Verify the user has this role before setting it active
+      const userRolesList = await this.getUserRoles(userId);
+      if (!userRolesList.includes(dto.activeRole)) {
+        throw new BadRequestException(
+          `User does not have the ${dto.activeRole} role. Assign it first.`,
+        );
+      }
+      updateData.activeRole = dto.activeRole;
+    }
+
+    await db.update(users).set(updateData).where(eq(users.id, userId));
+
+    // Return updated user
+    const [updated] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        activeRole: users.activeRole,
+        isActive: users.isActive,
+        isVerified: users.isVerified,
+        createdAt: users.createdAt,
+        lastLoginAt: users.lastLoginAt,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const updatedRoles = await this.getUserRoles(userId);
+
+    return {
+      ...updated,
+      roles: updatedRoles,
+    };
+  }
+
+  // ===========================================
+  // Admin: Delete User
+  // ===========================================
+  async deleteUser(userId: string, adminId: string): Promise<{ message: string }> {
+    // Prevent self-deletion
+    if (userId === adminId) {
+      throw new BadRequestException('Cannot delete your own account');
+    }
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Delete user (cascade will handle userRoles and refreshTokens)
+    await db.delete(users).where(eq(users.id, userId));
+
+    return { message: 'User deleted successfully' };
+  }
+
+  // ===========================================
   // Get All Users (Admin)
   // ===========================================
   async getAllUsers(): Promise<(Partial<User> & { roles: string[] })[]> {
@@ -567,5 +733,230 @@ export class AuthService {
     );
 
     return usersWithRoles;
+  }
+
+  // ===========================================
+  // Get All Roles with User Counts (Admin)
+  // ===========================================
+  async getAllRoles(): Promise<
+    { id: string; name: string; displayName: string; description: string | null; createdAt: Date; usersCount: number }[]
+  > {
+    // Get all roles
+    const allRoles = await db
+      .select({
+        id: roles.id,
+        name: roles.name,
+        displayName: roles.displayName,
+        description: roles.description,
+        createdAt: roles.createdAt,
+      })
+      .from(roles)
+      .orderBy(roles.createdAt);
+
+    // Get user counts per role
+    const roleCounts = await db
+      .select({
+        roleId: userRoles.roleId,
+        count: count(),
+      })
+      .from(userRoles)
+      .groupBy(userRoles.roleId);
+
+    const countMap = new Map(roleCounts.map((rc) => [rc.roleId, rc.count]));
+
+    return allRoles.map((role) => ({
+      ...role,
+      usersCount: countMap.get(role.id) || 0,
+    }));
+  }
+
+  // ===========================================
+  // Update Role (Admin)
+  // ===========================================
+  async updateRole(
+    roleId: string,
+    data: { displayName?: string; description?: string },
+  ): Promise<{ id: string; name: string; displayName: string; description: string | null }> {
+    const [role] = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.id, roleId))
+      .limit(1);
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (data.displayName !== undefined) updateData.displayName = data.displayName;
+    if (data.description !== undefined) updateData.description = data.description;
+
+    if (Object.keys(updateData).length === 0) {
+      return { id: role.id, name: role.name, displayName: role.displayName, description: role.description };
+    }
+
+    await db.update(roles).set(updateData).where(eq(roles.id, roleId));
+
+    const [updated] = await db
+      .select({
+        id: roles.id,
+        name: roles.name,
+        displayName: roles.displayName,
+        description: roles.description,
+      })
+      .from(roles)
+      .where(eq(roles.id, roleId))
+      .limit(1);
+
+    return updated;
+  }
+
+  // ===========================================
+  // Create Role (Admin)
+  // ===========================================
+  async createRole(data: {
+    name: string;
+    displayName: string;
+    description?: string;
+  }): Promise<{ id: string; name: string; displayName: string; description: string | null; createdAt: Date }> {
+    // Check if role name already exists
+    const [existing] = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.name, data.name.toUpperCase()))
+      .limit(1);
+
+    if (existing) {
+      throw new ConflictException(`Role ${data.name} already exists`);
+    }
+
+    const [newRole] = await db
+      .insert(roles)
+      .values({
+        name: data.name.toUpperCase(),
+        displayName: data.displayName,
+        description: data.description || null,
+      })
+      .returning({
+        id: roles.id,
+        name: roles.name,
+        displayName: roles.displayName,
+        description: roles.description,
+        createdAt: roles.createdAt,
+      });
+
+    return newRole;
+  }
+
+  // ===========================================
+  // Delete Role (Admin)
+  // ===========================================
+  async deleteRole(roleId: string): Promise<{ message: string }> {
+    const [role] = await db
+      .select()
+      .from(roles)
+      .where(eq(roles.id, roleId))
+      .limit(1);
+
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    // Protect system roles
+    const systemRoles = Object.values(ROLE_NAMES);
+    if (systemRoles.includes(role.name as RoleName)) {
+      throw new BadRequestException(`Cannot delete system role: ${role.name}`);
+    }
+
+    // Check if any users have this role
+    const [assignment] = await db
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.roleId, roleId))
+      .limit(1);
+
+    if (assignment) {
+      throw new BadRequestException('Cannot delete role that is assigned to users. Remove role from all users first.');
+    }
+
+    await db.delete(roles).where(eq(roles.id, roleId));
+
+    return { message: 'Role deleted successfully' };
+  }
+
+  // ===========================================
+  // Issue Tokens for User (post-2FA verification)
+  // ===========================================
+  async issueTokensForUser(
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{
+    user: Partial<User> & { roles: string[] };
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    const userRolesList = await this.getUserRoles(userId);
+    const accessToken = this.generateAccessToken(user, userRolesList);
+    const refreshToken = await this.generateRefreshToken(userId, ipAddress, userAgent);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        activeRole: user.activeRole,
+        roles: userRolesList,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  // ===========================================
+  // Get Challenge User Info (for resend-2fa)
+  // ===========================================
+  async getChallengeUserInfo(
+    challengeId: string,
+  ): Promise<{ userId: string; fingerprint: string; email: string } | null> {
+    const [challenge] = await db
+      .select({
+        userId: twoFactorChallenges.userId,
+        fingerprint: twoFactorChallenges.fingerprint,
+      })
+      .from(twoFactorChallenges)
+      .where(eq(twoFactorChallenges.id, challengeId))
+      .limit(1);
+
+    if (!challenge) return null;
+
+    const [user] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, challenge.userId))
+      .limit(1);
+
+    if (!user) return null;
+
+    return {
+      userId: challenge.userId,
+      fingerprint: challenge.fingerprint,
+      email: user.email,
+    };
   }
 }

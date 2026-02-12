@@ -26,6 +26,7 @@ import {
   ClipboardList,
   Bell,
 } from "lucide-react";
+import { useAuth } from "@/contexts";
 
 interface AdminProfile {
   name: string;
@@ -46,57 +47,58 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+  const { logout } = useAuth();
 
   // Dashboard navigation items for mobile menu
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/admin-dashboard`,
+      href: `/${locale}/dashboard/admin`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.users"),
-      href: `/${locale}/admin-dashboard/users`,
+      href: `/${locale}/dashboard/admin/users`,
       icon: Users,
     },
     {
       label: tDashboard("sidebar.roles"),
-      href: `/${locale}/admin-dashboard/roles`,
+      href: `/${locale}/dashboard/admin/roles`,
       icon: Shield,
     },
     {
       label: tDashboard("sidebar.courses"),
-      href: `/${locale}/admin-dashboard/courses`,
+      href: `/${locale}/dashboard/admin/courses`,
       icon: BookOpen,
     },
     {
       label: tDashboard("sidebar.finance"),
-      href: `/${locale}/admin-dashboard/finance`,
+      href: `/${locale}/dashboard/admin/finance`,
       icon: DollarSign,
     },
     {
       label: tDashboard("sidebar.security"),
-      href: `/${locale}/admin-dashboard/security`,
+      href: `/${locale}/dashboard/admin/security`,
       icon: Lock,
     },
     {
       label: tDashboard("sidebar.compliance"),
-      href: `/${locale}/admin-dashboard/compliance`,
+      href: `/${locale}/dashboard/admin/compliance`,
       icon: FileText,
     },
     {
       label: tDashboard("sidebar.reports"),
-      href: `/${locale}/admin-dashboard/reports`,
+      href: `/${locale}/dashboard/admin/reports`,
       icon: BarChart3,
     },
     {
       label: tDashboard("sidebar.logs"),
-      href: `/${locale}/admin-dashboard/logs`,
+      href: `/${locale}/dashboard/admin/logs`,
       icon: ClipboardList,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/admin-dashboard/settings`,
+      href: `/${locale}/dashboard/admin/settings`,
       icon: Settings,
     },
   ];
@@ -164,7 +166,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
                     {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href={`/${locale}/admin-dashboard/courses`}
+                    href={`/${locale}/dashboard/admin/courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsCoursesOpen(false)}
                   >
@@ -285,7 +287,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/admin-dashboard`}
+                  href={`/${locale}/dashboard/admin`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -293,7 +295,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
                   {tDashboard("sidebar.dashboard")}
                 </Link>
                 <Link
-                  href={`/${locale}/admin-dashboard/settings`}
+                  href={`/${locale}/dashboard/admin/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -301,7 +303,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
                   {tDashboard("sidebar.settings")}
                 </Link>
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
-                <button className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
+                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
                   {tDashboard("sidebar.logout")}
                 </button>
@@ -440,7 +442,7 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
             </div>
 
             {/* Logout Button */}
-            <button className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
+            <button onClick={logout} className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
               {tDashboard("sidebar.logout")}
             </button>

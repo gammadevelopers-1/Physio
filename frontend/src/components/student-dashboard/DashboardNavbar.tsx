@@ -23,6 +23,7 @@ import {
   FileText,
   Users,
 } from "lucide-react";
+import { useAuth } from "@/contexts";
 
 interface UserProfile {
   name: string;
@@ -43,47 +44,48 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const isRTL = locale === "ar";
+  const { logout } = useAuth();
 
   // Dashboard navigation items for mobile menu
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/student-dashboard`,
+      href: `/${locale}/dashboard/student`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.courses"),
-      href: `/${locale}/student-dashboard/courses`,
+      href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
     },
     {
       label: tDashboard("sidebar.favorites"),
-      href: `/${locale}/student-dashboard/favourites`,
+      href: `/${locale}/dashboard/student/favourites`,
       icon: Heart,
     },
     {
       label: tDashboard("sidebar.certifications"),
-      href: `/${locale}/student-dashboard/certifications`,
+      href: `/${locale}/dashboard/student/certifications`,
       icon: Award,
     },
     {
       label: tDashboard("sidebar.badges"),
-      href: `/${locale}/student-dashboard/badges`,
+      href: `/${locale}/dashboard/student/badges`,
       icon: BadgeCheck,
     },
     {
       label: tDashboard("sidebar.invoices"),
-      href: `/${locale}/student-dashboard/invoices`,
+      href: `/${locale}/dashboard/student/invoices`,
       icon: FileText,
     },
     {
       label: tDashboard("sidebar.inviteFriends"),
-      href: `/${locale}/student-dashboard/invite-friends`,
+      href: `/${locale}/dashboard/student/invite-friends`,
       icon: Users,
     },
     {
       label: tDashboard("sidebar.settings"),
-      href: `/${locale}/student-dashboard/settings`,
+      href: `/${locale}/dashboard/student/settings`,
       icon: Settings,
     },
   ];
@@ -151,7 +153,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                     {t("accreditedCourses")}
                   </Link>
                   <Link
-                    href={`/${locale}/student-dashboard/courses`}
+                    href={`/${locale}/dashboard/student/courses`}
                     className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                     onClick={() => setIsCoursesOpen(false)}
                   >
@@ -254,7 +256,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
               >
                 <Link
-                  href={`/${locale}/student-dashboard`}
+                  href={`/${locale}/dashboard/student`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -262,7 +264,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                   Dashboard
                 </Link>
                 <Link
-                  href={`/${locale}/student-dashboard/settings`}
+                  href={`/${locale}/dashboard/student/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -270,7 +272,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                   Settings
                 </Link>
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
-                <button className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
+                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
                   Logout
                 </button>
@@ -399,7 +401,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
             </div>
 
             {/* Logout Button */}
-            <button className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
+            <button onClick={logout} className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
               {tDashboard("sidebar.logout")}
             </button>

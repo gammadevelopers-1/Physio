@@ -46,7 +46,8 @@
       "Bash(npx next build:*)",
       "Bash(cat:*)",
       "Bash(xargs:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(find:*)"
     ]
   }
 }

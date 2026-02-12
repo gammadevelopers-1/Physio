@@ -165,7 +165,7 @@ export class AuthService {
     // Get user's roles
     const userRolesList = await this.getUserRoles(user.id);
 
-    // Reset failed attempts and update last login
+    // Reset failed attempts, verify user, and update last login
     await db
       .update(users)
       .set({
@@ -173,6 +173,7 @@ export class AuthService {
         lockedUntil: null,
         lastLoginAt: new Date(),
         lastLoginIp: ipAddress,
+        isVerified: true,
       })
       .where(eq(users.id, user.id));
 

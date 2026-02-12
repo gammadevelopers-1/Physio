@@ -24,12 +24,20 @@ interface AuthState {
   isAuthenticated: boolean;
 }
 
+interface TwoFactorPending {
+  challengeId: string;
+  email: string;
+}
+
 interface AuthContextType extends AuthState {
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
+  verify2FA: (challengeId: string, code: string) => Promise<void>;
+  resend2FA: (challengeId: string) => Promise<{ challengeId: string }>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   switchRole: (role: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+  twoFactorPending: TwoFactorPending | null;
 }
 
 interface RegisterData {
@@ -82,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
     isAuthenticated: false,
   });
+  const [twoFactorPending, setTwoFactorPending] = useState<TwoFactorPending | null>(null);
   const initAttempted = useRef(false);
 
   // On mount: try to restore session via refresh token cookie
@@ -91,11 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const initAuth = async () => {
       try {
-        // Attempt token refresh via httpOnly cookie
         const refreshResponse = await authApi.refresh();
         setAccessToken(refreshResponse.accessToken);
 
-        // Fetch full user profile
         const user = await authApi.me();
         setSessionCookie();
         setState({
@@ -104,7 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAuthenticated: true,
         });
       } catch {
-        // No valid session — user is not logged in
         removeAccessToken();
         clearSessionCookie();
         setState({
@@ -118,15 +124,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  // Login
+  // Login — may return user tokens OR trigger 2FA
   const login = useCallback(
     async (email: string, password: string, redirectTo?: string) => {
       setState((prev) => ({ ...prev, isLoading: true }));
       try {
         const response = await authApi.login({ email, password });
-        setAccessToken(response.accessToken);
 
-        // Fetch full user data (login response may have partial data)
+        // 2FA required — redirect to verification page
+        if (response.requiresTwoFactor && response.challengeId) {
+          setTwoFactorPending({
+            challengeId: response.challengeId,
+            email,
+          });
+          setState((prev) => ({ ...prev, isLoading: false }));
+
+          // Navigate to the OTP verification page
+          const params = new URLSearchParams({
+            challengeId: response.challengeId,
+          });
+          if (redirectTo) {
+            params.set('redirect', redirectTo);
+          }
+          router.push(`/${locale}/signin/verify?${params.toString()}`);
+          return;
+        }
+
+        // No 2FA — normal login flow
+        if (response.accessToken) {
+          setAccessToken(response.accessToken);
+        }
+
         let user = response.user as User;
         try {
           user = await authApi.me();
@@ -148,7 +176,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let targetPath = `/${locale}${dashboardPath}`;
 
         if (redirectTo) {
-          // If the redirect points to a dashboard, only use it if it matches the user's role
           const dashboardMatch = redirectTo.match(/\/dashboard\/(\w+)/);
           if (dashboardMatch) {
             const redirectDashboard = dashboardMatch[1];
@@ -156,9 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (redirectDashboard === userDashboard) {
               targetPath = redirectTo;
             }
-            // Otherwise ignore the stale redirect — go to correct dashboard
           } else {
-            // Non-dashboard redirect (e.g. /profile), use as-is
             targetPath = redirectTo;
           }
         }
@@ -169,8 +194,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router, locale]
+    [router, locale],
   );
+
+  // Verify 2FA OTP — called from the verification page
+  const verify2FA = useCallback(
+    async (challengeId: string, code: string) => {
+      setState((prev) => ({ ...prev, isLoading: true }));
+      try {
+        const response = await authApi.verify2FA(challengeId, code);
+
+        setAccessToken(response.accessToken);
+
+        let user = response.user as User;
+        try {
+          user = await authApi.me();
+        } catch {
+          // Use verify response data as fallback
+        }
+
+        setSessionCookie();
+        setTwoFactorPending(null);
+        setState({
+          user,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+
+        const displayName = user.firstName || user.email;
+        toast.success(`Welcome back, ${displayName}!`);
+
+        // Navigate to the user's correct dashboard
+        const dashboardPath = getDashboardPath(user.activeRole);
+        router.push(`/${locale}${dashboardPath}`);
+      } catch (error) {
+        setState((prev) => ({ ...prev, isLoading: false }));
+        throw error;
+      }
+    },
+    [router, locale],
+  );
+
+  // Resend 2FA OTP
+  const resend2FA = useCallback(async (challengeId: string) => {
+    const response = await authApi.resend2FA(challengeId);
+    if (response.challengeId) {
+      setTwoFactorPending((prev) =>
+        prev ? { ...prev, challengeId: response.challengeId } : null,
+      );
+    }
+    return response;
+  }, []);
 
   // Register
   const register = useCallback(async (data: RegisterData) => {
@@ -198,6 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     removeAccessToken();
     clearSessionCookie();
+    setTwoFactorPending(null);
     setState({ user: null, isLoading: false, isAuthenticated: false });
     toast.success('Signed out successfully');
     router.push(`/${locale}/signin`);
@@ -217,7 +292,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             : null,
         }));
 
-        const roleName = response.activeRole.charAt(0) + response.activeRole.slice(1).toLowerCase();
+        const roleName =
+          response.activeRole.charAt(0) +
+          response.activeRole.slice(1).toLowerCase();
         toast.success(`Switched to ${roleName} dashboard`);
 
         const dashboardPath = getDashboardPath(response.activeRole);
@@ -226,7 +303,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router, locale]
+    [router, locale],
   );
 
   // Refresh user data
@@ -248,10 +325,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         ...state,
         login,
+        verify2FA,
+        resend2FA,
         register,
         logout,
         switchRole,
         refreshUser,
+        twoFactorPending,
       }}
     >
       {children}

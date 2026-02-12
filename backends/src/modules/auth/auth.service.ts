@@ -18,6 +18,7 @@ import {
   refreshTokens,
   roles,
   userRoles,
+  twoFactorChallenges,
   ROLE_NAMES,
   RoleName,
 } from '../../database/schema';
@@ -880,5 +881,81 @@ export class AuthService {
     await db.delete(roles).where(eq(roles.id, roleId));
 
     return { message: 'Role deleted successfully' };
+  }
+
+  // ===========================================
+  // Issue Tokens for User (post-2FA verification)
+  // ===========================================
+  async issueTokensForUser(
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<{
+    user: Partial<User> & { roles: string[] };
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    const userRolesList = await this.getUserRoles(userId);
+    const accessToken = this.generateAccessToken(user, userRolesList);
+    const refreshToken = await this.generateRefreshToken(userId, ipAddress, userAgent);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        activeRole: user.activeRole,
+        roles: userRolesList,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  // ===========================================
+  // Get Challenge User Info (for resend-2fa)
+  // ===========================================
+  async getChallengeUserInfo(
+    challengeId: string,
+  ): Promise<{ userId: string; fingerprint: string; email: string } | null> {
+    const [challenge] = await db
+      .select({
+        userId: twoFactorChallenges.userId,
+        fingerprint: twoFactorChallenges.fingerprint,
+      })
+      .from(twoFactorChallenges)
+      .where(eq(twoFactorChallenges.id, challengeId))
+      .limit(1);
+
+    if (!challenge) return null;
+
+    const [user] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, challenge.userId))
+      .limit(1);
+
+    if (!user) return null;
+
+    return {
+      userId: challenge.userId,
+      fingerprint: challenge.fingerprint,
+      email: user.email,
+    };
   }
 }

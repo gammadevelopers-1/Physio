@@ -279,6 +279,53 @@
       "signUp": "Sign up"
     }
   },
+  "verifyPage": {
+    "title": "Verify Your Identity",
+    "subtitle": "We sent a verification code to",
+    "codeLabel": "Enter 6-digit code",
+    "verifyButton": "Verify",
+    "verifying": "Verifying...",
+    "resendCode": "Resend code",
+    "resendIn": "Resend in {seconds}s",
+    "notYou": "This isn't me",
+    "wrongCode": "Incorrect code. Please try again.",
+    "codeExpired": "Code expired. Please request a new one.",
+    "maxAttempts": "Too many attempts. Please request a new code.",
+    "codeSent": "New verification code sent",
+    "errors": {
+      "invalidCode": "Please enter all 6 digits",
+      "verificationFailed": "Verification failed. Please try again."
+    }
+  },
+  "securitySettings": {
+    "title": "Security Settings",
+    "description": "Manage your two-factor authentication and trusted devices",
+    "twoFactor": {
+      "title": "Two-Factor Authentication",
+      "description": "Add an extra layer of security to your account. When enabled, you'll need to verify your identity with an email code when signing in from a new device.",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "enable": "Enable 2FA",
+      "disable": "Disable 2FA",
+      "toggleSuccess": "Two-factor authentication {status}",
+      "statusEnabled": "enabled",
+      "statusDisabled": "disabled"
+    },
+    "trustedDevices": {
+      "title": "Trusted Devices",
+      "description": "These devices can sign in without a verification code",
+      "noDevices": "No trusted devices yet",
+      "noDevicesHint": "Devices will appear here after you verify them with a code",
+      "revokeDevice": "Revoke",
+      "revokeAll": "Revoke All Devices",
+      "revokeSuccess": "Device revoked successfully",
+      "revokeAllSuccess": "All devices revoked successfully",
+      "revokeAllConfirm": "Are you sure? You'll need to verify all devices again.",
+      "lastUsed": "Last used",
+      "addedOn": "Added on"
+    },
+    "back": "Back to Settings"
+  },
   "faqPage": {
     "title": "FAQs",
     "subtitle": "Still have any questions?",

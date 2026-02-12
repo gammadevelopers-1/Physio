@@ -59,6 +59,10 @@ services:
       - JWT_SECRET=physio-dev-secret-change-in-production-2026
       - JWT_ACCESS_EXPIRATION=15m
       - JWT_REFRESH_EXPIRATION_DAYS=7
+      # Email (Mailpit SMTP for dev)
+      - SMTP_HOST=mailpit
+      - SMTP_PORT=1025
+      - MAIL_FROM=noreply@physioguidance.org
     volumes:
       - ./backends/src:/app/src:delegated
       - backend_node_modules:/app/node_modules
@@ -76,7 +80,7 @@ services:
     image: postgres:15-alpine
     container_name: physio-database
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -88,6 +92,19 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - physio-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Mailpit - Email Testing (Dev SMTP + Web UI)
+  # ===========================================
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: physio-mailpit
+    ports:
+      - "8025:8025"   # Web UI
+      - "1025:1025"   # SMTP
     networks:
       - physio-network
     restart: unless-stopped

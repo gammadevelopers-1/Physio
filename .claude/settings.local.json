@@ -77,7 +77,13 @@
       "Bash(/dev/null << 'HEREDOC'\nimport createMiddleware from 'next-intl/middleware';\nimport { NextRequest, NextResponse } from 'next/server';\nimport { routing } from './src/i18n/routing';\n\nconst intlMiddleware = createMiddleware\\(routing\\);\n\nexport default function middleware\\(request: NextRequest\\) {\n  const { pathname } = request.nextUrl;\n\n  if \\(pathname.includes\\('/dashboard'\\)\\) {\n    return NextResponse.redirect\\(new URL\\('/en/signin', request.url\\)\\);\n  }\n\n  return intlMiddleware\\(request\\);\n}\n\nexport const config = {\n  matcher: ['/\\(\\(?!api|_next|.*\\\\\\\\..*\\).*\\)',],\n};\nHEREDOC)",
       "Bash(/tmp/test_login.js << 'EOF'\nconst data = {\n  email: \"test@example.com\",\n  password: \"password123\"\n};\n\nfetch\\('http://localhost:8080/api/auth/login', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json'\n  },\n  body: JSON.stringify\\(data\\),\n  credentials: 'include'\n}\\)\n.then\\(r => {\n  console.log\\('Status:', r.status\\);\n  console.log\\('Headers:', Object.fromEntries\\(r.headers\\)\\);\n  return r.json\\(\\);\n}\\)\n.then\\(d => console.log\\('Response:', JSON.stringify\\(d, null, 2\\)\\)\\)\n.catch\\(e => console.error\\('Error:', e.message\\)\\);\nEOF)",
       "Bash(docker-compose build --no-cache frontend)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(sudo fuser:*)",
+      "Bash(pg_isready:*)",
+      "Bash(docker network prune:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(xxd:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzM3ZWY5NC01ZmI0LTRkMjAtYmM1MS04NGM5ZTkyMWI4YjUiLCJlbWFpbCI6ImFkbWluQHBoeXNpb2d1aWRhbmNlLm9yZyIsImFjdGl2ZVJvbGUiOiJBRE1JTiIsInJvbGVzIjpbIkFETUlOIl0sImlhdCI6MTc3MDg4NjQzNSwiZXhwIjoxNzcwODg3MzM1fQ._hXGaROczx1BTPTM-DlDK8Z-r154VHnFV6i1B5NtNIQ\")"
     ]
   }
 }

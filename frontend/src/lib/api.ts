@@ -22,6 +22,31 @@ export function removeAccessToken(): void {
 }
 
 // ===========================================
+// Device ID Cookie (persistent, 1 year)
+// Used for 2FA device trust fingerprinting
+// ===========================================
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+export function getDeviceId(): string {
+  if (typeof document === 'undefined') return '';
+
+  const match = document.cookie.match(/(?:^|; )device_id=([^;]*)/);
+  if (match) return match[1];
+
+  // Generate and persist a new device ID
+  const deviceId = generateUUID();
+  const maxAge = 365 * 24 * 60 * 60; // 1 year in seconds
+  document.cookie = `device_id=${deviceId}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  return deviceId;
+}
+
+// ===========================================
 // API Error Class
 // ===========================================
 export class ApiError extends Error {
@@ -78,6 +103,12 @@ async function fetchApi<T>(
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
+  }
+
+  // Always send device ID for 2FA device fingerprinting
+  const deviceId = getDeviceId();
+  if (deviceId) {
+    headers['X-Device-Id'] = deviceId;
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
@@ -204,8 +235,10 @@ export interface User {
 }
 
 export interface LoginResponse {
-  user: User;
-  accessToken: string;
+  user?: User;
+  accessToken?: string;
+  requiresTwoFactor?: boolean;
+  challengeId?: string;
 }
 
 export interface RegisterResponse {
@@ -216,6 +249,19 @@ export interface RegisterResponse {
 export interface SwitchRoleResponse {
   accessToken: string;
   activeRole: string;
+}
+
+export interface Verify2FAResponse {
+  user: User;
+  accessToken: string;
+}
+
+export interface TrustedDevice {
+  id: string;
+  deviceName: string | null;
+  ipAddress: string | null;
+  lastUsedAt: string;
+  createdAt: string;
 }
 
 // ===========================================
@@ -242,6 +288,28 @@ export const authApi = {
     api.post<SwitchRoleResponse>('/auth/switch-role', { role }),
 
   logoutAll: () => api.post<{ message: string }>('/auth/logout-all'),
+
+  // 2FA
+  verify2FA: (challengeId: string, code: string) =>
+    api.post<Verify2FAResponse>('/auth/verify-2fa', { challengeId, code }, { skipAuth: true }),
+
+  resend2FA: (challengeId: string) =>
+    api.post<{ challengeId: string }>('/auth/resend-2fa', { challengeId }, { skipAuth: true }),
+
+  // Trusted Devices
+  getTrustedDevices: () => api.get<TrustedDevice[]>('/auth/trusted-devices'),
+
+  revokeDevice: (deviceId: string) =>
+    api.delete<{ message: string }>(`/auth/trusted-devices/${deviceId}`),
+
+  revokeAllDevices: () =>
+    api.delete<{ message: string }>('/auth/trusted-devices'),
+
+  // 2FA Settings
+  get2FAStatus: () => api.get<{ twoFactorEnabled: boolean }>('/auth/2fa/status'),
+
+  toggle2FA: (enabled: boolean) =>
+    api.post<{ twoFactorEnabled: boolean }>('/auth/2fa/toggle', { enabled }),
 };
 
 // ===========================================

@@ -6,3 +6,5 @@ export * from './create-user.dto';
 export * from './update-user.dto';
 export * from './create-role.dto';
 export * from './update-role.dto';
+export * from './verify-2fa.dto';
+export * from './toggle-2fa.dto';

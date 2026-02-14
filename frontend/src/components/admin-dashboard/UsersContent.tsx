@@ -971,6 +971,7 @@ const UsersContent = () => {
 
               {/* Users Table */}
               {!isLoadingUsers && !fetchError && (
+                <>
                 <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                   <div className="overflow-x-auto scrollbar-hide">
                     <table className="w-full">
@@ -1158,6 +1159,7 @@ const UsersContent = () => {
                     </div>
                   </div>
                 )}
+                </>
               )}
             </div>
           </div>

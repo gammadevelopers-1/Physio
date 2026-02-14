@@ -40,9 +40,26 @@ export DB_INSTANCE_NAME="physioguidance-db"
 export DB_TIER="db-f1-micro"
 export DB_VERSION="POSTGRES_15"
 
+# ===========================================
+# Production URLs (Cloud Run service URLs)
+# ===========================================
+# These are resolved dynamically after first deploy.
+# Override with env vars if you have custom domains.
+export PRODUCTION_FRONTEND_URL="${PRODUCTION_FRONTEND_URL:-}"
+export PRODUCTION_BACKEND_URL="${PRODUCTION_BACKEND_URL:-}"
+export PRODUCTION_STRAPI_URL="${PRODUCTION_STRAPI_URL:-}"
+
 # Derived values (don't modify)
 export DOCKER_REGISTRY="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REPO}"
 export TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+# Helper: get Cloud Run service URL
+get_service_url() {
+    local service_name=$1
+    gcloud run services describe ${service_name} \
+        --region=${GCP_REGION} \
+        --format='value(status.url)' 2>/dev/null || echo ""
+}
 
 # ===========================================
 # Helper Functions

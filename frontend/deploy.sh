@@ -144,7 +144,27 @@ gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
 log_success "Docker configured"
 
 # ============================================
-# Step 3: Build Docker image
+# Step 3: Resolve production URLs
+# ============================================
+log_info "Resolving production URLs for Next.js build..."
+
+BACKEND_URL="${PRODUCTION_BACKEND_URL:-$(gcloud run services describe physioguidance-api --region=${REGION} --format='value(status.url)' 2>/dev/null)}"
+STRAPI_URL="${PRODUCTION_STRAPI_URL:-$(gcloud run services describe physioguidance-cms --region=${REGION} --format='value(status.url)' 2>/dev/null)}"
+
+if [ -z "$BACKEND_URL" ]; then
+    log_error "Backend URL not found. Deploy backend first or set PRODUCTION_BACKEND_URL env var."
+    exit 1
+fi
+if [ -z "$STRAPI_URL" ]; then
+    log_error "Strapi URL not found. Deploy Strapi first or set PRODUCTION_STRAPI_URL env var."
+    exit 1
+fi
+
+log_info "NEXT_PUBLIC_API_URL    = ${BACKEND_URL}/api"
+log_info "NEXT_PUBLIC_STRAPI_URL = ${STRAPI_URL}"
+
+# ============================================
+# Step 4: Build Docker image
 # ============================================
 log_info "Building Docker image..."
 log_info "This may take a few minutes..."
@@ -155,6 +175,8 @@ cd "$SCRIPT_DIR"
 
 docker build \
     --platform linux/amd64 \
+    --build-arg NEXT_PUBLIC_API_URL="${BACKEND_URL}/api" \
+    --build-arg NEXT_PUBLIC_STRAPI_URL="${STRAPI_URL}" \
     -t ${IMAGE_TAG} \
     -t ${IMAGE_LATEST} \
     .
@@ -162,7 +184,7 @@ docker build \
 log_success "Docker image built"
 
 # ============================================
-# Step 4: Push to Artifact Registry
+# Step 5: Push to Artifact Registry
 # ============================================
 log_info "Pushing image to Artifact Registry..."
 docker push ${IMAGE_TAG}
@@ -170,7 +192,7 @@ docker push ${IMAGE_LATEST}
 log_success "Image pushed: ${IMAGE_TAG}"
 
 # ============================================
-# Step 5: Deploy to Cloud Run
+# Step 6: Deploy to Cloud Run
 # ============================================
 log_info "Deploying to Cloud Run..."
 gcloud run deploy ${SERVICE_NAME} \
@@ -183,10 +205,11 @@ gcloud run deploy ${SERVICE_NAME} \
     --cpu=1 \
     --min-instances=0 \
     --max-instances=3 \
+    --set-env-vars="NODE_ENV=production" \
     --quiet
 
 # ============================================
-# Step 6: Get service URL
+# Step 7: Get service URL
 # ============================================
 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} \
     --region=${REGION} \

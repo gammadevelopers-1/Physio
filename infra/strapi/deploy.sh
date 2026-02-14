@@ -78,37 +78,51 @@ log_step "Deploying to Cloud Run..."
 # Check if Cloud SQL instance exists
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
-if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
-    log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
-    gcloud run deploy ${STRAPI_SERVICE_NAME} \
-        --image=${IMAGE_TAG} \
-        --region=${GCP_REGION} \
-        --platform=managed \
-        --allow-unauthenticated \
-        --port=${STRAPI_PORT} \
-        --memory=${STRAPI_MEMORY} \
-        --cpu=${STRAPI_CPU} \
-        --min-instances=${STRAPI_MIN_INSTANCES} \
-        --max-instances=${STRAPI_MAX_INSTANCES} \
-        --add-cloudsql-instances=${CONNECTION_NAME} \
-        --set-env-vars="NODE_ENV=production,DATABASE_CLIENT=postgres" \
-        --set-secrets="DATABASE_HOST=STRAPI_DATABASE_HOST:latest,DATABASE_PORT=STRAPI_DATABASE_PORT:latest,DATABASE_NAME=STRAPI_DATABASE_NAME:latest,DATABASE_USERNAME=STRAPI_DATABASE_USERNAME:latest,DATABASE_PASSWORD=STRAPI_DATABASE_PASSWORD:latest,APP_KEYS=STRAPI_APP_KEYS:latest,API_TOKEN_SALT=STRAPI_API_TOKEN_SALT:latest,ADMIN_JWT_SECRET=STRAPI_ADMIN_JWT_SECRET:latest,TRANSFER_TOKEN_SALT=STRAPI_TRANSFER_TOKEN_SALT:latest,JWT_SECRET=STRAPI_JWT_SECRET:latest" \
-        --quiet
+# Strapi DB connection uses direct IP (not Cloud SQL proxy)
+# These values match the current production configuration.
+# To change DB credentials, update them here or use Secret Manager.
+STRAPI_DB_HOST="${STRAPI_DB_HOST:-104.154.109.61}"
+STRAPI_DB_PORT="${STRAPI_DB_PORT:-5432}"
+STRAPI_DB_NAME="${STRAPI_DB_NAME:-strapi}"
+STRAPI_DB_USER="${STRAPI_DB_USER:-apiuser}"
+
+# Env vars (non-sensitive)
+ENV_VARS="NODE_ENV=production"
+ENV_VARS="${ENV_VARS},DATABASE_CLIENT=postgres"
+ENV_VARS="${ENV_VARS},DATABASE_HOST=${STRAPI_DB_HOST}"
+ENV_VARS="${ENV_VARS},DATABASE_PORT=${STRAPI_DB_PORT}"
+ENV_VARS="${ENV_VARS},DATABASE_NAME=${STRAPI_DB_NAME}"
+ENV_VARS="${ENV_VARS},DATABASE_USERNAME=${STRAPI_DB_USER}"
+ENV_VARS="${ENV_VARS},DATABASE_SSL=false"
+
+# Secrets from GCP Secret Manager
+SECRETS="APP_KEYS=STRAPI_APP_KEYS:latest"
+SECRETS="${SECRETS},API_TOKEN_SALT=STRAPI_API_TOKEN_SALT:latest"
+SECRETS="${SECRETS},ADMIN_JWT_SECRET=STRAPI_ADMIN_JWT_SECRET:latest"
+SECRETS="${SECRETS},TRANSFER_TOKEN_SALT=STRAPI_TRANSFER_TOKEN_SALT:latest"
+SECRETS="${SECRETS},JWT_SECRET=STRAPI_JWT_SECRET:latest"
+
+# Check if DB password is in Secret Manager, otherwise use env var
+if gcloud secrets describe STRAPI_DATABASE_PASSWORD &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},DATABASE_PASSWORD=STRAPI_DATABASE_PASSWORD:latest"
 else
-    log_warning "No Cloud SQL instance found. Deploying without database."
-    gcloud run deploy ${STRAPI_SERVICE_NAME} \
-        --image=${IMAGE_TAG} \
-        --region=${GCP_REGION} \
-        --platform=managed \
-        --allow-unauthenticated \
-        --port=${STRAPI_PORT} \
-        --memory=${STRAPI_MEMORY} \
-        --cpu=${STRAPI_CPU} \
-        --min-instances=${STRAPI_MIN_INSTANCES} \
-        --max-instances=${STRAPI_MAX_INSTANCES} \
-        --set-env-vars="NODE_ENV=production" \
-        --quiet
+    log_warning "STRAPI_DATABASE_PASSWORD not in Secret Manager. Set STRAPI_DB_PASSWORD env var."
+    ENV_VARS="${ENV_VARS},DATABASE_PASSWORD=${STRAPI_DB_PASSWORD:-}"
 fi
+
+gcloud run deploy ${STRAPI_SERVICE_NAME} \
+    --image=${IMAGE_TAG} \
+    --region=${GCP_REGION} \
+    --platform=managed \
+    --allow-unauthenticated \
+    --port=${STRAPI_PORT} \
+    --memory=${STRAPI_MEMORY} \
+    --cpu=${STRAPI_CPU} \
+    --min-instances=${STRAPI_MIN_INSTANCES} \
+    --max-instances=${STRAPI_MAX_INSTANCES} \
+    --set-env-vars="${ENV_VARS}" \
+    --set-secrets="${SECRETS}" \
+    --quiet
 
 # Get service URL
 SERVICE_URL=$(gcloud run services describe ${STRAPI_SERVICE_NAME} \

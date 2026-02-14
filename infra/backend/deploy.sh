@@ -72,12 +72,44 @@ docker push ${IMAGE_TAG}
 docker push ${IMAGE_LATEST}
 log_success "Image pushed"
 
-# Step 5: Deploy to Cloud Run
+# Step 5: Resolve production URLs for CORS
+log_step "Resolving production URLs..."
+FRONTEND_URL="${PRODUCTION_FRONTEND_URL:-$(get_service_url ${FRONTEND_SERVICE_NAME})}"
+if [ -z "$FRONTEND_URL" ]; then
+    FRONTEND_URL="https://physioguidance-web-*.run.app"
+    log_warning "Frontend URL not found, using wildcard. Update CORS_ORIGIN after first frontend deploy."
+fi
+log_info "CORS_ORIGIN will be set to: ${FRONTEND_URL}"
+
+# Step 6: Deploy to Cloud Run
 log_step "Deploying to Cloud Run..."
 
 # Check if Cloud SQL instance exists
 DB_INSTANCE_NAME="physioguidance-db"
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
+
+# Common env vars for all backend deployments
+ENV_VARS="NODE_ENV=production"
+ENV_VARS="${ENV_VARS},PORT=${BACKEND_PORT}"
+ENV_VARS="${ENV_VARS},CORS_ORIGIN=${FRONTEND_URL}"
+ENV_VARS="${ENV_VARS},API_PREFIX=api"
+ENV_VARS="${ENV_VARS},LOG_LEVEL=warn"
+
+# Secrets from GCP Secret Manager (required)
+SECRETS="DATABASE_URL=DATABASE_URL:latest"
+SECRETS="${SECRETS},JWT_SECRET=JWT_SECRET:latest"
+SECRETS="${SECRETS},JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest"
+
+# Optional SMTP secrets (for 2FA emails) - add if they exist
+if gcloud secrets describe SMTP_HOST &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},SMTP_HOST=SMTP_HOST:latest"
+    SECRETS="${SECRETS},SMTP_PORT=SMTP_PORT:latest"
+    SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
+    log_info "SMTP secrets found - email will be configured"
+else
+    log_warning "SMTP secrets not found - email/2FA will not work"
+    log_warning "Create them with: make secrets-set SECRET=SMTP_HOST"
+fi
 
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
@@ -92,11 +124,11 @@ if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
         --add-cloudsql-instances=${CONNECTION_NAME} \
-        --set-env-vars="NODE_ENV=production" \
-        --set-secrets="DATABASE_URL=DATABASE_URL:latest" \
+        --set-env-vars="${ENV_VARS}" \
+        --set-secrets="${SECRETS}" \
         --quiet
 else
-    log_warning "No Cloud SQL instance found. Deploying without database."
+    log_warning "No Cloud SQL instance found. Deploying without Cloud SQL proxy."
     gcloud run deploy ${BACKEND_SERVICE_NAME} \
         --image=${IMAGE_TAG} \
         --region=${GCP_REGION} \
@@ -107,7 +139,8 @@ else
         --cpu=${BACKEND_CPU} \
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
-        --set-env-vars="NODE_ENV=production" \
+        --set-env-vars="${ENV_VARS}" \
+        --set-secrets="${SECRETS}" \
         --quiet
 fi
 

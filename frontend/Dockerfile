@@ -12,6 +12,13 @@ RUN npm ci --only=production
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Build-time args for production environment variables
+# Next.js inlines NEXT_PUBLIC_* vars at build time, so they must be set here
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_STRAPI_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL}
+
 # Copy package files and install all dependencies (including dev)
 COPY package.json package-lock.json ./
 RUN npm ci

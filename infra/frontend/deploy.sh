@@ -51,13 +51,32 @@ fi
 log_step "Configuring Docker for GCP..."
 gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
 
-# Step 3: Build Docker image
+# Step 3: Resolve production URLs for build args
+log_step "Resolving production URLs for Next.js build..."
+BACKEND_URL="${PRODUCTION_BACKEND_URL:-$(get_service_url ${BACKEND_SERVICE_NAME})}"
+STRAPI_URL="${PRODUCTION_STRAPI_URL:-$(get_service_url ${STRAPI_SERVICE_NAME})}"
+
+if [ -z "$BACKEND_URL" ]; then
+    log_error "Backend URL not found. Deploy backend first, or set PRODUCTION_BACKEND_URL."
+    exit 1
+fi
+if [ -z "$STRAPI_URL" ]; then
+    log_error "Strapi URL not found. Deploy Strapi first, or set PRODUCTION_STRAPI_URL."
+    exit 1
+fi
+
+log_info "NEXT_PUBLIC_API_URL  = ${BACKEND_URL}/api"
+log_info "NEXT_PUBLIC_STRAPI_URL = ${STRAPI_URL}"
+
+# Step 4: Build Docker image
 if [ "$SKIP_BUILD" = false ]; then
     log_step "Building Docker image..."
     cd "${FRONTEND_DIR}"
 
     docker build \
         --platform linux/amd64 \
+        --build-arg NEXT_PUBLIC_API_URL="${BACKEND_URL}/api" \
+        --build-arg NEXT_PUBLIC_STRAPI_URL="${STRAPI_URL}" \
         -t ${IMAGE_TAG} \
         -t ${IMAGE_LATEST} \
         .
@@ -65,13 +84,13 @@ if [ "$SKIP_BUILD" = false ]; then
     log_success "Image built: ${IMAGE_TAG}"
 fi
 
-# Step 4: Push to Artifact Registry
+# Step 5: Push to Artifact Registry
 log_step "Pushing to Artifact Registry..."
 docker push ${IMAGE_TAG}
 docker push ${IMAGE_LATEST}
 log_success "Image pushed"
 
-# Step 5: Deploy to Cloud Run
+# Step 6: Deploy to Cloud Run
 log_step "Deploying to Cloud Run..."
 gcloud run deploy ${FRONTEND_SERVICE_NAME} \
     --image=${IMAGE_TAG} \
@@ -83,6 +102,7 @@ gcloud run deploy ${FRONTEND_SERVICE_NAME} \
     --cpu=${FRONTEND_CPU} \
     --min-instances=${FRONTEND_MIN_INSTANCES} \
     --max-instances=${FRONTEND_MAX_INSTANCES} \
+    --set-env-vars="NODE_ENV=production" \
     --quiet
 
 # Get service URL

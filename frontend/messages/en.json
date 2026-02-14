@@ -2462,6 +2462,7 @@
         "role": "Role",
         "status": "Status",
         "lastLogin": "Last Login",
+        "lastIp": "Last IP",
         "created": "Created",
         "actions": "Actions"
       },

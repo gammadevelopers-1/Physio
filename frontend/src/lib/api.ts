@@ -231,6 +231,7 @@ export interface User {
   isActive: boolean;
   isVerified: boolean;
   lastLoginAt?: string;
+  lastLoginIp?: string | null;
   createdAt: string;
 }
 

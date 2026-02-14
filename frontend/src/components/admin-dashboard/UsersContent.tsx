@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -338,6 +338,9 @@ function EditUserModal({
             <div>
               <h2 className="text-lg font-semibold text-[#1F2937]">Edit User</h2>
               <p className="text-xs text-[#6B7280]">{user.email}</p>
+              {user.lastLoginIp && (
+                <p className="text-xs text-[#9CA3AF]">Last IP: {user.lastLoginIp}</p>
+              )}
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg">
@@ -533,6 +536,7 @@ function ManageRolesModal({
   const [activeRole, setActiveRole] = useState(user.activeRole);
   const [isLoading, setIsLoading] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+  const [confirmingRemoveRole, setConfirmingRemoveRole] = useState<string | null>(null);
 
   const availableRoles = ALL_ROLES.filter((r) => !userRoles.includes(r));
 
@@ -654,13 +658,34 @@ function ManageRolesModal({
                       Set Active
                     </button>
                   )}
-                  <button
-                    onClick={() => handleRemoveRole(role)}
-                    disabled={actionInProgress === role || userRoles.length <= 1}
-                    className="text-xs text-[#DC2626] hover:underline disabled:opacity-50"
-                  >
-                    {actionInProgress === role ? "..." : "Remove"}
-                  </button>
+                  {confirmingRemoveRole === role ? (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          handleRemoveRole(role);
+                          setConfirmingRemoveRole(null);
+                        }}
+                        disabled={actionInProgress === role}
+                        className="text-xs text-white bg-[#DC2626] hover:bg-[#B91C1C] px-2 py-0.5 rounded disabled:opacity-50"
+                      >
+                        {actionInProgress === role ? "..." : "Confirm"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingRemoveRole(null)}
+                        className="text-xs text-[#6B7280] hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmingRemoveRole(role)}
+                      disabled={actionInProgress === role || userRoles.length <= 1}
+                      className="text-xs text-[#DC2626] hover:underline disabled:opacity-50"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -717,10 +742,12 @@ const UsersContent = () => {
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -749,6 +776,17 @@ const UsersContent = () => {
       setIsLoadingUsers(false);
     }
   }, [currentPage, searchQuery, roleFilter, statusFilter]);
+
+  // Debounce search input (300ms)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchInput]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -908,8 +946,8 @@ const UsersContent = () => {
                     <input
                       type="text"
                       placeholder={t("usersPage.searchPlaceholder")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
                       className={`w-full h-10 border border-[#E5E7EB] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
@@ -989,6 +1027,9 @@ const UsersContent = () => {
                           <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.lastLogin")}
                           </th>
+                          <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                            {t("usersPage.table.lastIp")}
+                          </th>
                           <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.created")}
                           </th>
@@ -1026,6 +1067,9 @@ const UsersContent = () => {
                               </td>
                               <td className="px-4 py-4 text-sm text-[#6B7280] whitespace-nowrap">
                                 {formatRelativeTime(user.lastLoginAt)}
+                              </td>
+                              <td className="px-4 py-4 text-sm text-[#6B7280] whitespace-nowrap hidden lg:table-cell">
+                                {user.lastLoginIp || "—"}
                               </td>
                               <td className="px-4 py-4 text-sm text-[#6B7280] whitespace-nowrap">
                                 {formatDate(user.createdAt)}

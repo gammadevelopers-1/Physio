@@ -9,18 +9,23 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
-    // Use Mailpit SMTP for dev; in production, swap to a real provider (SES, Resend, etc.)
     const host = this.configService.get<string>('SMTP_HOST') || 'localhost';
     const port = parseInt(this.configService.get<string>('SMTP_PORT') || '1025', 10);
+    const user = this.configService.get<string>('SMTP_USER');
+    const pass = this.configService.get<string>('SMTP_PASS');
 
-    this.transporter = nodemailer.createTransport({
+    const transportOptions: nodemailer.TransportOptions & Record<string, unknown> = {
       host,
       port,
-      secure: false, // Mailpit does not use TLS
-      // No auth needed for Mailpit
-    });
+      secure: port === 465,
+    };
 
-    this.logger.log(`Email transport configured → ${host}:${port}`);
+    if (user && pass) {
+      transportOptions.auth = { user, pass };
+    }
+
+    this.transporter = nodemailer.createTransport(transportOptions);
+    this.logger.log(`Email transport configured → ${host}:${port} (auth: ${!!user})`);
   }
 
   /**

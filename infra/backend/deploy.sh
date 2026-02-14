@@ -89,8 +89,8 @@ DB_INSTANCE_NAME="physioguidance-db"
 CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
 # Common env vars for all backend deployments
+# NOTE: PORT is reserved by Cloud Run (set via --port flag), do not include it here
 ENV_VARS="NODE_ENV=production"
-ENV_VARS="${ENV_VARS},PORT=${BACKEND_PORT}"
 ENV_VARS="${ENV_VARS},CORS_ORIGIN=${FRONTEND_URL}"
 ENV_VARS="${ENV_VARS},API_PREFIX=api"
 ENV_VARS="${ENV_VARS},LOG_LEVEL=warn"
@@ -104,6 +104,8 @@ SECRETS="${SECRETS},JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest"
 if gcloud secrets describe SMTP_HOST &>/dev/null 2>&1; then
     SECRETS="${SECRETS},SMTP_HOST=SMTP_HOST:latest"
     SECRETS="${SECRETS},SMTP_PORT=SMTP_PORT:latest"
+    SECRETS="${SECRETS},SMTP_USER=SMTP_USER:latest"
+    SECRETS="${SECRETS},SMTP_PASS=SMTP_PASS:latest"
     SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
     log_info "SMTP secrets found - email will be configured"
 else

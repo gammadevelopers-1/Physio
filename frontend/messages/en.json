@@ -3908,5 +3908,33 @@
       "exportReport": "Export Report",
       "teamChat": "Team Chat"
     }
+  },
+  "dashboardSearch": {
+    "placeholder": "Search courses, blogs, and more...",
+    "hint": "Type to search across courses, blogs, and more",
+    "noResults": "No results found",
+    "noResultsHint": "Try different keywords or check your spelling",
+    "viewAll": "View all results",
+    "escToClose": "Press ESC to close",
+    "sections": {
+      "courses": "Courses",
+      "blogs": "Blogs",
+      "users": "Users"
+    },
+    "quickLinks": {
+      "title": "Quick Links",
+      "myCourses": "My Courses",
+      "browseCourses": "Browse Courses",
+      "certifications": "Certifications",
+      "settings": "Settings",
+      "students": "Students",
+      "users": "Users",
+      "roles": "Roles",
+      "courses": "Courses",
+      "instructors": "Instructors",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "tickets": "Tickets"
+    }
   }
 }

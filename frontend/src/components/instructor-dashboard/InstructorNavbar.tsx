@@ -25,6 +25,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
+import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
 
 interface InstructorProfile {
   name: string;
@@ -39,6 +40,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("instructorDashboard");
   const locale = useLocale();
@@ -221,12 +223,12 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />
 
           {/* Search Icon - Hidden on mobile */}
-          <Link
-            href={`/${locale}/search`}
+          <button
+            onClick={() => setIsSearchOpen(true)}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
           >
             <Search className="w-5 h-5" strokeWidth={1.67} />
-          </Link>
+          </button>
 
           {/* Cart Icon - Hidden on mobile */}
           <Link
@@ -390,13 +392,12 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
 
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 py-3">
-              <Link
-                href={`/${locale}/search`}
+              <button
+                onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Search className="w-5 h-5" strokeWidth={1.67} />
-              </Link>
+              </button>
               <Link
                 href={`/${locale}/checkout`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
@@ -414,6 +415,11 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           </div>
         </div>
       )}
+      <DashboardSearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        role="instructor"
+      />
     </nav>
   );
 };

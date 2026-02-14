@@ -84,7 +84,13 @@
       "Bash(docker network prune:*)",
       "Bash(docker-compose ps:*)",
       "Bash(xxd:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzM3ZWY5NC01ZmI0LTRkMjAtYmM1MS04NGM5ZTkyMWI4YjUiLCJlbWFpbCI6ImFkbWluQHBoeXNpb2d1aWRhbmNlLm9yZyIsImFjdGl2ZVJvbGUiOiJBRE1JTiIsInJvbGVzIjpbIkFETUlOIl0sImlhdCI6MTc3MDg4NjQzNSwiZXhwIjoxNzcwODg3MzM1fQ._hXGaROczx1BTPTM-DlDK8Z-r154VHnFV6i1B5NtNIQ\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzM3ZWY5NC01ZmI0LTRkMjAtYmM1MS04NGM5ZTkyMWI4YjUiLCJlbWFpbCI6ImFkbWluQHBoeXNpb2d1aWRhbmNlLm9yZyIsImFjdGl2ZVJvbGUiOiJBRE1JTiIsInJvbGVzIjpbIkFETUlOIl0sImlhdCI6MTc3MDg4NjQzNSwiZXhwIjoxNzcwODg3MzM1fQ._hXGaROczx1BTPTM-DlDK8Z-r154VHnFV6i1B5NtNIQ\")",
+      "Bash(/home/haseeb-raza/Desktop/physioguidance/frontend/node_modules/.bin/tsc:*)",
+      "Bash(docker compose up:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(docker compose restart:*)"
     ]
   }
 }

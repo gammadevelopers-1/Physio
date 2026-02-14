@@ -4120,5 +4120,33 @@
       "exportReport": "تصدير التقرير",
       "teamChat": "محادثة الفريق"
     }
+  },
+  "dashboardSearch": {
+    "placeholder": "ابحث في الدورات والمدونات والمزيد...",
+    "hint": "اكتب للبحث في الدورات والمدونات والمزيد",
+    "noResults": "لم يتم العثور على نتائج",
+    "noResultsHint": "جرب كلمات مفتاحية مختلفة أو تحقق من الإملاء",
+    "viewAll": "عرض جميع النتائج",
+    "escToClose": "اضغط ESC للإغلاق",
+    "sections": {
+      "courses": "الدورات",
+      "blogs": "المدونات",
+      "users": "المستخدمون"
+    },
+    "quickLinks": {
+      "title": "روابط سريعة",
+      "myCourses": "دوراتي",
+      "browseCourses": "تصفح الدورات",
+      "certifications": "الشهادات",
+      "settings": "الإعدادات",
+      "students": "الطلاب",
+      "users": "المستخدمون",
+      "roles": "الأدوار",
+      "courses": "الدورات",
+      "instructors": "المدربون",
+      "invoices": "الفواتير",
+      "payments": "المدفوعات",
+      "tickets": "التذاكر"
+    }
   }
 }

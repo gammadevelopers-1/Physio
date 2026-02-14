@@ -1174,6 +1174,8 @@
     },
     "settings": {
       "title": "Settings",
+      "tabProfile": "Profile",
+      "tabSecurity": "Security",
       "changePhoto": "Change photo",
       "firstName": "First Name",
       "lastName": "Last Name",
@@ -2469,6 +2471,7 @@
         "resetPassword": "Reset Password",
         "impersonate": "Impersonate",
         "suspend": "Suspend",
+        "trustedDevices": "Trusted Devices",
         "delete": "Delete"
       },
       "sampleUsers": {

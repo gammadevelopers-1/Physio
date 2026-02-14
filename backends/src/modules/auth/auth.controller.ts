@@ -5,6 +5,7 @@ import {
   Delete,
   Patch,
   Body,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -27,6 +28,7 @@ import {
   UpdateRoleDto,
   Verify2FADto,
   Toggle2FADto,
+  GetUsersQueryDto,
 } from './dto';
 import { JwtAuthGuard, RolesGuard } from './guards';
 import { CurrentUser, Public, Roles } from './decorators';
@@ -364,8 +366,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   @Get('users')
-  async getAllUsers() {
-    return this.authService.getAllUsers();
+  async getAllUsers(@Query() query: GetUsersQueryDto) {
+    return this.authService.getAllUsers({
+      ...query,
+      page: query.page ? Number(query.page) : undefined,
+      limit: query.limit ? Number(query.limit) : undefined,
+    });
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -456,5 +462,35 @@ export class AuthController {
   @Delete('roles/:id')
   async deleteRole(@Param('id') roleId: string) {
     return this.authService.deleteRole(roleId);
+  }
+
+  // ===========================================
+  // ADMIN: Manage User Trusted Devices
+  // ===========================================
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('users/:id/trusted-devices')
+  async getAdminUserTrustedDevices(@Param('id') userId: string) {
+    return this.twoFactorService.getUserTrustedDevices(userId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Delete('users/:id/trusted-devices/:deviceId')
+  async adminRevokeDevice(
+    @Param('id') userId: string,
+    @Param('deviceId') deviceId: string,
+  ) {
+    await this.twoFactorService.revokeDevice(userId, deviceId);
+    return { message: 'Device revoked successfully' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Delete('users/:id/trusted-devices')
+  async adminRevokeAllDevices(@Param('id') userId: string) {
+    await this.twoFactorService.revokeAllDevices(userId);
+    return { message: 'All devices revoked successfully' };
   }
 }

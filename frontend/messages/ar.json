@@ -1386,6 +1386,8 @@
     },
     "settings": {
       "title": "الإعدادات",
+      "tabProfile": "الملف الشخصي",
+      "tabSecurity": "الأمان",
       "changePhoto": "تغيير الصورة",
       "firstName": "الاسم الأول",
       "lastName": "اسم العائلة",
@@ -2681,6 +2683,7 @@
         "resetPassword": "إعادة تعيين كلمة المرور",
         "impersonate": "انتحال الشخصية",
         "suspend": "إيقاف",
+        "trustedDevices": "الأجهزة الموثوقة",
         "delete": "حذف"
       },
       "sampleUsers": {

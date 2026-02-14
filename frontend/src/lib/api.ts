@@ -333,12 +333,49 @@ export interface UpdateUserData {
   activeRole?: string;
 }
 
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface UserStats {
+  total: number;
+  active: number;
+  pending: number;
+  suspended: number;
+}
+
+export interface PaginatedUsersResponse {
+  data: User[];
+  meta: PaginationMeta;
+  stats: UserStats;
+}
+
 // ===========================================
 // Admin API Calls
 // ===========================================
 export const adminApi = {
   // Get all users (ADMIN/SUPER_ADMIN only)
-  getUsers: () => api.get<User[]>('/auth/users'),
+  getUsers: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.role) searchParams.set('role', params.role);
+    if (params?.status) searchParams.set('status', params.status);
+    const queryString = searchParams.toString();
+    return api.get<PaginatedUsersResponse>(`/auth/users${queryString ? `?${queryString}` : ''}`);
+  },
 
   // Get a user's roles
   getUserRoles: (userId: string) =>
@@ -379,6 +416,16 @@ export const adminApi = {
   // Delete a role (admin only)
   deleteRole: (roleId: string) =>
     api.delete<{ message: string }>(`/auth/roles/${roleId}`),
+
+  // Trusted Device Management (admin only)
+  getUserTrustedDevices: (userId: string) =>
+    api.get<TrustedDevice[]>(`/auth/users/${userId}/trusted-devices`),
+
+  revokeUserDevice: (userId: string, deviceId: string) =>
+    api.delete<{ message: string }>(`/auth/users/${userId}/trusted-devices/${deviceId}`),
+
+  revokeAllUserDevices: (userId: string) =>
+    api.delete<{ message: string }>(`/auth/users/${userId}/trusted-devices`),
 };
 
 export interface RoleWithCount {

@@ -6,8 +6,9 @@ import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
 import { useAuth } from "@/contexts";
-import { adminApi, User, CreateUserData, UpdateUserData } from "@/lib/api";
+import { adminApi, User, CreateUserData, UpdateUserData, PaginatedUsersResponse } from "@/lib/api";
 import { toast } from "sonner";
+import UserDevicesModal from "./UserDevicesModal";
 import {
   Search,
   Plus,
@@ -23,6 +24,7 @@ import {
   Shield,
   UserPlus,
   Check,
+  Smartphone,
 } from "lucide-react";
 
 // ============================================
@@ -709,6 +711,9 @@ const UsersContent = () => {
   const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, hasNext: false, hasPrev: false });
+  const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, suspended: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -722,19 +727,33 @@ const UsersContent = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [managingRolesUser, setManagingRolesUser] = useState<User | null>(null);
+  const [viewingDevicesUser, setViewingDevicesUser] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setIsLoadingUsers(true);
     setFetchError(null);
     try {
-      const data = await adminApi.getUsers();
-      setUsers(data);
+      const result = await adminApi.getUsers({
+        page: currentPage,
+        limit: 10,
+        search: searchQuery || undefined,
+        role: roleFilter !== "all" ? roleFilter : undefined,
+        status: statusFilter !== "all" ? statusFilter : undefined,
+      });
+      setUsers(result.data);
+      setPagination(result.meta);
+      setStats(result.stats);
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
       setIsLoadingUsers(false);
     }
-  }, []);
+  }, [currentPage, searchQuery, roleFilter, statusFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, statusFilter]);
 
   useEffect(() => {
     fetchUsers();
@@ -751,7 +770,7 @@ const UsersContent = () => {
   const adminProfile = {
     name: currentUser ? getUserName(currentUser) : "",
     email: currentUser?.email || "",
-    totalUsers: users.length,
+    totalUsers: stats.total,
     totalCourses: 0,
     uptime: 99.9,
   };
@@ -810,27 +829,6 @@ const UsersContent = () => {
         return "bg-[#9CA3AF]";
     }
   };
-
-  const filteredUsers = users.filter((user) => {
-    const name = getUserName(user);
-    const matchesSearch =
-      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole =
-      roleFilter === "all" || user.activeRole.toLowerCase() === roleFilter;
-    const status = getUserStatus(user);
-    const matchesStatus = statusFilter === "all" || status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
-
-  const stats = {
-    total: users.length,
-    active: users.filter((u) => u.isActive && u.isVerified).length,
-    pending: users.filter((u) => !u.isVerified).length,
-    suspended: users.filter((u) => !u.isActive).length,
-  };
-
-  const getRoleTranslationKey = (role: string) => role.toLowerCase();
 
   const handleSuspendToggle = async (user: User) => {
     try {
@@ -999,9 +997,9 @@ const UsersContent = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUsers.map((user) => {
+                        {users.map((user) => {
                           const status = getUserStatus(user);
-                          const roleKey = getRoleTranslationKey(user.activeRole);
+                          const roleKey = user.activeRole.toLowerCase();
                           return (
                             <tr key={user.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
                               <td className="px-4 py-4">
@@ -1065,6 +1063,16 @@ const UsersContent = () => {
                                         <Shield className="w-4 h-4" />
                                         Manage Roles
                                       </button>
+                                      <button
+                                        onClick={() => {
+                                          setViewingDevicesUser(user);
+                                          setOpenDropdownId(null);
+                                        }}
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]"
+                                      >
+                                        <Smartphone className="w-4 h-4" />
+                                        Trusted Devices
+                                      </button>
                                       <div className="border-t border-[#E5E7EB] my-1" />
                                       <button
                                         onClick={() => handleSuspendToggle(user)}
@@ -1100,12 +1108,56 @@ const UsersContent = () => {
                     </table>
                   </div>
 
-                  {filteredUsers.length === 0 && (
+                  {users.length === 0 && (
                     <div className="py-12 text-center">
                       <p className="text-[#6B7280]">{t("usersPage.noUsers")}</p>
                     </div>
                   )}
                 </div>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <p className="text-sm text-[#6B7280]">
+                      Showing {(currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, pagination.total)} of {pagination.total} users
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={!pagination.hasPrev}
+                        className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                        .filter((p) => p === 1 || p === pagination.totalPages || Math.abs(p - currentPage) <= 1)
+                        .map((p, idx, arr) => (
+                          <span key={p}>
+                            {idx > 0 && arr[idx - 1] !== p - 1 && (
+                              <span className="px-1 text-[#6B7280]">...</span>
+                            )}
+                            <button
+                              onClick={() => setCurrentPage(p)}
+                              className={`w-8 h-8 text-sm rounded-lg ${
+                                p === currentPage
+                                  ? "bg-[#002D87] text-white"
+                                  : "border border-[#E5E7EB] hover:bg-[#F9FAFB] text-[#4B5563]"
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          </span>
+                        ))}
+                      <button
+                        onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
+                        disabled={!pagination.hasNext}
+                        className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               )}
             </div>
           </div>
@@ -1141,6 +1193,13 @@ const UsersContent = () => {
           user={managingRolesUser}
           onClose={() => setManagingRolesUser(null)}
           onUpdated={fetchUsers}
+        />
+      )}
+
+      {viewingDevicesUser && (
+        <UserDevicesModal
+          user={viewingDevicesUser}
+          onClose={() => setViewingDevicesUser(null)}
         />
       )}
     </>

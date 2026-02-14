@@ -1245,7 +1245,7 @@
     },
     "loginRequired": "تسجيل الدخول مطلوب",
     "loginRequiredDesc": "يجب تسجيل الدخول لتقديم طلب مدرب.",
-    "signIn": "تسجيل الدخول",
+    "signIn": "تسجيل الدخول للتقديم",
     "alreadyTrainer": "أنت بالفعل مدرب!",
     "alreadyTrainerDesc": "لديك بالفعل دور المدرب.",
     "goToDashboard": "الذهاب إلى لوحة تحكم المدرب",

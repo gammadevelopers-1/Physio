@@ -1033,7 +1033,7 @@
     },
     "loginRequired": "Login Required",
     "loginRequiredDesc": "You need to sign in to submit a trainer application.",
-    "signIn": "Sign In",
+    "signIn": "Sign In to Apply",
     "alreadyTrainer": "You're Already a Trainer!",
     "alreadyTrainerDesc": "You already have the Instructor role.",
     "goToDashboard": "Go to Instructor Dashboard",

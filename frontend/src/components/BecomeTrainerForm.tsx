@@ -658,19 +658,22 @@ const BecomeTrainerForm = ({
     );
   }
 
+  // Helper: next-intl returns the key path (truthy) when missing, so || fallback won't work
+  const tt = (key: string, fallback: string) => (t.has(key) ? t(key) : fallback);
+
   // Not logged in
   if (!isAuthenticated) {
     return (
       <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <AlertCircle className="w-12 h-12 text-[#a37f49] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{t("loginRequired") || "Login Required"}</h2>
-          <p className="text-[#6B7280] mb-6">{t("loginRequiredDesc") || "You need to sign in to apply as a trainer."}</p>
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("loginRequired", "Login Required")}</h2>
+          <p className="text-[#6B7280] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
           <Link
             href={`/${locale}/signin?redirect=/${locale}/become-trainer`}
             className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
           >
-            {t("signIn") || "Sign In"}
+            {tt("signIn", "Sign In to Apply")}
           </Link>
         </div>
       </section>
@@ -683,13 +686,13 @@ const BecomeTrainerForm = ({
       <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{t("alreadyTrainer") || "You're Already a Trainer!"}</h2>
-          <p className="text-[#6B7280] mb-6">{t("alreadyTrainerDesc") || "You already have the Instructor role."}</p>
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("alreadyTrainer", "You're Already a Trainer!")}</h2>
+          <p className="text-[#6B7280] mb-6">{tt("alreadyTrainerDesc", "You already have the Instructor role.")}</p>
           <button
             onClick={() => switchRole("INSTRUCTOR")}
             className="inline-block px-6 py-3 bg-[#002D87] text-white rounded-xl font-medium hover:bg-[#001A52] transition-colors"
           >
-            {t("goToDashboard") || "Go to Instructor Dashboard"}
+            {tt("goToDashboard", "Go to Instructor Dashboard")}
           </button>
         </div>
       </section>
@@ -704,26 +707,26 @@ const BecomeTrainerForm = ({
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <Clock className="w-12 h-12 text-[#F59E0B] mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-[#1F2937] mb-2">
-            {status === "PENDING" ? (t("pendingApplication") || "Application Under Review") : (t("moreInfoNeeded") || "Additional Information Needed")}
+            {status === "PENDING" ? tt("pendingApplication", "Application Under Review") : tt("moreInfoNeeded", "Additional Information Needed")}
           </h2>
           <p className="text-[#6B7280] mb-2">
             {status === "PENDING"
-              ? (t("pendingApplicationDesc") || "Your application is being reviewed. We'll notify you once a decision is made.")
-              : (t("moreInfoNeededDesc") || "The reviewer has requested more information about your application.")}
+              ? tt("pendingApplicationDesc", "Your application is being reviewed. We'll notify you once a decision is made.")
+              : tt("moreInfoNeededDesc", "The reviewer has requested more information about your application.")}
           </p>
           {status === "MORE_INFO" && existingApplication.reviewNote && (
             <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4 text-sm text-[#92400E] text-start">
-              <strong>{t("reviewerNote") || "Reviewer note"}:</strong> {existingApplication.reviewNote}
+              <strong>{tt("reviewerNote", "Reviewer note")}:</strong> {existingApplication.reviewNote}
             </div>
           )}
           <p className="text-xs text-[#9CA3AF] mb-4">
-            {t("submittedOn") || "Submitted on"}: {new Date(existingApplication.createdAt).toLocaleDateString()}
+            {tt("submittedOn", "Submitted on")}: {new Date(existingApplication.createdAt).toLocaleDateString()}
           </p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
             className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
           >
-            {t("viewApplications") || "View My Applications"}
+            {tt("viewApplications", "View My Applications")}
           </Link>
         </div>
       </section>
@@ -736,13 +739,13 @@ const BecomeTrainerForm = ({
       <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
           <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{t("submitSuccess") || "Application Submitted!"}</h2>
-          <p className="text-[#6B7280] mb-6">{t("submitSuccessDesc") || "We'll review your application and notify you within a few business days."}</p>
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("submitSuccess", "Application Submitted!")}</h2>
+          <p className="text-[#6B7280] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
           <Link
             href={`/${locale}/dashboard/student/applications`}
             className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
           >
-            {t("viewApplications") || "View My Applications"}
+            {tt("viewApplications", "View My Applications")}
           </Link>
         </div>
       </section>
@@ -1002,7 +1005,7 @@ const BecomeTrainerForm = ({
                 </button>
                 <button type="submit" disabled={isSubmitting} className="h-11 px-6 rounded-lg font-medium text-white btn-gold disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {isSubmitting ? (t("submitting") || "Submitting...") : labels.save}
+                  {isSubmitting ? tt("submitting", "Submitting...") : labels.save}
                 </button>
               </div>
             </div>
@@ -1228,7 +1231,7 @@ const BecomeTrainerForm = ({
               </button>
               <button type="submit" disabled={isSubmitting} className="flex-1 h-12 rounded-xl font-medium text-white btn-gold disabled:opacity-50 flex items-center justify-center gap-2">
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isSubmitting ? (t("submitting") || "Submitting...") : labels.save}
+                {isSubmitting ? tt("submitting", "Submitting...") : labels.save}
               </button>
             </div>
           </div>

@@ -90,7 +90,10 @@
       "Bash(git status:*)",
       "Bash(git add:*)",
       "Bash(docker compose exec:*)",
-      "Bash(docker compose restart:*)"
+      "Bash(docker compose restart:*)",
+      "Bash(git stash:*)",
+      "Bash(npx nest build:*)",
+      "Bash(npx:*)"
     ]
   }
 }

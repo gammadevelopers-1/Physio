@@ -294,7 +294,7 @@ function EditUserModal({
   const [form, setForm] = useState({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
-    phone: (user as Record<string, unknown>).phone as string || "",
+    phone: (user as unknown as Record<string, unknown>).phone as string || "",
     isActive: user.isActive,
     isVerified: user.isVerified,
   });

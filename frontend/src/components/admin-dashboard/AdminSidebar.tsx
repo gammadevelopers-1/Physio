@@ -17,6 +17,7 @@ import {
   Settings,
   Pencil,
   Crown,
+  UserCheck,
 } from "lucide-react";
 
 interface AdminProfile {
@@ -54,6 +55,11 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       label: t("sidebar.roles"),
       href: `/${locale}/dashboard/admin/roles`,
       icon: Shield,
+    },
+    {
+      label: t("sidebar.roleRequests"),
+      href: `/${locale}/dashboard/admin/role-requests`,
+      icon: UserCheck,
     },
     {
       label: t("sidebar.courses"),

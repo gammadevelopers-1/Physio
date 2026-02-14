@@ -16,6 +16,7 @@ import {
   PlusCircle,
   Pencil,
   Coins,
+  ClipboardList,
 } from "lucide-react";
 
 interface UserProfile {
@@ -66,6 +67,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       label: t("sidebar.invoices"),
       href: `/${locale}/dashboard/student/invoices`,
       icon: FileText,
+    },
+    {
+      label: t("sidebar.applications"),
+      href: `/${locale}/dashboard/student/applications`,
+      icon: ClipboardList,
     },
     {
       label: t("sidebar.inviteFriends"),

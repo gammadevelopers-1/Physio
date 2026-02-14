@@ -438,4 +438,98 @@ export interface RoleWithCount {
   usersCount: number;
 }
 
+// ===========================================
+// Role Request Types
+// ===========================================
+export interface RoleRequest {
+  id: string;
+  userId: string;
+  requestedRole: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
+  profileData: Record<string, unknown>;
+  bankData: Record<string, unknown> | null;
+  resumeFiles: Array<{ type: string; url: string; filename: string }> | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar?: string | null;
+  };
+}
+
+export interface RoleRequestStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
+export interface PaginatedRoleRequestsResponse {
+  data: RoleRequest[];
+  meta: PaginationMeta;
+  stats: RoleRequestStats;
+}
+
+// ===========================================
+// Role Requests API
+// ===========================================
+export const roleRequestsApi = {
+  // Submit new application (student)
+  submit: (data: {
+    requestedRole: string;
+    profileData: Record<string, unknown>;
+    bankData?: Record<string, unknown>;
+    resumeFiles?: Array<{ type: string; url: string; filename: string }>;
+  }) => api.post<RoleRequest>('/role-requests', data),
+
+  // Get my applications
+  getMine: () => api.get<RoleRequest[]>('/role-requests/mine'),
+
+  // Get all applications (admin)
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    const queryString = searchParams.toString();
+    return api.get<PaginatedRoleRequestsResponse>(
+      `/role-requests${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  // Get single application (admin)
+  getById: (id: string) => api.get<RoleRequest>(`/role-requests/${id}`),
+
+  // Approve application (admin)
+  approve: (id: string, note?: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/approve`, { reviewNote: note }),
+
+  // Reject application (admin)
+  reject: (id: string, reviewNote: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/reject`, { reviewNote }),
+
+  // Request more info (admin)
+  requestInfo: (id: string, reviewNote: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/request-info`, { reviewNote }),
+
+  // Resubmit application (student)
+  resubmit: (id: string, data: {
+    requestedRole: string;
+    profileData: Record<string, unknown>;
+    bankData?: Record<string, unknown>;
+    resumeFiles?: Array<{ type: string; url: string; filename: string }>;
+  }) => api.patch<{ message: string }>(`/role-requests/${id}`, data),
+};
+
 export default api;

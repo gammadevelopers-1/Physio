@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Search,
@@ -39,6 +40,7 @@ const RoleRequestsContent = () => {
   const locale = useLocale();
   const t = useTranslations("adminDashboard");
   const isRTL = locale === "ar";
+  const router = useRouter();
 
   const [requests, setRequests] = useState<RoleRequest[]>([]);
   const [stats, setStats] = useState<RoleRequestStats>({ total: 0, pending: 0, approved: 0, rejected: 0 });
@@ -241,7 +243,11 @@ const RoleRequestsContent = () => {
                         const StatusIcon = config.icon;
 
                         return (
-                          <tr key={request.id} className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors">
+                          <tr
+                            key={request.id}
+                            onClick={() => router.push(`/${locale}/dashboard/admin/role-requests/${request.id}`)}
+                            className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                          >
                             <td className="px-4 py-3">
                               <p className="text-sm font-medium text-[#1F2937]">{getApplicantName(request)}</p>
                             </td>
@@ -260,7 +266,7 @@ const RoleRequestsContent = () => {
                             <td className="px-4 py-3">
                               <p className="text-sm text-[#6B7280]">{formatDate(request.createdAt)}</p>
                             </td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                               <Link
                                 href={`/${locale}/dashboard/admin/role-requests/${request.id}`}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#002D87] bg-[#EFF6FF] rounded-lg hover:bg-[#DBEAFE] transition-colors"

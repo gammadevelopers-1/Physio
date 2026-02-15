@@ -13,6 +13,7 @@ import {
   users,
   userRoles,
   roles,
+  blockedNationalIds,
   ROLE_REQUEST_STATUS,
   RoleName,
 } from '../../database/schema';
@@ -74,6 +75,64 @@ export class RoleRequestsService {
       throw new ConflictException(
         'You already have a pending application for this role',
       );
+    }
+
+    // Extract National ID from profileData
+    const profileData = dto.profileData as Record<string, string>;
+    const nationalId = profileData?.nationalIqamaId;
+
+    if (nationalId) {
+      // Check if this National ID is blocked
+      const [blocked] = await db
+        .select()
+        .from(blockedNationalIds)
+        .where(eq(blockedNationalIds.nationalId, nationalId))
+        .limit(1);
+
+      if (blocked) {
+        throw new ForbiddenException(
+          'This National/Iqama ID has been blocked. You cannot submit an application.',
+        );
+      }
+
+      // Check if another user already has an APPROVED or PENDING/MORE_INFO application with this National ID
+      const existingNationalIdRequests = await db
+        .select({
+          id: roleRequests.id,
+          status: roleRequests.status,
+          userId: roleRequests.userId,
+        })
+        .from(roleRequests)
+        .where(
+          and(
+            sql`${roleRequests.profileData}->>'nationalIqamaId' = ${nationalId}`,
+            or(
+              eq(roleRequests.status, ROLE_REQUEST_STATUS.APPROVED),
+              eq(roleRequests.status, ROLE_REQUEST_STATUS.PENDING),
+              eq(roleRequests.status, ROLE_REQUEST_STATUS.MORE_INFO),
+            ),
+          ),
+        );
+
+      if (existingNationalIdRequests.length > 0) {
+        const hasApproved = existingNationalIdRequests.some(
+          (r) => r.status === ROLE_REQUEST_STATUS.APPROVED,
+        );
+        if (hasApproved) {
+          throw new ConflictException(
+            'An instructor with this National/Iqama ID already exists.',
+          );
+        }
+        // PENDING or MORE_INFO from another user
+        const fromOtherUser = existingNationalIdRequests.some(
+          (r) => r.userId !== userId,
+        );
+        if (fromOtherUser) {
+          throw new ConflictException(
+            'An application with this National/Iqama ID is already under review.',
+          );
+        }
+      }
     }
 
     // Insert new role request
@@ -438,6 +497,19 @@ export class RoleRequestsService {
       })
       .where(eq(roleRequests.id, id));
 
+    // Optionally block the National ID
+    if (dto.blockNationalId) {
+      const profileData = request.profileData as Record<string, string>;
+      const nationalId = profileData?.nationalIqamaId;
+      if (nationalId) {
+        try {
+          await this.blockNationalId(nationalId, dto.reviewNote, adminId);
+        } catch {
+          // Already blocked or other error — continue with rejection
+        }
+      }
+    }
+
     // Send rejection email
     try {
       const profileData = request.profileData as Record<string, string>;
@@ -455,7 +527,10 @@ export class RoleRequestsService {
       this.logger.error('Failed to send rejection email', error);
     }
 
-    return { message: 'Application rejected' };
+    const message = dto.blockNationalId
+      ? 'Application rejected and National ID blocked'
+      : 'Application rejected';
+    return { message };
   }
 
   // ===========================================
@@ -593,5 +668,86 @@ export class RoleRequestsService {
     }
 
     return { message: 'Application resubmitted successfully' };
+  }
+
+  // ===========================================
+  // Block National ID - Prevent future applications
+  // ===========================================
+  async blockNationalId(
+    nationalId: string,
+    reason: string,
+    adminId: string,
+  ) {
+    // Check if already blocked
+    const [existing] = await db
+      .select()
+      .from(blockedNationalIds)
+      .where(eq(blockedNationalIds.nationalId, nationalId))
+      .limit(1);
+
+    if (existing) {
+      throw new ConflictException('This National/Iqama ID is already blocked');
+    }
+
+    const [blocked] = await db
+      .insert(blockedNationalIds)
+      .values({
+        nationalId,
+        reason,
+        blockedBy: adminId,
+      })
+      .returning();
+
+    return blocked;
+  }
+
+  // ===========================================
+  // Unblock National ID
+  // ===========================================
+  async unblockNationalId(nationalId: string) {
+    const [existing] = await db
+      .select()
+      .from(blockedNationalIds)
+      .where(eq(blockedNationalIds.nationalId, nationalId))
+      .limit(1);
+
+    if (!existing) {
+      throw new NotFoundException('This National/Iqama ID is not blocked');
+    }
+
+    await db
+      .delete(blockedNationalIds)
+      .where(eq(blockedNationalIds.nationalId, nationalId));
+
+    return { message: 'National/Iqama ID unblocked successfully' };
+  }
+
+  // ===========================================
+  // List Blocked National IDs
+  // ===========================================
+  async getBlockedNationalIds() {
+    return db
+      .select({
+        id: blockedNationalIds.id,
+        nationalId: blockedNationalIds.nationalId,
+        reason: blockedNationalIds.reason,
+        blockedBy: blockedNationalIds.blockedBy,
+        blockedAt: blockedNationalIds.blockedAt,
+      })
+      .from(blockedNationalIds)
+      .orderBy(desc(blockedNationalIds.blockedAt));
+  }
+
+  // ===========================================
+  // Check if National ID is blocked
+  // ===========================================
+  async isNationalIdBlocked(nationalId: string): Promise<boolean> {
+    const [blocked] = await db
+      .select()
+      .from(blockedNationalIds)
+      .where(eq(blockedNationalIds.nationalId, nationalId))
+      .limit(1);
+
+    return !!blocked;
   }
 }

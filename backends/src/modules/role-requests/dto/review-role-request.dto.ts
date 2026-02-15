@@ -1,7 +1,11 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class ReviewRoleRequestDto {
   @IsOptional()
   @IsString()
   reviewNote?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  blockNationalId?: boolean;
 }

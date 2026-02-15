@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Patch,
   Body,
   Param,
@@ -42,6 +43,44 @@ export class RoleRequestsController {
   @Get('mine')
   async findMine(@CurrentUser('id') userId: string) {
     return this.roleRequestsService.findMine(userId);
+  }
+
+  // ===========================================
+  // POST /role-requests/blocked-national-ids - Block a National ID
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Post('blocked-national-ids')
+  @HttpCode(HttpStatus.CREATED)
+  async blockNationalId(
+    @CurrentUser('id') adminId: string,
+    @Body() body: { nationalId: string; reason: string },
+  ) {
+    return this.roleRequestsService.blockNationalId(
+      body.nationalId,
+      body.reason,
+      adminId,
+    );
+  }
+
+  // ===========================================
+  // GET /role-requests/blocked-national-ids - List blocked IDs
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('blocked-national-ids')
+  async getBlockedNationalIds() {
+    return this.roleRequestsService.getBlockedNationalIds();
+  }
+
+  // ===========================================
+  // DELETE /role-requests/blocked-national-ids/:nationalId - Unblock
+  // ===========================================
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Delete('blocked-national-ids/:nationalId')
+  async unblockNationalId(@Param('nationalId') nationalId: string) {
+    return this.roleRequestsService.unblockNationalId(nationalId);
   }
 
   // ===========================================

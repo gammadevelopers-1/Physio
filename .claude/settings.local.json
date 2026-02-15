@@ -93,7 +93,10 @@
       "Bash(docker compose restart:*)",
       "Bash(git stash:*)",
       "Bash(npx nest build:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(npm run db:push:*)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npm run db:push:*)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npx drizzle-kit:*)"
     ]
   }
 }

@@ -375,7 +375,7 @@ const BecomeTrainerForm = ({
     bankName: bankNameLabel || t("bankAccount.bankName"),
     iban: bankIbanLabel || t("bankAccount.iban"),
     cancel: cancelButtonLabel || t("buttons.cancel"),
-    save: saveButtonLabel || t("buttons.save"),
+    save: t("buttons.save"),
     yes: yesButtonLabel || t("buttons.yes"),
     no: noButtonLabel || t("buttons.no"),
   };
@@ -630,12 +630,9 @@ const BecomeTrainerForm = ({
 
       setSubmitSuccess(true);
     } catch (err: unknown) {
-      const error = err as Error & { status?: number };
-      if (error.status === 409 || error.message?.includes("409")) {
-        setSubmitError("You already have a pending application for this role.");
-      } else {
-        setSubmitError(error.message || "Failed to submit application. Please try again.");
-      }
+      const error = err as Error & { statusCode?: number };
+      const msg = error.message || "Failed to submit application. Please try again.";
+      setSubmitError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -971,16 +968,6 @@ const BecomeTrainerForm = ({
               {/* Divider */}
               <div className="w-full h-px bg-[#F0F0F0] my-10" />
 
-              {/* Cancel/Save for Resume */}
-              <div className="flex gap-3 mb-10 justify-end">
-                <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                  {labels.cancel}
-                </button>
-                <button type="button" className="h-11 px-6 rounded-lg font-medium text-white btn-gold">
-                  {labels.save}
-                </button>
-              </div>
-
               {/* Bank Account Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-3" style={{ fontSize: "30px" }}>
                 {labels.bankTitle}
@@ -1005,7 +992,7 @@ const BecomeTrainerForm = ({
                 </button>
                 <button type="submit" disabled={isSubmitting} className="h-11 px-6 rounded-lg font-medium text-white btn-gold disabled:opacity-50 flex items-center gap-2">
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {isSubmitting ? tt("submitting", "Submitting...") : labels.save}
+                  {isSubmitting ? tt("submitting", "Submitting...") : (locale === "ar" ? "تقديم الطلب" : "Submit Application")}
                 </button>
               </div>
             </div>
@@ -1200,16 +1187,6 @@ const BecomeTrainerForm = ({
              {/* Divider */}
              <div className="w-full h-px bg-[#F0F0F0] my-8" />
 
-            {/* Cancel/Save Buttons for Resume */}
-            <div className="flex gap-3 mt-6">
-              <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                {labels.cancel}
-              </button>
-              <button type="button" className="flex-1 h-12 rounded-xl font-medium text-white btn-gold">
-                {labels.save}
-              </button>
-            </div>
-
             {/* Bank Account Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] my-6 pt-6" style={{ fontSize: "24px" }}>
               {labels.bankTitle}
@@ -1224,14 +1201,14 @@ const BecomeTrainerForm = ({
               <InputField label={labels.iban} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
-            {/* Cancel/Save Buttons for Bank Account */}
+            {/* Submit Buttons */}
             <div className="flex gap-3 mt-6">
               <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
                 {labels.cancel}
               </button>
               <button type="submit" disabled={isSubmitting} className="flex-1 h-12 rounded-xl font-medium text-white btn-gold disabled:opacity-50 flex items-center justify-center gap-2">
                 {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                {isSubmitting ? tt("submitting", "Submitting...") : labels.save}
+                {isSubmitting ? tt("submitting", "Submitting...") : (locale === "ar" ? "تقديم الطلب" : "Submit Application")}
               </button>
             </div>
           </div>

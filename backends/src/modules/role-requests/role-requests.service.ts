@@ -19,6 +19,7 @@ import {
 } from '../../database/schema';
 import { AuthService } from '../auth/auth.service';
 import { EmailService } from '../email/email.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateRoleRequestDto } from './dto/create-role-request.dto';
 import { ReviewRoleRequestDto } from './dto/review-role-request.dto';
 
@@ -29,6 +30,7 @@ export class RoleRequestsService {
   constructor(
     private authService: AuthService,
     private emailService: EmailService,
+    private notificationsService: NotificationsService,
   ) {}
 
   // ===========================================
@@ -192,6 +194,21 @@ export class RoleRequestsService {
       }
     } catch (error) {
       this.logger.error('Failed to send admin notification email', error);
+    }
+
+    // Create dashboard notification for admins
+    try {
+      const pData = dto.profileData as Record<string, string>;
+      const name =
+        pData.fullNameEnglish || pData.fullNameArabic || 'A student';
+      await this.notificationsService.create({
+        type: 'info',
+        title: 'New Trainer Application',
+        description: `${name} has submitted an application to become an instructor.`,
+        link: `/dashboard/admin/role-requests/${request.id}`,
+      });
+    } catch (error) {
+      this.logger.error('Failed to create dashboard notification', error);
     }
 
     return request;

@@ -28,6 +28,7 @@ interface Alert {
   title: string;
   description: string;
   time: string;
+  link?: string;
 }
 
 interface Activity {
@@ -191,11 +192,8 @@ const AlertsActivitySidebar = ({
         </div>
 
         <div className="space-y-3">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`p-3 rounded-lg border ${getAlertBgColor(alert.type)}`}
-            >
+          {alerts.map((alert) => {
+            const content = (
               <div className="flex items-start gap-3">
                 {getAlertIcon(alert.type)}
                 <div className="flex-1 min-w-0">
@@ -208,8 +206,24 @@ const AlertsActivitySidebar = ({
                   <p className="text-xs text-[#9CA3AF] mt-1">{alert.time}</p>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+            return alert.link ? (
+              <Link
+                key={alert.id}
+                href={`/${locale}${alert.link}`}
+                className={`block p-3 rounded-lg border ${getAlertBgColor(alert.type)} hover:opacity-80 transition-opacity`}
+              >
+                {content}
+              </Link>
+            ) : (
+              <div
+                key={alert.id}
+                className={`p-3 rounded-lg border ${getAlertBgColor(alert.type)}`}
+              >
+                {content}
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -4046,5 +4046,17 @@
       "payments": "Payments",
       "tickets": "Tickets"
     }
+  },
+  "roleSwitcher": {
+    "switchDashboard": "Switch Dashboard",
+    "roles": {
+      "student": "Student Dashboard",
+      "instructor": "Instructor Dashboard",
+      "admin": "Admin Dashboard",
+      "super_admin": "Admin Dashboard",
+      "manager": "Manager Dashboard",
+      "finance": "Finance Dashboard",
+      "support": "Support Dashboard"
+    }
   }
 }

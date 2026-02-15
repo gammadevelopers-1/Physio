@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
@@ -11,6 +12,7 @@ import UserManagementWidget from "./UserManagementWidget";
 import NELCComplianceOverviewWidget from "./NELCComplianceOverviewWidget";
 import FinanceSummaryWidget from "./FinanceSummaryWidget";
 import AlertsActivitySidebar from "./AlertsActivitySidebar";
+import { notificationsApi, AdminNotification } from "@/lib/api";
 
 // Mock Admin Profile Data
 const mockAdmin = {
@@ -83,6 +85,42 @@ const mockFinanceData = {
 
 const AdminDashboardContent = () => {
   const t = useTranslations("adminDashboard");
+  const [liveAlerts, setLiveAlerts] = useState<
+    { id: string; type: "critical" | "warning" | "info"; title: string; description: string; time: string; link?: string }[]
+  >([]);
+
+  // Fetch real notifications from backend
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const result = await notificationsApi.getAll({ limit: 10 });
+        const mapped = result.data.map((n: AdminNotification) => {
+          const createdAt = new Date(n.createdAt);
+          const diffMs = Date.now() - createdAt.getTime();
+          const diffMin = Math.floor(diffMs / 60000);
+          const diffHr = Math.floor(diffMin / 60);
+          const timeStr =
+            diffMin < 60
+              ? `${diffMin}m ago`
+              : diffHr < 24
+                ? `${diffHr}h ago`
+                : `${Math.floor(diffHr / 24)}d ago`;
+          return {
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            description: n.description,
+            time: timeStr,
+            link: n.link || undefined,
+          };
+        });
+        setLiveAlerts(mapped);
+      } catch {
+        // Not an admin or not logged in - ignore
+      }
+    };
+    fetchNotifications();
+  }, []);
 
   // Mock Activity Data with translations
   const mockActivities = [
@@ -251,7 +289,7 @@ const AdminDashboardContent = () => {
 
             {/* Right Sidebar - Alerts, Activity & Finance */}
             <AlertsActivitySidebar
-              alerts={mockAlerts}
+              alerts={[...liveAlerts, ...mockAlerts]}
               activities={mockActivities}
               finance={mockFinanceData}
             />

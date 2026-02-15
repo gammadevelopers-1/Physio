@@ -530,6 +530,47 @@ export const roleRequestsApi = {
     bankData?: Record<string, unknown>;
     resumeFiles?: Array<{ type: string; url: string; filename: string }>;
   }) => api.patch<{ message: string }>(`/role-requests/${id}`, data),
+
+  // Reject with block (admin)
+  rejectAndBlock: (id: string, reviewNote: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/reject`, {
+      reviewNote,
+      blockNationalId: true,
+    }),
+};
+
+// ===========================================
+// Admin Notifications API
+// ===========================================
+export interface AdminNotification {
+  id: string;
+  type: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export const notificationsApi = {
+  // Get notifications
+  getAll: (params?: { limit?: number; unreadOnly?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.unreadOnly) searchParams.set('unreadOnly', 'true');
+    const qs = searchParams.toString();
+    return api.get<{ data: AdminNotification[]; unreadCount: number }>(
+      `/notifications${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  // Mark one as read
+  markAsRead: (id: string) =>
+    api.patch<{ message: string }>(`/notifications/${id}/read`, {}),
+
+  // Mark all as read
+  markAllAsRead: () =>
+    api.patch<{ message: string }>('/notifications/read-all', {}),
 };
 
 export default api;

@@ -16,6 +16,7 @@ import { InstructorModule } from './modules/instructor/instructor.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { MaterialsModule } from './modules/materials/materials.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -48,6 +49,7 @@ import storageConfig from './config/storage.config';
     AssessmentsModule,
     MaterialsModule,
     CertificatesModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   MoreVertical,
   FileVideo,
@@ -28,6 +29,7 @@ import {
   FileBarChart,
   Loader2,
 } from "lucide-react";
+import { materialsApi } from "@/lib/api";
 
 interface ContentFile {
   id: string;
@@ -59,19 +61,23 @@ interface InstructorTabsProps {
   contentFiles: ContentFile[];
   assessments: AssessmentItem[];
   reports: ReportItem[];
+  courseId?: string;
+  onMaterialChange?: () => void;
 }
 
 const InstructorTabs = ({
   contentFiles,
   assessments,
   reports,
+  courseId,
+  onMaterialChange,
 }: InstructorTabsProps) => {
   const [activeTab, setActiveTab] = useState<
     "content" | "reports" | "assessments"
   >("content");
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<ContentFile[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [openExportDropdown, setOpenExportDropdown] = useState<string | null>(null);
   const [generatingReports, setGeneratingReports] = useState<Set<string>>(new Set());
   const [dateRanges, setDateRanges] = useState<Record<string, string>>({
@@ -99,34 +105,27 @@ const InstructorTabs = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // Process uploaded files
-  const processFiles = (files: FileList) => {
-    const newFiles: ContentFile[] = Array.from(files).map((file, index) => ({
-      id: `uploaded-${Date.now()}-${index}`,
-      type: getFileTypeFromName(file.name),
-      name: file.name,
-      version: "v1.0",
-      status: "processing" as const,
-      wcagCompliant: "warning" as const,
-      size: formatFileSize(file.size),
-    }));
-
-    setUploadedFiles((prev) => [...newFiles, ...prev]);
-
-    // Simulate processing completion after 2 seconds
-    setTimeout(() => {
-      setUploadedFiles((prev) =>
-        prev.map((f) =>
-          newFiles.some((nf) => nf.id === f.id)
-            ? { ...f, status: "live" as const, wcagCompliant: true as const }
-            : f
-        )
-      );
-    }, 2000);
+  // Upload files via backend API
+  const processFiles = async (files: FileList) => {
+    if (!courseId) {
+      toast.error(t("content.noCourseError"));
+      return;
+    }
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        await materialsApi.upload(courseId, file, file.name);
+      }
+      onMaterialChange?.();
+    } catch {
+      toast.error(t("content.uploadError"));
+    } finally {
+      setUploading(false);
+    }
   };
 
-  // Combined files list (uploaded first, then mock data)
-  const allFiles = [...uploadedFiles, ...contentFiles];
+  // All files come from backend (no local uploadedFiles state)
+  const allFiles = contentFiles;
 
   // Close action menu when clicking outside
   useEffect(() => {
@@ -211,6 +210,9 @@ const InstructorTabs = ({
     }
   };
 
+  const replaceInputRef = useRef<HTMLInputElement>(null);
+  const [replacingFileId, setReplacingFileId] = useState<string | null>(null);
+
   // File action handlers
   const handleEdit = (fileId: string) => {
     console.log("Editing file:", fileId);
@@ -218,14 +220,32 @@ const InstructorTabs = ({
   };
 
   const handleReplace = (fileId: string) => {
-    console.log("Replacing file:", fileId);
+    setReplacingFileId(fileId);
     setOpenActionMenu(null);
+    replaceInputRef.current?.click();
   };
 
-  const handleDelete = (fileId: string) => {
-    // Remove from uploaded files if it exists there
-    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+  const handleReplaceFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !replacingFileId) return;
+    try {
+      await materialsApi.replace(replacingFileId, file);
+      onMaterialChange?.();
+    } catch {
+      toast.error(t("content.replaceError"));
+    }
+    setReplacingFileId(null);
+    e.target.value = "";
+  };
+
+  const handleDelete = async (fileId: string) => {
     setOpenActionMenu(null);
+    try {
+      await materialsApi.delete(fileId);
+      onMaterialChange?.();
+    } catch {
+      toast.error(t("content.deleteError"));
+    }
   };
 
   // Drag and drop handlers
@@ -239,19 +259,19 @@ const InstructorTabs = ({
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      processFiles(files);
+      await processFiles(files);
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      processFiles(files);
+      await processFiles(files);
       // Reset input so the same file can be selected again
       e.target.value = "";
     }
@@ -331,6 +351,23 @@ const InstructorTabs = ({
                 </div>
               </label>
             </div>
+
+            {/* Hidden input for file replacement */}
+            <input
+              ref={replaceInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleReplaceFileSelected}
+              accept=".pdf,.mp4,.mov,.doc,.docx,.png,.jpg,.jpeg"
+            />
+
+            {/* Uploading indicator */}
+            {uploading && (
+              <div className="flex items-center gap-2 p-3 bg-[#EFF6FF] rounded-lg text-sm text-[#3B82F6]">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t("content.uploading")}
+              </div>
+            )}
 
             {/* File Table */}
             <div className="overflow-x-auto">

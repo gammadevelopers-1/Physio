@@ -252,6 +252,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                   width={40}
                   height={40}
                   className="object-cover w-full h-full"
+                  unoptimized={!!instructor.avatar}
                 />
               </div>
               <ChevronDown
@@ -318,6 +319,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                   width={40}
                   height={40}
                   className="object-cover w-full h-full"
+                  unoptimized={!!instructor.avatar}
                 />
               </div>
               <div>

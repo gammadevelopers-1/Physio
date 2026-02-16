@@ -185,6 +185,50 @@ async function fetchApi<T>(
 }
 
 // ===========================================
+// FormData Upload (multipart/form-data)
+// ===========================================
+async function uploadFormData<T>(
+  endpoint: string,
+  formData: FormData,
+  method: 'POST' | 'PUT' = 'POST',
+): Promise<T> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const deviceId = getDeviceId();
+  if (deviceId) {
+    headers['X-Device-Id'] = deviceId;
+  }
+  // Do NOT set Content-Type — browser sets multipart boundary automatically
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    method,
+    headers,
+    body: formData,
+    credentials: 'include',
+  });
+
+  const contentType = response.headers.get('content-type');
+  if (!contentType?.includes('application/json')) {
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Upload failed');
+    }
+    return {} as T;
+  }
+
+  const data = await response.json();
+  if (!response.ok) {
+    const message = Array.isArray(data.message)
+      ? data.message[0]
+      : data.message || 'Upload failed';
+    throw new ApiError(response.status, message);
+  }
+  return data;
+}
+
+// ===========================================
 // API Methods
 // ===========================================
 export const api = {
@@ -594,6 +638,41 @@ export const instructorApi = {
   // Assessments for a course (for assessment analysis widget)
   getAssessments: (courseId: string) =>
     api.get<{ data: AssessmentResponse[] }>(`/assessments?courseId=${courseId}`),
+};
+
+// ===========================================
+// Profile API (self-service)
+// ===========================================
+export const profileApi = {
+  update: (data: { firstName?: string; lastName?: string; phone?: string; avatar?: string }) =>
+    api.patch<User>('/auth/profile', data),
+
+  uploadAvatar: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<{ url: string; filename: string }>('/storage/upload-avatar', fd);
+  },
+};
+
+// ===========================================
+// Materials API (content management)
+// ===========================================
+export const materialsApi = {
+  upload: (courseId: string, file: File, title?: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (title) fd.append('title', title);
+    return uploadFormData<Record<string, unknown>>(`/courses/${courseId}/materials`, fd);
+  },
+
+  delete: (materialId: string) =>
+    api.delete<{ message: string }>(`/materials/${materialId}`),
+
+  replace: (materialId: string, file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<Record<string, unknown>>(`/materials/${materialId}/replace`, fd);
+  },
 };
 
 export default api;

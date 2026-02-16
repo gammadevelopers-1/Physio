@@ -149,6 +149,8 @@ const InstructorDashboardContent = () => {
                   contentFiles={contentFiles}
                   assessments={tabAssessments}
                   reports={reports}
+                  courseId={dashboard?.activeCourses?.[0]?.id}
+                  onMaterialChange={refetch}
                 />
               </div>
             )}

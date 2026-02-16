@@ -1761,7 +1761,12 @@
       "wcagNotice": "WCAG Compliance Check",
       "wcagNoticeDesc": "All uploads will be automatically checked for accessibility compliance.",
       "cancel": "Cancel",
-      "upload": "Upload"
+      "upload": "Upload",
+      "uploadError": "Failed to upload file. Please try again.",
+      "deleteError": "Failed to delete file. Please try again.",
+      "replaceError": "Failed to replace file. Please try again.",
+      "uploading": "Uploading...",
+      "noCourseError": "No active course found. Please create a course first."
     },
     "reports": {
       "title": "Reports",
@@ -1866,7 +1871,9 @@
       "connected": "Connected",
       "notConnected": "Not connected",
       "connect": "Connect",
-      "disconnect": "Disconnect"
+      "disconnect": "Disconnect",
+      "profileSaved": "Profile updated successfully",
+      "avatarUploadError": "Failed to upload avatar. Please try again."
     },
     "reportsTab": {
       "attendanceReport": "Attendance Report",

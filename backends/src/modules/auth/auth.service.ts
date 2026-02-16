@@ -23,7 +23,7 @@ import {
   ROLE_NAMES,
   RoleName,
 } from '../../database/schema';
-import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto } from './dto';
+import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto, UpdateProfileDto } from './dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 
 @Injectable()
@@ -637,6 +637,34 @@ export class AuthService {
       ...newUser,
       roles: [dto.role],
     };
+  }
+
+  // ===========================================
+  // Self-Service: Update Own Profile
+  // ===========================================
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<Partial<User> & { roles: string[] }> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
+    if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
+    if (dto.phone !== undefined) updateData.phone = dto.phone;
+    if (dto.avatar !== undefined) updateData.avatar = dto.avatar;
+
+    await db.update(users).set(updateData).where(eq(users.id, userId));
+
+    return this.getCurrentUser(userId);
   }
 
   // ===========================================

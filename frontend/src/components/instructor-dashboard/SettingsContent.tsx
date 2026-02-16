@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import Image from "next/image";
+import { toast } from "sonner";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { useAuth, useUser } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
 import {
-  User,
+  User as UserIcon,
   Shield,
   Bell,
   Settings,
@@ -20,19 +24,14 @@ import {
   Phone,
   MapPin,
   Globe,
-  Briefcase,
-  GraduationCap,
   Key,
   Eye,
   EyeOff,
   Check,
-  X,
-  ExternalLink,
   Video,
   Calendar,
   Cloud,
   Save,
-  AlertTriangle,
   Loader2,
 } from "lucide-react";
 
@@ -41,23 +40,79 @@ const SettingsContent = () => {
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { refreshUser } = useAuth();
+  const user = useUser();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications" | "preferences" | "integrations"
   >("profile");
 
-  // Profile State
+  // Profile State — initialized from authenticated user
   const [profileData, setProfileData] = useState({
-    firstName: "Dr. Sarah",
-    lastName: "Johnson",
-    email: "sarah.johnson@physioguidance.com",
-    phone: "+1 234 567 8900",
-    location: "New York, USA",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    location: "",
     language: "en",
-    bio: "Certified physiotherapist with 10+ years of experience in sports rehabilitation and lower back pain management.",
-    title: "Senior Physiotherapist",
-    specializations: ["Sports Rehabilitation", "Lower Back Pain", "Pediatric Care"],
+    bio: "",
+    title: "",
+    specializations: [] as string[],
   });
+  const [saving, setSaving] = useState(false);
+
+  // Sync user data into form when available
+  useEffect(() => {
+    if (user) {
+      setProfileData((prev) => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email,
+        phone: user.phone || "",
+      }));
+    }
+  }, [user]);
+
+  // Compute initials from user name
+  const initials = user
+    ? `${(user.firstName || "")[0] || ""}${(user.lastName || "")[0] || ""}`.toUpperCase() || user.email[0].toUpperCase()
+    : "";
+
+  // Handle avatar upload from settings camera button
+  const handleSettingsAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+      toast.success(t("settings.profileSaved"));
+    } catch {
+      toast.error(t("settings.avatarUploadError"));
+    }
+    e.target.value = "";
+  };
+
+  // Handle save profile
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await profileApi.update({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone,
+      });
+      await refreshUser();
+      toast.success(t("settings.profileSaved"));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Security State
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -99,7 +154,7 @@ const SettingsContent = () => {
   });
 
   const tabs = [
-    { id: "profile" as const, label: t("settings.tabProfile"), icon: User },
+    { id: "profile" as const, label: t("settings.tabProfile"), icon: UserIcon },
     { id: "security" as const, label: t("settings.tabSecurity"), icon: Shield },
     { id: "notifications" as const, label: t("settings.tabNotifications"), icon: Bell },
     { id: "preferences" as const, label: t("settings.tabPreferences"), icon: Settings },
@@ -158,10 +213,33 @@ const SettingsContent = () => {
                       {/* Avatar Section */}
                       <div className="flex flex-col sm:flex-row items-start gap-4">
                         <div className="relative">
-                          <div className="w-24 h-24 rounded-full bg-[#E5E7EB] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
-                            SJ
-                          </div>
-                          <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#3B82F6] text-white rounded-full flex items-center justify-center hover:bg-[#2563EB] transition-colors">
+                          {user?.avatar ? (
+                            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
+                              <Image
+                                src={user.avatar}
+                                alt={profileData.firstName}
+                                width={96}
+                                height={96}
+                                className="object-cover w-full h-full"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-24 h-24 rounded-full bg-[#E5E7EB] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
+                              {initials}
+                            </div>
+                          )}
+                          <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={handleSettingsAvatarUpload}
+                          />
+                          <button
+                            onClick={() => avatarInputRef.current?.click()}
+                            className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-8 h-8 bg-[#3B82F6] text-white rounded-full flex items-center justify-center hover:bg-[#2563EB] transition-colors`}
+                          >
                             <Camera className="w-4 h-4" />
                           </button>
                         </div>
@@ -170,16 +248,18 @@ const SettingsContent = () => {
                             {profileData.firstName} {profileData.lastName}
                           </h3>
                           <p className="text-sm text-[#6B7280]">{profileData.title}</p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {profileData.specializations.map((spec, index) => (
-                              <span
-                                key={index}
-                                className="px-2 py-1 bg-[#EFF6FF] text-[#3B82F6] rounded-full text-xs font-medium"
-                              >
-                                {spec}
-                              </span>
-                            ))}
-                          </div>
+                          {profileData.specializations.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {profileData.specializations.map((spec, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-1 bg-[#EFF6FF] text-[#3B82F6] rounded-full text-xs font-medium"
+                                >
+                                  {spec}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -226,10 +306,8 @@ const SettingsContent = () => {
                               <input
                                 type="email"
                                 value={profileData.email}
-                                onChange={(e) =>
-                                  setProfileData({ ...profileData, email: e.target.value })
-                                }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                readOnly
+                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -309,8 +387,16 @@ const SettingsContent = () => {
 
                       {/* Save Button */}
                       <div className="flex justify-end">
-                        <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors">
-                          <Save className="w-4 h-4" />
+                        <button
+                          onClick={handleSaveProfile}
+                          disabled={saving}
+                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {saving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
                           {t("settings.saveChanges")}
                         </button>
                       </div>

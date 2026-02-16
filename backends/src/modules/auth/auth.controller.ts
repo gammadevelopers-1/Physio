@@ -24,6 +24,7 @@ import {
   AssignRoleDto,
   CreateUserDto,
   UpdateUserDto,
+  UpdateProfileDto,
   CreateRoleDto,
   UpdateRoleDto,
   Verify2FADto,
@@ -357,6 +358,18 @@ export class AuthController {
     await this.authService.logoutAllDevices(userId);
     this.clearRefreshCookie(res);
     return { message: 'Logged out from all devices' };
+  }
+
+  // ===========================================
+  // Self-Service Profile Update
+  // ===========================================
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  async updateProfile(
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(userId, dto);
   }
 
   // ===========================================

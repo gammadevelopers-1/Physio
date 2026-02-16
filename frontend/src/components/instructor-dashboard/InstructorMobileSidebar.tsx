@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   BookOpen,
@@ -19,6 +20,8 @@ import {
   Pencil,
   Star,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
 
 interface InstructorProfile {
   name: string;
@@ -40,6 +43,21 @@ const InstructorMobileSidebar = ({
   const pathname = usePathname();
   const t = useTranslations("instructorDashboard");
   const isRTL = locale === "ar";
+  const { refreshUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+    } catch {
+      toast.error(t("settings.avatarUploadError"));
+    }
+    e.target.value = "";
+  };
 
   const navItems = [
     {
@@ -133,9 +151,18 @@ const InstructorMobileSidebar = ({
                     width={80}
                     height={80}
                     className="object-cover w-full h-full"
+                    unoptimized={!!instructor.avatar}
                   />
                 </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
                 <button
+                  onClick={() => avatarInputRef.current?.click()}
                   className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white`}
                 >
                   <Pencil className="w-3.5 h-3.5 text-white" />
@@ -174,9 +201,13 @@ const InstructorMobileSidebar = ({
             </div>
 
             {/* View Profile Button */}
-            <button className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937]">
+            <Link
+              href={`/${locale}/dashboard/instructor/settings`}
+              onClick={() => setIsOpen(false)}
+              className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+            >
               {t("sidebar.viewProfile")}
-            </button>
+            </Link>
           </div>
 
           {/* Navigation Card */}

@@ -9,3 +9,4 @@ export * from './update-role.dto';
 export * from './verify-2fa.dto';
 export * from './toggle-2fa.dto';
 export * from './get-users-query.dto';
+export * from './update-profile.dto';

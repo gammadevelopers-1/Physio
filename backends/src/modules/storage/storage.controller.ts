@@ -14,6 +14,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/guards';
+import { Public } from '../auth/decorators';
 import { randomUUID } from 'crypto';
 
 @Controller('storage')
@@ -79,9 +80,62 @@ export class StorageController {
   }
 
   /**
+   * Upload an avatar image (JPEG, PNG, WebP)
+   * Returns { url, filename } for use in profile update
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-avatar')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+        if (allowed.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(
+            new BadRequestException(
+              'Only image files (JPEG, PNG, WebP) are allowed for avatars',
+            ),
+            false,
+          );
+        }
+      },
+    }),
+  )
+  async uploadAvatar(
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string },
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    const ext = file.originalname.split('.').pop() || 'jpg';
+    const uniqueName = `avatars/${randomUUID()}.${ext}`;
+
+    try {
+      const url = await this.storageService.uploadTrainerDocument(
+        file.buffer,
+        uniqueName,
+        file.mimetype,
+      );
+
+      return {
+        url,
+        filename: file.originalname,
+      };
+    } catch {
+      throw new BadRequestException(
+        'Avatar upload failed. Storage may not be configured.',
+      );
+    }
+  }
+
+  /**
    * Serve local files in development (STORAGE_DRIVER=local)
    * GET /api/storage/files/:bucket/:path
    */
+  @Public()
   @Get('files/:bucket/*')
   async serveFile(
     @Param('bucket') bucket: string,
@@ -114,6 +168,7 @@ export class StorageController {
 
     res.setHeader('Content-Type', contentTypeMap[ext || ''] || 'application/octet-stream');
     res.setHeader('Content-Disposition', `inline; filename="${filePath.split('/').pop()}"`);
-    res.sendFile(localPath, { root: '/' });
+    const absolutePath = require('path').resolve(localPath);
+    res.sendFile(absolutePath);
   }
 }

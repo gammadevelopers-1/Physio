@@ -100,17 +100,17 @@ SECRETS="DATABASE_URL=DATABASE_URL:latest"
 SECRETS="${SECRETS},JWT_SECRET=JWT_SECRET:latest"
 SECRETS="${SECRETS},JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest"
 
-# Optional SMTP secrets (for 2FA emails) - add if they exist
-if gcloud secrets describe SMTP_HOST &>/dev/null 2>&1; then
-    SECRETS="${SECRETS},SMTP_HOST=SMTP_HOST:latest"
-    SECRETS="${SECRETS},SMTP_PORT=SMTP_PORT:latest"
-    SECRETS="${SECRETS},SMTP_USER=SMTP_USER:latest"
-    SECRETS="${SECRETS},SMTP_PASS=SMTP_PASS:latest"
-    SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
-    log_info "SMTP secrets found - email will be configured"
+# Email (Resend API)
+if gcloud secrets describe RESEND_API_KEY &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},RESEND_API_KEY=RESEND_API_KEY:latest"
+    log_info "Resend API key found - email will be configured"
 else
-    log_warning "SMTP secrets not found - email/2FA will not work"
-    log_warning "Create them with: make secrets-set SECRET=SMTP_HOST"
+    log_warning "RESEND_API_KEY secret not found - email/2FA will not work"
+fi
+
+# Mail from address
+if gcloud secrets describe MAIL_FROM &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
 fi
 
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then

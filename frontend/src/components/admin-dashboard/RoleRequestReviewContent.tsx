@@ -231,19 +231,19 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                   <InfoField icon={User} label={t("roleRequestReviewPage.fullNameAr") || "Full Name (Arabic)"} value={profileData.fullNameArabic} />
                   <InfoField icon={User} label={t("roleRequestReviewPage.fullNameEn") || "Full Name (English)"} value={profileData.fullNameEnglish} />
                   <InfoField icon={Mail} label={t("roleRequestReviewPage.email") || "Email"} value={profileData.email || application.user?.email} />
-                  <InfoField icon={Phone} label={t("roleRequestReviewPage.phone") || "Phone"} value={profileData.phone} />
+                  <InfoField icon={Phone} label={t("roleRequestReviewPage.phone") || "Phone"} value={profileData.mobileNumber || profileData.phone ? `${profileData.countryCode ? `(${profileData.countryCode}) ` : ""}${profileData.mobileNumber || profileData.phone}` : undefined} />
                   <InfoField icon={Globe} label={t("roleRequestReviewPage.nationality") || "Nationality"} value={profileData.nationality} />
                   <InfoField icon={User} label={t("roleRequestReviewPage.gender") || "Gender"} value={profileData.gender} />
                   <InfoField icon={Briefcase} label={t("roleRequestReviewPage.profession") || "Profession"} value={profileData.profession} />
                   <InfoField icon={GraduationCap} label={t("roleRequestReviewPage.specialty") || "Specialty"} value={profileData.specialty} />
                   <InfoField icon={Award} label={t("roleRequestReviewPage.qualification") || "Qualification"} value={profileData.qualification} />
-                  <InfoField icon={Award} label={t("roleRequestReviewPage.rank") || "Rank"} value={profileData.rank} />
-                  <InfoField icon={Hash} label={t("roleRequestReviewPage.scfhsNumber") || "SCFHS Number"} value={profileData.scfhsNumber} />
-                  <InfoField icon={Hash} label={t("roleRequestReviewPage.nationalId") || "National/Iqama ID"} value={profileData.nationalId} />
+                  <InfoField icon={Award} label={t("roleRequestReviewPage.rank") || "Rank"} value={profileData.academicRank || profileData.rank} />
+                  <InfoField icon={Hash} label={t("roleRequestReviewPage.scfhsNumber") || "SCFHS Registered"} value={profileData.hasScfhsNumber === "true" ? "Yes" : profileData.hasScfhsNumber === "false" ? "No" : (profileData.scfhsNumber || profileData.hasScfhsNumber)} />
+                  <InfoField icon={Hash} label={t("roleRequestReviewPage.nationalId") || "National/Iqama ID"} value={profileData.nationalIqamaId || profileData.nationalId} />
                 </div>
 
                 {/* Social Links */}
-                {(profileData.twitter || profileData.linkedin) && (
+                {(profileData.twitter || profileData.linkedIn || profileData.linkedin) && (
                   <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
                     <h3 className="text-sm font-medium text-[#6B7280] mb-3">
                       {t("roleRequestReviewPage.socialLinks") || "Social Links"}
@@ -255,10 +255,10 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                           {profileData.twitter}
                         </a>
                       )}
-                      {profileData.linkedin && (
-                        <a href={profileData.linkedin.startsWith("http") ? profileData.linkedin : `https://linkedin.com/in/${profileData.linkedin}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F0F9FF] text-[#0369A1] rounded-lg text-sm hover:bg-[#E0F2FE] transition-colors">
+                      {(profileData.linkedIn || profileData.linkedin) && (
+                        <a href={(profileData.linkedIn || profileData.linkedin)!.startsWith("http") ? (profileData.linkedIn || profileData.linkedin) : `https://linkedin.com/in/${profileData.linkedIn || profileData.linkedin}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#F0F9FF] text-[#0369A1] rounded-lg text-sm hover:bg-[#E0F2FE] transition-colors">
                           <Linkedin className="w-4 h-4" />
-                          {profileData.linkedin}
+                          {profileData.linkedIn || profileData.linkedin}
                         </a>
                       )}
                     </div>

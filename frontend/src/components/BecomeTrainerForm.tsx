@@ -407,6 +407,7 @@ const BecomeTrainerForm = ({
   });
 
   const [files, setFiles] = useState({
+    resume: null as File | null,
     education: null as File | null,
     professionalSkills: null as File | null,
     scientificResearches: null as File | null,
@@ -565,6 +566,12 @@ const BecomeTrainerForm = ({
       return;
     }
 
+    // Validate at least one name field is filled
+    if (!formData.fullNameArabic && !formData.fullNameEnglish) {
+      setSubmitError(locale === "ar" ? "يرجى إدخال الاسم بالعربية أو الإنجليزية على الأقل" : "Please enter at least one name (Arabic or English)");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -572,18 +579,27 @@ const BecomeTrainerForm = ({
       // Upload files
       const resumeFiles: Array<{ type: string; url: string; filename: string }> = [];
 
-      const fileEntries: [string, File | null][] = [
-        ["education", files.education],
-        ["professionalSkills", files.professionalSkills],
-        ["scientificResearches", files.scientificResearches],
-        ["trainingExperience", files.trainingExperience],
-      ];
+      if (formData.uploadResume && files.resume) {
+        // Upload single resume file
+        const result = await uploadFile(files.resume);
+        if (result) {
+          resumeFiles.push({ type: "resume", url: result.url, filename: result.filename });
+        }
+      } else if (formData.createResume) {
+        // Upload individual section files
+        const fileEntries: [string, File | null][] = [
+          ["education", files.education],
+          ["professionalSkills", files.professionalSkills],
+          ["scientificResearches", files.scientificResearches],
+          ["trainingExperience", files.trainingExperience],
+        ];
 
-      for (const [type, file] of fileEntries) {
-        if (file) {
-          const result = await uploadFile(file);
-          if (result) {
-            resumeFiles.push({ type, url: result.url, filename: result.filename });
+        for (const [type, file] of fileEntries) {
+          if (file) {
+            const result = await uploadFile(file);
+            if (result) {
+              resumeFiles.push({ type, url: result.url, filename: result.filename });
+            }
           }
         }
       }
@@ -596,10 +612,14 @@ const BecomeTrainerForm = ({
         }
       }
 
+      // Auto-copy name if only one is filled
+      const finalNameArabic = formData.fullNameArabic || formData.fullNameEnglish;
+      const finalNameEnglish = formData.fullNameEnglish || formData.fullNameArabic;
+
       // Build profile data
       const profileData = {
-        fullNameArabic: formData.fullNameArabic,
-        fullNameEnglish: formData.fullNameEnglish,
+        fullNameArabic: finalNameArabic,
+        fullNameEnglish: finalNameEnglish,
         email: formData.email,
         countryCode: formData.countryCode,
         mobileNumber: formData.mobileNumber,
@@ -799,7 +819,7 @@ const BecomeTrainerForm = ({
                       onClick={() => photoInputRef.current?.click()}
                       className="px-5 py-2 border border-[#a37f49] rounded-lg text-sm font-medium text-[#a37f49] hover:bg-[#fdf8f3]"
                     >
-                      {labels.attachCV}
+                      {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                     </button>
                     <input
                       ref={photoInputRef}
@@ -825,7 +845,6 @@ const BecomeTrainerForm = ({
                       name="fullNameArabic"
                       value={formData.fullNameArabic}
                       onChange={handleInputChange}
-                      required
                       placeholder={labels.fullNameArPlaceholder}
                       className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
@@ -835,7 +854,6 @@ const BecomeTrainerForm = ({
                       name="fullNameEnglish"
                       value={formData.fullNameEnglish}
                       onChange={handleInputChange}
-                      required
                       placeholder={labels.fullNameEnPlaceholder}
                       className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
@@ -958,12 +976,20 @@ const BecomeTrainerForm = ({
                 <Checkbox label={labels.createResume} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
               </div>
 
-              <div className="flex flex-col gap-8">
-                <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-                <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-              </div>
+              {formData.uploadResume && (
+                <div className="flex flex-col gap-8">
+                  <FileUpload label={locale === "ar" ? "السيرة الذاتية" : "Resume / CV"} field="resume" file={files.resume} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                </div>
+              )}
+
+              {formData.createResume && (
+                <div className="flex flex-col gap-8">
+                  <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                  <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                  <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                  <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                </div>
+              )}
 
               {/* Divider */}
               <div className="w-full h-px bg-[#F0F0F0] my-10" />
@@ -1035,7 +1061,7 @@ const BecomeTrainerForm = ({
                     onClick={() => photoInputRef.current?.click()}
                     className="px-5 py-2 border border-[#a37f49] rounded-lg text-sm font-medium text-[#a37f49] hover:bg-[#fdf8f3]"
                   >
-                    {labels.attachCV}
+                    {locale === "ar" ? "رفع الصورة" : "Upload Photo"}
                   </button>
                   <div
                     className="w-12 h-12 rounded-full bg-[#EEF3F7] flex items-center justify-center overflow-hidden cursor-pointer"
@@ -1063,7 +1089,6 @@ const BecomeTrainerForm = ({
                   name="fullNameArabic"
                   value={formData.fullNameArabic}
                   onChange={handleInputChange}
-                  required
                   placeholder={labels.fullNameArPlaceholder}
                   className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
@@ -1073,7 +1098,6 @@ const BecomeTrainerForm = ({
                   name="fullNameEnglish"
                   value={formData.fullNameEnglish}
                   onChange={handleInputChange}
-                  required
                   placeholder={labels.fullNameEnPlaceholder}
                   className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
@@ -1177,12 +1201,20 @@ const BecomeTrainerForm = ({
               <Checkbox label={labels.createResume} name="createResume" checked={formData.createResume} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
-            <div className="flex flex-col gap-5">
-              <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-              <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-              <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-              <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
-            </div>
+            {formData.uploadResume && (
+              <div className="flex flex-col gap-5">
+                <FileUpload label={locale === "ar" ? "السيرة الذاتية" : "Resume / CV"} field="resume" file={files.resume} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+              </div>
+            )}
+
+            {formData.createResume && (
+              <div className="flex flex-col gap-5">
+                <FileUpload label={labels.education} field="education" file={files.education} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                <FileUpload label={labels.professionalSkills} field="professionalSkills" file={files.professionalSkills} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                <FileUpload label={labels.scientificResearches} field="scientificResearches" file={files.scientificResearches} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+                <FileUpload label={labels.trainingExperience} field="trainingExperience" file={files.trainingExperience} onFileChange={handleFileChangeWrapper} t={t} isRTL={isRTL} clickToUploadLabel={labels.clickToUpload} orDragDropLabel={labels.orDragDrop} pdfMaxSizeLabel={labels.pdfMaxSize} />
+              </div>
+            )}
 
              {/* Divider */}
              <div className="w-full h-px bg-[#F0F0F0] my-8" />

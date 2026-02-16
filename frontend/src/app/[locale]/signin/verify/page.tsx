@@ -136,7 +136,7 @@ function VerifyForm() {
       setError(null);
 
       try {
-        await verify2FA(challengeId, code);
+        await verify2FA(challengeId, code, redirectTo || undefined);
         // Success → AuthContext handles redirect
       } catch (err) {
         const message =

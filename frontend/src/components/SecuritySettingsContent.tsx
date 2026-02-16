@@ -25,6 +25,7 @@ export default function SecuritySettingsContent() {
     handleToggle2FA,
     handleRevokeDevice,
     handleRevokeAll,
+    handleLogout,
   } = useSecuritySettings();
 
   if (loading) {
@@ -82,6 +83,7 @@ export default function SecuritySettingsContent() {
           onRevokeDevice={handleRevokeDevice}
           onRevokeAll={handleRevokeAll}
           onShowRevokeAllConfirm={setShowRevokeAllConfirm}
+          onLogout={handleLogout}
         />
       </div>
 

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import Link from "next/link";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
@@ -20,7 +19,11 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Smartphone,
 } from "lucide-react";
+import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
+import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
+import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
 
 // Mock Admin Profile
 const mockAdmin = {
@@ -35,6 +38,7 @@ const settingsTabs = [
   { id: "general", label: "General", icon: Settings },
   { id: "localization", label: "Localization", icon: Globe },
   { id: "authentication", label: "Authentication", icon: Lock },
+  { id: "my-security", label: "My Security", icon: Smartphone },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "integrations", label: "Integrations", icon: Link2 },
@@ -69,6 +73,22 @@ const AdminSettingsContent = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceMessage, setMaintenanceMessage] = useState("");
 
+  // Personal Security (2FA + Trusted Devices)
+  const {
+    twoFactorEnabled,
+    devices,
+    loading: securityLoading,
+    toggling,
+    revokingId,
+    revokingAll,
+    showRevokeAllConfirm,
+    setShowRevokeAllConfirm,
+    handleToggle2FA,
+    handleRevokeDevice,
+    handleRevokeAll,
+    handleLogout,
+  } = useSecuritySettings();
+
   return (
     <>
       <AdminNavbar admin={mockAdmin} />
@@ -93,13 +113,6 @@ const AdminSettingsContent = () => {
                 <p className="text-sm text-[#6B7280] mt-1">
                   {t("settingsPage.subtitle")}
                 </p>
-                <Link
-                  href={`/${locale}/dashboard/settings/security`}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#a37f49] bg-[#a37f49]/10 hover:bg-[#a37f49]/20 rounded-lg transition-colors mt-3"
-                >
-                  <Shield className="w-4 h-4" />
-                  Personal Security Settings
-                </Link>
               </div>
 
               {/* Settings Card with Horizontal Tabs */}
@@ -286,6 +299,40 @@ const AdminSettingsContent = () => {
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
                           </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === "my-security" && (
+                      <div className="space-y-6">
+                        <h2 className="text-lg font-semibold text-[#1F2937]">
+                          {locale === "ar" ? "الأمان الشخصي" : "My Security"}
+                        </h2>
+                        <p className="text-sm text-[#6B7280]">
+                          {locale === "ar" ? "إدارة المصادقة الثنائية والأجهزة الموثوقة لحسابك." : "Manage your personal two-factor authentication and trusted devices."}
+                        </p>
+
+                        {/* 2FA Toggle */}
+                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[#E5E7EB]">
+                          <TwoFactorToggle
+                            enabled={twoFactorEnabled}
+                            toggling={toggling}
+                            onToggle={handleToggle2FA}
+                          />
+                        </div>
+
+                        {/* Trusted Devices */}
+                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[#E5E7EB]">
+                          <TrustedDevicesSection
+                            devices={devices}
+                            revokingId={revokingId}
+                            revokingAll={revokingAll}
+                            showRevokeAllConfirm={showRevokeAllConfirm}
+                            onRevokeDevice={handleRevokeDevice}
+                            onRevokeAll={handleRevokeAll}
+                            onShowRevokeAllConfirm={setShowRevokeAllConfirm}
+                            onLogout={handleLogout}
+                          />
                         </div>
                       </div>
                     )}

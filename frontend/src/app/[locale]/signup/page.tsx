@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthNavbar from "@/components/AuthNavbar";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
@@ -21,12 +21,14 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function SignUpPage() {
+function SignUpForm() {
   const t = useTranslations("signupPage");
   const locale = useLocale();
   const router = useRouter();
   const isRTL = locale === "ar";
   const { register, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -97,9 +99,9 @@ export default function SignUpPage() {
       });
       setSuccess(true);
       toast.success("Account created successfully! Redirecting to sign in...");
-      // Redirect to signin after 2 seconds
+      // Redirect to signin after 2 seconds, preserving redirect param
       setTimeout(() => {
-        router.push(`/${locale}/signin`);
+        router.push(`/${locale}/signin${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`);
       }, 2000);
     } catch (err) {
       const message = err instanceof ApiError
@@ -403,7 +405,7 @@ export default function SignUpPage() {
                     {t("footer.hasAccount")}{" "}
                   </span>
                   <Link
-                    href={`/${locale}/signin`}
+                    href={`/${locale}/signin${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
                     className="text-[#171717] underline hover:text-[var(--on-surface-primary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
@@ -431,5 +433,13 @@ export default function SignUpPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
   );
 }

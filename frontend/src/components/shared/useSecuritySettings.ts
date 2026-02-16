@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { authApi, TrustedDevice, ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/contexts";
 
 export function useSecuritySettings() {
   const t = useTranslations("securitySettings");
+  const { logout } = useAuth();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [devices, setDevices] = useState<TrustedDevice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +89,15 @@ export function useSecuritySettings() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      // Force redirect even if logout API fails
+      window.location.href = "/";
+    }
+  };
+
   return {
     twoFactorEnabled,
     devices,
@@ -99,5 +110,6 @@ export function useSecuritySettings() {
     handleToggle2FA,
     handleRevokeDevice,
     handleRevokeAll,
+    handleLogout,
   };
 }

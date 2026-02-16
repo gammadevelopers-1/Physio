@@ -240,7 +240,7 @@ function SignInForm() {
                     {t("footer.noAccount")}{" "}
                   </span>
                   <Link
-                    href={`/${locale}/signup`}
+                    href={`/${locale}/signup${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
                     className="text-[#171717] underline hover:text-[var(--on-surface-primary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >

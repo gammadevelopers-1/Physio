@@ -919,7 +919,7 @@ const UsersContent = () => {
               </div>
 
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
                   <p className="text-sm text-[#6B7280]">{t("usersPage.stats.total")}</p>
@@ -927,10 +927,6 @@ const UsersContent = () => {
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{stats.active}</p>
                   <p className="text-sm text-[#6B7280]">{t("usersPage.stats.active")}</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-2xl font-bold text-[#D97706]">{stats.pending}</p>
-                  <p className="text-sm text-[#6B7280]">{t("usersPage.stats.pending")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-2xl font-bold text-[#DC2626]">{stats.suspended}</p>

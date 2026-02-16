@@ -31,7 +31,7 @@ interface TwoFactorPending {
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
-  verify2FA: (challengeId: string, code: string) => Promise<void>;
+  verify2FA: (challengeId: string, code: string, redirectTo?: string) => Promise<void>;
   resend2FA: (challengeId: string) => Promise<{ challengeId: string }>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Verify 2FA OTP — called from the verification page
   const verify2FA = useCallback(
-    async (challengeId: string, code: string) => {
+    async (challengeId: string, code: string, redirectTo?: string) => {
       setState((prev) => ({ ...prev, isLoading: true }));
       try {
         const response = await authApi.verify2FA(challengeId, code);
@@ -224,9 +224,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const displayName = user.firstName || user.email;
         toast.success(`Welcome back, ${displayName}!`);
 
-        // Navigate to the user's correct dashboard
+        // Navigate to redirect target or user's correct dashboard
         const dashboardPath = getDashboardPath(user.activeRole);
-        router.push(`/${locale}${dashboardPath}`);
+        let targetPath = `/${locale}${dashboardPath}`;
+
+        if (redirectTo) {
+          const dashboardMatch = redirectTo.match(/\/dashboard\/(\w+)/);
+          if (dashboardMatch) {
+            const redirectDashboard = dashboardMatch[1];
+            const userDashboard = dashboardPath.split('/').pop();
+            if (redirectDashboard === userDashboard) {
+              targetPath = redirectTo;
+            }
+          } else {
+            targetPath = redirectTo;
+          }
+        }
+
+        router.push(targetPath);
       } catch (error) {
         setState((prev) => ({ ...prev, isLoading: false }));
         throw error;

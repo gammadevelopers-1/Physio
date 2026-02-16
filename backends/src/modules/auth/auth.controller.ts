@@ -214,8 +214,17 @@ export class AuthController {
   // ===========================================
   @UseGuards(JwtAuthGuard)
   @Get('trusted-devices')
-  async getTrustedDevices(@CurrentUser('id') userId: string) {
-    return this.twoFactorService.getUserTrustedDevices(userId);
+  async getTrustedDevices(
+    @CurrentUser('id') userId: string,
+    @Req() req: Request,
+    @Headers('x-device-id') deviceId?: string,
+  ) {
+    const userAgent = req.headers['user-agent'] || '';
+    const fingerprint =
+      deviceId
+        ? this.twoFactorService.generateFingerprint(userAgent, deviceId)
+        : undefined;
+    return this.twoFactorService.getUserTrustedDevices(userId, fingerprint);
   }
 
   // ===========================================

@@ -30,6 +30,9 @@ export * from './submissions';
 // Course Material schemas
 export * from './course-materials';
 
+// Certificate schemas
+export * from './certificate-requests';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

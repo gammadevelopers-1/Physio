@@ -52,6 +52,7 @@ export class CoursesController {
     @Query('status') status?: string,
     @Query('delivery') delivery?: string,
     @Query('search') search?: string,
+    @Query('sort') sort?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -59,6 +60,7 @@ export class CoursesController {
       status,
       delivery,
       search,
+      sort,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });

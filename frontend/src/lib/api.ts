@@ -624,6 +624,11 @@ import type {
   DashboardSummaryResponse,
   CourseEnrollment,
   AssessmentResponse,
+  InstructorCoursesResponse,
+  InstructorCoursesParams,
+  CourseDetailResponse,
+  CourseSessionsResponse,
+  CreateCourseData,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -638,6 +643,38 @@ export const instructorApi = {
   // Assessments for a course (for assessment analysis widget)
   getAssessments: (courseId: string) =>
     api.get<{ data: AssessmentResponse[] }>(`/assessments?courseId=${courseId}`),
+
+  // Instructor courses listing (My Courses page)
+  getCourses: (params?: InstructorCoursesParams) => {
+    const sp = new URLSearchParams();
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.delivery && params.delivery !== 'all') sp.set('delivery', params.delivery);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.sort) sp.set('sort', params.sort);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<InstructorCoursesResponse>(`/courses${qs ? `?${qs}` : ''}`);
+  },
+
+  // Course detail with modules
+  getCourseDetail: (courseId: string) =>
+    api.get<CourseDetailResponse>(`/courses/${courseId}`),
+
+  // Sessions for a specific course
+  getCourseSessions: (courseId: string) =>
+    api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
+
+  // Create a new course
+  createCourse: (data: CreateCourseData) =>
+    api.post<CourseDetailResponse>('/courses', data),
+
+  // Upload course thumbnail image
+  uploadThumbnail: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<{ url: string; filename: string }>('/storage/upload', fd);
+  },
 };
 
 // ===========================================

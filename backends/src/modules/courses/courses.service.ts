@@ -9,8 +9,11 @@ import { db } from '../../database';
 import {
   courses,
   courseModules,
+  enrollments,
+  sessions,
   COURSE_STATUS,
 } from '../../database/schema';
+import { getTableColumns } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -73,6 +76,7 @@ export class CoursesService {
       status?: string;
       delivery?: string;
       search?: string;
+      sort?: string;
       page?: number;
       limit?: number;
     },
@@ -113,11 +117,48 @@ export class CoursesService {
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
+    // Determine sort order
+    let orderByExpr;
+    switch (params.sort) {
+      case 'oldest':
+        orderByExpr = asc(courses.createdAt);
+        break;
+      case 'alphabetical':
+        orderByExpr = asc(courses.title);
+        break;
+      case 'students':
+        orderByExpr = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}) DESC`;
+        break;
+      case 'newest':
+      default:
+        orderByExpr = desc(courses.createdAt);
+        break;
+    }
+
+    // Enriched query with correlated subqueries for enrollment & session stats
     const data = await db
-      .select()
+      .select({
+        ...getTableColumns(courses),
+        enrolledCount: sql<number>`(
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}
+        )`.mapWith(Number),
+        completionRate: sql<number>`(
+          SELECT COALESCE(ROUND(AVG(e.progress)), 0) FROM enrollments e WHERE e.course_id = ${courses.id}
+        )`.mapWith(Number),
+        totalSessions: sql<number>`(
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id}
+        )`.mapWith(Number),
+        completedSessions: sql<number>`(
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id} AND s.status = 'completed'
+        )`.mapWith(Number),
+        nextSessionAt: sql<string | null>`(
+          SELECT MIN(s.scheduled_at) FROM sessions s
+          WHERE s.course_id = ${courses.id} AND s.scheduled_at > NOW() AND s.status = 'scheduled'
+        )`,
+      })
       .from(courses)
       .where(whereClause)
-      .orderBy(desc(courses.createdAt))
+      .orderBy(orderByExpr)
       .limit(limit)
       .offset(offset);
 

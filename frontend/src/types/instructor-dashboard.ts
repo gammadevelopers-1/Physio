@@ -142,3 +142,115 @@ export interface AssessmentResponse {
   status: string;
   createdAt: string;
 }
+
+// ─── Course Listing (My Courses page) ────────────────────
+
+export interface InstructorCourse {
+  id: string;
+  instructorId: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  descriptionAr: string | null;
+  deliveryType: 'zoom' | 'onsite' | 'blended';
+  status: 'draft' | 'active' | 'completed' | 'archived';
+  thumbnail: string | null;
+  maxEnrollment: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  enrolledCount: number;
+  completionRate: number;
+  totalSessions: number;
+  completedSessions: number;
+  nextSessionAt: string | null;
+}
+
+export interface InstructorCoursesResponse {
+  data: InstructorCourse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface InstructorCoursesParams {
+  status?: string;
+  delivery?: string;
+  search?: string;
+  sort?: string;
+  page?: number;
+  limit?: number;
+}
+
+// ─── Course Detail (single course page) ────────────────────
+
+export interface CourseModule {
+  id: string;
+  courseId: string;
+  title: string;
+  titleAr: string | null;
+  orderIndex: number;
+  type: string;
+  durationMinutes: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseDetailResponse {
+  id: string;
+  instructorId: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  descriptionAr: string | null;
+  deliveryType: 'zoom' | 'onsite' | 'blended';
+  status: 'draft' | 'active' | 'completed' | 'archived';
+  thumbnail: string | null;
+  maxEnrollment: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+  modules: CourseModule[];
+}
+
+export interface CourseSession {
+  id: string;
+  courseId: string;
+  instructorId: string;
+  title: string;
+  type: 'zoom' | 'onsite' | 'hybrid';
+  scheduledAt: string;
+  durationMinutes: number;
+  zoomLink: string | null;
+  meetingId: string | null;
+  roomName: string | null;
+  venueAddress: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseSessionsResponse {
+  data: CourseSession[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ─── Create Course ──────────────────────────────────────────
+
+export interface CreateCourseData {
+  title: string;
+  titleAr?: string;
+  description?: string;
+  descriptionAr?: string;
+  deliveryType: 'zoom' | 'onsite' | 'blended';
+  thumbnail?: string;
+  maxEnrollment?: number;
+  startDate?: string;
+  endDate?: string;
+}

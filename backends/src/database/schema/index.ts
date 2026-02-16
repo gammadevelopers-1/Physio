@@ -11,6 +11,10 @@ export * from './role-requests';
 export * from './blocked-national-ids';
 export * from './admin-notifications';
 
+// Course schemas
+export * from './courses';
+export * from './course-modules';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

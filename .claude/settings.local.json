@@ -101,7 +101,14 @@
       "Bash(STRAPI_URL=\"https://physioguidance-cms-59901490054.us-central1.run.app\" STRAPI_API_TOKEN=\"e55624e4a3390fe8cd3b5038f66c94e8dd55d5a86ddc9b61b27672ed419a328bbebac7960a664b54cb608ad82c8e3884cc791f6fb265eef17491ce488366c265004204453569926c070879788fb51ac722e0f97f527d86c9c822270551a875a88ed5ac5f181ad5aab44ab35a756fb7c6dfadfcb53cae18749f8daec6691e9ea5\" node:*)",
       "Bash(TOKEN=\"e55624e4a3390fe8cd3b5038f66c94e8dd55d5a86ddc9b61b27672ed419a328bbebac7960a664b54cb608ad82c8e3884cc791f6fb265eef17491ce488366c265004204453569926c070879788fb51ac722e0f97f527d86c9c822270551a875a88ed5ac5f181ad5aab44ab35a756fb7c6dfadfcb53cae18749f8daec6691e9ea5\")",
       "Bash(URL=\"https://physioguidance-cms-59901490054.us-central1.run.app\")",
-      "Bash(__NEW_LINE_7dbd2a1aedad810b__ echo \"=== Featured courses ===\")"
+      "Bash(__NEW_LINE_7dbd2a1aedad810b__ echo \"=== Featured courses ===\")",
+      "Bash(npx nest build:*)",
+      "Bash(npm run db:generate:*)",
+      "Bash(docker compose up:*)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npm run db:migrate:*)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npm run db:push:*)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npx drizzle-kit push:*)",
+      "Bash(PGPASSWORD=postgres psql:*)"
     ]
   }
 }

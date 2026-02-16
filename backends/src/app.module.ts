@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { EmailModule } from './modules/email/email.module';
 import { RoleRequestsModule } from './modules/role-requests/role-requests.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { CoursesModule } from './modules/courses/courses.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -34,6 +35,7 @@ import storageConfig from './config/storage.config';
     StorageModule,
     RoleRequestsModule,
     NotificationsModule,
+    CoursesModule,
   ],
   controllers: [AppController],
   providers: [

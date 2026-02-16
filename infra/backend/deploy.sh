@@ -90,10 +90,9 @@ CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
 # Common env vars for all backend deployments
 # NOTE: PORT is reserved by Cloud Run (set via --port flag), do not include it here
-ENV_VARS="NODE_ENV=production"
-ENV_VARS="${ENV_VARS},CORS_ORIGIN=${FRONTEND_URL}"
-ENV_VARS="${ENV_VARS},API_PREFIX=api"
-ENV_VARS="${ENV_VARS},LOG_LEVEL=warn"
+# Use ^||^ delimiter because CORS_ORIGIN contains commas
+CORS_VALUE="${FRONTEND_URL},https://physioguidance.org,https://www.physioguidance.org"
+ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LOG_LEVEL=warn||STORAGE_LOCAL_DIR=/tmp/uploads"
 
 # Secrets from GCP Secret Manager (required)
 SECRETS="DATABASE_URL=DATABASE_URL:latest"

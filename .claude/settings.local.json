@@ -84,7 +84,24 @@
       "Bash(docker network prune:*)",
       "Bash(docker-compose ps:*)",
       "Bash(xxd:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzM3ZWY5NC01ZmI0LTRkMjAtYmM1MS04NGM5ZTkyMWI4YjUiLCJlbWFpbCI6ImFkbWluQHBoeXNpb2d1aWRhbmNlLm9yZyIsImFjdGl2ZVJvbGUiOiJBRE1JTiIsInJvbGVzIjpbIkFETUlOIl0sImlhdCI6MTc3MDg4NjQzNSwiZXhwIjoxNzcwODg3MzM1fQ._hXGaROczx1BTPTM-DlDK8Z-r154VHnFV6i1B5NtNIQ\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YzM3ZWY5NC01ZmI0LTRkMjAtYmM1MS04NGM5ZTkyMWI4YjUiLCJlbWFpbCI6ImFkbWluQHBoeXNpb2d1aWRhbmNlLm9yZyIsImFjdGl2ZVJvbGUiOiJBRE1JTiIsInJvbGVzIjpbIkFETUlOIl0sImlhdCI6MTc3MDg4NjQzNSwiZXhwIjoxNzcwODg3MzM1fQ._hXGaROczx1BTPTM-DlDK8Z-r154VHnFV6i1B5NtNIQ\")",
+      "Bash(gcloud run services describe:*)",
+      "Bash(CLOUDSDK_PYTHON=\"/c/Users/Lenovo T470s/AppData/Local/Programs/Python/Python313/python\" gcloud:*)",
+      "Bash(export CLOUDSDK_PYTHON=\"/c/Users/Lenovo T470s/AppData/Local/Programs/Python/Python313/python\")",
+      "Bash(gcloud run services logs read:*)",
+      "Bash(gcloud sql connect:*)",
+      "Bash(docker build:*)",
+      "Bash(docker push:*)",
+      "Bash(gcloud run deploy:*)",
+      "Bash(DATABASE_HOST=104.154.109.61 DATABASE_PORT=5432 DATABASE_USER=apiuser DATABASE_PASSWORD='YpIUpba+xji1peyEyEe0KOceZYXT/Crd' DATABASE_NAME=physioguidance npx drizzle-kit push --force)",
+      "Bash(npm ls:*)",
+      "Bash(gcloud secrets create:*)",
+      "Bash(git add:*)",
+      "Bash(gcloud secrets versions add:*)",
+      "Bash(STRAPI_URL=\"https://physioguidance-cms-59901490054.us-central1.run.app\" STRAPI_API_TOKEN=\"e55624e4a3390fe8cd3b5038f66c94e8dd55d5a86ddc9b61b27672ed419a328bbebac7960a664b54cb608ad82c8e3884cc791f6fb265eef17491ce488366c265004204453569926c070879788fb51ac722e0f97f527d86c9c822270551a875a88ed5ac5f181ad5aab44ab35a756fb7c6dfadfcb53cae18749f8daec6691e9ea5\" node:*)",
+      "Bash(TOKEN=\"e55624e4a3390fe8cd3b5038f66c94e8dd55d5a86ddc9b61b27672ed419a328bbebac7960a664b54cb608ad82c8e3884cc791f6fb265eef17491ce488366c265004204453569926c070879788fb51ac722e0f97f527d86c9c822270551a875a88ed5ac5f181ad5aab44ab35a756fb7c6dfadfcb53cae18749f8daec6691e9ea5\")",
+      "Bash(URL=\"https://physioguidance-cms-59901490054.us-central1.run.app\")",
+      "Bash(__NEW_LINE_7dbd2a1aedad810b__ echo \"=== Featured courses ===\")"
     ]
   }
 }

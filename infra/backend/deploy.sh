@@ -76,6 +76,12 @@ log_success "Image pushed"
 log_step "Resolving production URLs..."
 FRONTEND_URL="${PRODUCTION_FRONTEND_URL:-$(get_service_url ${FRONTEND_SERVICE_NAME})}"
 CLOUD_RUN_FRONTEND_URL="$(get_service_url ${FRONTEND_SERVICE_NAME})"
+# GCP has two Cloud Run URL formats - get both
+GCP_PROJECT_NUMBER=$(gcloud projects describe ${GCP_PROJECT_ID} --format='value(projectNumber)' 2>/dev/null || echo "")
+CLOUD_RUN_FRONTEND_URL_NEW=""
+if [ -n "$GCP_PROJECT_NUMBER" ]; then
+    CLOUD_RUN_FRONTEND_URL_NEW="https://${FRONTEND_SERVICE_NAME}-${GCP_PROJECT_NUMBER}.${GCP_REGION}.run.app"
+fi
 if [ -z "$FRONTEND_URL" ]; then
     FRONTEND_URL="https://physioguidance-web-*.run.app"
     log_warning "Frontend URL not found, using wildcard. Update CORS_ORIGIN after first frontend deploy."
@@ -92,12 +98,15 @@ CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 # Common env vars for all backend deployments
 # NOTE: PORT is reserved by Cloud Run (set via --port flag), do not include it here
 # Use ^||^ delimiter because CORS_ORIGIN contains commas
-# Include custom domains + Cloud Run URLs for direct access
+# Include custom domains + both Cloud Run URL formats for direct access
 CORS_VALUE="${FRONTEND_URL},https://www.physioguidance.org"
 if [ -n "$CLOUD_RUN_FRONTEND_URL" ] && [ "$CLOUD_RUN_FRONTEND_URL" != "$FRONTEND_URL" ]; then
     CORS_VALUE="${CORS_VALUE},${CLOUD_RUN_FRONTEND_URL}"
 fi
-ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LOG_LEVEL=warn||STORAGE_LOCAL_DIR=/tmp/uploads"
+if [ -n "$CLOUD_RUN_FRONTEND_URL_NEW" ] && [ "$CLOUD_RUN_FRONTEND_URL_NEW" != "$FRONTEND_URL" ] && [ "$CLOUD_RUN_FRONTEND_URL_NEW" != "$CLOUD_RUN_FRONTEND_URL" ]; then
+    CORS_VALUE="${CORS_VALUE},${CLOUD_RUN_FRONTEND_URL_NEW}"
+fi
+ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LOG_LEVEL=warn||STORAGE_LOCAL_DIR=/tmp/uploads||APP_URL=https://api.physioguidance.org/api"
 
 # Secrets from GCP Secret Manager (required)
 SECRETS="DATABASE_URL=DATABASE_URL:latest"

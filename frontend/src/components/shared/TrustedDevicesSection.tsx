@@ -19,8 +19,8 @@ interface TrustedDevicesSectionProps {
   revokingId: string | null;
   revokingAll: boolean;
   showRevokeAllConfirm: boolean;
-  onRevokeDevice: (deviceId: string) => void;
-  onRevokeAll: () => void;
+  onRevokeDevice: (deviceId: string) => Promise<void> | void;
+  onRevokeAll: () => Promise<void> | void;
   onShowRevokeAllConfirm: (show: boolean) => void;
   onLogout?: () => void;
 }
@@ -75,22 +75,20 @@ export default function TrustedDevicesSection({
     }
   };
 
-  const confirmRevokeCurrentDevice = () => {
+  const confirmRevokeCurrentDevice = async () => {
     if (currentDevice) {
-      onRevokeDevice(currentDevice.id);
+      await onRevokeDevice(currentDevice.id);
       setConfirmingCurrentDevice(false);
-      // Logout after revoking current device
       if (onLogout) {
-        setTimeout(() => onLogout(), 500);
+        onLogout();
       }
     }
   };
 
-  const handleRevokeAll = () => {
-    onRevokeAll();
-    // If current device is included, logout
+  const handleRevokeAll = async () => {
+    await onRevokeAll();
     if (includeCurrentInRevokeAll && onLogout) {
-      setTimeout(() => onLogout(), 500);
+      onLogout();
     }
     setIncludeCurrentInRevokeAll(false);
   };

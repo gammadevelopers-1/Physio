@@ -151,7 +151,12 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
   const profileData = (application?.profileData || {}) as Record<string, string>;
   const bankData = (application?.bankData || {}) as Record<string, string>;
-  const resumeFiles = (application?.resumeFiles || []) as Array<{ type: string; url: string; filename: string }>;
+  const rawResumeFiles = (application?.resumeFiles || []) as Array<{ type: string; url: string; filename: string }>;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+  const resumeFiles = rawResumeFiles.map((file) => ({
+    ...file,
+    url: file.url.replace(/^http:\/\/localhost:\d+\/api/, apiUrl),
+  }));
   const config = application
     ? statusConfig[application.status as keyof typeof statusConfig] || statusConfig.PENDING
     : statusConfig.PENDING;

@@ -397,6 +397,7 @@ const BecomeTrainerForm = ({
     rank: "",
     hasScfhsNumber: false,
     noScfhsNumber: true,
+    scfhsNumber: "",
     twitter: "",
     linkedIn: "",
     uploadResume: false,
@@ -612,9 +613,8 @@ const BecomeTrainerForm = ({
         }
       }
 
-      // Auto-copy name if only one is filled
-      const finalNameArabic = formData.fullNameArabic || formData.fullNameEnglish;
-      const finalNameEnglish = formData.fullNameEnglish || formData.fullNameArabic;
+      const finalNameArabic = formData.fullNameArabic;
+      const finalNameEnglish = formData.fullNameEnglish;
 
       // Build profile data
       const profileData = {
@@ -631,6 +631,7 @@ const BecomeTrainerForm = ({
         qualification: formData.qualification,
         academicRank: formData.rank,
         hasScfhsNumber: formData.hasScfhsNumber,
+        scfhsNumber: formData.hasScfhsNumber ? formData.scfhsNumber : "",
         twitter: formData.twitter,
         linkedIn: formData.linkedIn,
       };
@@ -948,9 +949,22 @@ const BecomeTrainerForm = ({
                   <label className="shrink-0 text-[var(--on-surface-default)] pt-1" style={{ fontSize: "16px" }}>
                     {labels.scfhsQuestion} <span className="text-[#dc2626]">*</span>
                   </label>
-                  <div className="w-1/2 flex gap-8 pt-3">
-                    <Checkbox label={labels.yes} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
-                    <Checkbox label={labels.no} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                  <div className="w-1/2 flex flex-col gap-3">
+                    <div className="flex gap-8 pt-3">
+                      <Checkbox label={labels.yes} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                      <Checkbox label={labels.no} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
+                    </div>
+                    {formData.hasScfhsNumber && (
+                      <input
+                        type="text"
+                        name="scfhsNumber"
+                        value={formData.scfhsNumber}
+                        onChange={handleInputChange}
+                        placeholder={locale === "ar" ? "أدخل رقم التصنيف" : "Enter SCFHS number"}
+                        className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                        style={{ fontSize: "16px" }}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="w-full h-px bg-[#F0F0F0]" />
@@ -1176,6 +1190,17 @@ const BecomeTrainerForm = ({
                   <Checkbox label={labels.yes} name="hasScfhsNumber" checked={formData.hasScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
                   <Checkbox label={labels.no} name="noScfhsNumber" checked={formData.noScfhsNumber} onChange={handleInputChange} isRTL={isRTL} />
                 </div>
+                {formData.hasScfhsNumber && (
+                  <input
+                    type="text"
+                    name="scfhsNumber"
+                    value={formData.scfhsNumber}
+                    onChange={handleInputChange}
+                    placeholder={locale === "ar" ? "أدخل رقم التصنيف" : "Enter SCFHS number"}
+                    className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                    style={{ fontSize: "16px" }}
+                  />
+                )}
               </div>
                {/* Divider */}
             <div className="w-full h-px bg-[#F0F0F0] " />

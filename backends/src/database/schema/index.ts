@@ -7,6 +7,9 @@ export * from './users';
 export * from './refresh-tokens';
 export * from './roles';
 export * from './two-factor';
+export * from './role-requests';
+export * from './blocked-national-ids';
+export * from './admin-notifications';
 
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';

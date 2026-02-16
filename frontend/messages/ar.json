@@ -1191,7 +1191,7 @@
     },
     "buttons": {
       "cancel": "إلغاء",
-      "save": "حفظ",
+      "save": "تقديم الطلب",
       "yes": "نعم",
       "no": "لا"
     },
@@ -1242,7 +1242,24 @@
         "alBilad": "بنك البلاد",
         "other": "أخرى"
       }
-    }
+    },
+    "loginRequired": "تسجيل الدخول مطلوب",
+    "loginRequiredDesc": "يجب تسجيل الدخول لتقديم طلب مدرب.",
+    "signIn": "تسجيل الدخول للتقديم",
+    "alreadyTrainer": "أنت بالفعل مدرب!",
+    "alreadyTrainerDesc": "لديك بالفعل دور المدرب.",
+    "goToDashboard": "الذهاب إلى لوحة تحكم المدرب",
+    "pendingApplication": "الطلب قيد المراجعة",
+    "pendingApplicationDesc": "طلبك قيد المراجعة. سنبلغك عند اتخاذ القرار.",
+    "moreInfoNeeded": "مطلوب معلومات إضافية",
+    "moreInfoNeededDesc": "طلب المراجع معلومات إضافية حول طلبك.",
+    "reviewerNote": "ملاحظة المراجع",
+    "submittedOn": "تم التقديم في",
+    "viewApplications": "عرض طلباتي",
+    "submitSuccess": "تم تقديم الطلب!",
+    "submitSuccessDesc": "سنقوم بمراجعة طلبك وإبلاغك خلال بضعة أيام عمل.",
+    "submitError": "فشل في تقديم طلبك. يرجى المحاولة مرة أخرى.",
+    "submitting": "جارٍ التقديم..."
   },
   "studentDashboard": {
     "title": "لوحة تحكم الطالب",
@@ -1254,6 +1271,7 @@
       "certifications": "الشهادات",
       "badges": "الشارات",
       "invoices": "الفواتير",
+      "applications": "طلباتي",
       "inviteFriends": "دعوة الأصدقاء",
       "settings": "الإعدادات",
       "points": "نقاط",
@@ -1263,6 +1281,28 @@
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
       "logout": "تسجيل الخروج"
+    },
+    "applicationsPage": {
+      "title": "طلباتي",
+      "subtitle": "تتبع حالة طلبات الأدوار الخاصة بك",
+      "emptyTitle": "لا توجد طلبات بعد",
+      "emptyDesc": "لم تقدم أي طلبات أدوار بعد.",
+      "becomeTrainer": "كن مدربًا",
+      "instructorApplication": "طلب مدرب",
+      "statusPending": "قيد المراجعة",
+      "statusApproved": "تمت الموافقة",
+      "statusRejected": "مرفوض",
+      "statusMoreInfo": "مطلوب معلومات إضافية",
+      "pendingMessage": "طلبك قيد المراجعة. سنبلغك عند اتخاذ القرار.",
+      "approvedMessage": "تهانينا! تمت الموافقة على طلبك. يمكنك الآن التبديل إلى لوحة تحكم المدرب.",
+      "switchRole": "التبديل إلى المدرب",
+      "reason": "السبب",
+      "reapply": "إعادة التقديم",
+      "reviewerNote": "ملاحظة المراجع",
+      "editResubmit": "تعديل وإعادة التقديم",
+      "timeline": "الجدول الزمني",
+      "submitted": "تم التقديم",
+      "reviewed": "تمت المراجعة"
     },
     "stats": {
       "courses": "الدورات",
@@ -1386,6 +1426,8 @@
     },
     "settings": {
       "title": "الإعدادات",
+      "tabProfile": "الملف الشخصي",
+      "tabSecurity": "الأمان",
       "changePhoto": "تغيير الصورة",
       "firstName": "الاسم الأول",
       "lastName": "اسم العائلة",
@@ -2497,6 +2539,7 @@
       "dashboard": "لوحة التحكم",
       "users": "المستخدمون",
       "roles": "الأدوار والصلاحيات",
+      "roleRequests": "طلبات الأدوار",
       "courses": "جميع الدورات",
       "finance": "المالية",
       "security": "الأمان",
@@ -2672,6 +2715,7 @@
         "role": "الدور",
         "status": "الحالة",
         "lastLogin": "آخر دخول",
+        "lastIp": "آخر IP",
         "created": "تاريخ الإنشاء",
         "actions": "الإجراءات"
       },
@@ -2681,6 +2725,7 @@
         "resetPassword": "إعادة تعيين كلمة المرور",
         "impersonate": "انتحال الشخصية",
         "suspend": "إيقاف",
+        "trustedDevices": "الأجهزة الموثوقة",
         "delete": "حذف"
       },
       "sampleUsers": {
@@ -3162,6 +3207,75 @@
         "tapPayments": "تاب للمدفوعات",
         "unifonicSms": "يونيفونيك للرسائل"
       }
+    },
+    "roleRequestsPage": {
+      "title": "طلبات الأدوار",
+      "subtitle": "مراجعة وإدارة طلبات أدوار المدربين",
+      "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+      "stats": {
+        "total": "الإجمالي",
+        "pending": "قيد الانتظار",
+        "approved": "موافق عليها",
+        "rejected": "مرفوضة"
+      },
+      "filterAll": "جميع الحالات",
+      "filterPending": "قيد الانتظار",
+      "filterApproved": "موافق عليها",
+      "filterRejected": "مرفوضة",
+      "filterMoreInfo": "معلومات إضافية",
+      "colApplicant": "المتقدم",
+      "colEmail": "البريد الإلكتروني",
+      "colRole": "الدور",
+      "colStatus": "الحالة",
+      "colSubmitted": "تاريخ التقديم",
+      "colActions": "الإجراءات",
+      "review": "مراجعة",
+      "noResults": "لا توجد طلبات أدوار",
+      "showing": "عرض",
+      "of": "من"
+    },
+    "roleRequestReviewPage": {
+      "title": "مراجعة الطلب",
+      "backToList": "العودة إلى طلبات الأدوار",
+      "profileSection": "معلومات الملف الشخصي",
+      "documentsSection": "المستندات والسيرة الذاتية",
+      "bankSection": "المعلومات البنكية",
+      "socialLinks": "الروابط الاجتماعية",
+      "timeline": "الجدول الزمني",
+      "actions": "الإجراءات",
+      "adminNote": "ملاحظة المشرف",
+      "fullNameAr": "الاسم الكامل (بالعربية)",
+      "fullNameEn": "الاسم الكامل (بالإنجليزية)",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "nationality": "الجنسية",
+      "gender": "الجنس",
+      "profession": "المهنة",
+      "specialty": "التخصص",
+      "qualification": "المؤهل العلمي",
+      "rank": "الرتبة",
+      "scfhsNumber": "رقم الهيئة السعودية",
+      "nationalId": "رقم الهوية/الإقامة",
+      "accountHolder": "صاحب الحساب",
+      "bankName": "اسم البنك",
+      "iban": "رقم الآيبان",
+      "submitted": "تم التقديم",
+      "reviewed": "تمت المراجعة",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "requestInfo": "طلب معلومات إضافية",
+      "modalApproveTitle": "الموافقة على الطلب",
+      "modalApproveDesc": "سيتم الموافقة على الطلب وتعيين دور المدرب.",
+      "modalRejectTitle": "رفض الطلب",
+      "modalRejectDesc": "يرجى تقديم سبب رفض هذا الطلب.",
+      "modalRequestInfoTitle": "طلب معلومات إضافية",
+      "modalRequestInfoDesc": "صف المعلومات الإضافية المطلوبة من المتقدم.",
+      "noteOptional": "أضف ملاحظة (اختياري)...",
+      "noteRequired": "أدخل رسالتك (مطلوب)...",
+      "cancel": "إلغاء",
+      "confirmApprove": "موافقة",
+      "confirmReject": "رفض",
+      "confirmRequestInfo": "إرسال الطلب"
     }
   },
   "financeDashboard": {
@@ -4115,6 +4229,46 @@
       "knowledgeBase": "قاعدة المعرفة",
       "exportReport": "تصدير التقرير",
       "teamChat": "محادثة الفريق"
+    }
+  },
+  "dashboardSearch": {
+    "placeholder": "ابحث في الدورات والمدونات والمزيد...",
+    "hint": "اكتب للبحث في الدورات والمدونات والمزيد",
+    "noResults": "لم يتم العثور على نتائج",
+    "noResultsHint": "جرب كلمات مفتاحية مختلفة أو تحقق من الإملاء",
+    "viewAll": "عرض جميع النتائج",
+    "escToClose": "اضغط ESC للإغلاق",
+    "sections": {
+      "courses": "الدورات",
+      "blogs": "المدونات",
+      "users": "المستخدمون"
+    },
+    "quickLinks": {
+      "title": "روابط سريعة",
+      "myCourses": "دوراتي",
+      "browseCourses": "تصفح الدورات",
+      "certifications": "الشهادات",
+      "settings": "الإعدادات",
+      "students": "الطلاب",
+      "users": "المستخدمون",
+      "roles": "الأدوار",
+      "courses": "الدورات",
+      "instructors": "المدربون",
+      "invoices": "الفواتير",
+      "payments": "المدفوعات",
+      "tickets": "التذاكر"
+    }
+  },
+  "roleSwitcher": {
+    "switchDashboard": "تبديل لوحة التحكم",
+    "roles": {
+      "student": "لوحة تحكم الطالب",
+      "instructor": "لوحة تحكم المدرب",
+      "admin": "لوحة تحكم المشرف",
+      "super_admin": "لوحة تحكم المشرف",
+      "manager": "لوحة تحكم المدير",
+      "finance": "لوحة تحكم المالية",
+      "support": "لوحة تحكم الدعم"
     }
   }
 }

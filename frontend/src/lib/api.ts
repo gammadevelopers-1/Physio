@@ -231,6 +231,7 @@ export interface User {
   isActive: boolean;
   isVerified: boolean;
   lastLoginAt?: string;
+  lastLoginIp?: string | null;
   createdAt: string;
 }
 
@@ -333,12 +334,49 @@ export interface UpdateUserData {
   activeRole?: string;
 }
 
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface UserStats {
+  total: number;
+  active: number;
+  pending: number;
+  suspended: number;
+}
+
+export interface PaginatedUsersResponse {
+  data: User[];
+  meta: PaginationMeta;
+  stats: UserStats;
+}
+
 // ===========================================
 // Admin API Calls
 // ===========================================
 export const adminApi = {
   // Get all users (ADMIN/SUPER_ADMIN only)
-  getUsers: () => api.get<User[]>('/auth/users'),
+  getUsers: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.role) searchParams.set('role', params.role);
+    if (params?.status) searchParams.set('status', params.status);
+    const queryString = searchParams.toString();
+    return api.get<PaginatedUsersResponse>(`/auth/users${queryString ? `?${queryString}` : ''}`);
+  },
 
   // Get a user's roles
   getUserRoles: (userId: string) =>
@@ -379,6 +417,16 @@ export const adminApi = {
   // Delete a role (admin only)
   deleteRole: (roleId: string) =>
     api.delete<{ message: string }>(`/auth/roles/${roleId}`),
+
+  // Trusted Device Management (admin only)
+  getUserTrustedDevices: (userId: string) =>
+    api.get<TrustedDevice[]>(`/auth/users/${userId}/trusted-devices`),
+
+  revokeUserDevice: (userId: string, deviceId: string) =>
+    api.delete<{ message: string }>(`/auth/users/${userId}/trusted-devices/${deviceId}`),
+
+  revokeAllUserDevices: (userId: string) =>
+    api.delete<{ message: string }>(`/auth/users/${userId}/trusted-devices`),
 };
 
 export interface RoleWithCount {
@@ -389,5 +437,140 @@ export interface RoleWithCount {
   createdAt: string;
   usersCount: number;
 }
+
+// ===========================================
+// Role Request Types
+// ===========================================
+export interface RoleRequest {
+  id: string;
+  userId: string;
+  requestedRole: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'MORE_INFO';
+  profileData: Record<string, unknown>;
+  bankData: Record<string, unknown> | null;
+  resumeFiles: Array<{ type: string; url: string; filename: string }> | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatar?: string | null;
+  };
+}
+
+export interface RoleRequestStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+}
+
+export interface PaginatedRoleRequestsResponse {
+  data: RoleRequest[];
+  meta: PaginationMeta;
+  stats: RoleRequestStats;
+}
+
+// ===========================================
+// Role Requests API
+// ===========================================
+export const roleRequestsApi = {
+  // Submit new application (student)
+  submit: (data: {
+    requestedRole: string;
+    profileData: Record<string, unknown>;
+    bankData?: Record<string, unknown>;
+    resumeFiles?: Array<{ type: string; url: string; filename: string }>;
+  }) => api.post<RoleRequest>('/role-requests', data),
+
+  // Get my applications
+  getMine: () => api.get<RoleRequest[]>('/role-requests/mine'),
+
+  // Get all applications (admin)
+  getAll: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.status) searchParams.set('status', params.status);
+    const queryString = searchParams.toString();
+    return api.get<PaginatedRoleRequestsResponse>(
+      `/role-requests${queryString ? `?${queryString}` : ''}`
+    );
+  },
+
+  // Get single application (admin)
+  getById: (id: string) => api.get<RoleRequest>(`/role-requests/${id}`),
+
+  // Approve application (admin)
+  approve: (id: string, note?: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/approve`, { reviewNote: note }),
+
+  // Reject application (admin)
+  reject: (id: string, reviewNote: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/reject`, { reviewNote }),
+
+  // Request more info (admin)
+  requestInfo: (id: string, reviewNote: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/request-info`, { reviewNote }),
+
+  // Resubmit application (student)
+  resubmit: (id: string, data: {
+    requestedRole: string;
+    profileData: Record<string, unknown>;
+    bankData?: Record<string, unknown>;
+    resumeFiles?: Array<{ type: string; url: string; filename: string }>;
+  }) => api.patch<{ message: string }>(`/role-requests/${id}`, data),
+
+  // Reject with block (admin)
+  rejectAndBlock: (id: string, reviewNote: string) =>
+    api.patch<{ message: string }>(`/role-requests/${id}/reject`, {
+      reviewNote,
+      blockNationalId: true,
+    }),
+};
+
+// ===========================================
+// Admin Notifications API
+// ===========================================
+export interface AdminNotification {
+  id: string;
+  type: 'critical' | 'warning' | 'info';
+  title: string;
+  description: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export const notificationsApi = {
+  // Get notifications
+  getAll: (params?: { limit?: number; unreadOnly?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.unreadOnly) searchParams.set('unreadOnly', 'true');
+    const qs = searchParams.toString();
+    return api.get<{ data: AdminNotification[]; unreadCount: number }>(
+      `/notifications${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  // Mark one as read
+  markAsRead: (id: string) =>
+    api.patch<{ message: string }>(`/notifications/${id}/read`, {}),
+
+  // Mark all as read
+  markAllAsRead: () =>
+    api.patch<{ message: string }>('/notifications/read-all', {}),
+};
 
 export default api;

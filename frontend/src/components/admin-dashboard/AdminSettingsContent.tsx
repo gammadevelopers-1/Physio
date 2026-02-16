@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import Link from "next/link";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
@@ -18,6 +19,7 @@ import {
   Save,
   Eye,
   EyeOff,
+  Shield,
 } from "lucide-react";
 
 // Mock Admin Profile
@@ -91,6 +93,13 @@ const AdminSettingsContent = () => {
                 <p className="text-sm text-[#6B7280] mt-1">
                   {t("settingsPage.subtitle")}
                 </p>
+                <Link
+                  href={`/${locale}/dashboard/settings/security`}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#a37f49] bg-[#a37f49]/10 hover:bg-[#a37f49]/20 rounded-lg transition-colors mt-3"
+                >
+                  <Shield className="w-4 h-4" />
+                  Personal Security Settings
+                </Link>
               </div>
 
               {/* Settings Card with Horizontal Tabs */}

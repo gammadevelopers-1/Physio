@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,7 +18,9 @@ import {
   Settings,
   Pencil,
   Crown,
+  UserCheck,
 } from "lucide-react";
+import { roleRequestsApi } from "@/lib/api";
 
 interface AdminProfile {
   name: string;
@@ -37,6 +40,20 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
   const pathname = usePathname();
   const t = useTranslations("adminDashboard");
   const isRTL = locale === "ar";
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Fetch real pending role request count
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const result = await roleRequestsApi.getAll({ status: "PENDING", limit: 1 });
+        setPendingCount(result.stats.pending);
+      } catch {
+        // Not admin or not logged in — ignore
+      }
+    };
+    fetchPendingCount();
+  }, []);
 
   const navItems = [
     {
@@ -48,12 +65,17 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       label: t("sidebar.users"),
       href: `/${locale}/dashboard/admin/users`,
       icon: Users,
-      badge: 5,
     },
     {
       label: t("sidebar.roles"),
       href: `/${locale}/dashboard/admin/roles`,
       icon: Shield,
+    },
+    {
+      label: t("sidebar.roleRequests"),
+      href: `/${locale}/dashboard/admin/role-requests`,
+      icon: UserCheck,
+      badge: pendingCount > 0 ? pendingCount : undefined,
     },
     {
       label: t("sidebar.courses"),
@@ -69,7 +91,6 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
       label: t("sidebar.security"),
       href: `/${locale}/dashboard/admin/security`,
       icon: Lock,
-      badge: 2,
     },
     {
       label: t("sidebar.compliance"),

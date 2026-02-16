@@ -8,3 +8,4 @@ export * from './create-role.dto';
 export * from './update-role.dto';
 export * from './verify-2fa.dto';
 export * from './toggle-2fa.dto';
+export * from './get-users-query.dto';

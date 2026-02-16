@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { ChevronDown, Trash2, Mail, Image as ImageIcon, CloudUpload } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Trash2, Mail, Image as ImageIcon, CloudUpload, CheckCircle2, AlertCircle, Clock, Loader2 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { useIsAuthenticated, useUser, useUserRoles, useAuth } from "@/contexts";
+import { roleRequestsApi, getAccessToken, type RoleRequest } from "@/lib/api";
 
 // InputField component moved outside to prevent re-creation on parent re-render
 const InputField = ({
@@ -371,7 +375,7 @@ const BecomeTrainerForm = ({
     bankName: bankNameLabel || t("bankAccount.bankName"),
     iban: bankIbanLabel || t("bankAccount.iban"),
     cancel: cancelButtonLabel || t("buttons.cancel"),
-    save: saveButtonLabel || t("buttons.save"),
+    save: t("buttons.save"),
     yes: yesButtonLabel || t("buttons.yes"),
     no: noButtonLabel || t("buttons.no"),
   };
@@ -410,7 +414,42 @@ const BecomeTrainerForm = ({
   });
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [existingApplication, setExistingApplication] = useState<RoleRequest | null>(null);
+  const [checkingStatus, setCheckingStatus] = useState(true);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const isAuthenticated = useIsAuthenticated();
+  const user = useUser();
+  const userRoles = useUserRoles();
+  const { switchRole } = useAuth();
+  const isInstructor = userRoles.includes("INSTRUCTOR");
+
+  // Check for existing application on mount
+  useEffect(() => {
+    const checkExisting = async () => {
+      if (!isAuthenticated) {
+        setCheckingStatus(false);
+        return;
+      }
+      try {
+        const applications = await roleRequestsApi.getMine();
+        const pending = applications.find(
+          (a) => a.requestedRole === "INSTRUCTOR" && (a.status === "PENDING" || a.status === "MORE_INFO")
+        );
+        if (pending) {
+          setExistingApplication(pending);
+        }
+      } catch {
+        // Ignore - user may not have any applications
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+    checkExisting();
+  }, [isAuthenticated]);
 
   // Option mappings with translation keys
   const genderOptions = [
@@ -500,15 +539,215 @@ const BecomeTrainerForm = ({
     setFiles((prev) => ({ ...prev, [field]: file }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadFile = async (file: File): Promise<{ url: string; filename: string } | null> => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+    const token = getAccessToken();
+    const formPayload = new FormData();
+    formPayload.append("file", file);
+
+    try {
+      const res = await fetch(`${API_URL}/storage/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formPayload,
+      });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData, files);
+    if (!isAuthenticated) {
+      router.push(`/${locale}/signin?redirect=/${locale}/become-trainer`);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      // Upload files
+      const resumeFiles: Array<{ type: string; url: string; filename: string }> = [];
+
+      const fileEntries: [string, File | null][] = [
+        ["education", files.education],
+        ["professionalSkills", files.professionalSkills],
+        ["scientificResearches", files.scientificResearches],
+        ["trainingExperience", files.trainingExperience],
+      ];
+
+      for (const [type, file] of fileEntries) {
+        if (file) {
+          const result = await uploadFile(file);
+          if (result) {
+            resumeFiles.push({ type, url: result.url, filename: result.filename });
+          }
+        }
+      }
+
+      // Upload photo if exists
+      if (formData.photo) {
+        const photoResult = await uploadFile(formData.photo);
+        if (photoResult) {
+          resumeFiles.push({ type: "photo", url: photoResult.url, filename: photoResult.filename });
+        }
+      }
+
+      // Build profile data
+      const profileData = {
+        fullNameArabic: formData.fullNameArabic,
+        fullNameEnglish: formData.fullNameEnglish,
+        email: formData.email,
+        countryCode: formData.countryCode,
+        mobileNumber: formData.mobileNumber,
+        gender: formData.gender,
+        nationality: formData.nationality,
+        nationalIqamaId: formData.nationalIqamaId,
+        profession: formData.profession,
+        specialty: formData.specialty,
+        qualification: formData.qualification,
+        academicRank: formData.rank,
+        hasScfhsNumber: formData.hasScfhsNumber,
+        twitter: formData.twitter,
+        linkedIn: formData.linkedIn,
+      };
+
+      const bankData = {
+        accountHolderName: formData.accountHolderName,
+        bankName: formData.bankName,
+        iban: formData.iban,
+      };
+
+      await roleRequestsApi.submit({
+        requestedRole: "INSTRUCTOR",
+        profileData,
+        bankData,
+        resumeFiles,
+      });
+
+      setSubmitSuccess(true);
+    } catch (err: unknown) {
+      const error = err as Error & { statusCode?: number };
+      const msg = error.message || "Failed to submit application. Please try again.";
+      setSubmitError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Helper function to handle file changes with proper typing
   const handleFileChangeWrapper = (field: string, file: File | null) => {
     handleFileChange(field as keyof typeof files, file);
   };
+
+  // Loading state
+  if (checkingStatus) {
+    return (
+      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#a37f49] mx-auto mb-4" />
+          <p className="text-[#6B7280]">Loading...</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Helper: next-intl returns the key path (truthy) when missing, so || fallback won't work
+  const tt = (key: string, fallback: string) => (t.has(key) ? t(key) : fallback);
+
+  // Not logged in
+  if (!isAuthenticated) {
+    return (
+      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
+          <AlertCircle className="w-12 h-12 text-[#a37f49] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("loginRequired", "Login Required")}</h2>
+          <p className="text-[#6B7280] mb-6">{tt("loginRequiredDesc", "You need to sign in to submit a trainer application.")}</p>
+          <Link
+            href={`/${locale}/signin?redirect=/${locale}/become-trainer`}
+            className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+          >
+            {tt("signIn", "Sign In to Apply")}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  // Already an instructor
+  if (isInstructor) {
+    return (
+      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
+          <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("alreadyTrainer", "You're Already a Trainer!")}</h2>
+          <p className="text-[#6B7280] mb-6">{tt("alreadyTrainerDesc", "You already have the Instructor role.")}</p>
+          <button
+            onClick={() => switchRole("INSTRUCTOR")}
+            className="inline-block px-6 py-3 bg-[#002D87] text-white rounded-xl font-medium hover:bg-[#001A52] transition-colors"
+          >
+            {tt("goToDashboard", "Go to Instructor Dashboard")}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // Existing pending/more_info application
+  if (existingApplication) {
+    const status = existingApplication.status;
+    return (
+      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
+          <Clock className="w-12 h-12 text-[#F59E0B] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">
+            {status === "PENDING" ? tt("pendingApplication", "Application Under Review") : tt("moreInfoNeeded", "Additional Information Needed")}
+          </h2>
+          <p className="text-[#6B7280] mb-2">
+            {status === "PENDING"
+              ? tt("pendingApplicationDesc", "Your application is being reviewed. We'll notify you once a decision is made.")
+              : tt("moreInfoNeededDesc", "The reviewer has requested more information about your application.")}
+          </p>
+          {status === "MORE_INFO" && existingApplication.reviewNote && (
+            <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-lg p-3 mb-4 text-sm text-[#92400E] text-start">
+              <strong>{tt("reviewerNote", "Reviewer note")}:</strong> {existingApplication.reviewNote}
+            </div>
+          )}
+          <p className="text-xs text-[#9CA3AF] mb-4">
+            {tt("submittedOn", "Submitted on")}: {new Date(existingApplication.createdAt).toLocaleDateString()}
+          </p>
+          <Link
+            href={`/${locale}/dashboard/student/applications`}
+            className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+          >
+            {tt("viewApplications", "View My Applications")}
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  // Success state
+  if (submitSuccess) {
+    return (
+      <section className="bg-[#EEF3F7] min-h-screen flex items-center justify-center" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="bg-white rounded-2xl p-10 max-w-md mx-auto text-center shadow-sm">
+          <CheckCircle2 className="w-12 h-12 text-[#16A34A] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[#1F2937] mb-2">{tt("submitSuccess", "Application Submitted!")}</h2>
+          <p className="text-[#6B7280] mb-6">{tt("submitSuccessDesc", "We'll review your application and notify you within a few business days.")}</p>
+          <Link
+            href={`/${locale}/dashboard/student/applications`}
+            className="inline-block px-6 py-3 bg-[#a37f49] text-white rounded-xl font-medium hover:bg-[#8b6a3d] transition-colors"
+          >
+            {tt("viewApplications", "View My Applications")}
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[#EEF3F7] min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
@@ -518,6 +757,14 @@ const BecomeTrainerForm = ({
           <h1 className="font-semibold text-[var(--on-surface-default)] text-center mb-10" style={{ fontSize: "48px" }}>
             {labels.title}
           </h1>
+
+          {/* Error banner */}
+          {submitError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+              <p className="text-sm text-red-700">{submitError}</p>
+            </div>
+          )}
 
           {/* Single Card containing all sections */}
           <form onSubmit={handleSubmit}>
@@ -721,16 +968,6 @@ const BecomeTrainerForm = ({
               {/* Divider */}
               <div className="w-full h-px bg-[#F0F0F0] my-10" />
 
-              {/* Cancel/Save for Resume */}
-              <div className="flex gap-3 mb-10 justify-end">
-                <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                  {labels.cancel}
-                </button>
-                <button type="button" className="h-11 px-6 rounded-lg font-medium text-white btn-gold">
-                  {labels.save}
-                </button>
-              </div>
-
               {/* Bank Account Section */}
               <h2 className="font-semibold text-[var(--on-surface-default)] mb-3" style={{ fontSize: "30px" }}>
                 {labels.bankTitle}
@@ -753,8 +990,9 @@ const BecomeTrainerForm = ({
                 <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[#C8D5E1] hover:bg-gray-50">
                   {labels.cancel}
                 </button>
-                <button type="submit" className="h-11 px-6 rounded-lg font-medium text-white btn-gold">
-                  {labels.save}
+                <button type="submit" disabled={isSubmitting} className="h-11 px-6 rounded-lg font-medium text-white btn-gold disabled:opacity-50 flex items-center gap-2">
+                  {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {isSubmitting ? tt("submitting", "Submitting...") : (locale === "ar" ? "تقديم الطلب" : "Submit Application")}
                 </button>
               </div>
             </div>
@@ -767,6 +1005,14 @@ const BecomeTrainerForm = ({
         <h1 className="font-semibold text-[var(--on-surface-default)] mb-6 text-center" style={{ fontSize: "30px" }}>
           {labels.title}
         </h1>
+
+        {/* Error banner */}
+        {submitError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+            <p className="text-sm text-red-700">{submitError}</p>
+          </div>
+        )}
 
         {/* Single Card containing all sections */}
         <form onSubmit={handleSubmit}>
@@ -941,16 +1187,6 @@ const BecomeTrainerForm = ({
              {/* Divider */}
              <div className="w-full h-px bg-[#F0F0F0] my-8" />
 
-            {/* Cancel/Save Buttons for Resume */}
-            <div className="flex gap-3 mt-6">
-              <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
-                {labels.cancel}
-              </button>
-              <button type="button" className="flex-1 h-12 rounded-xl font-medium text-white btn-gold">
-                {labels.save}
-              </button>
-            </div>
-
             {/* Bank Account Section */}
             <h2 className="font-semibold text-[var(--on-surface-default)] my-6 pt-6" style={{ fontSize: "24px" }}>
               {labels.bankTitle}
@@ -965,13 +1201,14 @@ const BecomeTrainerForm = ({
               <InputField label={labels.iban} name="iban" required value={formData.iban} onChange={handleInputChange} isRTL={isRTL} />
             </div>
 
-            {/* Cancel/Save Buttons for Bank Account */}
+            {/* Submit Buttons */}
             <div className="flex gap-3 mt-6">
               <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
                 {labels.cancel}
               </button>
-              <button type="submit" className="flex-1 h-12 rounded-xl font-medium text-white btn-gold">
-                {labels.save}
+              <button type="submit" disabled={isSubmitting} className="flex-1 h-12 rounded-xl font-medium text-white btn-gold disabled:opacity-50 flex items-center justify-center gap-2">
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isSubmitting ? tt("submitting", "Submitting...") : (locale === "ar" ? "تقديم الطلب" : "Submit Application")}
               </button>
             </div>
           </div>

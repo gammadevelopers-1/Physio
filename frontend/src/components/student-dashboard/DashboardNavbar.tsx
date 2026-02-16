@@ -24,6 +24,8 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
+import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
+import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
 interface UserProfile {
   name: string;
@@ -38,6 +40,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("studentDashboard");
   const locale = useLocale();
@@ -215,12 +218,12 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />
 
           {/* Search Icon - Hidden on mobile */}
-          <Link
-            href={`/${locale}/search`}
+          <button
+            onClick={() => setIsSearchOpen(true)}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
           >
             <Search className="w-5 h-5" strokeWidth={1.67} />
-          </Link>
+          </button>
 
           {/* Cart Icon - Hidden on mobile */}
           <Link
@@ -271,6 +274,7 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
                   <Settings className="w-4 h-4" />
                   Settings
                 </Link>
+                <RoleSwitcherDropdownItems onSwitch={() => setIsUserMenuOpen(false)} />
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
                 <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
@@ -384,13 +388,12 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
 
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 py-3">
-              <Link
-                href={`/${locale}/search`}
+              <button
+                onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Search className="w-5 h-5" strokeWidth={1.67} />
-              </Link>
+              </button>
               <Link
                 href={`/${locale}/checkout`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
@@ -400,6 +403,9 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
               </Link>
             </div>
 
+            {/* Role Switcher */}
+            <RoleSwitcherMobileSection onSwitch={() => setIsMobileMenuOpen(false)} />
+
             {/* Logout Button */}
             <button onClick={logout} className="mt-2 flex items-center justify-center gap-2 h-11 px-5 py-2 border border-red-200 text-red-600 rounded-xl text-sm font-medium w-full hover:bg-red-50 transition-colors">
               <LogOut className="w-4 h-4" />
@@ -408,6 +414,11 @@ const DashboardNavbar = ({ user }: DashboardNavbarProps) => {
           </div>
         </div>
       )}
+      <DashboardSearchOverlay
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        role="student"
+      />
     </nav>
   );
 };

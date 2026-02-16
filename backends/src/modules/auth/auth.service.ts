@@ -9,7 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { eq, and, inArray, count, sql } from 'drizzle-orm';
+import { eq, and, or, inArray, count, sql, ilike, asc, desc, SQL } from 'drizzle-orm';
 import { randomBytes } from 'crypto';
 import { db } from '../../database';
 import {
@@ -19,6 +19,7 @@ import {
   roles,
   userRoles,
   twoFactorChallenges,
+  trustedDevices,
   ROLE_NAMES,
   RoleName,
 } from '../../database/schema';
@@ -296,6 +297,9 @@ export class AuthService {
         .where(eq(users.id, userId));
     }
 
+    // Revoke all sessions: role change invalidates existing trust & tokens
+    await this.revokeAllUserSessions(userId);
+
     // Get updated roles list
     const updatedRoles = await this.getUserRoles(userId);
 
@@ -355,6 +359,9 @@ export class AuthService {
         .set({ activeRole: remainingRoles[0], updatedAt: new Date() })
         .where(eq(users.id, userId));
     }
+
+    // Revoke all sessions: role change invalidates existing trust & tokens
+    await this.revokeAllUserSessions(userId);
 
     // Get updated roles list
     const updatedRoles = await this.getUserRoles(userId);
@@ -550,6 +557,20 @@ export class AuthService {
   }
 
   // ===========================================
+  // Helper: Revoke all trusted devices + refresh tokens
+  // Used when roles change, user is suspended, etc.
+  // ===========================================
+  private async revokeAllUserSessions(userId: string): Promise<void> {
+    await Promise.all([
+      db.delete(trustedDevices).where(eq(trustedDevices.userId, userId)),
+      db
+        .update(refreshTokens)
+        .set({ isRevoked: true, revokedAt: new Date() })
+        .where(eq(refreshTokens.userId, userId)),
+    ]);
+  }
+
+  // ===========================================
   // Admin: Create User
   // ===========================================
   async createUser(
@@ -655,6 +676,16 @@ export class AuthService {
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 
+    // If user was suspended, revoke all sessions
+    if (dto.isActive === false && user.isActive === true) {
+      await this.revokeAllUserSessions(userId);
+    }
+
+    // If active role changed, revoke all sessions
+    if (dto.activeRole !== undefined && dto.activeRole !== user.activeRole) {
+      await this.revokeAllUserSessions(userId);
+    }
+
     // Return updated user
     const [updated] = await db
       .select({
@@ -706,33 +737,145 @@ export class AuthService {
   }
 
   // ===========================================
-  // Get All Users (Admin)
+  // Get All Users (Admin) — with pagination, search, filter, sort
   // ===========================================
-  async getAllUsers(): Promise<(Partial<User> & { roles: string[] })[]> {
-    const allUsers = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        activeRole: users.activeRole,
-        isActive: users.isActive,
-        isVerified: users.isVerified,
-        createdAt: users.createdAt,
-        lastLoginAt: users.lastLoginAt,
-      })
-      .from(users)
-      .orderBy(users.createdAt);
+  async getAllUsers(query: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  } = {}) {
+    const page = query.page || 1;
+    const limit = Math.min(query.limit || 20, 100);
+    const search = query.search?.trim() || '';
+    const role = query.role?.trim().toUpperCase() || '';
+    const status = query.status?.trim().toLowerCase() || '';
+    const sortBy = query.sortBy || 'createdAt';
+    const sortOrder = query.sortOrder?.toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const offset = (page - 1) * limit;
 
-    // Get roles for all users
-    const usersWithRoles = await Promise.all(
-      allUsers.map(async (user) => ({
+    // Build WHERE conditions
+    const conditions: (SQL | undefined)[] = [];
+
+    if (search) {
+      conditions.push(
+        or(
+          ilike(users.firstName, `%${search}%`),
+          ilike(users.lastName, `%${search}%`),
+          ilike(users.email, `%${search}%`),
+        ),
+      );
+    }
+
+    if (role) {
+      conditions.push(eq(users.activeRole, role));
+    }
+
+    if (status === 'active') {
+      conditions.push(eq(users.isActive, true));
+      conditions.push(eq(users.isVerified, true));
+    } else if (status === 'suspended' || status === 'inactive') {
+      conditions.push(eq(users.isActive, false));
+    } else if (status === 'pending') {
+      conditions.push(eq(users.isActive, true));
+      conditions.push(eq(users.isVerified, false));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Sort column mapping
+    const sortColumnMap: Record<string, typeof users.createdAt> = {
+      email: users.email as any,
+      firstName: users.firstName as any,
+      lastName: users.lastName as any,
+      lastLoginAt: users.lastLoginAt as any,
+      createdAt: users.createdAt,
+    };
+    const sortColumn = sortColumnMap[sortBy] || users.createdAt;
+    const orderByClause = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
+
+    // Execute count, data, and stats queries in parallel
+    const [countResult, allUsers, statsResult] = await Promise.all([
+      db.select({ value: count() }).from(users).where(whereClause),
+      db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          activeRole: users.activeRole,
+          isActive: users.isActive,
+          isVerified: users.isVerified,
+          createdAt: users.createdAt,
+          lastLoginAt: users.lastLoginAt,
+          lastLoginIp: users.lastLoginIp,
+        })
+        .from(users)
+        .where(whereClause)
+        .orderBy(orderByClause)
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({
+          total: sql<number>`cast(count(*) as int)`,
+          active: sql<number>`cast(count(*) filter (where ${users.isActive} = true and ${users.isVerified} = true) as int)`,
+          pending: sql<number>`cast(count(*) filter (where ${users.isActive} = true and ${users.isVerified} = false) as int)`,
+          suspended: sql<number>`cast(count(*) filter (where ${users.isActive} = false) as int)`,
+        })
+        .from(users),
+    ]);
+
+    const total = Number(countResult[0].value);
+    const totalPages = Math.ceil(total / limit);
+
+    // Batch fetch roles for all users on this page (avoids N+1)
+    let usersWithRoles: (typeof allUsers[number] & { roles: string[] })[];
+    if (allUsers.length > 0) {
+      const userIds = allUsers.map((u) => u.id);
+      const allUserRoles = await db
+        .select({
+          userId: userRoles.userId,
+          roleName: roles.name,
+        })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(inArray(userRoles.userId, userIds));
+
+      const rolesByUserId = new Map<string, string[]>();
+      for (const ur of allUserRoles) {
+        const existing = rolesByUserId.get(ur.userId) || [];
+        existing.push(ur.roleName);
+        rolesByUserId.set(ur.userId, existing);
+      }
+
+      usersWithRoles = allUsers.map((user) => ({
         ...user,
-        roles: await this.getUserRoles(user.id),
-      })),
-    );
+        roles: rolesByUserId.get(user.id) || [],
+      }));
+    } else {
+      usersWithRoles = [];
+    }
 
-    return usersWithRoles;
+    return {
+      data: usersWithRoles,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+      stats: {
+        total: Number(statsResult[0].total),
+        active: Number(statsResult[0].active),
+        pending: Number(statsResult[0].pending),
+        suspended: Number(statsResult[0].suspended),
+      },
+    };
   }
 
   // ===========================================

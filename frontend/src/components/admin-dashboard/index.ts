@@ -18,3 +18,5 @@ export { default as ComplianceContent } from "./ComplianceContent";
 export { default as ReportsContent } from "./ReportsContent";
 export { default as LogsContent } from "./LogsContent";
 export { default as AdminSettingsContent } from "./AdminSettingsContent";
+export { default as RoleRequestsContent } from "./RoleRequestsContent";
+export { default as RoleRequestReviewContent } from "./RoleRequestReviewContent";

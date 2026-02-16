@@ -5,6 +5,9 @@ import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
+import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
+import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
+import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
 import {
   User,
   Shield,
@@ -19,8 +22,6 @@ import {
   Briefcase,
   GraduationCap,
   Key,
-  Smartphone,
-  LogOut,
   Eye,
   EyeOff,
   Check,
@@ -31,6 +32,7 @@ import {
   Cloud,
   Save,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 
 const mockInstructor = {
@@ -66,7 +68,7 @@ const SettingsContent = () => {
   // Security State
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const security = useSecuritySettings();
 
   // Notification State
   const [notifications, setNotifications] = useState({
@@ -389,82 +391,28 @@ const SettingsContent = () => {
                       </div>
 
                       {/* Two-Factor Authentication */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
-                              <Smartphone className="w-5 h-5 text-[#22C55E]" />
-                            </div>
-                            <div>
-                              <h4 className="text-sm font-semibold text-[#1F2937]">
-                                {t("settings.twoFactor")}
-                              </h4>
-                              <p className="text-sm text-[#6B7280] mt-0.5">
-                                {t("settings.twoFactorDesc")}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setTwoFactorEnabled(!twoFactorEnabled)}
-                            className={`relative w-12 h-6 rounded-full transition-colors ${
-                              twoFactorEnabled ? "bg-[#22C55E]" : "bg-[#E5E7EB]"
-                            }`}
-                          >
-                            <span
-                              className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${
-                                twoFactorEnabled
-                                  ? isRTL
-                                    ? "left-1"
-                                    : "right-1"
-                                  : isRTL
-                                    ? "right-1"
-                                    : "left-1"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
+                      <TwoFactorToggle
+                        enabled={security.twoFactorEnabled}
+                        toggling={security.toggling}
+                        onToggle={security.handleToggle2FA}
+                      />
 
-                      {/* Active Sessions */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.activeSessions")}
-                        </h4>
-                        <div className="space-y-3">
-                          {[
-                            { device: "MacBook Pro", location: "New York, USA", current: true },
-                            { device: "iPhone 14 Pro", location: "New York, USA", current: false },
-                            { device: "iPad Air", location: "Boston, USA", current: false },
-                          ].map((session, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center">
-                                  <Smartphone className="w-4 h-4 text-[#6B7280]" />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-[#1F2937]">
-                                    {session.device}
-                                    {session.current && (
-                                      <span className="ml-2 px-2 py-0.5 bg-[#DCFCE7] text-[#22C55E] rounded-full text-xs">
-                                        {t("settings.currentDevice")}
-                                      </span>
-                                    )}
-                                  </p>
-                                  <p className="text-xs text-[#6B7280]">{session.location}</p>
-                                </div>
-                              </div>
-                              {!session.current && (
-                                <button className="p-2 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors">
-                                  <LogOut className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          ))}
+                      {/* Trusted Devices */}
+                      {security.loading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-[#a37f49]" />
                         </div>
-                      </div>
+                      ) : (
+                        <TrustedDevicesSection
+                          devices={security.devices}
+                          revokingId={security.revokingId}
+                          revokingAll={security.revokingAll}
+                          showRevokeAllConfirm={security.showRevokeAllConfirm}
+                          onRevokeDevice={security.handleRevokeDevice}
+                          onRevokeAll={security.handleRevokeAll}
+                          onShowRevokeAllConfirm={security.setShowRevokeAllConfirm}
+                        />
+                      )}
                     </div>
                   )}
 

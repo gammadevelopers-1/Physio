@@ -979,7 +979,7 @@
     },
     "buttons": {
       "cancel": "Cancel",
-      "save": "Save",
+      "save": "Submit Application",
       "yes": "Yes",
       "no": "No"
     },
@@ -1030,7 +1030,24 @@
         "alBilad": "Al Bilad Bank",
         "other": "Other"
       }
-    }
+    },
+    "loginRequired": "Login Required",
+    "loginRequiredDesc": "You need to sign in to submit a trainer application.",
+    "signIn": "Sign In to Apply",
+    "alreadyTrainer": "You're Already a Trainer!",
+    "alreadyTrainerDesc": "You already have the Instructor role.",
+    "goToDashboard": "Go to Instructor Dashboard",
+    "pendingApplication": "Application Under Review",
+    "pendingApplicationDesc": "Your application is being reviewed. We'll notify you once a decision is made.",
+    "moreInfoNeeded": "Additional Information Needed",
+    "moreInfoNeededDesc": "The reviewer has requested more information about your application.",
+    "reviewerNote": "Reviewer note",
+    "submittedOn": "Submitted on",
+    "viewApplications": "View My Applications",
+    "submitSuccess": "Application Submitted!",
+    "submitSuccessDesc": "We'll review your application and notify you within a few business days.",
+    "submitError": "Failed to submit your application. Please try again.",
+    "submitting": "Submitting..."
   },
   "studentDashboard": {
     "title": "Student Dashboard",
@@ -1042,6 +1059,7 @@
       "certifications": "Certifications",
       "badges": "Badges",
       "invoices": "Invoices",
+      "applications": "My Applications",
       "inviteFriends": "Invite friends",
       "settings": "Settings",
       "points": "Points",
@@ -1051,6 +1069,28 @@
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
       "logout": "Logout"
+    },
+    "applicationsPage": {
+      "title": "My Applications",
+      "subtitle": "Track the status of your role applications",
+      "emptyTitle": "No Applications Yet",
+      "emptyDesc": "You haven't submitted any role applications yet.",
+      "becomeTrainer": "Become a Trainer",
+      "instructorApplication": "Instructor Application",
+      "statusPending": "Pending Review",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "statusMoreInfo": "More Info Needed",
+      "pendingMessage": "Your application is under review. We'll notify you once a decision is made.",
+      "approvedMessage": "Congratulations! Your application has been approved. You can now switch to the Instructor dashboard.",
+      "switchRole": "Switch to Instructor",
+      "reason": "Reason",
+      "reapply": "Reapply",
+      "reviewerNote": "Reviewer's Note",
+      "editResubmit": "Edit & Resubmit",
+      "timeline": "Timeline",
+      "submitted": "Submitted",
+      "reviewed": "Reviewed"
     },
     "stats": {
       "courses": "Courses",
@@ -1174,6 +1214,8 @@
     },
     "settings": {
       "title": "Settings",
+      "tabProfile": "Profile",
+      "tabSecurity": "Security",
       "changePhoto": "Change photo",
       "firstName": "First Name",
       "lastName": "Last Name",
@@ -2285,6 +2327,7 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "roles": "Roles & Permissions",
+      "roleRequests": "Role Requests",
       "courses": "All Courses",
       "finance": "Finance",
       "security": "Security",
@@ -2460,6 +2503,7 @@
         "role": "Role",
         "status": "Status",
         "lastLogin": "Last Login",
+        "lastIp": "Last IP",
         "created": "Created",
         "actions": "Actions"
       },
@@ -2469,6 +2513,7 @@
         "resetPassword": "Reset Password",
         "impersonate": "Impersonate",
         "suspend": "Suspend",
+        "trustedDevices": "Trusted Devices",
         "delete": "Delete"
       },
       "sampleUsers": {
@@ -2950,6 +2995,75 @@
         "tapPayments": "Tap Payments",
         "unifonicSms": "Unifonic SMS"
       }
+    },
+    "roleRequestsPage": {
+      "title": "Role Requests",
+      "subtitle": "Review and manage instructor role applications",
+      "searchPlaceholder": "Search by name or email...",
+      "stats": {
+        "total": "Total",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "filterAll": "All Status",
+      "filterPending": "Pending",
+      "filterApproved": "Approved",
+      "filterRejected": "Rejected",
+      "filterMoreInfo": "More Info",
+      "colApplicant": "Applicant",
+      "colEmail": "Email",
+      "colRole": "Role",
+      "colStatus": "Status",
+      "colSubmitted": "Submitted",
+      "colActions": "Actions",
+      "review": "Review",
+      "noResults": "No role requests found",
+      "showing": "Showing",
+      "of": "of"
+    },
+    "roleRequestReviewPage": {
+      "title": "Application Review",
+      "backToList": "Back to Role Requests",
+      "profileSection": "Profile Information",
+      "documentsSection": "Documents & Resume",
+      "bankSection": "Bank Information",
+      "socialLinks": "Social Links",
+      "timeline": "Timeline",
+      "actions": "Actions",
+      "adminNote": "Admin Note",
+      "fullNameAr": "Full Name (Arabic)",
+      "fullNameEn": "Full Name (English)",
+      "email": "Email",
+      "phone": "Phone",
+      "nationality": "Nationality",
+      "gender": "Gender",
+      "profession": "Profession",
+      "specialty": "Specialty",
+      "qualification": "Qualification",
+      "rank": "Rank",
+      "scfhsNumber": "SCFHS Number",
+      "nationalId": "National/Iqama ID",
+      "accountHolder": "Account Holder",
+      "bankName": "Bank Name",
+      "iban": "IBAN",
+      "submitted": "Submitted",
+      "reviewed": "Reviewed",
+      "approve": "Approve",
+      "reject": "Reject",
+      "requestInfo": "Request More Info",
+      "modalApproveTitle": "Approve Application",
+      "modalApproveDesc": "This will approve the application and assign the Instructor role.",
+      "modalRejectTitle": "Reject Application",
+      "modalRejectDesc": "Please provide a reason for rejecting this application.",
+      "modalRequestInfoTitle": "Request More Information",
+      "modalRequestInfoDesc": "Describe what additional information is needed from the applicant.",
+      "noteOptional": "Add a note (optional)...",
+      "noteRequired": "Enter your message (required)...",
+      "cancel": "Cancel",
+      "confirmApprove": "Approve",
+      "confirmReject": "Reject",
+      "confirmRequestInfo": "Send Request"
     }
   },
   "financeDashboard": {
@@ -3903,6 +4017,46 @@
       "knowledgeBase": "Knowledge Base",
       "exportReport": "Export Report",
       "teamChat": "Team Chat"
+    }
+  },
+  "dashboardSearch": {
+    "placeholder": "Search courses, blogs, and more...",
+    "hint": "Type to search across courses, blogs, and more",
+    "noResults": "No results found",
+    "noResultsHint": "Try different keywords or check your spelling",
+    "viewAll": "View all results",
+    "escToClose": "Press ESC to close",
+    "sections": {
+      "courses": "Courses",
+      "blogs": "Blogs",
+      "users": "Users"
+    },
+    "quickLinks": {
+      "title": "Quick Links",
+      "myCourses": "My Courses",
+      "browseCourses": "Browse Courses",
+      "certifications": "Certifications",
+      "settings": "Settings",
+      "students": "Students",
+      "users": "Users",
+      "roles": "Roles",
+      "courses": "Courses",
+      "instructors": "Instructors",
+      "invoices": "Invoices",
+      "payments": "Payments",
+      "tickets": "Tickets"
+    }
+  },
+  "roleSwitcher": {
+    "switchDashboard": "Switch Dashboard",
+    "roles": {
+      "student": "Student Dashboard",
+      "instructor": "Instructor Dashboard",
+      "admin": "Admin Dashboard",
+      "super_admin": "Admin Dashboard",
+      "manager": "Manager Dashboard",
+      "finance": "Finance Dashboard",
+      "support": "Support Dashboard"
     }
   }
 }

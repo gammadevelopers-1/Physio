@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, ChevronDown, Calendar } from "lucide-react";
+import { Pencil, ChevronDown, Calendar, Loader2, Shield } from "lucide-react";
+import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
+import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
+import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -38,6 +41,8 @@ const SettingsContent = () => {
   const [formData, setFormData] = useState(mockSettingsData);
   const [nationalityOpen, setNationalityOpen] = useState(false);
   const [genderOpen, setGenderOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
+  const security = useSecuritySettings();
 
   const nationalities = [
     { value: "Saudi Arabia", labelKey: "settings.nationalities.saudiArabia" },
@@ -95,7 +100,33 @@ const SettingsContent = () => {
                 {t("settings.title")}
               </h1>
 
-              {/* Settings Form */}
+              {/* Tabs */}
+              <div className="flex gap-1 mb-6 bg-[#F3F4F6] rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab("profile")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === "profile"
+                      ? "bg-white text-[#1F2937] shadow-sm"
+                      : "text-[#6B7280] hover:text-[#1F2937]"
+                  }`}
+                >
+                  <Pencil className="w-4 h-4" />
+                  {t("settings.tabProfile")}
+                </button>
+                <button
+                  onClick={() => setActiveTab("security")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === "security"
+                      ? "bg-white text-[#1F2937] shadow-sm"
+                      : "text-[#6B7280] hover:text-[#1F2937]"
+                  }`}
+                >
+                  <Shield className="w-4 h-4" />
+                  {t("settings.tabSecurity")}
+                </button>
+              </div>
+
+              {activeTab === "profile" && (
               <div
                 className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6"
                 dir={isRTL ? "rtl" : "ltr"}
@@ -351,6 +382,38 @@ const SettingsContent = () => {
                   </button>
                 </div>
               </div>
+              )}
+
+              {activeTab === "security" && (
+                <div dir={isRTL ? "rtl" : "ltr"}>
+                  {security.loading ? (
+                    <div className="flex items-center justify-center py-16">
+                      <Loader2 className="w-8 h-8 animate-spin text-[#D4A520]" />
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                        <TwoFactorToggle
+                          enabled={security.twoFactorEnabled}
+                          toggling={security.toggling}
+                          onToggle={security.handleToggle2FA}
+                        />
+                      </div>
+                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                        <TrustedDevicesSection
+                          devices={security.devices}
+                          revokingId={security.revokingId}
+                          revokingAll={security.revokingAll}
+                          showRevokeAllConfirm={security.showRevokeAllConfirm}
+                          onRevokeDevice={security.handleRevokeDevice}
+                          onRevokeAll={security.handleRevokeAll}
+                          onShowRevokeAllConfirm={security.setShowRevokeAllConfirm}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

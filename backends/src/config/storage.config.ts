@@ -1,6 +1,12 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('storage', () => ({
+  // Driver: 'gcp' for Google Cloud Storage, 'local' for filesystem (dev)
+  driver: process.env.STORAGE_DRIVER || 'local',
+
+  // Local uploads directory (used when driver=local)
+  localDir: process.env.STORAGE_LOCAL_DIR || './uploads',
+
   // GCP Project
   projectId: process.env.GCP_PROJECT_ID || 'physioguidance',
 

@@ -11,6 +11,7 @@ import {
   courseModules,
   COURSE_STATUS,
 } from '../../database/schema';
+import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
@@ -21,12 +22,27 @@ import { ReorderModulesDto } from './dto/reorder-modules.dto';
 export class CoursesService {
   private readonly logger = new Logger(CoursesService.name);
 
+  // ─── Role helpers ─────────────────────────────────────────
+
+  private isAdmin(user: AuthenticatedUser): boolean {
+    return (
+      user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
+    );
+  }
+
   // ─── Course CRUD ────────────────────────────────────────────
 
   /**
-   * Create a new course for an instructor
+   * Create a new course.
+   * - Instructor: always creates as themselves.
+   * - Admin: can specify an instructorId in the body to create on behalf of any instructor.
    */
-  async create(instructorId: string, dto: CreateCourseDto) {
+  async create(user: AuthenticatedUser, dto: CreateCourseDto) {
+    const instructorId =
+      this.isAdmin(user) && dto.instructorId
+        ? dto.instructorId
+        : user.id;
+
     const [course] = await db
       .insert(courses)
       .values({
@@ -47,10 +63,12 @@ export class CoursesService {
   }
 
   /**
-   * List courses for the authenticated instructor with filtering and pagination
+   * List courses with filtering and pagination.
+   * - Instructor: only their own courses.
+   * - Admin: all courses across all instructors.
    */
   async findAll(
-    instructorId: string,
+    user: AuthenticatedUser,
     params: {
       status?: string;
       delivery?: string;
@@ -63,10 +81,12 @@ export class CoursesService {
     const limit = params.limit || 20;
     const offset = (page - 1) * limit;
 
-    // Build WHERE conditions — always scoped to the instructor
-    const conditions: ReturnType<typeof eq>[] = [
-      eq(courses.instructorId, instructorId),
-    ];
+    const conditions: ReturnType<typeof eq>[] = [];
+
+    // Instructor: scope to own courses only
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
 
     if (
       params.status &&
@@ -90,7 +110,8 @@ export class CoursesService {
       );
     }
 
-    const whereClause = and(...conditions);
+    const whereClause =
+      conditions.length > 0 ? and(...conditions) : undefined;
 
     const data = await db
       .select()
@@ -115,18 +136,20 @@ export class CoursesService {
   }
 
   /**
-   * Get course detail with modules — only if owned by instructor
+   * Get course detail with modules.
+   * - Instructor: only their own (404 for others).
+   * - Admin: any course.
    */
-  async findOne(courseId: string, instructorId: string) {
+  async findOne(courseId: string, user: AuthenticatedUser) {
+    const conditions = [eq(courses.id, courseId)];
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
+
     const [course] = await db
       .select()
       .from(courses)
-      .where(
-        and(
-          eq(courses.id, courseId),
-          eq(courses.instructorId, instructorId),
-        ),
-      )
+      .where(and(...conditions))
       .limit(1);
 
     if (!course) {
@@ -143,28 +166,16 @@ export class CoursesService {
   }
 
   /**
-   * Update a course — only if owned by instructor
+   * Update a course.
+   * - Instructor: only their own.
+   * - Admin: any course.
    */
   async update(
     courseId: string,
-    instructorId: string,
+    user: AuthenticatedUser,
     dto: UpdateCourseDto,
   ) {
-    // Verify ownership
-    const [existing] = await db
-      .select({ id: courses.id })
-      .from(courses)
-      .where(
-        and(
-          eq(courses.id, courseId),
-          eq(courses.instructorId, instructorId),
-        ),
-      )
-      .limit(1);
-
-    if (!existing) {
-      throw new NotFoundException('Course not found');
-    }
+    await this.verifyCourseAccess(courseId, user);
 
     const [updated] = await db
       .update(courses)
@@ -176,23 +187,12 @@ export class CoursesService {
   }
 
   /**
-   * Delete a course — only draft courses, only if owned by instructor
+   * Delete a course — only draft courses.
+   * - Instructor: only their own drafts.
+   * - Admin: any draft course.
    */
-  async remove(courseId: string, instructorId: string) {
-    const [existing] = await db
-      .select({ id: courses.id, status: courses.status })
-      .from(courses)
-      .where(
-        and(
-          eq(courses.id, courseId),
-          eq(courses.instructorId, instructorId),
-        ),
-      )
-      .limit(1);
-
-    if (!existing) {
-      throw new NotFoundException('Course not found');
-    }
+  async remove(courseId: string, user: AuthenticatedUser) {
+    const existing = await this.verifyCourseAccess(courseId, user);
 
     if (existing.status !== COURSE_STATUS.DRAFT) {
       throw new BadRequestException(
@@ -208,20 +208,22 @@ export class CoursesService {
   // ─── Module CRUD ────────────────────────────────────────────
 
   /**
-   * Add a module to a course — verify course ownership first
+   * Add a module to a course.
    */
   async addModule(
     courseId: string,
-    instructorId: string,
+    user: AuthenticatedUser,
     dto: CreateModuleDto,
   ) {
-    await this.verifyCourseOwnership(courseId, instructorId);
+    await this.verifyCourseAccess(courseId, user);
 
     // If no orderIndex provided, append at the end
     let orderIndex = dto.orderIndex;
     if (orderIndex === undefined || orderIndex === null) {
       const [maxResult] = await db
-        .select({ maxOrder: sql<number>`COALESCE(MAX(${courseModules.orderIndex}), -1)` })
+        .select({
+          maxOrder: sql<number>`COALESCE(MAX(${courseModules.orderIndex}), -1)`,
+        })
         .from(courseModules)
         .where(eq(courseModules.courseId, courseId));
 
@@ -244,15 +246,15 @@ export class CoursesService {
   }
 
   /**
-   * Update a module — verify course ownership first
+   * Update a module.
    */
   async updateModule(
     courseId: string,
     moduleId: string,
-    instructorId: string,
+    user: AuthenticatedUser,
     dto: UpdateModuleDto,
   ) {
-    await this.verifyCourseOwnership(courseId, instructorId);
+    await this.verifyCourseAccess(courseId, user);
 
     const [existing] = await db
       .select({ id: courseModules.id })
@@ -279,14 +281,14 @@ export class CoursesService {
   }
 
   /**
-   * Remove a module — verify course ownership first
+   * Remove a module.
    */
   async removeModule(
     courseId: string,
     moduleId: string,
-    instructorId: string,
+    user: AuthenticatedUser,
   ) {
-    await this.verifyCourseOwnership(courseId, instructorId);
+    await this.verifyCourseAccess(courseId, user);
 
     const [existing] = await db
       .select({ id: courseModules.id })
@@ -311,14 +313,14 @@ export class CoursesService {
   }
 
   /**
-   * Reorder modules — verify course ownership, then batch-update orderIndex
+   * Reorder modules.
    */
   async reorderModules(
     courseId: string,
-    instructorId: string,
+    user: AuthenticatedUser,
     dto: ReorderModulesDto,
   ) {
-    await this.verifyCourseOwnership(courseId, instructorId);
+    await this.verifyCourseAccess(courseId, user);
 
     // Verify all module IDs belong to this course
     const existingModules = await db
@@ -356,21 +358,23 @@ export class CoursesService {
   // ─── Helpers ────────────────────────────────────────────────
 
   /**
-   * Verify the instructor owns the course — throws 404 if not
+   * Verify the user can access the course.
+   * - Admin: any course (lookup by id only).
+   * - Instructor: only their own (lookup by id + instructorId → 404 otherwise).
    */
-  private async verifyCourseOwnership(
+  private async verifyCourseAccess(
     courseId: string,
-    instructorId: string,
+    user: AuthenticatedUser,
   ) {
+    const conditions = [eq(courses.id, courseId)];
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
+
     const [course] = await db
-      .select({ id: courses.id })
+      .select({ id: courses.id, status: courses.status })
       .from(courses)
-      .where(
-        and(
-          eq(courses.id, courseId),
-          eq(courses.instructorId, instructorId),
-        ),
-      )
+      .where(and(...conditions))
       .limit(1);
 
     if (!course) {

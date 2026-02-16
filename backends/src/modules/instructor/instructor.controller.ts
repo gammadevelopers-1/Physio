@@ -1,0 +1,48 @@
+import {
+  Controller,
+  Get,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
+import { InstructorService } from './instructor.service';
+import { JwtAuthGuard, RolesGuard } from '../auth/guards';
+import { CurrentUser, Roles } from '../auth/decorators';
+import { UserRole } from '../../database/schema';
+import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+
+@Controller('instructor')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class InstructorController {
+  constructor(private instructorService: InstructorService) {}
+
+  /**
+   * GET /instructor/students — All students across instructor's courses
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Get('students')
+  async getStudents(@CurrentUser() user: AuthenticatedUser) {
+    return this.instructorService.getStudents(user);
+  }
+
+  /**
+   * GET /instructor/at-risk — At-risk learners
+   * NOTE: Must be defined BEFORE :id route to avoid "at-risk" matching as :id
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Get('at-risk')
+  async getAtRiskStudents(@CurrentUser() user: AuthenticatedUser) {
+    return this.instructorService.getAtRiskStudents(user);
+  }
+
+  /**
+   * GET /instructor/students/:id — Student detail with enrollments, attendance, scores
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Get('students/:id')
+  async getStudentDetail(
+    @Param('id') studentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.instructorService.getStudentDetail(studentId, user);
+  }
+}

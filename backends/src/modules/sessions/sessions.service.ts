@@ -1,0 +1,403 @@
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
+import { eq, and, desc, asc, count, sql, gte, lte } from 'drizzle-orm';
+import { db } from '../../database';
+import {
+  sessions,
+  courses,
+  SESSION_STATUS,
+} from '../../database/schema';
+import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { CreateSessionDto } from './dto/create-session.dto';
+import { UpdateSessionDto } from './dto/update-session.dto';
+import { CancelSessionDto } from './dto/cancel-session.dto';
+
+@Injectable()
+export class SessionsService {
+  private readonly logger = new Logger(SessionsService.name);
+
+  // ─── Role helpers ─────────────────────────────────────────
+
+  private isAdmin(user: AuthenticatedUser): boolean {
+    return (
+      user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
+    );
+  }
+
+  // ─── Session CRUD ───────────────────────────────────────────
+
+  /**
+   * Schedule a new session.
+   * - Instructor: verifies course belongs to them, uses own id.
+   * - Admin: can specify instructorId, course just needs to exist.
+   */
+  async create(user: AuthenticatedUser, dto: CreateSessionDto) {
+    if (this.isAdmin(user)) {
+      // Admin: verify course exists (any course)
+      const [course] = await db
+        .select({ id: courses.id, instructorId: courses.instructorId })
+        .from(courses)
+        .where(eq(courses.id, dto.courseId))
+        .limit(1);
+
+      if (!course) {
+        throw new NotFoundException('Course not found');
+      }
+
+      const instructorId = dto.instructorId || course.instructorId;
+
+      const [session] = await db
+        .insert(sessions)
+        .values({
+          courseId: dto.courseId,
+          instructorId,
+          title: dto.title,
+          type: dto.type,
+          scheduledAt: new Date(dto.scheduledAt),
+          durationMinutes: dto.durationMinutes,
+          zoomLink: dto.zoomLink,
+          meetingId: dto.meetingId,
+          roomName: dto.roomName,
+          venueAddress: dto.venueAddress,
+        })
+        .returning();
+
+      return session;
+    }
+
+    // Instructor: verify course belongs to them
+    const [course] = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(
+        and(
+          eq(courses.id, dto.courseId),
+          eq(courses.instructorId, user.id),
+        ),
+      )
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const [session] = await db
+      .insert(sessions)
+      .values({
+        courseId: dto.courseId,
+        instructorId: user.id,
+        title: dto.title,
+        type: dto.type,
+        scheduledAt: new Date(dto.scheduledAt),
+        durationMinutes: dto.durationMinutes,
+        zoomLink: dto.zoomLink,
+        meetingId: dto.meetingId,
+        roomName: dto.roomName,
+        venueAddress: dto.venueAddress,
+      })
+      .returning();
+
+    return session;
+  }
+
+  /**
+   * List sessions with filtering and pagination.
+   * - Instructor: only their own sessions.
+   * - Admin: all sessions across all instructors.
+   */
+  async findAll(
+    user: AuthenticatedUser,
+    params: {
+      dateRange?: string;
+      status?: string;
+      courseId?: string;
+      page?: number;
+      limit?: number;
+    },
+  ) {
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const offset = (page - 1) * limit;
+
+    const conditions: ReturnType<typeof eq>[] = [];
+
+    // Instructor: scope to own sessions only
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
+
+    // dateRange filter — format: "YYYY-MM-DD,YYYY-MM-DD"
+    if (params.dateRange) {
+      const parts = params.dateRange.split(',');
+      if (parts[0] && parts[0].trim()) {
+        conditions.push(
+          gte(sessions.scheduledAt, new Date(parts[0].trim())),
+        );
+      }
+      if (parts[1] && parts[1].trim()) {
+        const endDate = new Date(parts[1].trim());
+        endDate.setHours(23, 59, 59, 999);
+        conditions.push(lte(sessions.scheduledAt, endDate));
+      }
+    }
+
+    if (
+      params.status &&
+      Object.values(SESSION_STATUS).includes(params.status as any)
+    ) {
+      conditions.push(eq(sessions.status, params.status));
+    }
+
+    if (params.courseId) {
+      conditions.push(eq(sessions.courseId, params.courseId));
+    }
+
+    const whereClause =
+      conditions.length > 0 ? and(...conditions) : undefined;
+
+    const data = await db
+      .select()
+      .from(sessions)
+      .where(whereClause)
+      .orderBy(desc(sessions.scheduledAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(sessions)
+      .where(whereClause);
+
+    return {
+      data,
+      total: countResult?.count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((countResult?.count || 0) / limit),
+    };
+  }
+
+  /**
+   * Today's sessions.
+   * - Instructor: only theirs.
+   * - Admin: all sessions today.
+   */
+  async findToday(user: AuthenticatedUser) {
+    const conditions: ReturnType<typeof eq>[] = [
+      sql`DATE(${sessions.scheduledAt}) = CURRENT_DATE` as any,
+    ];
+
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
+
+    const data = await db
+      .select()
+      .from(sessions)
+      .where(and(...conditions))
+      .orderBy(asc(sessions.scheduledAt));
+
+    return data;
+  }
+
+  /**
+   * Upcoming sessions — future sessions ordered by date.
+   * - Instructor: only theirs.
+   * - Admin: all upcoming sessions.
+   */
+  async findUpcoming(user: AuthenticatedUser) {
+    const conditions: ReturnType<typeof eq>[] = [
+      sql`${sessions.scheduledAt} > NOW()` as any,
+    ];
+
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
+
+    const data = await db
+      .select()
+      .from(sessions)
+      .where(and(...conditions))
+      .orderBy(asc(sessions.scheduledAt));
+
+    return data;
+  }
+
+  /**
+   * Session detail.
+   * - Instructor: only their own (404 for others).
+   * - Admin: any session.
+   */
+  async findOne(sessionId: string, user: AuthenticatedUser) {
+    const conditions = [eq(sessions.id, sessionId)];
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
+
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(and(...conditions))
+      .limit(1);
+
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    return session;
+  }
+
+  /**
+   * Update a session.
+   * - Instructor: only their own.
+   * - Admin: any session.
+   */
+  async update(
+    sessionId: string,
+    user: AuthenticatedUser,
+    dto: UpdateSessionDto,
+  ) {
+    await this.verifySessionAccess(sessionId, user);
+
+    const updateData: Record<string, unknown> = {
+      ...dto,
+      updatedAt: new Date(),
+    };
+
+    // Convert scheduledAt string to Date for timestamp column
+    if (dto.scheduledAt) {
+      updateData.scheduledAt = new Date(dto.scheduledAt);
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set(updateData)
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  // ─── Session Lifecycle ──────────────────────────────────────
+
+  /**
+   * Start a session — sets status=live and actualStartedAt=NOW()
+   * Cannot start an already live session.
+   */
+  async start(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (session.status === SESSION_STATUS.LIVE) {
+      throw new BadRequestException(
+        'Cannot start an already live session',
+      );
+    }
+
+    if (session.status !== SESSION_STATUS.SCHEDULED) {
+      throw new BadRequestException(
+        'Only scheduled sessions can be started',
+      );
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.LIVE,
+        actualStartedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * End a session — sets status=completed and actualEndedAt=NOW()
+   * Cannot end a non-live session.
+   */
+  async end(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (session.status !== SESSION_STATUS.LIVE) {
+      throw new BadRequestException('Cannot end a non-live session');
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.COMPLETED,
+        actualEndedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Cancel a session — requires a reason (400 if empty).
+   */
+  async cancel(
+    sessionId: string,
+    user: AuthenticatedUser,
+    dto: CancelSessionDto,
+  ) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (
+      session.status === SESSION_STATUS.COMPLETED ||
+      session.status === SESSION_STATUS.CANCELLED
+    ) {
+      throw new BadRequestException(
+        `Cannot cancel a ${session.status} session`,
+      );
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.CANCELLED,
+        cancelReason: dto.cancelReason,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────
+
+  /**
+   * Verify the user can access the session.
+   * - Admin: any session (lookup by id only).
+   * - Instructor: only their own (lookup by id + instructorId → 404 otherwise).
+   */
+  private async verifySessionAccess(
+    sessionId: string,
+    user: AuthenticatedUser,
+  ) {
+    const conditions = [eq(sessions.id, sessionId)];
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
+
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(and(...conditions))
+      .limit(1);
+
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+
+    return session;
+  }
+}

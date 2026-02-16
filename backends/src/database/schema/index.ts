@@ -15,6 +15,18 @@ export * from './admin-notifications';
 export * from './courses';
 export * from './course-modules';
 
+// Session schemas
+export * from './sessions';
+
+// Enrollment & Attendance schemas
+export * from './enrollments';
+export * from './attendance';
+
+// Assessment schemas
+export * from './assessments';
+export * from './questions';
+export * from './submissions';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

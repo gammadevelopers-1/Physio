@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsInt,
   IsIn,
+  IsUUID,
   MaxLength,
   Min,
   IsDateString,
@@ -13,6 +14,10 @@ import { DELIVERY_TYPE, DeliveryType } from '../../../database/schema';
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
 
 export class CreateCourseDto {
+  @IsOptional()
+  @IsUUID('4', { message: 'Instructor ID must be a valid UUID' })
+  instructorId?: string;
+
   @IsString()
   @IsNotEmpty({ message: 'Title is required' })
   @MaxLength(255)

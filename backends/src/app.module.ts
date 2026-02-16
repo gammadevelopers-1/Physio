@@ -10,6 +10,10 @@ import { EmailModule } from './modules/email/email.module';
 import { RoleRequestsModule } from './modules/role-requests/role-requests.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CoursesModule } from './modules/courses/courses.module';
+import { SessionsModule } from './modules/sessions/sessions.module';
+import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
+import { InstructorModule } from './modules/instructor/instructor.module';
+import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -36,6 +40,10 @@ import storageConfig from './config/storage.config';
     RoleRequestsModule,
     NotificationsModule,
     CoursesModule,
+    SessionsModule,
+    EnrollmentsModule,
+    InstructorModule,
+    AssessmentsModule,
   ],
   controllers: [AppController],
   providers: [

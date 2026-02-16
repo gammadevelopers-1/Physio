@@ -1886,6 +1886,10 @@
       "exportCSV": "Export CSV",
       "exportPDF": "Export PDF"
     },
+    "error": {
+      "title": "Failed to Load Dashboard",
+      "retry": "Try Again"
+    },
     "sessionsCalendar": {
       "title": "My Sessions Calendar",
       "today": "Today",

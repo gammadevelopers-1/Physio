@@ -3,21 +3,35 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql, inArray, count, asc, desc } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
   attendance,
   sessions,
   courses,
+  courseModules,
+  courseMaterials,
   users,
+  assessments,
+  submissions,
+  questions,
   ATTENDANCE_STATUS,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { CoursesService } from '../courses/courses.service';
+import { SessionsService } from '../sessions/sessions.service';
+import { CertificatesService } from '../certificates/certificates.service';
 
 @Injectable()
 export class InstructorService {
   private readonly logger = new Logger(InstructorService.name);
+
+  constructor(
+    private readonly coursesService: CoursesService,
+    private readonly sessionsService: SessionsService,
+    private readonly certificatesService: CertificatesService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -25,6 +39,423 @@ export class InstructorService {
     return (
       user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
     );
+  }
+
+  // ─── Dashboard Summary ──────────────────────────────────────
+
+  /**
+   * GET /instructor/dashboard-summary
+   * Aggregated endpoint returning data for all dashboard widgets.
+   * Uses Promise.all for concurrent fetching.
+   */
+  async getDashboardSummary(user: AuthenticatedUser) {
+    const [
+      coursesResult,
+      todaySessions,
+      upcomingSessions,
+      atRiskLearners,
+      certificatesResult,
+    ] = await Promise.all([
+      this.coursesService.findAll(user, { status: 'active', limit: 100 }),
+      this.sessionsService.findToday(user),
+      this.sessionsService.findUpcoming(user),
+      this.getAtRiskStudents(user),
+      this.certificatesService.findPending(user, { status: 'pending', limit: 50 }),
+    ]);
+
+    // Enrich today's sessions with enrollment counts
+    const enrichedTodaySessions = await Promise.all(
+      todaySessions.map(async (session) => {
+        const [result] = await db
+          .select({ count: count() })
+          .from(enrollments)
+          .where(eq(enrollments.courseId, session.courseId));
+        return {
+          ...session,
+          enrolledCount: result?.count || 0,
+        };
+      }),
+    );
+
+    // Enrich upcoming sessions with enrollment counts
+    const enrichedUpcomingSessions = await Promise.all(
+      upcomingSessions.map(async (session) => {
+        const [result] = await db
+          .select({ count: count() })
+          .from(enrollments)
+          .where(eq(enrollments.courseId, session.courseId));
+        return {
+          ...session,
+          enrolledCount: result?.count || 0,
+        };
+      }),
+    );
+
+    // Enrich pending certificates with course name
+    const enrichedCertificates = await Promise.all(
+      (certificatesResult.data || []).map(async (cert) => {
+        const [course] = await db
+          .select({ title: courses.title })
+          .from(courses)
+          .where(eq(courses.id, cert.courseId))
+          .limit(1);
+        return {
+          ...cert,
+          courseName: course?.title || 'Unknown Course',
+        };
+      }),
+    );
+
+    // ─── Attendance Trend (last 7 days) ──────────────────────
+    const courseIds = (coursesResult.data || []).map((c) => c.id);
+    let attendanceTrend: number[] = [0, 0, 0, 0, 0, 0, 0];
+
+    if (courseIds.length > 0) {
+      // Get all session IDs for instructor's courses
+      const courseSessions = await db
+        .select({ id: sessions.id, scheduledAt: sessions.scheduledAt })
+        .from(sessions)
+        .where(inArray(sessions.courseId, courseIds));
+
+      const sessionIds = courseSessions.map((s) => s.id);
+
+      if (sessionIds.length > 0) {
+        // Attendance per day for last 7 days
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const dailyAttendance = await db
+          .select({
+            dayOfWeek: sql<number>`EXTRACT(DOW FROM ${sessions.scheduledAt})`.as('dow'),
+            totalRecords: count(),
+            presentCount:
+              sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
+                'present_count',
+              ),
+          })
+          .from(attendance)
+          .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+          .where(
+            and(
+              inArray(attendance.sessionId, sessionIds),
+              sql`${sessions.scheduledAt} >= ${sevenDaysAgo.toISOString()}`,
+            ),
+          )
+          .groupBy(sql`EXTRACT(DOW FROM ${sessions.scheduledAt})`);
+
+        // Map to Mon-Sun array (1=Mon ... 0=Sun → index 0-6)
+        const trendMap = new Map<number, number>();
+        for (const row of dailyAttendance) {
+          const total = Number(row.totalRecords);
+          const present = Number(row.presentCount);
+          const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+          trendMap.set(Number(row.dayOfWeek), rate);
+        }
+
+        // PostgreSQL DOW: 0=Sun, 1=Mon, ..., 6=Sat
+        // Frontend expects: [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+        attendanceTrend = [1, 2, 3, 4, 5, 6, 0].map(
+          (dow) => trendMap.get(dow) ?? 0,
+        );
+      }
+    }
+
+    // ─── Module Progress (first active course or all) ──────
+    let moduleProgress: { name: string; percentage: number }[] = [];
+
+    if (courseIds.length > 0) {
+      // Get the first active course's modules
+      const firstCourseId = courseIds[0];
+      const modules = await db
+        .select({
+          id: courseModules.id,
+          title: courseModules.title,
+          orderIndex: courseModules.orderIndex,
+        })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, firstCourseId))
+        .orderBy(asc(courseModules.orderIndex));
+
+      if (modules.length > 0) {
+        // Get total enrolled students for this course
+        const [enrollCount] = await db
+          .select({ count: count() })
+          .from(enrollments)
+          .where(eq(enrollments.courseId, firstCourseId));
+        const totalStudents = enrollCount?.count || 0;
+
+        // Approximate module completion from overall enrollment progress
+        // Each module's completion = students whose progress >= (moduleIndex+1)/totalModules * 100
+        const totalModules = modules.length;
+        const studentProgresses = totalStudents > 0
+          ? await db
+              .select({ progress: enrollments.progress })
+              .from(enrollments)
+              .where(eq(enrollments.courseId, firstCourseId))
+          : [];
+
+        moduleProgress = modules.map((mod, idx) => {
+          const threshold = ((idx + 1) / totalModules) * 100;
+          const completed = studentProgresses.filter(
+            (s) => (s.progress ?? 0) >= threshold,
+          ).length;
+          const percentage =
+            totalStudents > 0
+              ? Math.round((completed / totalStudents) * 100)
+              : 0;
+          return { name: mod.title, percentage };
+        });
+      }
+    }
+
+    // ─── Assessment Analysis (pre/post comparison) ─────────
+    let assessmentScores: {
+      id: string;
+      name: string;
+      preScore: number;
+      postScore: number;
+    }[] = [];
+    let questionAnalysis: {
+      id: string;
+      question: string;
+      difficulty: 'easy' | 'medium' | 'hard';
+      correctRate: number;
+    }[] = [];
+
+    if (courseIds.length > 0) {
+      // Get all published assessments across instructor's courses
+      const courseAssessments = await db
+        .select({
+          id: assessments.id,
+          title: assessments.title,
+          courseId: assessments.courseId,
+          type: assessments.type,
+          createdAt: assessments.createdAt,
+        })
+        .from(assessments)
+        .where(
+          and(
+            inArray(assessments.courseId, courseIds),
+            eq(assessments.status, 'published'),
+          ),
+        )
+        .orderBy(asc(assessments.createdAt));
+
+      if (courseAssessments.length > 0) {
+        // Build pre/post comparison: first assessment is "pre", rest are "post" progression
+        const comparisons = [];
+        for (const ca of courseAssessments) {
+          const [avgResult] = await db
+            .select({
+              avgPercentage:
+                sql<number>`COALESCE(ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)), 2), 0)`.as(
+                  'avg_pct',
+                ),
+              totalSubs: count(),
+            })
+            .from(submissions)
+            .where(
+              and(
+                eq(submissions.assessmentId, ca.id),
+                eq(submissions.status, 'graded'),
+              ),
+            );
+
+          comparisons.push({
+            id: ca.id,
+            title: ca.title,
+            avgPercentage: Number(avgResult?.avgPercentage ?? 0),
+            totalSubmissions: Number(avgResult?.totalSubs ?? 0),
+          });
+        }
+
+        // Create pre/post pairs: for each assessment, preScore = first assessment avg, postScore = this assessment avg
+        const firstAvg = comparisons[0]?.avgPercentage ?? 0;
+        assessmentScores = comparisons.map((c) => ({
+          id: c.id,
+          name: c.title,
+          preScore: Math.round(firstAvg),
+          postScore: Math.round(c.avgPercentage),
+        }));
+
+        // Get question analysis for the most recent assessment
+        const latestAssessment =
+          courseAssessments[courseAssessments.length - 1];
+        const assessmentQuestions = await db
+          .select({
+            id: questions.id,
+            questionText: questions.questionText,
+            difficultyLevel: questions.difficultyLevel,
+          })
+          .from(questions)
+          .where(eq(questions.assessmentId, latestAssessment.id));
+
+        if (assessmentQuestions.length > 0) {
+          // Get graded submissions for this assessment
+          const gradedSubs = await db
+            .select({ answers: submissions.answers })
+            .from(submissions)
+            .where(
+              and(
+                eq(submissions.assessmentId, latestAssessment.id),
+                eq(submissions.status, 'graded'),
+              ),
+            );
+
+          questionAnalysis = assessmentQuestions.map((q) => {
+            let totalAttempts = 0;
+            let correctAnswers = 0;
+
+            for (const sub of gradedSubs) {
+              const answers = (sub.answers as { questionId: string; isCorrect: boolean | null }[]) || [];
+              const answer = answers.find((a) => a.questionId === q.id);
+              if (answer && answer.isCorrect !== null) {
+                totalAttempts++;
+                if (answer.isCorrect) correctAnswers++;
+              }
+            }
+
+            const correctRate =
+              totalAttempts > 0
+                ? Math.round((correctAnswers / totalAttempts) * 100)
+                : 0;
+
+            // Map difficulty level
+            let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+            if (q.difficultyLevel === 'easy') difficulty = 'easy';
+            else if (q.difficultyLevel === 'hard') difficulty = 'hard';
+            else if (!q.difficultyLevel) {
+              // Auto-detect from correct rate
+              if (correctRate >= 70) difficulty = 'easy';
+              else if (correctRate < 40) difficulty = 'hard';
+            }
+
+            return {
+              id: q.id,
+              question: q.questionText,
+              difficulty,
+              correctRate,
+            };
+          });
+        }
+      }
+    }
+
+    // ─── Materials for Content Management tab ────────────────
+    let materials: {
+      id: string;
+      type: string;
+      name: string;
+      version: string;
+      status: string;
+      wcagCompliant: boolean | 'warning';
+      size?: string;
+    }[] = [];
+
+    if (courseIds.length > 0) {
+      const rawMaterials = await db
+        .select({
+          id: courseMaterials.id,
+          title: courseMaterials.title,
+          type: courseMaterials.type,
+          version: courseMaterials.version,
+          status: courseMaterials.status,
+          wcagStatus: courseMaterials.wcagStatus,
+          fileSize: courseMaterials.fileSize,
+        })
+        .from(courseMaterials)
+        .where(inArray(courseMaterials.courseId, courseIds))
+        .orderBy(desc(courseMaterials.createdAt));
+
+      materials = rawMaterials.map((m) => ({
+        id: m.id,
+        type: m.type as 'video' | 'pdf' | 'document' | 'image',
+        name: m.title,
+        version: `v${m.version}`,
+        status: m.status === 'failed' ? 'draft' : m.status,
+        wcagCompliant:
+          m.wcagStatus === 'compliant'
+            ? true
+            : m.wcagStatus === 'pending'
+              ? ('warning' as const)
+              : false,
+        size: m.fileSize
+          ? m.fileSize < 1024 * 1024
+            ? `${(m.fileSize / 1024).toFixed(1)} KB`
+            : `${(m.fileSize / (1024 * 1024)).toFixed(1)} MB`
+          : undefined,
+      }));
+    }
+
+    // ─── Assessments for Assessments tab ────────────────────
+    let tabAssessments: {
+      id: string;
+      title: string;
+      questions: number;
+      submissions: number;
+      avgScore: number;
+    }[] = [];
+
+    if (courseIds.length > 0) {
+      const allAssessments = await db
+        .select({
+          id: assessments.id,
+          title: assessments.title,
+        })
+        .from(assessments)
+        .where(inArray(assessments.courseId, courseIds))
+        .orderBy(desc(assessments.createdAt));
+
+      tabAssessments = await Promise.all(
+        allAssessments.map(async (a) => {
+          const [qCount] = await db
+            .select({ count: count() })
+            .from(questions)
+            .where(eq(questions.assessmentId, a.id));
+
+          const [subStats] = await db
+            .select({
+              count: count(),
+              avgPct: sql<number>`COALESCE(ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC))), 0)`.as('avg_pct'),
+            })
+            .from(submissions)
+            .where(eq(submissions.assessmentId, a.id));
+
+          return {
+            id: a.id,
+            title: a.title,
+            questions: qCount?.count || 0,
+            submissions: subStats?.count || 0,
+            avgScore: Number(subStats?.avgPct ?? 0),
+          };
+        }),
+      );
+    }
+
+    return {
+      kpis: {
+        activeCourses: coursesResult.total || 0,
+        todaysSessions: todaySessions.length,
+        atRiskLearners: atRiskLearners.length,
+      },
+      todaySessions: enrichedTodaySessions,
+      upcomingSessions: enrichedUpcomingSessions,
+      atRiskLearners,
+      pendingCertificates: enrichedCertificates,
+      activeCourses: (coursesResult.data || []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        titleAr: c.titleAr,
+        status: c.status,
+      })),
+      attendanceTrend,
+      moduleProgress,
+      assessmentScores,
+      questionAnalysis,
+      materials,
+      tabAssessments,
+    };
   }
 
   // ─── Students View ────────────────────────────────────────

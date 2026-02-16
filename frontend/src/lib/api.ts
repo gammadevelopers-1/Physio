@@ -573,4 +573,27 @@ export const notificationsApi = {
     api.patch<{ message: string }>('/notifications/read-all', {}),
 };
 
+// ===========================================
+// Instructor Dashboard API
+// ===========================================
+import type {
+  DashboardSummaryResponse,
+  CourseEnrollment,
+  AssessmentResponse,
+} from '@/types/instructor-dashboard';
+
+export const instructorApi = {
+  // Aggregated dashboard summary
+  getDashboardSummary: () =>
+    api.get<DashboardSummaryResponse>('/instructor/dashboard-summary'),
+
+  // Course enrollments (for course performance widget)
+  getCourseEnrollments: (courseId: string) =>
+    api.get<CourseEnrollment[]>(`/courses/${courseId}/enrollments`),
+
+  // Assessments for a course (for assessment analysis widget)
+  getAssessments: (courseId: string) =>
+    api.get<{ data: AssessmentResponse[] }>(`/assessments?courseId=${courseId}`),
+};
+
 export default api;

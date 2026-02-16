@@ -6,6 +6,7 @@ import Link from "next/link";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
+import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import {
   Search,
   Filter,
@@ -22,14 +23,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const mockInstructor = {
-  name: "Dr. Faisal Al-Otaibi",
-  email: "faisal@healthtraining.sa",
-  rating: 4.8,
-  courseCompletion: 92,
-  avatar: "/images/instructor-1.png",
-};
-
 interface Student {
   id: string;
   name: string;
@@ -44,6 +37,7 @@ interface Student {
 }
 
 const StudentsContent = () => {
+  const instructor = useInstructorProfile();
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -236,15 +230,15 @@ const StudentsContent = () => {
 
   return (
     <>
-      <InstructorNavbar instructor={mockInstructor} />
+      <InstructorNavbar instructor={instructor} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <InstructorSidebar instructor={mockInstructor} />
+              <InstructorSidebar instructor={instructor} />
             </div>
-            <InstructorMobileSidebar instructor={mockInstructor} />
+            <InstructorMobileSidebar instructor={instructor} />
 
             <div className="flex-1 min-w-0 space-y-6">
               {/* Header */}

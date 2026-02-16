@@ -16,6 +16,16 @@ export class InstructorController {
   constructor(private instructorService: InstructorService) {}
 
   /**
+   * GET /instructor/dashboard-summary — Aggregated dashboard data.
+   * NOTE: Must be defined BEFORE parameterized routes.
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Get('dashboard-summary')
+  async getDashboardSummary(@CurrentUser() user: AuthenticatedUser) {
+    return this.instructorService.getDashboardSummary(user);
+  }
+
+  /**
    * GET /instructor/students — All students across instructor's courses
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)

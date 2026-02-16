@@ -108,7 +108,8 @@
       "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npm run db:migrate:*)",
       "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npm run db:push:*)",
       "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npx drizzle-kit push:*)",
-      "Bash(PGPASSWORD=postgres psql:*)"
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(docker compose restart:*)"
     ]
   }
 }

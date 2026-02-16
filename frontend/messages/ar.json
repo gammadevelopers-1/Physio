@@ -2098,6 +2098,10 @@
       "exportCSV": "تصدير CSV",
       "exportPDF": "تصدير PDF"
     },
+    "error": {
+      "title": "فشل تحميل لوحة المعلومات",
+      "retry": "حاول مرة أخرى"
+    },
     "sessionsCalendar": {
       "title": "تقويم جلساتي",
       "today": "اليوم",

@@ -27,6 +27,9 @@ export * from './assessments';
 export * from './questions';
 export * from './submissions';
 
+// Course Material schemas
+export * from './course-materials';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

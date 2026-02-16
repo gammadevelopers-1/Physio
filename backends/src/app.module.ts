@@ -14,6 +14,7 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 import { InstructorModule } from './modules/instructor/instructor.module';
 import { AssessmentsModule } from './modules/assessments/assessments.module';
+import { MaterialsModule } from './modules/materials/materials.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -44,6 +45,7 @@ import storageConfig from './config/storage.config';
     EnrollmentsModule,
     InstructorModule,
     AssessmentsModule,
+    MaterialsModule,
   ],
   controllers: [AppController],
   providers: [

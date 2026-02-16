@@ -12,14 +12,6 @@ import { ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 
-const GoogleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M19.8055 10.0415C19.8055 9.40083 19.7499 8.80083 19.6499 8.21667H10.2055V11.8417H15.6055C15.3888 12.97 14.7277 13.9234 13.7444 14.5617V16.8192H16.8999C18.7055 15.1525 19.8055 12.7359 19.8055 10.0415Z" fill="#4285F4"/>
-    <path d="M10.2055 19.0001C12.9055 19.0001 15.1722 18.1042 16.8999 16.8192L13.7444 14.5617C12.8999 15.1017 11.8222 15.4201 10.2055 15.4201C7.59444 15.4201 5.38333 13.7367 4.63889 11.4H1.38333V13.7267C3.10556 17.0851 6.38889 19.0001 10.2055 19.0001Z" fill="#34A853"/>
-    <path d="M4.63889 11.4C4.22778 10.27 4.22778 9.03167 4.63889 7.90167V5.575H1.38333C-0.0166667 8.27833 -0.0166667 11.0233 1.38333 13.7267L4.63889 11.4Z" fill="#FBBC05"/>
-    <path d="M10.2055 4.57998C11.9055 4.55498 13.5499 5.19665 14.7944 6.38665L16.9666 4.21498C15.0888 2.46498 12.6944 1.49331 10.2055 1.51831C6.38889 1.51831 3.10556 3.43331 1.38333 6.79165L4.63889 9.11831C5.38333 6.78165 7.59444 5.09831 10.2055 4.57998Z" fill="#EA4335"/>
-  </svg>
-);
 
 function SignUpForm() {
   const t = useTranslations("signupPage");
@@ -376,24 +368,6 @@ function SignUpForm() {
                     {t("form.register")}
                   </button>
 
-                  {/* Sign up with Google (Coming Soon) */}
-                  <button
-                    type="button"
-                    disabled={true}
-                    className="w-full h-10 px-4 py-2.5 bg-white border border-[#d5d7da] rounded-xl flex items-center justify-center gap-3 opacity-50 cursor-not-allowed relative"
-                    style={{ boxShadow: "0px 1px 2px 0px rgba(10,13,18,0.05)" }}
-                  >
-                    <GoogleIcon />
-                    <span
-                      className="font-medium text-[#414651]"
-                      style={{ fontSize: "14px" }}
-                    >
-                      {t("form.signInWithGoogle")}
-                    </span>
-                    <span className="absolute -top-2 -end-2 bg-gray-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
-                      Soon
-                    </span>
-                  </button>
                 </form>
 
                 {/* Footer Link */}

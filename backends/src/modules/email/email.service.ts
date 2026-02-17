@@ -55,6 +55,7 @@ export class EmailService {
     const from =
       this.configService.get<string>('MAIL_FROM') ||
       'noreply@physioguidance.org';
+    const replyTo = this.configService.get<string>('MAIL_REPLY_TO');
     const fromHeader = `PhysioGuidance <${from}>`;
 
     if (this.resend) {
@@ -64,6 +65,7 @@ export class EmailService {
         subject: options.subject,
         html: options.html,
         text: options.text,
+        ...(replyTo && { reply_to: replyTo }),
       });
       if (error) throw new Error(error.message);
     } else if (this.transporter) {
@@ -73,6 +75,7 @@ export class EmailService {
         subject: options.subject,
         html: options.html,
         text: options.text,
+        ...(replyTo && { replyTo }),
       });
     }
   }

@@ -126,6 +126,12 @@ if gcloud secrets describe MAIL_FROM &>/dev/null 2>&1; then
     SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
 fi
 
+# Mail reply-to address
+if gcloud secrets describe MAIL_REPLY_TO &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},MAIL_REPLY_TO=MAIL_REPLY_TO:latest"
+    log_info "Reply-to address configured"
+fi
+
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
     gcloud run deploy ${BACKEND_SERVICE_NAME} \

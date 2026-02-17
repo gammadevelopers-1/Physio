@@ -29,7 +29,9 @@ export class CoursesService {
 
   private isAdmin(user: AuthenticatedUser): boolean {
     return (
-      user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN') ||
+      user.roles.includes('MANAGER')
     );
   }
 
@@ -154,6 +156,10 @@ export class CoursesService {
         nextSessionAt: sql<string | null>`(
           SELECT MIN(s.scheduled_at) FROM sessions s
           WHERE s.course_id = ${courses.id} AND s.scheduled_at > NOW() AND s.status = 'scheduled'
+        )`,
+        instructorName: sql<string | null>`(
+          SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
+          WHERE u.id = ${courses.instructorId}
         )`,
       })
       .from(courses)

@@ -765,6 +765,43 @@ export class AuthService {
   }
 
   // ===========================================
+  // Get Instructors (Manager / Admin) — lightweight list for dropdowns
+  // ===========================================
+  async getInstructors(): Promise<
+    Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }>
+  > {
+    const instructorRole = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.INSTRUCTOR as RoleName))
+      .limit(1);
+
+    if (!instructorRole.length) return [];
+
+    return db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(userRoles.userId, users.id))
+      .where(
+        and(
+          eq(userRoles.roleId, instructorRole[0].id),
+          eq(users.isActive, true),
+        ),
+      )
+      .orderBy(asc(users.firstName));
+  }
+
+  // ===========================================
   // Get All Users (Admin) — with pagination, search, filter, sort
   // ===========================================
   async getAllUsers(query: {

@@ -28,7 +28,7 @@ export class EnrollmentsController {
   /**
    * GET /courses/:id/enrollments — List students enrolled in a course
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('courses/:id/enrollments')
   async getCourseEnrollments(
     @Param('id') courseId: string,
@@ -42,7 +42,7 @@ export class EnrollmentsController {
   /**
    * GET /sessions/:id/attendance — List attendance for a session
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('sessions/:id/attendance')
   async getSessionAttendance(
     @Param('id') sessionId: string,
@@ -54,7 +54,7 @@ export class EnrollmentsController {
   /**
    * POST /sessions/:id/attendance — Mark single student attendance
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post('sessions/:id/attendance')
   @HttpCode(HttpStatus.CREATED)
   async markAttendance(
@@ -69,7 +69,7 @@ export class EnrollmentsController {
    * POST /sessions/:id/attendance/bulk — Bulk mark attendance
    * NOTE: Must be defined BEFORE any parameterized attendance routes
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post('sessions/:id/attendance/bulk')
   @HttpCode(HttpStatus.CREATED)
   async bulkMarkAttendance(
@@ -85,7 +85,7 @@ export class EnrollmentsController {
   /**
    * PATCH /attendance/:id — Update an attendance record
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch('attendance/:id')
   async updateAttendance(
     @Param('id') attendanceId: string,

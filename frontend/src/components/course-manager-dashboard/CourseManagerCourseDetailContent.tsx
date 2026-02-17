@@ -1,0 +1,550 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { courseManagerApi } from "@/lib/api";
+import type {
+  CourseDetailResponse,
+  CourseModule,
+} from "@/types/instructor-dashboard";
+import CourseManagerNavbar from "./CourseManagerNavbar";
+import CourseManagerSidebar from "./CourseManagerSidebar";
+import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  Calendar,
+  Clock,
+  Edit,
+  Trash2,
+  Users,
+  Video,
+  MapPin,
+  Layers,
+  ChevronDown,
+  ChevronRight,
+  Play,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
+  CheckCircle,
+  Archive,
+  FileText,
+} from "lucide-react";
+
+interface CourseManagerCourseDetailContentProps {
+  courseId: string;
+}
+
+// ─── Skeleton ──────────────────────────────────────────────────
+const CourseDetailSkeleton = () => (
+  <div className="flex-1 min-w-0 animate-pulse">
+    <div className="h-4 w-32 bg-[#E5E7EB] rounded mb-4" />
+    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+      <div className="h-48 sm:h-56 bg-[#E5E7EB]" />
+      <div className="p-5 space-y-3">
+        <div className="h-6 w-2/3 bg-[#E5E7EB] rounded" />
+        <div className="h-4 w-1/2 bg-[#E5E7EB] rounded" />
+      </div>
+    </div>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+          <div className="h-4 w-16 bg-[#E5E7EB] rounded mb-2" />
+          <div className="h-6 w-12 bg-[#E5E7EB] rounded" />
+        </div>
+      ))}
+    </div>
+    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+      <div className="h-5 w-32 bg-[#E5E7EB] rounded mb-4" />
+      <div className="space-y-3">
+        <div className="h-4 w-full bg-[#E5E7EB] rounded" />
+        <div className="h-4 w-3/4 bg-[#E5E7EB] rounded" />
+      </div>
+    </div>
+  </div>
+);
+
+const CourseManagerCourseDetailContent = ({
+  courseId,
+}: CourseManagerCourseDetailContentProps) => {
+  const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+  const router = useRouter();
+  const manager = useManagerProfile();
+
+  const [course, setCourse] = useState<CourseDetailResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const fetchCourse = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await courseManagerApi.getCourseDetail(courseId);
+      setCourse(result);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : t("courseDetail.loadError")
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId, t]);
+
+  useEffect(() => {
+    fetchCourse();
+  }, [fetchCourse]);
+
+  const handleDelete = async () => {
+    if (!course) return;
+    setDeleting(true);
+    try {
+      await courseManagerApi.deleteCourse(course.id);
+      toast.success(t("courseDetail.deleteSuccess"));
+      router.push(`/${locale}/dashboard/manager/courses`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("courseDetail.deleteError")
+      );
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!course) return;
+    setUpdatingStatus(true);
+    try {
+      const updated = await courseManagerApi.updateCourse(course.id, {
+        status: newStatus,
+      });
+      setCourse(updated);
+      toast.success(t("courseDetail.statusUpdated"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("courseDetail.statusError")
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const toggleModule = (moduleId: string) => {
+    setExpandedModules((prev) => {
+      const next = new Set(prev);
+      if (next.has(moduleId)) next.delete(moduleId);
+      else next.add(moduleId);
+      return next;
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#DCFCE7] text-[#16A34A]">
+            {t("courseDetail.status.active")}
+          </span>
+        );
+      case "draft":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEF3C7] text-[#D97706]">
+            {t("courseDetail.status.draft")}
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#DBEAFE] text-[#1D4ED8]">
+            {t("courseDetail.status.completed")}
+          </span>
+        );
+      case "archived":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#F3F4F6] text-[#6B7280]">
+            {t("courseDetail.status.archived")}
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getDeliveryIcon = (type: string) => {
+    switch (type) {
+      case "zoom":
+        return <Video className="w-4 h-4 text-[#3B82F6]" />;
+      case "onsite":
+        return <MapPin className="w-4 h-4 text-[#16A34A]" />;
+      case "blended":
+        return <Layers className="w-4 h-4 text-[#8B5CF6]" />;
+      default:
+        return <BookOpen className="w-4 h-4 text-[#6B7280]" />;
+    }
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const BackArrow = isRTL ? ArrowRight : ArrowLeft;
+
+  return (
+    <>
+      <CourseManagerNavbar manager={manager} />
+
+      <div className="bg-[#F9FAFB] min-h-screen">
+        <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left Sidebar */}
+            <div className="hidden lg:block lg:flex-shrink-0">
+              <CourseManagerSidebar manager={manager} />
+            </div>
+
+            <CourseManagerMobileSidebar manager={manager} />
+
+            {/* Main Content */}
+            {loading ? (
+              <CourseDetailSkeleton />
+            ) : error ? (
+              <div className="flex-1 min-w-0">
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                  <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
+                  <p className="text-[#6B7280] mb-4">{error}</p>
+                  <button
+                    onClick={fetchCourse}
+                    className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    {t("dashboard.retry")}
+                  </button>
+                </div>
+              </div>
+            ) : course ? (
+              <div className="flex-1 min-w-0">
+                {/* Back Link */}
+                <Link
+                  href={`/${locale}/dashboard/manager/courses`}
+                  className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#002D87] mb-4 transition-colors"
+                >
+                  <BackArrow className="w-4 h-4" />
+                  {t("courseDetail.backToCourses")}
+                </Link>
+
+                {/* Course Header */}
+                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+                  {/* Thumbnail */}
+                  {course.thumbnail && (
+                    <div className="relative h-48 sm:h-56 bg-[#F3F4F6]">
+                      <Image
+                        src={course.thumbnail}
+                        alt={course.title}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                            {course.title}
+                          </h1>
+                          {getStatusBadge(course.status)}
+                        </div>
+                        {course.titleAr && (
+                          <p className="text-sm text-[#6B7280] mb-1" dir="rtl">
+                            {course.titleAr}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {course.status === "draft" && (
+                          <button
+                            onClick={() => handleStatusChange("active")}
+                            disabled={updatingStatus}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            {t("courseDetail.activate")}
+                          </button>
+                        )}
+                        {course.status === "active" && (
+                          <button
+                            onClick={() => handleStatusChange("archived")}
+                            disabled={updatingStatus}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                          >
+                            <Archive className="w-4 h-4" />
+                            {t("courseDetail.archive")}
+                          </button>
+                        )}
+                        <Link
+                          href={`/${locale}/dashboard/manager/courses/${course.id}/edit`}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                          {t("courseDetail.editCourse")}
+                        </Link>
+                        {course.status === "draft" && (
+                          <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#FCA5A5] text-[#DC2626] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            {t("courseDetail.delete")}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      {getDeliveryIcon(course.deliveryType)}
+                      <span className="text-xs text-[#6B7280]">
+                        {t("courseDetail.deliveryType")}
+                      </span>
+                    </div>
+                    <p className="text-lg font-semibold text-[#1F2937] capitalize">
+                      {course.deliveryType === "zoom"
+                        ? t("courseDetail.delivery.zoom")
+                        : course.deliveryType === "onsite"
+                          ? t("courseDetail.delivery.onsite")
+                          : t("courseDetail.delivery.blended")}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="w-4 h-4 text-[#8B5CF6]" />
+                      <span className="text-xs text-[#6B7280]">
+                        {t("courseDetail.maxEnrollment")}
+                      </span>
+                    </div>
+                    <p className="text-lg font-semibold text-[#1F2937]">
+                      {course.maxEnrollment ?? "—"}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-[#16A34A]" />
+                      <span className="text-xs text-[#6B7280]">
+                        {t("courseDetail.startDate")}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1F2937]">
+                      {formatDate(course.startDate)}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Calendar className="w-4 h-4 text-[#DC2626]" />
+                      <span className="text-xs text-[#6B7280]">
+                        {t("courseDetail.endDate")}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1F2937]">
+                      {formatDate(course.endDate)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+                  <h2 className="text-base font-semibold text-[#1F2937] mb-3">
+                    {t("courseDetail.description")}
+                  </h2>
+                  {course.description ? (
+                    <p className="text-sm text-[#4B5563] leading-relaxed whitespace-pre-wrap">
+                      {course.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-[#9CA3AF] italic">
+                      {t("courseDetail.noDescription")}
+                    </p>
+                  )}
+                  {course.descriptionAr && (
+                    <p
+                      className="text-sm text-[#4B5563] leading-relaxed mt-3 pt-3 border-t border-[#E5E7EB] whitespace-pre-wrap"
+                      dir="rtl"
+                    >
+                      {course.descriptionAr}
+                    </p>
+                  )}
+                </div>
+
+                {/* Modules */}
+                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+                  <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
+                    <h2 className="text-base font-semibold text-[#1F2937]">
+                      {t("courseDetail.modules")} ({course.modules?.length ?? 0})
+                    </h2>
+                  </div>
+
+                  {course.modules && course.modules.length > 0 ? (
+                    <div className="divide-y divide-[#E5E7EB]">
+                      {course.modules
+                        .sort((a, b) => a.orderIndex - b.orderIndex)
+                        .map((mod: CourseModule, idx: number) => (
+                          <div key={mod.id}>
+                            <button
+                              className="w-full flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors"
+                              onClick={() => toggleModule(mod.id)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="w-8 h-8 rounded-lg bg-[#F0F7FF] flex items-center justify-center text-sm font-semibold text-[#002D87]">
+                                  {idx + 1}
+                                </span>
+                                <div className={`${isRTL ? "text-right" : "text-left"}`}>
+                                  <span className="text-sm font-medium text-[#1F2937]">
+                                    {mod.title}
+                                  </span>
+                                  {mod.titleAr && (
+                                    <p className="text-xs text-[#6B7280]" dir="rtl">
+                                      {mod.titleAr}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {mod.durationMinutes && (
+                                  <span className="text-xs text-[#6B7280] flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {mod.durationMinutes} {t("courseDetail.minutes")}
+                                  </span>
+                                )}
+                                <span className="px-2 py-0.5 text-xs rounded bg-[#F3F4F6] text-[#6B7280] capitalize">
+                                  {mod.type}
+                                </span>
+                                {expandedModules.has(mod.id) ? (
+                                  <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                                ) : (
+                                  <ChevronRight
+                                    className={`w-4 h-4 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`}
+                                  />
+                                )}
+                              </div>
+                            </button>
+                            {expandedModules.has(mod.id) && (
+                              <div className="px-4 pb-4 bg-[#F9FAFB]">
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="text-[#6B7280]">{t("courseDetail.moduleType")}:</span>{" "}
+                                    <span className="text-[#1F2937] capitalize">{mod.type}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-[#6B7280]">{t("courseDetail.moduleDuration")}:</span>{" "}
+                                    <span className="text-[#1F2937]">
+                                      {mod.durationMinutes ? `${mod.durationMinutes} ${t("courseDetail.minutes")}` : "—"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center">
+                      <FileText className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
+                      <p className="text-sm text-[#6B7280]">
+                        {t("courseDetail.noModules")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Course Metadata */}
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                  <h2 className="text-base font-semibold text-[#1F2937] mb-3">
+                    {t("courseDetail.courseInfo")}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-[#6B7280]">{t("courseDetail.courseId")}:</span>{" "}
+                      <span className="text-[#1F2937] font-mono text-xs">{course.id}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#6B7280]">{t("courseDetail.createdAt")}:</span>{" "}
+                      <span className="text-[#1F2937]">{formatDate(course.createdAt)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#6B7280]">{t("courseDetail.updatedAt")}:</span>{" "}
+                      <span className="text-[#1F2937]">{formatDate(course.updatedAt)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#6B7280]">{t("courseDetail.instructorId")}:</span>{" "}
+                      <span className="text-[#1F2937] font-mono text-xs">{course.instructorId}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-[#DC2626]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#1F2937]">
+                {t("courseDetail.confirmDelete")}
+              </h3>
+            </div>
+            <p className="text-sm text-[#6B7280] mb-6">
+              {t("courseDetail.confirmDeleteDesc")}
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+              >
+                {t("courseDetail.cancel")}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("courseDetail.confirmDeleteBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default CourseManagerCourseDetailContent;

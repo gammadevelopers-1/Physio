@@ -1,7 +1,6 @@
 "use client";
 
-import { useTranslations, useLocale } from "next-intl";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Users,
   UserCheck,
@@ -34,8 +33,6 @@ interface AdminKPICardsProps {
 
 const AdminKPICards = ({ data }: AdminKPICardsProps) => {
   const t = useTranslations("adminDashboard");
-  const locale = useLocale();
-  const base = `/${locale}/dashboard/admin`;
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {
@@ -54,7 +51,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: UserCheck,
       iconBg: "bg-[var(--blue-blue-50)]",
       iconColor: "text-[var(--blue-blue-500)]",
-      href: `${base}/users?status=active`,
     },
     {
       id: "totalUsers",
@@ -64,7 +60,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: Users,
       iconBg: "bg-[var(--gold-gold-100)]",
       iconColor: "text-[var(--gold-gold-500)]",
-      href: `${base}/users`,
     },
     {
       id: "revenueMTD",
@@ -75,7 +70,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: DollarSign,
       iconBg: "bg-[var(--functional-green-400)]/10",
       iconColor: "text-[var(--functional-green-600)]",
-      href: `${base}/finance`,
     },
     {
       id: "nelcCompliance",
@@ -85,7 +79,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: FileCheck,
       iconBg: "bg-[var(--blue-blue-50)]",
       iconColor: "text-[var(--blue-blue-500)]",
-      href: `${base}/compliance`,
     },
     {
       id: "systemUptime",
@@ -96,7 +89,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: Activity,
       iconBg: "bg-[var(--functional-green-400)]/10",
       iconColor: "text-[var(--functional-green-600)]",
-      href: `${base}/security`,
     },
     {
       id: "certificates",
@@ -106,7 +98,6 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       icon: Award,
       iconBg: "bg-[var(--gold-gold-100)]",
       iconColor: "text-[var(--gold-gold-500)]",
-      href: `${base}/certificates`,
     },
   ];
 
@@ -115,10 +106,9 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
       {kpiCards.map((card) => {
         const Icon = card.icon;
         return (
-          <Link
+          <div
             key={card.id}
-            href={card.href}
-            className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3 hover:border-[var(--gold-gold-300)] hover:shadow-md transition-all cursor-pointer"
+            className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3"
           >
             <div className="flex items-start justify-between">
               <div
@@ -168,7 +158,7 @@ const AdminKPICards = ({ data }: AdminKPICardsProps) => {
                 {card.subLabel}
               </span>
             </div>
-          </Link>
+          </div>
         );
       })}
     </div>

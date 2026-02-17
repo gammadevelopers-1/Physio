@@ -14,6 +14,9 @@ export { default as CourseManagerDashboardContent } from "./CourseManagerDashboa
 
 // Page Content Components
 export { default as CoursesContent } from "./CoursesContent";
+export { default as CreateCourseContent } from "./CreateCourseContent";
+export { default as EditCourseContent } from "./EditCourseContent";
+export { default as CourseManagerCourseDetailContent } from "./CourseManagerCourseDetailContent";
 export { default as SessionsContent } from "./SessionsContent";
 export { default as InstructorsContent } from "./InstructorsContent";
 export { default as ContentReviewContent } from "./ContentReviewContent";

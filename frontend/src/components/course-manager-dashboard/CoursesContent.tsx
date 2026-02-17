@@ -7,6 +7,8 @@ import { useLocale, useTranslations } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useCourseManagerCourses } from "@/hooks/useCourseManagerCourses";
 import {
   Search,
   Plus,
@@ -19,131 +21,53 @@ import {
   ChevronRight,
   BarChart3,
   Settings,
-  Star,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
-interface Course {
-  id: string;
-  title: string;
-  thumbnail: string;
-  category: string;
-  status: "active" | "draft" | "completed" | "archived";
-  delivery: "zoom" | "onsite" | "blended";
-  instructor: string;
-  enrolledStudents: number;
-  capacity: number;
-  completionRate: number | null;
-  rating: number | null;
-  totalSessions: number;
-  completedSessions: number;
-}
-
-const mockManager = {
-  name: "Mohammed Al-Khalid",
-  email: "m.alkhalid@physio.edu.sa",
-  totalCourses: 12,
-  totalInstructors: 6,
-  nelcCompliance: 85,
-  avatar: "/images/instructor-1.png",
-};
+const CourseCardSkeleton = () => (
+  <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+    <div className="h-36 bg-[#E5E7EB] animate-pulse" />
+    <div className="p-4 space-y-3">
+      <div className="h-5 w-3/4 bg-[#E5E7EB] rounded animate-pulse" />
+      <div className="h-3 w-1/2 bg-[#E5E7EB] rounded animate-pulse" />
+      <div className="flex gap-3">
+        <div className="h-4 w-20 bg-[#E5E7EB] rounded animate-pulse" />
+        <div className="h-4 w-20 bg-[#E5E7EB] rounded animate-pulse" />
+        <div className="h-4 w-20 bg-[#E5E7EB] rounded animate-pulse" />
+      </div>
+      <div className="space-y-1">
+        <div className="flex justify-between">
+          <div className="h-3 w-16 bg-[#E5E7EB] rounded animate-pulse" />
+          <div className="h-3 w-8 bg-[#E5E7EB] rounded animate-pulse" />
+        </div>
+        <div className="h-1.5 w-full bg-[#E5E7EB] rounded-full animate-pulse" />
+      </div>
+      <div className="h-9 w-full bg-[#E5E7EB] rounded-lg animate-pulse" />
+    </div>
+  </div>
+);
 
 const CoursesContent = () => {
+  const manager = useManagerProfile();
   const locale = useLocale();
   const t = useTranslations("courseManagerDashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
 
-  const courses: Course[] = [
-    {
-      id: "1",
-      title: "ACLS Training",
-      category: "Emergency Care",
-      thumbnail: "/student_dashboard/courses/image 473.svg",
-      instructor: "Dr. Faisal Ahmed",
-      status: "active",
-      delivery: "zoom",
-      enrolledStudents: 45,
-      capacity: 50,
-      completionRate: 85,
-      rating: 4.8,
-      totalSessions: 12,
-      completedSessions: 8,
-    },
-    {
-      id: "2",
-      title: "First Aid Certification",
-      category: "Safety",
-      thumbnail: "/student_dashboard/courses/image 491.svg",
-      instructor: "Dr. Sara Al-Rashid",
-      status: "active",
-      delivery: "onsite",
-      enrolledStudents: 32,
-      capacity: 40,
-      completionRate: 72,
-      rating: 4.5,
-      totalSessions: 8,
-      completedSessions: 4,
-    },
-    {
-      id: "3",
-      title: "CPR Certification",
-      category: "Emergency Care",
-      thumbnail: "/student_dashboard/courses/image 473.svg",
-      instructor: "Dr. Khalid Hassan",
-      status: "draft",
-      delivery: "blended",
-      enrolledStudents: 0,
-      capacity: 30,
-      completionRate: null,
-      rating: null,
-      totalSessions: 6,
-      completedSessions: 0,
-    },
-    {
-      id: "4",
-      title: "Emergency Response",
-      category: "Emergency Care",
-      thumbnail: "/student_dashboard/courses/image 491.svg",
-      instructor: "Dr. Fatima Noor",
-      status: "completed",
-      delivery: "zoom",
-      enrolledStudents: 50,
-      capacity: 50,
-      completionRate: 91,
-      rating: 4.9,
-      totalSessions: 10,
-      completedSessions: 10,
-    },
-    {
-      id: "5",
-      title: "Infection Control",
-      category: "Healthcare",
-      thumbnail: "/student_dashboard/courses/image 473.svg",
-      instructor: "Dr. Ahmed Youssef",
-      status: "active",
-      delivery: "zoom",
-      enrolledStudents: 28,
-      capacity: 35,
-      completionRate: 60,
-      rating: 4.3,
-      totalSessions: 8,
-      completedSessions: 5,
-    },
-  ];
-
-  const categories = ["Emergency Care", "Safety", "Healthcare"];
-
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || course.status === statusFilter;
-    const matchesCategory =
-      categoryFilter === "all" || course.category === categoryFilter;
-    return matchesSearch && matchesStatus && matchesCategory;
+  const { courses, total, loading, error, refetch } = useCourseManagerCourses({
+    status: statusFilter,
+    delivery: deliveryFilter,
+    search: searchQuery,
+    sort: sortBy,
+    page: 1,
+    limit: 50,
   });
+
+  const activeCourses = courses.filter((c) => c.status === "active").length;
+  const totalEnrolled = courses.reduce((acc, c) => acc + c.enrolledCount, 0);
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -170,15 +94,15 @@ const CoursesContent = () => {
 
   return (
     <>
-      <CourseManagerNavbar manager={mockManager} />
+      <CourseManagerNavbar manager={manager} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={mockManager} />
+              <CourseManagerSidebar manager={manager} />
             </div>
-            <CourseManagerMobileSidebar manager={mockManager} />
+            <CourseManagerMobileSidebar manager={manager} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}
@@ -191,35 +115,39 @@ const CoursesContent = () => {
                     {t("coursesPage.subtitle")}
                   </p>
                 </div>
-                <button className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                <Link
+                  href={`/${locale}/dashboard/manager/courses/create`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                >
                   <Plus className="w-4 h-4" />
                   {t("coursesPage.createCourse")}
-                </button>
+                </Link>
               </div>
 
               {/* Stats Summary */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("coursesPage.stats.total")}</p>
-                  <p className="text-2xl font-bold text-[#1F2937] mt-1">{courses.length}</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("coursesPage.stats.active")}</p>
-                  <p className="text-2xl font-bold text-[#22C55E] mt-1">
-                    {courses.filter((c) => c.status === "active").length}
+                  <p className="text-xs text-[#6B7280]">
+                    {t("coursesPage.stats.total")}
                   </p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("coursesPage.stats.totalEnrollments")}</p>
                   <p className="text-2xl font-bold text-[#1F2937] mt-1">
-                    {courses.reduce((acc, c) => acc + c.enrolledStudents, 0)}
+                    {loading ? "—" : total}
                   </p>
                 </div>
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("coursesPage.stats.avgRating")}</p>
-                  <p className="text-2xl font-bold text-[#1F2937] mt-1 flex items-center gap-1">
-                    <Star className="w-5 h-5 text-[#FBBF24] fill-[#FBBF24]" />
-                    {(courses.filter((c) => c.rating).reduce((acc, c) => acc + (c.rating || 0), 0) / courses.filter((c) => c.rating).length).toFixed(1)}
+                  <p className="text-xs text-[#6B7280]">
+                    {t("coursesPage.stats.active")}
+                  </p>
+                  <p className="text-2xl font-bold text-[#22C55E] mt-1">
+                    {loading ? "—" : activeCourses}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <p className="text-xs text-[#6B7280]">
+                    {t("coursesPage.stats.totalEnrollments")}
+                  </p>
+                  <p className="text-2xl font-bold text-[#1F2937] mt-1">
+                    {loading ? "—" : totalEnrolled}
                   </p>
                 </div>
               </div>
@@ -243,116 +171,91 @@ const CoursesContent = () => {
                       onChange={(e) => setStatusFilter(e.target.value)}
                       className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
-                      <option value="all">{t("coursesPage.filters.allStatus")}</option>
-                      <option value="active">{t("coursesPage.filters.active")}</option>
-                      <option value="draft">{t("coursesPage.filters.draft")}</option>
-                      <option value="completed">{t("coursesPage.filters.completed")}</option>
-                      <option value="archived">{t("coursesPage.filters.archived")}</option>
+                      <option value="all">
+                        {t("coursesPage.filters.allStatus")}
+                      </option>
+                      <option value="active">
+                        {t("coursesPage.filters.active")}
+                      </option>
+                      <option value="draft">
+                        {t("coursesPage.filters.draft")}
+                      </option>
+                      <option value="completed">
+                        {t("coursesPage.filters.completed")}
+                      </option>
+                      <option value="archived">
+                        {t("coursesPage.filters.archived")}
+                      </option>
                     </select>
+
                     <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      value={deliveryFilter}
+                      onChange={(e) => setDeliveryFilter(e.target.value)}
                       className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
-                      <option value="all">{t("coursesPage.filters.allCategories")}</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
+                      <option value="all">
+                        {t("coursesPage.filters.allDelivery")}
+                      </option>
+                      <option value="zoom">
+                        {t("coursesPage.delivery.zoom")}
+                      </option>
+                      <option value="onsite">
+                        {t("coursesPage.delivery.onsite")}
+                      </option>
+                      <option value="blended">
+                        {t("coursesPage.delivery.blended")}
+                      </option>
+                    </select>
+
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    >
+                      <option value="newest">
+                        {t("coursesPage.sort.newest")}
+                      </option>
+                      <option value="oldest">
+                        {t("coursesPage.sort.oldest")}
+                      </option>
+                      <option value="students">
+                        {t("coursesPage.sort.mostStudents")}
+                      </option>
+                      <option value="alphabetical">
+                        {t("coursesPage.sort.alphabetical")}
+                      </option>
                     </select>
                   </div>
                 </div>
               </div>
 
-              {/* Course Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredCourses.map((course) => (
-                  <div
-                    key={course.id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <div className="relative h-36">
-                      <Image
-                        src={course.thumbnail}
-                        alt={course.title}
-                        fill
-                        className="object-cover"
-                      />
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
-                          {t(`coursesPage.status.${course.status}`)}
-                        </span>
-                      </div>
-                      <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors">
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1">
-                          {course.title}
-                        </h3>
-                        {course.rating && (
-                          <span className="flex items-center gap-1 text-xs text-[#6B7280]">
-                            <Star className="w-3.5 h-3.5 text-[#FBBF24] fill-[#FBBF24]" />
-                            {course.rating}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-xs text-[#6B7280] mb-3">{course.instructor}</p>
-
-                      <div className="flex items-center gap-3 text-xs text-[#6B7280] mb-3">
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5" />
-                          {course.enrolledStudents}/{course.capacity}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          {getDeliveryIcon(course.delivery)}
-                          {t(`coursesPage.delivery.${course.delivery}`)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {course.completedSessions}/{course.totalSessions}
-                        </span>
-                      </div>
-
-                      {course.completionRate !== null && (
-                        <div className="mb-4">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-[#6B7280]">{t("coursesPage.completion")}</span>
-                            <span className="font-medium text-[#1F2937]">{course.completionRate}%</span>
-                          </div>
-                          <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[#22C55E] rounded-full transition-all"
-                              style={{ width: `${course.completionRate}%` }}
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/${locale}/dashboard/manager/courses/${course.id}`}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
-                        >
-                          {t("coursesPage.manage")}
-                          <ChevronRight className="w-4 h-4" />
-                        </Link>
-                        <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
-                          <BarChart3 className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
-                          <Settings className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+              {/* Course Cards — Loading / Error / Empty / Data */}
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <CourseCardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-6 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 bg-[#FEE2E2] rounded-full flex items-center justify-center mb-4">
+                    <AlertCircle className="w-6 h-6 text-[#EF4444]" />
                   </div>
-                ))}
-              </div>
-
-              {filteredCourses.length === 0 && (
+                  <h3 className="text-lg font-semibold text-[#991B1B] mb-2">
+                    {t("error.title")}
+                  </h3>
+                  <p className="text-sm text-[#DC2626] mb-4 max-w-md">
+                    {error}
+                  </p>
+                  <button
+                    onClick={refetch}
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#EF4444] rounded-lg hover:bg-[#DC2626] transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    {t("error.retry")}
+                  </button>
+                </div>
+              ) : courses.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-[#9CA3AF]" />
@@ -363,6 +266,121 @@ const CoursesContent = () => {
                   <p className="text-sm text-[#6B7280] mb-4">
                     {t("coursesPage.noCoursesDesc")}
                   </p>
+                  <Link
+                    href={`/${locale}/dashboard/manager/courses/create`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {t("coursesPage.createCourse")}
+                  </Link>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {courses.map((course) => {
+                    const courseTitle =
+                      locale === "ar" && course.titleAr
+                        ? course.titleAr
+                        : course.title;
+                    const thumbnailSrc =
+                      course.thumbnail ||
+                      "/student_dashboard/courses/image 473.svg";
+
+                    return (
+                      <div
+                        key={course.id}
+                        className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
+                      >
+                        <div className="relative h-36">
+                          <Image
+                            src={thumbnailSrc}
+                            alt={courseTitle}
+                            fill
+                            className="object-cover"
+                            unoptimized={thumbnailSrc.startsWith("http")}
+                          />
+                          <div className="absolute top-3 left-3 flex gap-2">
+                            <span
+                              className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}
+                            >
+                              {t(`coursesPage.status.${course.status}`)}
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[#374151]">
+                              {getDeliveryIcon(course.deliveryType)}
+                              {t(
+                                `coursesPage.delivery.${course.deliveryType}`
+                              )}
+                            </span>
+                          </div>
+                          <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="p-4">
+                          <h3 className="text-base font-semibold text-[#1F2937] mb-1 line-clamp-1">
+                            {courseTitle}
+                          </h3>
+
+                          {course.instructorName && (
+                            <p className="text-xs text-[#6B7280] mb-3">
+                              {course.instructorName}
+                            </p>
+                          )}
+
+                          <div className="flex items-center gap-3 text-xs text-[#6B7280] mb-3">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-3.5 h-3.5" />
+                              {course.enrolledCount}{" "}
+                              {t("coursesPage.students")}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {course.completedSessions}/
+                              {course.totalSessions}{" "}
+                              {t("coursesPage.sessions")}
+                            </span>
+                          </div>
+
+                          {course.completionRate > 0 && (
+                            <div className="mb-4">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-[#6B7280]">
+                                  {t("coursesPage.completion")}
+                                </span>
+                                <span className="font-medium text-[#1F2937]">
+                                  {course.completionRate}%
+                                </span>
+                              </div>
+                              <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-[#22C55E] rounded-full transition-all"
+                                  style={{
+                                    width: `${course.completionRate}%`,
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <Link
+                              href={`/${locale}/dashboard/manager/courses/${course.id}`}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                            >
+                              {t("coursesPage.manage")}
+                              <ChevronRight className="w-4 h-4" />
+                            </Link>
+                            <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
+                              <BarChart3 className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
+                              <Settings className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

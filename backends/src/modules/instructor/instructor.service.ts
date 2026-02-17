@@ -37,7 +37,9 @@ export class InstructorService {
 
   private isAdmin(user: AuthenticatedUser): boolean {
     return (
-      user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN') ||
+      user.roles.includes('MANAGER')
     );
   }
 

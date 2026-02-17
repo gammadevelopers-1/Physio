@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import Image from "next/image";
+import { toast } from "sonner";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useAuth, useUser } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
 import {
-  User,
+  User as UserIcon,
   Shield,
   Bell,
   Settings,
@@ -19,7 +24,6 @@ import {
   Phone,
   MapPin,
   Globe,
-  Building2,
   Key,
   Eye,
   EyeOff,
@@ -31,43 +35,89 @@ import {
   Loader2,
 } from "lucide-react";
 
-const mockManager = {
-  name: "Mohammed Al-Khalid",
-  email: "m.alkhalid@physio.edu.sa",
-  totalCourses: 12,
-  totalInstructors: 6,
-  nelcCompliance: 85,
-  avatar: "/images/instructor-1.png",
-};
-
 const SettingsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const manager = useManagerProfile();
+  const { refreshUser } = useAuth();
+  const user = useUser();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications" | "preferences" | "integrations"
   >("profile");
 
-  // Profile State
+  // Profile State — initialized from authenticated user
   const [profileData, setProfileData] = useState({
-    firstName: "Mohammed",
-    lastName: "Al-Khalid",
-    email: "m.alkhalid@physio.edu.sa",
-    phone: "+966 50 123 4567",
-    location: "Riyadh, Saudi Arabia",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    location: "",
     language: "en",
-    bio: "Experienced course manager with 8+ years in healthcare education and training development. Specialized in NELC compliance and curriculum design.",
-    title: "Senior Course Manager",
-    departments: ["Training & Development", "NELC Compliance", "Curriculum Design"],
+    bio: "",
   });
+  const [saving, setSaving] = useState(false);
+
+  // Sync user data into form when available
+  useEffect(() => {
+    if (user) {
+      setProfileData((prev) => ({
+        ...prev,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email,
+        phone: user.phone || "",
+      }));
+    }
+  }, [user]);
+
+  // Compute initials from user name
+  const initials = user
+    ? `${(user.firstName || "")[0] || ""}${(user.lastName || "")[0] || ""}`.toUpperCase() || user.email[0].toUpperCase()
+    : "";
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+      toast.success(t("settingsPage.profileUpdated"));
+    } catch {
+      toast.error(t("settingsPage.profileError"));
+    }
+    e.target.value = "";
+  };
+
+  // Handle save profile
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await profileApi.update({
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone,
+      });
+      await refreshUser();
+      toast.success(t("settingsPage.profileUpdated"));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to save";
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Security State
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const security = useSecuritySettings();
 
-  // Notification State
+  // Notification State (client-side only)
   const [notifications, setNotifications] = useState({
     emailNewCourse: true,
     emailContentReview: true,
@@ -80,7 +130,7 @@ const SettingsContent = () => {
     digestMonthly: false,
   });
 
-  // Preferences State
+  // Preferences State (client-side only)
   const [preferences, setPreferences] = useState({
     theme: "light",
     dateFormat: "DD/MM/YYYY",
@@ -91,18 +141,18 @@ const SettingsContent = () => {
     showTips: true,
   });
 
-  // Integrations State
+  // Integrations State (client-side only)
   const [integrations, setIntegrations] = useState({
-    zoom: { connected: true, email: "m.alkhalid@zoom.us" },
-    googleCalendar: { connected: true, email: "m.alkhalid@gmail.com" },
+    zoom: { connected: false, email: "" },
+    googleCalendar: { connected: false, email: "" },
     microsoftTeams: { connected: false, email: "" },
     slack: { connected: false, email: "" },
-    googleDrive: { connected: true, email: "m.alkhalid@gmail.com" },
+    googleDrive: { connected: false, email: "" },
     dropbox: { connected: false, email: "" },
   });
 
   const tabs = [
-    { id: "profile" as const, label: t("settingsPage.tabs.profile"), icon: User },
+    { id: "profile" as const, label: t("settingsPage.tabs.profile"), icon: UserIcon },
     { id: "security" as const, label: t("settingsPage.tabs.security"), icon: Shield },
     { id: "notifications" as const, label: t("settingsPage.tabs.notifications"), icon: Bell },
     { id: "preferences" as const, label: t("settingsPage.tabs.preferences"), icon: Settings },
@@ -111,20 +161,17 @@ const SettingsContent = () => {
 
   return (
     <>
-      <CourseManagerNavbar manager={mockManager} />
+      <CourseManagerNavbar manager={manager} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Sidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={mockManager} />
+              <CourseManagerSidebar manager={manager} />
             </div>
-            <CourseManagerMobileSidebar manager={mockManager} />
+            <CourseManagerMobileSidebar manager={manager} />
 
-            {/* Main Content */}
             <div className="flex-1 min-w-0 space-y-6">
-              {/* Header */}
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
                   {t("settingsPage.title")}
@@ -161,10 +208,33 @@ const SettingsContent = () => {
                       {/* Avatar Section */}
                       <div className="flex flex-col sm:flex-row items-start gap-4">
                         <div className="relative">
-                          <div className="w-24 h-24 rounded-full bg-[#EFF6FF] flex items-center justify-center text-2xl font-bold text-[#3B82F6]">
-                            MA
-                          </div>
-                          <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#3B82F6] text-white rounded-full flex items-center justify-center hover:bg-[#2563EB] transition-colors">
+                          {user?.avatar ? (
+                            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100">
+                              <Image
+                                src={user.avatar}
+                                alt={profileData.firstName}
+                                width={96}
+                                height={96}
+                                className="object-cover w-full h-full"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-24 h-24 rounded-full bg-[#E5E7EB] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
+                              {initials}
+                            </div>
+                          )}
+                          <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                          />
+                          <button
+                            onClick={() => avatarInputRef.current?.click()}
+                            className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-8 h-8 bg-[#3B82F6] text-white rounded-full flex items-center justify-center hover:bg-[#2563EB] transition-colors`}
+                          >
                             <Camera className="w-4 h-4" />
                           </button>
                         </div>
@@ -172,17 +242,7 @@ const SettingsContent = () => {
                           <h3 className="text-lg font-semibold text-[#1F2937]">
                             {profileData.firstName} {profileData.lastName}
                           </h3>
-                          <p className="text-sm text-[#6B7280]">{profileData.title}</p>
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {profileData.departments.map((dept, index) => (
-                              <span
-                                key={index}
-                                className="px-2 py-1 bg-[#EFF6FF] text-[#3B82F6] rounded-full text-xs font-medium"
-                              >
-                                {dept}
-                              </span>
-                            ))}
-                          </div>
+                          <p className="text-sm text-[#6B7280]">{profileData.email}</p>
                         </div>
                       </div>
 
@@ -229,10 +289,8 @@ const SettingsContent = () => {
                               <input
                                 type="email"
                                 value={profileData.email}
-                                onChange={(e) =>
-                                  setProfileData({ ...profileData, email: e.target.value })
-                                }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                disabled
+                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -254,66 +312,21 @@ const SettingsContent = () => {
                               />
                             </div>
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
-                              {t("settingsPage.profile.location")}
-                            </label>
-                            <div className="relative">
-                              <MapPin
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
-                              />
-                              <input
-                                type="text"
-                                value={profileData.location}
-                                onChange={(e) =>
-                                  setProfileData({ ...profileData, location: e.target.value })
-                                }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
-                              {t("settingsPage.profile.language")}
-                            </label>
-                            <div className="relative">
-                              <Globe
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
-                              />
-                              <select
-                                value={profileData.language}
-                                onChange={(e) =>
-                                  setProfileData({ ...profileData, language: e.target.value })
-                                }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
-                              >
-                                <option value="en">English</option>
-                                <option value="ar">العربية</option>
-                              </select>
-                            </div>
-                          </div>
                         </div>
-                      </div>
-
-                      {/* Bio */}
-                      <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1.5">
-                          {t("settingsPage.profile.bio")}
-                        </label>
-                        <textarea
-                          value={profileData.bio}
-                          onChange={(e) =>
-                            setProfileData({ ...profileData, bio: e.target.value })
-                          }
-                          rows={4}
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
-                        />
                       </div>
 
                       {/* Save Button */}
                       <div className="flex justify-end">
-                        <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors">
-                          <Save className="w-4 h-4" />
+                        <button
+                          onClick={handleSaveProfile}
+                          disabled={saving}
+                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          {saving ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
                           {t("settingsPage.saveChanges")}
                         </button>
                       </div>

@@ -32,7 +32,7 @@ export class CoursesController {
   /**
    * POST /courses — Create a new course
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
@@ -45,7 +45,7 @@ export class CoursesController {
   /**
    * GET /courses — List courses (instructor: own only, admin: all)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
@@ -69,7 +69,7 @@ export class CoursesController {
   /**
    * GET /courses/:id — Course detail with modules
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -81,7 +81,7 @@ export class CoursesController {
   /**
    * PATCH /courses/:id — Update a course
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -94,7 +94,7 @@ export class CoursesController {
   /**
    * DELETE /courses/:id — Delete a draft course
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Delete(':id')
   async remove(
     @Param('id') id: string,
@@ -108,7 +108,7 @@ export class CoursesController {
   /**
    * POST /courses/:id/modules — Add a module to a course
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Post(':id/modules')
   @HttpCode(HttpStatus.CREATED)
   async addModule(
@@ -123,7 +123,7 @@ export class CoursesController {
    * PATCH /courses/:id/modules/reorder — Reorder modules
    * NOTE: Must be defined BEFORE :mid param route to avoid "reorder" matching as :mid
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Patch(':id/modules/reorder')
   async reorderModules(
     @Param('id') courseId: string,
@@ -136,7 +136,7 @@ export class CoursesController {
   /**
    * PATCH /courses/:id/modules/:mid — Update a module
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Patch(':id/modules/:mid')
   async updateModule(
     @Param('id') courseId: string,
@@ -150,7 +150,7 @@ export class CoursesController {
   /**
    * DELETE /courses/:id/modules/:mid — Remove a module
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Delete(':id/modules/:mid')
   async removeModule(
     @Param('id') courseId: string,

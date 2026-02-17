@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import CourseManagerNavbar from "./CourseManagerNavbar";
@@ -11,309 +12,175 @@ import InstructorsManagementWidget from "./InstructorsManagementWidget";
 import NELCComplianceWidget from "./NELCComplianceWidget";
 import CourseStatsWidget from "./CourseStatsWidget";
 import UpcomingSessionsWidget from "./UpcomingSessionsWidget";
-
-// Static mock data
-const mockManager = {
-  name: "Mohammed Al-Khalid",
-  email: "m.alkhalid@physio.edu.sa",
-  totalCourses: 12,
-  totalInstructors: 6,
-  nelcCompliance: 85,
-  avatar: "/images/instructor-1.png",
-};
-
-// KPI Data for 3 main cards
-const mockKPIData = {
-  totalCourses: 12,
-  totalEnrollments: 245,
-  pendingReviews: 5,
-};
-
-// Stats data for right sidebar widget
-const mockCourseStats = {
-  activeCourses: 8,
-  draftCourses: 2,
-  completedCourses: 2,
-  avgCompletionRate: 78,
-  completionTrend: 5,
-  avgRating: 4.6,
-};
-
-const mockCourses = [
-  {
-    id: "1",
-    name: "ACLS Training",
-    category: "Emergency Care",
-    thumbnail: "AC",
-    instructor: "Dr. Faisal Ahmed",
-    status: "active" as const,
-    enrolled: 45,
-    capacity: 50,
-    completionRate: 85,
-    rating: 4.8,
-  },
-  {
-    id: "2",
-    name: "First Aid Certification",
-    category: "Safety",
-    thumbnail: "FA",
-    instructor: "Dr. Sara Al-Rashid",
-    status: "active" as const,
-    enrolled: 32,
-    capacity: 40,
-    completionRate: 72,
-    rating: 4.5,
-  },
-  {
-    id: "3",
-    name: "CPR Certification",
-    category: "Emergency Care",
-    thumbnail: "CP",
-    instructor: "Dr. Khalid Hassan",
-    status: "preparing" as const,
-    enrolled: 12,
-    capacity: 30,
-    completionRate: null,
-    rating: null,
-  },
-  {
-    id: "4",
-    name: "Emergency Response",
-    category: "Emergency Care",
-    thumbnail: "ER",
-    instructor: "Dr. Fatima Noor",
-    status: "completed" as const,
-    enrolled: 50,
-    capacity: 50,
-    completionRate: 91,
-    rating: 4.9,
-  },
-];
-
-const mockSessions = [
-  {
-    id: "1",
-    title: "ACLS Training - Module 3",
-    time: "2:00 PM",
-    date: "Today",
-    type: "zoom" as const,
-    enrolled: 25,
-    capacity: 30,
-  },
-  {
-    id: "2",
-    title: "First Aid Practical",
-    time: "4:30 PM",
-    date: "Today",
-    type: "onsite" as const,
-    location: "Room 204",
-    enrolled: 18,
-    capacity: 20,
-  },
-  {
-    id: "3",
-    title: "CPR & ACLS Review",
-    time: "10:00 AM",
-    date: "Feb 10",
-    type: "zoom" as const,
-    enrolled: 22,
-    capacity: 30,
-    hasConflict: true,
-  },
-];
-
-const mockContentReviewItems = [
-  {
-    id: "1",
-    type: "video" as const,
-    title: "Module 3 Video",
-    courseName: "ACLS",
-    submittedBy: "Dr. Faisal",
-    checklist: [
-      { id: "obj", label: "Objectives", passed: true },
-      { id: "assess", label: "Assessments", passed: true },
-      { id: "hours", label: "Hours", passed: true },
-      { id: "wcag", label: "WCAG", passed: true },
-      { id: "nelc", label: "NELC", passed: false },
-    ],
-  },
-  {
-    id: "2",
-    type: "quiz" as const,
-    title: "Final Quiz",
-    courseName: "First Aid",
-    submittedBy: "Dr. Sara",
-    checklist: [
-      { id: "obj", label: "Objectives", passed: true },
-      { id: "assess", label: "Assessments", passed: true },
-      { id: "hours", label: "Hours", passed: true },
-      { id: "wcag", label: "WCAG", passed: true },
-      { id: "nelc", label: "NELC", passed: true },
-    ],
-  },
-  {
-    id: "3",
-    type: "pdf" as const,
-    title: "Study Guide v2",
-    courseName: "CPR",
-    submittedBy: "Dr. Khalid",
-    checklist: [
-      { id: "obj", label: "Objectives", passed: true },
-      { id: "assess", label: "Assessments", passed: true },
-      { id: "hours", label: "Hours", passed: false },
-      { id: "wcag", label: "WCAG", passed: true },
-      { id: "nelc", label: "NELC", passed: true },
-    ],
-  },
-];
-
-const mockInstructors = [
-  {
-    id: "1",
-    name: "Dr. Faisal Ahmed",
-    initials: "FA",
-    assignedCourses: 3,
-    hoursPerWeek: 12,
-    loadPercentage: 85,
-    rating: 4.8,
-    status: "busy" as const,
-  },
-  {
-    id: "2",
-    name: "Dr. Sara Al-Rashid",
-    initials: "SA",
-    assignedCourses: 2,
-    hoursPerWeek: 8,
-    loadPercentage: 50,
-    rating: 4.5,
-    status: "available" as const,
-  },
-  {
-    id: "3",
-    name: "Dr. Khalid Hassan",
-    initials: "KH",
-    assignedCourses: 4,
-    hoursPerWeek: 16,
-    loadPercentage: 95,
-    rating: 4.7,
-    status: "overloaded" as const,
-  },
-  {
-    id: "4",
-    name: "Dr. Fatima Noor",
-    initials: "FN",
-    assignedCourses: 2,
-    hoursPerWeek: 6,
-    loadPercentage: 35,
-    rating: 4.9,
-    status: "available" as const,
-  },
-];
-
-const mockComplianceData = {
-  percentage: 85,
-  passed: 42,
-  review: 6,
-  failed: 2,
-};
-
-const mockReports = [
-  {
-    id: "1",
-    type: "enrollment" as const,
-    title: "Enrollment Report",
-    description: "By course & date range",
-  },
-  {
-    id: "2",
-    type: "completion" as const,
-    title: "Completion Report",
-    description: "Rates & trends",
-  },
-  {
-    id: "3",
-    type: "satisfaction" as const,
-    title: "Satisfaction Report",
-    description: "Ratings & feedback",
-  },
-];
+import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useCourseManagerDashboard } from "@/hooks/useCourseManagerDashboard";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const manager = useManagerProfile();
+  const { summary, courses, instructors, loading, error, refetch } =
+    useCourseManagerDashboard();
 
-  const handleApprove = (id: string) => {
-    console.log("Approving:", id);
+  // Derive KPI data from real courses
+  const kpiData = {
+    totalCourses: courses.length,
+    totalEnrollments: courses.reduce((sum, c) => sum + c.enrolledCount, 0),
+    pendingReviews: 0,
   };
 
-  const handleReject = (id: string) => {
-    console.log("Rejecting:", id);
+  // Derive course stats from real data
+  const activeCourses = courses.filter((c) => c.status === "active");
+  const courseStats = {
+    activeCourses: activeCourses.length,
+    draftCourses: courses.filter((c) => c.status === "draft").length,
+    completedCourses: courses.filter((c) => c.status === "completed").length,
+    avgCompletionRate:
+      activeCourses.length > 0
+        ? Math.round(
+            activeCourses.reduce((sum, c) => sum + c.completionRate, 0) /
+              activeCourses.length
+          )
+        : 0,
+    completionTrend: 0,
+    avgRating: 0,
   };
 
-  const handlePreview = (id: string) => {
-    console.log("Previewing:", id);
-  };
+  // Map courses to CatalogOverviewWidget format
+  const catalogCourses = courses.map((c) => ({
+    id: c.id,
+    name: c.title,
+    category: c.deliveryType,
+    thumbnail: c.title
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase(),
+    instructor: c.instructorName || "",
+    status: c.status === "draft" ? ("preparing" as const) : (c.status as "active" | "completed" | "archived"),
+    enrolled: c.enrolledCount,
+    capacity: c.maxEnrollment || 0,
+    completionRate: c.completionRate > 0 ? c.completionRate : null,
+    rating: null,
+  }));
+
+  // Map upcoming sessions from summary
+  const upcomingSessions = (summary?.upcomingSessions || []).slice(0, 3).map((s) => {
+    const d = new Date(s.scheduledAt);
+    const today = new Date();
+    const isToday = d.toDateString() === today.toDateString();
+    return {
+      id: s.id,
+      title: s.title,
+      time: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      date: isToday
+        ? "Today"
+        : d.toLocaleDateString([], { month: "short", day: "numeric" }),
+      type: (s.type === "onsite" ? "onsite" : "zoom") as "zoom" | "onsite",
+      location: s.venueAddress || undefined,
+      enrolled: s.enrolledCount || 0,
+      capacity: 0,
+    };
+  });
+
+  // Map instructors to widget format
+  const widgetInstructors = instructors.map((inst) => {
+    const name =
+      [inst.firstName, inst.lastName].filter(Boolean).join(" ") || inst.email;
+    const initials = inst.firstName && inst.lastName
+      ? `${inst.firstName[0]}${inst.lastName[0]}`.toUpperCase()
+      : name.substring(0, 2).toUpperCase();
+    return {
+      id: inst.id,
+      name,
+      initials,
+      assignedCourses: 0,
+      hoursPerWeek: 0,
+      loadPercentage: 0,
+      rating: 0,
+      status: "available" as const,
+    };
+  });
+
+  if (loading) {
+    return (
+      <>
+        <CourseManagerNavbar manager={manager} />
+        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
+            <p className="text-sm text-[#6B7280]">{t("dashboard.loading")}</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <CourseManagerNavbar manager={manager} />
+        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
+            <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+            <button
+              onClick={refetch}
+              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+            >
+              <RefreshCw className="w-4 h-4" />
+              {t("dashboard.retry")}
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
-      {/* Dashboard Navbar */}
-      <CourseManagerNavbar manager={mockManager} />
+      <CourseManagerNavbar manager={manager} />
 
-      {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Sidebar - Hidden on mobile, shown via MobileSidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <CourseManagerSidebar manager={mockManager} />
+              <CourseManagerSidebar manager={manager} />
             </div>
+            <CourseManagerMobileSidebar manager={manager} />
 
-            {/* Mobile Sidebar */}
-            <CourseManagerMobileSidebar manager={mockManager} />
-
-            {/* Main Content */}
             <div className="flex-1 min-w-0">
-              {/* Page Title */}
               <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)] mb-4 sm:mb-6">
                 {t("title")}
               </h1>
 
-              {/* KPI Cards */}
-              <CourseManagerKPICards data={mockKPIData} />
+              <CourseManagerKPICards data={kpiData} />
 
-              {/* Catalog Overview - Full Width */}
               <div className="mb-6">
-                <CatalogOverviewWidget courses={mockCourses} />
+                <CatalogOverviewWidget courses={catalogCourses} />
               </div>
 
-              {/* Content Review Queue - Full Width */}
               <div className="mb-6">
                 <ContentReviewQueue
-                  items={mockContentReviewItems}
-                  onApprove={handleApprove}
-                  onReject={handleReject}
-                  onPreview={handlePreview}
+                  items={[]}
+                  onApprove={() => {}}
+                  onReject={() => {}}
+                  onPreview={() => {}}
                 />
               </div>
 
-              {/* NELC Compliance & Reports - Full Width */}
               <div className="mb-6">
                 <NELCComplianceWidget
-                  compliance={mockComplianceData}
-                  reports={mockReports}
+                  compliance={{ percentage: 0, passed: 0, review: 0, failed: 0 }}
+                  reports={[]}
                 />
               </div>
             </div>
 
-            {/* Right Sidebar */}
             <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
-              {/* Course Stats Widget */}
-              <CourseStatsWidget data={mockCourseStats} />
-
-              {/* Upcoming Sessions */}
-              <UpcomingSessionsWidget sessions={mockSessions} />
-
-              {/* Instructors Management */}
-              <InstructorsManagementWidget instructors={mockInstructors} />
+              <CourseStatsWidget data={courseStats} />
+              <UpcomingSessionsWidget sessions={upcomingSessions} />
+              <InstructorsManagementWidget instructors={widgetInstructors} />
             </div>
           </div>
         </div>

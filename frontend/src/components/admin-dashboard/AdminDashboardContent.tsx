@@ -13,15 +13,7 @@ import NELCComplianceOverviewWidget from "./NELCComplianceOverviewWidget";
 import FinanceSummaryWidget from "./FinanceSummaryWidget";
 import AlertsActivitySidebar from "./AlertsActivitySidebar";
 import { notificationsApi, AdminNotification } from "@/lib/api";
-
-// Mock Admin Profile Data
-const mockAdmin = {
-  name: "Abdullah Al-Rashid",
-  email: "admin@physio.edu.sa",
-  totalUsers: 1245,
-  totalCourses: 12,
-  uptime: 99.9,
-};
+import { useAdminProfile } from "@/hooks/useAdminProfile";
 
 // Mock KPI Data
 const mockKPIData = {
@@ -85,6 +77,7 @@ const mockFinanceData = {
 
 const AdminDashboardContent = () => {
   const t = useTranslations("adminDashboard");
+  const admin = useAdminProfile();
   const [liveAlerts, setLiveAlerts] = useState<
     { id: string; type: "critical" | "warning" | "info"; title: string; description: string; time: string; link?: string }[]
   >([]);
@@ -235,7 +228,7 @@ const AdminDashboardContent = () => {
   return (
     <>
       {/* Dashboard Navbar */}
-      <AdminNavbar admin={mockAdmin} />
+      <AdminNavbar admin={admin} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -243,11 +236,11 @@ const AdminDashboardContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile, shown via MobileSidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <AdminSidebar admin={mockAdmin} />
+              <AdminSidebar admin={admin} />
             </div>
 
             {/* Mobile Sidebar */}
-            <AdminMobileSidebar admin={mockAdmin} />
+            <AdminMobileSidebar admin={admin} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -257,7 +250,7 @@ const AdminDashboardContent = () => {
                   {t("title")}
                 </h1>
                 <p className="text-sm text-[var(--on-surface-variant)] mt-1">
-                  {t("subtitle", { name: mockAdmin.name.split(" ")[0] })}
+                  {t("subtitle", { name: admin.name.split(" ")[0] })}
                 </p>
               </div>
 

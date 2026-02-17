@@ -12,7 +12,6 @@ import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useInstructorCourses } from "@/hooks/useInstructorCourses";
 import {
   Search,
-  Plus,
   Users,
   Calendar,
   Clock,
@@ -128,22 +127,13 @@ const MyCoursesContent = () => {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">
-                    {t("courses.title")}
-                  </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">
-                    {t("courses.subtitle")}
-                  </p>
-                </div>
-                <Link
-                  href={`/${locale}/dashboard/instructor/courses/create`}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t("courses.createCourse")}
-                </Link>
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-[#1F2937]">
+                  {t("courses.title")}
+                </h1>
+                <p className="text-sm text-[#6B7280] mt-1">
+                  {t("courses.subtitle")}
+                </p>
               </div>
 
               {/* Filters */}
@@ -243,16 +233,9 @@ const MyCoursesContent = () => {
                   <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
                     {t("courses.noCoursesTitle")}
                   </h3>
-                  <p className="text-sm text-[#6B7280] mb-4">
-                    {t("courses.noCoursesDescription")}
+                  <p className="text-sm text-[#6B7280]">
+                    {t("courses.noCoursesAssigned")}
                   </p>
-                  <Link
-                    href={`/${locale}/dashboard/instructor/courses/create`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t("courses.createCourse")}
-                  </Link>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -19,15 +19,7 @@ import {
 import { AdminSidebar, AdminNavbar } from "@/components/admin-dashboard";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import { roleRequestsApi, type RoleRequest, type RoleRequestStats } from "@/lib/api";
-
-const mockAdmin = {
-  name: "Admin",
-  email: "admin@physioguidance.com",
-  totalUsers: 0,
-  totalCourses: 0,
-  uptime: 99.9,
-  avatar: "/images/default-avatar.png",
-};
+import { useAdminProfile } from "@/hooks/useAdminProfile";
 
 const statusConfig = {
   PENDING: { badgeBg: "bg-[#FEF3C7]", badgeText: "text-[#92400E]", icon: Clock },
@@ -39,6 +31,7 @@ const statusConfig = {
 const RoleRequestsContent = () => {
   const locale = useLocale();
   const t = useTranslations("adminDashboard");
+  const admin = useAdminProfile();
   const isRTL = locale === "ar";
   const router = useRouter();
 
@@ -127,12 +120,12 @@ const RoleRequestsContent = () => {
 
   return (
     <>
-      <AdminNavbar admin={mockAdmin} />
+      <AdminNavbar admin={admin} />
       <div className="flex flex-1">
         <div className="hidden lg:block">
-          <AdminSidebar admin={mockAdmin} />
+          <AdminSidebar admin={admin} />
         </div>
-        <AdminMobileSidebar admin={mockAdmin} />
+        <AdminMobileSidebar admin={admin} />
 
         <div className="flex-1 p-4 lg:p-8" dir={isRTL ? "rtl" : "ltr"}>
           {/* Header */}

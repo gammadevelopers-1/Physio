@@ -373,6 +373,17 @@ export class AuthController {
   }
 
   // ===========================================
+  // MANAGER + ADMIN ENDPOINTS
+  // ===========================================
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  @Get('instructors')
+  async getInstructors() {
+    return this.authService.getInstructors();
+  }
+
+  // ===========================================
   // ADMIN ENDPOINTS
   // ===========================================
 

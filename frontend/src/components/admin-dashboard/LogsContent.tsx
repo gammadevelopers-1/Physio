@@ -23,18 +23,11 @@ import {
   Plus,
   Eye,
 } from "lucide-react";
-
-// Mock Admin Profile
-const mockAdmin = {
-  name: "Abdullah Al-Rashid",
-  email: "admin@physio.edu.sa",
-  totalUsers: 1245,
-  totalCourses: 12,
-  uptime: 99.9,
-};
+import { useAdminProfile } from "@/hooks/useAdminProfile";
 
 const LogsContent = () => {
   const t = useTranslations("adminDashboard");
+  const admin = useAdminProfile();
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -184,17 +177,17 @@ const LogsContent = () => {
 
   return (
     <>
-      <AdminNavbar admin={mockAdmin} />
+      <AdminNavbar admin={admin} />
 
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <AdminSidebar admin={mockAdmin} />
+              <AdminSidebar admin={admin} />
             </div>
 
-            <AdminMobileSidebar admin={mockAdmin} />
+            <AdminMobileSidebar admin={admin} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

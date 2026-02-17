@@ -165,6 +165,7 @@ export interface InstructorCourse {
   totalSessions: number;
   completedSessions: number;
   nextSessionAt: string | null;
+  instructorName: string | null;
 }
 
 export interface InstructorCoursesResponse {

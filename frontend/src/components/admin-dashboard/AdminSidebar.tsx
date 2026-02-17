@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   Users,
@@ -20,7 +21,8 @@ import {
   Crown,
   UserCheck,
 } from "lucide-react";
-import { roleRequestsApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { roleRequestsApi, profileApi } from "@/lib/api";
 
 interface AdminProfile {
   name: string;
@@ -40,7 +42,22 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
   const pathname = usePathname();
   const t = useTranslations("adminDashboard");
   const isRTL = locale === "ar";
+  const { refreshUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [pendingCount, setPendingCount] = useState(0);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+    } catch {
+      toast.error(t("sidebar.avatarUploadError"));
+    }
+    e.target.value = "";
+  };
 
   // Fetch real pending role request count
   useEffect(() => {
@@ -134,6 +151,7 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
                   width={80}
                   height={80}
                   className="object-cover w-full h-full"
+                  unoptimized
                 />
               ) : (
                 <span className="text-2xl font-bold text-white">
@@ -149,7 +167,15 @@ const AdminSidebar = ({ admin }: AdminSidebarProps) => {
                 <Lock className="w-3 h-3 text-white" />
               </div>
             </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
             <button
+              onClick={() => avatarInputRef.current?.click()}
               className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white`}
               aria-label={t("sidebar.editProfile")}
             >

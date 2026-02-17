@@ -29,7 +29,7 @@ export class SessionsController {
   /**
    * POST /sessions — Schedule a new session
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
@@ -42,7 +42,7 @@ export class SessionsController {
   /**
    * GET /sessions — List sessions with filters
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
@@ -65,7 +65,7 @@ export class SessionsController {
    * GET /sessions/today — Today's sessions
    * NOTE: Must be defined BEFORE :id route to avoid "today" matching as :id
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('today')
   async findToday(@CurrentUser() user: AuthenticatedUser) {
     return this.sessionsService.findToday(user);
@@ -75,7 +75,7 @@ export class SessionsController {
    * GET /sessions/upcoming — Future sessions ordered by date
    * NOTE: Must be defined BEFORE :id route to avoid "upcoming" matching as :id
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('upcoming')
   async findUpcoming(@CurrentUser() user: AuthenticatedUser) {
     return this.sessionsService.findUpcoming(user);
@@ -84,7 +84,7 @@ export class SessionsController {
   /**
    * GET /sessions/:id — Session detail
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -96,7 +96,7 @@ export class SessionsController {
   /**
    * PATCH /sessions/:id — Update a session
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -111,7 +111,7 @@ export class SessionsController {
   /**
    * POST /sessions/:id/start — Mark session as live
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/start')
   async start(
     @Param('id') id: string,
@@ -123,7 +123,7 @@ export class SessionsController {
   /**
    * POST /sessions/:id/end — Mark session as completed
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/end')
   async end(
     @Param('id') id: string,
@@ -135,7 +135,7 @@ export class SessionsController {
   /**
    * PATCH /sessions/:id/cancel — Cancel session with required reason
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch(':id/cancel')
   async cancel(
     @Param('id') id: string,

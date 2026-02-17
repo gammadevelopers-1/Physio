@@ -31,7 +31,7 @@ export class AssessmentsController {
   /**
    * POST /assessments — Create a new assessment
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
@@ -44,7 +44,7 @@ export class AssessmentsController {
   /**
    * GET /assessments — List assessments with filters
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
@@ -66,7 +66,7 @@ export class AssessmentsController {
   /**
    * GET /assessments/:id — Assessment detail with questions
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -78,7 +78,7 @@ export class AssessmentsController {
   /**
    * PATCH /assessments/:id — Update an assessment
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch(':id')
   async update(
     @Param('id') id: string,
@@ -91,7 +91,7 @@ export class AssessmentsController {
   /**
    * DELETE /assessments/:id — Delete a draft assessment
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Delete(':id')
   async remove(
     @Param('id') id: string,
@@ -105,7 +105,7 @@ export class AssessmentsController {
   /**
    * POST /assessments/:id/questions — Add a question to an assessment
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/questions')
   @HttpCode(HttpStatus.CREATED)
   async addQuestion(
@@ -119,7 +119,7 @@ export class AssessmentsController {
   /**
    * GET /assessments/:id/questions — List questions for an assessment
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id/questions')
   async getQuestions(
     @Param('id') assessmentId: string,
@@ -151,7 +151,7 @@ export class AssessmentsController {
   /**
    * GET /assessments/:id/submissions — List submissions for an assessment
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id/submissions')
   async getSubmissions(
     @Param('id') assessmentId: string,
@@ -165,7 +165,7 @@ export class AssessmentsController {
   /**
    * GET /assessments/:id/item-analysis — Difficulty + discrimination indices
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id/item-analysis')
   async getItemAnalysis(
     @Param('id') assessmentId: string,

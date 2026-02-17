@@ -627,6 +627,7 @@ import type {
   InstructorCoursesResponse,
   InstructorCoursesParams,
   CourseDetailResponse,
+  CourseSession,
   CourseSessionsResponse,
   CreateCourseData,
 } from '@/types/instructor-dashboard';
@@ -664,17 +665,6 @@ export const instructorApi = {
   // Sessions for a specific course
   getCourseSessions: (courseId: string) =>
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
-
-  // Create a new course
-  createCourse: (data: CreateCourseData) =>
-    api.post<CourseDetailResponse>('/courses', data),
-
-  // Upload course thumbnail image
-  uploadThumbnail: (file: File) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    return uploadFormData<{ url: string; filename: string }>('/storage/upload', fd);
-  },
 };
 
 // ===========================================
@@ -710,6 +700,135 @@ export const materialsApi = {
     fd.append('file', file);
     return uploadFormData<Record<string, unknown>>(`/materials/${materialId}/replace`, fd);
   },
+};
+
+// ===========================================
+// Course Manager Dashboard API
+// ===========================================
+
+export interface InstructorListItem {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+}
+
+export interface CreateCourseManagerData {
+  title: string;
+  titleAr?: string;
+  description?: string;
+  descriptionAr?: string;
+  deliveryType: 'zoom' | 'onsite' | 'blended';
+  thumbnail?: string;
+  maxEnrollment?: number;
+  startDate?: string;
+  endDate?: string;
+  instructorId: string;
+}
+
+export interface SessionsParams {
+  dateRange?: string;
+  status?: string;
+  courseId?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface SessionsResponse {
+  data: CourseSession[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface AssessmentsParams {
+  courseId?: string;
+  type?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AssessmentsResponse {
+  data: AssessmentResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export const courseManagerApi = {
+  // Get all courses (manager sees all)
+  getCourses: (params?: InstructorCoursesParams) => {
+    const sp = new URLSearchParams();
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.delivery && params.delivery !== 'all') sp.set('delivery', params.delivery);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.sort) sp.set('sort', params.sort);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<InstructorCoursesResponse>(`/courses${qs ? `?${qs}` : ''}`);
+  },
+
+  // Create a new course (with instructorId assignment)
+  createCourse: (data: CreateCourseManagerData) =>
+    api.post<CourseDetailResponse>('/courses', data),
+
+  // Upload course thumbnail image
+  uploadThumbnail: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<{ url: string; filename: string }>('/storage/upload', fd);
+  },
+
+  // Get list of instructors for dropdown
+  getInstructors: () =>
+    api.get<InstructorListItem[]>('/auth/instructors'),
+
+  // Sessions
+  getSessions: (params?: SessionsParams) => {
+    const sp = new URLSearchParams();
+    if (params?.dateRange) sp.set('dateRange', params.dateRange);
+    if (params?.status) sp.set('status', params.status);
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<SessionsResponse>(`/sessions${qs ? `?${qs}` : ''}`);
+  },
+
+  getUpcomingSessions: () =>
+    api.get<CourseSession[]>('/sessions/upcoming'),
+
+  // Dashboard summary (reuses instructor endpoint — MANAGER now has access)
+  getDashboardSummary: () =>
+    api.get<DashboardSummaryResponse>('/instructor/dashboard-summary'),
+
+  // Assessments
+  getAssessments: (params?: AssessmentsParams) => {
+    const sp = new URLSearchParams();
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.type) sp.set('type', params.type);
+    if (params?.status) sp.set('status', params.status);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<AssessmentsResponse>(`/assessments${qs ? `?${qs}` : ''}`);
+  },
+
+  // Course detail (single course with modules)
+  getCourseDetail: (courseId: string) =>
+    api.get<CourseDetailResponse>(`/courses/${courseId}`),
+
+  // Update course
+  updateCourse: (courseId: string, data: Record<string, unknown>) =>
+    api.patch<CourseDetailResponse>(`/courses/${courseId}`, data),
+
+  // Delete course (draft only)
+  deleteCourse: (courseId: string) =>
+    api.delete(`/courses/${courseId}`),
 };
 
 export default api;

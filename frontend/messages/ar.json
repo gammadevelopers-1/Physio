@@ -1494,8 +1494,9 @@
       "completion": "الإكمال",
       "nextSession": "الجلسة القادمة",
       "viewDetails": "عرض التفاصيل",
-      "noCoursesTitle": "لا توجد دورات",
-      "noCoursesDescription": "لا توجد دورات تطابق الفلاتر الحالية."
+      "noCoursesTitle": "لا توجد دورات مسندة",
+      "noCoursesDescription": "لا توجد دورات تطابق الفلاتر الحالية.",
+      "noCoursesAssigned": "لم يتم تعيين أي دورات لك بعد. يرجى التواصل مع مدير الدورات."
     },
     "sidebar": {
       "instructorDashboard": "لوحة تحكم المدرب",
@@ -2186,6 +2187,10 @@
   "courseManagerDashboard": {
     "title": "لوحة تحكم مدير الدورات",
     "subtitle": "مرحباً بعودتك، {name}! إليك نظرة عامة على الدورات.",
+    "dashboard": {
+      "loading": "جاري تحميل لوحة التحكم...",
+      "retry": "حاول مرة أخرى"
+    },
     "sidebar": {
       "courseManagerDashboard": "لوحة تحكم مدير الدورات",
       "dashboard": "لوحة التحكم",
@@ -2201,6 +2206,7 @@
       "nelc": "NELC",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
+      "avatarUploadError": "فشل رفع الصورة الشخصية. يرجى المحاولة مرة أخرى.",
       "logout": "تسجيل الخروج"
     },
     "kpi": {
@@ -2307,7 +2313,8 @@
         "draft": "مسودة",
         "completed": "مكتمل",
         "archived": "مؤرشف",
-        "allCategories": "جميع الفئات"
+        "allCategories": "جميع الفئات",
+        "allDelivery": "جميع أنواع التقديم"
       },
       "status": {
         "active": "نشط",
@@ -2319,7 +2326,107 @@
         "zoom": "زوم",
         "onsite": "حضوري",
         "blended": "مدمج"
+      },
+      "sort": {
+        "newest": "الأحدث أولاً",
+        "oldest": "الأقدم أولاً",
+        "mostStudents": "الأكثر طلاباً",
+        "alphabetical": "أبجدي"
+      },
+      "students": "طلاب",
+      "sessions": "جلسات"
+    },
+    "error": {
+      "title": "حدث خطأ ما",
+      "retry": "حاول مرة أخرى"
+    },
+    "createCourse": {
+      "title": "إنشاء دورة جديدة",
+      "subtitle": "املأ التفاصيل أدناه لإنشاء دورة جديدة وتعيينها لمدرب.",
+      "backToCourses": "العودة إلى الدورات",
+      "basicInfo": "المعلومات الأساسية",
+      "courseTitle": "عنوان الدورة (إنجليزي)",
+      "courseTitlePlaceholder": "أدخل عنوان الدورة",
+      "courseTitleAr": "عنوان الدورة (عربي)",
+      "courseTitleArPlaceholder": "أدخل عنوان الدورة بالعربية",
+      "description": "الوصف (إنجليزي)",
+      "descriptionPlaceholder": "أدخل وصف الدورة",
+      "descriptionAr": "الوصف (عربي)",
+      "descriptionArPlaceholder": "أدخل وصف الدورة بالعربية",
+      "courseImage": "صورة الدورة",
+      "uploadImage": "انقر لرفع الصورة",
+      "imageHint": "JPG أو PNG أو WebP. الحجم الموصى به 800x400 بكسل",
+      "imageUploaded": "تم رفع الصورة بنجاح",
+      "thumbnailError": "فشل في رفع الصورة",
+      "instructor": "تعيين المدرب",
+      "selectInstructor": "تعيين المدرب",
+      "chooseInstructor": "— اختر مدرباً —",
+      "loadingInstructors": "جاري تحميل المدربين...",
+      "instructorRequired": "يرجى اختيار مدرب",
+      "courseSettings": "إعدادات الدورة",
+      "deliveryType": "نوع التقديم",
+      "deliveryZoom": "زوم (عبر الإنترنت)",
+      "deliveryOnsite": "حضوري",
+      "deliveryBlended": "مدمج",
+      "maxEnrollment": "الحد الأقصى للتسجيل",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "cancel": "إلغاء",
+      "createButton": "إنشاء الدورة",
+      "titleRequired": "عنوان الدورة مطلوب",
+      "success": "تم إنشاء الدورة بنجاح!",
+      "error": "فشل في إنشاء الدورة"
+    },
+    "courseDetail": {
+      "backToCourses": "العودة إلى الدورات",
+      "editCourse": "تعديل الدورة",
+      "activate": "تفعيل",
+      "archive": "أرشفة",
+      "delete": "حذف",
+      "loadError": "فشل في تحميل تفاصيل الدورة",
+      "deleteSuccess": "تم حذف الدورة بنجاح",
+      "deleteError": "فشل في حذف الدورة",
+      "statusUpdated": "تم تحديث حالة الدورة",
+      "statusError": "فشل في تحديث حالة الدورة",
+      "confirmDelete": "حذف الدورة",
+      "confirmDeleteDesc": "هل أنت متأكد من حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء. يمكن حذف الدورات المسودة فقط.",
+      "confirmDeleteBtn": "حذف الدورة",
+      "cancel": "إلغاء",
+      "deliveryType": "نوع التقديم",
+      "delivery": {
+        "zoom": "زوم (عبر الإنترنت)",
+        "onsite": "حضوري",
+        "blended": "مدمج"
+      },
+      "maxEnrollment": "الحد الأقصى للتسجيل",
+      "startDate": "تاريخ البدء",
+      "endDate": "تاريخ الانتهاء",
+      "description": "الوصف",
+      "noDescription": "لم يتم تقديم وصف.",
+      "modules": "الوحدات",
+      "noModules": "لم تتم إضافة وحدات لهذه الدورة بعد.",
+      "minutes": "دقيقة",
+      "moduleType": "النوع",
+      "moduleDuration": "المدة",
+      "courseInfo": "معلومات الدورة",
+      "courseId": "معرف الدورة",
+      "createdAt": "تاريخ الإنشاء",
+      "updatedAt": "آخر تحديث",
+      "instructorId": "معرف المدرب",
+      "status": {
+        "active": "نشطة",
+        "draft": "مسودة",
+        "completed": "مكتملة",
+        "archived": "مؤرشفة"
       }
+    },
+    "editCourse": {
+      "title": "تعديل الدورة",
+      "subtitle": "قم بتحديث تفاصيل الدورة أدناه.",
+      "backToCourse": "العودة إلى الدورة",
+      "saveChanges": "حفظ التغييرات",
+      "success": "تم تحديث الدورة بنجاح!",
+      "error": "فشل في تحديث الدورة"
     },
     "sessionsPage": {
       "title": "الجلسات",
@@ -2337,6 +2444,9 @@
       "statusLive": "مباشر",
       "statusCompleted": "مكتملة",
       "statusCancelled": "ملغاة",
+      "allStatuses": "جميع الحالات",
+      "noSessions": "لم يتم العثور على جلسات",
+      "noSessionsDesc": "لا توجد جلسات تطابق الفلاتر الحالية.",
       "scheduleSessionTitle": "جدولة جلسة جديدة",
       "type": {
         "zoom": "زوم",
@@ -2398,6 +2508,8 @@
       "reject": "رفض",
       "noContent": "لم يتم العثور على محتوى",
       "noContentDesc": "لا توجد عناصر محتوى تطابق الفلاتر",
+      "emptyTitle": "لا توجد مراجعات محتوى",
+      "emptyDesc": "ستظهر طلبات مراجعة المحتوى هنا عندما يقدم المدربون مواد للمراجعة.",
       "stats": {
         "pending": "قيد الانتظار",
         "approved": "معتمد",
@@ -2432,7 +2544,8 @@
         "total": "إجمالي التقييمات",
         "totalAttempts": "إجمالي المحاولات",
         "avgScore": "متوسط الدرجة",
-        "avgCompletion": "متوسط الإكمال"
+        "avgCompletion": "متوسط الإكمال",
+        "active": "التقييمات النشطة"
       },
       "filters": {
         "allTypes": "جميع الأنواع",
@@ -2462,6 +2575,8 @@
         "questions": "الأسئلة",
         "attempts": "المحاولات",
         "avgScore": "متوسط الدرجة",
+        "totalMarks": "الدرجة الكلية",
+        "passingMarks": "درجة النجاح",
         "status": "الحالة",
         "actions": "الإجراءات"
       },
@@ -2493,9 +2608,12 @@
         "totalEnrollments": "إجمالي التسجيلات",
         "completionRate": "معدل الإكمال",
         "avgScore": "متوسط درجة التقييم",
-        "certifications": "الشهادات الصادرة"
+        "certifications": "الشهادات الصادرة",
+        "totalCourses": "إجمالي الدورات",
+        "activeCourses": "الدورات النشطة"
       },
       "topCourses": "أفضل الدورات أداءً",
+      "noCourses": "لا توجد دورات متاحة بعد",
       "enrolled": "مسجل",
       "completion": "الإكمال",
       "enrollmentTrend": "اتجاه التسجيل",
@@ -2507,6 +2625,8 @@
       "title": "الإعدادات",
       "subtitle": "إدارة حسابك وتفضيلاتك",
       "saveChanges": "حفظ التغييرات",
+      "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
+      "profileError": "فشل في تحديث الملف الشخصي",
       "tabs": {
         "profile": "الملف الشخصي",
         "notifications": "الإشعارات",
@@ -2611,6 +2731,7 @@
       "uptime": "وقت التشغيل",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
+      "avatarUploadError": "فشل رفع الصورة الشخصية. يرجى المحاولة مرة أخرى.",
       "logout": "تسجيل الخروج"
     },
     "kpi": {

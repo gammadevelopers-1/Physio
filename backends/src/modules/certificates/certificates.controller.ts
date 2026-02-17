@@ -49,7 +49,7 @@ export class CertificatesController {
    * POST /certificates/batch — Batch process certificate requests.
    * Static route must come BEFORE parameterized :id route.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post('certificates/batch')
   @HttpCode(HttpStatus.OK)
   async batch(
@@ -62,7 +62,7 @@ export class CertificatesController {
   /**
    * GET /certificates/:id — Get a single certificate request detail.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('certificates/:id')
   async findOne(
     @Param('id') id: string,
@@ -75,7 +75,7 @@ export class CertificatesController {
    * PATCH /certificates/:id/approve — Approve a certificate request.
    * Generates a placeholder PDF.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch('certificates/:id/approve')
   async approve(
     @Param('id') id: string,
@@ -88,7 +88,7 @@ export class CertificatesController {
    * PATCH /certificates/:id/reject — Reject a certificate request.
    * Requires a rejection note.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch('certificates/:id/reject')
   async reject(
     @Param('id') id: string,
@@ -102,7 +102,7 @@ export class CertificatesController {
    * PATCH /certificates/:id/hold — Place a certificate request on hold.
    * Requires an audit note.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch('certificates/:id/hold')
   async hold(
     @Param('id') id: string,
@@ -119,7 +119,7 @@ export class CertificatesController {
    * - Instructor: only for their own courses.
    * - Admin: all.
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('instructor/certificates')
   async findPending(
     @CurrentUser() user: AuthenticatedUser,

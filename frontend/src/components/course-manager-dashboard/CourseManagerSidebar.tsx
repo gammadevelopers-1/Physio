@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   BookOpen,
@@ -16,6 +18,8 @@ import {
   Pencil,
   Briefcase,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
 
 interface CourseManagerProfile {
   name: string;
@@ -35,6 +39,21 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
   const pathname = usePathname();
   const t = useTranslations("courseManagerDashboard");
   const isRTL = locale === "ar";
+  const { refreshUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+    } catch {
+      toast.error(t("sidebar.avatarUploadError"));
+    }
+    e.target.value = "";
+  };
 
   const navItems = [
     {
@@ -62,7 +81,6 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
       label: t("sidebar.contentReview"),
       href: `/${locale}/dashboard/manager/content-review`,
       icon: FileCheck,
-      badge: 5,
     },
     {
       label: t("sidebar.assessments"),
@@ -100,9 +118,18 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
                 width={80}
                 height={80}
                 className="object-cover w-full h-full"
+                unoptimized={!!manager.avatar}
               />
             </div>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
             <button
+              onClick={() => avatarInputRef.current?.click()}
               className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white`}
               aria-label={t("sidebar.editProfile")}
             >
@@ -142,9 +169,12 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
+        <Link
+          href={`/${locale}/dashboard/manager/settings`}
+          className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+        >
           {t("sidebar.viewProfile")}
-        </button>
+        </Link>
       </div>
 
       {/* Navigation Card */}

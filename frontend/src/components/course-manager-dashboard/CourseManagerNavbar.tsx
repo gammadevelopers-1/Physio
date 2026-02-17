@@ -245,6 +245,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                   width={40}
                   height={40}
                   className="object-cover w-full h-full"
+                  unoptimized={!!manager.avatar}
                 />
               </div>
               <ChevronDown
@@ -310,6 +311,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                   width={40}
                   height={40}
                   className="object-cover w-full h-full"
+                  unoptimized={!!manager.avatar}
                 />
               </div>
               <div>

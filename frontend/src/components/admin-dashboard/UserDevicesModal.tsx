@@ -53,7 +53,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
     try {
       await adminApi.revokeUserDevice(user.id, deviceId);
       setDevices((prev) => prev.filter((d) => d.id !== deviceId));
-      toast.success(t("trustedDevices.revokeSuccess"));
+      toast.success(t("trustedDevices.adminRevokeSuccess"));
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to revoke device");
     } finally {
@@ -67,7 +67,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
       await adminApi.revokeAllUserDevices(user.id);
       setDevices([]);
       setShowRevokeAllConfirm(false);
-      toast.success(t("trustedDevices.revokeAllSuccess"));
+      toast.success(t("trustedDevices.adminRevokeAllSuccess"));
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to revoke devices");
     } finally {

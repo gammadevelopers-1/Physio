@@ -321,6 +321,9 @@
       "revokeSuccess": "Device revoked successfully",
       "revokeAllSuccess": "All devices revoked successfully",
       "revokeAllConfirm": "Are you sure? You'll need to verify all devices again.",
+      "sessionRevokedMessage": "Your session has been ended. Please sign in again to verify your identity.",
+      "adminRevokeSuccess": "Device revoked and user session invalidated",
+      "adminRevokeAllSuccess": "All devices revoked and user sessions invalidated",
       "lastUsed": "Last used",
       "addedOn": "Added on"
     },
@@ -2158,7 +2161,12 @@
       "loadError": "Failed to load courses.",
       "retry": "Retry",
       "auditTitle": "Audit Traceability",
-      "auditDesc": "Each exported report includes a timestamp, applied filters, and instructor name for audit compliance."
+      "auditDesc": "Each exported report includes a timestamp, applied filters, and instructor name for audit compliance.",
+      "attendanceDescription": "Track student attendance across all sessions with attendance percentages and session-level details.",
+      "progressReport": "Progress Report",
+      "progressDescription": "Monitor student progress, completion rates, and performance trends across your courses.",
+      "nelcReport": "NELC Compliance Report",
+      "nelcDescription": "Generate NELC-compliant reports for accreditation and regulatory submission."
     },
     "settings": {
       "title": "Settings",

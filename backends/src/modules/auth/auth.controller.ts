@@ -227,9 +227,13 @@ export class AuthController {
   async revokeDevice(
     @CurrentUser('id') userId: string,
     @Param('id') deviceId: string,
+    @Res({ passthrough: true }) res: Response,
   ) {
     await this.twoFactorService.revokeDevice(userId, deviceId);
-    return { message: 'Device revoked successfully' };
+    // Also revoke all refresh tokens — forces re-login with 2FA
+    await this.authService.logoutAllDevices(userId);
+    this.clearRefreshCookie(res);
+    return { message: 'Device revoked successfully', sessionRevoked: true };
   }
 
   // ===========================================
@@ -237,9 +241,15 @@ export class AuthController {
   // ===========================================
   @UseGuards(JwtAuthGuard)
   @Delete('trusted-devices')
-  async revokeAllDevices(@CurrentUser('id') userId: string) {
+  async revokeAllDevices(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     await this.twoFactorService.revokeAllDevices(userId);
-    return { message: 'All devices revoked successfully' };
+    // Also revoke all refresh tokens — forces re-login with 2FA
+    await this.authService.logoutAllDevices(userId);
+    this.clearRefreshCookie(res);
+    return { message: 'All devices revoked successfully', sessionRevoked: true };
   }
 
   // ===========================================
@@ -507,7 +517,9 @@ export class AuthController {
     @Param('deviceId') deviceId: string,
   ) {
     await this.twoFactorService.revokeDevice(userId, deviceId);
-    return { message: 'Device revoked successfully' };
+    // Also revoke the target user's sessions — forces them to re-login with 2FA
+    await this.authService.logoutAllDevices(userId);
+    return { message: 'Device revoked successfully', sessionRevoked: true };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -515,6 +527,8 @@ export class AuthController {
   @Delete('users/:id/trusted-devices')
   async adminRevokeAllDevices(@Param('id') userId: string) {
     await this.twoFactorService.revokeAllDevices(userId);
-    return { message: 'All devices revoked successfully' };
+    // Also revoke the target user's sessions — forces them to re-login with 2FA
+    await this.authService.logoutAllDevices(userId);
+    return { message: 'All devices revoked successfully', sessionRevoked: true };
   }
 }

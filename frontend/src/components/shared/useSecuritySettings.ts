@@ -1,12 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { authApi, TrustedDevice, ApiError } from "@/lib/api";
+import { authApi, TrustedDevice, ApiError, removeAccessToken } from "@/lib/api";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 
 export function useSecuritySettings() {
   const t = useTranslations("securitySettings");
+  const router = useRouter();
+  const locale = useLocale();
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [devices, setDevices] = useState<TrustedDevice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +18,14 @@ export function useSecuritySettings() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
   const [showRevokeAllConfirm, setShowRevokeAllConfirm] = useState(false);
+
+  // Force logout: clear local auth state and redirect to login
+  const forceLogout = useCallback(() => {
+    removeAccessToken();
+    document.cookie = "session=; path=/; max-age=0; SameSite=Lax";
+    toast.info(t("trustedDevices.sessionRevokedMessage"));
+    router.push(`/${locale}/signin`);
+  }, [router, locale, t]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -60,13 +72,12 @@ export function useSecuritySettings() {
     setRevokingId(deviceId);
     try {
       await authApi.revokeDevice(deviceId);
-      setDevices((prev) => prev.filter((d) => d.id !== deviceId));
-      toast.success(t("trustedDevices.revokeSuccess"));
+      // Backend revoked all sessions — force logout so user re-authenticates with 2FA
+      forceLogout();
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.message : "Failed to revoke device"
       );
-    } finally {
       setRevokingId(null);
     }
   };
@@ -75,14 +86,12 @@ export function useSecuritySettings() {
     setRevokingAll(true);
     try {
       await authApi.revokeAllDevices();
-      setDevices([]);
-      setShowRevokeAllConfirm(false);
-      toast.success(t("trustedDevices.revokeAllSuccess"));
+      // Backend revoked all sessions — force logout so user re-authenticates with 2FA
+      forceLogout();
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.message : "Failed to revoke devices"
       );
-    } finally {
       setRevokingAll(false);
     }
   };

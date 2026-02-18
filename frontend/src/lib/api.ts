@@ -969,6 +969,70 @@ export const materialsApi = {
 };
 
 // ===========================================
+// Reports API (binary file download)
+// ===========================================
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion';
+export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
+
+export const reportsApi = {
+  /**
+   * Download a report as a binary file.
+   * Triggers browser download automatically.
+   */
+  download: async (
+    type: ReportType,
+    params: { courseId?: string; format?: ReportFormat; dateFrom?: string; dateTo?: string },
+  ): Promise<void> => {
+    const sp = new URLSearchParams();
+    if (params.courseId) sp.set('courseId', params.courseId);
+    if (params.format) sp.set('format', params.format);
+    if (params.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+
+    const token = getAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const deviceId = getDeviceId();
+    if (deviceId) headers['X-Device-Id'] = deviceId;
+
+    const response = await fetch(
+      `${API_URL}/instructor/reports/${type}${qs ? `?${qs}` : ''}`,
+      { method: 'GET', headers, credentials: 'include' },
+    );
+
+    if (!response.ok) {
+      // Try to parse JSON error
+      const ct = response.headers.get('content-type');
+      if (ct?.includes('application/json')) {
+        const data = await response.json();
+        throw new ApiError(response.status, data.message || 'Report generation failed');
+      }
+      throw new ApiError(response.status, 'Report generation failed');
+    }
+
+    // Extract filename from Content-Disposition header
+    const disposition = response.headers.get('content-disposition');
+    let filename = `report.${params.format || 'csv'}`;
+    if (disposition) {
+      const match = disposition.match(/filename="?([^";\n]+)"?/);
+      if (match) filename = match[1];
+    }
+
+    // Download the blob
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+};
+
+// ===========================================
 // Course Manager Dashboard API
 // ===========================================
 

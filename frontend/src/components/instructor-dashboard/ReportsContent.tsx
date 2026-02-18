@@ -1,191 +1,392 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import {
-  BarChart3,
+  instructorApi,
+  reportsApi,
+  type ReportType,
+  type ReportFormat,
+} from "@/lib/api";
+import type { InstructorCourse } from "@/types/instructor-dashboard";
+import { toast } from "sonner";
+import {
   Users,
   Calendar,
   FileText,
-  Award,
-  TrendingUp,
-  Clock,
   Download,
   FileSpreadsheet,
   File,
-  ChevronDown,
-  Filter,
   RefreshCw,
-  Eye,
   BookOpen,
-  ClipboardList,
   UserCheck,
-  GraduationCap,
-  Activity,
+  Loader2,
+  AlertCircle,
+  X,
 } from "lucide-react";
 
-interface ReportType {
-  id: string;
-  title: string;
-  description: string;
+/* ------------------------------------------------------------------ */
+/*  Modal Overlay                                                      */
+/* ------------------------------------------------------------------ */
+function ModalOverlay({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Report type definitions                                            */
+/* ------------------------------------------------------------------ */
+interface ReportTypeConfig {
+  id: ReportType;
   icon: React.ElementType;
   iconBg: string;
   iconColor: string;
-  lastGenerated?: string;
-  dataPoints: number;
+  requiresCourse: boolean;
+  supportsDateRange: boolean;
 }
 
+const REPORT_TYPES: ReportTypeConfig[] = [
+  {
+    id: "attendance",
+    icon: Calendar,
+    iconBg: "bg-[#DCFCE7]",
+    iconColor: "text-[#22C55E]",
+    requiresCourse: false,
+    supportsDateRange: true,
+  },
+  {
+    id: "gradebook",
+    icon: BookOpen,
+    iconBg: "bg-[#E0E7FF]",
+    iconColor: "text-[#6366F1]",
+    requiresCourse: true,
+    supportsDateRange: false,
+  },
+  {
+    id: "enrollment",
+    icon: Users,
+    iconBg: "bg-[#DBEAFE]",
+    iconColor: "text-[#3B82F6]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+  {
+    id: "completion",
+    icon: UserCheck,
+    iconBg: "bg-[#FCE7F3]",
+    iconColor: "text-[#EC4899]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+];
+
+/* ------------------------------------------------------------------ */
+/*  Export Format Modal                                                 */
+/* ------------------------------------------------------------------ */
+function ExportModal({
+  reportType,
+  courses,
+  onClose,
+  t,
+}: {
+  reportType: ReportTypeConfig;
+  courses: InstructorCourse[];
+  onClose: () => void;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [selectedFormat, setSelectedFormat] = useState<ReportFormat>("pdf");
+  const [generating, setGenerating] = useState(false);
+
+  const canGenerate = reportType.requiresCourse ? !!selectedCourse : true;
+
+  const handleGenerate = async () => {
+    if (!canGenerate) return;
+    setGenerating(true);
+    try {
+      await reportsApi.download(reportType.id, {
+        courseId: selectedCourse || undefined,
+        format: selectedFormat,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      });
+      toast.success(t("reports.downloadSuccess"));
+      onClose();
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : t("reports.downloadError");
+      toast.error(message);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const formatOptions: { id: ReportFormat; label: string; icon: React.ElementType; desc: string }[] = [
+    { id: "pdf", label: "PDF", icon: FileText, desc: t("reports.pdfDesc") },
+    { id: "csv", label: "CSV", icon: FileSpreadsheet, desc: t("reports.csvDesc") },
+    { id: "xlsx", label: "Excel", icon: File, desc: t("reports.excelDesc") },
+  ];
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-10 h-10 rounded-lg ${reportType.iconBg} flex items-center justify-center`}
+              >
+                <reportType.icon
+                  className={`w-5 h-5 ${reportType.iconColor}`}
+                />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("reports.exportReport")}
+                </h3>
+                <p className="text-sm text-[#6B7280]">
+                  {t(`reports.${reportType.id}Report`)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Course Selector */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              {t("reports.selectCourse")}
+              {reportType.requiresCourse && (
+                <span className="text-red-500 ml-0.5">*</span>
+              )}
+            </label>
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            >
+              {reportType.requiresCourse ? (
+                <option value="">{t("reports.chooseCourse")}</option>
+              ) : (
+                <option value="">{t("reports.allCourses")}</option>
+              )}
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date Range (only for attendance) */}
+          {reportType.supportsDateRange && (
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                  {t("reports.dateFrom")}
+                </label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                  {t("reports.dateTo")}
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Export Format */}
+          <p className="text-sm font-medium text-[#374151] mb-2">
+            {t("reports.selectFormat")}
+          </p>
+          <div className="space-y-2 mb-5">
+            {formatOptions.map((fmt) => (
+              <button
+                key={fmt.id}
+                onClick={() => setSelectedFormat(fmt.id)}
+                className={`w-full flex items-center gap-4 p-3 border rounded-xl transition-colors ${
+                  selectedFormat === fmt.id
+                    ? "border-[#3B82F6] bg-[#EFF6FF]"
+                    : "border-[#E5E7EB] hover:border-[#3B82F6] hover:bg-[#EFF6FF]"
+                }`}
+              >
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                    selectedFormat === fmt.id
+                      ? "bg-white"
+                      : "bg-[#F3F4F6]"
+                  }`}
+                >
+                  <fmt.icon
+                    className={`w-4 h-4 ${
+                      selectedFormat === fmt.id
+                        ? "text-[#3B82F6]"
+                        : "text-[#6B7280]"
+                    }`}
+                  />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-[#1F2937]">
+                    {fmt.label}
+                  </p>
+                  <p className="text-xs text-[#6B7280]">{fmt.desc}</p>
+                </div>
+                {selectedFormat === fmt.id && (
+                  <div className="w-5 h-5 rounded-full bg-[#3B82F6] flex items-center justify-center">
+                    <svg
+                      className="w-3 h-3 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={3}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+            >
+              {t("reports.cancel")}
+            </button>
+            <button
+              onClick={handleGenerate}
+              disabled={!canGenerate || generating}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                canGenerate && !generating
+                  ? "btn-gold text-white"
+                  : "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
+              }`}
+            >
+              {generating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t("reports.generating")}
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  {t("reports.generate")}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main Component                                                     */
+/* ------------------------------------------------------------------ */
 const ReportsContent = () => {
   const instructor = useInstructorProfile();
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
-  const isRTL = locale === "ar";
 
-  const [selectedCourse, setSelectedCourse] = useState("all");
-  const [selectedDateRange, setSelectedDateRange] = useState("30days");
-  const [generatingReport, setGeneratingReport] = useState<string | null>(null);
-  const [showExportModal, setShowExportModal] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
+  // Courses for the filter / selector
+  const [courses, setCourses] = useState<InstructorCourse[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [courseError, setCourseError] = useState("");
 
-  const courses = [
-    { id: "all", name: t("reports.allCourses") },
-    { id: "course1", name: "Lower Back Pain Management" },
-    { id: "course2", name: "Sports Rehabilitation" },
-    { id: "course3", name: "Pediatric Physiotherapy" },
-  ];
+  // Quick-generate state (for card buttons)
+  const [generatingReport, setGeneratingReport] = useState<ReportType | null>(
+    null
+  );
 
-  const dateRanges = [
-    { id: "7days", name: t("reports.last7Days") },
-    { id: "30days", name: t("reports.last30Days") },
-    { id: "90days", name: t("reports.last90Days") },
-    { id: "year", name: t("reports.lastYear") },
-    { id: "all", name: t("reports.allTime") },
-  ];
+  // Modal state
+  const [exportModal, setExportModal] = useState<ReportTypeConfig | null>(null);
 
-  const reportTypes: ReportType[] = [
-    {
-      id: "enrollment",
-      title: t("reports.enrollmentReport"),
-      description: t("reports.enrollmentDesc"),
-      icon: Users,
-      iconBg: "bg-[#DBEAFE]",
-      iconColor: "text-[#3B82F6]",
-      lastGenerated: "Feb 5, 2024",
-      dataPoints: 156,
-    },
-    {
-      id: "attendance",
-      title: t("reports.attendanceReport"),
-      description: t("reports.attendanceDesc"),
-      icon: Calendar,
-      iconBg: "bg-[#DCFCE7]",
-      iconColor: "text-[#22C55E]",
-      lastGenerated: "Feb 4, 2024",
-      dataPoints: 342,
-    },
-    {
-      id: "assessment",
-      title: t("reports.assessmentReport"),
-      description: t("reports.assessmentDesc"),
-      icon: ClipboardList,
-      iconBg: "bg-[#E0E7FF]",
-      iconColor: "text-[#6366F1]",
-      lastGenerated: "Feb 3, 2024",
-      dataPoints: 89,
-    },
-    {
-      id: "progress",
-      title: t("reports.progressReport"),
-      description: t("reports.progressDesc"),
-      icon: TrendingUp,
-      iconBg: "bg-[#FEF9C3]",
-      iconColor: "text-[#EAB308]",
-      lastGenerated: "Feb 2, 2024",
-      dataPoints: 234,
-    },
-    {
-      id: "completion",
-      title: t("reports.completionReport"),
-      description: t("reports.completionDesc"),
-      icon: UserCheck,
-      iconBg: "bg-[#FCE7F3]",
-      iconColor: "text-[#EC4899]",
-      lastGenerated: "Feb 1, 2024",
-      dataPoints: 67,
-    },
-    {
-      id: "certificate",
-      title: t("reports.certificateReport"),
-      description: t("reports.certificateDesc"),
-      icon: GraduationCap,
-      iconBg: "bg-[#FEF3C7]",
-      iconColor: "text-[#D4A520]",
-      lastGenerated: "Jan 30, 2024",
-      dataPoints: 45,
-    },
-    {
-      id: "engagement",
-      title: t("reports.engagementReport"),
-      description: t("reports.engagementDesc"),
-      icon: Activity,
-      iconBg: "bg-[#FFEDD5]",
-      iconColor: "text-[#F97316]",
-      lastGenerated: "Jan 28, 2024",
-      dataPoints: 512,
-    },
-  ];
+  // Global filter
+  const [filterCourse, setFilterCourse] = useState("");
+  const [filterFormat, setFilterFormat] = useState<ReportFormat>("pdf");
 
-  const exportFormats = [
-    {
-      id: "pdf",
-      name: "PDF",
-      icon: FileText,
-      description: t("reports.pdfDesc"),
-    },
-    {
-      id: "csv",
-      name: "CSV",
-      icon: FileSpreadsheet,
-      description: t("reports.csvDesc"),
-    },
-    {
-      id: "excel",
-      name: "Excel",
-      icon: File,
-      description: t("reports.excelDesc"),
-    },
-  ];
+  // Fetch courses
+  const fetchCourses = useCallback(async () => {
+    setLoadingCourses(true);
+    setCourseError("");
+    try {
+      const res = await instructorApi.getCourses({ limit: 200 });
+      setCourses(res.data);
+    } catch {
+      setCourseError(t("reports.loadError"));
+    } finally {
+      setLoadingCourses(false);
+    }
+  }, [t]);
 
-  const handleGenerateReport = (reportId: string) => {
-    setGeneratingReport(reportId);
-    // Simulate report generation
-    setTimeout(() => {
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  // Quick generate — uses the global filter course + default PDF format
+  const handleQuickGenerate = async (rt: ReportTypeConfig) => {
+    if (rt.requiresCourse && !filterCourse) {
+      // Open modal instead so user can pick a course
+      setExportModal(rt);
+      return;
+    }
+    setGeneratingReport(rt.id);
+    try {
+      await reportsApi.download(rt.id, {
+        courseId: filterCourse || undefined,
+        format: filterFormat,
+      });
+      toast.success(t("reports.downloadSuccess"));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : t("reports.downloadError");
+      toast.error(message);
+    } finally {
       setGeneratingReport(null);
-    }, 2000);
-  };
-
-  const handleExport = (report: ReportType) => {
-    setSelectedReport(report);
-    setShowExportModal(true);
-  };
-
-  const handleExportFormat = (format: string) => {
-    // Handle export logic
-    console.log(`Exporting ${selectedReport?.id} as ${format}`);
-    setShowExportModal(false);
-    setSelectedReport(null);
-  };
-
-  // Quick Stats
-  const stats = {
-    totalReports: reportTypes.length,
-    generatedThisMonth: 24,
-    dataPointsAnalyzed: "1,445",
-    avgGenerationTime: "2.3s",
+    }
   };
 
   return (
@@ -209,337 +410,229 @@ const ReportsContent = () => {
                   <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
                     {t("reports.title")}
                   </h1>
-                  <p className="text-sm text-[#6B7280] mt-1">{t("reports.subtitle")}</p>
+                  <p className="text-sm text-[#6B7280] mt-1">
+                    {t("reports.subtitle")}
+                  </p>
                 </div>
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-[#3B82F6]" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">
-                        {stats.totalReports}
-                      </p>
-                      <p className="text-xs text-[#6B7280]">{t("reports.reportTypes")}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-[#22C55E]" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">
-                        {stats.generatedThisMonth}
-                      </p>
-                      <p className="text-xs text-[#6B7280]">
-                        {t("reports.generatedThisMonth")}
-                      </p>
+                {REPORT_TYPES.map((rt) => (
+                  <div
+                    key={rt.id}
+                    className="bg-white rounded-xl border border-[#E5E7EB] p-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-lg ${rt.iconBg} flex items-center justify-center`}
+                      >
+                        <rt.icon className={`w-5 h-5 ${rt.iconColor}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[#1F2937]">
+                          {t(`reports.${rt.id}Report`)}
+                        </p>
+                        <p className="text-xs text-[#6B7280]">
+                          {rt.requiresCourse
+                            ? t("reports.perCourse")
+                            : t("reports.allOrPerCourse")}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#E0E7FF] flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-[#6366F1]" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">
-                        {stats.dataPointsAnalyzed}
-                      </p>
-                      <p className="text-xs text-[#6B7280]">
-                        {t("reports.dataPointsAnalyzed")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-[#EAB308]" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">
-                        {stats.avgGenerationTime}
-                      </p>
-                      <p className="text-xs text-[#6B7280]">
-                        {t("reports.avgGenTime")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Filters */}
+              {/* Global Filters */}
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 flex flex-col md:flex-row gap-3">
+                    {/* Course filter */}
                     <select
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      value={filterCourse}
+                      onChange={(e) => setFilterCourse(e.target.value)}
+                      disabled={loadingCourses}
+                      className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
                     >
-                      {courses.map((course) => (
-                        <option key={course.id} value={course.id}>
-                          {course.name}
+                      <option value="">{t("reports.allCourses")}</option>
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.title}
                         </option>
                       ))}
                     </select>
+
+                    {/* Format filter */}
                     <select
-                      value={selectedDateRange}
-                      onChange={(e) => setSelectedDateRange(e.target.value)}
-                      className="flex-1 md:w-auto px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      value={filterFormat}
+                      onChange={(e) =>
+                        setFilterFormat(e.target.value as ReportFormat)
+                      }
+                      className="md:w-40 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
-                      {dateRanges.map((range) => (
-                        <option key={range.id} value={range.id}>
-                          {range.name}
-                        </option>
-                      ))}
+                      <option value="pdf">PDF</option>
+                      <option value="csv">CSV</option>
+                      <option value="xlsx">Excel (XLSX)</option>
                     </select>
                   </div>
-                  <button className="flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors">
-                    <RefreshCw className="w-4 h-4" />
+
+                  <button
+                    onClick={fetchCourses}
+                    disabled={loadingCourses}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${loadingCourses ? "animate-spin" : ""}`}
+                    />
                     {t("reports.refreshAll")}
                   </button>
                 </div>
               </div>
 
-              {/* Report Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {reportTypes.map((report) => (
-                  <div
-                    key={report.id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
+              {/* Error state */}
+              {courseError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-700">{courseError}</p>
+                  <button
+                    onClick={fetchCourses}
+                    className="ml-auto text-sm font-medium text-red-700 hover:text-red-800"
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div
-                        className={`w-12 h-12 rounded-xl ${report.iconBg} flex items-center justify-center`}
-                      >
-                        <report.icon className={`w-6 h-6 ${report.iconColor}`} />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleExport(report)}
-                          className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                          title={t("reports.export")}
-                        >
-                          <Download className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                          title={t("reports.preview")}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <h3 className="text-base font-semibold text-[#1F2937] mb-1">
-                      {report.title}
-                    </h3>
-                    <p className="text-sm text-[#6B7280] mb-4 line-clamp-2">
-                      {report.description}
-                    </p>
-
-                    <div className="flex items-center justify-between text-xs text-[#9CA3AF] mb-4">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
-                        {t("reports.lastGenerated")}: {report.lastGenerated}
-                      </span>
-                      <span>{report.dataPoints} {t("reports.dataPoints")}</span>
-                    </div>
-
-                    <button
-                      onClick={() => handleGenerateReport(report.id)}
-                      disabled={generatingReport === report.id}
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        generatingReport === report.id
-                          ? "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
-                          : "bg-[#EFF6FF] text-[#3B82F6] hover:bg-[#DBEAFE]"
-                      }`}
-                    >
-                      {generatingReport === report.id ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          {t("reports.generating")}
-                        </>
-                      ) : (
-                        <>
-                          <BarChart3 className="w-4 h-4" />
-                          {t("reports.generate")}
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {/* Recent Reports Section */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB]">
-                <div className="p-5 border-b border-[#E5E7EB]">
-                  <h3 className="text-base font-semibold text-[#1F2937]">
-                    {t("reports.recentlyGenerated")}
-                  </h3>
+                    {t("reports.retry")}
+                  </button>
                 </div>
-                <div className="divide-y divide-[#E5E7EB]">
-                  {[
-                    {
-                      name: "Enrollment Report - All Courses",
-                      date: "Feb 5, 2024",
-                      format: "PDF",
-                      size: "245 KB",
-                    },
-                    {
-                      name: "Attendance Report - Lower Back Pain",
-                      date: "Feb 4, 2024",
-                      format: "Excel",
-                      size: "1.2 MB",
-                    },
-                    {
-                      name: "Assessment Report - Sports Rehab",
-                      date: "Feb 3, 2024",
-                      format: "CSV",
-                      size: "156 KB",
-                    },
-                    {
-                      name: "Progress Report - All Courses",
-                      date: "Feb 2, 2024",
-                      format: "PDF",
-                      size: "892 KB",
-                    },
-                  ].map((report, index) => (
+              )}
+
+              {/* Loading state */}
+              {loadingCourses && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
                     <div
-                      key={index}
-                      className="flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors"
+                      key={i}
+                      className="bg-white rounded-xl border border-[#E5E7EB] p-5 animate-pulse"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-[#F3F4F6] flex items-center justify-center">
-                          {report.format === "PDF" ? (
-                            <FileText className="w-5 h-5 text-[#EF4444]" />
-                          ) : report.format === "Excel" ? (
-                            <File className="w-5 h-5 text-[#22C55E]" />
-                          ) : (
-                            <FileSpreadsheet className="w-5 h-5 text-[#3B82F6]" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-[#1F2937]">
-                            {report.name}
-                          </p>
-                          <p className="text-xs text-[#6B7280]">
-                            {report.date} • {report.size}
-                          </p>
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-xl bg-gray-200" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-2/3 bg-gray-200 rounded" />
+                          <div className="h-3 w-full bg-gray-100 rounded" />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-[#F3F4F6] rounded text-xs font-medium text-[#6B7280]">
-                          {report.format}
+                      <div className="h-10 bg-gray-100 rounded-lg" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Report Cards */}
+              {!loadingCourses && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {REPORT_TYPES.map((rt) => (
+                    <div
+                      key={rt.id}
+                      className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4">
+                          <div
+                            className={`w-12 h-12 rounded-xl ${rt.iconBg} flex items-center justify-center flex-shrink-0`}
+                          >
+                            <rt.icon
+                              className={`w-6 h-6 ${rt.iconColor}`}
+                            />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-semibold text-[#1F2937] mb-1">
+                              {t(`reports.${rt.id}Report`)}
+                            </h3>
+                            <p className="text-sm text-[#6B7280] line-clamp-2">
+                              {t(`reports.${rt.id}Desc`)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Info badges */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {rt.requiresCourse && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#FEF3C7] text-[#92400E] rounded text-xs font-medium">
+                            {t("reports.courseRequired")}
+                          </span>
+                        )}
+                        {rt.supportsDateRange && (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#EFF6FF] text-[#1D4ED8] rounded text-xs font-medium">
+                            {t("reports.dateRangeSupported")}
+                          </span>
+                        )}
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#F3F4F6] text-[#6B7280] rounded text-xs font-medium">
+                          CSV / PDF / Excel
                         </span>
-                        <button className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors">
-                          <Download className="w-4 h-4" />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleQuickGenerate(rt)}
+                          disabled={generatingReport === rt.id}
+                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                            generatingReport === rt.id
+                              ? "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
+                              : "bg-[#EFF6FF] text-[#3B82F6] hover:bg-[#DBEAFE]"
+                          }`}
+                        >
+                          {generatingReport === rt.id ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              {t("reports.generating")}
+                            </>
+                          ) : (
+                            <>
+                              <Download className="w-4 h-4" />
+                              {t("reports.quickDownload")}
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setExportModal(rt)}
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                        >
+                          {t("reports.customize")}
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              )}
 
-              {/* Export Modal */}
-              {showExportModal && selectedReport && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-lg ${selectedReport.iconBg} flex items-center justify-center`}
-                          >
-                            <selectedReport.icon
-                              className={`w-5 h-5 ${selectedReport.iconColor}`}
-                            />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-[#1F2937]">
-                              {t("reports.exportReport")}
-                            </h3>
-                            <p className="text-sm text-[#6B7280]">
-                              {selectedReport.title}
-                            </p>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setShowExportModal(false);
-                            setSelectedReport(null);
-                          }}
-                          className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <line x1="18" y1="6" x2="6" y2="18" />
-                            <line x1="6" y1="6" x2="18" y2="18" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      <p className="text-sm text-[#6B7280] mb-4">
-                        {t("reports.selectFormat")}
-                      </p>
-
-                      <div className="space-y-3">
-                        {exportFormats.map((format) => (
-                          <button
-                            key={format.id}
-                            onClick={() => handleExportFormat(format.id)}
-                            className="w-full flex items-center gap-4 p-4 border border-[#E5E7EB] rounded-xl hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors group"
-                          >
-                            <div className="w-10 h-10 rounded-lg bg-[#F3F4F6] flex items-center justify-center group-hover:bg-white">
-                              <format.icon className="w-5 h-5 text-[#6B7280] group-hover:text-[#3B82F6]" />
-                            </div>
-                            <div className="flex-1 text-left">
-                              <p className="text-sm font-medium text-[#1F2937]">
-                                {format.name}
-                              </p>
-                              <p className="text-xs text-[#6B7280]">
-                                {format.description}
-                              </p>
-                            </div>
-                            <Download className="w-5 h-5 text-[#9CA3AF] group-hover:text-[#3B82F6]" />
-                          </button>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setShowExportModal(false);
-                          setSelectedReport(null);
-                        }}
-                        className="w-full mt-4 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                      >
-                        {t("reports.cancel")}
-                      </button>
-                    </div>
+              {/* Audit note */}
+              <div className="bg-[#EFF6FF] rounded-xl border border-[#BFDBFE] p-4">
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-[#1E40AF]">
+                      {t("reports.auditTitle")}
+                    </p>
+                    <p className="text-sm text-[#3B82F6] mt-0.5">
+                      {t("reports.auditDesc")}
+                    </p>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Export Modal */}
+      {exportModal && (
+        <ExportModal
+          reportType={exportModal}
+          courses={courses}
+          onClose={() => setExportModal(null)}
+          t={t}
+        />
+      )}
     </>
   );
 };

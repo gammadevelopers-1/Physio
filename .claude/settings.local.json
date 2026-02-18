@@ -111,7 +111,8 @@
       "Bash(PGPASSWORD=postgres psql:*)",
       "Bash(docker compose restart:*)",
       "Bash(docker compose down:*)",
-      "Bash(docker compose exec:*)"
+      "Bash(docker compose exec:*)",
+      "Bash(docker volume rm:*)"
     ]
   }
 }

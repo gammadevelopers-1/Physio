@@ -629,6 +629,7 @@ import type {
   CourseDetailResponse,
   CourseSession,
   CourseSessionsResponse,
+  CourseModule,
   CreateCourseData,
 } from '@/types/instructor-dashboard';
 
@@ -665,6 +666,49 @@ export const instructorApi = {
   // Sessions for a specific course
   getCourseSessions: (courseId: string) =>
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
+
+  // Course update & delete
+  updateCourse: (courseId: string, data: Record<string, unknown>) =>
+    api.patch<CourseDetailResponse>(`/courses/${courseId}`, data),
+
+  deleteCourse: (courseId: string) =>
+    api.delete<{ message: string }>(`/courses/${courseId}`),
+
+  // Module management
+  addModule: (courseId: string, data: { title: string; titleAr?: string; type: string; durationMinutes?: number }) =>
+    api.post<CourseModule>(`/courses/${courseId}/modules`, data),
+
+  updateModule: (courseId: string, moduleId: string, data: Record<string, unknown>) =>
+    api.patch<CourseModule>(`/courses/${courseId}/modules/${moduleId}`, data),
+
+  deleteModule: (courseId: string, moduleId: string) =>
+    api.delete<{ message: string }>(`/courses/${courseId}/modules/${moduleId}`),
+
+  reorderModules: (courseId: string, modules: { id: string; orderIndex: number }[]) =>
+    api.patch<CourseModule[]>(`/courses/${courseId}/modules/reorder`, { modules }),
+
+  // Session management
+  createSession: (data: Record<string, unknown>) =>
+    api.post<CourseSession>('/sessions', data),
+
+  updateSession: (sessionId: string, data: Record<string, unknown>) =>
+    api.patch<CourseSession>(`/sessions/${sessionId}`, data),
+
+  startSession: (sessionId: string) =>
+    api.post<CourseSession>(`/sessions/${sessionId}/start`, {}),
+
+  endSession: (sessionId: string) =>
+    api.post<CourseSession>(`/sessions/${sessionId}/end`, {}),
+
+  cancelSession: (sessionId: string, cancelReason: string) =>
+    api.patch<CourseSession>(`/sessions/${sessionId}/cancel`, { cancelReason }),
+
+  // Thumbnail upload
+  uploadThumbnail: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<{ url: string; filename: string }>('/storage/upload', fd);
+  },
 };
 
 // ===========================================

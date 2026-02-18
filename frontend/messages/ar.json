@@ -1979,7 +1979,14 @@
       "showing": "عرض",
       "of": "من",
       "students": "طلاب",
-      "statusAtrisk": "معرض للخطر"
+      "statusAtrisk": "معرض للخطر",
+      "errorLoading": "فشل في تحميل الطلاب",
+      "loading": "جارٍ تحميل الطلاب...",
+      "retry": "إعادة المحاولة",
+      "never": "أبداً",
+      "noStudents": "لم يتم العثور على طلاب",
+      "noStudentsDesc": "لا يوجد طلاب يطابقون الفلاتر الحالية.",
+      "tableProgress": "التقدم"
     },
     "studentDetail": {
       "backToStudents": "العودة للطلاب",
@@ -2014,7 +2021,18 @@
       "status": "الحالة",
       "passed": "ناجح",
       "failed": "راسب",
-      "recentActivity": "النشاط الأخير"
+      "recentActivity": "النشاط الأخير",
+      "loading": "جارٍ تحميل تفاصيل الطالب...",
+      "retry": "إعادة المحاولة",
+      "avgProgress": "متوسط التقدم",
+      "noEnrollments": "لم يتم العثور على تسجيلات في الدورات.",
+      "totalSessions": "إجمالي الجلسات",
+      "late": "متأخر",
+      "excused": "معذور",
+      "attendanceRate": "نسبة الحضور",
+      "noAttendanceRecords": "لم يتم العثور على سجلات حضور.",
+      "noAssessments": "لا توجد درجات تقييم متاحة بعد.",
+      "noActivity": "لا يوجد نشاط حديث لعرضه."
     },
     "assessments": {
       "title": "التقييمات",

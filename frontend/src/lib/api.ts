@@ -632,6 +632,9 @@ import type {
   CourseModule,
   CreateCourseData,
   AttendanceRecord,
+  InstructorStudent,
+  AtRiskStudent,
+  StudentDetailResponse,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -741,6 +744,16 @@ export const instructorApi = {
 
   updateAttendance: (attendanceId: string, data: { status?: string; note?: string }) =>
     api.patch<AttendanceRecord>(`/attendance/${attendanceId}`, data),
+
+  // Students
+  getStudents: () =>
+    api.get<InstructorStudent[]>('/instructor/students'),
+
+  getStudentDetail: (studentId: string) =>
+    api.get<StudentDetailResponse>(`/instructor/students/${studentId}`),
+
+  getAtRiskStudents: () =>
+    api.get<AtRiskStudent[]>('/instructor/at-risk'),
 };
 
 // ===========================================

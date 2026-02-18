@@ -1767,7 +1767,14 @@
       "showing": "Showing",
       "of": "of",
       "students": "students",
-      "statusAtrisk": "At Risk"
+      "statusAtrisk": "At Risk",
+      "errorLoading": "Failed to load students",
+      "loading": "Loading students...",
+      "retry": "Retry",
+      "never": "Never",
+      "noStudents": "No students found",
+      "noStudentsDesc": "No students match your current filters.",
+      "tableProgress": "Progress"
     },
     "studentDetail": {
       "backToStudents": "Back to Students",
@@ -1802,7 +1809,18 @@
       "status": "Status",
       "passed": "Passed",
       "failed": "Failed",
-      "recentActivity": "Recent Activity"
+      "recentActivity": "Recent Activity",
+      "loading": "Loading student details...",
+      "retry": "Retry",
+      "avgProgress": "Avg. Progress",
+      "noEnrollments": "No course enrollments found.",
+      "totalSessions": "Total Sessions",
+      "late": "Late",
+      "excused": "Excused",
+      "attendanceRate": "Attendance Rate",
+      "noAttendanceRecords": "No attendance records found.",
+      "noAssessments": "No assessment scores available yet.",
+      "noActivity": "No recent activity to display."
     },
     "assessments": {
       "title": "Assessments",

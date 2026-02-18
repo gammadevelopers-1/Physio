@@ -261,6 +261,66 @@ export interface AttendanceRecord {
   studentEmail: string;
 }
 
+// ─── Instructor Students ────────────────────────────────────
+
+export interface InstructorStudent {
+  studentId: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  totalEnrollments: number;
+  averageProgress: number;
+  lastAccessedAt: string | null;
+}
+
+export interface AtRiskStudent {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  attendanceRate: number;
+  lastAccessedAt: string | null;
+  riskReasons: string[];
+}
+
+export interface StudentDetailEnrollment {
+  id: string;
+  courseId: string;
+  status: string;
+  progress: number;
+  enrolledAt: string;
+  completedAt: string | null;
+  lastAccessedAt: string | null;
+  courseTitle: string;
+  courseTitleAr: string | null;
+}
+
+export interface StudentAttendanceSummary {
+  totalSessions: number;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  attendanceRate: number;
+}
+
+export interface StudentAssessmentScore {
+  assessmentId: string;
+  title: string;
+  score: number;
+  maxScore: number;
+}
+
+export interface StudentDetailResponse {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  enrollments: StudentDetailEnrollment[];
+  attendanceSummary: StudentAttendanceSummary;
+  assessmentScores: StudentAssessmentScore[];
+}
+
 // ─── Create Course ──────────────────────────────────────────
 
 export interface CreateCourseData {

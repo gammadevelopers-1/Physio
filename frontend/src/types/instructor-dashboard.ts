@@ -242,6 +242,25 @@ export interface CourseSessionsResponse {
   totalPages: number;
 }
 
+// ─── Attendance ─────────────────────────────────────────────
+
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+
+export interface AttendanceRecord {
+  id: string;
+  sessionId: string;
+  studentId: string;
+  status: string;
+  joinedAt: string | null;
+  leftAt: string | null;
+  durationMinutes: number | null;
+  markedBy: string | null;
+  note: string | null;
+  studentFirstName: string | null;
+  studentLastName: string | null;
+  studentEmail: string;
+}
+
 // ─── Create Course ──────────────────────────────────────────
 
 export interface CreateCourseData {

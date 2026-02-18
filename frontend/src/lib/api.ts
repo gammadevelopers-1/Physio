@@ -631,6 +631,7 @@ import type {
   CourseSessionsResponse,
   CourseModule,
   CreateCourseData,
+  AttendanceRecord,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -709,6 +710,37 @@ export const instructorApi = {
     fd.append('file', file);
     return uploadFormData<{ url: string; filename: string }>('/storage/upload', fd);
   },
+
+  // Sessions listing with filters
+  getSessions: (params?: { dateRange?: string; status?: string; courseId?: string; page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateRange) sp.set('dateRange', params.dateRange);
+    if (params?.status) sp.set('status', params.status);
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<CourseSessionsResponse>(`/sessions${qs ? `?${qs}` : ''}`);
+  },
+
+  getTodaySessions: () =>
+    api.get<CourseSession[]>('/sessions/today'),
+
+  getUpcomingSessions: () =>
+    api.get<CourseSession[]>('/sessions/upcoming'),
+
+  // Attendance
+  getSessionAttendance: (sessionId: string) =>
+    api.get<AttendanceRecord[]>(`/sessions/${sessionId}/attendance`),
+
+  markAttendance: (sessionId: string, data: { studentId: string; status: string; note?: string }) =>
+    api.post<AttendanceRecord>(`/sessions/${sessionId}/attendance`, data),
+
+  bulkMarkAttendance: (sessionId: string, records: { studentId: string; status: string; note?: string }[]) =>
+    api.post<AttendanceRecord[]>(`/sessions/${sessionId}/attendance/bulk`, { records }),
+
+  updateAttendance: (attendanceId: string, data: { status?: string; note?: string }) =>
+    api.patch<AttendanceRecord>(`/attendance/${attendanceId}`, data),
 };
 
 // ===========================================

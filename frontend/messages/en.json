@@ -1627,6 +1627,9 @@
       "today": "Today",
       "allCourses": "All Courses",
       "allTypes": "All Types",
+      "allStatuses": "All Statuses",
+      "filters": "Filter",
+      "retry": "Retry",
       "zoom": "Zoom",
       "onsite": "On-site",
       "hybrid": "Hybrid",
@@ -1637,6 +1640,7 @@
       "noSessionsDesc": "Schedule a new session to get started",
       "enrolled": "enrolled",
       "startSession": "Start Session",
+      "endSession": "End Session",
       "viewDetails": "View Details",
       "editSession": "Edit Session",
       "joinSession": "Join Session",
@@ -1656,6 +1660,10 @@
       "attendance": "Attendance",
       "share": "Share",
       "edit": "Edit",
+      "statusUpcoming": "Scheduled",
+      "statusLive": "Live",
+      "statusCompleted": "Completed",
+      "statusCancelled": "Cancelled",
       "type": {
         "zoom": "Zoom",
         "onsite": "On-site",
@@ -1675,9 +1683,57 @@
         "sessionType": "Session Type",
         "onsite": "On-site",
         "hybrid": "Hybrid",
+        "zoomLink": "Zoom Link",
+        "roomName": "Room Name",
+        "roomNamePlaceholder": "e.g. Room 204",
+        "venueAddress": "Venue Address",
+        "venueAddressPlaceholder": "Enter venue address",
         "notifyStudents": "Notify enrolled students about this session",
         "cancel": "Cancel",
         "schedule": "Schedule Session"
+      },
+      "schedule": {
+        "success": "Session scheduled successfully",
+        "error": "Failed to schedule session",
+        "conflict": "Schedule conflict: overlaps with \"{session}\""
+      },
+      "lifecycle": {
+        "started": "Session started successfully",
+        "startError": "Failed to start session",
+        "ended": "Session ended successfully",
+        "endError": "Failed to end session",
+        "cancelled": "Session cancelled successfully",
+        "cancelError": "Failed to cancel session"
+      },
+      "cancelSession": {
+        "title": "Cancel Session",
+        "warning": "Are you sure you want to cancel \"{title}\"? This action cannot be undone and enrolled students will be notified.",
+        "reasonLabel": "Cancellation Reason",
+        "reasonPlaceholder": "Please provide a reason for cancellation...",
+        "goBack": "Go Back",
+        "confirm": "Cancel Session"
+      },
+      "editModal": {
+        "title": "Edit Session",
+        "success": "Session updated successfully",
+        "error": "Failed to update session",
+        "save": "Save Changes"
+      },
+      "attendance": {
+        "title": "Mark Attendance",
+        "summary": "Summary",
+        "markAll": "Mark All",
+        "present": "Present",
+        "absent": "Absent",
+        "late": "Late",
+        "excused": "Excused",
+        "noStudents": "No students enrolled in this course",
+        "noChanges": "No attendance changes to save",
+        "saved": "Attendance saved successfully",
+        "saveError": "Failed to save attendance",
+        "loadError": "Failed to load attendance data",
+        "cancel": "Cancel",
+        "save": "Save Attendance"
       }
     },
     "students": {

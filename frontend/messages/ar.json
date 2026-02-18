@@ -1839,6 +1839,9 @@
       "today": "اليوم",
       "allCourses": "جميع الدورات",
       "allTypes": "جميع الأنواع",
+      "allStatuses": "جميع الحالات",
+      "filters": "تصفية",
+      "retry": "إعادة المحاولة",
       "zoom": "زوم",
       "onsite": "حضوري",
       "hybrid": "هجين",
@@ -1849,6 +1852,7 @@
       "noSessionsDesc": "جدول جلسة جديدة للبدء",
       "enrolled": "مسجل",
       "startSession": "بدء الجلسة",
+      "endSession": "إنهاء الجلسة",
       "viewDetails": "عرض التفاصيل",
       "editSession": "تعديل الجلسة",
       "joinSession": "الانضمام للجلسة",
@@ -1868,6 +1872,10 @@
       "attendance": "الحضور",
       "share": "مشاركة",
       "edit": "تعديل",
+      "statusUpcoming": "مجدولة",
+      "statusLive": "مباشرة",
+      "statusCompleted": "مكتملة",
+      "statusCancelled": "ملغاة",
       "type": {
         "zoom": "زوم",
         "onsite": "حضوري",
@@ -1887,9 +1895,57 @@
         "sessionType": "نوع الجلسة",
         "onsite": "حضوري",
         "hybrid": "هجين",
+        "zoomLink": "رابط زوم",
+        "roomName": "اسم القاعة",
+        "roomNamePlaceholder": "مثال: قاعة 204",
+        "venueAddress": "عنوان المكان",
+        "venueAddressPlaceholder": "أدخل عنوان المكان",
         "notifyStudents": "إشعار الطلاب المسجلين بهذه الجلسة",
         "cancel": "إلغاء",
         "schedule": "جدولة الجلسة"
+      },
+      "schedule": {
+        "success": "تم جدولة الجلسة بنجاح",
+        "error": "فشل في جدولة الجلسة",
+        "conflict": "تعارض في الجدول: تتداخل مع \"{session}\""
+      },
+      "lifecycle": {
+        "started": "تم بدء الجلسة بنجاح",
+        "startError": "فشل في بدء الجلسة",
+        "ended": "تم إنهاء الجلسة بنجاح",
+        "endError": "فشل في إنهاء الجلسة",
+        "cancelled": "تم إلغاء الجلسة بنجاح",
+        "cancelError": "فشل في إلغاء الجلسة"
+      },
+      "cancelSession": {
+        "title": "إلغاء الجلسة",
+        "warning": "هل أنت متأكد من إلغاء \"{title}\"؟ لا يمكن التراجع عن هذا الإجراء وسيتم إشعار الطلاب المسجلين.",
+        "reasonLabel": "سبب الإلغاء",
+        "reasonPlaceholder": "يرجى تقديم سبب للإلغاء...",
+        "goBack": "العودة",
+        "confirm": "إلغاء الجلسة"
+      },
+      "editModal": {
+        "title": "تعديل الجلسة",
+        "success": "تم تحديث الجلسة بنجاح",
+        "error": "فشل في تحديث الجلسة",
+        "save": "حفظ التغييرات"
+      },
+      "attendance": {
+        "title": "تسجيل الحضور",
+        "summary": "الملخص",
+        "markAll": "تحديد الكل",
+        "present": "حاضر",
+        "absent": "غائب",
+        "late": "متأخر",
+        "excused": "معذور",
+        "noStudents": "لا يوجد طلاب مسجلين في هذه الدورة",
+        "noChanges": "لا توجد تغييرات في الحضور للحفظ",
+        "saved": "تم حفظ الحضور بنجاح",
+        "saveError": "فشل في حفظ الحضور",
+        "loadError": "فشل في تحميل بيانات الحضور",
+        "cancel": "إلغاء",
+        "save": "حفظ الحضور"
       }
     },
     "students": {

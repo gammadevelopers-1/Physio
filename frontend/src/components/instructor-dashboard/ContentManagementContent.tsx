@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { instructorApi, materialsApi } from "@/lib/api";
+import { toast } from "sonner";
+import type {
+  InstructorCourse,
+  CourseMaterialResponse,
+  MaterialType,
+} from "@/types/instructor-dashboard";
 import {
   Search,
   Filter,
@@ -16,7 +23,6 @@ import {
   FileText,
   File,
   Image,
-  MoreVertical,
   Check,
   AlertTriangle,
   X,
@@ -25,7 +31,6 @@ import {
   Trash2,
   Edit3,
   Eye,
-  Copy,
   Grid,
   List,
   HardDrive,
@@ -33,21 +38,586 @@ import {
   Video,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
+  RefreshCw,
+  Replace,
+  Loader2,
 } from "lucide-react";
 
-interface ContentFile {
-  id: string;
-  name: string;
-  type: "video" | "pdf" | "document" | "image" | "other";
-  size: string;
-  course: string;
-  uploadedAt: string;
-  status: "live" | "processing" | "failed";
-  wcagCompliant: boolean | "warning" | "pending";
-  version: string;
-  downloads: number;
+// ─── Helpers ───────────────────────────────────────────────
+
+function formatFileSize(bytes: number | string): string {
+  const b = typeof bytes === "string" ? parseInt(bytes, 10) : bytes;
+  if (!b || isNaN(b)) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let i = 0;
+  let size = b;
+  while (size >= 1024 && i < units.length - 1) {
+    size /= 1024;
+    i++;
+  }
+  return `${size.toFixed(size < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
+
+function detectMaterialType(file: File): MaterialType | null {
+  const mime = file.type;
+  if (mime.startsWith("video/")) return "video";
+  if (mime === "application/pdf") return "pdf";
+  if (mime.startsWith("image/")) return "image";
+  if (
+    mime.includes("msword") ||
+    mime.includes("wordprocessingml") ||
+    mime.includes("ms-excel") ||
+    mime.includes("spreadsheetml") ||
+    mime.includes("ms-powerpoint") ||
+    mime.includes("presentationml")
+  )
+    return "document";
+  return null;
+}
+
+const ALLOWED_MIMES = [
+  "video/mp4", "video/mpeg", "video/webm", "video/quicktime", "video/x-msvideo",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "image/jpeg", "image/png", "image/webp", "image/gif",
+];
+
+// ─── Modal Overlay ─────────────────────────────────────────
+
+const ModalOverlay = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    {children}
+  </div>
+);
+
+// ─── Upload Modal ──────────────────────────────────────────
+
+interface UploadModalProps {
+  courses: InstructorCourse[];
+  onClose: () => void;
+  onUploaded: () => void;
+  t: ReturnType<typeof useTranslations>;
+}
+
+const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
+  const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "");
+  const [title, setTitle] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [detectedType, setDetectedType] = useState<MaterialType | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  const handleFileSelect = (f: File) => {
+    if (!ALLOWED_MIMES.includes(f.type)) {
+      setError(t("content.unsupportedType"));
+      return;
+    }
+    setFile(f);
+    setError("");
+    const type = detectMaterialType(f);
+    setDetectedType(type);
+    if (!title) {
+      setTitle(f.name.replace(/\.[^.]+$/, ""));
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) handleFileSelect(droppedFile);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleUpload = async () => {
+    if (!file || !selectedCourseId || !title.trim() || !detectedType) return;
+    setUploading(true);
+    setProgress(0);
+    setError("");
+    try {
+      await materialsApi.uploadWithProgress(
+        selectedCourseId,
+        file,
+        title.trim(),
+        detectedType,
+        (pct) => setProgress(pct),
+      );
+      toast.success(t("content.uploadSuccess"));
+      onUploaded();
+      onClose();
+    } catch {
+      setError(t("content.uploadError"));
+      toast.error(t("content.uploadError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.uploadTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* File drop zone */}
+          <div
+            ref={dropRef}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
+              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[#E5E7EB] hover:border-[#3B82F6]"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept={ALLOWED_MIMES.join(",")}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFileSelect(f);
+              }}
+            />
+            {file ? (
+              <div>
+                <Check className="w-8 h-8 mx-auto mb-2 text-[#22C55E]" />
+                <p className="text-sm font-medium text-[#1F2937] truncate">{file.name}</p>
+                <p className="text-xs text-[#6B7280] mt-1">
+                  {formatFileSize(file.size)} &bull; {detectedType?.toUpperCase()}
+                </p>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setFile(null); setDetectedType(null); }}
+                  className="mt-2 text-xs text-[#EF4444] hover:underline"
+                >
+                  {t("content.removeFile")}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#EFF6FF] flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-[#3B82F6]" />
+                </div>
+                <p className="text-sm text-[#374151] mb-1">{t("content.dragDrop")}</p>
+                <p className="text-xs text-[#6B7280]">{t("content.orBrowse")}</p>
+                <p className="text-xs text-[#9CA3AF] mt-2">{t("content.supportedFormats")}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Title */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.materialTitle")}</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t("content.titlePlaceholder")}
+              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            />
+          </div>
+
+          {/* Course */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.selectCourse")}</label>
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            >
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>{c.title}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Progress */}
+          {uploading && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs text-[#6B7280] mb-1">
+                <span>{t("content.uploading")}</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="w-full bg-[#E5E7EB] rounded-full h-2">
+                <div
+                  className="bg-[#3B82F6] h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
+
+          {/* WCAG Notice */}
+          <div className="mt-4 flex items-start gap-3 p-3 bg-[#EFF6FF] rounded-lg">
+            <FileCheck className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-[#1D4ED8]">{t("content.wcagNotice")}</p>
+              <p className="text-xs text-[#3B82F6] mt-1">{t("content.wcagNoticeDesc")}</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 mt-6">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50">
+              {t("content.cancel")}
+            </button>
+            <button
+              onClick={handleUpload}
+              disabled={uploading || !file || !title.trim() || !selectedCourseId || !detectedType}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {uploading ? t("content.uploading") : t("content.upload")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+};
+
+// ─── Replace Modal ─────────────────────────────────────────
+
+interface ReplaceModalProps {
+  material: CourseMaterialResponse;
+  onClose: () => void;
+  onReplaced: () => void;
+  t: ReturnType<typeof useTranslations>;
+}
+
+const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) => {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (f: File) => {
+    const detectedType = detectMaterialType(f);
+    if (detectedType !== material.type) {
+      setError(t("content.typeMismatch"));
+      return;
+    }
+    setFile(f);
+    setError("");
+  };
+
+  const handleReplace = async () => {
+    if (!file) return;
+    setUploading(true);
+    setProgress(0);
+    setError("");
+    try {
+      await materialsApi.replaceWithProgress(material.id, file, (pct) => setProgress(pct));
+      toast.success(t("content.replaceSuccess"));
+      onReplaced();
+      onClose();
+    } catch {
+      setError(t("content.replaceError"));
+      toast.error(t("content.replaceError"));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.replaceTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Current file info */}
+          <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
+            <p className="text-sm font-medium text-[#1F2937]">{material.title}</p>
+            <p className="text-xs text-[#6B7280] mt-1">
+              v{material.version} &bull; {formatFileSize(material.fileSize)} &bull; {material.type.toUpperCase()}
+            </p>
+          </div>
+
+          <p className="text-sm text-[#6B7280] mb-4">{t("content.replaceDesc")}</p>
+
+          {/* File picker */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
+              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[#E5E7EB] hover:border-[#3B82F6]"
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept={ALLOWED_MIMES.join(",")}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFileSelect(f);
+              }}
+            />
+            {file ? (
+              <div>
+                <Check className="w-6 h-6 mx-auto mb-2 text-[#22C55E]" />
+                <p className="text-sm font-medium text-[#1F2937] truncate">{file.name}</p>
+                <p className="text-xs text-[#6B7280] mt-1">{formatFileSize(file.size)}</p>
+              </div>
+            ) : (
+              <div>
+                <Replace className="w-8 h-8 mx-auto mb-2 text-[#6B7280]" />
+                <p className="text-sm text-[#374151]">{t("content.selectNewFile")}</p>
+                <p className="text-xs text-[#9CA3AF] mt-1">{t("content.sameTypeRequired")}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Progress */}
+          {uploading && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs text-[#6B7280] mb-1">
+                <span>{t("content.uploading")}</span>
+                <span>{progress}%</span>
+              </div>
+              <div className="w-full bg-[#E5E7EB] rounded-full h-2">
+                <div className="bg-[#3B82F6] h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
+          )}
+
+          {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
+
+          <div className="flex gap-3 mt-6">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+              {t("content.cancel")}
+            </button>
+            <button
+              onClick={handleReplace}
+              disabled={uploading || !file}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F97316] text-white rounded-lg text-sm font-medium hover:bg-[#EA580C] disabled:opacity-50"
+            >
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Replace className="w-4 h-4" />}
+              {uploading ? t("content.uploading") : t("content.replace")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+};
+
+// ─── Edit Modal ────────────────────────────────────────────
+
+interface EditModalProps {
+  material: CourseMaterialResponse;
+  onClose: () => void;
+  onUpdated: () => void;
+  t: ReturnType<typeof useTranslations>;
+}
+
+const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
+  const [title, setTitle] = useState(material.title);
+  const [captionsUrl, setCaptionsUrl] = useState(material.captionsUrl || "");
+  const [transcriptUrl, setTranscriptUrl] = useState(material.transcriptUrl || "");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    try {
+      const data: Record<string, string> = {};
+      if (title.trim() !== material.title) data.title = title.trim();
+      if (captionsUrl !== (material.captionsUrl || "")) data.captionsUrl = captionsUrl;
+      if (transcriptUrl !== (material.transcriptUrl || "")) data.transcriptUrl = transcriptUrl;
+
+      if (Object.keys(data).length === 0) {
+        onClose();
+        return;
+      }
+
+      await materialsApi.update(material.id, data);
+      toast.success(t("content.updateSuccess"));
+      onUpdated();
+      onClose();
+    } catch {
+      toast.error(t("content.updateError"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.editTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Title */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.materialTitle")}</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            />
+          </div>
+
+          {/* WCAG Status display */}
+          <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg">
+            <p className="text-xs font-medium text-[#6B7280] mb-1">{t("content.wcagStatus")}</p>
+            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+              material.wcagStatus === "pass" ? "bg-[#DCFCE7] text-[#22C55E]" :
+              material.wcagStatus === "warning" ? "bg-[#FEF9C3] text-[#EAB308]" :
+              material.wcagStatus === "fail" ? "bg-[#FEE2E2] text-[#EF4444]" :
+              "bg-[#F3F4F6] text-[#6B7280]"
+            }`}>
+              {material.wcagStatus === "pass" ? <Check className="w-3 h-3" /> :
+               material.wcagStatus === "warning" ? <AlertTriangle className="w-3 h-3" /> :
+               material.wcagStatus === "fail" ? <X className="w-3 h-3" /> :
+               <Clock className="w-3 h-3" />}
+              {material.wcagStatus === "pass" ? t("content.wcagPass") :
+               material.wcagStatus === "warning" ? t("content.wcagWarning") :
+               material.wcagStatus === "fail" ? t("content.wcagFail") :
+               t("content.wcagPending")}
+            </span>
+          </div>
+
+          {/* Captions URL (for videos) */}
+          {material.type === "video" && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.captionsUrl")}</label>
+                <input
+                  type="text"
+                  value={captionsUrl}
+                  onChange={(e) => setCaptionsUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                />
+                <p className="text-xs text-[#9CA3AF] mt-1">{t("content.captionsUrlHint")}</p>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.transcriptUrl")}</label>
+                <input
+                  type="text"
+                  value={transcriptUrl}
+                  onChange={(e) => setTranscriptUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Info */}
+          <div className="p-3 bg-[#F9FAFB] rounded-lg text-xs text-[#6B7280] space-y-1">
+            <p>{t("content.version")}: v{material.version}</p>
+            <p>{t("content.type")}: {material.type.toUpperCase()}</p>
+            <p>{t("content.tableSize")}: {formatFileSize(material.fileSize)}</p>
+          </div>
+
+          <div className="flex gap-3 mt-6">
+            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+              {t("content.cancel")}
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || !title.trim()}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {t("content.save")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+};
+
+// ─── Delete Confirm ────────────────────────────────────────
+
+interface DeleteConfirmProps {
+  material: CourseMaterialResponse;
+  onClose: () => void;
+  onDeleted: () => void;
+  t: ReturnType<typeof useTranslations>;
+}
+
+const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) => {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await materialsApi.delete(material.id);
+      toast.success(t("content.deleteSuccess"));
+      onDeleted();
+      onClose();
+    } catch {
+      toast.error(t("content.deleteError"));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="p-6 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#FEE2E2] flex items-center justify-center">
+            <Trash2 className="w-6 h-6 text-[#EF4444]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.deleteConfirmTitle")}</h3>
+          <p className="text-sm text-[#6B7280] mb-1">{t("content.deleteConfirmDesc")}</p>
+          <p className="text-sm font-medium text-[#1F2937] mb-6">&ldquo;{material.title}&rdquo;</p>
+
+          <div className="flex gap-3">
+            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+              {t("content.cancel")}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#EF4444] text-white rounded-lg text-sm font-medium hover:bg-[#DC2626] disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {t("content.delete")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ModalOverlay>
+  );
+};
+
+// ─── Main Component ────────────────────────────────────────
 
 const ContentManagementContent = () => {
   const instructor = useInstructorProfile();
@@ -55,23 +625,203 @@ const ContentManagementContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
+  // Data
+  const [courses, setCourses] = useState<InstructorCourse[]>([]);
+  const [materials, setMaterials] = useState<CourseMaterialResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [showFilters, setShowFilters] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
-  // Mock data
-  const courses = [
-    { id: "all", name: t("content.allCourses") },
-    { id: "course1", name: "Lower Back Pain Management" },
-    { id: "course2", name: "Sports Rehabilitation" },
-    { id: "course3", name: "Pediatric Physiotherapy" },
-  ];
+  // Modals
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [replacingMaterial, setReplacingMaterial] = useState<CourseMaterialResponse | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<CourseMaterialResponse | null>(null);
+  const [deletingMaterial, setDeletingMaterial] = useState<CourseMaterialResponse | null>(null);
 
+  // ── Fetch courses ────────────────────────────────────────
+  const fetchCourses = useCallback(async () => {
+    try {
+      const res = await instructorApi.getCourses({ limit: 100 });
+      setCourses(res.data);
+      return res.data;
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // ── Fetch materials ──────────────────────────────────────
+  const fetchMaterials = useCallback(async (courseList: InstructorCourse[], courseFilter: string) => {
+    try {
+      if (courseFilter !== "all") {
+        const data = await materialsApi.list(courseFilter);
+        setMaterials(data);
+      } else {
+        // Fetch materials for all courses in parallel
+        const results = await Promise.all(
+          courseList.map((c) => materialsApi.list(c.id).catch(() => [] as CourseMaterialResponse[]))
+        );
+        setMaterials(results.flat());
+      }
+    } catch {
+      setError(t("content.loadError"));
+    }
+  }, [t]);
+
+  // ── Initial load ─────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      const courseList = await fetchCourses();
+      if (cancelled) return;
+      if (courseList.length === 0) {
+        setLoading(false);
+        return;
+      }
+      await fetchMaterials(courseList, "all");
+      if (!cancelled) setLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [fetchCourses, fetchMaterials]);
+
+  // ── Refetch when course filter changes ───────────────────
+  const handleCourseChange = useCallback(async (courseId: string) => {
+    setSelectedCourse(courseId);
+    setCurrentPage(1);
+    setLoading(true);
+    await fetchMaterials(courses, courseId);
+    setLoading(false);
+  }, [courses, fetchMaterials]);
+
+  const refetch = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    await fetchMaterials(courses, selectedCourse);
+    setLoading(false);
+  }, [courses, selectedCourse, fetchMaterials]);
+
+  // ── Filtering & pagination ───────────────────────────────
+  const filteredMaterials = useMemo(() => {
+    return materials.filter((m) => {
+      const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = selectedType === "all" || m.type === selectedType;
+      const matchesStatus = selectedStatus === "all" || m.status === selectedStatus;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [materials, searchQuery, selectedType, selectedStatus]);
+
+  const totalPages = Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE);
+  const paginatedMaterials = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredMaterials.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredMaterials, currentPage]);
+
+  // ── Derived stats ────────────────────────────────────────
+  const stats = useMemo(() => {
+    const totalFiles = materials.length;
+    const totalBytes = materials.reduce((sum, m) => {
+      const size = typeof m.fileSize === "string" ? parseInt(m.fileSize, 10) : m.fileSize;
+      return sum + (isNaN(size) ? 0 : size);
+    }, 0);
+    const liveFiles = materials.filter((m) => m.status === "live").length;
+    const wcagPass = materials.filter((m) => m.wcagStatus === "pass").length;
+    return { totalFiles, totalStorage: formatFileSize(totalBytes), liveFiles, wcagPass };
+  }, [materials]);
+
+  // ── Course name lookup ───────────────────────────────────
+  const courseNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    courses.forEach((c) => { map[c.id] = c.title; });
+    return map;
+  }, [courses]);
+
+  // ── Icon helpers ─────────────────────────────────────────
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case "video": return <FileVideo className="w-5 h-5" />;
+      case "pdf": return <FileText className="w-5 h-5" />;
+      case "document": return <File className="w-5 h-5" />;
+      case "image": return <Image className="w-5 h-5" />;
+      default: return <File className="w-5 h-5" />;
+    }
+  };
+
+  const getFileIconBg = (type: string) => {
+    switch (type) {
+      case "video": return "bg-[#FEE2E2] text-[#EF4444]";
+      case "pdf": return "bg-[#FFEDD5] text-[#F97316]";
+      case "document": return "bg-[#DBEAFE] text-[#3B82F6]";
+      case "image": return "bg-[#D1FAE5] text-[#10B981]";
+      default: return "bg-[#F3F4F6] text-[#6B7280]";
+    }
+  };
+
+  const getStatusStyle = (status: string) => {
+    switch (status) {
+      case "live": return "bg-[#DCFCE7] text-[#22C55E]";
+      case "processing": return "bg-[#FEF9C3] text-[#EAB308]";
+      case "failed": return "bg-[#FEE2E2] text-[#EF4444]";
+      default: return "bg-[#F3F4F6] text-[#6B7280]";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "live": return <Check className="w-3 h-3" />;
+      case "processing": return <Clock className="w-3 h-3" />;
+      case "failed": return <X className="w-3 h-3" />;
+      default: return null;
+    }
+  };
+
+  const getWcagStyle = (wcag: string) => {
+    if (wcag === "pass") return "bg-[#DCFCE7] text-[#22C55E]";
+    if (wcag === "warning") return "bg-[#FEF9C3] text-[#EAB308]";
+    if (wcag === "fail") return "bg-[#FEE2E2] text-[#EF4444]";
+    return "bg-[#F3F4F6] text-[#6B7280]"; // pending (gray)
+  };
+
+  const getWcagIcon = (wcag: string) => {
+    if (wcag === "pass") return <Check className="w-3 h-3" />;
+    if (wcag === "warning") return <AlertTriangle className="w-3 h-3" />;
+    if (wcag === "fail") return <X className="w-3 h-3" />;
+    return <Clock className="w-3 h-3" />; // pending
+  };
+
+  const getWcagLabel = (wcag: string) => {
+    if (wcag === "pass") return t("content.wcagPass");
+    if (wcag === "warning") return t("content.wcagWarning");
+    if (wcag === "fail") return t("content.wcagFail");
+    return t("content.wcagPending"); // pending
+  };
+
+  const handlePreview = (m: CourseMaterialResponse) => {
+    if (m.fileUrl) {
+      window.open(m.fileUrl, "_blank");
+    }
+  };
+
+  const handleDownload = (m: CourseMaterialResponse) => {
+    if (m.fileUrl) {
+      const a = document.createElement("a");
+      a.href = m.fileUrl;
+      a.download = m.title;
+      a.click();
+    }
+  };
+
+  // ── Types & statuses filter options ──────────────────────
   const types = [
     { id: "all", name: t("content.allTypes") },
     { id: "video", name: t("content.typeVideo") },
@@ -87,203 +837,47 @@ const ContentManagementContent = () => {
     { id: "failed", name: t("content.statusFailed") },
   ];
 
-  const files: ContentFile[] = [
-    {
-      id: "1",
-      name: "Module 1 - Introduction to Lower Back Pain.mp4",
-      type: "video",
-      size: "245 MB",
-      course: "Lower Back Pain Management",
-      uploadedAt: "Feb 5, 2024",
-      status: "live",
-      wcagCompliant: true,
-      version: "v2.1",
-      downloads: 156,
-    },
-    {
-      id: "2",
-      name: "Assessment Guidelines.pdf",
-      type: "pdf",
-      size: "2.4 MB",
-      course: "Lower Back Pain Management",
-      uploadedAt: "Feb 3, 2024",
-      status: "live",
-      wcagCompliant: true,
-      version: "v1.3",
-      downloads: 89,
-    },
-    {
-      id: "3",
-      name: "Module 5 - Advanced Techniques.mp4",
-      type: "video",
-      size: "312 MB",
-      course: "Lower Back Pain Management",
-      uploadedAt: "Feb 1, 2024",
-      status: "processing",
-      wcagCompliant: "pending",
-      version: "v1.0",
-      downloads: 0,
-    },
-    {
-      id: "4",
-      name: "Case Study Examples.docx",
-      type: "document",
-      size: "1.8 MB",
-      course: "Sports Rehabilitation",
-      uploadedAt: "Jan 28, 2024",
-      status: "live",
-      wcagCompliant: "warning",
-      version: "v2.0",
-      downloads: 67,
-    },
-    {
-      id: "5",
-      name: "Anatomy Reference Chart.png",
-      type: "image",
-      size: "4.2 MB",
-      course: "Pediatric Physiotherapy",
-      uploadedAt: "Jan 25, 2024",
-      status: "live",
-      wcagCompliant: false,
-      version: "v1.0",
-      downloads: 234,
-    },
-    {
-      id: "6",
-      name: "Sports Rehab Protocol.pdf",
-      type: "pdf",
-      size: "5.6 MB",
-      course: "Sports Rehabilitation",
-      uploadedAt: "Jan 22, 2024",
-      status: "failed",
-      wcagCompliant: false,
-      version: "v1.0",
-      downloads: 0,
-    },
-  ];
-
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case "video":
-        return <FileVideo className="w-5 h-5" />;
-      case "pdf":
-        return <FileText className="w-5 h-5" />;
-      case "document":
-        return <File className="w-5 h-5" />;
-      case "image":
-        return <Image className="w-5 h-5" />;
-      default:
-        return <File className="w-5 h-5" />;
-    }
-  };
-
-  const getFileIconBg = (type: string) => {
-    switch (type) {
-      case "video":
-        return "bg-[#FEE2E2] text-[#EF4444]";
-      case "pdf":
-        return "bg-[#FFEDD5] text-[#F97316]";
-      case "document":
-        return "bg-[#DBEAFE] text-[#3B82F6]";
-      case "image":
-        return "bg-[#D1FAE5] text-[#10B981]";
-      default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
-    }
-  };
-
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "live":
-        return "bg-[#DCFCE7] text-[#22C55E]";
-      case "processing":
-        return "bg-[#FEF9C3] text-[#EAB308]";
-      case "failed":
-        return "bg-[#FEE2E2] text-[#EF4444]";
-      default:
-        return "bg-[#F3F4F6] text-[#6B7280]";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "live":
-        return <Check className="w-3 h-3" />;
-      case "processing":
-        return <Clock className="w-3 h-3" />;
-      case "failed":
-        return <X className="w-3 h-3" />;
-      default:
-        return null;
-    }
-  };
-
-  const getWcagStyle = (wcag: boolean | "warning" | "pending") => {
-    if (wcag === true) return "bg-[#DCFCE7] text-[#22C55E]";
-    if (wcag === "warning") return "bg-[#FEF9C3] text-[#EAB308]";
-    if (wcag === "pending") return "bg-[#F3F4F6] text-[#6B7280]";
-    return "bg-[#FEE2E2] text-[#EF4444]";
-  };
-
-  const getWcagIcon = (wcag: boolean | "warning" | "pending") => {
-    if (wcag === true) return <Check className="w-3 h-3" />;
-    if (wcag === "warning") return <AlertTriangle className="w-3 h-3" />;
-    if (wcag === "pending") return <Clock className="w-3 h-3" />;
-    return <X className="w-3 h-3" />;
-  };
-
-  const filteredFiles = files.filter((file) => {
-    const matchesSearch = file.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesCourse =
-      selectedCourse === "all" ||
-      file.course.toLowerCase().includes(
-        courses.find((c) => c.id === selectedCourse)?.name.toLowerCase() || ""
-      );
-    const matchesType = selectedType === "all" || file.type === selectedType;
-    const matchesStatus =
-      selectedStatus === "all" || file.status === selectedStatus;
-
-    return matchesSearch && matchesCourse && matchesType && matchesStatus;
-  });
-
-  // Stats
-  const totalFiles = files.length;
-  const totalStorage = "1.2 GB";
-  const liveFiles = files.filter((f) => f.status === "live").length;
-  const wcagCompliant = files.filter((f) => f.wcagCompliant === true).length;
-
+  // ── Render ───────────────────────────────────────────────
   return (
     <>
       <InstructorNavbar instructor={instructor} />
-
       <div className="bg-[#F9FAFB] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Sidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
               <InstructorSidebar instructor={instructor} />
             </div>
             <InstructorMobileSidebar instructor={instructor} />
 
-            {/* Main Content */}
             <div className="flex-1 min-w-0 space-y-6">
               {/* Header */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">
-                    {t("content.title")}
-                  </h1>
+                  <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">{t("content.title")}</h1>
                   <p className="text-sm text-[#6B7280] mt-1">{t("content.subtitle")}</p>
                 </div>
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  <Upload className="w-4 h-4" />
-                  {t("content.uploadNew")}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={refetch}
+                    className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                    title={t("content.refresh")}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (courses.length === 0) {
+                        toast.error(t("content.noCourseError"));
+                        return;
+                      }
+                      setShowUploadModal(true);
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {t("content.uploadNew")}
+                  </button>
+                </div>
               </div>
 
               {/* Stats Cards */}
@@ -294,7 +888,7 @@ const ContentManagementContent = () => {
                       <FolderOpen className="w-5 h-5 text-[#3B82F6]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{totalFiles}</p>
+                      <p className="text-2xl font-bold text-[#1F2937]">{stats.totalFiles}</p>
                       <p className="text-xs text-[#6B7280]">{t("content.totalFiles")}</p>
                     </div>
                   </div>
@@ -305,7 +899,7 @@ const ContentManagementContent = () => {
                       <HardDrive className="w-5 h-5 text-[#6366F1]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{totalStorage}</p>
+                      <p className="text-2xl font-bold text-[#1F2937]">{stats.totalStorage}</p>
                       <p className="text-xs text-[#6B7280]">{t("content.storageUsed")}</p>
                     </div>
                   </div>
@@ -316,7 +910,7 @@ const ContentManagementContent = () => {
                       <Check className="w-5 h-5 text-[#22C55E]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{liveFiles}</p>
+                      <p className="text-2xl font-bold text-[#1F2937]">{stats.liveFiles}</p>
                       <p className="text-xs text-[#6B7280]">{t("content.liveContent")}</p>
                     </div>
                   </div>
@@ -327,450 +921,452 @@ const ContentManagementContent = () => {
                       <FileCheck className="w-5 h-5 text-[#EC4899]" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-[#1F2937]">{wcagCompliant}</p>
+                      <p className="text-2xl font-bold text-[#1F2937]">{stats.wcagPass}</p>
                       <p className="text-xs text-[#6B7280]">{t("content.wcagCompliant")}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Search and Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="relative flex-1">
-                    <Search
-                      className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
-                    />
-                    <input
-                      type="text"
-                      placeholder={t("content.searchPlaceholder")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
-                    >
-                      <Filter className="w-4 h-4" />
-                      {t("content.filters")}
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
-                      />
-                    </button>
-
-                    {/* View Mode Toggle */}
-                    <div className="flex border border-[#E5E7EB] rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => setViewMode("list")}
-                        className={`p-2.5 ${
-                          viewMode === "list"
-                            ? "bg-[#3B82F6] text-white"
-                            : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"
-                        }`}
-                      >
-                        <List className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setViewMode("grid")}
-                        className={`p-2.5 ${
-                          viewMode === "grid"
-                            ? "bg-[#3B82F6] text-white"
-                            : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"
-                        }`}
-                      >
-                        <Grid className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Desktop Filters */}
-                  <div className="hidden md:flex gap-3">
-                    <select
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      {courses.map((course) => (
-                        <option key={course.id} value={course.id}>
-                          {course.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      {types.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      {statuses.map((status) => (
-                        <option key={status.id} value={status.id}>
-                          {status.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              {/* Loading / Error states */}
+              {loading && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                  <span className="ml-3 text-[#6B7280]">{t("content.loading")}</span>
                 </div>
+              )}
 
-                {/* Mobile Filters */}
-                {showFilters && (
-                  <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] grid grid-cols-3 gap-3">
-                    <select
-                      value={selectedCourse}
-                      onChange={(e) => setSelectedCourse(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      {courses.map((course) => (
-                        <option key={course.id} value={course.id}>
-                          {course.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      {types.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      {statuses.map((status) => (
-                        <option key={status.id} value={status.id}>
-                          {status.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
+              {error && !loading && (
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                  <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
+                  <p className="text-[#EF4444] mb-4">{error}</p>
+                  <button onClick={refetch} className="px-4 py-2 btn-gold text-white rounded-lg text-sm">
+                    {t("content.retry")}
+                  </button>
+                </div>
+              )}
 
-              {/* Content List View */}
-              {viewMode === "list" && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                            {t("content.tableFile")}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                            {t("content.tableCourse")}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                            {t("content.tableSize")}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                            {t("content.tableStatus")}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                            {t("content.tableWCAG")}
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                            {t("content.tableActions")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#E5E7EB]">
-                        {filteredFiles.map((file) => (
-                          <tr
-                            key={file.id}
-                            className="hover:bg-[#F9FAFB] transition-colors"
+              {!loading && !error && (
+                <>
+                  {/* Search and Filters */}
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="relative flex-1">
+                        <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
+                        <input
+                          type="text"
+                          placeholder={t("content.searchPlaceholder")}
+                          value={searchQuery}
+                          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                          className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowFilters(!showFilters)}
+                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                        >
+                          <Filter className="w-4 h-4" />
+                          {t("content.filters")}
+                          <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {/* View Mode Toggle */}
+                        <div className="flex border border-[#E5E7EB] rounded-lg overflow-hidden">
+                          <button
+                            onClick={() => setViewMode("list")}
+                            className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"}`}
                           >
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${getFileIconBg(file.type)}`}
-                                >
-                                  {getFileIcon(file.type)}
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-[#1F2937] max-w-[250px] truncate">
-                                    {file.name}
-                                  </p>
-                                  <p className="text-xs text-[#6B7280]">
-                                    {file.version} • {file.uploadedAt}
-                                  </p>
-                                </div>
+                            <List className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setViewMode("grid")}
+                            className={`p-2.5 ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"}`}
+                          >
+                            <Grid className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Desktop Filters */}
+                      <div className="hidden md:flex gap-3">
+                        <select
+                          value={selectedCourse}
+                          onChange={(e) => handleCourseChange(e.target.value)}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          <option value="all">{t("content.allCourses")}</option>
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>{c.title}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={selectedType}
+                          onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          {types.map((t) => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={selectedStatus}
+                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          {statuses.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Mobile Filters */}
+                    {showFilters && (
+                      <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] grid grid-cols-3 gap-3">
+                        <select
+                          value={selectedCourse}
+                          onChange={(e) => handleCourseChange(e.target.value)}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          <option value="all">{t("content.allCourses")}</option>
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>{c.title}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={selectedType}
+                          onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          {types.map((t) => (
+                            <option key={t.id} value={t.id}>{t.name}</option>
+                          ))}
+                        </select>
+                        <select
+                          value={selectedStatus}
+                          onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          {statuses.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Empty state */}
+                  {filteredMaterials.length === 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                      <FolderOpen className="w-12 h-12 text-[#D1D5DB] mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.noFiles")}</h3>
+                      <p className="text-sm text-[#6B7280] mb-6">{t("content.noFilesDesc")}</p>
+                      {courses.length > 0 && (
+                        <button
+                          onClick={() => setShowUploadModal(true)}
+                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium"
+                        >
+                          <Upload className="w-4 h-4" />
+                          {t("content.uploadNew")}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* List View */}
+                  {viewMode === "list" && filteredMaterials.length > 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                                {t("content.tableFile")}
+                              </th>
+                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                                {t("content.tableCourse")}
+                              </th>
+                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                                {t("content.tableSize")}
+                              </th>
+                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                                {t("content.tableStatus")}
+                              </th>
+                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                                {t("content.tableWCAG")}
+                              </th>
+                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                                {t("content.tableActions")}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#E5E7EB]">
+                            {paginatedMaterials.map((m) => (
+                              <tr key={m.id} className="hover:bg-[#F9FAFB] transition-colors">
+                                <td className="px-4 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getFileIconBg(m.type)}`}>
+                                      {getFileIcon(m.type)}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="text-sm font-medium text-[#1F2937] max-w-[250px] truncate">{m.title}</p>
+                                      <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                                        <span>v{m.version}</span>
+                                        <span>&bull;</span>
+                                        <span>{new Date(m.createdAt).toLocaleDateString()}</span>
+                                        {m.version > 1 && (
+                                          <span className="px-1.5 py-0.5 bg-[#DBEAFE] text-[#3B82F6] rounded text-[10px] font-medium">
+                                            {t("content.newVersion")}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className="text-sm text-[#374151] max-w-[150px] truncate block">
+                                    {courseNameMap[m.courseId] || m.courseId}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className="text-sm text-[#6B7280]">{formatFileSize(m.fileSize)}</span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(m.status)}`}>
+                                    {getStatusIcon(m.status)}
+                                    {t(`content.status${m.status.charAt(0).toUpperCase() + m.status.slice(1)}`)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getWcagStyle(m.wcagStatus)}`}
+                                    title={t("content.wcagCompliance")}
+                                  >
+                                    {getWcagIcon(m.wcagStatus)}
+                                    {getWcagLabel(m.wcagStatus)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <div className="flex items-center gap-1">
+                                    {m.fileUrl && (
+                                      <button
+                                        onClick={() => handlePreview(m)}
+                                        className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                                        title={t("content.preview")}
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                    {m.fileUrl && (
+                                      <button
+                                        onClick={() => handleDownload(m)}
+                                        className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                                        title={t("content.download")}
+                                      >
+                                        <Download className="w-4 h-4" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => setEditingMaterial(m)}
+                                      className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                                      title={t("content.edit")}
+                                    >
+                                      <Edit3 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setReplacingMaterial(m)}
+                                      className="p-2 text-[#6B7280] hover:text-[#F97316] hover:bg-[#FFF7ED] rounded-lg transition-colors"
+                                      title={t("content.replace")}
+                                    >
+                                      <Replace className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setDeletingMaterial(m)}
+                                      className="p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
+                                      title={t("content.delete")}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Pagination */}
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                        <p className="text-sm text-[#6B7280]">
+                          {t("content.showing")} {paginatedMaterials.length} {t("content.of")} {filteredMaterials.length} {t("content.files")}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                          </button>
+                          <span className="px-3 py-1 text-sm text-[#374151]">
+                            {currentPage} / {totalPages || 1}
+                          </span>
+                          <button
+                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage >= totalPages}
+                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grid View */}
+                  {viewMode === "grid" && filteredMaterials.length > 0 && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {paginatedMaterials.map((m) => (
+                          <div key={m.id} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow">
+                            {/* File Preview */}
+                            <div className={`h-32 flex items-center justify-center relative ${
+                              m.type === "video" ? "bg-[#FEE2E2]" :
+                              m.type === "pdf" ? "bg-[#FFEDD5]" :
+                              m.type === "image" ? "bg-[#D1FAE5]" : "bg-[#DBEAFE]"
+                            }`}>
+                              {m.type === "video" ? <Video className="w-12 h-12 text-[#EF4444] opacity-50" /> :
+                               m.type === "pdf" ? <FileText className="w-12 h-12 text-[#F97316] opacity-50" /> :
+                               m.type === "image" ? <Image className="w-12 h-12 text-[#10B981] opacity-50" /> :
+                               <File className="w-12 h-12 text-[#3B82F6] opacity-50" />}
+                              {m.version > 1 && (
+                                <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#3B82F6] text-white rounded text-[10px] font-medium">
+                                  v{m.version}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="p-4">
+                              <p className="text-sm font-medium text-[#1F2937] truncate mb-1">{m.title}</p>
+                              <p className="text-xs text-[#6B7280] truncate mb-3">{courseNameMap[m.courseId] || ""}</p>
+
+                              <div className="flex items-center justify-between mb-3">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(m.status)}`}>
+                                  {getStatusIcon(m.status)}
+                                  {t(`content.status${m.status.charAt(0).toUpperCase() + m.status.slice(1)}`)}
+                                </span>
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getWcagStyle(m.wcagStatus)}`}>
+                                  {getWcagIcon(m.wcagStatus)}
+                                  WCAG
+                                </span>
                               </div>
-                            </td>
-                            <td className="px-4 py-4">
-                              <span className="text-sm text-[#374151] max-w-[150px] truncate block">
-                                {file.course}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4">
-                              <span className="text-sm text-[#6B7280]">{file.size}</span>
-                            </td>
-                            <td className="px-4 py-4">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(file.status)}`}
-                              >
-                                {getStatusIcon(file.status)}
-                                {t(`content.status${file.status.charAt(0).toUpperCase() + file.status.slice(1)}`)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4">
-                              <span
-                                className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getWcagStyle(file.wcagCompliant)}`}
-                                title={t("content.wcagCompliance")}
-                              >
-                                {getWcagIcon(file.wcagCompliant)}
-                                {file.wcagCompliant === true
-                                  ? t("content.wcagPass")
-                                  : file.wcagCompliant === "warning"
-                                    ? t("content.wcagWarning")
-                                    : file.wcagCompliant === "pending"
-                                      ? t("content.wcagPending")
-                                      : t("content.wcagFail")}
-                              </span>
-                            </td>
-                            <td className="px-4 py-4">
-                              <div className="flex items-center gap-1">
+
+                              <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
+                                <span>{formatFileSize(m.fileSize)}</span>
+                                <span>v{m.version}</span>
+                              </div>
+
+                              <div className="flex items-center gap-1 mt-3 pt-3 border-t border-[#E5E7EB]">
+                                {m.fileUrl && (
+                                  <button
+                                    onClick={() => handlePreview(m)}
+                                    className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center"
+                                    title={t("content.preview")}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                )}
                                 <button
-                                  className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                  title={t("content.preview")}
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </button>
-                                <button
-                                  className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                  title={t("content.download")}
-                                >
-                                  <Download className="w-4 h-4" />
-                                </button>
-                                <button
-                                  className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
+                                  onClick={() => setEditingMaterial(m)}
+                                  className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center"
                                   title={t("content.edit")}
                                 >
                                   <Edit3 className="w-4 h-4" />
                                 </button>
-                                <button className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
-                                  <MoreVertical className="w-4 h-4" />
+                                <button
+                                  onClick={() => setReplacingMaterial(m)}
+                                  className="flex-1 p-2 text-[#6B7280] hover:text-[#F97316] hover:bg-[#FFF7ED] rounded-lg transition-colors flex items-center justify-center"
+                                  title={t("content.replace")}
+                                >
+                                  <Replace className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => setDeletingMaterial(m)}
+                                  className="flex-1 p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center justify-center"
+                                  title={t("content.delete")}
+                                >
+                                  <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
-                            </td>
-                          </tr>
+                            </div>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Pagination */}
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
-                    <p className="text-sm text-[#6B7280]">
-                      {t("content.showing")} {filteredFiles.length} {t("content.of")}{" "}
-                      {files.length} {t("content.files")}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isRTL ? (
-                          <ChevronRight className="w-4 h-4" />
-                        ) : (
-                          <ChevronLeft className="w-4 h-4" />
-                        )}
-                      </button>
-                      <span className="px-3 py-1 text-sm text-[#374151]">{currentPage}</span>
-                      <button
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
-                      >
-                        {isRTL ? (
-                          <ChevronLeft className="w-4 h-4" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Content Grid View */}
-              {viewMode === "grid" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredFiles.map((file) => (
-                    <div
-                      key={file.id}
-                      className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
-                    >
-                      {/* File Preview */}
-                      <div
-                        className={`h-32 flex items-center justify-center ${
-                          file.type === "video"
-                            ? "bg-[#FEE2E2]"
-                            : file.type === "pdf"
-                              ? "bg-[#FFEDD5]"
-                              : file.type === "image"
-                                ? "bg-[#D1FAE5]"
-                                : "bg-[#DBEAFE]"
-                        }`}
-                      >
-                        {file.type === "video" ? (
-                          <Video className="w-12 h-12 text-[#EF4444] opacity-50" />
-                        ) : file.type === "pdf" ? (
-                          <FileText className="w-12 h-12 text-[#F97316] opacity-50" />
-                        ) : file.type === "image" ? (
-                          <Image className="w-12 h-12 text-[#10B981] opacity-50" />
-                        ) : (
-                          <File className="w-12 h-12 text-[#3B82F6] opacity-50" />
-                        )}
                       </div>
 
-                      <div className="p-4">
-                        <p className="text-sm font-medium text-[#1F2937] truncate mb-1">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-[#6B7280] mb-3">{file.course}</p>
-
-                        <div className="flex items-center justify-between mb-3">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(file.status)}`}
+                      {/* Grid Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
                           >
-                            {getStatusIcon(file.status)}
-                            {t(`content.status${file.status.charAt(0).toUpperCase() + file.status.slice(1)}`)}
-                          </span>
-                          <span
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getWcagStyle(file.wcagCompliant)}`}
+                            {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                          </button>
+                          <span className="text-sm text-[#374151]">{currentPage} / {totalPages}</span>
+                          <button
+                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage >= totalPages}
+                            className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50"
                           >
-                            {getWcagIcon(file.wcagCompliant)}
-                            WCAG
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
-                          <span>{file.size}</span>
-                          <span>{file.version}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 mt-3 pt-3 border-t border-[#E5E7EB]">
-                          <button className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center">
-                            <Download className="w-4 h-4" />
-                          </button>
-                          <button className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center">
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button className="flex-1 p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center justify-center">
-                            <Trash2 className="w-4 h-4" />
+                            {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                           </button>
                         </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Upload Modal */}
-              {showUploadModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                  <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-[#1F2937]">
-                          {t("content.uploadTitle")}
-                        </h3>
-                        <button
-                          onClick={() => setShowUploadModal(false)}
-                          className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </div>
-
-                      {/* Upload Area */}
-                      <div className="border-2 border-dashed border-[#E5E7EB] rounded-xl p-8 text-center hover:border-[#3B82F6] transition-colors cursor-pointer">
-                        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#EFF6FF] flex items-center justify-center">
-                          <Upload className="w-6 h-6 text-[#3B82F6]" />
-                        </div>
-                        <p className="text-sm text-[#374151] mb-1">
-                          {t("content.dragDrop")}
-                        </p>
-                        <p className="text-xs text-[#6B7280]">
-                          {t("content.orBrowse")}
-                        </p>
-                        <p className="text-xs text-[#9CA3AF] mt-2">
-                          {t("content.supportedFormats")}
-                        </p>
-                      </div>
-
-                      {/* Course Selection */}
-                      <div className="mt-4">
-                        <label className="block text-sm font-medium text-[#374151] mb-2">
-                          {t("content.selectCourse")}
-                        </label>
-                        <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]">
-                          {courses
-                            .filter((c) => c.id !== "all")
-                            .map((course) => (
-                              <option key={course.id} value={course.id}>
-                                {course.name}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-
-                      {/* WCAG Notice */}
-                      <div className="mt-4 flex items-start gap-3 p-3 bg-[#EFF6FF] rounded-lg">
-                        <FileCheck className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-[#1D4ED8]">
-                            {t("content.wcagNotice")}
-                          </p>
-                          <p className="text-xs text-[#3B82F6] mt-1">
-                            {t("content.wcagNoticeDesc")}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-3 mt-6">
-                        <button
-                          onClick={() => setShowUploadModal(false)}
-                          className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                        >
-                          {t("content.cancel")}
-                        </button>
-                        <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors">
-                          <Upload className="w-4 h-4" />
-                          {t("content.upload")}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      )}
+                    </>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {showUploadModal && (
+        <UploadModal
+          courses={courses}
+          onClose={() => setShowUploadModal(false)}
+          onUploaded={refetch}
+          t={t}
+        />
+      )}
+      {replacingMaterial && (
+        <ReplaceModal
+          material={replacingMaterial}
+          onClose={() => setReplacingMaterial(null)}
+          onReplaced={refetch}
+          t={t}
+        />
+      )}
+      {editingMaterial && (
+        <EditModal
+          material={editingMaterial}
+          onClose={() => setEditingMaterial(null)}
+          onUpdated={refetch}
+          t={t}
+        />
+      )}
+      {deletingMaterial && (
+        <DeleteConfirm
+          material={deletingMaterial}
+          onClose={() => setDeletingMaterial(null)}
+          onDeleted={refetch}
+          t={t}
+        />
+      )}
     </>
   );
 };

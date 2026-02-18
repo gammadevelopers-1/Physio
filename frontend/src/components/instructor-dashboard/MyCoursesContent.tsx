@@ -20,6 +20,7 @@ import {
   MapPin,
   BookOpen,
   ChevronRight,
+  ChevronLeft,
   BarChart3,
   Settings,
 } from "lucide-react";
@@ -335,7 +336,7 @@ const MyCoursesContent = () => {
                               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
                             >
                               {t("courses.viewDetails")}
-                              <ChevronRight className="w-4 h-4" />
+                              {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                             </Link>
                             <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
                               <BarChart3 className="w-4 h-4" />

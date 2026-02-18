@@ -114,7 +114,11 @@ const InstructorTabs = ({
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        await materialsApi.upload(courseId, file, file.name);
+        const mime = file.type;
+        const type = mime.startsWith("video/") ? "video" :
+          mime === "application/pdf" ? "pdf" :
+          mime.startsWith("image/") ? "image" : "document";
+        await materialsApi.upload(courseId, file, file.name, type);
       }
       onMaterialChange?.();
     } catch {

@@ -624,6 +624,7 @@ import type {
   DashboardSummaryResponse,
   CourseEnrollment,
   AssessmentResponse,
+  AssessmentsListResponse,
   InstructorCoursesResponse,
   InstructorCoursesParams,
   CourseDetailResponse,
@@ -635,6 +636,10 @@ import type {
   InstructorStudent,
   AtRiskStudent,
   StudentDetailResponse,
+  AssessmentQuestion,
+  AssessmentSubmission,
+  ItemAnalysisResponse,
+  CourseMaterialResponse,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -649,6 +654,55 @@ export const instructorApi = {
   // Assessments for a course (for assessment analysis widget)
   getAssessments: (courseId: string) =>
     api.get<{ data: AssessmentResponse[] }>(`/assessments?courseId=${courseId}`),
+
+  // Assessments listing with full filters
+  getAssessmentsList: (params?: { courseId?: string; type?: string; status?: string; page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.type && params.type !== 'all') sp.set('type', params.type);
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<AssessmentsListResponse>(`/assessments${qs ? `?${qs}` : ''}`);
+  },
+
+  // Assessment CRUD
+  createAssessment: (data: { courseId: string; title: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number }) =>
+    api.post<AssessmentResponse>('/assessments', data),
+
+  getAssessmentDetail: (assessmentId: string) =>
+    api.get<AssessmentResponse & { questions: AssessmentQuestion[] }>(`/assessments/${assessmentId}`),
+
+  updateAssessment: (assessmentId: string, data: Record<string, unknown>) =>
+    api.patch<AssessmentResponse>(`/assessments/${assessmentId}`, data),
+
+  deleteAssessment: (assessmentId: string) =>
+    api.delete<{ message: string }>(`/assessments/${assessmentId}`),
+
+  // Questions
+  getAssessmentQuestions: (assessmentId: string) =>
+    api.get<AssessmentQuestion[]>(`/assessments/${assessmentId}/questions`),
+
+  addQuestion: (assessmentId: string, data: { type: string; questionText: string; questionTextAr?: string; options?: { text: string; textAr?: string; isCorrect: boolean }[]; correctAnswer?: string; marks?: number; difficultyLevel?: string }) =>
+    api.post<AssessmentQuestion>(`/assessments/${assessmentId}/questions`, data),
+
+  updateQuestion: (questionId: string, data: Record<string, unknown>) =>
+    api.patch<AssessmentQuestion>(`/questions/${questionId}`, data),
+
+  deleteQuestion: (questionId: string) =>
+    api.delete<{ message: string }>(`/questions/${questionId}`),
+
+  // Submissions & Grading
+  getSubmissions: (assessmentId: string) =>
+    api.get<AssessmentSubmission[]>(`/assessments/${assessmentId}/submissions`),
+
+  gradeSubmission: (submissionId: string, grades: { questionId: string; marksAwarded: number }[]) =>
+    api.patch<AssessmentSubmission>(`/submissions/${submissionId}/grade`, { grades }),
+
+  // Item Analysis
+  getItemAnalysis: (assessmentId: string) =>
+    api.get<ItemAnalysisResponse>(`/assessments/${assessmentId}/item-analysis`),
 
   // Instructor courses listing (My Courses page)
   getCourses: (params?: InstructorCoursesParams) => {
@@ -774,21 +828,115 @@ export const profileApi = {
 // Materials API (content management)
 // ===========================================
 export const materialsApi = {
-  upload: (courseId: string, file: File, title?: string) => {
+  list: (courseId: string, params?: { type?: string; status?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.type && params.type !== 'all') sp.set('type', params.type);
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    const qs = sp.toString();
+    return api.get<CourseMaterialResponse[]>(`/courses/${courseId}/materials${qs ? `?${qs}` : ''}`);
+  },
+
+  upload: (courseId: string, file: File, title: string, type: string, moduleId?: string) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('title', title);
+    fd.append('type', type);
+    if (moduleId) fd.append('moduleId', moduleId);
+    return uploadFormData<CourseMaterialResponse>(`/courses/${courseId}/materials`, fd);
+  },
+
+  uploadWithProgress: (
+    courseId: string,
+    file: File,
+    title: string,
+    type: string,
+    onProgress: (percent: number) => void,
+    moduleId?: string,
+  ): Promise<CourseMaterialResponse> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_URL}/courses/${courseId}/materials`);
+
+      const token = getAccessToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      const deviceId = getDeviceId();
+      if (deviceId) xhr.setRequestHeader('X-Device-Id', deviceId);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error(xhr.responseText || 'Upload failed'));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Upload failed'));
+
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('title', title);
+      fd.append('type', type);
+      if (moduleId) fd.append('moduleId', moduleId);
+      xhr.send(fd);
+    });
+  },
+
+  update: (materialId: string, data: { title?: string; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string }) =>
+    api.patch<CourseMaterialResponse>(`/materials/${materialId}`, data),
+
+  replace: (materialId: string, file: File, title?: string) => {
     const fd = new FormData();
     fd.append('file', file);
     if (title) fd.append('title', title);
-    return uploadFormData<Record<string, unknown>>(`/courses/${courseId}/materials`, fd);
+    return uploadFormData<CourseMaterialResponse>(`/materials/${materialId}/replace`, fd);
+  },
+
+  replaceWithProgress: (
+    materialId: string,
+    file: File,
+    onProgress: (percent: number) => void,
+    title?: string,
+  ): Promise<CourseMaterialResponse> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_URL}/materials/${materialId}/replace`);
+
+      const token = getAccessToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      const deviceId = getDeviceId();
+      if (deviceId) xhr.setRequestHeader('X-Device-Id', deviceId);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error(xhr.responseText || 'Replace failed'));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Replace failed'));
+
+      const fd = new FormData();
+      fd.append('file', file);
+      if (title) fd.append('title', title);
+      xhr.send(fd);
+    });
   },
 
   delete: (materialId: string) =>
     api.delete<{ message: string }>(`/materials/${materialId}`),
-
-  replace: (materialId: string, file: File) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    return uploadFormData<Record<string, unknown>>(`/materials/${materialId}/replace`, fd);
-  },
 };
 
 // ===========================================

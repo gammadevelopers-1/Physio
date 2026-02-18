@@ -139,8 +139,96 @@ export interface AssessmentResponse {
   totalMarks: number;
   passingMarks: number;
   durationMinutes: number | null;
+  attemptsAllowed: number;
   status: string;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface AssessmentsListResponse {
+  data: AssessmentResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ─── Questions ──────────────────────────────────────────────
+
+export interface QuestionOption {
+  text: string;
+  textAr?: string;
+  isCorrect: boolean;
+}
+
+export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay';
+export type DifficultyLevel = 'easy' | 'medium' | 'hard';
+
+export interface AssessmentQuestion {
+  id: string;
+  assessmentId: string | null;
+  courseId: string;
+  type: QuestionType;
+  questionText: string;
+  questionTextAr?: string;
+  options?: QuestionOption[];
+  correctAnswer?: string;
+  marks: number;
+  difficultyLevel?: DifficultyLevel;
+  createdAt: string;
+}
+
+// ─── Submissions ────────────────────────────────────────────
+
+export interface SubmissionAnswer {
+  questionId: string;
+  answer: string;
+  isCorrect: boolean | null;
+  marksAwarded: number | null;
+}
+
+export interface AssessmentSubmission {
+  id: string;
+  assessmentId: string;
+  studentId: string;
+  answers: SubmissionAnswer[];
+  score: number | null;
+  totalMarks: number | null;
+  percentage: string | null;
+  startedAt: string | null;
+  submittedAt: string | null;
+  status: 'in_progress' | 'submitted' | 'graded';
+  createdAt: string;
+  studentFirstName: string;
+  studentLastName: string;
+  studentEmail: string;
+}
+
+// ─── Item Analysis ──────────────────────────────────────────
+
+export interface ItemAnalysisQuestion {
+  questionId: string;
+  questionText: string;
+  type: string;
+  marks: number;
+  difficultyIndex: number;
+  discriminationIndex: number;
+  totalAttempts: number;
+  correctAnswers: number;
+}
+
+export interface PrePostComparison {
+  assessmentId: string;
+  title: string;
+  type: string;
+  averagePercentage: number;
+  totalSubmissions: number;
+}
+
+export interface ItemAnalysisResponse {
+  questions: ItemAnalysisQuestion[];
+  totalSubmissions: number;
+  prePostComparison: PrePostComparison[] | null;
 }
 
 // ─── Course Listing (My Courses page) ────────────────────
@@ -333,4 +421,29 @@ export interface CreateCourseData {
   maxEnrollment?: number;
   startDate?: string;
   endDate?: string;
+}
+
+// ─── Course Materials ──────────────────────────────────────
+
+export type MaterialType = 'video' | 'pdf' | 'document' | 'image';
+export type MaterialStatus = 'processing' | 'live' | 'failed';
+
+export interface CourseMaterialResponse {
+  id: string;
+  courseId: string;
+  moduleId: string | null;
+  title: string;
+  type: MaterialType;
+  fileUrl: string | null;
+  fileSize: number | string;
+  mimeType: string;
+  version: number;
+  previousVersionId: string | null;
+  status: MaterialStatus;
+  wcagStatus: string;
+  captionsUrl: string | null;
+  transcriptUrl: string | null;
+  uploadedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }

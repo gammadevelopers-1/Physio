@@ -640,6 +640,9 @@ import type {
   AssessmentSubmission,
   ItemAnalysisResponse,
   CourseMaterialResponse,
+  CertificateRequestResponse,
+  CertificateListResponse,
+  BatchCertificateResult,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -808,6 +811,32 @@ export const instructorApi = {
 
   getAtRiskStudents: () =>
     api.get<AtRiskStudent[]>('/instructor/at-risk'),
+
+  // Certificates
+  getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.courseId && params.courseId !== 'all') sp.set('courseId', params.courseId);
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<CertificateListResponse>(`/instructor/certificates${qs ? `?${qs}` : ''}`);
+  },
+
+  getCertificateDetail: (id: string) =>
+    api.get<CertificateRequestResponse>(`/certificates/${id}`),
+
+  approveCertificate: (id: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/approve`, {}),
+
+  rejectCertificate: (id: string, note: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/reject`, { note }),
+
+  holdCertificate: (id: string, note: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/hold`, { note }),
+
+  batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
+    api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
 };
 
 // ===========================================

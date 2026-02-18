@@ -447,3 +447,41 @@ export interface CourseMaterialResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+// ─── Certificate Requests ──────────────────────────────────
+
+export type CertificateStatus = 'pending' | 'approved' | 'rejected' | 'held';
+
+export interface CertificateRequestResponse {
+  id: string;
+  courseId: string;
+  studentId: string;
+  status: CertificateStatus;
+  attendancePercent: string | null;
+  assessmentPassed: boolean | null;
+  courseCompleted: boolean | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+  reviewedAt: string | null;
+  certificateUrl: string | null;
+  createdAt: string;
+  studentFirstName: string;
+  studentLastName: string;
+  studentEmail: string;
+  courseName?: string;
+}
+
+export interface CertificateListResponse {
+  data: CertificateRequestResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface BatchCertificateResult {
+  processed: number;
+  successful: number;
+  failed: number;
+  results: { id: string; status: string; error?: string }[];
+}

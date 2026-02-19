@@ -29,7 +29,7 @@ import {
   FileBarChart,
   Loader2,
 } from "lucide-react";
-import { materialsApi } from "@/lib/api";
+import { materialsApi, reportsApi, type ReportType, type ReportFormat } from "@/lib/api";
 
 interface ContentFile {
   id: string;
@@ -86,7 +86,6 @@ const InstructorTabs = ({
     assessment: "last7days",
   });
   const actionMenuRef = useRef<HTMLTableSectionElement>(null);
-  const exportDropdownRef = useRef<HTMLDivElement>(null);
   const t = useTranslations("instructorDashboard");
 
   // Helper to determine file type from extension
@@ -143,17 +142,65 @@ const InstructorTabs = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close export dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
-        setOpenExportDropdown(null);
-      }
-    };
+  // Convert date range selection to dateFrom/dateTo strings
+  const getDateRange = (rangeKey: string): { dateFrom: string; dateTo: string } => {
+    const now = new Date();
+    const to = now.toISOString().split("T")[0];
+    let from: Date;
+    switch (rangeKey) {
+      case "last7days":
+        from = new Date(now); from.setDate(from.getDate() - 7); break;
+      case "last30days":
+        from = new Date(now); from.setDate(from.getDate() - 30); break;
+      case "last90days":
+        from = new Date(now); from.setDate(from.getDate() - 90); break;
+      case "thisMonth":
+        from = new Date(now.getFullYear(), now.getMonth(), 1); break;
+      case "lastMonth":
+        from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+        return { dateFrom: from.toISOString().split("T")[0], dateTo: endOfLastMonth.toISOString().split("T")[0] };
+      default:
+        from = new Date(now); from.setDate(from.getDate() - 7); break;
+    }
+    return { dateFrom: from.toISOString().split("T")[0], dateTo: to };
+  };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // Map tab report keys to backend ReportType
+  const reportTypeMap: Record<string, ReportType | null> = {
+    attendance: "attendance",
+    gradebook: "gradebook",
+    assessment: null, // Not supported on backend yet
+  };
+
+  // Download a report via the real API
+  const handleReportDownload = async (reportKey: string, format: ReportFormat) => {
+    const apiType = reportTypeMap[reportKey];
+    if (!apiType) {
+      toast.info(t("reportsTab.assessmentNotAvailable"));
+      return;
+    }
+    setGeneratingReports((prev) => new Set(prev).add(reportKey));
+    try {
+      const { dateFrom, dateTo } = getDateRange(dateRanges[reportKey]);
+      await reportsApi.download(apiType, {
+        courseId: courseId || undefined,
+        format,
+        dateFrom,
+        dateTo,
+      });
+      toast.success(t("reportsTab.downloadSuccess"));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : t("reportsTab.downloadError");
+      toast.error(message);
+    } finally {
+      setGeneratingReports((prev) => {
+        const next = new Set(prev);
+        next.delete(reportKey);
+        return next;
+      });
+    }
+  };
 
   const tabs = [
     { id: "content" as const, label: t("tabs.contentManagement"), icon: FolderOpen },
@@ -505,7 +552,7 @@ const InstructorTabs = ({
         {activeTab === "reports" && (
           <div className="space-y-4">
             {/* Report Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" ref={exportDropdownRef}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Attendance Report Card */}
               <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
                 {/* Header */}
@@ -546,18 +593,9 @@ const InstructorTabs = ({
 
                 {/* Actions Row */}
                 <div className="flex items-center gap-2">
-                  {/* Generate Button */}
+                  {/* Generate Button — downloads CSV by default */}
                   <button
-                    onClick={() => {
-                      setGeneratingReports((prev) => new Set(prev).add("attendance"));
-                      setTimeout(() => {
-                        setGeneratingReports((prev) => {
-                          const next = new Set(prev);
-                          next.delete("attendance");
-                          return next;
-                        });
-                      }, 2000);
-                    }}
+                    onClick={() => handleReportDownload("attendance", "csv")}
                     disabled={generatingReports.has("attendance")}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
                   >
@@ -581,30 +619,33 @@ const InstructorTabs = ({
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                     {openExportDropdown === "attendance" && (
-                      <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              console.log("Export attendance as CSV");
-                              setOpenExportDropdown(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                          >
-                            <FileBarChart className="w-4 h-4 text-[#22C55E]" />
-                            {t("reportsTab.exportCSV")}
-                          </button>
-                          <button
-                            onClick={() => {
-                              console.log("Export attendance as PDF");
-                              setOpenExportDropdown(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                          >
-                            <FileText className="w-4 h-4 text-[#EF4444]" />
-                            {t("reportsTab.exportPDF")}
-                          </button>
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
+                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setOpenExportDropdown(null);
+                                handleReportDownload("attendance", "csv");
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            >
+                              <FileBarChart className="w-4 h-4 text-[#22C55E]" />
+                              {t("reportsTab.exportCSV")}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenExportDropdown(null);
+                                handleReportDownload("attendance", "pdf");
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            >
+                              <FileText className="w-4 h-4 text-[#EF4444]" />
+                              {t("reportsTab.exportPDF")}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -650,18 +691,9 @@ const InstructorTabs = ({
 
                 {/* Actions Row */}
                 <div className="flex items-center gap-2">
-                  {/* Generate Button */}
+                  {/* Generate Button — downloads CSV by default */}
                   <button
-                    onClick={() => {
-                      setGeneratingReports((prev) => new Set(prev).add("gradebook"));
-                      setTimeout(() => {
-                        setGeneratingReports((prev) => {
-                          const next = new Set(prev);
-                          next.delete("gradebook");
-                          return next;
-                        });
-                      }, 2000);
-                    }}
+                    onClick={() => handleReportDownload("gradebook", "csv")}
                     disabled={generatingReports.has("gradebook")}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
                   >
@@ -685,30 +717,33 @@ const InstructorTabs = ({
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                     {openExportDropdown === "gradebook" && (
-                      <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              console.log("Export gradebook as CSV");
-                              setOpenExportDropdown(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                          >
-                            <FileBarChart className="w-4 h-4 text-[#22C55E]" />
-                            {t("reportsTab.exportCSV")}
-                          </button>
-                          <button
-                            onClick={() => {
-                              console.log("Export gradebook as PDF");
-                              setOpenExportDropdown(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                          >
-                            <FileText className="w-4 h-4 text-[#EF4444]" />
-                            {t("reportsTab.exportPDF")}
-                          </button>
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
+                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setOpenExportDropdown(null);
+                                handleReportDownload("gradebook", "csv");
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            >
+                              <FileBarChart className="w-4 h-4 text-[#22C55E]" />
+                              {t("reportsTab.exportCSV")}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenExportDropdown(null);
+                                handleReportDownload("gradebook", "pdf");
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            >
+                              <FileText className="w-4 h-4 text-[#EF4444]" />
+                              {t("reportsTab.exportPDF")}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -754,18 +789,9 @@ const InstructorTabs = ({
 
                 {/* Actions Row */}
                 <div className="flex items-center gap-2">
-                  {/* Generate Button */}
+                  {/* Generate Button — downloads CSV by default */}
                   <button
-                    onClick={() => {
-                      setGeneratingReports((prev) => new Set(prev).add("assessment"));
-                      setTimeout(() => {
-                        setGeneratingReports((prev) => {
-                          const next = new Set(prev);
-                          next.delete("assessment");
-                          return next;
-                        });
-                      }, 2000);
-                    }}
+                    onClick={() => handleReportDownload("assessment", "csv")}
                     disabled={generatingReports.has("assessment")}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
                   >
@@ -789,30 +815,33 @@ const InstructorTabs = ({
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
                     {openExportDropdown === "assessment" && (
-                      <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
-                        <div className="py-1">
-                          <button
-                            onClick={() => {
-                              console.log("Export assessment as CSV");
-                              setOpenExportDropdown(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                          >
-                            <FileBarChart className="w-4 h-4 text-[#22C55E]" />
-                            {t("reportsTab.exportCSV")}
-                          </button>
-                          <button
-                            onClick={() => {
-                              console.log("Export assessment as PDF");
-                              setOpenExportDropdown(null);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                          >
-                            <FileText className="w-4 h-4 text-[#EF4444]" />
-                            {t("reportsTab.exportPDF")}
-                          </button>
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
+                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                setOpenExportDropdown(null);
+                                handleReportDownload("assessment", "csv");
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            >
+                              <FileBarChart className="w-4 h-4 text-[#22C55E]" />
+                              {t("reportsTab.exportCSV")}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setOpenExportDropdown(null);
+                                handleReportDownload("assessment", "pdf");
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                            >
+                              <FileText className="w-4 h-4 text-[#EF4444]" />
+                              {t("reportsTab.exportPDF")}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
                   </div>
                 </div>

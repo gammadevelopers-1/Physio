@@ -66,6 +66,11 @@ services:
       # Storage (local filesystem for dev; set to 'gcp' in production)
       - STORAGE_DRIVER=local
       - STORAGE_LOCAL_DIR=./uploads
+      # Zoom Integration
+      - ZOOM_ACCOUNT_ID=dBhO51fLSgyBJw3IoWMm6g
+      - ZOOM_CLIENT_ID=woI4gaHnTZWbz3ABlmgh6g
+      - ZOOM_CLIENT_SECRET=lkw0uNsH7IScl2cUdkAD3fVx8Atc65VO
+      - ZOOM_WEBHOOK_SECRET_TOKEN=
     volumes:
       - ./backends/src:/app/src:delegated
       - backend_node_modules:/app/node_modules

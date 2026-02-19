@@ -22,6 +22,10 @@ import {
   getAtRiskReminderHtml,
   getAtRiskReminderText,
 } from './templates/at-risk-reminder.template';
+import {
+  getSessionReminderHtml,
+  getSessionReminderText,
+} from './templates/session-reminder.template';
 
 @Injectable()
 export class EmailService {
@@ -214,6 +218,41 @@ export class EmailService {
       );
     } catch (error) {
       this.logger.error(`Failed to send at-risk reminder to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send session reminder email (5 minutes before session starts)
+   */
+  async sendSessionReminder(
+    to: string,
+    params: {
+      recipientName: string;
+      sessionTitle: string;
+      courseName: string;
+      scheduledAt: string;
+      durationMinutes: number;
+      zoomLink: string | null;
+      isInstructor: boolean;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Session Starting Soon: ${params.sessionTitle}`,
+        html: getSessionReminderHtml(params),
+        text: getSessionReminderText(params),
+      });
+      this.logger.log(
+        `Session reminder sent to ${to} for "${params.sessionTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send session reminder to ${to}`, error);
     }
   }
 }

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -17,23 +18,28 @@ import { AssessmentsModule } from './modules/assessments/assessments.module';
 import { MaterialsModule } from './modules/materials/materials.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { ZoomModule } from './modules/zoom/zoom.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import storageConfig from './config/storage.config';
+import zoomConfig from './config/zoom.config';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, storageConfig],
+      load: [appConfig, databaseConfig, storageConfig, zoomConfig],
       envFilePath: [
         `.env.${process.env.NODE_ENV || 'local'}`,
         '.env.local',
         '.env',
       ],
     }),
+
+    // Task scheduling (cron jobs)
+    ScheduleModule.forRoot(),
 
     // Feature modules
     EmailModule,
@@ -50,6 +56,7 @@ import storageConfig from './config/storage.config';
     MaterialsModule,
     CertificatesModule,
     ReportsModule,
+    ZoomModule,
   ],
   controllers: [AppController],
   providers: [

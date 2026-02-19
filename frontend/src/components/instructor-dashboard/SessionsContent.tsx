@@ -371,7 +371,6 @@ function ScheduleSessionModal({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState(60);
-  const [zoomLink, setZoomLink] = useState("");
   const [roomName, setRoomName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [saving, setSaving] = useState(false);
@@ -415,9 +414,6 @@ function ScheduleSessionModal({
         scheduledAt,
         durationMinutes: duration,
       };
-      if (type === "zoom" || type === "hybrid") {
-        if (zoomLink) data.zoomLink = zoomLink;
-      }
       if (type === "onsite" || type === "hybrid") {
         if (roomName) data.roomName = roomName;
         if (venueAddress) data.venueAddress = venueAddress;
@@ -556,19 +552,13 @@ function ScheduleSessionModal({
           </div>
         </div>
 
-        {/* Zoom link */}
+        {/* Zoom info */}
         {(type === "zoom" || type === "hybrid") && (
-          <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1.5">
-              {t("sessionsPage.form.zoomLink")}
-            </label>
-            <input
-              type="url"
-              value={zoomLink}
-              onChange={(e) => setZoomLink(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
-              placeholder="https://zoom.us/j/..."
-            />
+          <div className="flex items-start gap-2 p-3 bg-[#EFF6FF] rounded-lg">
+            <Video className="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[#1E40AF]">
+              A Zoom meeting will be automatically created when you schedule this session.
+            </p>
           </div>
         )}
 
@@ -789,15 +779,16 @@ function SessionCard({
             </button>
           )}
 
-          {session.zoomLink && session.status !== "cancelled" && (
+          {/* Rejoin Zoom for live sessions */}
+          {session.zoomLink && session.status === "live" && (
             <a
               href={session.zoomLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-[#3B82F6] hover:underline flex items-center gap-1"
+              className="inline-flex items-center gap-1 text-xs text-[#3B82F6] hover:underline"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              {t("sessionsPage.joinSession")}
+              Rejoin Zoom
             </a>
           )}
         </div>
@@ -828,7 +819,6 @@ function EditSessionModal({
     `${String(scheduled.getHours()).padStart(2, "0")}:${String(scheduled.getMinutes()).padStart(2, "0")}`
   );
   const [duration, setDuration] = useState(session.durationMinutes || 60);
-  const [zoomLink, setZoomLink] = useState(session.zoomLink || "");
   const [roomName, setRoomName] = useState(session.roomName || "");
   const [venueAddress, setVenueAddress] = useState(session.venueAddress || "");
   const [saving, setSaving] = useState(false);
@@ -842,9 +832,6 @@ function EditSessionModal({
         scheduledAt,
         durationMinutes: duration,
       };
-      if (session.type === "zoom" || session.type === "hybrid") {
-        data.zoomLink = zoomLink || null;
-      }
       if (session.type === "onsite" || session.type === "hybrid") {
         data.roomName = roomName || null;
         data.venueAddress = venueAddress || null;
@@ -921,17 +908,28 @@ function EditSessionModal({
             <option value={120}>2 {t("sessionsPage.form.hours")}</option>
           </select>
         </div>
-        {(session.type === "zoom" || session.type === "hybrid") && (
+        {(session.type === "zoom" || session.type === "hybrid") && session.zoomLink && (
           <div>
             <label className="block text-sm font-medium text-[#374151] mb-1.5">
               {t("sessionsPage.form.zoomLink")}
             </label>
-            <input
-              type="url"
-              value={zoomLink}
-              onChange={(e) => setZoomLink(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={session.zoomLink}
+                readOnly
+                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
+              />
+              <a
+                href={session.zoomLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 p-2.5 border border-[#E5E7EB] rounded-lg text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+            <p className="text-xs text-[#9CA3AF] mt-1">Auto-generated Zoom meeting link</p>
           </div>
         )}
         {(session.type === "onsite" || session.type === "hybrid") && (
@@ -1076,8 +1074,12 @@ const SessionsContent = () => {
   // Lifecycle actions
   const handleStart = async (session: CourseSession) => {
     try {
-      await instructorApi.startSession(session.id);
+      const result = await instructorApi.startSession(session.id);
       toast.success(t("sessionsPage.lifecycle.started"));
+      // Open Zoom host URL if available
+      if ((result as any).zoomStartUrl) {
+        window.open((result as any).zoomStartUrl, "_blank");
+      }
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.startError"));

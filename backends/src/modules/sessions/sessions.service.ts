@@ -10,15 +10,19 @@ import {
   sessions,
   courses,
   SESSION_STATUS,
+  SESSION_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
+import { ZoomService } from '../zoom/zoom.service';
 
 @Injectable()
 export class SessionsService {
   private readonly logger = new Logger(SessionsService.name);
+
+  constructor(private readonly zoomService: ZoomService) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -38,6 +42,33 @@ export class SessionsService {
    * - Admin: can specify instructorId, course just needs to exist.
    */
   async create(user: AuthenticatedUser, dto: CreateSessionDto) {
+    // Auto-create Zoom meeting if type is zoom or hybrid
+    let zoomLink = dto.zoomLink || null;
+    let meetingId = dto.meetingId || null;
+
+    if (
+      (dto.type === SESSION_TYPE.ZOOM || dto.type === SESSION_TYPE.HYBRID) &&
+      !dto.zoomLink
+    ) {
+      try {
+        const zoomMeeting = await this.zoomService.createMeeting({
+          topic: dto.title,
+          startTime: new Date(dto.scheduledAt),
+          durationMinutes: dto.durationMinutes || 60,
+        });
+        zoomLink = zoomMeeting.joinUrl;
+        meetingId = zoomMeeting.meetingId;
+        this.logger.log(
+          `Zoom meeting auto-created: ${meetingId} for session "${dto.title}"`,
+        );
+      } catch (error) {
+        this.logger.error('Failed to auto-create Zoom meeting', error);
+        throw new BadRequestException(
+          'Failed to create Zoom meeting. Please try again or provide a manual Zoom link.',
+        );
+      }
+    }
+
     if (this.isAdmin(user)) {
       // Admin: verify course exists (any course)
       const [course] = await db
@@ -61,8 +92,8 @@ export class SessionsService {
           type: dto.type,
           scheduledAt: new Date(dto.scheduledAt),
           durationMinutes: dto.durationMinutes,
-          zoomLink: dto.zoomLink,
-          meetingId: dto.meetingId,
+          zoomLink,
+          meetingId,
           roomName: dto.roomName,
           venueAddress: dto.venueAddress,
         })
@@ -96,8 +127,8 @@ export class SessionsService {
         type: dto.type,
         scheduledAt: new Date(dto.scheduledAt),
         durationMinutes: dto.durationMinutes,
-        zoomLink: dto.zoomLink,
-        meetingId: dto.meetingId,
+        zoomLink,
+        meetingId,
         roomName: dto.roomName,
         venueAddress: dto.venueAddress,
       })
@@ -315,7 +346,27 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
-    return updated;
+    // If this is a Zoom/hybrid session with a meetingId, fetch the host start URL
+    let zoomStartUrl: string | null = null;
+    if (
+      updated.meetingId &&
+      (updated.type === SESSION_TYPE.ZOOM ||
+        updated.type === SESSION_TYPE.HYBRID)
+    ) {
+      try {
+        const meetingDetails = await this.zoomService.getMeeting(
+          updated.meetingId,
+        );
+        zoomStartUrl = meetingDetails.startUrl;
+      } catch (error) {
+        this.logger.warn(
+          `Could not fetch Zoom start URL for meeting ${updated.meetingId}`,
+          error,
+        );
+      }
+    }
+
+    return { ...updated, zoomStartUrl };
   }
 
   /**
@@ -327,6 +378,23 @@ export class SessionsService {
 
     if (session.status !== SESSION_STATUS.LIVE) {
       throw new BadRequestException('Cannot end a non-live session');
+    }
+
+    // End the Zoom meeting if this is a zoom/hybrid session
+    if (
+      session.meetingId &&
+      (session.type === SESSION_TYPE.ZOOM ||
+        session.type === SESSION_TYPE.HYBRID)
+    ) {
+      try {
+        await this.zoomService.endMeeting(session.meetingId);
+      } catch (error) {
+        this.logger.warn(
+          `Could not end Zoom meeting ${session.meetingId}`,
+          error,
+        );
+        // Don't block session end if Zoom API fails
+      }
     }
 
     const [updated] = await db

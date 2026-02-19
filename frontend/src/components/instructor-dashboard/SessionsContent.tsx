@@ -37,6 +37,7 @@ import {
   Loader2,
   Filter,
   Ban,
+  Trash2,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -622,6 +623,7 @@ function SessionCard({
   onCancel,
   onAttendance,
   onEdit,
+  onDelete,
   t,
   locale,
 }: {
@@ -632,6 +634,7 @@ function SessionCard({
   onCancel: () => void;
   onAttendance: () => void;
   onEdit: () => void;
+  onDelete: () => void;
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
@@ -770,12 +773,31 @@ function SessionCard({
           )}
 
           {session.status === "completed" && (
+            <>
+              <button
+                onClick={onAttendance}
+                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                title={t("sessionsPage.attendance.title")}
+              >
+                <ClipboardCheck className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
+                title={t("sessionsPage.deleteSession")}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+
+          {session.status === "cancelled" && (
             <button
-              onClick={onAttendance}
-              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-              title={t("sessionsPage.attendance.title")}
+              onClick={onDelete}
+              className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
+              title={t("sessionsPage.deleteSession")}
             >
-              <ClipboardCheck className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" />
             </button>
           )}
 
@@ -1036,6 +1058,40 @@ const SessionsContent = () => {
     fetchData();
   }, [fetchData]);
 
+  // Poll for status changes when there are live sessions
+  // This detects when a Zoom meeting ends (via webhook) and auto-updates the UI
+  const hasLiveSessions = useMemo(
+    () => sessions.some((s) => s.status === "live"),
+    [sessions],
+  );
+
+  useEffect(() => {
+    if (!hasLiveSessions) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await instructorApi.getSessions({ limit: 200 });
+        const fresh = res.data;
+        // Check if any previously-live session has ended
+        const ended = sessions.filter(
+          (old) =>
+            old.status === "live" &&
+            fresh.find((n) => n.id === old.id && n.status === "completed"),
+        );
+        if (ended.length > 0) {
+          setSessions(fresh);
+          for (const s of ended) {
+            toast.success(`"${s.title}" has ended`);
+          }
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [hasLiveSessions, sessions]);
+
   // Filter sessions
   const filteredSessions = useMemo(() => {
     return sessions.filter((s) => {
@@ -1108,6 +1164,17 @@ const SessionsContent = () => {
     }
   };
 
+  const handleDelete = async (session: CourseSession) => {
+    if (!window.confirm(`Delete "${session.title}"? This action cannot be undone.`)) return;
+    try {
+      await instructorApi.deleteSession(session.id);
+      toast.success(t("sessionsPage.lifecycle.deleted"));
+      fetchData();
+    } catch {
+      toast.error(t("sessionsPage.lifecycle.deleteError"));
+    }
+  };
+
   // Calendar helpers
   const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
@@ -1158,6 +1225,7 @@ const SessionsContent = () => {
               onCancel={() => setCancelSessionData(session)}
               onAttendance={() => setAttendanceSession(session)}
               onEdit={() => setEditSessionData(session)}
+              onDelete={() => handleDelete(session)}
               t={t}
               locale={locale}
             />

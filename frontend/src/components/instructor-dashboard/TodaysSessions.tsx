@@ -9,32 +9,32 @@ interface Session {
   id: string;
   title: string;
   thumbnail: string;
-  type: "zoom" | "onsite";
+  type: "zoom" | "onsite" | "hybrid";
+  status: "scheduled" | "live" | "completed" | "cancelled";
   location?: string;
   enrolled: number;
   time: string;
+  zoomLink?: string;
 }
 
 interface TodaysSessionsProps {
   sessions: Session[];
+  onStartSession?: (sessionId: string) => void;
+  onEndSession?: (sessionId: string) => void;
+  onAttendance?: (sessionId: string) => void;
+  onShare?: (sessionId: string) => void;
 }
 
-const TodaysSessions = ({ sessions }: TodaysSessionsProps) => {
+const TodaysSessions = ({
+  sessions,
+  onStartSession,
+  onEndSession,
+  onAttendance,
+  onShare,
+}: TodaysSessionsProps) => {
   const t = useTranslations("instructorDashboard");
   const router = useRouter();
   const locale = useLocale();
-
-  const handleStartSession = (sessionId: string) => {
-    console.log("Starting session:", sessionId);
-  };
-
-  const handleAttendance = (sessionId: string) => {
-    console.log("Opening attendance for:", sessionId);
-  };
-
-  const handleShareMaterials = (sessionId: string) => {
-    console.log("Sharing materials for:", sessionId);
-  };
 
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6">
@@ -71,9 +71,10 @@ const TodaysSessions = ({ sessions }: TodaysSessionsProps) => {
               <SessionCard
                 key={session.id}
                 session={session}
-                onStart={() => handleStartSession(session.id)}
-                onAttendance={() => handleAttendance(session.id)}
-                onShare={() => handleShareMaterials(session.id)}
+                onStart={() => onStartSession?.(session.id)}
+                onEnd={() => onEndSession?.(session.id)}
+                onAttendance={() => onAttendance?.(session.id)}
+                onShare={() => onShare?.(session.id)}
               />
             ))}
           </div>

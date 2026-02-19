@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -143,5 +144,17 @@ export class SessionsController {
     @Body() dto: CancelSessionDto,
   ) {
     return this.sessionsService.cancel(id, user, dto);
+  }
+
+  /**
+   * DELETE /sessions/:id — Delete a completed or cancelled session
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Delete(':id')
+  async delete(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.delete(id, user);
   }
 }

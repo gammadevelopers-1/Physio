@@ -766,6 +766,9 @@ export const instructorApi = {
   cancelSession: (sessionId: string, cancelReason: string) =>
     api.patch<CourseSession>(`/sessions/${sessionId}/cancel`, { cancelReason }),
 
+  deleteSession: (sessionId: string) =>
+    api.delete<{ message: string }>(`/sessions/${sessionId}`),
+
   // Thumbnail upload
   uploadThumbnail: (file: File) => {
     const fd = new FormData();

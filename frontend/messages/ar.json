@@ -1534,11 +1534,14 @@
     },
     "sessions": {
       "zoomSession": "جلسة زوم",
+      "hybridSession": "هجين",
       "onsite": "حضوري",
       "enrolled": "مسجل",
       "startSession": "بدء الجلسة",
+      "endSession": "إنهاء الجلسة",
       "attendance": "الحضور",
       "shareMaterials": "مشاركة المواد",
+      "statusScheduled": "مجدول",
       "statusUpcoming": "قادم",
       "statusLive": "مباشر",
       "statusCompleted": "مكتمل",
@@ -1923,13 +1926,16 @@
         "error": "فشل في جدولة الجلسة",
         "conflict": "تعارض في الجدول: تتداخل مع \"{session}\""
       },
+      "deleteSession": "حذف الجلسة",
       "lifecycle": {
         "started": "تم بدء الجلسة بنجاح",
         "startError": "فشل في بدء الجلسة",
         "ended": "تم إنهاء الجلسة بنجاح",
         "endError": "فشل في إنهاء الجلسة",
         "cancelled": "تم إلغاء الجلسة بنجاح",
-        "cancelError": "فشل في إلغاء الجلسة"
+        "cancelError": "فشل في إلغاء الجلسة",
+        "deleted": "تم حذف الجلسة بنجاح",
+        "deleteError": "فشل في حذف الجلسة"
       },
       "cancelSession": {
         "title": "إلغاء الجلسة",

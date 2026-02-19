@@ -1,6 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
+import { toast } from "sonner";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import InstructorNavbar from "./InstructorNavbar";
@@ -19,6 +22,7 @@ import DashboardSkeleton from "./DashboardSkeleton";
 import DashboardError from "./DashboardError";
 import { useInstructorDashboard } from "@/hooks/useInstructorDashboard";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { instructorApi } from "@/lib/api";
 import {
   transformToKPIData,
   transformToSessionCards,
@@ -33,6 +37,8 @@ const InstructorDashboardContent = () => {
   const t = useTranslations("instructorDashboard");
   const { data: dashboard, loading, error, refetch } = useInstructorDashboard();
   const instructor = useInstructorProfile();
+  const router = useRouter();
+  const locale = useLocale();
 
   // ─── Derived data from API ───────────────────────────────
   const attendanceData = dashboard?.attendanceTrend ?? [0, 0, 0, 0, 0, 0, 0];
@@ -55,16 +61,35 @@ const InstructorDashboardContent = () => {
     console.log("Refreshing notifications...");
   };
 
-  const handleStartSession = (sessionId: string) => {
-    console.log("Starting session:", sessionId);
+  const handleStartSession = async (sessionId: string) => {
+    try {
+      const result = await instructorApi.startSession(sessionId);
+      toast.success("Session started");
+      if ((result as any).zoomStartUrl) {
+        window.open((result as any).zoomStartUrl, "_blank");
+      }
+      refetch();
+    } catch {
+      toast.error("Failed to start session");
+    }
+  };
+
+  const handleEndSession = async (sessionId: string) => {
+    try {
+      await instructorApi.endSession(sessionId);
+      toast.success("Session ended");
+      refetch();
+    } catch {
+      toast.error("Failed to end session");
+    }
   };
 
   const handleSessionAttendance = (sessionId: string) => {
-    console.log("Opening attendance for:", sessionId);
+    router.push(`/${locale}/dashboard/instructor/sessions`);
   };
 
   const handleShareSessionMaterials = (sessionId: string) => {
-    console.log("Sharing materials for:", sessionId);
+    router.push(`/${locale}/dashboard/instructor/sessions`);
   };
 
   // ─── Derived data from API ───────────────────────────────
@@ -110,13 +135,20 @@ const InstructorDashboardContent = () => {
                 <InstructorKPICards data={kpiData} />
 
                 {/* Today's Sessions */}
-                <TodaysSessions sessions={sessionCards} />
+                <TodaysSessions
+                  sessions={sessionCards}
+                  onStartSession={handleStartSession}
+                  onEndSession={handleEndSession}
+                  onAttendance={handleSessionAttendance}
+                  onShare={handleShareSessionMaterials}
+                />
 
                 {/* Sessions Calendar Widget */}
                 <div className="mb-6">
                   <SessionsCalendarWidget
                     sessions={calendarSessions}
                     onStartSession={handleStartSession}
+                    onEndSession={handleEndSession}
                     onAttendance={handleSessionAttendance}
                     onShareMaterials={handleShareSessionMaterials}
                   />

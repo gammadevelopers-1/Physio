@@ -1322,11 +1322,14 @@
     },
     "sessions": {
       "zoomSession": "Zoom Session",
+      "hybridSession": "Hybrid",
       "onsite": "On-site",
       "enrolled": "enrolled",
       "startSession": "Start Session",
+      "endSession": "End Session",
       "attendance": "Attendance",
       "shareMaterials": "Share Materials",
+      "statusScheduled": "Scheduled",
       "statusUpcoming": "Upcoming",
       "statusLive": "Live",
       "statusCompleted": "Completed",
@@ -1711,13 +1714,16 @@
         "error": "Failed to schedule session",
         "conflict": "Schedule conflict: overlaps with \"{session}\""
       },
+      "deleteSession": "Delete Session",
       "lifecycle": {
         "started": "Session started successfully",
         "startError": "Failed to start session",
         "ended": "Session ended successfully",
         "endError": "Failed to end session",
         "cancelled": "Session cancelled successfully",
-        "cancelError": "Failed to cancel session"
+        "cancelError": "Failed to cancel session",
+        "deleted": "Session deleted successfully",
+        "deleteError": "Failed to delete session"
       },
       "cancelSession": {
         "title": "Cancel Session",

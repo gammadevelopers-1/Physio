@@ -442,6 +442,26 @@ export class SessionsService {
     return updated;
   }
 
+  /**
+   * Delete a session — only completed or cancelled sessions can be deleted.
+   */
+  async delete(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (
+      session.status !== SESSION_STATUS.COMPLETED &&
+      session.status !== SESSION_STATUS.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'Only completed or cancelled sessions can be deleted',
+      );
+    }
+
+    await db.delete(sessions).where(eq(sessions.id, sessionId));
+
+    return { message: 'Session deleted successfully' };
+  }
+
   // ─── Helpers ────────────────────────────────────────────────
 
   /**

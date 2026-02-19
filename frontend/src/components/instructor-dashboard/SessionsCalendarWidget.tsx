@@ -7,11 +7,14 @@ import {
   ChevronRight,
   Video,
   MapPin,
+  RefreshCw,
   Play,
+  Square,
   ClipboardCheck,
   Upload,
   Calendar,
   Users,
+  CheckCircle,
 } from "lucide-react";
 
 interface CalendarSession {
@@ -19,7 +22,8 @@ interface CalendarSession {
   title: string;
   time: string;
   duration: string;
-  type: "zoom" | "onsite";
+  type: "zoom" | "onsite" | "hybrid";
+  status: "scheduled" | "live" | "completed" | "cancelled";
   venue?: string;
   enrolled: number;
   dayIndex: number; // 0-6 (Sunday-Saturday)
@@ -29,6 +33,7 @@ interface CalendarSession {
 interface SessionsCalendarWidgetProps {
   sessions: CalendarSession[];
   onStartSession?: (sessionId: string) => void;
+  onEndSession?: (sessionId: string) => void;
   onAttendance?: (sessionId: string) => void;
   onShareMaterials?: (sessionId: string) => void;
 }
@@ -36,6 +41,7 @@ interface SessionsCalendarWidgetProps {
 const SessionsCalendarWidget = ({
   sessions,
   onStartSession,
+  onEndSession,
   onAttendance,
   onShareMaterials,
 }: SessionsCalendarWidgetProps) => {
@@ -128,6 +134,140 @@ const SessionsCalendarWidget = ({
     return `${firstMonth} - ${lastMonth} ${year}`;
   }, [weekDays]);
 
+  const getSessionStyle = (session: CalendarSession) => {
+    if (session.status === "completed") {
+      return "bg-[#F0FDF4] border-[#BBF7D0] opacity-70";
+    }
+    if (session.status === "cancelled") {
+      return "bg-[#F3F4F6] border-[#E5E7EB] opacity-50";
+    }
+    if (session.status === "live") {
+      return "bg-[#FEF2F2] border-[#FECACA] ring-1 ring-[#EF4444]";
+    }
+    // scheduled
+    if (session.type === "zoom") return "bg-[#EFF6FF] border-[#BFDBFE] hover:border-[#3B82F6]";
+    if (session.type === "hybrid") return "bg-[#F5F3FF] border-[#DDD6FE] hover:border-[#8B5CF6]";
+    return "bg-[#F0FDF4] border-[#BBF7D0] hover:border-[#22C55E]";
+  };
+
+  const getTypeIcon = (type: string) => {
+    if (type === "zoom") return <Video className="w-3 h-3 text-[#3B82F6]" />;
+    if (type === "hybrid") return <RefreshCw className="w-3 h-3 text-[#8B5CF6]" />;
+    return <MapPin className="w-3 h-3 text-[#22C55E]" />;
+  };
+
+  const getTypeColor = (type: string) => {
+    if (type === "zoom") return "text-[#3B82F6]";
+    if (type === "hybrid") return "text-[#8B5CF6]";
+    return "text-[#22C55E]";
+  };
+
+  const getTypeLabel = (type: string) => {
+    if (type === "zoom") return t("sessionsCalendar.zoom");
+    if (type === "hybrid") return "Hybrid";
+    return t("sessionsCalendar.onsite");
+  };
+
+  const renderSessionCard = (session: CalendarSession, isMobile: boolean) => {
+    const isCompleted = session.status === "completed";
+    const isCancelled = session.status === "cancelled";
+    const isLive = session.status === "live";
+    const isScheduled = session.status === "scheduled";
+
+    return (
+      <div
+        key={session.id}
+        className={`relative p-2 rounded-lg border cursor-pointer transition-all duration-200 ${getSessionStyle(session)}`}
+        onMouseEnter={() => !isMobile && setHoveredSession(session.id)}
+        onMouseLeave={() => !isMobile && setHoveredSession(null)}
+        onClick={() => isMobile && setHoveredSession(hoveredSession === session.id ? null : session.id)}
+      >
+        {/* Type + Status Badges */}
+        <div className="flex items-center gap-1 mb-1 flex-wrap">
+          {getTypeIcon(session.type)}
+          <span className={`text-[10px] font-medium ${getTypeColor(session.type)}`}>
+            {getTypeLabel(session.type)}
+          </span>
+          {isCompleted && (
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-[#22C55E]">
+              <CheckCircle className="w-2.5 h-2.5" />
+            </span>
+          )}
+          {isLive && (
+            <span className="flex items-center gap-0.5 px-1 py-0.5 bg-[#FEE2E2] rounded text-[9px] font-bold text-[#EF4444]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />
+              LIVE
+            </span>
+          )}
+          {isCancelled && (
+            <span className="text-[9px] font-medium text-[#9CA3AF] line-through">Cancelled</span>
+          )}
+        </div>
+
+        {/* Session Title */}
+        <p className={`text-xs font-medium line-clamp-2 mb-1 ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+          {session.title}
+        </p>
+
+        {/* Time */}
+        <p className="text-[10px] text-[#6B7280]">{session.time}</p>
+
+        {/* Venue for on-site/hybrid */}
+        {(session.type === "onsite" || session.type === "hybrid") && session.venue && (
+          <p className="text-[10px] text-[#6B7280] truncate">{session.venue}</p>
+        )}
+
+        {/* Enrolled count */}
+        <div className="flex items-center gap-1 mt-1">
+          <Users className="w-2.5 h-2.5 text-[#9CA3AF]" />
+          <span className="text-[10px] text-[#9CA3AF]">{session.enrolled}</span>
+        </div>
+
+        {/* Action Buttons - Show on Hover/Tap - Status aware */}
+        {hoveredSession === session.id && !isCancelled && (
+          <div className={`${isMobile ? "flex items-center justify-center gap-1 mt-2 pt-2 border-t border-[#E5E7EB]" : "absolute bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] rounded-b-lg p-1.5 flex items-center justify-center gap-1 shadow-sm"}`}>
+            {isScheduled && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onStartSession?.(session.id); }}
+                className={`${isMobile ? "flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium" : "p-1"} bg-[#3B82F6] text-white rounded hover:bg-[#2563EB] transition-colors`}
+                title={t("sessionsCalendar.startSession")}
+              >
+                <Play className="w-3 h-3" />
+                {isMobile && t("sessionsCalendar.start")}
+              </button>
+            )}
+            {isLive && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEndSession?.(session.id); }}
+                className={`${isMobile ? "flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium" : "p-1"} bg-[#EF4444] text-white rounded hover:bg-[#DC2626] transition-colors`}
+                title="End Session"
+              >
+                <Square className="w-3 h-3" />
+                {isMobile && "End"}
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); onAttendance?.(session.id); }}
+              className="p-1 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+              title={t("sessionsCalendar.attendance")}
+            >
+              <ClipboardCheck className="w-3 h-3" />
+            </button>
+            {isScheduled && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onShareMaterials?.(session.id); }}
+                className="p-1 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                title={t("sessionsCalendar.shareMaterials")}
+              >
+                <Upload className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       {/* Header */}
@@ -200,99 +340,9 @@ const SessionsCalendarWidget = ({
 
                 {/* Sessions for this day */}
                 <div className="space-y-2">
-                  {sessionsByDay[day.dayIndex]?.map((session) => (
-                    <div
-                      key={session.id}
-                      className={`relative p-2 rounded-lg border cursor-pointer transition-all duration-200 ${
-                        session.type === "zoom"
-                          ? "bg-[#EFF6FF] border-[#BFDBFE] hover:border-[#3B82F6]"
-                          : "bg-[#F0FDF4] border-[#BBF7D0] hover:border-[#22C55E]"
-                      }`}
-                      onMouseEnter={() => setHoveredSession(session.id)}
-                      onMouseLeave={() => setHoveredSession(null)}
-                    >
-                      {/* Type Badge */}
-                      <div className="flex items-center gap-1 mb-1">
-                        {session.type === "zoom" ? (
-                          <Video className="w-3 h-3 text-[#3B82F6]" />
-                        ) : (
-                          <MapPin className="w-3 h-3 text-[#22C55E]" />
-                        )}
-                        <span
-                          className={`text-[10px] font-medium ${
-                            session.type === "zoom"
-                              ? "text-[#3B82F6]"
-                              : "text-[#22C55E]"
-                          }`}
-                        >
-                          {session.type === "zoom"
-                            ? t("sessionsCalendar.zoom")
-                            : t("sessionsCalendar.onsite")}
-                        </span>
-                      </div>
-
-                      {/* Session Title */}
-                      <p className="text-xs font-medium text-[#1F2937] line-clamp-2 mb-1">
-                        {session.title}
-                      </p>
-
-                      {/* Time */}
-                      <p className="text-[10px] text-[#6B7280]">
-                        {session.time}
-                      </p>
-
-                      {/* Venue for on-site */}
-                      {session.type === "onsite" && session.venue && (
-                        <p className="text-[10px] text-[#6B7280] truncate">
-                          {session.venue}
-                        </p>
-                      )}
-
-                      {/* Enrolled count */}
-                      <div className="flex items-center gap-1 mt-1">
-                        <Users className="w-2.5 h-2.5 text-[#9CA3AF]" />
-                        <span className="text-[10px] text-[#9CA3AF]">
-                          {session.enrolled}
-                        </span>
-                      </div>
-
-                      {/* Action Buttons - Show on Hover */}
-                      {hoveredSession === session.id && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] rounded-b-lg p-1.5 flex items-center justify-center gap-1 shadow-sm">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartSession?.(session.id);
-                            }}
-                            className="p-1 bg-[#3B82F6] text-white rounded hover:bg-[#2563EB] transition-colors"
-                            title={t("sessionsCalendar.startSession")}
-                          >
-                            <Play className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAttendance?.(session.id);
-                            }}
-                            className="p-1 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                            title={t("sessionsCalendar.attendance")}
-                          >
-                            <ClipboardCheck className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onShareMaterials?.(session.id);
-                            }}
-                            className="p-1 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                            title={t("sessionsCalendar.shareMaterials")}
-                          >
-                            <Upload className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {sessionsByDay[day.dayIndex]?.map((session) =>
+                    renderSessionCard(session, false)
+                  )}
 
                   {/* Empty state for day */}
                   {sessionsByDay[day.dayIndex]?.length === 0 && (
@@ -349,98 +399,9 @@ const SessionsCalendarWidget = ({
 
                 {/* Sessions */}
                 <div className="p-2 space-y-2 min-h-[120px]">
-                  {sessionsByDay[day.dayIndex]?.map((session) => (
-                    <div
-                      key={session.id}
-                      className={`p-2 rounded-lg border ${
-                        session.type === "zoom"
-                          ? "bg-white border-[#BFDBFE]"
-                          : "bg-white border-[#BBF7D0]"
-                      }`}
-                      onClick={() => setHoveredSession(hoveredSession === session.id ? null : session.id)}
-                    >
-                      {/* Type Badge */}
-                      <div className="flex items-center gap-1 mb-1">
-                        {session.type === "zoom" ? (
-                          <Video className="w-3 h-3 text-[#3B82F6]" />
-                        ) : (
-                          <MapPin className="w-3 h-3 text-[#22C55E]" />
-                        )}
-                        <span
-                          className={`text-[10px] font-medium ${
-                            session.type === "zoom"
-                              ? "text-[#3B82F6]"
-                              : "text-[#22C55E]"
-                          }`}
-                        >
-                          {session.type === "zoom"
-                            ? t("sessionsCalendar.zoom")
-                            : t("sessionsCalendar.onsite")}
-                        </span>
-                      </div>
-
-                      {/* Session Title */}
-                      <p className="text-xs font-medium text-[#1F2937] line-clamp-2 mb-1">
-                        {session.title}
-                      </p>
-
-                      {/* Time */}
-                      <p className="text-[10px] text-[#6B7280] mb-1">
-                        {session.time}
-                      </p>
-
-                      {/* Venue for on-site */}
-                      {session.type === "onsite" && session.venue && (
-                        <p className="text-[10px] text-[#6B7280] truncate mb-1">
-                          📍 {session.venue}
-                        </p>
-                      )}
-
-                      {/* Enrolled */}
-                      <div className="flex items-center gap-1">
-                        <Users className="w-2.5 h-2.5 text-[#9CA3AF]" />
-                        <span className="text-[10px] text-[#9CA3AF]">
-                          {session.enrolled} {t("sessionsCalendar.enrolled")}
-                        </span>
-                      </div>
-
-                      {/* Action Buttons - Show on tap (mobile) */}
-                      {hoveredSession === session.id && (
-                        <div className="flex items-center justify-center gap-1 mt-2 pt-2 border-t border-[#E5E7EB]">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartSession?.(session.id);
-                            }}
-                            className="flex-1 flex items-center justify-center gap-1 py-1.5 bg-[#3B82F6] text-white text-[10px] font-medium rounded hover:bg-[#2563EB] transition-colors"
-                          >
-                            <Play className="w-3 h-3" />
-                            {t("sessionsCalendar.start")}
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAttendance?.(session.id);
-                            }}
-                            className="p-1.5 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                            title={t("sessionsCalendar.attendance")}
-                          >
-                            <ClipboardCheck className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onShareMaterials?.(session.id);
-                            }}
-                            className="p-1.5 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                            title={t("sessionsCalendar.shareMaterials")}
-                          >
-                            <Upload className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {sessionsByDay[day.dayIndex]?.map((session) =>
+                    renderSessionCard(session, true)
+                  )}
 
                   {/* Empty state */}
                   {sessionsByDay[day.dayIndex]?.length === 0 && (
@@ -457,7 +418,7 @@ const SessionsCalendarWidget = ({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[#E5E7EB]">
+        <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[#E5E7EB] flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#EFF6FF] border border-[#BFDBFE]" />
             <span className="text-xs text-[#6B7280]">
@@ -469,6 +430,14 @@ const SessionsCalendarWidget = ({
             <span className="text-xs text-[#6B7280]">
               {t("sessionsCalendar.onsiteSession")}
             </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded bg-[#DCFCE7] border border-[#BBF7D0]" />
+            <span className="text-xs text-[#6B7280]">Completed</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded bg-[#FEF2F2] border border-[#FECACA]" />
+            <span className="text-xs text-[#6B7280]">Live</span>
           </div>
         </div>
       </div>

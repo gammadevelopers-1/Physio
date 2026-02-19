@@ -114,7 +114,8 @@
       "Bash(docker compose exec:*)",
       "Bash(docker volume rm:*)",
       "Bash(npm run db:push:*)",
-      "Bash(# Check the seed data to know the password grep -r \"\"password\\\\|Password\\\\|argon2\"\" /home/haseeb-raza/Desktop/physioguidance/backends/src/database/seeds/)"
+      "Bash(# Check the seed data to know the password grep -r \"\"password\\\\|Password\\\\|argon2\"\" /home/haseeb-raza/Desktop/physioguidance/backends/src/database/seeds/)",
+      "Bash(echo:*)"
     ]
   }
 }

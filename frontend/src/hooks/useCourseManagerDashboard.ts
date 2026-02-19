@@ -15,6 +15,7 @@ interface UseCourseManagerDashboardReturn {
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  silentRefetch: () => void;
 }
 
 export function useCourseManagerDashboard(): UseCourseManagerDashboardReturn {
@@ -24,10 +25,11 @@ export function useCourseManagerDashboard(): UseCourseManagerDashboardReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
 
     try {
       const [summaryResult, coursesResult, instructorsResult] =
@@ -37,25 +39,23 @@ export function useCourseManagerDashboard(): UseCourseManagerDashboardReturn {
           courseManagerApi.getInstructors(),
         ]);
 
-      if (!cancelled) {
-        setSummary(summaryResult);
-        setCourses(coursesResult.data);
-        setInstructors(instructorsResult);
-      }
+      setSummary(summaryResult);
+      setCourses(coursesResult.data);
+      setInstructors(instructorsResult);
     } catch (err) {
-      if (!cancelled) {
+      if (!silent) {
         setError(
           err instanceof Error ? err.message : "Failed to load dashboard data"
         );
       }
     } finally {
-      if (!cancelled) setLoading(false);
+      if (!silent) setLoading(false);
     }
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
+
+  const silentRefetch = useCallback(() => {
+    fetchData(true);
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
@@ -67,6 +67,7 @@ export function useCourseManagerDashboard(): UseCourseManagerDashboardReturn {
     instructors,
     loading,
     error,
-    refetch: fetchData,
+    refetch: () => fetchData(),
+    silentRefetch,
   };
 }

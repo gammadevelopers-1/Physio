@@ -1,6 +1,8 @@
 "use client";
 
+import { useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -14,11 +16,12 @@ import CourseStatsWidget from "./CourseStatsWidget";
 import UpcomingSessionsWidget from "./UpcomingSessionsWidget";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerDashboard } from "@/hooks/useCourseManagerDashboard";
+import { courseManagerApi, ApiError } from "@/lib/api";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const manager = useManagerProfile();
-  const { summary, courses, instructors, loading, error, refetch } =
+  const { summary, courses, instructors, loading, error, refetch, silentRefetch } =
     useCourseManagerDashboard();
 
   // Derive KPI data from real courses
@@ -63,6 +66,24 @@ const CourseManagerDashboardContent = () => {
     completionRate: c.completionRate > 0 ? c.completionRate : null,
     rating: null,
   }));
+
+  // Handle status change from CatalogOverviewWidget
+  const handleCatalogStatusChange = useCallback(
+    async (courseId: string, newStatus: string) => {
+      // Map widget status "preparing" back to backend "draft"
+      const backendStatus = newStatus === "preparing" ? "draft" : newStatus;
+      try {
+        await courseManagerApi.updateCourse(courseId, { status: backendStatus });
+        toast.success(t("catalog.statusChanged"));
+        silentRefetch();
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.message : t("catalog.statusFailed")
+        );
+      }
+    },
+    [t, silentRefetch]
+  );
 
   // Map upcoming sessions from summary
   const upcomingSessions = (summary?.upcomingSessions || []).slice(0, 3).map((s) => {
@@ -157,7 +178,7 @@ const CourseManagerDashboardContent = () => {
               <CourseManagerKPICards data={kpiData} />
 
               <div className="mb-6">
-                <CatalogOverviewWidget courses={catalogCourses} />
+                <CatalogOverviewWidget courses={catalogCourses} onStatusChange={handleCatalogStatusChange} />
               </div>
 
               <div className="mb-6">

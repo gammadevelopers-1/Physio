@@ -1287,7 +1287,12 @@
       "viewDetails": "View Details",
       "noCoursesTitle": "No Courses Assigned",
       "noCoursesDescription": "No courses match your current filters.",
-      "noCoursesAssigned": "No courses have been assigned to you yet. Please contact your course manager."
+      "noCoursesAssigned": "No courses have been assigned to you yet. Please contact your course manager.",
+      "changeStatus": "Change Status",
+      "statusChanged": "Course status updated successfully",
+      "statusFailed": "Failed to update course status",
+      "viewAnalytics": "View Analytics",
+      "courseSettings": "Course Settings"
     },
     "sidebar": {
       "instructorDashboard": "Instructor Dashboard",
@@ -2334,7 +2339,11 @@
       "active": "Active",
       "preparing": "Preparing",
       "completed": "Completed",
-      "archived": "Archived"
+      "archived": "Archived",
+      "changeStatus": "Change Status",
+      "statusChanged": "Course status updated successfully",
+      "statusFailed": "Failed to update course status",
+      "manageCourse": "Manage Course"
     },
     "schedules": {
       "title": "Schedules & Sessions",
@@ -2432,7 +2441,12 @@
         "alphabetical": "Alphabetical"
       },
       "students": "students",
-      "sessions": "sessions"
+      "sessions": "sessions",
+      "changeStatus": "Change Status",
+      "statusChanged": "Course status updated successfully",
+      "statusFailed": "Failed to update course status",
+      "viewAnalytics": "View Analytics",
+      "courseSettings": "Course Settings"
     },
     "error": {
       "title": "Something went wrong",

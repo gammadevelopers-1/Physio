@@ -1499,7 +1499,12 @@
       "viewDetails": "عرض التفاصيل",
       "noCoursesTitle": "لا توجد دورات مسندة",
       "noCoursesDescription": "لا توجد دورات تطابق الفلاتر الحالية.",
-      "noCoursesAssigned": "لم يتم تعيين أي دورات لك بعد. يرجى التواصل مع مدير الدورات."
+      "noCoursesAssigned": "لم يتم تعيين أي دورات لك بعد. يرجى التواصل مع مدير الدورات.",
+      "changeStatus": "تغيير الحالة",
+      "statusChanged": "تم تحديث حالة الدورة بنجاح",
+      "statusFailed": "فشل في تحديث حالة الدورة",
+      "viewAnalytics": "عرض التحليلات",
+      "courseSettings": "إعدادات الدورة"
     },
     "sidebar": {
       "instructorDashboard": "لوحة تحكم المدرب",
@@ -2546,7 +2551,11 @@
       "active": "نشطة",
       "preparing": "قيد التحضير",
       "completed": "مكتملة",
-      "archived": "مؤرشفة"
+      "archived": "مؤرشفة",
+      "changeStatus": "تغيير الحالة",
+      "statusChanged": "تم تحديث حالة الدورة بنجاح",
+      "statusFailed": "فشل في تحديث حالة الدورة",
+      "manageCourse": "إدارة الدورة"
     },
     "schedules": {
       "title": "الجداول والجلسات",
@@ -2644,7 +2653,12 @@
         "alphabetical": "أبجدي"
       },
       "students": "طلاب",
-      "sessions": "جلسات"
+      "sessions": "جلسات",
+      "changeStatus": "تغيير الحالة",
+      "statusChanged": "تم تحديث حالة الدورة بنجاح",
+      "statusFailed": "فشل في تحديث حالة الدورة",
+      "viewAnalytics": "عرض التحليلات",
+      "courseSettings": "إعدادات الدورة"
     },
     "error": {
       "title": "حدث خطأ ما",

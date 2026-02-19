@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useInstructorCourses } from "@/hooks/useInstructorCourses";
+import { instructorApi, ApiError } from "@/lib/api";
 import {
   Search,
   Users,
@@ -23,7 +26,21 @@ import {
   ChevronLeft,
   BarChart3,
   Settings,
+  Loader2,
+  CheckCircle,
+  FileText,
+  Archive,
+  Play,
 } from "lucide-react";
+
+const COURSE_STATUSES = ["active", "draft", "completed", "archived"] as const;
+
+const statusIcons: Record<string, React.ReactNode> = {
+  active: <Play className="w-3.5 h-3.5" />,
+  draft: <FileText className="w-3.5 h-3.5" />,
+  completed: <CheckCircle className="w-3.5 h-3.5" />,
+  archived: <Archive className="w-3.5 h-3.5" />,
+};
 
 const CourseCardSkeleton = () => (
   <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
@@ -74,11 +91,26 @@ function formatNextSession(isoDate: string | null): string | null {
 const MyCoursesContent = () => {
   const instructor = useInstructorProfile();
   const locale = useLocale();
+  const router = useRouter();
   const t = useTranslations("instructorDashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [statusLoading, setStatusLoading] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { courses, loading, error, refetch } = useInstructorCourses({
     status: statusFilter,
@@ -88,6 +120,25 @@ const MyCoursesContent = () => {
     page: 1,
     limit: 20,
   });
+
+  const handleStatusChange = useCallback(
+    async (courseId: string, newStatus: string) => {
+      setOpenDropdown(null);
+      setStatusLoading(courseId);
+      try {
+        await instructorApi.updateCourse(courseId, { status: newStatus });
+        toast.success(t("courses.statusChanged"));
+        refetch();
+      } catch (err) {
+        toast.error(
+          err instanceof ApiError ? err.message : t("courses.statusFailed")
+        );
+      } finally {
+        setStatusLoading(null);
+      }
+    },
+    [t, refetch]
+  );
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -277,9 +328,38 @@ const MyCoursesContent = () => {
                               {t(`courses.delivery.${course.deliveryType}`)}
                             </span>
                           </div>
-                          <button className="absolute top-3 right-3 p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors">
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
+                          {/* Status dropdown trigger */}
+                          <div className="absolute top-3 right-3" ref={openDropdown === course.id ? dropdownRef : undefined}>
+                            <button
+                              onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
+                              disabled={statusLoading === course.id}
+                              className="p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors disabled:opacity-50"
+                            >
+                              {statusLoading === course.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <MoreVertical className="w-4 h-4" />
+                              )}
+                            </button>
+
+                            {openDropdown === course.id && (
+                              <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20">
+                                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+                                  {t("courses.changeStatus")}
+                                </p>
+                                {COURSE_STATUSES.filter((s) => s !== course.status).map((status) => (
+                                  <button
+                                    key={status}
+                                    onClick={() => handleStatusChange(course.id, status)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                  >
+                                    {statusIcons[status]}
+                                    {t(`courses.status.${status}`)}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Course Info */}
@@ -338,10 +418,18 @@ const MyCoursesContent = () => {
                               {t("courses.viewDetails")}
                               {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                             </Link>
-                            <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
+                            <button
+                              onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
+                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              title={t("courses.viewAnalytics")}
+                            >
                               <BarChart3 className="w-4 h-4" />
                             </button>
-                            <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
+                            <button
+                              onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
+                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              title={t("courses.courseSettings")}
+                            >
                               <Settings className="w-4 h-4" />
                             </button>
                           </div>

@@ -1,6 +1,8 @@
 import {
   Controller,
   Get,
+  Post,
+  Body,
   Param,
   UseGuards,
 } from '@nestjs/common';
@@ -9,6 +11,7 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { CreateInterventionDto } from './dto';
 
 @Controller('instructor')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,6 +45,19 @@ export class InstructorController {
   @Get('at-risk')
   async getAtRiskStudents(@CurrentUser() user: AuthenticatedUser) {
     return this.instructorService.getAtRiskStudents(user);
+  }
+
+  /**
+   * POST /instructor/interventions — Create an at-risk student intervention
+   * NOTE: Must be defined BEFORE :id route to avoid matching as param
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post('interventions')
+  async createIntervention(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateInterventionDto,
+  ) {
+    return this.instructorService.createIntervention(user, dto);
   }
 
   /**

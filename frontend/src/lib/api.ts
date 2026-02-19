@@ -643,6 +643,8 @@ import type {
   CertificateRequestResponse,
   CertificateListResponse,
   BatchCertificateResult,
+  CreateInterventionPayload,
+  InterventionResponse,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -811,6 +813,10 @@ export const instructorApi = {
 
   getAtRiskStudents: () =>
     api.get<AtRiskStudent[]>('/instructor/at-risk'),
+
+  // Interventions
+  createIntervention: (data: CreateInterventionPayload) =>
+    api.post<InterventionResponse>('/instructor/interventions', data),
 
   // Certificates
   getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {

@@ -23,6 +23,7 @@ interface CalendarSession {
   venue?: string;
   enrolled: number;
   dayIndex: number; // 0-6 (Sunday-Saturday)
+  date: string; // ISO date string (YYYY-MM-DD) for week filtering
 }
 
 interface SessionsCalendarWidgetProps {
@@ -69,19 +70,37 @@ const SessionsCalendarWidget = ({
   // Day names for translation
   const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
-  // Group sessions by day
+  // Build a set of date strings (YYYY-MM-DD) for the currently displayed week
+  const weekDateSet = useMemo(() => {
+    const dates = new Set<string>();
+    for (const day of weekDays) {
+      const y = day.date.getFullYear();
+      const m = String(day.date.getMonth() + 1).padStart(2, "0");
+      const d = String(day.date.getDate()).padStart(2, "0");
+      dates.add(`${y}-${m}-${d}`);
+    }
+    return dates;
+  }, [weekDays]);
+
+  // Group sessions by day, only including sessions that fall within the displayed week
   const sessionsByDay = useMemo(() => {
     const grouped: { [key: number]: CalendarSession[] } = {};
+    const seen = new Set<string>();
     for (let i = 0; i < 7; i++) {
       grouped[i] = [];
     }
     sessions.forEach((session) => {
-      if (grouped[session.dayIndex]) {
+      if (
+        grouped[session.dayIndex] &&
+        !seen.has(session.id) &&
+        weekDateSet.has(session.date)
+      ) {
+        seen.add(session.id);
         grouped[session.dayIndex].push(session);
       }
     });
     return grouped;
-  }, [sessions]);
+  }, [sessions, weekDateSet]);
 
   const navigateWeek = (direction: "prev" | "next") => {
     setCurrentWeekOffset((prev) =>

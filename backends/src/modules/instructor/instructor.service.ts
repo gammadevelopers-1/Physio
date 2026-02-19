@@ -16,12 +16,16 @@ import {
   assessments,
   submissions,
   questions,
+  interventions,
   ATTENDANCE_STATUS,
+  INTERVENTION_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CoursesService } from '../courses/courses.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { CertificatesService } from '../certificates/certificates.service';
+import { EmailService } from '../email/email.service';
+import { CreateInterventionDto } from './dto';
 
 @Injectable()
 export class InstructorService {
@@ -31,6 +35,7 @@ export class InstructorService {
     private readonly coursesService: CoursesService,
     private readonly sessionsService: SessionsService,
     private readonly certificatesService: CertificatesService,
+    private readonly emailService: EmailService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -719,6 +724,22 @@ export class InstructorService {
 
     const studentIds = enrolledStudents.map((s) => s.studentId);
 
+    // Get per-student course enrollments (for intervention context)
+    const studentCourseEnrollments = await db
+      .select({
+        studentId: enrollments.studentId,
+        courseId: enrollments.courseId,
+      })
+      .from(enrollments)
+      .where(inArray(enrollments.courseId, courseIds));
+
+    const studentCoursesMap = new Map<string, string[]>();
+    for (const e of studentCourseEnrollments) {
+      const existing = studentCoursesMap.get(e.studentId) || [];
+      existing.push(e.courseId);
+      studentCoursesMap.set(e.studentId, existing);
+    }
+
     // Get all session IDs for instructor's courses
     const sessionIds = await db
       .select({ id: sessions.id })
@@ -824,10 +845,142 @@ export class InstructorService {
           attendanceRate,
           lastAccessedAt: lastAccess || null,
           riskReasons,
+          enrolledCourseIds: studentCoursesMap.get(studentId) || [],
         });
       }
     }
 
     return atRiskStudents;
+  }
+
+  // ─── Interventions ──────────────────────────────────────────
+
+  /**
+   * POST /instructor/interventions
+   * Create an intervention for an at-risk student.
+   */
+  async createIntervention(
+    user: AuthenticatedUser,
+    dto: CreateInterventionDto,
+  ) {
+    // 1. Verify student exists
+    const [student] = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(users)
+      .where(eq(users.id, dto.studentId))
+      .limit(1);
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    // 2. Verify instructor has access to this student
+    const courseConditions = this.isAdmin(user)
+      ? []
+      : [eq(courses.instructorId, user.id)];
+
+    const instructorCourses = await db
+      .select({ id: courses.id, title: courses.title })
+      .from(courses)
+      .where(
+        courseConditions.length > 0
+          ? and(...courseConditions)
+          : undefined,
+      );
+
+    const instructorCourseIds = instructorCourses.map((c) => c.id);
+
+    if (instructorCourseIds.length === 0) {
+      throw new NotFoundException('No courses found');
+    }
+
+    // Verify student is enrolled in at least one of the instructor's courses
+    const studentEnrollment = await db
+      .select({ courseId: enrollments.courseId })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, dto.studentId),
+          inArray(enrollments.courseId, instructorCourseIds),
+        ),
+      )
+      .limit(1);
+
+    if (studentEnrollment.length === 0) {
+      throw new NotFoundException('Student is not enrolled in your courses');
+    }
+
+    // 3. Resolve courseId
+    const resolvedCourseId = dto.courseId || studentEnrollment[0].courseId;
+    const courseName =
+      instructorCourses.find((c) => c.id === resolvedCourseId)?.title ||
+      'your course';
+
+    // 4. Handle action by type
+    let metadata: Record<string, unknown> = {};
+
+    switch (dto.type) {
+      case INTERVENTION_TYPE.EMAIL: {
+        const studentName =
+          `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
+          student.email;
+        await this.emailService.sendAtRiskReminder(
+          student.email,
+          studentName,
+          courseName,
+          dto.message || undefined,
+        );
+        metadata = { emailSentTo: student.email, courseName };
+        this.logger.log(
+          `At-risk email sent to ${student.email} for course "${courseName}"`,
+        );
+        break;
+      }
+
+      case INTERVENTION_TYPE.MAKEUP_SESSION: {
+        metadata = {
+          action: 'navigate_to_session_form',
+          courseId: resolvedCourseId,
+          courseName,
+          studentId: dto.studentId,
+        };
+        this.logger.log(
+          `Make-up session intervention logged for student ${dto.studentId}`,
+        );
+        break;
+      }
+
+      case INTERVENTION_TYPE.TICKET: {
+        metadata = {
+          action: 'ticket_placeholder',
+          courseName,
+          message: dto.message || 'Support ticket requested',
+        };
+        this.logger.log(
+          `Support ticket placeholder logged for student ${dto.studentId}`,
+        );
+        break;
+      }
+    }
+
+    // 5. Insert audit log
+    const [intervention] = await db
+      .insert(interventions)
+      .values({
+        instructorId: user.id,
+        studentId: dto.studentId,
+        courseId: resolvedCourseId,
+        type: dto.type,
+        message: dto.message || null,
+        metadata,
+      })
+      .returning();
+
+    return intervention;
   }
 }

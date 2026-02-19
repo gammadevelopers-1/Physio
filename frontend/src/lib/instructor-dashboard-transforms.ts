@@ -36,7 +36,6 @@ export function transformToSessionCards(sessions: DashboardSession[]) {
       location: s.roomName || s.venueAddress || undefined,
       enrolled: s.enrolledCount,
       time: `${formatTime(scheduledDate)} - ${formatTime(endDate)}`,
-      isFavorite: false,
     };
   });
 }
@@ -66,6 +65,7 @@ export function transformToCalendarSessions(sessions: DashboardSession[]) {
       venue: s.roomName || s.venueAddress || undefined,
       enrolled: s.enrolledCount,
       dayIndex: scheduledDate.getDay(), // 0 = Sunday
+      date: scheduledDate.toISOString().split("T")[0], // YYYY-MM-DD
     };
   });
 }
@@ -170,6 +170,8 @@ export function transformToAtRiskLearners(
       initials,
       riskType,
       riskValue,
+      email: l.email,
+      enrolledCourseIds: l.enrolledCourseIds || [],
     };
   });
 }

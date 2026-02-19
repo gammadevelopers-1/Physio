@@ -18,6 +18,10 @@ import {
   getNewApplicationAdminHtml,
   getNewApplicationAdminText,
 } from './templates/new-application-admin.template';
+import {
+  getAtRiskReminderHtml,
+  getAtRiskReminderText,
+} from './templates/at-risk-reminder.template';
 
 @Injectable()
 export class EmailService {
@@ -181,6 +185,35 @@ export class EmailService {
       );
     } catch (error) {
       this.logger.error('Failed to send admin notification email', error);
+    }
+  }
+
+  /**
+   * Send at-risk reminder email to student
+   */
+  async sendAtRiskReminder(
+    to: string,
+    studentName: string,
+    courseName: string,
+    customMessage?: string,
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Course Progress Reminder - ${courseName}`,
+        html: getAtRiskReminderHtml(studentName, courseName, customMessage),
+        text: getAtRiskReminderText(studentName, courseName, customMessage),
+      });
+      this.logger.log(
+        `At-risk reminder email sent to ${to} for course "${courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send at-risk reminder to ${to}`, error);
     }
   }
 }

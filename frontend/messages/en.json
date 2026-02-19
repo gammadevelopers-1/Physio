@@ -1356,7 +1356,13 @@
       "inactive": "Inactive",
       "viewAll": "View All",
       "sendReminder": "Send Reminder",
-      "openTicket": "Open Ticket"
+      "scheduleMakeup": "Schedule Make-up Session",
+      "openTicket": "Open Ticket",
+      "reminderSent": "Reminder email sent successfully",
+      "reminderFailed": "Failed to send reminder email",
+      "ticketCreated": "Support ticket has been logged",
+      "makeupSessionInfo": "Make-up session intervention recorded",
+      "actionFailed": "Action failed. Please try again."
     },
     "tabs": {
       "contentManagement": "Content Management",

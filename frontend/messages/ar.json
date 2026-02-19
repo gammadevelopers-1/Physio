@@ -1568,7 +1568,13 @@
       "inactive": "غير نشط",
       "viewAll": "عرض الكل",
       "sendReminder": "إرسال تذكير",
-      "openTicket": "فتح تذكرة"
+      "scheduleMakeup": "جدولة جلسة تعويضية",
+      "openTicket": "فتح تذكرة",
+      "reminderSent": "تم إرسال بريد التذكير بنجاح",
+      "reminderFailed": "فشل إرسال بريد التذكير",
+      "ticketCreated": "تم تسجيل تذكرة الدعم",
+      "makeupSessionInfo": "تم تسجيل تدخل الجلسة التعويضية",
+      "actionFailed": "فشل الإجراء. يرجى المحاولة مرة أخرى."
     },
     "tabs": {
       "contentManagement": "إدارة المحتوى",

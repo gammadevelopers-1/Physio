@@ -32,6 +32,7 @@ export interface DashboardAtRiskLearner {
   attendanceRate: number;
   lastAccessedAt: string | null;
   riskReasons: string[];
+  enrolledCourseIds: string[];
 }
 
 export interface DashboardCertificate {
@@ -369,6 +370,7 @@ export interface AtRiskStudent {
   attendanceRate: number;
   lastAccessedAt: string | null;
   riskReasons: string[];
+  enrolledCourseIds: string[];
 }
 
 export interface StudentDetailEnrollment {
@@ -484,4 +486,26 @@ export interface BatchCertificateResult {
   successful: number;
   failed: number;
   results: { id: string; status: string; error?: string }[];
+}
+
+// ─── Interventions ──────────────────────────────────────────
+
+export type InterventionType = 'email' | 'makeup_session' | 'ticket';
+
+export interface CreateInterventionPayload {
+  type: InterventionType;
+  studentId: string;
+  courseId?: string;
+  message?: string;
+}
+
+export interface InterventionResponse {
+  id: string;
+  instructorId: string;
+  studentId: string;
+  courseId: string | null;
+  type: InterventionType;
+  message: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
 }

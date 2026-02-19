@@ -69,16 +69,23 @@ const InstructorCalendarWidget = ({
                   <span className="text-[13px] text-[#6B7280]">
                     {event.duration}
                   </span>
-                  {event.type === "zoom" && event.zoomLink ? (
-                    <a
-                      href={event.zoomLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-[13px] font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
-                    >
-                      <Video className="w-3.5 h-3.5" />
-                      {t("calendar.zoom")}
-                    </a>
+                  {event.type === "zoom" ? (
+                    event.zoomLink ? (
+                      <a
+                        href={event.zoomLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-[13px] font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                        {t("calendar.zoom")}
+                      </a>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3B82F6]">
+                        <Video className="w-3.5 h-3.5" />
+                        {t("calendar.zoom")}
+                      </span>
+                    )
                   ) : (
                     <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#22C55E]">
                       <MapPin className="w-3.5 h-3.5" />

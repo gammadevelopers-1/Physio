@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
-  Heart,
   Video,
   MapPin,
   Users,
@@ -21,7 +20,6 @@ interface Session {
   location?: string;
   enrolled: number;
   time: string;
-  isFavorite?: boolean;
 }
 
 interface SessionCardProps {
@@ -29,7 +27,6 @@ interface SessionCardProps {
   onStart?: () => void;
   onAttendance?: () => void;
   onShare?: () => void;
-  onFavorite?: () => void;
 }
 
 const SessionCard = ({
@@ -37,7 +34,6 @@ const SessionCard = ({
   onStart,
   onAttendance,
   onShare,
-  onFavorite,
 }: SessionCardProps) => {
   const t = useTranslations("instructorDashboard");
 
@@ -56,18 +52,10 @@ const SessionCard = ({
       {/* Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between mb-1">
+        <div className="mb-1">
           <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1">
             {session.title}
           </h3>
-          <button
-            onClick={onFavorite}
-            className="text-[#9CA3AF] hover:text-[#EF4444] transition-colors flex-shrink-0"
-          >
-            <Heart
-              className={`w-5 h-5 ${session.isFavorite ? "fill-[#EF4444] text-[#EF4444]" : ""}`}
-            />
-          </button>
         </div>
 
         {/* Session Type Badge */}

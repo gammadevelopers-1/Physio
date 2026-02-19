@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
@@ -988,9 +989,13 @@ const SessionsContent = () => {
   const instructor = useInstructorProfile();
   const locale = useLocale();
   const t = useTranslations("instructorDashboard");
+  const searchParams = useSearchParams();
 
-  // View mode
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
+  // View mode — initialize from ?view= query param if present
+  const [viewMode, setViewMode] = useState<"calendar" | "list">(() => {
+    const view = searchParams.get("view");
+    return view === "calendar" ? "calendar" : "list";
+  });
 
   // Filters
   const [filterCourse, setFilterCourse] = useState<string>("all");

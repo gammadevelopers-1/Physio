@@ -1,14 +1,18 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   MoreVertical,
   ChevronRight,
   AlertTriangle,
   Mail,
+  Calendar,
   Ticket,
+  Loader2,
 } from "lucide-react";
+import { instructorApi, ApiError } from "@/lib/api";
 
 interface AtRiskLearner {
   id: string;
@@ -17,11 +21,13 @@ interface AtRiskLearner {
   riskType: "lowAttendance" | "lowScore" | "inactive";
   riskValue: string;
   course?: string;
+  email?: string;
+  enrolledCourseIds?: string[];
 }
 
 interface AtRiskLearnersProps {
   learners: AtRiskLearner[];
-visibleCount?: number;
+  visibleCount?: number;
 }
 
 const AtRiskLearners = ({
@@ -30,6 +36,7 @@ const AtRiskLearners = ({
 }: AtRiskLearnersProps) => {
   const t = useTranslations("instructorDashboard");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -70,15 +77,62 @@ const AtRiskLearners = ({
     }
   };
 
-  const handleSendReminder = (learnerId: string) => {
-    console.log("Sending reminder to learner:", learnerId);
+  const handleSendReminder = useCallback(async (learner: AtRiskLearner) => {
     setOpenDropdown(null);
-  };
+    setActionLoading(learner.id);
+    try {
+      await instructorApi.createIntervention({
+        type: "email",
+        studentId: learner.id,
+        courseId: learner.enrolledCourseIds?.[0],
+      });
+      toast.success(t("atRisk.reminderSent"));
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : t("atRisk.reminderFailed")
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  }, [t]);
 
-  const handleOpenTicket = (learnerId: string) => {
-    console.log("Opening ticket for learner:", learnerId);
+  const handleScheduleMakeup = useCallback(async (learner: AtRiskLearner) => {
     setOpenDropdown(null);
-  };
+    setActionLoading(learner.id);
+    try {
+      await instructorApi.createIntervention({
+        type: "makeup_session",
+        studentId: learner.id,
+        courseId: learner.enrolledCourseIds?.[0],
+      });
+      toast.info(t("atRisk.makeupSessionInfo"));
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : t("atRisk.actionFailed")
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  }, [t]);
+
+  const handleOpenTicket = useCallback(async (learner: AtRiskLearner) => {
+    setOpenDropdown(null);
+    setActionLoading(learner.id);
+    try {
+      await instructorApi.createIntervention({
+        type: "ticket",
+        studentId: learner.id,
+        courseId: learner.enrolledCourseIds?.[0],
+      });
+      toast.success(t("atRisk.ticketCreated"));
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : t("atRisk.actionFailed")
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  }, [t]);
 
   const displayedLearners = learners.slice(0, visibleCount);
   const totalCount = learners.length;
@@ -130,25 +184,40 @@ const AtRiskLearners = ({
               <div className="relative flex-shrink-0">
                 <button
                   onClick={() => setOpenDropdown(openDropdown === learner.id ? null : learner.id)}
-                  className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors"
+                  disabled={actionLoading === learner.id}
+                  className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <MoreVertical className="w-4 h-4" />
+                  {actionLoading === learner.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <MoreVertical className="w-4 h-4" />
+                  )}
                 </button>
 
                 {/* Dropdown Menu */}
                 {openDropdown === learner.id && (
-                  <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                  <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
                     <div className="py-1">
                       <button
-                        onClick={() => handleSendReminder(learner.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                        onClick={() => handleSendReminder(learner)}
+                        disabled={actionLoading === learner.id}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                       >
                         <Mail className="w-4 h-4 text-[#6B7280]" />
                         {t("atRisk.sendReminder")}
                       </button>
                       <button
-                        onClick={() => handleOpenTicket(learner.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                        onClick={() => handleScheduleMakeup(learner)}
+                        disabled={actionLoading === learner.id}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                      >
+                        <Calendar className="w-4 h-4 text-[#6B7280]" />
+                        {t("atRisk.scheduleMakeup")}
+                      </button>
+                      <button
+                        onClick={() => handleOpenTicket(learner)}
+                        disabled={actionLoading === learner.id}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                       >
                         <Ticket className="w-4 h-4 text-[#6B7280]" />
                         {t("atRisk.openTicket")}

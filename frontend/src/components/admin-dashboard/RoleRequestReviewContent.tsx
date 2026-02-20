@@ -153,10 +153,12 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
   const bankData = (application?.bankData || {}) as Record<string, string>;
   const rawResumeFiles = (application?.resumeFiles || []) as Array<{ type: string; url: string; filename: string }>;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-  const resumeFiles = rawResumeFiles.map((file) => ({
-    ...file,
-    url: file.url.replace(/^http:\/\/localhost:\d+\/api/, apiUrl),
-  }));
+  const resumeFiles = rawResumeFiles
+    .filter((file) => file && typeof file === "object" && !Array.isArray(file) && file.url)
+    .map((file) => ({
+      ...file,
+      url: file.url.replace(/^http:\/\/localhost:\d+\/api/, apiUrl),
+    }));
   const config = application
     ? statusConfig[application.status as keyof typeof statusConfig] || statusConfig.PENDING
     : statusConfig.PENDING;
@@ -243,7 +245,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                   <InfoField icon={GraduationCap} label={t("roleRequestReviewPage.specialty") || "Specialty"} value={profileData.specialty} />
                   <InfoField icon={Award} label={t("roleRequestReviewPage.qualification") || "Qualification"} value={profileData.qualification} />
                   <InfoField icon={Award} label={t("roleRequestReviewPage.rank") || "Rank"} value={profileData.academicRank || profileData.rank} />
-                  <InfoField icon={Hash} label={t("roleRequestReviewPage.scfhsNumber") || "SCFHS Registered"} value={profileData.hasScfhsNumber === "true" ? "Yes" : profileData.hasScfhsNumber === "false" ? "No" : (profileData.scfhsNumber || profileData.hasScfhsNumber)} />
+                  <InfoField icon={Hash} label={t("roleRequestReviewPage.scfhsNumber") || "SCFHS Registered"} value={String(profileData.hasScfhsNumber) === "true" ? `Yes${profileData.scfhsNumber ? ` — ${profileData.scfhsNumber}` : ""}` : String(profileData.hasScfhsNumber) === "false" ? "No" : (profileData.scfhsNumber || profileData.hasScfhsNumber)} />
                   <InfoField icon={Hash} label={t("roleRequestReviewPage.nationalId") || "National/Iqama ID"} value={profileData.nationalIqamaId || profileData.nationalId} />
                 </div>
 

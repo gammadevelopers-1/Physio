@@ -794,6 +794,13 @@ export const instructorApi = {
   getUpcomingSessions: () =>
     api.get<CourseSession[]>('/sessions/upcoming'),
 
+  // Enrollment (with NELC limit enforcement)
+  enrollStudent: (courseId: string, data: { studentId: string }) =>
+    api.post<{ id: string; courseId: string; studentId: string; status: string }>(
+      `/courses/${courseId}/enroll`,
+      data,
+    ),
+
   // Attendance
   getSessionAttendance: (sessionId: string) =>
     api.get<AttendanceRecord[]>(`/sessions/${sessionId}/attendance`),
@@ -1168,6 +1175,156 @@ export const courseManagerApi = {
   // Delete course (draft only)
   deleteCourse: (courseId: string) =>
     api.delete(`/courses/${courseId}`),
+};
+
+// ===========================================
+// Session Assistants API (NELC Auto-Allocation)
+// ===========================================
+export const sessionAssistantsApi = {
+  getAssistants: (sessionId: string) =>
+    api.get<Array<{
+      id: string;
+      sessionId: string;
+      userId: string;
+      role: string;
+      assignedAt: string;
+      assignedBy: string | null;
+      isAutoAssigned: boolean;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }>>(`/sessions/${sessionId}/assistants`),
+
+  assignAssistant: (sessionId: string, data: { userId: string; role?: string }) =>
+    api.post<{ id: string; sessionId: string; userId: string; role: string }>(
+      `/sessions/${sessionId}/assistants`,
+      data,
+    ),
+
+  removeAssistant: (sessionId: string, userId: string) =>
+    api.delete<{ message: string }>(`/sessions/${sessionId}/assistants/${userId}`),
+};
+
+// ===========================================
+// NELC Audit API
+// ===========================================
+export const nelcAuditApi = {
+  getLogs: (params?: {
+    eventType?: string;
+    entityType?: string;
+    entityId?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.eventType) sp.set('eventType', params.eventType);
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.entityId) sp.set('entityId', params.entityId);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        eventType: string;
+        entityType: string;
+        entityId: string | null;
+        userId: string | null;
+        metadata: Record<string, unknown> | null;
+        ipAddress: string | null;
+        createdAt: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    }>(`/nelc-audit${qs ? `?${qs}` : ''}`);
+  },
+
+  getSummary: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{ eventType: string; count: number }>>(
+      `/nelc-audit/summary${qs ? `?${qs}` : ''}`,
+    );
+  },
+};
+
+// ===========================================
+// Zoom Attendance API (Real-time tracking)
+// ===========================================
+export const zoomAttendanceApi = {
+  /** Get granular join/leave logs for a session */
+  getAttendanceLogs: (sessionId: string) =>
+    api.get<Array<{
+      id: string;
+      sessionId: string;
+      studentId: string | null;
+      eventType: string;
+      timestamp: string;
+      zoomParticipantId: string | null;
+      zoomUserEmail: string | null;
+    }>>(`/sessions/${sessionId}/attendance-logs`),
+
+  /** Trigger a mock Zoom webhook event (dev only) */
+  sendMockWebhook: (data: {
+    event: string;
+    payload: Record<string, unknown>;
+  }) => api.post<{ status: string }>('/zoom/mock-webhook', data),
+
+  /** Trigger post-meeting Zoom sync for a session */
+  syncZoomAttendance: (sessionId: string) =>
+    api.post<{ message: string; synced: number }>(
+      `/sessions/${sessionId}/sync-zoom`,
+      {},
+    ),
+};
+
+// ===========================================
+// NELC Compliance API
+// ===========================================
+export interface ComplianceCheck {
+  rule: string;
+  status: 'passed' | 'review' | 'failed';
+  detail: string;
+}
+
+export interface SessionComplianceResult {
+  sessionId: string;
+  overallStatus: 'passed' | 'review' | 'failed';
+  checks: ComplianceCheck[];
+}
+
+export interface CourseComplianceResult {
+  courseId: string;
+  overallStatus: 'passed' | 'review' | 'failed';
+  sessionResults: SessionComplianceResult[];
+  summary: { passed: number; review: number; failed: number; total: number };
+}
+
+export interface ComplianceSummary {
+  totalCourses: number;
+  totalSessions: number;
+  passed: number;
+  review: number;
+  failed: number;
+}
+
+export const nelcComplianceApi = {
+  getSummary: () =>
+    api.get<ComplianceSummary>('/nelc-compliance/summary'),
+
+  getSessionCompliance: (sessionId: string) =>
+    api.get<SessionComplianceResult>(`/nelc-compliance/session/${sessionId}`),
+
+  getCourseCompliance: (courseId: string) =>
+    api.get<CourseComplianceResult>(`/nelc-compliance/course/${courseId}`),
 };
 
 export default api;

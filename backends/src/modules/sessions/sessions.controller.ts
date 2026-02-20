@@ -12,6 +12,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
+import { ZoomSyncService } from '../zoom/zoom-sync.service';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
@@ -23,7 +24,10 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 @Controller('sessions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SessionsController {
-  constructor(private sessionsService: SessionsService) {}
+  constructor(
+    private sessionsService: SessionsService,
+    private zoomSyncService: ZoomSyncService,
+  ) {}
 
   // ─── Session Endpoints ──────────────────────────────────────
 
@@ -156,5 +160,17 @@ export class SessionsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sessionsService.delete(id, user);
+  }
+
+  // ─── Zoom Sync Endpoints ──────────────────────────────────
+
+  /**
+   * POST /sessions/:id/sync-zoom — Manually trigger Zoom attendance sync
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post(':id/sync-zoom')
+  async syncZoom(@Param('id') id: string) {
+    const result = await this.zoomSyncService.syncSession(id);
+    return { message: 'Zoom attendance synced', ...result };
   }
 }

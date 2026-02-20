@@ -1,5 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import {
+  IZoomService,
+  CreateZoomMeetingParams,
+  CreateZoomMeetingResult,
+  ZoomMeetingDetails,
+  ZoomParticipantReport,
+} from './zoom.interface';
 
 interface ZoomTokenResponse {
   access_token: string;
@@ -20,15 +27,8 @@ interface ZoomMeetingResponse {
   start_time: string;
 }
 
-export interface CreateZoomMeetingResult {
-  meetingId: string;
-  joinUrl: string;
-  startUrl: string;
-  password: string;
-}
-
 @Injectable()
-export class ZoomService {
+export class ZoomService implements IZoomService {
   private readonly logger = new Logger(ZoomService.name);
   private cachedToken: string | null = null;
   private tokenExpiresAt = 0;
@@ -48,10 +48,6 @@ export class ZoomService {
     );
   }
 
-  /**
-   * Get an OAuth access token using Server-to-Server OAuth.
-   * Caches the token until it expires (with a 60s buffer).
-   */
   private async getAccessToken(): Promise<string> {
     const now = Date.now();
     if (this.cachedToken && now < this.tokenExpiresAt) {
@@ -84,26 +80,20 @@ export class ZoomService {
 
     const data: ZoomTokenResponse = await response.json();
     this.cachedToken = data.access_token;
-    // Cache with 60s buffer before actual expiry
     this.tokenExpiresAt = now + (data.expires_in - 60) * 1000;
 
     this.logger.log('Zoom OAuth token obtained successfully');
     return this.cachedToken;
   }
 
-  /**
-   * Create a Zoom meeting via the Zoom REST API.
-   */
-  async createMeeting(params: {
-    topic: string;
-    startTime: Date;
-    durationMinutes: number;
-  }): Promise<CreateZoomMeetingResult> {
+  async createMeeting(
+    params: CreateZoomMeetingParams,
+  ): Promise<CreateZoomMeetingResult> {
     const token = await this.getAccessToken();
 
     const body = {
       topic: params.topic,
-      type: 2, // Scheduled meeting
+      type: 2,
       start_time: params.startTime.toISOString(),
       duration: params.durationMinutes,
       timezone: 'UTC',
@@ -131,7 +121,6 @@ export class ZoomService {
     }
 
     const meeting: ZoomMeetingResponse = await response.json();
-
     this.logger.log(`Zoom meeting created: ${meeting.id}`);
 
     return {
@@ -142,21 +131,14 @@ export class ZoomService {
     };
   }
 
-  /**
-   * Get meeting details (including start_url for host).
-   */
-  async getMeeting(
-    meetingId: string,
-  ): Promise<{ startUrl: string; joinUrl: string; status: string }> {
+  async getMeeting(meetingId: string): Promise<ZoomMeetingDetails> {
     const token = await this.getAccessToken();
 
     const response = await fetch(
       `https://api.zoom.us/v2/meetings/${meetingId}`,
       {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       },
     );
 
@@ -175,9 +157,6 @@ export class ZoomService {
     };
   }
 
-  /**
-   * End a Zoom meeting via the Zoom REST API.
-   */
   async endMeeting(meetingId: string): Promise<void> {
     const token = await this.getAccessToken();
 
@@ -195,7 +174,6 @@ export class ZoomService {
 
     if (!response.ok) {
       const errorText = await response.text();
-      // 404 = meeting already ended or doesn't exist — not a real error
       if (response.status === 404) {
         this.logger.warn(
           `Zoom meeting ${meetingId} not found (already ended?)`,
@@ -209,10 +187,47 @@ export class ZoomService {
     this.logger.log(`Zoom meeting ${meetingId} ended successfully`);
   }
 
-  /**
-   * Verify that a webhook payload is authentic using the secret token.
-   */
   getWebhookSecretToken(): string {
     return this.webhookSecretToken;
+  }
+
+  async getParticipantReport(
+    meetingId: string,
+  ): Promise<ZoomParticipantReport[]> {
+    const token = await this.getAccessToken();
+
+    const response = await fetch(
+      `https://api.zoom.us/v2/report/meetings/${meetingId}/participants?page_size=300`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(`Zoom participant report failed: ${errorText}`);
+      throw new Error(
+        `Failed to get participant report: ${response.status}`,
+      );
+    }
+
+    const data = await response.json();
+    const participants: ZoomParticipantReport[] = (
+      data.participants || []
+    ).map((p: any) => ({
+      id: p.id || p.participant_uuid || '',
+      name: p.name || '',
+      userEmail: p.user_email || '',
+      joinTime: p.join_time || '',
+      leaveTime: p.leave_time || '',
+      duration: p.duration || 0,
+    }));
+
+    this.logger.log(
+      `Zoom participant report for ${meetingId}: ${participants.length} participants`,
+    );
+
+    return participants;
   }
 }

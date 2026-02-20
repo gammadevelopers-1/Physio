@@ -19,6 +19,9 @@ import { MaterialsModule } from './modules/materials/materials.module';
 import { CertificatesModule } from './modules/certificates/certificates.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { ZoomModule } from './modules/zoom/zoom.module';
+import { NelcAuditModule } from './modules/nelc-audit/nelc-audit.module';
+import { SessionAssistantsModule } from './modules/session-assistants/session-assistants.module';
+import { NelcComplianceModule } from './modules/nelc-compliance/nelc-compliance.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -41,6 +44,9 @@ import zoomConfig from './config/zoom.config';
     // Task scheduling (cron jobs)
     ScheduleModule.forRoot(),
 
+    // NELC Compliance (global — available to all modules)
+    NelcAuditModule,
+
     // Feature modules
     EmailModule,
     AuthModule,
@@ -57,6 +63,8 @@ import zoomConfig from './config/zoom.config';
     CertificatesModule,
     ReportsModule,
     ZoomModule,
+    SessionAssistantsModule,
+    NelcComplianceModule,
   ],
   controllers: [AppController],
   providers: [

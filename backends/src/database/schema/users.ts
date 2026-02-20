@@ -38,6 +38,9 @@ export const users = pgTable('users', {
   // Two-Factor Authentication
   twoFactorEnabled: boolean('two_factor_enabled').notNull().default(true),
 
+  // Zoom Integration (optional — for matching Zoom participants to system users)
+  zoomEmail: varchar('zoom_email', { length: 255 }),
+
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

@@ -35,6 +35,7 @@ export const sessions = pgTable(
     actualEndedAt: timestamp('actual_ended_at'),
     cancelReason: text('cancel_reason'),
     reminderSentAt: timestamp('reminder_sent_at'),
+    zoomSyncedAt: timestamp('zoom_synced_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

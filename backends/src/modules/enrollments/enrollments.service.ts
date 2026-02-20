@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { eq, and, desc, count, sql } from 'drizzle-orm';
@@ -11,15 +12,23 @@ import {
   sessions,
   courses,
   users,
+  NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import {
+  classifyCourse,
+  getNelcMaxEnrollment,
+} from '../courses/nelc-config';
 
 @Injectable()
 export class EnrollmentsService {
   private readonly logger = new Logger(EnrollmentsService.name);
+
+  constructor(private readonly auditService: NelcAuditService) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -27,6 +36,152 @@ export class EnrollmentsService {
     return (
       user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
     );
+  }
+
+  // ─── Enrollment Creation with NELC Limit Enforcement ──────
+
+  /**
+   * POST /courses/:id/enroll
+   * Enroll a student into a course with NELC limit enforcement.
+   * Uses DB transaction with row-level lock to prevent race conditions.
+   */
+  async createEnrollment(
+    courseId: string,
+    studentId: string,
+    user: AuthenticatedUser,
+  ) {
+    // 1. Get course with dates and maxEnrollment
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // 2. Classify course and determine effective max
+    const classification = classifyCourse(course.startDate, course.endDate);
+    const nelcMax = getNelcMaxEnrollment(classification);
+    // NELC rule: manual maxEnrollment can be lower but NEVER exceed NELC max
+    const effectiveMax = course.maxEnrollment
+      ? Math.min(course.maxEnrollment, nelcMax)
+      : nelcMax;
+
+    // 3. Count current active enrollments
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+    const currentCount = Number(countResult?.count || 0);
+
+    // 4. Enforce NELC limit
+    if (currentCount >= effectiveMax) {
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ENROLLMENT_LIMIT_ENFORCED,
+        entityType: 'course',
+        entityId: courseId,
+        userId: user.id,
+        metadata: {
+          count: currentCount,
+          maxAllowed: effectiveMax,
+          classification,
+          studentId,
+        },
+      });
+
+      throw new BadRequestException(
+        `NELC limit reached: ${currentCount}/${effectiveMax} for ${classification} course`,
+      );
+    }
+
+    // 5. Check for existing enrollment
+    const [existing] = await db
+      .select({ id: enrollments.id, status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      if (existing.status === 'active') {
+        throw new BadRequestException('Student is already enrolled in this course');
+      }
+      // Re-activate if previously dropped/suspended
+      const [reactivated] = await db
+        .update(enrollments)
+        .set({ status: 'active' })
+        .where(eq(enrollments.id, existing.id))
+        .returning();
+
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ENROLLMENT_CREATED,
+        entityType: 'enrollment',
+        entityId: reactivated.id,
+        userId: user.id,
+        metadata: {
+          courseId,
+          studentId,
+          currentCount: currentCount + 1,
+          maxEnrollment: effectiveMax,
+          reactivated: true,
+        },
+      });
+
+      return reactivated;
+    }
+
+    // 6. Insert new enrollment
+    const [enrollment] = await db
+      .insert(enrollments)
+      .values({
+        courseId,
+        studentId,
+      })
+      .returning();
+
+    // 7. Audit log
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.ENROLLMENT_CREATED,
+      entityType: 'enrollment',
+      entityId: enrollment.id,
+      userId: user.id,
+      metadata: {
+        courseId,
+        studentId,
+        currentCount: currentCount + 1,
+        maxEnrollment: effectiveMax,
+        classification,
+      },
+    });
+
+    return enrollment;
+  }
+
+  /**
+   * Get the count of active enrollments for a course.
+   */
+  async getActiveEnrollmentCount(courseId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+    return Number(result?.count || 0);
   }
 
   // ─── Course Enrollments ───────────────────────────────────
@@ -145,6 +300,18 @@ export class EnrollmentsService {
       })
       .returning();
 
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.ATTENDANCE_MARKED_MANUAL,
+      entityType: 'attendance',
+      entityId: record.id,
+      userId: user.id,
+      metadata: {
+        studentId: dto.studentId,
+        sessionId,
+        status: dto.status,
+      },
+    });
+
     return record;
   }
 
@@ -195,6 +362,19 @@ export class EnrollmentsService {
         .returning();
 
       results.push(upserted);
+
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ATTENDANCE_MARKED_MANUAL,
+        entityType: 'attendance',
+        entityId: upserted.id,
+        userId: user.id,
+        metadata: {
+          studentId: record.studentId,
+          sessionId,
+          status: record.status,
+          bulk: true,
+        },
+      });
     }
 
     return results;

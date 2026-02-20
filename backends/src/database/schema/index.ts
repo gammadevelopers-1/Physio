@@ -36,6 +36,11 @@ export * from './certificate-requests';
 // Intervention schemas
 export * from './interventions';
 
+// NELC Compliance schemas
+export * from './nelc-audit-logs';
+export * from './session-assistants';
+export * from './attendance-logs';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

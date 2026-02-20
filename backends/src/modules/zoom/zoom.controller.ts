@@ -7,11 +7,13 @@ import {
   HttpStatus,
   Logger,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { db } from '../../database';
 import { sessions, SESSION_STATUS } from '../../database/schema';
-import { ZoomService } from './zoom.service';
+import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
+import { ZoomWebhookService } from './zoom-webhook.service';
 import { Public } from '../auth/decorators';
 import * as crypto from 'crypto';
 
@@ -19,7 +21,10 @@ import * as crypto from 'crypto';
 export class ZoomController {
   private readonly logger = new Logger(ZoomController.name);
 
-  constructor(private zoomService: ZoomService) {}
+  constructor(
+    @Inject(ZOOM_SERVICE) private zoomService: IZoomService,
+    private webhookService: ZoomWebhookService,
+  ) {}
 
   /**
    * POST /zoom/webhook
@@ -35,7 +40,6 @@ export class ZoomController {
     @Headers('x-zm-signature') signature: string,
   ) {
     // ─── URL Validation Challenge ──────────────────────────
-    // Zoom sends this during webhook endpoint verification setup
     if (body.event === 'endpoint.url_validation') {
       const hashForValidate = crypto
         .createHmac('sha256', this.zoomService.getWebhookSecretToken())
@@ -52,7 +56,7 @@ export class ZoomController {
 
     // ─── Signature Verification ────────────────────────────
     const secretToken = this.zoomService.getWebhookSecretToken();
-    if (secretToken && timestamp && signature) {
+    if (secretToken && secretToken !== 'mock-webhook-secret' && timestamp && signature) {
       const message = `v0:${timestamp}:${JSON.stringify(body)}`;
       const expectedSig =
         'v0=' +
@@ -73,9 +77,43 @@ export class ZoomController {
 
     if (event === 'meeting.ended') {
       await this.handleMeetingEnded(body.payload?.object);
+    } else if (event === 'meeting.participant_joined') {
+      await this.webhookService.handleParticipantJoined(body.payload?.object);
+    } else if (event === 'meeting.participant_left') {
+      await this.webhookService.handleParticipantLeft(body.payload?.object);
     }
 
     return { status: 'ok' };
+  }
+
+  /**
+   * POST /zoom/mock-webhook
+   * Mock endpoint for local development — simulates Zoom webhook events.
+   * Only available when NODE_ENV !== 'production'.
+   */
+  @Public()
+  @Post('mock-webhook')
+  @HttpCode(HttpStatus.OK)
+  async handleMockWebhook(@Body() body: any) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new BadRequestException('Mock webhooks disabled in production');
+    }
+
+    this.logger.log(`[MOCK] Simulating Zoom event: ${body.event}`);
+
+    const event = body.event;
+
+    if (event === 'meeting.participant_joined') {
+      await this.webhookService.handleParticipantJoined(body.payload?.object);
+    } else if (event === 'meeting.participant_left') {
+      await this.webhookService.handleParticipantLeft(body.payload?.object);
+    } else if (event === 'meeting.ended') {
+      await this.handleMeetingEnded(body.payload?.object);
+    } else {
+      return { status: 'unknown_event', event };
+    }
+
+    return { status: 'ok', mock: true };
   }
 
   /**
@@ -91,7 +129,6 @@ export class ZoomController {
     const meetingId = String(meeting.id);
     this.logger.log(`Meeting ended: ${meetingId}`);
 
-    // Find session with this meetingId that is currently live
     const [session] = await db
       .select()
       .from(sessions)

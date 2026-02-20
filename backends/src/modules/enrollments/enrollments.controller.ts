@@ -13,6 +13,7 @@ import { EnrollmentsService } from './enrollments.service';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -24,6 +25,20 @@ export class EnrollmentsController {
   constructor(private enrollmentsService: EnrollmentsService) {}
 
   // ─── Course Enrollment Endpoints ──────────────────────────
+
+  /**
+   * POST /courses/:id/enroll — Enroll a student (with NELC limit enforcement)
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post('courses/:id/enroll')
+  @HttpCode(HttpStatus.CREATED)
+  async enrollStudent(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateEnrollmentDto,
+  ) {
+    return this.enrollmentsService.createEnrollment(courseId, dto.studentId, user);
+  }
 
   /**
    * GET /courses/:id/enrollments — List students enrolled in a course

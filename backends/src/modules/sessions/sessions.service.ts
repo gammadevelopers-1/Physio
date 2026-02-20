@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Inject,
   NotFoundException,
   BadRequestException,
   Logger,
@@ -16,13 +17,20 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
-import { ZoomService } from '../zoom/zoom.service';
+import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
+import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { NELC_EVENT_TYPE } from '../../database/schema';
 
 @Injectable()
 export class SessionsService {
   private readonly logger = new Logger(SessionsService.name);
 
-  constructor(private readonly zoomService: ZoomService) {}
+  constructor(
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
+    private readonly auditService: NelcAuditService,
+    private readonly assistantsService: SessionAssistantsService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -99,6 +107,11 @@ export class SessionsService {
         })
         .returning();
 
+      // Auto-allocate assistants based on NELC rules
+      await this.assistantsService.checkAndAllocate(session.id).catch((err) => {
+        this.logger.warn('Auto-allocation failed for session', err);
+      });
+
       return session;
     }
 
@@ -133,6 +146,11 @@ export class SessionsService {
         venueAddress: dto.venueAddress,
       })
       .returning();
+
+    // Auto-allocate assistants based on NELC rules
+    await this.assistantsService.checkAndAllocate(session.id).catch((err) => {
+      this.logger.warn('Auto-allocation failed for session', err);
+    });
 
     return session;
   }
@@ -366,6 +384,19 @@ export class SessionsService {
       }
     }
 
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.SESSION_STARTED,
+      entityType: 'session',
+      entityId: updated.id,
+      userId: user.id,
+      metadata: {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+        instructorId: updated.instructorId,
+        method: updated.type,
+      },
+    });
+
     return { ...updated, zoomStartUrl };
   }
 
@@ -407,6 +438,19 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.SESSION_ENDED,
+      entityType: 'session',
+      entityId: updated.id,
+      userId: user.id,
+      metadata: {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+        actualStartedAt: session.actualStartedAt,
+        actualEndedAt: updated.actualEndedAt,
+      },
+    });
+
     return updated;
   }
 
@@ -438,6 +482,18 @@ export class SessionsService {
       })
       .where(eq(sessions.id, sessionId))
       .returning();
+
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.SESSION_CANCELLED,
+      entityType: 'session',
+      entityId: updated.id,
+      userId: user.id,
+      metadata: {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+        cancelReason: dto.cancelReason,
+      },
+    });
 
     return updated;
   }

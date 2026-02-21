@@ -445,9 +445,24 @@ export interface CourseMaterialResponse {
   wcagStatus: string;
   captionsUrl: string | null;
   transcriptUrl: string | null;
+  processingStep: string | null;
+  processingError: string | null;
   uploadedBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface MaterialVariant {
+  id: string;
+  materialId: string;
+  resolution: string;
+  fileUrl: string;
+  fileSize: number | null;
+  width: number | null;
+  height: number | null;
+  bitrate: string | null;
+  mimeType: string;
+  createdAt: string;
 }
 
 // ─── Certificate Requests ──────────────────────────────────

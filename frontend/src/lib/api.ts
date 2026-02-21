@@ -995,6 +995,20 @@ export const materialsApi = {
 
   delete: (materialId: string) =>
     api.delete<{ message: string }>(`/materials/${materialId}`),
+
+  getStatus: (materialId: string) =>
+    api.get<{
+      id: string;
+      status: string;
+      processingStep: string | null;
+      wcagStatus: string;
+      captionsUrl: string | null;
+      transcriptUrl: string | null;
+      processingError: string | null;
+    }>(`/materials/${materialId}/status`),
+
+  getVariants: (materialId: string) =>
+    api.get<import('@/types/instructor-dashboard').MaterialVariant[]>(`/materials/${materialId}/variants`),
 };
 
 // ===========================================

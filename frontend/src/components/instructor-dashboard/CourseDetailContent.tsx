@@ -330,6 +330,28 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     }
   };
 
+  // Poll for processing status in expanded modules
+  useEffect(() => {
+    const expandedWithProcessing = expandedModules.filter((modId) => {
+      const mats = moduleMaterials[modId] || [];
+      return mats.some((m) => m.status === "processing");
+    });
+    if (expandedWithProcessing.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const modId of expandedWithProcessing) {
+        try {
+          const data = await materialsApi.list(courseId, { moduleId: modId });
+          setModuleMaterials((prev) => ({ ...prev, [modId]: data }));
+        } catch {
+          // Silently ignore polling errors
+        }
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [expandedModules, moduleMaterials, courseId]);
+
   const handleUnlinkMaterial = async (materialId: string, moduleId: string) => {
     try {
       await materialsApi.unlinkFromModule(materialId);

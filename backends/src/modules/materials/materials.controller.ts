@@ -134,6 +134,30 @@ export class MaterialsController {
   // ─── Material-scoped Endpoints ────────────────────────────
 
   /**
+   * GET /materials/:id/status — Lightweight polling endpoint
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Get('materials/:id/status')
+  async getStatus(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.getProcessingStatus(materialId, user);
+  }
+
+  /**
+   * GET /materials/:id/variants — Transcoded video variants
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Get('materials/:id/variants')
+  async getVariants(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.getVariants(materialId, user);
+  }
+
+  /**
    * PATCH /materials/:id — Update material metadata
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)

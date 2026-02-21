@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -22,18 +23,20 @@ import { ZoomModule } from './modules/zoom/zoom.module';
 import { NelcAuditModule } from './modules/nelc-audit/nelc-audit.module';
 import { SessionAssistantsModule } from './modules/session-assistants/session-assistants.module';
 import { NelcComplianceModule } from './modules/nelc-compliance/nelc-compliance.module';
+import { ProcessingModule } from './modules/processing/processing.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import storageConfig from './config/storage.config';
 import zoomConfig from './config/zoom.config';
+import processingConfig from './config/processing.config';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, storageConfig, zoomConfig],
+      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig],
       envFilePath: [
         `.env.${process.env.NODE_ENV || 'local'}`,
         '.env.local',
@@ -43,6 +46,18 @@ import zoomConfig from './config/zoom.config';
 
     // Task scheduling (cron jobs)
     ScheduleModule.forRoot(),
+
+    // BullMQ job queue (Redis)
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('processing.redis.host', 'localhost'),
+          port: configService.get('processing.redis.port', 6379),
+        },
+      }),
+      inject: [ConfigService],
+    }),
 
     // NELC Compliance (global — available to all modules)
     NelcAuditModule,
@@ -65,6 +80,7 @@ import zoomConfig from './config/zoom.config';
     ZoomModule,
     SessionAssistantsModule,
     NelcComplianceModule,
+    ProcessingModule,
   ],
   controllers: [AppController],
   providers: [

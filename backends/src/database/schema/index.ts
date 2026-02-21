@@ -29,6 +29,7 @@ export * from './submissions';
 
 // Course Material schemas
 export * from './course-materials';
+export * from './material-variants';
 
 // Certificate schemas
 export * from './certificate-requests';

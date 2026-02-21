@@ -11,9 +11,11 @@ import { db } from '../../database';
 import {
   courseMaterials,
   courses,
+  materialVariants,
   MATERIAL_STATUS,
 } from '../../database/schema';
 import { StorageService } from '../storage/storage.service';
+import { ProcessingService } from '../processing/processing.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 
@@ -51,7 +53,10 @@ const SIZE_LIMITS: Record<string, number> = {
 export class MaterialsService {
   private readonly logger = new Logger(MaterialsService.name);
 
-  constructor(private storageService: StorageService) {}
+  constructor(
+    private storageService: StorageService,
+    private processingService: ProcessingService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -129,16 +134,38 @@ export class MaterialsService {
         file.mimetype,
       );
 
-      // Update status to 'live'
-      const [updated] = await db
+      // Update fileUrl but keep status='processing'
+      await db
         .update(courseMaterials)
-        .set({
+        .set({ fileUrl, updatedAt: new Date() })
+        .where(eq(courseMaterials.id, material.id));
+
+      // Dispatch background processing pipeline
+      try {
+        await this.processingService.dispatchProcessing(
+          material.id,
+          materialType,
           fileUrl,
-          status: MATERIAL_STATUS.LIVE,
-          updatedAt: new Date(),
-        })
+          courseId,
+          file.mimetype,
+        );
+      } catch (dispatchError) {
+        this.logger.warn(
+          `Processing dispatch failed for ${material.id}; marking as live without processing`,
+          dispatchError,
+        );
+        await db
+          .update(courseMaterials)
+          .set({ status: MATERIAL_STATUS.LIVE, wcagStatus: 'pending', updatedAt: new Date() })
+          .where(eq(courseMaterials.id, material.id));
+      }
+
+      // Return the material
+      const [updated] = await db
+        .select()
+        .from(courseMaterials)
         .where(eq(courseMaterials.id, material.id))
-        .returning();
+        .limit(1);
 
       return updated;
     } catch (error) {
@@ -305,16 +332,38 @@ export class MaterialsService {
         file.mimetype,
       );
 
-      // Update status to 'live'
-      const [updated] = await db
+      // Update fileUrl but keep status='processing'
+      await db
         .update(courseMaterials)
-        .set({
+        .set({ fileUrl, updatedAt: new Date() })
+        .where(eq(courseMaterials.id, material.id));
+
+      // Dispatch background processing pipeline
+      try {
+        await this.processingService.dispatchProcessing(
+          material.id,
+          materialType,
           fileUrl,
-          status: MATERIAL_STATUS.LIVE,
-          updatedAt: new Date(),
-        })
+          existing.courseId,
+          file.mimetype,
+        );
+      } catch (dispatchError) {
+        this.logger.warn(
+          `Processing dispatch failed for ${material.id}; marking as live without processing`,
+          dispatchError,
+        );
+        await db
+          .update(courseMaterials)
+          .set({ status: MATERIAL_STATUS.LIVE, wcagStatus: 'pending', updatedAt: new Date() })
+          .where(eq(courseMaterials.id, material.id));
+      }
+
+      // Return the material
+      const [updated] = await db
+        .select()
+        .from(courseMaterials)
         .where(eq(courseMaterials.id, material.id))
-        .returning();
+        .limit(1);
 
       return updated;
     } catch (error) {
@@ -366,6 +415,43 @@ export class MaterialsService {
     return { message: 'Materials reordered successfully' };
   }
 
+  // ─── Processing Status ───────────────────────────────────
+
+  /**
+   * GET /materials/:id/status
+   * Lightweight status check for frontend polling.
+   */
+  async getProcessingStatus(materialId: string, user: AuthenticatedUser) {
+    const material = await this.verifyMaterialAccess(materialId, user);
+    return {
+      id: material.id,
+      status: material.status,
+      processingStep: material.processingStep,
+      wcagStatus: material.wcagStatus,
+      captionsUrl: material.captionsUrl,
+      transcriptUrl: material.transcriptUrl,
+      processingError: material.processingError,
+    };
+  }
+
+  // ─── Variants ───────────────────────────────────────────
+
+  /**
+   * GET /materials/:id/variants
+   * Returns the transcoded video variants (resolutions).
+   */
+  async getVariants(materialId: string, user: AuthenticatedUser) {
+    await this.verifyMaterialAccess(materialId, user);
+
+    const variants = await db
+      .select()
+      .from(materialVariants)
+      .where(eq(materialVariants.materialId, materialId))
+      .orderBy(asc(materialVariants.resolution));
+
+    return variants;
+  }
+
   // ─── Delete ───────────────────────────────────────────────
 
   /**
@@ -375,21 +461,60 @@ export class MaterialsService {
   async remove(materialId: string, user: AuthenticatedUser) {
     const existing = await this.verifyMaterialAccess(materialId, user);
 
-    // Delete file from storage if fileUrl exists
+    // Delete variant files from storage (before cascade deletes the rows)
+    const variants = await db
+      .select()
+      .from(materialVariants)
+      .where(eq(materialVariants.materialId, materialId));
+
+    for (const variant of variants) {
+      const variantPath = this.extractStoragePath(variant.fileUrl);
+      if (variantPath) {
+        try {
+          await this.storageService.deleteFile('public', variantPath);
+        } catch (error) {
+          this.logger.warn(`Failed to delete variant file: ${variantPath}`, error);
+        }
+      }
+    }
+
+    // Delete main file from storage
     if (existing.fileUrl) {
       const storagePath = this.extractStoragePath(existing.fileUrl);
       if (storagePath) {
         try {
           await this.storageService.deleteFile('public', storagePath);
         } catch (error) {
-          this.logger.warn(
-            `Failed to delete file from storage: ${storagePath}`,
-            error,
-          );
+          this.logger.warn(`Failed to delete file from storage: ${storagePath}`, error);
         }
       }
     }
 
+    // Delete captions file
+    if (existing.captionsUrl) {
+      const captionsPath = this.extractStoragePath(existing.captionsUrl);
+      if (captionsPath) {
+        try {
+          await this.storageService.deleteFile('public', captionsPath);
+        } catch (error) {
+          this.logger.warn(`Failed to delete captions file: ${captionsPath}`, error);
+        }
+      }
+    }
+
+    // Delete transcript file
+    if (existing.transcriptUrl) {
+      const transcriptPath = this.extractStoragePath(existing.transcriptUrl);
+      if (transcriptPath) {
+        try {
+          await this.storageService.deleteFile('public', transcriptPath);
+        } catch (error) {
+          this.logger.warn(`Failed to delete transcript file: ${transcriptPath}`, error);
+        }
+      }
+    }
+
+    // Delete the material record (cascades to variants)
     await db
       .delete(courseMaterials)
       .where(eq(courseMaterials.id, materialId));

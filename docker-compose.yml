@@ -71,12 +71,21 @@ services:
       - ZOOM_CLIENT_ID=woI4gaHnTZWbz3ABlmgh6g
       - ZOOM_CLIENT_SECRET=lkw0uNsH7IScl2cUdkAD3fVx8Atc65VO
       - ZOOM_WEBHOOK_SECRET_TOKEN=
+      # Redis (BullMQ job queue)
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # OpenAI (Whisper speech-to-text for captions)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # FFmpeg (video transcoding)
+      - FFMPEG_ENABLED=true
     volumes:
       - ./backends/src:/app/src:delegated
       - backend_node_modules:/app/node_modules
       - backend_uploads:/app/uploads
     depends_on:
       database:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - physio-network
@@ -100,6 +109,25 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
+      retries: 5
+    networks:
+      - physio-network
+    restart: unless-stopped
+
+  # ===========================================
+  # Redis - Job Queue (BullMQ)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: physio-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
     networks:
       - physio-network
@@ -146,6 +174,7 @@ networks:
 volumes:
   postgres_data:
   pgadmin_data:
+  redis_data:
   frontend_node_modules:
   backend_node_modules:
   backend_uploads:

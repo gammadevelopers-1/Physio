@@ -13,6 +13,7 @@ import { relations, sql } from 'drizzle-orm';
 import { courses } from './courses';
 import { courseModules } from './course-modules';
 import { users } from './users';
+import { materialVariants } from './material-variants';
 
 export const courseMaterials = pgTable(
   'course_materials',
@@ -34,6 +35,8 @@ export const courseMaterials = pgTable(
     wcagStatus: varchar('wcag_status', { length: 20 }).notNull().default('pending'),
     captionsUrl: varchar('captions_url', { length: 500 }),
     transcriptUrl: varchar('transcript_url', { length: 500 }),
+    processingStep: varchar('processing_step', { length: 30 }),
+    processingError: varchar('processing_error', { length: 1000 }),
     uploadedBy: uuid('uploaded_by')
       .notNull()
       .references(() => users.id),
@@ -66,7 +69,7 @@ export const courseMaterials = pgTable(
 
 export const courseMaterialsRelations = relations(
   courseMaterials,
-  ({ one }) => ({
+  ({ one, many }) => ({
     course: one(courses, {
       fields: [courseMaterials.courseId],
       references: [courses.id],
@@ -79,6 +82,7 @@ export const courseMaterialsRelations = relations(
       fields: [courseMaterials.uploadedBy],
       references: [users.id],
     }),
+    variants: many(materialVariants),
   }),
 );
 

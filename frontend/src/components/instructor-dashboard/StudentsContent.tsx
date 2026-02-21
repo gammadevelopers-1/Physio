@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 
 type RiskStatus = "good" | "at-risk" | "inactive";
-type SortField = "name" | "progress" | "enrollments" | "lastActive";
+type SortField = "name" | "progress" | "enrollments" | "lastActive" | "attendance" | "assessmentAverage";
 type SortDirection = "asc" | "desc";
 
 interface EnrichedStudent extends InstructorStudent {
@@ -145,6 +145,10 @@ const StudentsContent = () => {
           return (a.averageProgress - b.averageProgress) * dir;
         case "enrollments":
           return (a.totalEnrollments - b.totalEnrollments) * dir;
+        case "attendance":
+          return ((a.attendanceRate ?? -1) - (b.attendanceRate ?? -1)) * dir;
+        case "assessmentAverage":
+          return ((a.assessmentAverage ?? -1) - (b.assessmentAverage ?? -1)) * dir;
         case "lastActive": {
           const dateA = a.lastAccessedAt ? new Date(a.lastAccessedAt).getTime() : 0;
           const dateB = b.lastAccessedAt ? new Date(b.lastAccessedAt).getTime() : 0;
@@ -243,10 +247,10 @@ const StudentsContent = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    if (diffMins < 60) return t("common.timeMinutesAgo", { count: diffMins });
+    if (diffHours < 24) return t("common.timeHoursAgo", { count: diffHours });
+    if (diffDays < 7) return t("common.timeDaysAgo", { count: diffDays });
+    if (diffDays < 30) return t("common.timeWeeksAgo", { count: Math.floor(diffDays / 7) });
     return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
       month: "short",
       day: "numeric",
@@ -511,6 +515,24 @@ const StudentsContent = () => {
                                   </button>
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                                  <button
+                                    onClick={() => toggleSort("attendance")}
+                                    className="flex items-center gap-1 hover:text-[#374151]"
+                                  >
+                                    {t("students.tableAttendance")}
+                                    <ArrowUpDown className="w-3 h-3" />
+                                  </button>
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                                  <button
+                                    onClick={() => toggleSort("assessmentAverage")}
+                                    className="flex items-center gap-1 hover:text-[#374151]"
+                                  >
+                                    {t("students.tableScore")}
+                                    <ArrowUpDown className="w-3 h-3" />
+                                  </button>
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                   {t("students.tableStatus")}
                                 </th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
@@ -576,6 +598,32 @@ const StudentsContent = () => {
                                         {student.averageProgress}%
                                       </span>
                                     </div>
+                                  </td>
+                                  <td className="px-4 py-4">
+                                    <span
+                                      className={`text-sm font-semibold ${
+                                        student.attendanceRate == null
+                                          ? "text-[#9CA3AF]"
+                                          : getProgressStyle(student.attendanceRate)
+                                      }`}
+                                    >
+                                      {student.attendanceRate != null
+                                        ? `${student.attendanceRate}%`
+                                        : "-"}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-4">
+                                    <span
+                                      className={`text-sm font-semibold ${
+                                        student.assessmentAverage == null
+                                          ? "text-[#9CA3AF]"
+                                          : getProgressStyle(student.assessmentAverage)
+                                      }`}
+                                    >
+                                      {student.assessmentAverage != null
+                                        ? `${student.assessmentAverage}%`
+                                        : "-"}
+                                    </span>
                                   </td>
                                   <td className="px-4 py-4">
                                     <span
@@ -697,7 +745,7 @@ const StudentsContent = () => {
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2 mb-3">
+                            <div className="grid grid-cols-3 gap-2 mb-2">
                               <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
                                 <p className="text-sm font-semibold text-[#374151]">
                                   {student.totalEnrollments}
@@ -722,6 +770,40 @@ const StudentsContent = () => {
                                 </p>
                                 <p className="text-[10px] text-[#6B7280]">
                                   {t("students.tableLastActivity")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 mb-3">
+                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                                <p
+                                  className={`text-sm font-semibold ${
+                                    student.attendanceRate == null
+                                      ? "text-[#9CA3AF]"
+                                      : getProgressStyle(student.attendanceRate)
+                                  }`}
+                                >
+                                  {student.attendanceRate != null
+                                    ? `${student.attendanceRate}%`
+                                    : "-"}
+                                </p>
+                                <p className="text-[10px] text-[#6B7280]">
+                                  {t("students.tableAttendance")}
+                                </p>
+                              </div>
+                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                                <p
+                                  className={`text-sm font-semibold ${
+                                    student.assessmentAverage == null
+                                      ? "text-[#9CA3AF]"
+                                      : getProgressStyle(student.assessmentAverage)
+                                  }`}
+                                >
+                                  {student.assessmentAverage != null
+                                    ? `${student.assessmentAverage}%`
+                                    : "-"}
+                                </p>
+                                <p className="text-[10px] text-[#6B7280]">
+                                  {t("students.tableScore")}
                                 </p>
                               </div>
                             </div>

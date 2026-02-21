@@ -27,4 +27,19 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(500)
   avatar?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  location?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  language?: string;
 }

@@ -146,6 +146,7 @@ export interface AssessmentResponse {
   status: string;
   createdAt: string;
   updatedAt: string;
+  submissionCount?: number;
 }
 
 export interface AssessmentsListResponse {
@@ -320,7 +321,10 @@ export interface CourseSession {
   meetingId: string | null;
   roomName: string | null;
   venueAddress: string | null;
-  status: string;
+  status: 'scheduled' | 'live' | 'completed' | 'cancelled';
+  actualStartedAt: string | null;
+  actualEndedAt: string | null;
+  cancelReason: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -341,7 +345,7 @@ export interface AttendanceRecord {
   id: string;
   sessionId: string;
   studentId: string;
-  status: string;
+  status: AttendanceStatus;
   joinedAt: string | null;
   leftAt: string | null;
   durationMinutes: number | null;
@@ -362,6 +366,8 @@ export interface InstructorStudent {
   totalEnrollments: number;
   averageProgress: number;
   lastAccessedAt: string | null;
+  attendanceRate: number | null;
+  assessmentAverage: number | null;
 }
 
 export interface AtRiskStudent {
@@ -401,6 +407,16 @@ export interface StudentAssessmentScore {
   title: string;
   score: number;
   maxScore: number;
+  classAverage: number;
+}
+
+export interface StudentAttendanceRecord {
+  sessionId: string;
+  status: AttendanceStatus;
+  sessionTitle: string;
+  scheduledAt: string;
+  courseId: string;
+  courseTitle: string;
 }
 
 export interface StudentDetailResponse {
@@ -411,6 +427,7 @@ export interface StudentDetailResponse {
   enrollments: StudentDetailEnrollment[];
   attendanceSummary: StudentAttendanceSummary;
   assessmentScores: StudentAssessmentScore[];
+  attendanceRecords: StudentAttendanceRecord[];
 }
 
 // ─── Create Course ──────────────────────────────────────────

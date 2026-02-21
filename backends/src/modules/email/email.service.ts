@@ -26,6 +26,18 @@ import {
   getSessionReminderHtml,
   getSessionReminderText,
 } from './templates/session-reminder.template';
+import {
+  getCertificateApprovedHtml,
+  getCertificateApprovedText,
+} from './templates/certificate-approved.template';
+import {
+  getCertificateRejectedHtml,
+  getCertificateRejectedText,
+} from './templates/certificate-rejected.template';
+import {
+  getCertificateHeldHtml,
+  getCertificateHeldText,
+} from './templates/certificate-held.template';
 
 @Injectable()
 export class EmailService {
@@ -253,6 +265,102 @@ export class EmailService {
       );
     } catch (error) {
       this.logger.error(`Failed to send session reminder to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send certificate approved email to student
+   */
+  async sendCertificateApproved(
+    to: string,
+    studentName: string,
+    courseName: string,
+    downloadUrl: string,
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Certificate Approved - ${courseName}`,
+        html: getCertificateApprovedHtml(studentName, courseName, downloadUrl),
+        text: getCertificateApprovedText(studentName, courseName, downloadUrl),
+      });
+      this.logger.log(
+        `Certificate approved email sent to ${to} for "${courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send certificate approved email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send certificate rejected email to student
+   */
+  async sendCertificateRejected(
+    to: string,
+    studentName: string,
+    courseName: string,
+    reviewNote: string,
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Certificate Request Update - ${courseName}`,
+        html: getCertificateRejectedHtml(studentName, courseName, reviewNote),
+        text: getCertificateRejectedText(studentName, courseName, reviewNote),
+      });
+      this.logger.log(
+        `Certificate rejected email sent to ${to} for "${courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send certificate rejected email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send certificate held email to student
+   */
+  async sendCertificateHeld(
+    to: string,
+    studentName: string,
+    courseName: string,
+    reviewNote: string,
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Certificate Request On Hold - ${courseName}`,
+        html: getCertificateHeldHtml(studentName, courseName, reviewNote),
+        text: getCertificateHeldText(studentName, courseName, reviewNote),
+      });
+      this.logger.log(
+        `Certificate held email sent to ${to} for "${courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send certificate held email to ${to}`,
+        error,
+      );
     }
   }
 }

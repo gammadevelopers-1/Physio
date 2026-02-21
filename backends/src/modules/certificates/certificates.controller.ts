@@ -60,6 +60,20 @@ export class CertificatesController {
   }
 
   /**
+   * GET /certificates/my-certificates — Get student's approved certificates.
+   * Static route must come BEFORE parameterized :id route.
+   */
+  @Roles(
+    'STUDENT' as UserRole,
+    'INSTRUCTOR' as UserRole,
+    'ADMIN' as UserRole,
+  )
+  @Get('certificates/my-certificates')
+  async getMyCertificates(@CurrentUser() user: AuthenticatedUser) {
+    return this.certificatesService.getStudentCertificates(user.id);
+  }
+
+  /**
    * GET /certificates/:id — Get a single certificate request detail.
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

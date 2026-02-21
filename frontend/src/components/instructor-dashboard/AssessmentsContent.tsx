@@ -571,30 +571,42 @@ const AddQuestionModal = ({
                 {t("assessments.options")}
               </label>
               {options.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="correctOption"
-                    checked={opt.isCorrect}
-                    onChange={() => handleOptionChange(idx, "isCorrect", true)}
-                    className="w-4 h-4 text-[#3B82F6]"
-                  />
-                  <input
-                    type="text"
-                    value={opt.text}
-                    onChange={(e) => handleOptionChange(idx, "text", e.target.value)}
-                    className="flex-1 px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    placeholder={`${t("assessments.option")} ${idx + 1}`}
-                  />
-                  {options.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveOption(idx)}
-                      className="p-1 text-[#EF4444] hover:bg-[#FEE2E2] rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="correctOption"
+                      checked={opt.isCorrect}
+                      onChange={() => handleOptionChange(idx, "isCorrect", true)}
+                      className="w-4 h-4 text-[#3B82F6]"
+                    />
+                    <input
+                      type="text"
+                      value={opt.text}
+                      onChange={(e) => handleOptionChange(idx, "text", e.target.value)}
+                      className="flex-1 px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      placeholder={`${t("assessments.option")} ${idx + 1}`}
+                    />
+                    {options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveOption(idx)}
+                        className="p-1 text-[#EF4444] hover:bg-[#FEE2E2] rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className={`${options.length > 2 ? "ml-6 mr-9" : "ml-6"}`}>
+                    <input
+                      type="text"
+                      value={opt.textAr || ""}
+                      onChange={(e) => handleOptionChange(idx, "textAr", e.target.value)}
+                      className="w-full px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      placeholder={`${t("assessments.optionAr")} ${idx + 1}`}
+                      dir="rtl"
+                    />
+                  </div>
                 </div>
               ))}
               <button
@@ -746,6 +758,21 @@ const GradeModal = ({
                     <p className="text-xs text-[#9CA3AF] mt-1">
                       {t("assessments.studentAnswer")}: <span className="text-[#374151]">{answer.answer}</span>
                     </p>
+                    {question && (
+                      <p className="text-xs text-[#9CA3AF] mt-1">
+                        {t("assessments.correctAnswerLabel")}:{" "}
+                        <span className="text-[#22C55E] font-medium">
+                          {question.type === "mcq"
+                            ? (question.options as { text: string; isCorrect: boolean }[] | undefined)
+                                ?.find((o) => o.isCorrect)?.text || "-"
+                            : question.type === "true_false"
+                              ? question.correctAnswer === "true"
+                                ? "True"
+                                : "False"
+                              : question.correctAnswer || t("assessments.manualReviewRequired")}
+                        </span>
+                      </p>
+                    )}
                   </div>
                   {answer.isCorrect !== null && (
                     <span
@@ -900,7 +927,9 @@ const AssessmentsContent = () => {
     const fetchQuestions = async () => {
       setQuestionsLoading(true);
       try {
-        const data = await instructorApi.getAssessmentQuestions(selectedAssessmentForQ);
+        const data = selectedAssessmentForQ.startsWith("course:")
+          ? await instructorApi.getCourseBankQuestions(selectedAssessmentForQ.replace("course:", ""))
+          : await instructorApi.getAssessmentQuestions(selectedAssessmentForQ);
         setQuestions(data);
       } catch {
         toast.error(t("assessments.questionsLoadError"));
@@ -1438,6 +1467,10 @@ const AssessmentsContent = () => {
                                             {assessment.durationMinutes} {t("assessments.minutes")}
                                           </span>
                                         )}
+                                        <span className="text-xs text-[#6B7280] flex items-center gap-1">
+                                          <Users className="w-3 h-3" />
+                                          {t("assessments.submissionCount", { count: assessment.submissionCount || 0 })}
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
@@ -1498,11 +1531,20 @@ const AssessmentsContent = () => {
                               className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                             >
                               <option value="">{t("assessments.selectAssessment")}</option>
-                              {assessments.map((a) => (
-                                <option key={a.id} value={a.id}>
-                                  {a.title}
-                                </option>
-                              ))}
+                              <optgroup label={t("assessments.courseLevelBank")}>
+                                {courses.map((c) => (
+                                  <option key={`course-${c.id}`} value={`course:${c.id}`}>
+                                    {locale === "ar" && c.titleAr ? c.titleAr : c.title}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label={t("assessments.assessmentQuestions")}>
+                                {assessments.map((a) => (
+                                  <option key={a.id} value={a.id}>
+                                    {a.title}
+                                  </option>
+                                ))}
+                              </optgroup>
                             </select>
                             {selectedAssessmentForQ && (
                               <>
@@ -1834,29 +1876,43 @@ const AssessmentsContent = () => {
                                     {t("assessments.prePostComparison")}
                                   </h4>
                                   <div className="space-y-2">
-                                    {itemAnalysis.prePostComparison.map((item) => (
-                                      <div
-                                        key={item.assessmentId}
-                                        className="flex items-center justify-between"
-                                      >
-                                        <span className="text-sm text-[#374151]">
-                                          {item.title}
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                          <div className="w-24 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
-                                            <div
-                                              className="h-full bg-[#3B82F6] rounded-full"
-                                              style={{
-                                                width: `${Math.min(item.averagePercentage, 100)}%`,
-                                              }}
-                                            />
-                                          </div>
-                                          <span className="text-sm font-medium text-[#374151] w-12 text-right">
-                                            {item.averagePercentage.toFixed(1)}%
+                                    {itemAnalysis.prePostComparison!.map((item, idx) => {
+                                      const firstAvg = itemAnalysis.prePostComparison![0].averagePercentage;
+                                      const delta = idx > 0 ? item.averagePercentage - firstAvg : null;
+                                      return (
+                                        <div
+                                          key={item.assessmentId}
+                                          className="flex items-center justify-between"
+                                        >
+                                          <span className="text-sm text-[#374151] flex-1 min-w-0 truncate">
+                                            {item.title}
                                           </span>
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <div className="w-24 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                              <div
+                                                className="h-full bg-[#3B82F6] rounded-full"
+                                                style={{
+                                                  width: `${Math.min(item.averagePercentage, 100)}%`,
+                                                }}
+                                              />
+                                            </div>
+                                            <span className="text-sm font-medium text-[#374151] w-12 text-right">
+                                              {item.averagePercentage.toFixed(1)}%
+                                            </span>
+                                            {delta !== null && (
+                                              <span
+                                                className={`text-xs font-medium w-14 text-right ${
+                                                  delta >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"
+                                                }`}
+                                              >
+                                                {delta >= 0 ? "+" : ""}
+                                                {delta.toFixed(1)}%
+                                              </span>
+                                            )}
+                                          </div>
                                         </div>
-                                      </div>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               )}

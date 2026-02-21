@@ -20,6 +20,7 @@ import {
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { StorageService } from '../storage/storage.service';
+import { EmailService } from '../email/email.service';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
 import { HoldCertificateDto } from './dto/hold-certificate.dto';
 import { BatchCertificateDto } from './dto/batch-certificate.dto';
@@ -28,7 +29,10 @@ import { BatchCertificateDto } from './dto/batch-certificate.dto';
 export class CertificatesService {
   private readonly logger = new Logger(CertificatesService.name);
 
-  constructor(private readonly storageService: StorageService) {}
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly emailService: EmailService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -145,6 +149,34 @@ export class CertificatesService {
     const courseCompleted = enrollment ? enrollment.progress === 100 : false;
 
     return { attendancePercent, assessmentPassed, courseCompleted };
+  }
+
+  // ─── Student Certificates ──────────────────────────────────
+
+  /**
+   * GET /certificates/my-certificates — Get student's approved certificates.
+   */
+  async getStudentCertificates(studentId: string) {
+    return db
+      .select({
+        id: certificateRequests.id,
+        courseId: certificateRequests.courseId,
+        status: certificateRequests.status,
+        certificateUrl: certificateRequests.certificateUrl,
+        createdAt: certificateRequests.createdAt,
+        reviewedAt: certificateRequests.reviewedAt,
+        courseName: courses.title,
+        courseThumbnail: courses.thumbnail,
+      })
+      .from(certificateRequests)
+      .innerJoin(courses, eq(certificateRequests.courseId, courses.id))
+      .where(
+        and(
+          eq(certificateRequests.studentId, studentId),
+          eq(certificateRequests.status, CERTIFICATE_STATUS.APPROVED),
+        ),
+      )
+      .orderBy(desc(certificateRequests.reviewedAt));
   }
 
   // ─── Create Certificate Request ─────────────────────────────
@@ -364,6 +396,21 @@ export class CertificatesService {
       .where(eq(certificateRequests.id, id))
       .returning();
 
+    // Send email notification to student
+    try {
+      const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
+      const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
+      const courseName = course?.title || 'your course';
+      await this.emailService.sendCertificateApproved(
+        request.studentEmail,
+        studentName,
+        courseName,
+        certificateUrl,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send certificate approval email for request ${id}`, error);
+    }
+
     return updated;
   }
 
@@ -397,6 +444,21 @@ export class CertificatesService {
       .where(eq(certificateRequests.id, id))
       .returning();
 
+    // Send email notification to student
+    try {
+      const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
+      const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
+      const courseName = course?.title || 'your course';
+      await this.emailService.sendCertificateRejected(
+        request.studentEmail,
+        studentName,
+        courseName,
+        dto.note,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send certificate rejection email for request ${id}`, error);
+    }
+
     return updated;
   }
 
@@ -429,6 +491,21 @@ export class CertificatesService {
       })
       .where(eq(certificateRequests.id, id))
       .returning();
+
+    // Send email notification to student
+    try {
+      const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
+      const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
+      const courseName = course?.title || 'your course';
+      await this.emailService.sendCertificateHeld(
+        request.studentEmail,
+        studentName,
+        courseName,
+        dto.note,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send certificate hold email for request ${id}`, error);
+    }
 
     return updated;
   }

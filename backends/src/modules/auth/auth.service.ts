@@ -661,6 +661,9 @@ export class AuthService {
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
     if (dto.phone !== undefined) updateData.phone = dto.phone;
     if (dto.avatar !== undefined) updateData.avatar = dto.avatar;
+    if (dto.bio !== undefined) updateData.bio = dto.bio;
+    if (dto.location !== undefined) updateData.location = dto.location;
+    if (dto.language !== undefined) updateData.language = dto.language;
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 

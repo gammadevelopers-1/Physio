@@ -201,9 +201,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 60) return t("common.timeMinutesAgo", { count: diffMins });
+    if (diffHours < 24) return t("common.timeHoursAgo", { count: diffHours });
+    if (diffDays < 7) return t("common.timeDaysAgo", { count: diffDays });
     return formatDate(dateStr);
   };
 
@@ -608,6 +608,73 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             </div>
                           </div>
 
+                          {/* Session-by-Session Breakdown */}
+                          {student.attendanceRecords && student.attendanceRecords.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
+                                {t("studentDetail.sessionBreakdown")}
+                              </h4>
+                              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
+                                          {t("studentDetail.session")}
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
+                                          {t("studentDetail.course") || "Course"}
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
+                                          {t("studentDetail.dateLabel")}
+                                        </th>
+                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
+                                          {t("studentDetail.status")}
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#E5E7EB]">
+                                      {student.attendanceRecords.map((record) => {
+                                        const statusStyles: Record<string, string> = {
+                                          present: "bg-[#DCFCE7] text-[#166534]",
+                                          absent: "bg-[#FEE2E2] text-[#991B1B]",
+                                          late: "bg-[#FEF9C3] text-[#854D0E]",
+                                          excused: "bg-[#F3F4F6] text-[#4B5563]",
+                                        };
+                                        const statusLabels: Record<string, string> = {
+                                          present: t("studentDetail.statusPresent") || "Present",
+                                          absent: t("studentDetail.statusAbsent") || "Absent",
+                                          late: t("studentDetail.statusLate") || "Late",
+                                          excused: t("studentDetail.statusExcused") || "Excused",
+                                        };
+                                        return (
+                                          <tr key={record.sessionId} className="hover:bg-[#F9FAFB]">
+                                            <td className="px-4 py-2.5 text-sm text-[#1F2937]">
+                                              {record.sessionTitle}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-sm text-[#6B7280]">
+                                              {record.courseTitle}
+                                            </td>
+                                            <td className="px-4 py-2.5 text-sm text-[#6B7280]">
+                                              {formatDate(record.scheduledAt)}
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                              <span
+                                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[record.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}
+                                              >
+                                                {statusLabels[record.status] || record.status}
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {student.attendanceSummary.totalSessions === 0 && (
                             <div className="text-center py-8">
                               <Calendar className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
@@ -647,6 +714,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                       {t("studentDetail.score")}
                                     </th>
                                     <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
+                                      {t("studentDetail.classAverage")}
+                                    </th>
+                                    <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
                                       {t("studentDetail.status")}
                                     </th>
                                   </tr>
@@ -683,6 +753,25 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                             {assessment.score}/
                                             {assessment.maxScore}
                                           </span>
+                                        </td>
+                                        <td className="py-3">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm text-[#6B7280]">
+                                              {assessment.classAverage}%
+                                            </span>
+                                            {percentage !== 0 && (
+                                              <span
+                                                className={`text-xs font-medium ${
+                                                  percentage >= assessment.classAverage
+                                                    ? "text-[#22C55E]"
+                                                    : "text-[#EF4444]"
+                                                }`}
+                                              >
+                                                {percentage >= assessment.classAverage ? "+" : ""}
+                                                {percentage - assessment.classAverage}%
+                                              </span>
+                                            )}
+                                          </div>
                                         </td>
                                         <td className="py-3">
                                           <span

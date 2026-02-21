@@ -7,6 +7,7 @@ import {
   IsUUID,
   IsDateString,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import {
   ATTENDANCE_STATUS,
@@ -39,7 +40,8 @@ export class MarkAttendanceDto {
   @Min(0)
   durationMinutes?: number;
 
-  @IsOptional()
+  @ValidateIf((o) => o.status === 'late' || o.status === 'excused')
+  @IsNotEmpty({ message: 'Note is required for late or excused attendance' })
   @IsString()
   note?: string;
 }

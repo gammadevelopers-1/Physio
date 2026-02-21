@@ -20,6 +20,11 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
 type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
+interface ReportMetadata {
+  instructorName?: string;
+  filters?: string;
+}
+
 interface ReportResult {
   buffer: Buffer;
   contentType: string;
@@ -54,6 +59,30 @@ export class ReportsService {
     return f as ReportFormat;
   }
 
+  /**
+   * Fetch the instructor's full name for report metadata.
+   */
+  private async getInstructorName(userId: string): Promise<string> {
+    const [instructor] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return `${instructor?.firstName || ''} ${instructor?.lastName || ''}`.trim() || 'Unknown';
+  }
+
+  /**
+   * Resolve a course name by ID for filter descriptions.
+   */
+  private async getCourseName(courseId: string): Promise<string> {
+    const [course] = await db
+      .select({ title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    return course?.title || courseId;
+  }
+
   // ═══════════════════════════════════════════════════════════
   // ─── 1. Attendance Report ─────────────────────────────────
   // Columns: Student Name, Email, Session Date, Session, Status, Total Attendance %
@@ -70,6 +99,22 @@ export class ReportsService {
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
     const courseIds = await this.resolveCourseIds(user, params.courseId);
+    const instructorName = await this.getInstructorName(user.id);
+
+    // Build filter description
+    const filterParts: string[] = [];
+    if (params.courseId) {
+      filterParts.push(`Course: ${await this.getCourseName(params.courseId)}`);
+    } else {
+      filterParts.push('All Courses');
+    }
+    if (params.dateFrom) filterParts.push(`From: ${params.dateFrom}`);
+    if (params.dateTo) filterParts.push(`To: ${params.dateTo}`);
+
+    const metadata: ReportMetadata = {
+      instructorName,
+      filters: filterParts.join(', '),
+    };
 
     const headers = [
       'Student Name',
@@ -81,7 +126,7 @@ export class ReportsService {
     ];
 
     if (courseIds.length === 0) {
-      return this.formatReport('Attendance Report', headers, [], format);
+      return this.formatReport('Attendance Report', headers, [], format, metadata);
     }
 
     // Build session filter conditions (with optional date range)
@@ -165,7 +210,7 @@ export class ReportsService {
       attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%',
     ]);
 
-    return this.formatReport('Attendance Report', headers, rows, format);
+    return this.formatReport('Attendance Report', headers, rows, format, metadata);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -186,6 +231,13 @@ export class ReportsService {
     }
 
     await this.verifyCourseAccess(params.courseId, user);
+    const instructorName = await this.getInstructorName(user.id);
+    const courseName = await this.getCourseName(params.courseId);
+
+    const metadata: ReportMetadata = {
+      instructorName,
+      filters: `Course: ${courseName}`,
+    };
 
     // Get all assessments for this course
     const courseAssessments = await db
@@ -291,7 +343,7 @@ export class ReportsService {
       ];
     });
 
-    return this.formatReport('Gradebook Report', headers, rows, format);
+    return this.formatReport('Gradebook Report', headers, rows, format, metadata);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -305,6 +357,14 @@ export class ReportsService {
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
     const courseIds = await this.resolveCourseIds(user, params.courseId);
+    const instructorName = await this.getInstructorName(user.id);
+
+    const metadata: ReportMetadata = {
+      instructorName,
+      filters: params.courseId
+        ? `Course: ${await this.getCourseName(params.courseId)}`
+        : 'All Courses',
+    };
 
     const headers = [
       'Student Name',
@@ -316,7 +376,7 @@ export class ReportsService {
     ];
 
     if (courseIds.length === 0) {
-      return this.formatReport('Enrollment Report', headers, [], format);
+      return this.formatReport('Enrollment Report', headers, [], format, metadata);
     }
 
     const data = await db
@@ -343,7 +403,7 @@ export class ReportsService {
       this.formatDate(row.lastAccessedAt),
     ]);
 
-    return this.formatReport('Enrollment Report', headers, rows, format);
+    return this.formatReport('Enrollment Report', headers, rows, format, metadata);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -357,6 +417,14 @@ export class ReportsService {
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
     const courseIds = await this.resolveCourseIds(user, params.courseId);
+    const instructorName = await this.getInstructorName(user.id);
+
+    const metadata: ReportMetadata = {
+      instructorName,
+      filters: params.courseId
+        ? `Course: ${await this.getCourseName(params.courseId)}`
+        : 'All Courses',
+    };
 
     const headers = [
       'Student Name',
@@ -366,7 +434,7 @@ export class ReportsService {
     ];
 
     if (courseIds.length === 0) {
-      return this.formatReport('Completion Report', headers, [], format);
+      return this.formatReport('Completion Report', headers, [], format, metadata);
     }
 
     // Get completed enrollments with certificate request status (LEFT JOIN)
@@ -402,7 +470,7 @@ export class ReportsService {
       row.certStatus || 'No Request',
     ]);
 
-    return this.formatReport('Completion Report', headers, rows, format);
+    return this.formatReport('Completion Report', headers, rows, format, metadata);
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -414,6 +482,7 @@ export class ReportsService {
     headers: string[],
     rows: string[][],
     format: ReportFormat,
+    metadata?: ReportMetadata,
   ): Promise<ReportResult> {
     const date = new Date().toISOString().split('T')[0];
     const slug = title.toLowerCase().replace(/\s+/g, '-');
@@ -424,13 +493,13 @@ export class ReportsService {
 
     switch (format) {
       case 'csv':
-        buffer = this.generateCsv(headers, rows);
+        buffer = this.generateCsv(headers, rows, metadata);
         break;
       case 'pdf':
-        buffer = await this.generatePdf(title, headers, rows);
+        buffer = await this.generatePdf(title, headers, rows, metadata);
         break;
       case 'xlsx':
-        buffer = await this.generateExcel(title, headers, rows);
+        buffer = await this.generateExcel(title, headers, rows, metadata);
         break;
     }
 
@@ -445,7 +514,11 @@ export class ReportsService {
   // ─── CSV Generator ────────────────────────────────────────
   // ═══════════════════════════════════════════════════════════
 
-  private generateCsv(headers: string[], rows: string[][]): Buffer {
+  private generateCsv(
+    headers: string[],
+    rows: string[][],
+    metadata?: ReportMetadata,
+  ): Buffer {
     const escape = (val: string): string => {
       if (
         val.includes(',') ||
@@ -458,7 +531,18 @@ export class ReportsService {
       return val;
     };
 
+    const metaLines: string[] = [];
+    if (metadata?.instructorName) {
+      metaLines.push(`# Instructor: ${metadata.instructorName}`);
+    }
+    if (metadata?.filters) {
+      metaLines.push(`# Filters: ${metadata.filters}`);
+    }
+    metaLines.push(`# Generated: ${this.formatTimestamp(new Date())} | NELC Compliant`);
+    metaLines.push('');
+
     const lines = [
+      ...metaLines,
       headers.map(escape).join(','),
       ...rows.map((row) => row.map(escape).join(',')),
     ];
@@ -474,6 +558,7 @@ export class ReportsService {
     title: string,
     headers: string[],
     rows: string[][],
+    metadata?: ReportMetadata,
   ): Promise<Buffer> {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const PDFDocument = require('pdfkit');
@@ -502,15 +587,41 @@ export class ReportsService {
         .font('Helvetica-Bold')
         .text(title, { align: 'center' });
       doc.moveDown(0.3);
+
+      // ── Metadata block ──
+      if (metadata?.instructorName) {
+        doc
+          .fontSize(9)
+          .font('Helvetica')
+          .text(`Instructor: ${metadata.instructorName}`, { align: 'center' });
+      }
+      if (metadata?.filters) {
+        doc
+          .fontSize(9)
+          .font('Helvetica-Oblique')
+          .text(`Filters: ${metadata.filters}`, { align: 'center' });
+      }
       doc
         .fontSize(9)
         .font('Helvetica')
-        .text(`Generated: ${new Date().toLocaleDateString()}`, {
+        .text(`Generated: ${this.formatTimestamp(new Date())} | NELC Compliant`, {
           align: 'center',
         });
       doc.moveDown(0.8);
 
       let y = doc.y;
+
+      // ── NELC footer helper ──
+      const drawFooter = () => {
+        doc
+          .fontSize(7)
+          .font('Helvetica')
+          .text(
+            `Total records: ${rows.length}  |  NELC Compliant Report — PhysioGuidance`,
+            startX,
+            doc.page.height - doc.page.margins.bottom - 10,
+          );
+      };
 
       // ── Header row drawing helper ──
       const drawHeaders = () => {
@@ -536,6 +647,7 @@ export class ReportsService {
       for (const row of rows) {
         // Page break check
         if (y > doc.page.height - doc.page.margins.bottom - 20) {
+          drawFooter();
           doc.addPage();
           y = doc.page.margins.top;
           drawHeaders();
@@ -550,15 +662,8 @@ export class ReportsService {
         y += 12;
       }
 
-      // ── Footer ──
-      doc
-        .fontSize(7)
-        .font('Helvetica')
-        .text(
-          `Total records: ${rows.length}`,
-          startX,
-          doc.page.height - doc.page.margins.bottom - 10,
-        );
+      // ── Footer on last page ──
+      drawFooter();
 
       doc.end();
     });
@@ -572,6 +677,7 @@ export class ReportsService {
     title: string,
     headers: string[],
     rows: string[][],
+    metadata?: ReportMetadata,
   ): Promise<Buffer> {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const ExcelJS = require('exceljs');
@@ -583,24 +689,49 @@ export class ReportsService {
     const sheetName = title.substring(0, 31);
     const worksheet = workbook.addWorksheet(sheetName);
 
+    let rowNum = 1;
+
     // Title row
     const titleRow = worksheet.addRow([title]);
     titleRow.font = { bold: true, size: 14 };
     if (headers.length > 1) {
-      worksheet.mergeCells(1, 1, 1, headers.length);
+      worksheet.mergeCells(rowNum, 1, rowNum, headers.length);
+    }
+    rowNum++;
+
+    // Instructor row
+    if (metadata?.instructorName) {
+      const instrRow = worksheet.addRow([`Instructor: ${metadata.instructorName}`]);
+      instrRow.font = { italic: true, size: 10, color: { argb: 'FF666666' } };
+      if (headers.length > 1) {
+        worksheet.mergeCells(rowNum, 1, rowNum, headers.length);
+      }
+      rowNum++;
     }
 
-    // Date row
+    // Filters row
+    if (metadata?.filters) {
+      const filterRow = worksheet.addRow([`Filters: ${metadata.filters}`]);
+      filterRow.font = { italic: true, size: 10, color: { argb: 'FF666666' } };
+      if (headers.length > 1) {
+        worksheet.mergeCells(rowNum, 1, rowNum, headers.length);
+      }
+      rowNum++;
+    }
+
+    // Generated date row
     const dateRow = worksheet.addRow([
-      `Generated: ${new Date().toLocaleDateString()}`,
+      `Generated: ${this.formatTimestamp(new Date())} | NELC Compliant`,
     ]);
     dateRow.font = { italic: true, size: 10, color: { argb: 'FF666666' } };
     if (headers.length > 1) {
-      worksheet.mergeCells(2, 1, 2, headers.length);
+      worksheet.mergeCells(rowNum, 1, rowNum, headers.length);
     }
+    rowNum++;
 
     // Empty separator row
     worksheet.addRow([]);
+    rowNum++;
 
     // Header row with styling
     const headerRow = worksheet.addRow(headers);
@@ -643,7 +774,11 @@ export class ReportsService {
   private formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
-    return d.toISOString().split('T')[0];
+    return `${d.toISOString().split('T')[0]} ${d.toTimeString().split(' ')[0].slice(0, 5)}`;
+  }
+
+  private formatTimestamp(date: Date): string {
+    return date.toISOString().replace('T', ' ').slice(0, 16);
   }
 
   /**

@@ -562,7 +562,82 @@ export class InstructorService {
       )
       .orderBy(users.firstName);
 
-    return studentsData;
+    if (studentsData.length === 0) return [];
+
+    const studentIds = studentsData.map((s) => s.studentId);
+
+    // Batch-fetch attendance rates per student
+    const sessionIds = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(inArray(sessions.courseId, courseIds));
+
+    const sIds = sessionIds.map((s) => s.id);
+
+    const attendanceRateMap = new Map<string, number>();
+    if (sIds.length > 0) {
+      const attendanceData = await db
+        .select({
+          studentId: attendance.studentId,
+          totalSessions: sql<number>`COUNT(*)`.as('total_sessions'),
+          presentCount:
+            sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
+              'present_count',
+            ),
+        })
+        .from(attendance)
+        .where(
+          and(
+            inArray(attendance.studentId, studentIds),
+            inArray(attendance.sessionId, sIds),
+          ),
+        )
+        .groupBy(attendance.studentId);
+
+      for (const a of attendanceData) {
+        const total = Number(a.totalSessions);
+        const present = Number(a.presentCount);
+        attendanceRateMap.set(
+          a.studentId,
+          total > 0 ? Math.round((present / total) * 100) : 0,
+        );
+      }
+    }
+
+    // Batch-fetch assessment averages per student
+    const assessmentAvgMap = new Map<string, number>();
+    const submissionData = await db
+      .select({
+        studentId: submissions.studentId,
+        avgPercentage:
+          sql<number>`ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)))`.as(
+            'avg_percentage',
+          ),
+      })
+      .from(submissions)
+      .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
+      .where(
+        and(
+          inArray(submissions.studentId, studentIds),
+          inArray(assessments.courseId, courseIds),
+          eq(submissions.status, 'graded'),
+        ),
+      )
+      .groupBy(submissions.studentId);
+
+    for (const s of submissionData) {
+      assessmentAvgMap.set(s.studentId, Number(s.avgPercentage) || 0);
+    }
+
+    return studentsData.map((s) => ({
+      ...s,
+      attendanceRate: attendanceRateMap.has(s.studentId)
+        ? attendanceRateMap.get(s.studentId)!
+        : null,
+      assessmentAverage: assessmentAvgMap.has(s.studentId)
+        ? assessmentAvgMap.get(s.studentId)!
+        : null,
+    }));
   }
 
   /**
@@ -705,14 +780,99 @@ export class InstructorService {
           : 0;
     }
 
-    // Assessment scores — placeholder (no assessments table yet)
-    const assessmentScores: { assessmentId: string; title: string; score: number; maxScore: number }[] = [];
+    // Assessment scores — fetch from submissions + assessments
+    const studentScores = await db
+      .select({
+        assessmentId: assessments.id,
+        title: assessments.title,
+        maxScore: assessments.totalMarks,
+        score: submissions.score,
+        submittedAt: submissions.submittedAt,
+      })
+      .from(submissions)
+      .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
+      .where(
+        and(
+          eq(submissions.studentId, studentId),
+          inArray(assessments.courseId, courseIds),
+          eq(submissions.status, 'graded'),
+        ),
+      )
+      .orderBy(desc(submissions.submittedAt));
+
+    // Deduplicate: keep latest submission per assessment
+    const seenAssessments = new Set<string>();
+    const dedupedScores = studentScores.filter((s) => {
+      if (seenAssessments.has(s.assessmentId)) return false;
+      seenAssessments.add(s.assessmentId);
+      return true;
+    });
+
+    // Batch-fetch class averages for each assessment
+    const assessmentIds = dedupedScores.map((s) => s.assessmentId);
+    const classAvgMap = new Map<string, number>();
+
+    if (assessmentIds.length > 0) {
+      const classAvgData = await db
+        .select({
+          assessmentId: submissions.assessmentId,
+          classAverage:
+            sql<number>`ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)))`.as(
+              'class_avg',
+            ),
+        })
+        .from(submissions)
+        .where(
+          and(
+            inArray(submissions.assessmentId, assessmentIds),
+            eq(submissions.status, 'graded'),
+          ),
+        )
+        .groupBy(submissions.assessmentId);
+
+      for (const c of classAvgData) {
+        classAvgMap.set(c.assessmentId, Number(c.classAverage) || 0);
+      }
+    }
+
+    const assessmentScores = dedupedScores.map((s) => ({
+      assessmentId: s.assessmentId,
+      title: s.title,
+      score: Number(s.score) || 0,
+      maxScore: Number(s.maxScore) || 0,
+      classAverage: classAvgMap.get(s.assessmentId) ?? 0,
+    }));
+
+    // Session-by-session attendance records
+    const attendanceRecordsList =
+      sIds.length > 0
+        ? await db
+            .select({
+              sessionId: attendance.sessionId,
+              status: attendance.status,
+              sessionTitle: sessions.title,
+              scheduledAt: sessions.scheduledAt,
+              courseId: sessions.courseId,
+              courseTitle: courses.title,
+            })
+            .from(attendance)
+            .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+            .innerJoin(courses, eq(sessions.courseId, courses.id))
+            .where(
+              and(
+                eq(attendance.studentId, studentId),
+                inArray(attendance.sessionId, sIds),
+              ),
+            )
+            .orderBy(desc(sessions.scheduledAt))
+        : [];
 
     return {
       ...student,
       enrollments: studentEnrollments,
       attendanceSummary,
       assessmentScores,
+      attendanceRecords: attendanceRecordsList,
     };
   }
 

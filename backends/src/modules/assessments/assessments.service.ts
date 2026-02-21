@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, isNull } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, isNull, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   assessments,
@@ -135,8 +135,32 @@ export class AssessmentsService {
       .from(assessments)
       .where(whereClause);
 
+    // Batch-fetch submission counts per assessment
+    const assessmentIds = data.map((a) => a.id);
+    const subCountMap = new Map<string, number>();
+
+    if (assessmentIds.length > 0) {
+      const subCounts = await db
+        .select({
+          assessmentId: submissions.assessmentId,
+          cnt: count(),
+        })
+        .from(submissions)
+        .where(inArray(submissions.assessmentId, assessmentIds))
+        .groupBy(submissions.assessmentId);
+
+      for (const sc of subCounts) {
+        subCountMap.set(sc.assessmentId, Number(sc.cnt));
+      }
+    }
+
+    const enrichedData = data.map((a) => ({
+      ...a,
+      submissionCount: subCountMap.get(a.id) || 0,
+    }));
+
     return {
-      data,
+      data: enrichedData,
       total: countResult?.count || 0,
       page,
       limit,
@@ -256,6 +280,26 @@ export class AssessmentsService {
       .select()
       .from(questions)
       .where(eq(questions.assessmentId, assessmentId))
+      .orderBy(asc(questions.createdAt));
+
+    return data;
+  }
+
+  /**
+   * List course-level bank questions (assessmentId IS NULL).
+   */
+  async getCourseBankQuestions(courseId: string, user: AuthenticatedUser) {
+    await this.verifyCourseAccess(courseId, user);
+
+    const data = await db
+      .select()
+      .from(questions)
+      .where(
+        and(
+          eq(questions.courseId, courseId),
+          isNull(questions.assessmentId),
+        ),
+      )
       .orderBy(asc(questions.createdAt));
 
     return data;

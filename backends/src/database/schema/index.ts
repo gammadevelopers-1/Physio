@@ -34,6 +34,9 @@ export * from './material-variants';
 // Certificate schemas
 export * from './certificate-requests';
 
+// User Preferences schemas
+export * from './user-preferences';
+
 // Intervention schemas
 export * from './interventions';
 

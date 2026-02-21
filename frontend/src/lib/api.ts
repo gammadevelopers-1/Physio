@@ -689,6 +689,9 @@ export const instructorApi = {
   getAssessmentQuestions: (assessmentId: string) =>
     api.get<AssessmentQuestion[]>(`/assessments/${assessmentId}/questions`),
 
+  getCourseBankQuestions: (courseId: string) =>
+    api.get<AssessmentQuestion[]>(`/assessments/course-bank/${courseId}/questions`),
+
   addQuestion: (assessmentId: string, data: { type: string; questionText: string; questionTextAr?: string; options?: { text: string; textAr?: string; isCorrect: boolean }[]; correctAnswer?: string; marks?: number; difficultyLevel?: string }) =>
     api.post<AssessmentQuestion>(`/assessments/${assessmentId}/questions`, data),
 
@@ -859,13 +862,16 @@ export const instructorApi = {
 
   batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
     api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
+
+  getMyCertificates: () =>
+    api.get<{ id: string; courseId: string; status: string; certificateUrl: string | null; createdAt: string; reviewedAt: string | null; courseName: string; courseThumbnail: string | null }[]>('/certificates/my-certificates'),
 };
 
 // ===========================================
 // Profile API (self-service)
 // ===========================================
 export const profileApi = {
-  update: (data: { firstName?: string; lastName?: string; phone?: string; avatar?: string }) =>
+  update: (data: { firstName?: string; lastName?: string; phone?: string; avatar?: string; bio?: string; location?: string; language?: string }) =>
     api.patch<User>('/auth/profile', data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
@@ -876,6 +882,17 @@ export const profileApi = {
     fd.append('file', file);
     return uploadFormData<{ url: string; filename: string }>('/storage/upload-avatar', fd);
   },
+};
+
+// ===========================================
+// Preferences API (notification + UI preferences)
+// ===========================================
+export const preferencesApi = {
+  get: () => api.get<Record<string, unknown>>('/preferences'),
+  updateNotifications: (data: Record<string, boolean>) =>
+    api.patch<Record<string, unknown>>('/preferences/notifications', data),
+  updateUi: (data: Record<string, unknown>) =>
+    api.patch<Record<string, unknown>>('/preferences/ui', data),
 };
 
 // ===========================================

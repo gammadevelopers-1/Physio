@@ -33,6 +33,8 @@ import {
   Play,
   LayoutGrid,
   List,
+  Plus,
+  Star,
 } from "lucide-react";
 
 const COURSE_STATUSES = ["active", "draft", "completed", "archived"] as const;
@@ -95,7 +97,9 @@ const MyCoursesContent = () => {
   const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("instructorDashboard");
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const debounceRef = useRef<NodeJS.Timeout>(undefined);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
@@ -150,7 +154,7 @@ const MyCoursesContent = () => {
       active: "bg-[#DCFCE7] text-[#22C55E]",
       draft: "bg-[#F3F4F6] text-[#6B7280]",
       completed: "bg-[#EFF6FF] text-[#3B82F6]",
-      archived: "bg-[#FEF3C7] text-[#D4A520]",
+      archived: "bg-[#374151] text-[#F9FAFB]",
     };
     return styles[status] || styles.draft;
   };
@@ -184,13 +188,22 @@ const MyCoursesContent = () => {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Header */}
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-[#1F2937]">
-                  {t("courses.title")}
-                </h1>
-                <p className="text-sm text-[#6B7280] mt-1">
-                  {t("courses.subtitle")}
-                </p>
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h1 className="text-2xl font-bold text-[#1F2937]">
+                    {t("courses.title")}
+                  </h1>
+                  <p className="text-sm text-[#6B7280] mt-1">
+                    {t("courses.subtitle")}
+                  </p>
+                </div>
+                <Link
+                  href={`/${locale}/dashboard/instructor/courses/create`}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t("courses.createCourse")}
+                </Link>
               </div>
 
               {/* Filters */}
@@ -202,8 +215,12 @@ const MyCoursesContent = () => {
                     <input
                       type="text"
                       placeholder={t("courses.searchPlaceholder")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      value={searchInput}
+                      onChange={(e) => {
+                        setSearchInput(e.target.value);
+                        clearTimeout(debounceRef.current);
+                        debounceRef.current = setTimeout(() => setSearchQuery(e.target.value), 300);
+                      }}
                       className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                     />
                   </div>
@@ -308,9 +325,16 @@ const MyCoursesContent = () => {
                   <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
                     {t("courses.noCoursesTitle")}
                   </h3>
-                  <p className="text-sm text-[#6B7280]">
+                  <p className="text-sm text-[#6B7280] mb-4">
                     {t("courses.noCoursesAssigned")}
                   </p>
+                  <Link
+                    href={`/${locale}/dashboard/instructor/courses/create`}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {t("courses.createCourse")}
+                  </Link>
                 </div>
               ) : (
                 <>
@@ -381,6 +405,18 @@ const MyCoursesContent = () => {
                             </div>
                             <div className="p-4">
                               <h3 className="text-base font-semibold text-[#1F2937] mb-2 line-clamp-1">{courseTitle}</h3>
+                              {(course.startDate || course.endDate) && (
+                                <div className="flex items-center gap-1.5 text-xs text-[#6B7280] mb-2">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  {course.startDate
+                                    ? new Date(course.startDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    : "—"}
+                                  {" – "}
+                                  {course.endDate
+                                    ? new Date(course.endDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    : t("courses.ongoing")}
+                                </div>
+                              )}
                               <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
                                 <span className="flex items-center gap-1">
                                   <Users className="w-4 h-4" />
@@ -389,6 +425,10 @@ const MyCoursesContent = () => {
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-4 h-4" />
                                   {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
+                                </span>
+                                <span className="flex items-center gap-1 text-[#9CA3AF]">
+                                  <Star className="w-3.5 h-3.5" />
+                                  {t("courses.ratingComingSoon")}
                                 </span>
                               </div>
                               <div className="mb-3">
@@ -469,6 +509,15 @@ const MyCoursesContent = () => {
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-3 h-3" /> {course.completedSessions}/{course.totalSessions}
                                 </span>
+                                {course.startDate && (
+                                  <span className="flex items-center gap-1">
+                                    {new Date(course.startDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" })}
+                                    {" – "}
+                                    {course.endDate
+                                      ? new Date(course.endDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" })
+                                      : t("courses.ongoing")}
+                                  </span>
+                                )}
                               </div>
                             </div>
                             <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>

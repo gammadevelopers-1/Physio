@@ -66,6 +66,18 @@ export class AssessmentsController {
   }
 
   /**
+   * GET /assessments/course-bank/:courseId/questions — Course-level question bank
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('course-bank/:courseId/questions')
+  async getCourseBankQuestions(
+    @Param('courseId') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.assessmentsService.getCourseBankQuestions(courseId, user);
+  }
+
+  /**
    * GET /assessments/:id — Assessment detail with questions
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

@@ -9,7 +9,7 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useAuth, useUser } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { profileApi, preferencesApi } from "@/lib/api";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
@@ -71,6 +71,9 @@ const SettingsContent = () => {
         lastName: user.lastName || "",
         email: user.email,
         phone: user.phone || "",
+        bio: (user as any).bio || "",
+        location: (user as any).location || "",
+        language: (user as any).language || "en",
       }));
     }
   }, [user]);
@@ -103,6 +106,9 @@ const SettingsContent = () => {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         phone: profileData.phone,
+        bio: profileData.bio,
+        location: profileData.location,
+        language: profileData.language,
       });
       await refreshUser();
       toast.success(t("settings.profileSaved"));
@@ -159,6 +165,7 @@ const SettingsContent = () => {
     digestWeekly: true,
     digestMonthly: false,
   });
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   // Preferences State
   const [preferences, setPreferences] = useState({
@@ -170,6 +177,67 @@ const SettingsContent = () => {
     compactMode: false,
     showTips: true,
   });
+  const [savingPreferences, setSavingPreferences] = useState(false);
+
+  // Fetch preferences from API on mount
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const prefs = await preferencesApi.get();
+        if (prefs) {
+          setNotifications((prev) => ({
+            ...prev,
+            emailNewStudent: (prefs as any).emailNewStudent ?? prev.emailNewStudent,
+            emailCourseComplete: (prefs as any).emailCourseComplete ?? prev.emailCourseComplete,
+            emailAssessmentSubmit: (prefs as any).emailAssessmentSubmit ?? prev.emailAssessmentSubmit,
+            emailCertificateRequest: (prefs as any).emailCertificateRequest ?? prev.emailCertificateRequest,
+            pushNewSession: (prefs as any).pushNewSession ?? prev.pushNewSession,
+            pushStudentMessage: (prefs as any).pushStudentMessage ?? prev.pushStudentMessage,
+            pushSystemUpdates: (prefs as any).pushSystemUpdates ?? prev.pushSystemUpdates,
+            digestWeekly: (prefs as any).digestWeekly ?? prev.digestWeekly,
+            digestMonthly: (prefs as any).digestMonthly ?? prev.digestMonthly,
+          }));
+          setPreferences((prev) => ({
+            ...prev,
+            theme: (prefs as any).theme ?? prev.theme,
+            dateFormat: (prefs as any).dateFormat ?? prev.dateFormat,
+            timeFormat: (prefs as any).timeFormat ?? prev.timeFormat,
+            timezone: (prefs as any).timezone ?? prev.timezone,
+            defaultView: (prefs as any).defaultView ?? prev.defaultView,
+            compactMode: (prefs as any).compactMode ?? prev.compactMode,
+            showTips: (prefs as any).showTips ?? prev.showTips,
+          }));
+        }
+      } catch {
+        // Silently fail — use defaults
+      }
+    };
+    fetchPreferences();
+  }, []);
+
+  const handleSaveNotifications = async () => {
+    setSavingNotifications(true);
+    try {
+      await preferencesApi.updateNotifications(notifications as unknown as Record<string, boolean>);
+      toast.success(t("settings.notificationsSaved") || "Notification preferences saved");
+    } catch {
+      toast.error("Failed to save notification preferences");
+    } finally {
+      setSavingNotifications(false);
+    }
+  };
+
+  const handleSavePreferences = async () => {
+    setSavingPreferences(true);
+    try {
+      await preferencesApi.updateUi(preferences as unknown as Record<string, unknown>);
+      toast.success(t("settings.preferencesSaved") || "Preferences saved");
+    } catch {
+      toast.error("Failed to save preferences");
+    } finally {
+      setSavingPreferences(false);
+    }
+  };
 
   // Integrations State
   const [integrations, setIntegrations] = useState({
@@ -674,6 +742,21 @@ const SettingsContent = () => {
                           ))}
                         </div>
                       </div>
+
+                      {/* Save Notifications Button */}
+                      <div className="pt-6 border-t border-[#E5E7EB] flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleSaveNotifications}
+                          disabled={savingNotifications}
+                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                        >
+                          <Save className="w-4 h-4" />
+                          {savingNotifications
+                            ? (t("settings.savingNotifications") || "Saving...")
+                            : (t("settings.saveNotifications") || "Save Notifications")}
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -820,13 +903,14 @@ const SettingsContent = () => {
                       <div className="flex justify-end">
                         <button
                           type="button"
-                          onClick={() => {
-                            toast.success(t("settings.preferencesSaved") || "Preferences saved");
-                          }}
-                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors"
+                          onClick={handleSavePreferences}
+                          disabled={savingPreferences}
+                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                         >
                           <Save className="w-4 h-4" />
-                          {t("settings.savePreferences")}
+                          {savingPreferences
+                            ? (t("settings.loadingPreferences") || "Saving...")
+                            : t("settings.savePreferences")}
                         </button>
                       </div>
                     </div>

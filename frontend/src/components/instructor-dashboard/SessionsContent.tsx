@@ -7,7 +7,7 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
-import { instructorApi } from "@/lib/api";
+import { instructorApi, reportsApi } from "@/lib/api";
 import type {
   CourseSession,
   InstructorCourse,
@@ -38,6 +38,7 @@ import {
   Filter,
   Ban,
   Trash2,
+  Download,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -98,6 +99,7 @@ function AttendanceModal({
   session,
   onClose,
   t,
+  locale,
 }: {
   session: CourseSession;
   onClose: () => void;
@@ -105,9 +107,11 @@ function AttendanceModal({
   locale: string;
 }) {
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [localStatuses, setLocalStatuses] = useState<Record<string, AttendanceStatus>>({});
+  const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const load = async () => {
@@ -117,13 +121,17 @@ function AttendanceModal({
           instructorApi.getCourseEnrollments(session.courseId),
         ]);
         setEnrollments(enr);
+        setAttendanceRecords(att);
 
-        // Initialize local statuses from existing attendance records
+        // Initialize local statuses and notes from existing attendance records
         const existing: Record<string, AttendanceStatus> = {};
+        const existingNotes: Record<string, string> = {};
         for (const a of att) {
-          existing[a.studentId] = a.status as AttendanceStatus;
+          existing[a.studentId] = a.status;
+          if (a.note) existingNotes[a.studentId] = a.note;
         }
         setLocalStatuses(existing);
+        setLocalNotes(existingNotes);
       } catch {
         toast.error(t("sessionsPage.attendance.loadError"));
       } finally {
@@ -141,11 +149,20 @@ function AttendanceModal({
       case "absent": return "bg-[#FEE2E2] text-[#EF4444]";
       case "late": return "bg-[#FEF3C7] text-[#D97706]";
       case "excused": return "bg-[#EFF6FF] text-[#3B82F6]";
+      default: return "bg-[#F3F4F6] text-[#6B7280]";
     }
   };
 
   const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
     setLocalStatuses((prev) => ({ ...prev, [studentId]: status }));
+    // Clear note when switching to present/absent
+    if (status !== "late" && status !== "excused") {
+      setLocalNotes((prev) => {
+        const next = { ...prev };
+        delete next[studentId];
+        return next;
+      });
+    }
   };
 
   const handleBulkMark = (status: AttendanceStatus) => {
@@ -154,14 +171,30 @@ function AttendanceModal({
       all[e.studentId] = status;
     }
     setLocalStatuses(all);
+    // Clear notes when bulk-marking present/absent
+    if (status !== "late" && status !== "excused") {
+      setLocalNotes({});
+    }
   };
 
   const handleSave = async () => {
+    // Validate notes for late/excused students
+    const missingNotes = Object.entries(localStatuses).filter(
+      ([studentId, status]) =>
+        (status === "late" || status === "excused") &&
+        !localNotes[studentId]?.trim()
+    );
+    if (missingNotes.length > 0) {
+      toast.error(t("sessionsPage.attendance.noteRequired"));
+      return;
+    }
+
     setSaving(true);
     try {
       const records = Object.entries(localStatuses).map(([studentId, status]) => ({
         studentId,
         status,
+        ...(localNotes[studentId]?.trim() ? { note: localNotes[studentId].trim() } : {}),
       }));
       if (records.length === 0) {
         toast.error(t("sessionsPage.attendance.noChanges"));
@@ -178,9 +211,23 @@ function AttendanceModal({
     }
   };
 
+  const handleExport = async () => {
+    try {
+      await reportsApi.download("attendance", {
+        courseId: session.courseId,
+        format: "csv",
+      });
+    } catch {
+      toast.error(t("sessionsPage.attendance.exportError"));
+    }
+  };
+
   const presentCount = Object.values(localStatuses).filter((s) => s === "present").length;
   const absentCount = Object.values(localStatuses).filter((s) => s === "absent").length;
   const lateCount = Object.values(localStatuses).filter((s) => s === "late").length;
+  const excusedCount = Object.values(localStatuses).filter((s) => s === "excused").length;
+
+  const timeLocale = locale === "ar" ? "ar-SA" : "en-US";
 
   return (
     <ModalOverlay onClose={onClose}>
@@ -203,13 +250,14 @@ function AttendanceModal({
       ) : (
         <>
           {/* Summary */}
-          <div className="flex items-center gap-4 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+          <div className="flex items-center gap-4 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB] flex-wrap">
             <span className="text-xs font-medium text-[#6B7280]">
               {t("sessionsPage.attendance.summary")}:
             </span>
             <span className="text-xs text-[#16A34A]">{presentCount} {t("sessionsPage.attendance.present")}</span>
             <span className="text-xs text-[#EF4444]">{absentCount} {t("sessionsPage.attendance.absent")}</span>
             <span className="text-xs text-[#D97706]">{lateCount} {t("sessionsPage.attendance.late")}</span>
+            <span className="text-xs text-[#3B82F6]">{excusedCount} {t("sessionsPage.attendance.excused")}</span>
           </div>
 
           {/* Bulk actions */}
@@ -236,29 +284,63 @@ function AttendanceModal({
               <div className="divide-y divide-[#E5E7EB]">
                 {enrollments.map((e) => {
                   const currentStatus = localStatuses[e.studentId] || "absent";
+                  const rec = attendanceRecords.find((a) => a.studentId === e.studentId);
+                  const needsNote = currentStatus === "late" || currentStatus === "excused";
                   return (
-                    <div key={e.studentId} className="flex items-center justify-between px-4 py-3">
-                      <div>
-                        <p className="text-sm font-medium text-[#1F2937]">
-                          {e.studentFirstName} {e.studentLastName}
-                        </p>
-                        <p className="text-xs text-[#6B7280]">{e.studentEmail}</p>
+                    <div key={e.studentId} className="px-4 py-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-[#1F2937]">
+                            {e.studentFirstName} {e.studentLastName}
+                          </p>
+                          <p className="text-xs text-[#6B7280]">{e.studentEmail}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {statusOptions.map((status) => (
+                            <button
+                              key={status}
+                              onClick={() => handleStatusChange(e.studentId, status)}
+                              className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+                                currentStatus === status
+                                  ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
+                                  : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[#E5E7EB]"
+                              }`}
+                            >
+                              {t(`sessionsPage.attendance.${status}`)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {statusOptions.map((status) => (
-                          <button
-                            key={status}
-                            onClick={() => handleStatusChange(e.studentId, status)}
-                            className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
-                              currentStatus === status
-                                ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
-                                : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[#E5E7EB]"
-                            }`}
-                          >
-                            {t(`sessionsPage.attendance.${status}`)}
-                          </button>
-                        ))}
-                      </div>
+                      {/* Note input for late/excused */}
+                      {needsNote && (
+                        <input
+                          type="text"
+                          value={localNotes[e.studentId] || ""}
+                          onChange={(ev) =>
+                            setLocalNotes((prev) => ({ ...prev, [e.studentId]: ev.target.value }))
+                          }
+                          placeholder={t("sessionsPage.attendance.notePlaceholder")}
+                          className="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded text-xs text-[#374151] placeholder:text-[#9CA3AF] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                        />
+                      )}
+                      {/* Zoom sync timing data */}
+                      {rec?.joinedAt && (
+                        <div className="flex items-center gap-3 text-[10px] text-[#9CA3AF]">
+                          <span>
+                            {t("sessionsPage.attendance.joinedAt")}:{" "}
+                            {new Date(rec.joinedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          {rec.leftAt && (
+                            <span>
+                              {t("sessionsPage.attendance.leftAt")}:{" "}
+                              {new Date(rec.leftAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          )}
+                          {rec.durationMinutes != null && (
+                            <span>{rec.durationMinutes} {t("sessionsPage.form.minutes")}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -266,22 +348,31 @@ function AttendanceModal({
             )}
           </div>
 
-          {/* Save */}
-          <div className="flex items-center justify-end gap-3 p-4 border-t border-[#E5E7EB]">
+          {/* Footer */}
+          <div className="flex items-center justify-between p-4 border-t border-[#E5E7EB]">
             <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              onClick={handleExport}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
             >
-              {t("sessionsPage.attendance.cancel")}
+              <Download className="w-3.5 h-3.5" />
+              {t("sessionsPage.attendance.exportAttendance")}
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {t("sessionsPage.attendance.save")}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              >
+                {t("sessionsPage.attendance.cancel")}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+              >
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("sessionsPage.attendance.save")}
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -295,11 +386,13 @@ function CancelSessionModal({
   session,
   onClose,
   onConfirm,
+  loading,
   t,
 }: {
   session: CourseSession;
   onClose: () => void;
   onConfirm: (reason: string) => void;
+  loading?: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
   const [reason, setReason] = useState("");
@@ -343,10 +436,126 @@ function CancelSessionModal({
         </button>
         <button
           onClick={() => onConfirm(reason)}
-          disabled={!reason.trim()}
-          className="px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50"
+          disabled={!reason.trim() || loading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50"
         >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           {t("sessionsPage.cancelSession.confirm")}
+        </button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ─── Delete Session Modal ───────────────────────────────────
+
+function DeleteSessionModal({
+  session,
+  onClose,
+  onConfirm,
+  loading,
+  t,
+}: {
+  session: CourseSession;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+        <h2 className="text-lg font-semibold text-[#1F2937]">
+          {t("sessionsPage.deleteModal.title")}
+        </h2>
+        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+          <X className="w-5 h-5 text-[#6B7280]" />
+        </button>
+      </div>
+      <div className="p-4">
+        <div className="flex items-start gap-3 p-3 bg-[#FEE2E2] rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-[#EF4444] flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-[#991B1B]">
+            {t("sessionsPage.deleteModal.warning", { title: session.title })}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-3 p-4 border-t border-[#E5E7EB]">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+        >
+          {t("sessionsPage.deleteModal.goBack")}
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50"
+        >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {t("sessionsPage.deleteModal.confirm")}
+        </button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
+// ─── End Session Modal ──────────────────────────────────────
+
+function EndSessionModal({
+  session,
+  onClose,
+  onConfirm,
+  loading,
+  t,
+}: {
+  session: CourseSession;
+  onClose: () => void;
+  onConfirm: () => void;
+  loading: boolean;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const hasZoom = session.type === "zoom" || session.type === "hybrid";
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+        <h2 className="text-lg font-semibold text-[#1F2937]">
+          {t("sessionsPage.endModal.title")}
+        </h2>
+        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+          <X className="w-5 h-5 text-[#6B7280]" />
+        </button>
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="flex items-start gap-3 p-3 bg-[#FEF3C7] rounded-lg">
+          <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-[#92400E]">
+            {t("sessionsPage.endModal.warning", { title: session.title })}
+          </p>
+        </div>
+        {hasZoom && (
+          <div className="flex items-start gap-3 p-3 bg-[#EFF6FF] rounded-lg">
+            <Video className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-[#1E40AF]">
+              {t("sessionsPage.endModal.zoomWarning")}
+            </p>
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-end gap-3 p-4 border-t border-[#E5E7EB]">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+        >
+          {t("sessionsPage.endModal.goBack")}
+        </button>
+        <button
+          onClick={onConfirm}
+          disabled={loading}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50"
+        >
+          {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+          {t("sessionsPage.endModal.confirm")}
         </button>
       </div>
     </ModalOverlay>
@@ -374,6 +583,7 @@ function ScheduleSessionModal({
   const [duration, setDuration] = useState(60);
   const [roomName, setRoomName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
+  const [zoomLink, setZoomLink] = useState("");
   const [saving, setSaving] = useState(false);
   const [conflict, setConflict] = useState<string | null>(null);
 
@@ -387,7 +597,7 @@ function ScheduleSessionModal({
       try {
         const scheduled = new Date(`${date}T${time}`);
         const endTime = new Date(scheduled.getTime() + duration * 60000);
-        const res = await instructorApi.getSessions({ limit: 100 });
+        const res = await instructorApi.getSessions({ limit: 200 });
         const sessions = res.data;
         const overlapping = sessions.find((s) => {
           if (s.status === "cancelled") return false;
@@ -404,13 +614,24 @@ function ScheduleSessionModal({
   }, [date, time, duration]);
 
   const handleSubmit = async () => {
-    if (!courseId || !title || !date || !time) return;
+    if (!courseId || !title.trim() || !date || !time) return;
+    // Validate past date+time
+    const scheduledDate = new Date(`${date}T${time}`);
+    if (scheduledDate <= new Date()) {
+      toast.error(t("sessionsPage.form.pastTimeError"));
+      return;
+    }
+    // Validate venue for on-site/hybrid
+    if ((type === "onsite" || type === "hybrid") && !venueAddress.trim()) {
+      toast.error(t("sessionsPage.form.venueRequired"));
+      return;
+    }
     setSaving(true);
     try {
-      const scheduledAt = new Date(`${date}T${time}`).toISOString();
+      const scheduledAt = scheduledDate.toISOString();
       const data: Record<string, unknown> = {
         courseId,
-        title,
+        title: title.trim(),
         type,
         scheduledAt,
         durationMinutes: duration,
@@ -418,6 +639,9 @@ function ScheduleSessionModal({
       if (type === "onsite" || type === "hybrid") {
         if (roomName) data.roomName = roomName;
         if (venueAddress) data.venueAddress = venueAddress;
+      }
+      if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
+        data.zoomLink = zoomLink.trim();
       }
       await instructorApi.createSession(data);
       toast.success(t("sessionsPage.schedule.success"));
@@ -482,6 +706,7 @@ function ScheduleSessionModal({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
               className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
             />
           </div>
@@ -553,13 +778,30 @@ function ScheduleSessionModal({
           </div>
         </div>
 
-        {/* Zoom info */}
+        {/* Zoom link */}
         {(type === "zoom" || type === "hybrid") && (
-          <div className="flex items-start gap-2 p-3 bg-[#EFF6FF] rounded-lg">
-            <Video className="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-[#1E40AF]">
-              A Zoom meeting will be automatically created when you schedule this session.
-            </p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 p-3 bg-[#EFF6FF] rounded-lg">
+              <Video className="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-[#1E40AF]">
+                {t("sessionsPage.zoomAutoCreate")}
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                {t("sessionsPage.zoomLinkOptional")}
+              </label>
+              <input
+                type="url"
+                value={zoomLink}
+                onChange={(e) => setZoomLink(e.target.value)}
+                placeholder="https://zoom.us/j/..."
+                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              />
+              <p className="text-xs text-[#9CA3AF] mt-1">
+                {t("sessionsPage.zoomLinkHint")}
+              </p>
+            </div>
           </div>
         )}
 
@@ -602,7 +844,7 @@ function ScheduleSessionModal({
         </button>
         <button
           onClick={handleSubmit}
-          disabled={saving || !courseId || !title || !date || !time}
+          disabled={saving || !courseId || !title.trim() || !date || !time}
           className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -624,6 +866,7 @@ function SessionCard({
   onAttendance,
   onEdit,
   onDelete,
+  actionLoading,
   t,
   locale,
 }: {
@@ -635,6 +878,7 @@ function SessionCard({
   onAttendance: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  actionLoading: boolean;
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
@@ -723,10 +967,11 @@ function SessionCard({
             <>
               <button
                 onClick={onStart}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] disabled:opacity-50 transition-colors"
                 title={t("sessionsPage.start")}
               >
-                <Play className="w-3.5 h-3.5" />
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
               </button>
               <button
@@ -757,9 +1002,10 @@ function SessionCard({
             <>
               <button
                 onClick={onEnd}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] transition-colors"
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] disabled:opacity-50 transition-colors"
               >
-                <Square className="w-3.5 h-3.5" />
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                 {t("sessionsPage.endSession")}
               </button>
               <button
@@ -810,7 +1056,7 @@ function SessionCard({
               className="inline-flex items-center gap-1 text-xs text-[#3B82F6] hover:underline"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              Rejoin Zoom
+              {t("sessionsPage.rejoinZoom")}
             </a>
           )}
         </div>
@@ -844,13 +1090,53 @@ function EditSessionModal({
   const [roomName, setRoomName] = useState(session.roomName || "");
   const [venueAddress, setVenueAddress] = useState(session.venueAddress || "");
   const [saving, setSaving] = useState(false);
+  const [conflict, setConflict] = useState<string | null>(null);
+
+  // Conflict detection
+  useEffect(() => {
+    if (!date || !time) {
+      setConflict(null);
+      return;
+    }
+    const checkConflict = async () => {
+      try {
+        const scheduledDt = new Date(`${date}T${time}`);
+        const endTime = new Date(scheduledDt.getTime() + duration * 60000);
+        const res = await instructorApi.getSessions({ limit: 200 });
+        const sessions = res.data;
+        const overlapping = sessions.find((s) => {
+          if (s.id === session.id) return false; // Exclude current session
+          if (s.status === "cancelled") return false;
+          const sStart = new Date(s.scheduledAt);
+          const sEnd = new Date(sStart.getTime() + (s.durationMinutes || 60) * 60000);
+          return scheduledDt < sEnd && endTime > sStart;
+        });
+        setConflict(overlapping ? overlapping.title : null);
+      } catch {
+        // Ignore conflict check errors
+      }
+    };
+    checkConflict();
+  }, [date, time, duration, session.id]);
 
   const handleSave = async () => {
+    if (!title.trim() || !date || !time) return;
+    // Validate past date+time
+    const scheduledDate = new Date(`${date}T${time}`);
+    if (scheduledDate <= new Date()) {
+      toast.error(t("sessionsPage.form.pastTimeError"));
+      return;
+    }
+    // Validate venue for on-site/hybrid
+    if ((session.type === "onsite" || session.type === "hybrid") && !venueAddress.trim()) {
+      toast.error(t("sessionsPage.form.venueRequired"));
+      return;
+    }
     setSaving(true);
     try {
-      const scheduledAt = new Date(`${date}T${time}`).toISOString();
+      const scheduledAt = scheduledDate.toISOString();
       const data: Record<string, unknown> = {
-        title,
+        title: title.trim(),
         scheduledAt,
         durationMinutes: duration,
       };
@@ -900,6 +1186,7 @@ function EditSessionModal({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
               className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
             />
           </div>
@@ -915,6 +1202,17 @@ function EditSessionModal({
             />
           </div>
         </div>
+
+        {/* Conflict warning */}
+        {conflict && (
+          <div className="flex items-start gap-2 p-3 bg-[#FEF3C7] rounded-lg">
+            <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[#92400E]">
+              {t("sessionsPage.schedule.conflict", { session: conflict })}
+            </p>
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-[#374151] mb-1.5">
             {t("sessionsPage.form.duration")}
@@ -951,7 +1249,7 @@ function EditSessionModal({
                 <ExternalLink className="w-4 h-4" />
               </a>
             </div>
-            <p className="text-xs text-[#9CA3AF] mt-1">Auto-generated Zoom meeting link</p>
+            <p className="text-xs text-[#9CA3AF] mt-1">{t("sessionsPage.zoomAutoGenerated")}</p>
           </div>
         )}
         {(session.type === "onsite" || session.type === "hybrid") && (
@@ -969,7 +1267,7 @@ function EditSessionModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-1.5">
-                {t("sessionsPage.form.venueAddress")}
+                {t("sessionsPage.form.venueAddress")} *
               </label>
               <input
                 type="text"
@@ -990,7 +1288,7 @@ function EditSessionModal({
         </button>
         <button
           onClick={handleSave}
-          disabled={saving || !title}
+          disabled={saving || !title.trim() || !date || !time}
           className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -1037,6 +1335,8 @@ const SessionsContent = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [attendanceSession, setAttendanceSession] = useState<CourseSession | null>(null);
   const [cancelSessionData, setCancelSessionData] = useState<CourseSession | null>(null);
+  const [deleteSessionData, setDeleteSessionData] = useState<CourseSession | null>(null);
+  const [endSessionData, setEndSessionData] = useState<CourseSession | null>(null);
   const [editSessionData, setEditSessionData] = useState<CourseSession | null>(null);
 
   // Fetch data
@@ -1051,7 +1351,7 @@ const SessionsContent = () => {
       setSessions(sessionsRes.data);
       setCourses(coursesRes.data);
     } catch {
-      setError("Failed to load sessions");
+      setError(t("sessionsPage.loadError"));
     } finally {
       setLoading(false);
     }
@@ -1084,7 +1384,7 @@ const SessionsContent = () => {
         if (ended.length > 0) {
           setSessions(fresh);
           for (const s of ended) {
-            toast.success(`"${s.title}" has ended`);
+            toast.success(t("sessionsPage.lifecycle.sessionEnded", { title: s.title }));
           }
         }
       } catch {
@@ -1095,22 +1395,28 @@ const SessionsContent = () => {
     return () => clearInterval(interval);
   }, [hasLiveSessions, sessions]);
 
+  // Date range validation
+  const dateRangeInvalid = !!(filterDateFrom && filterDateTo && filterDateFrom > filterDateTo);
+
   // Filter sessions
   const filteredSessions = useMemo(() => {
     return sessions.filter((s) => {
       if (filterCourse !== "all" && s.courseId !== filterCourse) return false;
       if (filterStatus !== "all" && s.status !== filterStatus) return false;
-      if (filterDateFrom) {
-        const sessionDate = getDateStr(s.scheduledAt);
-        if (sessionDate < filterDateFrom) return false;
-      }
-      if (filterDateTo) {
-        const sessionDate = getDateStr(s.scheduledAt);
-        if (sessionDate > filterDateTo) return false;
+      // Skip date filtering when range is invalid
+      if (!dateRangeInvalid) {
+        if (filterDateFrom) {
+          const sessionDate = getDateStr(s.scheduledAt);
+          if (sessionDate < filterDateFrom) return false;
+        }
+        if (filterDateTo) {
+          const sessionDate = getDateStr(s.scheduledAt);
+          if (sessionDate > filterDateTo) return false;
+        }
       }
       return true;
     });
-  }, [sessions, filterCourse, filterStatus, filterDateFrom, filterDateTo]);
+  }, [sessions, filterCourse, filterStatus, filterDateFrom, filterDateTo, dateRangeInvalid]);
 
   // Group sessions for list view
   const todayStr = getTodayStr();
@@ -1156,12 +1462,15 @@ const SessionsContent = () => {
     }
   };
 
-  const handleEnd = async (session: CourseSession) => {
-    if (actionLoadingId) return;
-    if (!window.confirm(t("sessionsPage.lifecycle.endConfirm"))) return;
-    setActionLoadingId(session.id);
+  const handleEnd = (session: CourseSession) => {
+    setEndSessionData(session);
+  };
+
+  const confirmEnd = async () => {
+    if (!endSessionData || actionLoadingId) return;
+    setActionLoadingId(endSessionData.id);
     try {
-      const result = await instructorApi.endSession(session.id);
+      const result = await instructorApi.endSession(endSessionData.id);
       toast.success(t("sessionsPage.lifecycle.ended"));
       if ((result as any).zoomEndedSuccessfully === false) {
         const errorDetail = (result as any).zoomErrorMessage;
@@ -1172,6 +1481,7 @@ const SessionsContent = () => {
           { duration: 8000 }
         );
       }
+      setEndSessionData(null);
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.endError"));
@@ -1181,7 +1491,8 @@ const SessionsContent = () => {
   };
 
   const handleCancel = async (reason: string) => {
-    if (!cancelSessionData) return;
+    if (!cancelSessionData || actionLoadingId) return;
+    setActionLoadingId(cancelSessionData.id);
     try {
       await instructorApi.cancelSession(cancelSessionData.id, reason);
       toast.success(t("sessionsPage.lifecycle.cancelled"));
@@ -1189,17 +1500,27 @@ const SessionsContent = () => {
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.cancelError"));
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
-  const handleDelete = async (session: CourseSession) => {
-    if (!window.confirm(`Delete "${session.title}"? This action cannot be undone.`)) return;
+  const handleDelete = (session: CourseSession) => {
+    setDeleteSessionData(session);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteSessionData || actionLoadingId) return;
+    setActionLoadingId(deleteSessionData.id);
     try {
-      await instructorApi.deleteSession(session.id);
+      await instructorApi.deleteSession(deleteSessionData.id);
       toast.success(t("sessionsPage.lifecycle.deleted"));
+      setDeleteSessionData(null);
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.deleteError"));
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -1254,6 +1575,7 @@ const SessionsContent = () => {
               onAttendance={() => setAttendanceSession(session)}
               onEdit={() => setEditSessionData(session)}
               onDelete={() => handleDelete(session)}
+              actionLoading={actionLoadingId === session.id}
               t={t}
               locale={locale}
             />
@@ -1372,6 +1694,12 @@ const SessionsContent = () => {
                   </button>
                 )}
               </div>
+              {dateRangeInvalid && (
+                <span className="flex items-center gap-1 text-xs text-[#D97706]">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  {t("sessionsPage.dateRangeWarning")}
+                </span>
+              )}
 
               {/* Loading */}
               {loading && (
@@ -1527,6 +1855,27 @@ const SessionsContent = () => {
           session={cancelSessionData}
           onClose={() => setCancelSessionData(null)}
           onConfirm={handleCancel}
+          loading={actionLoadingId === cancelSessionData.id}
+          t={t}
+        />
+      )}
+
+      {deleteSessionData && (
+        <DeleteSessionModal
+          session={deleteSessionData}
+          onClose={() => setDeleteSessionData(null)}
+          onConfirm={confirmDelete}
+          loading={actionLoadingId === deleteSessionData.id}
+          t={t}
+        />
+      )}
+
+      {endSessionData && (
+        <EndSessionModal
+          session={endSessionData}
+          onClose={() => setEndSessionData(null)}
+          onConfirm={confirmEnd}
+          loading={actionLoadingId === endSessionData.id}
           t={t}
         />
       )}

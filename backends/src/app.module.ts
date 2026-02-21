@@ -24,6 +24,7 @@ import { NelcAuditModule } from './modules/nelc-audit/nelc-audit.module';
 import { SessionAssistantsModule } from './modules/session-assistants/session-assistants.module';
 import { NelcComplianceModule } from './modules/nelc-compliance/nelc-compliance.module';
 import { ProcessingModule } from './modules/processing/processing.module';
+import { PreferencesModule } from './modules/preferences/preferences.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -81,6 +82,7 @@ import processingConfig from './config/processing.config';
     SessionAssistantsModule,
     NelcComplianceModule,
     ProcessingModule,
+    PreferencesModule,
   ],
   controllers: [AppController],
   providers: [

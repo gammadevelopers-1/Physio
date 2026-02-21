@@ -15,6 +15,13 @@
       "when": 1771651211589,
       "tag": "0001_regular_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771706914357,
+      "tag": "0002_chubby_puppet_master",
+      "breakpoints": true
     }
   ]
 }

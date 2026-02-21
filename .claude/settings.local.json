@@ -127,7 +127,8 @@
       "WebFetch(domain:archive.org)",
       "WebFetch(domain:gist.github.com)",
       "WebFetch(domain:labs.inqscribe.com)",
-      "Bash(ffmpeg:*)"
+      "Bash(ffmpeg:*)",
+      "Bash(DATABASE_HOST=localhost npx drizzle-kit push:*)"
     ]
   }
 }

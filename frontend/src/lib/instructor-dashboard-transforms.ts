@@ -31,7 +31,7 @@ export function transformToSessionCards(sessions: DashboardSession[]) {
     return {
       id: s.id,
       title: s.title,
-      thumbnail: "/student_dashboard/courses/image 473.svg",
+      thumbnail: s.courseThumbnail || "/student_dashboard/courses/image 473.svg",
       type: s.type as "zoom" | "onsite" | "hybrid",
       status: s.status as "scheduled" | "live" | "completed" | "cancelled",
       location: s.roomName || s.venueAddress || undefined,
@@ -119,6 +119,7 @@ export function transformToCalendarEvents(sessions: DashboardSession[]) {
       duration: `${s.durationMinutes} mins`,
       enrolled: s.enrolledCount,
       type: s.type as "zoom" | "onsite",
+      status: s.status as "scheduled" | "live" | "completed" | "cancelled",
       zoomLink: s.zoomLink || undefined,
     };
   });

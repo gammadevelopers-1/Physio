@@ -419,19 +419,35 @@ export class SessionsService {
     }
 
     // End the Zoom meeting if this is a zoom/hybrid session
+    let zoomEndedSuccessfully = true;
+    let zoomErrorMessage: string | undefined;
+
     if (
       session.meetingId &&
       (session.type === SESSION_TYPE.ZOOM ||
         session.type === SESSION_TYPE.HYBRID)
     ) {
-      try {
-        await this.zoomService.endMeeting(session.meetingId);
-      } catch (error) {
-        this.logger.warn(
-          `Could not end Zoom meeting ${session.meetingId}`,
-          error,
+      const result = await this.zoomService.endMeeting(session.meetingId);
+      zoomEndedSuccessfully = result.ended;
+      zoomErrorMessage = result.error;
+    } else if (
+      !session.meetingId &&
+      session.zoomLink &&
+      (session.type === SESSION_TYPE.ZOOM ||
+        session.type === SESSION_TYPE.HYBRID)
+    ) {
+      // Fallback: extract meeting ID from Zoom URL
+      const extracted = session.zoomLink.match(/\/j\/(\d+)/)?.[1];
+      if (extracted) {
+        this.logger.log(
+          `No meetingId stored — extracted ${extracted} from zoomLink`,
         );
-        // Don't block session end if Zoom API fails
+        const result = await this.zoomService.endMeeting(extracted);
+        zoomEndedSuccessfully = result.ended;
+        zoomErrorMessage = result.error;
+      } else {
+        zoomEndedSuccessfully = false;
+        zoomErrorMessage = 'No meeting ID available';
       }
     }
 
@@ -458,7 +474,7 @@ export class SessionsService {
       },
     });
 
-    return updated;
+    return { ...updated, zoomEndedSuccessfully, zoomErrorMessage };
   }
 
   /**

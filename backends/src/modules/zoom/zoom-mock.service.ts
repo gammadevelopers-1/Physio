@@ -58,12 +58,15 @@ export class ZoomMockService implements IZoomService {
     };
   }
 
-  async endMeeting(meetingId: string): Promise<void> {
+  async endMeeting(
+    meetingId: string,
+  ): Promise<{ ended: boolean; error?: string }> {
     const meeting = this.meetings.get(meetingId);
     if (meeting) {
       meeting.status = 'ended';
     }
     this.logger.log(`[MOCK] Zoom meeting ended: ${meetingId}`);
+    return { ended: true };
   }
 
   getWebhookSecretToken(): string {

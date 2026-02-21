@@ -157,34 +157,92 @@ export class ZoomService implements IZoomService {
     };
   }
 
-  async endMeeting(meetingId: string): Promise<void> {
-    const token = await this.getAccessToken();
+  async endMeeting(
+    meetingId: string,
+  ): Promise<{ ended: boolean; error?: string }> {
+    const maxAttempts = 2;
 
-    const response = await fetch(
-      `https://api.zoom.us/v2/meetings/${meetingId}/status`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'end' }),
-      },
-    );
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const token = await this.getAccessToken();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      if (response.status === 404) {
-        this.logger.warn(
-          `Zoom meeting ${meetingId} not found (already ended?)`,
+        const response = await fetch(
+          `https://api.zoom.us/v2/meetings/${meetingId}/status`,
+          {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: 'end' }),
+          },
         );
-        return;
+
+        if (response.ok || response.status === 204) {
+          this.logger.log(`Zoom meeting ${meetingId} ended successfully`);
+          return { ended: true };
+        }
+
+        const errorText = await response.text();
+
+        // 404 = meeting not found (already ended or deleted)
+        if (response.status === 404) {
+          this.logger.warn(
+            `Zoom meeting ${meetingId} not found (already ended?)`,
+          );
+          return { ended: true };
+        }
+
+        // 400 with code 3001 = "Meeting does not exist"
+        if (response.status === 400) {
+          try {
+            const parsed = JSON.parse(errorText);
+            if (parsed.code === 3001) {
+              this.logger.warn(
+                `Zoom meeting ${meetingId} does not exist (code 3001)`,
+              );
+              return { ended: true };
+            }
+          } catch {
+            /* not JSON, fall through */
+          }
+        }
+
+        // Retry on other errors
+        if (attempt < maxAttempts) {
+          this.logger.warn(
+            `Zoom endMeeting attempt ${attempt} failed (${response.status}), retrying in 1s...`,
+          );
+          await new Promise((r) => setTimeout(r, 1000));
+          // Force token refresh on retry (in case token was stale)
+          this.cachedToken = null;
+          continue;
+        }
+
+        this.logger.error(
+          `Zoom end meeting failed after ${maxAttempts} attempts: ${response.status} - ${errorText}`,
+        );
+        return {
+          ended: false,
+          error: `Zoom API ${response.status}: ${errorText.slice(0, 200)}`,
+        };
+      } catch (error) {
+        if (attempt < maxAttempts) {
+          this.logger.warn(
+            `Zoom endMeeting attempt ${attempt} threw, retrying in 1s...`,
+          );
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+        const msg = error instanceof Error ? error.message : String(error);
+        this.logger.error(
+          `Zoom end meeting threw after ${maxAttempts} attempts: ${msg}`,
+        );
+        return { ended: false, error: msg };
       }
-      this.logger.error(`Zoom end meeting failed: ${errorText}`);
-      throw new Error(`Failed to end Zoom meeting: ${response.status}`);
     }
 
-    this.logger.log(`Zoom meeting ${meetingId} ended successfully`);
+    return { ended: false, error: 'Unreachable' };
   }
 
   getWebhookSecretToken(): string {

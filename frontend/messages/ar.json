@@ -1550,7 +1550,13 @@
       "statusUpcoming": "قادم",
       "statusLive": "مباشر",
       "statusCompleted": "مكتمل",
-      "statusCancelled": "ملغي"
+      "statusCancelled": "ملغي",
+      "endSessionConfirm": "إنهاء هذه الجلسة؟ سيتم فصل جميع المشاركين من زووم.",
+      "sessionEnded": "تم إنهاء الجلسة بنجاح",
+      "endSessionError": "فشل في إنهاء الجلسة",
+      "zoomEndFailed": "تم إكمال الجلسة، لكن لم يتم إنهاء اجتماع زووم. يرجى إنهاؤه يدوياً في زووم.",
+      "zoomEndFailedDetail": "اكتملت الجلسة، لكن لم يمكن إنهاء اجتماع Zoom: {error}. يرجى إنهاؤه يدويًا.",
+      "sessionEndedAuto": "انتهت \"{title}\""
     },
     "todaysSessions": {
       "title": "جلسات اليوم",
@@ -1618,7 +1624,10 @@
       "zoom": "زوم",
       "onsite": "حضوري",
       "noEventsTitle": "لا توجد أحداث قادمة",
-      "noEventsDescription": "ستظهر جلساتك القادمة هنا."
+      "noEventsDescription": "ستظهر جلساتك القادمة هنا.",
+      "completed": "مكتملة",
+      "cancelled": "ملغاة",
+      "live": "مباشر"
     },
     "notifications": {
       "title": "الإشعارات",
@@ -1953,6 +1962,9 @@
         "startError": "فشل في بدء الجلسة",
         "ended": "تم إنهاء الجلسة بنجاح",
         "endError": "فشل في إنهاء الجلسة",
+        "endConfirm": "إنهاء هذه الجلسة؟ سيتم فصل جميع المشاركين من زووم.",
+        "zoomEndFailed": "تم إكمال الجلسة، لكن لم يتم إنهاء اجتماع زووم. يرجى إنهاؤه يدوياً في زووم.",
+        "zoomEndFailedDetail": "اكتملت الجلسة، لكن لم يمكن إنهاء اجتماع Zoom: {error}. يرجى إنهاؤه يدويًا.",
         "cancelled": "تم إلغاء الجلسة بنجاح",
         "cancelError": "فشل في إلغاء الجلسة",
         "deleted": "تم حذف الجلسة بنجاح",

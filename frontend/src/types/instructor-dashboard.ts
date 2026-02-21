@@ -21,6 +21,7 @@ export interface DashboardSession {
   venueAddress: string | null;
   status: string;
   enrolledCount: number;
+  courseThumbnail: string | null;
   createdAt: string;
   updatedAt: string;
 }

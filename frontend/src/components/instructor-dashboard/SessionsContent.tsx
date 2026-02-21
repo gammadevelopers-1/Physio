@@ -1158,10 +1158,20 @@ const SessionsContent = () => {
 
   const handleEnd = async (session: CourseSession) => {
     if (actionLoadingId) return;
+    if (!window.confirm(t("sessionsPage.lifecycle.endConfirm"))) return;
     setActionLoadingId(session.id);
     try {
-      await instructorApi.endSession(session.id);
+      const result = await instructorApi.endSession(session.id);
       toast.success(t("sessionsPage.lifecycle.ended"));
+      if ((result as any).zoomEndedSuccessfully === false) {
+        const errorDetail = (result as any).zoomErrorMessage;
+        toast.warning(
+          errorDetail
+            ? t("sessionsPage.lifecycle.zoomEndFailedDetail", { error: errorDetail })
+            : t("sessionsPage.lifecycle.zoomEndFailed"),
+          { duration: 8000 }
+        );
+      }
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.endError"));

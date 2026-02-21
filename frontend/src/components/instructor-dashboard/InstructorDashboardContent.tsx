@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
@@ -95,14 +96,64 @@ const InstructorDashboardContent = () => {
   };
 
   const handleEndSession = async (sessionId: string) => {
+    if (!window.confirm(t("sessions.endSessionConfirm"))) return;
     try {
-      await instructorApi.endSession(sessionId);
-      toast.success("Session ended");
+      const result = await instructorApi.endSession(sessionId);
+      toast.success(t("sessions.sessionEnded"));
+      if ((result as any).zoomEndedSuccessfully === false) {
+        const errorDetail = (result as any).zoomErrorMessage;
+        toast.warning(
+          errorDetail
+            ? t("sessions.zoomEndFailedDetail", { error: errorDetail })
+            : t("sessions.zoomEndFailed"),
+          { duration: 8000 }
+        );
+      }
       refetch();
     } catch {
-      toast.error("Failed to end session");
+      toast.error(t("sessions.endSessionError"));
     }
   };
+
+  // ─── Live session polling ─────────────────────────────────
+  // When any session is live, poll every 5s to detect external changes
+  // (e.g. instructor ends meeting from Zoom UI → webhook updates DB → poll detects)
+
+  const hasLiveSessions = useMemo(
+    () => dashboard?.todaySessions?.some((s) => s.status === "live") ?? false,
+    [dashboard]
+  );
+
+  const prevSessionsRef = useRef(dashboard?.todaySessions);
+  useEffect(() => {
+    prevSessionsRef.current = dashboard?.todaySessions;
+  }, [dashboard?.todaySessions]);
+
+  useEffect(() => {
+    if (!hasLiveSessions) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const fresh = await instructorApi.getDashboardSummary();
+        const prev = prevSessionsRef.current ?? [];
+        const ended = prev.filter(
+          (old) =>
+            old.status === "live" &&
+            fresh.todaySessions.find((n) => n.id === old.id && n.status === "completed")
+        );
+        if (ended.length > 0) {
+          refetch();
+          for (const s of ended) {
+            toast.info(t("sessions.sessionEndedAuto", { title: s.title }));
+          }
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [hasLiveSessions, refetch, t]);
 
   const handleSessionAttendance = (sessionId: string) => {
     router.push(`/${locale}/dashboard/instructor/sessions`);

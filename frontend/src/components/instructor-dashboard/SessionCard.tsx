@@ -80,6 +80,7 @@ const SessionCard = ({
           alt={session.title}
           fill
           className="object-cover"
+          unoptimized
         />
       </div>
 

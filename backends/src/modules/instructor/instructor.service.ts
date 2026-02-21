@@ -70,7 +70,22 @@ export class InstructorService {
       this.certificatesService.findPending(user, { status: 'pending', limit: 50 }),
     ]);
 
-    // Enrich today's sessions with enrollment counts
+    // Batch-fetch course thumbnails for all sessions (single query, no N+1)
+    const allSessionCourseIds = [
+      ...new Set([
+        ...todaySessions.map((s) => s.courseId),
+        ...upcomingSessions.map((s) => s.courseId),
+      ]),
+    ];
+    const courseThumbnails = allSessionCourseIds.length > 0
+      ? await db
+          .select({ id: courses.id, thumbnail: courses.thumbnail })
+          .from(courses)
+          .where(inArray(courses.id, allSessionCourseIds))
+      : [];
+    const thumbnailMap = new Map(courseThumbnails.map((c) => [c.id, c.thumbnail]));
+
+    // Enrich today's sessions with enrollment counts + course thumbnail
     const enrichedTodaySessions = await Promise.all(
       todaySessions.map(async (session) => {
         const [result] = await db
@@ -80,11 +95,12 @@ export class InstructorService {
         return {
           ...session,
           enrolledCount: result?.count || 0,
+          courseThumbnail: thumbnailMap.get(session.courseId) || null,
         };
       }),
     );
 
-    // Enrich upcoming sessions with enrollment counts
+    // Enrich upcoming sessions with enrollment counts + course thumbnail
     const enrichedUpcomingSessions = await Promise.all(
       upcomingSessions.map(async (session) => {
         const [result] = await db
@@ -94,6 +110,7 @@ export class InstructorService {
         return {
           ...session,
           enrolledCount: result?.count || 0,
+          courseThumbnail: thumbnailMap.get(session.courseId) || null,
         };
       }),
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Calendar, Video, MapPin } from "lucide-react";
+import { Calendar, Video, MapPin, CheckCircle, XCircle } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
@@ -11,6 +11,7 @@ interface CalendarEvent {
   duration: string;
   enrolled: number;
   type: "zoom" | "onsite";
+  status: "scheduled" | "live" | "completed" | "cancelled";
   zoomLink?: string;
 }
 
@@ -44,57 +45,85 @@ const InstructorCalendarWidget = ({
           </div>
         ) : (
           <div className="space-y-3">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="p-3.5 border border-[#E5E7EB] rounded-xl"
-              >
-                {/* Date and Time */}
-                <p className="text-[13px] text-[#6B7280] mb-1">
-                  {event.date} - {event.time}
-                </p>
+            {events.map((event) => {
+              const cardStyle =
+                event.status === "completed"
+                  ? "p-3.5 border border-[#BBF7D0] bg-[#F0FDF4] rounded-xl opacity-70"
+                  : event.status === "cancelled"
+                    ? "p-3.5 border border-[#E5E7EB] bg-[#F3F4F6] rounded-xl opacity-50"
+                    : event.status === "live"
+                      ? "p-3.5 border border-[#FECACA] bg-[#FEF2F2] rounded-xl ring-1 ring-[#EF4444]"
+                      : "p-3.5 border border-[#E5E7EB] rounded-xl";
 
-                {/* Event Title */}
-                <h4 className="text-[15px] font-semibold text-[#1F2937] mb-1">
-                  {event.title}
-                </h4>
+              const titleStyle =
+                event.status === "cancelled"
+                  ? "text-[15px] font-semibold text-[#9CA3AF] line-through mb-1"
+                  : event.status === "completed"
+                    ? "text-[15px] font-semibold text-[#6B7280] mb-1"
+                    : "text-[15px] font-semibold text-[#1F2937] mb-1";
 
-                {/* Enrolled Count */}
-                <p className="text-[13px] text-[#6B7280] mb-2">
-                  {event.enrolled} {t("calendar.studentsEnrolled")}
-                </p>
+              return (
+                <div key={event.id} className={cardStyle}>
+                  {/* Date and Time */}
+                  <p className="text-[13px] text-[#6B7280] mb-1">
+                    {event.date} - {event.time}
+                  </p>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[13px] text-[#6B7280]">
-                    {event.duration}
-                  </span>
-                  {event.type === "zoom" ? (
-                    event.zoomLink ? (
-                      <a
-                        href={event.zoomLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-[13px] font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
-                      >
-                        <Video className="w-3.5 h-3.5" />
-                        {t("calendar.zoom")}
-                      </a>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3B82F6]">
-                        <Video className="w-3.5 h-3.5" />
-                        {t("calendar.zoom")}
-                      </span>
-                    )
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#22C55E]">
-                      <MapPin className="w-3.5 h-3.5" />
-                      {t("calendar.onsite")}
+                  {/* Event Title */}
+                  <h4 className={titleStyle}>{event.title}</h4>
+
+                  {/* Enrolled Count */}
+                  <p className="text-[13px] text-[#6B7280] mb-2">
+                    {event.enrolled} {t("calendar.studentsEnrolled")}
+                  </p>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[13px] text-[#6B7280]">
+                      {event.duration}
                     </span>
-                  )}
+                    {event.status === "completed" ? (
+                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#22C55E]">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {t("calendar.completed")}
+                      </span>
+                    ) : event.status === "cancelled" ? (
+                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#9CA3AF]">
+                        <XCircle className="w-3.5 h-3.5" />
+                        {t("calendar.cancelled")}
+                      </span>
+                    ) : event.status === "live" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#FEE2E2] rounded text-[13px] font-bold text-[#EF4444]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />
+                        {t("calendar.live")}
+                      </span>
+                    ) : event.type === "zoom" ? (
+                      event.zoomLink ? (
+                        <a
+                          href={event.zoomLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-[13px] font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                        >
+                          <Video className="w-3.5 h-3.5" />
+                          {t("calendar.zoom")}
+                        </a>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#3B82F6]">
+                          <Video className="w-3.5 h-3.5" />
+                          {t("calendar.zoom")}
+                        </span>
+                      )
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[13px] font-medium text-[#22C55E]">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {t("calendar.onsite")}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

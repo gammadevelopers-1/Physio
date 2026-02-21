@@ -440,9 +440,25 @@ export class InstructorService {
       );
     }
 
+    // ─── Total Students across all instructor courses ────────
+    let totalStudents = 0;
+    if (courseIds.length > 0) {
+      const [studentCount] = await db
+        .select({ count: sql<number>`COUNT(DISTINCT ${enrollments.studentId})`.as('count') })
+        .from(enrollments)
+        .where(
+          and(
+            inArray(enrollments.courseId, courseIds),
+            eq(enrollments.status, 'active'),
+          ),
+        );
+      totalStudents = Number(studentCount?.count ?? 0);
+    }
+
     return {
       kpis: {
         activeCourses: coursesResult.total || 0,
+        totalStudents,
         todaysSessions: todaySessions.length,
         atRiskLearners: atRiskLearners.length,
       },
@@ -473,7 +489,7 @@ export class InstructorService {
    * - Instructor: students enrolled in their own courses only.
    * - Admin: all enrolled students across all courses.
    */
-  async getStudents(user: AuthenticatedUser) {
+  async getStudents(user: AuthenticatedUser, courseId?: string) {
     // Get the instructor's course IDs (or all courses for admin)
     const courseConditions = this.isAdmin(user)
       ? []
@@ -488,10 +504,17 @@ export class InstructorService {
           : undefined,
       );
 
-    const courseIds = instructorCourses.map((c) => c.id);
+    let courseIds = instructorCourses.map((c) => c.id);
 
     if (courseIds.length === 0) {
       return [];
+    }
+
+    // If a specific courseId filter is provided, narrow down
+    if (courseId && courseIds.includes(courseId)) {
+      courseIds = [courseId];
+    } else if (courseId) {
+      return []; // courseId not in instructor's courses
     }
 
     // Get unique students with aggregated data
@@ -827,8 +850,37 @@ export class InstructorService {
         );
       }
 
-      // Criterion 2: Assessment average < 60% (placeholder)
-      // No assessments table yet — will be added when assessments module is created
+      // Criterion 2: Assessment average < 60%
+      const studentCourseIds = studentCoursesMap.get(studentId) || [];
+      if (studentCourseIds.length > 0) {
+        const studentSubmissions = await db
+          .select({
+            percentage: submissions.percentage,
+          })
+          .from(submissions)
+          .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
+          .where(
+            and(
+              eq(submissions.studentId, studentId),
+              eq(submissions.status, 'graded'),
+              inArray(assessments.courseId, studentCourseIds),
+            ),
+          );
+
+        if (studentSubmissions.length > 0) {
+          const avgPercentage =
+            studentSubmissions.reduce(
+              (sum, s) => sum + parseFloat(s.percentage || '0'),
+              0,
+            ) / studentSubmissions.length;
+
+          if (avgPercentage < 60) {
+            riskReasons.push(
+              `Assessment average ${avgPercentage.toFixed(1)}% (below 60%)`,
+            );
+          }
+        }
+      }
 
       // Criterion 3: No activity in last 7 days
       if (!lastAccess || new Date(lastAccess) < sevenDaysAgo) {

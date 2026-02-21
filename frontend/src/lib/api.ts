@@ -692,18 +692,18 @@ export const instructorApi = {
   addQuestion: (assessmentId: string, data: { type: string; questionText: string; questionTextAr?: string; options?: { text: string; textAr?: string; isCorrect: boolean }[]; correctAnswer?: string; marks?: number; difficultyLevel?: string }) =>
     api.post<AssessmentQuestion>(`/assessments/${assessmentId}/questions`, data),
 
-  updateQuestion: (questionId: string, data: Record<string, unknown>) =>
-    api.patch<AssessmentQuestion>(`/questions/${questionId}`, data),
+  updateQuestion: (assessmentId: string, questionId: string, data: Record<string, unknown>) =>
+    api.patch<AssessmentQuestion>(`/assessments/${assessmentId}/questions/${questionId}`, data),
 
-  deleteQuestion: (questionId: string) =>
-    api.delete<{ message: string }>(`/questions/${questionId}`),
+  deleteQuestion: (assessmentId: string, questionId: string) =>
+    api.delete<{ message: string }>(`/assessments/${assessmentId}/questions/${questionId}`),
 
   // Submissions & Grading
   getSubmissions: (assessmentId: string) =>
     api.get<AssessmentSubmission[]>(`/assessments/${assessmentId}/submissions`),
 
-  gradeSubmission: (submissionId: string, grades: { questionId: string; marksAwarded: number }[]) =>
-    api.patch<AssessmentSubmission>(`/submissions/${submissionId}/grade`, { grades }),
+  gradeSubmission: (assessmentId: string, submissionId: string, grades: { questionId: string; marksAwarded: number }[]) =>
+    api.patch<AssessmentSubmission>(`/assessments/${assessmentId}/submissions/${submissionId}/grade`, { grades }),
 
   // Item Analysis
   getItemAnalysis: (assessmentId: string) =>
@@ -729,6 +729,10 @@ export const instructorApi = {
   // Sessions for a specific course
   getCourseSessions: (courseId: string) =>
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
+
+  // Course creation
+  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string }) =>
+    api.post<CourseDetailResponse>('/courses', data),
 
   // Course update & delete
   updateCourse: (courseId: string, data: Record<string, unknown>) =>
@@ -815,8 +819,10 @@ export const instructorApi = {
     api.patch<AttendanceRecord>(`/attendance/${attendanceId}`, data),
 
   // Students
-  getStudents: () =>
-    api.get<InstructorStudent[]>('/instructor/students'),
+  getStudents: (params?: { courseId?: string }) => {
+    const query = params?.courseId ? `?courseId=${params.courseId}` : '';
+    return api.get<InstructorStudent[]>(`/instructor/students${query}`);
+  },
 
   getStudentDetail: (studentId: string) =>
     api.get<StudentDetailResponse>(`/instructor/students/${studentId}`),
@@ -861,6 +867,9 @@ export const instructorApi = {
 export const profileApi = {
   update: (data: { firstName?: string; lastName?: string; phone?: string; avatar?: string }) =>
     api.patch<User>('/auth/profile', data),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.patch<{ message: string }>('/auth/change-password', { currentPassword, newPassword }),
 
   uploadAvatar: (file: File) => {
     const fd = new FormData();

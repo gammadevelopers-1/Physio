@@ -8,10 +8,24 @@ import {
   IsDateString,
   MaxLength,
   Min,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  Validate,
 } from 'class-validator';
 import { SESSION_TYPE, SessionType } from '../../../database/schema';
 
 const validSessionTypes = Object.values(SESSION_TYPE);
+
+@ValidatorConstraint({ name: 'isFutureDate', async: false })
+class IsFutureDateConstraint implements ValidatorConstraintInterface {
+  validate(dateString: string) {
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) && date > new Date();
+  }
+  defaultMessage() {
+    return 'scheduledAt must be a future date';
+  }
+}
 
 export class CreateSessionDto {
   @IsOptional()
@@ -34,6 +48,7 @@ export class CreateSessionDto {
   type: SessionType;
 
   @IsDateString({}, { message: 'scheduledAt must be a valid ISO date string' })
+  @Validate(IsFutureDateConstraint)
   scheduledAt: string;
 
   @IsOptional()

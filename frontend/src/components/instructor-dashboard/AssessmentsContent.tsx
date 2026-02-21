@@ -665,12 +665,14 @@ const AddQuestionModal = ({
 const GradeModal = ({
   submission,
   questions,
+  assessmentId,
   t,
   onClose,
   onGraded,
 }: {
   submission: AssessmentSubmission;
   questions: AssessmentQuestion[];
+  assessmentId: string;
   t: (key: string) => string;
   onClose: () => void;
   onGraded: () => void;
@@ -696,7 +698,7 @@ const GradeModal = ({
         questionId,
         marksAwarded,
       }));
-      await instructorApi.gradeSubmission(submission.id, gradeItems);
+      await instructorApi.gradeSubmission(assessmentId, submission.id, gradeItems);
       toast.success(t("assessments.gradeSuccess"));
       onGraded();
       onClose();
@@ -1129,7 +1131,7 @@ const AssessmentsContent = () => {
 
   const handleDeleteQuestion = async (questionId: string) => {
     try {
-      await instructorApi.deleteQuestion(questionId);
+      await instructorApi.deleteQuestion(selectedAssessmentForQ || '', questionId);
       toast.success(t("assessments.questionDeleted"));
       // Refresh questions
       if (selectedAssessmentForQ) {
@@ -2008,6 +2010,7 @@ const AssessmentsContent = () => {
         <GradeModal
           submission={gradeModalData.submission}
           questions={gradeModalData.questions}
+          assessmentId={selectedAssessmentForS || ''}
           t={t}
           onClose={() => setGradeModalData(null)}
           onGraded={async () => {

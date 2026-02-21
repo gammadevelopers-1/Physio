@@ -2,6 +2,7 @@
 
 export interface DashboardKPIs {
   activeCourses: number;
+  totalStudents: number;
   todaysSessions: number;
   atRiskLearners: number;
 }

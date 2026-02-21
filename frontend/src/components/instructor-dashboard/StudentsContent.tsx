@@ -10,6 +10,7 @@ import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { instructorApi } from "@/lib/api";
 import type {
   InstructorStudent,
+  InstructorCourse,
   AtRiskStudent,
 } from "@/types/instructor-dashboard";
 import {
@@ -46,12 +47,14 @@ const StudentsContent = () => {
 
   // Data state
   const [students, setStudents] = useState<EnrichedStudent[]>([]);
+  const [courses, setCourses] = useState<InstructorCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filter & search state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedCourse, setSelectedCourse] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -63,10 +66,12 @@ const StudentsContent = () => {
     setLoading(true);
     setError(null);
     try {
-      const [studentsData, atRiskData] = await Promise.all([
-        instructorApi.getStudents(),
+      const [studentsData, atRiskData, coursesRes] = await Promise.all([
+        instructorApi.getStudents(selectedCourse !== "all" ? { courseId: selectedCourse } : undefined),
         instructorApi.getAtRiskStudents(),
+        instructorApi.getCourses({ limit: 100 }),
       ]);
+      setCourses(coursesRes.data);
 
       // Build a set of at-risk student IDs with their risk reasons
       const atRiskMap = new Map<string, string[]>();
@@ -109,7 +114,7 @@ const StudentsContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [t]);
+  }, [t, selectedCourse]);
 
   useEffect(() => {
     fetchData();
@@ -406,6 +411,16 @@ const StudentsContent = () => {
 
                       <div className="hidden md:flex gap-3">
                         <select
+                          value={selectedCourse}
+                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
+                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          <option value="all">{t("students.allCourses")}</option>
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
+                          ))}
+                        </select>
+                        <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
                           className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
@@ -420,7 +435,17 @@ const StudentsContent = () => {
                     </div>
 
                     {showFilters && (
-                      <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB]">
+                      <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] space-y-3">
+                        <select
+                          value={selectedCourse}
+                          onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
+                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          <option value="all">{t("students.allCourses")}</option>
+                          {courses.map((c) => (
+                            <option key={c.id} value={c.id}>{locale === "ar" && c.titleAr ? c.titleAr : c.title}</option>
+                          ))}
+                        </select>
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}

@@ -383,6 +383,18 @@ export class AuthController {
   }
 
   // ===========================================
+  // Change Password
+  // ===========================================
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password')
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() dto: { currentPassword: string; newPassword: string },
+  ) {
+    return this.authService.changePassword(userId, dto.currentPassword, dto.newPassword);
+  }
+
+  // ===========================================
   // MANAGER + ADMIN ENDPOINTS
   // ===========================================
 

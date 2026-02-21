@@ -1020,12 +1020,15 @@ const SessionsContent = () => {
   // Filters
   const [filterCourse, setFilterCourse] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterDateFrom, setFilterDateFrom] = useState<string>("");
+  const [filterDateTo, setFilterDateTo] = useState<string>("");
 
   // Data
   const [sessions, setSessions] = useState<CourseSession[]>([]);
   const [courses, setCourses] = useState<InstructorCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
   // Calendar
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -1097,9 +1100,17 @@ const SessionsContent = () => {
     return sessions.filter((s) => {
       if (filterCourse !== "all" && s.courseId !== filterCourse) return false;
       if (filterStatus !== "all" && s.status !== filterStatus) return false;
+      if (filterDateFrom) {
+        const sessionDate = getDateStr(s.scheduledAt);
+        if (sessionDate < filterDateFrom) return false;
+      }
+      if (filterDateTo) {
+        const sessionDate = getDateStr(s.scheduledAt);
+        if (sessionDate > filterDateTo) return false;
+      }
       return true;
     });
-  }, [sessions, filterCourse, filterStatus]);
+  }, [sessions, filterCourse, filterStatus, filterDateFrom, filterDateTo]);
 
   // Group sessions for list view
   const todayStr = getTodayStr();
@@ -1129,26 +1140,33 @@ const SessionsContent = () => {
 
   // Lifecycle actions
   const handleStart = async (session: CourseSession) => {
+    if (actionLoadingId) return;
+    setActionLoadingId(session.id);
     try {
       const result = await instructorApi.startSession(session.id);
       toast.success(t("sessionsPage.lifecycle.started"));
-      // Open Zoom host URL if available
       if ((result as any).zoomStartUrl) {
         window.open((result as any).zoomStartUrl, "_blank");
       }
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.startError"));
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const handleEnd = async (session: CourseSession) => {
+    if (actionLoadingId) return;
+    setActionLoadingId(session.id);
     try {
       await instructorApi.endSession(session.id);
       toast.success(t("sessionsPage.lifecycle.ended"));
       fetchData();
     } catch {
       toast.error(t("sessionsPage.lifecycle.endError"));
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -1321,6 +1339,28 @@ const SessionsContent = () => {
                   <option value="completed">{t("sessionsPage.statusCompleted")}</option>
                   <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
                 </select>
+                <input
+                  type="date"
+                  value={filterDateFrom}
+                  onChange={(e) => setFilterDateFrom(e.target.value)}
+                  className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                  title={t("sessionsPage.dateFrom")}
+                />
+                <input
+                  type="date"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                  title={t("sessionsPage.dateTo")}
+                />
+                {(filterDateFrom || filterDateTo) && (
+                  <button
+                    onClick={() => { setFilterDateFrom(""); setFilterDateTo(""); }}
+                    className="px-2 py-1.5 text-xs text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               {/* Loading */}

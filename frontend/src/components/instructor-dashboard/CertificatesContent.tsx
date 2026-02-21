@@ -312,6 +312,7 @@ const CertificatesContent = () => {
   const [certificates, setCertificates] = useState<CertificateRequestResponse[]>([]);
   const [totalCerts, setTotalCerts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [statusCounts, setStatusCounts] = useState({ pending: 0, approved: 0, held: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -344,7 +345,7 @@ const CertificatesContent = () => {
     setLoading(true);
     setError("");
     try {
-      const [coursesRes, certsRes] = await Promise.all([
+      const [coursesRes, certsRes, pendingRes, approvedRes, heldRes] = await Promise.all([
         instructorApi.getCourses({ limit: 100 }),
         instructorApi.getCertificates({
           courseId: selectedCourse !== "all" ? selectedCourse : undefined,
@@ -352,11 +353,19 @@ const CertificatesContent = () => {
           page: currentPage,
           limit: ITEMS_PER_PAGE,
         }),
+        instructorApi.getCertificates({ status: "pending", limit: 1 }),
+        instructorApi.getCertificates({ status: "approved", limit: 1 }),
+        instructorApi.getCertificates({ status: "held", limit: 1 }),
       ]);
       setCourses(coursesRes.data);
       setCertificates(certsRes.data);
       setTotalCerts(certsRes.total);
       setTotalPages(certsRes.totalPages);
+      setStatusCounts({
+        pending: pendingRes.total,
+        approved: approvedRes.total,
+        held: heldRes.total,
+      });
     } catch {
       setError(t("certificates.loadError"));
     } finally {
@@ -382,14 +391,13 @@ const CertificatesContent = () => {
     });
   }, [certificates, searchQuery, courseNameMap]);
 
-  // ── Stats (from all fetched data) ────────────────────────
-  const stats = useMemo(() => {
-    const total = totalCerts;
-    const pending = certificates.filter((c) => c.status === "pending").length;
-    const approved = certificates.filter((c) => c.status === "approved").length;
-    const held = certificates.filter((c) => c.status === "held").length;
-    return { total, pending, approved, held };
-  }, [certificates, totalCerts]);
+  // ── Stats (from global status counts) ────────────────────
+  const stats = useMemo(() => ({
+    total: statusCounts.pending + statusCounts.approved + statusCounts.held,
+    pending: statusCounts.pending,
+    approved: statusCounts.approved,
+    held: statusCounts.held,
+  }), [statusCounts]);
 
   // ── Selection helpers ────────────────────────────────────
   const actionableCerts = filteredCertificates.filter((c) => c.status === "pending" || c.status === "held");
@@ -625,7 +633,7 @@ const CertificatesContent = () => {
                           type="text"
                           placeholder={t("certificates.searchPlaceholder")}
                           value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                           className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>

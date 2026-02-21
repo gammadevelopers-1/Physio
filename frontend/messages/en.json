@@ -1292,7 +1292,11 @@
       "statusChanged": "Course status updated successfully",
       "statusFailed": "Failed to update course status",
       "viewAnalytics": "View Analytics",
-      "courseSettings": "Course Settings"
+      "courseSettings": "Course Settings",
+      "gridView": "Grid View",
+      "listView": "List View",
+      "showing": "Showing",
+      "of": "of"
     },
     "sidebar": {
       "instructorDashboard": "Instructor Dashboard",
@@ -1313,6 +1317,7 @@
     },
     "kpi": {
       "activeCourses": "Active Courses",
+      "totalStudents": "Total Students",
       "todaysSessions": "Today's Sessions",
       "atRiskLearners": "At-Risk Learners",
       "pendingCertificates": "Pending Certificates",
@@ -1605,6 +1610,7 @@
       "cancel": "Cancel",
       "updateSuccess": "Course updated successfully",
       "updateError": "Failed to update course",
+      "endDateBeforeStart": "End date must be after start date",
       "deleteSuccess": "Course deleted successfully",
       "deleteError": "Failed to delete course",
       "statusUpdateSuccess": "Course status updated",
@@ -1660,6 +1666,8 @@
       "allCourses": "All Courses",
       "allTypes": "All Types",
       "allStatuses": "All Statuses",
+      "dateFrom": "From date",
+      "dateTo": "To date",
       "filters": "Filter",
       "retry": "Retry",
       "zoom": "Zoom",
@@ -1804,6 +1812,7 @@
       "students": "students",
       "statusAtrisk": "At Risk",
       "errorLoading": "Failed to load students",
+      "allCourses": "All Courses",
       "loading": "Loading students...",
       "retry": "Retry",
       "never": "Never",
@@ -2061,7 +2070,12 @@
       "batchRejectSuccess": "certificates rejected successfully.",
       "batchFailed": "certificates failed to process.",
       "batchRejectTitle": "Batch Reject Certificates",
-      "batchRejectDesc": "Provide a reason for rejecting the selected certificates."
+      "batchRejectDesc": "Provide a reason for rejecting the selected certificates.",
+      "approveFailed": "Failed to approve certificate. Please try again.",
+      "holdFailed": "Failed to hold certificate. Please try again.",
+      "batchHoldSuccess": "Selected certificates placed on hold.",
+      "batchApproveFailed": "Failed to approve selected certificates.",
+      "batchHoldFailed": "Failed to hold selected certificates."
     },
     "content": {
       "title": "Content Management",
@@ -2205,6 +2219,8 @@
       "retry": "Retry",
       "auditTitle": "Audit Traceability",
       "auditDesc": "Each exported report includes a timestamp, applied filters, and instructor name for audit compliance.",
+      "noDataTitle": "No courses available",
+      "noDataDesc": "You have no courses assigned yet. Reports require at least one course with enrolled students.",
       "attendanceDescription": "Track student attendance across all sessions with attendance percentages and session-level details.",
       "progressReport": "Progress Report",
       "progressDescription": "Monitor student progress, completion rates, and performance trends across your courses.",
@@ -2270,7 +2286,10 @@
       "connect": "Connect",
       "disconnect": "Disconnect",
       "profileSaved": "Profile updated successfully",
-      "avatarUploadError": "Failed to upload avatar. Please try again."
+      "avatarUploadError": "Failed to upload avatar. Please try again.",
+      "passwordChanged": "Password changed successfully",
+      "passwordChangedLogout": "Password changed successfully. Logging out all sessions for security...",
+      "passwordChangeFailed": "Failed to change password"
     },
     "reportsTab": {
       "attendanceReport": "Attendance Report",

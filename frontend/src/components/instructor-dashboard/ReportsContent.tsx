@@ -26,6 +26,7 @@ import {
   UserCheck,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   X,
 } from "lucide-react";
 
@@ -522,6 +523,21 @@ const ReportsContent = () => {
                       <div className="h-10 bg-gray-100 rounded-lg" />
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Empty data warning */}
+              {!loadingCourses && courses.length === 0 && (
+                <div className="bg-[#FEF3C7] rounded-xl border border-[#FDE68A] p-4 flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-[#92400E]">
+                      {t("reports.noDataTitle")}
+                    </p>
+                    <p className="text-sm text-[#B45309] mt-0.5">
+                      {t("reports.noDataDesc")}
+                    </p>
+                  </div>
                 </div>
               )}
 

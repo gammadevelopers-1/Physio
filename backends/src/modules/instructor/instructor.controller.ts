@@ -4,6 +4,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { InstructorService } from './instructor.service';
@@ -33,8 +34,11 @@ export class InstructorController {
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('students')
-  async getStudents(@CurrentUser() user: AuthenticatedUser) {
-    return this.instructorService.getStudents(user);
+  async getStudents(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+  ) {
+    return this.instructorService.getStudents(user, courseId);
   }
 
   /**

@@ -172,6 +172,20 @@ export class AssessmentsService {
   ) {
     await this.verifyAssessmentAccess(assessmentId, user);
 
+    // If publishing, verify at least one question exists
+    if (dto.status === ASSESSMENT_STATUS.PUBLISHED) {
+      const [questionCount] = await db
+        .select({ count: count() })
+        .from(questions)
+        .where(eq(questions.assessmentId, assessmentId));
+
+      if (!questionCount || Number(questionCount.count) === 0) {
+        throw new BadRequestException(
+          'Cannot publish an assessment with no questions. Add at least one question first.',
+        );
+      }
+    }
+
     const [updated] = await db
       .update(assessments)
       .set({ ...dto, updatedAt: new Date() })
@@ -565,10 +579,12 @@ export class AssessmentsService {
       (a, b) => (b.score ?? 0) - (a.score ?? 0),
     );
     const n = sortedSubs.length;
-    const topCount = Math.max(1, Math.ceil(n * 0.27));
-    const bottomCount = Math.max(1, Math.ceil(n * 0.27));
-    const topGroup = sortedSubs.slice(0, topCount);
-    const bottomGroup = sortedSubs.slice(n - bottomCount);
+    // Need at least 3 submissions for meaningful discrimination (top/bottom groups must not overlap)
+    const canComputeDiscrimination = n >= 3;
+    const topCount = canComputeDiscrimination ? Math.max(1, Math.ceil(n * 0.27)) : 0;
+    const bottomCount = canComputeDiscrimination ? Math.max(1, Math.ceil(n * 0.27)) : 0;
+    const topGroup = canComputeDiscrimination ? sortedSubs.slice(0, topCount) : [];
+    const bottomGroup = canComputeDiscrimination ? sortedSubs.slice(n - bottomCount) : [];
 
     // Analyze each question
     const questionAnalysis = assessmentQuestions.map((question) => {
@@ -590,36 +606,39 @@ export class AssessmentsService {
       const difficultyIndex =
         totalAttempts > 0 ? correctAnswers / totalAttempts : 0;
 
-      // Discrimination index
-      let topCorrect = 0;
-      let topTotal = 0;
-      for (const sub of topGroup) {
-        const answers = (sub.answers as SubmissionAnswer[]) || [];
-        const answer = answers.find(
-          (a) => a.questionId === question.id,
-        );
-        if (answer && answer.isCorrect !== null) {
-          topTotal++;
-          if (answer.isCorrect) topCorrect++;
+      // Discrimination index (requires at least 3 submissions to avoid overlap)
+      let discriminationIndex = 0;
+      if (canComputeDiscrimination) {
+        let topCorrect = 0;
+        let topTotal = 0;
+        for (const sub of topGroup) {
+          const answers = (sub.answers as SubmissionAnswer[]) || [];
+          const answer = answers.find(
+            (a) => a.questionId === question.id,
+          );
+          if (answer && answer.isCorrect !== null) {
+            topTotal++;
+            if (answer.isCorrect) topCorrect++;
+          }
         }
-      }
 
-      let bottomCorrect = 0;
-      let bottomTotal = 0;
-      for (const sub of bottomGroup) {
-        const answers = (sub.answers as SubmissionAnswer[]) || [];
-        const answer = answers.find(
-          (a) => a.questionId === question.id,
-        );
-        if (answer && answer.isCorrect !== null) {
-          bottomTotal++;
-          if (answer.isCorrect) bottomCorrect++;
+        let bottomCorrect = 0;
+        let bottomTotal = 0;
+        for (const sub of bottomGroup) {
+          const answers = (sub.answers as SubmissionAnswer[]) || [];
+          const answer = answers.find(
+            (a) => a.questionId === question.id,
+          );
+          if (answer && answer.isCorrect !== null) {
+            bottomTotal++;
+            if (answer.isCorrect) bottomCorrect++;
+          }
         }
-      }
 
-      const topRate = topTotal > 0 ? topCorrect / topTotal : 0;
-      const bottomRate = bottomTotal > 0 ? bottomCorrect / bottomTotal : 0;
-      const discriminationIndex = topRate - bottomRate;
+        const topRate = topTotal > 0 ? topCorrect / topTotal : 0;
+        const bottomRate = bottomTotal > 0 ? bottomCorrect / bottomTotal : 0;
+        discriminationIndex = topRate - bottomRate;
+      }
 
       return {
         questionId: question.id,

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   Star,
   Check,
@@ -11,6 +12,7 @@ import {
   Eye,
   CheckCircle,
   PauseCircle,
+  Loader2,
 } from "lucide-react";
 
 interface PendingCertificate {
@@ -28,13 +30,27 @@ interface PendingCertificate {
 interface CertificateQueueProps {
   certificates: PendingCertificate[];
   totalCount?: number;
+  onApprove?: (id: string) => Promise<void>;
+  onHold?: (id: string, note: string) => Promise<void>;
+  onBatchApprove?: (ids: string[]) => Promise<void>;
+  onBatchHold?: (ids: string[], note: string) => Promise<void>;
+  onPreview?: (id: string) => void;
+  onRefresh?: () => void;
 }
 
 const CertificateQueue = ({
   certificates,
+  onApprove,
+  onHold,
+  onBatchApprove,
+  onBatchHold,
+  onPreview,
+  onRefresh,
 }: CertificateQueueProps) => {
   const t = useTranslations("instructorDashboard");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [batchLoading, setBatchLoading] = useState(false);
 
   const totalCount = certificates.length;
   const allSelected = selectedIds.size === certificates.length && certificates.length > 0;
@@ -58,26 +74,66 @@ const CertificateQueue = ({
     setSelectedIds(newSelected);
   };
 
-  const handleApprove = (id: string) => {
-    console.log("Approving certificate:", id);
+  const handleApprove = async (id: string) => {
+    if (!onApprove) return;
+    setLoadingId(id);
+    try {
+      await onApprove(id);
+      toast.success(t("certificates.approveSuccess"));
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || t("certificates.approveFailed"));
+    } finally {
+      setLoadingId(null);
+    }
   };
 
-  const handleHold = (id: string) => {
-    console.log("Holding certificate:", id);
+  const handleHold = async (id: string) => {
+    if (!onHold) return;
+    setLoadingId(id);
+    try {
+      await onHold(id, "Placed on hold for review");
+      toast.success(t("certificates.holdSuccess"));
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || t("certificates.holdFailed"));
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   const handlePreview = (id: string) => {
-    console.log("Previewing certificate:", id);
+    onPreview?.(id);
   };
 
-  const handleBatchApprove = () => {
-    console.log("Batch approving:", Array.from(selectedIds));
-    setSelectedIds(new Set());
+  const handleBatchApprove = async () => {
+    if (!onBatchApprove || selectedIds.size === 0) return;
+    setBatchLoading(true);
+    try {
+      await onBatchApprove(Array.from(selectedIds));
+      toast.success(t("certificates.batchApproveSuccess"));
+      setSelectedIds(new Set());
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || t("certificates.batchApproveFailed"));
+    } finally {
+      setBatchLoading(false);
+    }
   };
 
-  const handleBatchHold = () => {
-    console.log("Batch holding:", Array.from(selectedIds));
-    setSelectedIds(new Set());
+  const handleBatchHold = async () => {
+    if (!onBatchHold || selectedIds.size === 0) return;
+    setBatchLoading(true);
+    try {
+      await onBatchHold(Array.from(selectedIds), "Batch hold for review");
+      toast.success(t("certificates.batchHoldSuccess"));
+      setSelectedIds(new Set());
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || t("certificates.batchHoldFailed"));
+    } finally {
+      setBatchLoading(false);
+    }
   };
 
   // Check if certificate is eligible (all checks passed)
@@ -129,16 +185,18 @@ const CertificateQueue = ({
             <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#E5E7EB]">
               <button
                 onClick={handleBatchApprove}
-                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-[#22C55E] bg-[#DCFCE7] rounded hover:bg-[#BBF7D0] transition-colors"
+                disabled={batchLoading}
+                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-[#22C55E] bg-[#DCFCE7] rounded hover:bg-[#BBF7D0] transition-colors disabled:opacity-50"
               >
-                <CheckCircle className="w-3.5 h-3.5" />
+                {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                 {t("certificates.approve")}
               </button>
               <button
                 onClick={handleBatchHold}
-                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-[#F97316] bg-[#FFEDD5] rounded hover:bg-[#FED7AA] transition-colors"
+                disabled={batchLoading}
+                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-[#F97316] bg-[#FFEDD5] rounded hover:bg-[#FED7AA] transition-colors disabled:opacity-50"
               >
-                <PauseCircle className="w-3.5 h-3.5" />
+                {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PauseCircle className="w-3.5 h-3.5" />}
                 {t("certificates.hold")}
               </button>
             </div>
@@ -238,19 +296,20 @@ const CertificateQueue = ({
                   </button>
                   <button
                     onClick={() => handleApprove(cert.id)}
-                    disabled={!isEligible(cert.checks)}
+                    disabled={!isEligible(cert.checks) || loadingId === cert.id}
                     className={`p-1.5 rounded transition-colors ${
-                      isEligible(cert.checks)
+                      isEligible(cert.checks) && loadingId !== cert.id
                         ? "text-[#22C55E] hover:bg-[#DCFCE7]"
                         : "text-[#D1D5DB] cursor-not-allowed"
                     }`}
                     title={t("certificates.approve")}
                   >
-                    <CheckCircle className="w-3.5 h-3.5" />
+                    {loadingId === cert.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                   </button>
                   <button
                     onClick={() => handleHold(cert.id)}
-                    className="p-1.5 text-[#F97316] hover:bg-[#FFEDD5] rounded transition-colors"
+                    disabled={loadingId === cert.id}
+                    className="p-1.5 text-[#F97316] hover:bg-[#FFEDD5] rounded transition-colors disabled:opacity-50"
                     title={t("certificates.hold")}
                   >
                     <PauseCircle className="w-3.5 h-3.5" />

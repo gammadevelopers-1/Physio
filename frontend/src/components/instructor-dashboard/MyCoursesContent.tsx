@@ -31,6 +31,8 @@ import {
   FileText,
   Archive,
   Play,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 
 const COURSE_STATUSES = ["active", "draft", "completed", "archived"] as const;
@@ -97,9 +99,12 @@ const MyCoursesContent = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [currentPage, setCurrentPage] = useState(1);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const ITEMS_PER_PAGE = 8;
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -112,13 +117,13 @@ const MyCoursesContent = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const { courses, loading, error, refetch } = useInstructorCourses({
+  const { courses, total, totalPages, loading, error, refetch } = useInstructorCourses({
     status: statusFilter,
     delivery: deliveryFilter,
     search: searchQuery,
     sort: sortBy,
-    page: 1,
-    limit: 20,
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
   });
 
   const handleStatusChange = useCallback(
@@ -264,6 +269,24 @@ const MyCoursesContent = () => {
                         {t("courses.sort.alphabetical")}
                       </option>
                     </select>
+
+                    {/* View Toggle */}
+                    <div className="flex items-center bg-white border border-[#E5E7EB] rounded-lg p-0.5">
+                      <button
+                        onClick={() => setViewMode("grid")}
+                        className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
+                        title={t("courses.gridView")}
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode("list")}
+                        className={`p-2 rounded-md transition-colors ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
+                        title={t("courses.listView")}
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -290,154 +313,235 @@ const MyCoursesContent = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {courses.map((course) => {
-                    const courseTitle =
-                      locale === "ar" && course.titleAr
-                        ? course.titleAr
-                        : course.title;
-                    const nextSession = formatNextSession(
-                      course.nextSessionAt
-                    );
-                    const thumbnailSrc =
-                      course.thumbnail ||
-                      "/student_dashboard/courses/image 473.svg";
+                <>
+                  {/* Grid View */}
+                  {viewMode === "grid" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {courses.map((course) => {
+                        const courseTitle =
+                          locale === "ar" && course.titleAr
+                            ? course.titleAr
+                            : course.title;
+                        const nextSession = formatNextSession(course.nextSessionAt);
+                        const thumbnailSrc =
+                          course.thumbnail || "/student_dashboard/courses/image 473.svg";
 
-                    return (
-                      <div
-                        key={course.id}
-                        className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
-                      >
-                        {/* Course Image */}
-                        <div className="relative h-40">
-                          <Image
-                            src={thumbnailSrc}
-                            alt={courseTitle}
-                            fill
-                            className="object-cover"
-                            unoptimized={thumbnailSrc.startsWith("http")}
-                          />
-                          <div className="absolute top-3 left-3 flex gap-2">
-                            <span
-                              className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}
-                            >
-                              {t(`courses.status.${course.status}`)}
-                            </span>
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[#374151]">
-                              {getDeliveryIcon(course.deliveryType)}
-                              {t(`courses.delivery.${course.deliveryType}`)}
-                            </span>
-                          </div>
-                          {/* Status dropdown trigger */}
-                          <div className="absolute top-3 right-3" ref={openDropdown === course.id ? dropdownRef : undefined}>
-                            <button
-                              onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
-                              disabled={statusLoading === course.id}
-                              className="p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors disabled:opacity-50"
-                            >
-                              {statusLoading === course.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <MoreVertical className="w-4 h-4" />
-                              )}
-                            </button>
-
-                            {openDropdown === course.id && (
-                              <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20">
-                                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
-                                  {t("courses.changeStatus")}
-                                </p>
-                                {COURSE_STATUSES.filter((s) => s !== course.status).map((status) => (
-                                  <button
-                                    key={status}
-                                    onClick={() => handleStatusChange(course.id, status)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                                  >
-                                    {statusIcons[status]}
-                                    {t(`courses.status.${status}`)}
-                                  </button>
-                                ))}
+                        return (
+                          <div
+                            key={course.id}
+                            className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
+                          >
+                            <div className="relative h-40">
+                              <Image
+                                src={thumbnailSrc}
+                                alt={courseTitle}
+                                fill
+                                className="object-cover"
+                                unoptimized={thumbnailSrc.startsWith("http")}
+                              />
+                              <div className="absolute top-3 left-3 flex gap-2">
+                                <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
+                                  {t(`courses.status.${course.status}`)}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/90 rounded-md text-xs font-medium text-[#374151]">
+                                  {getDeliveryIcon(course.deliveryType)}
+                                  {t(`courses.delivery.${course.deliveryType}`)}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Course Info */}
-                        <div className="p-4">
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-2 line-clamp-1">
-                            {courseTitle}
-                          </h3>
-
-                          {/* Stats Row */}
-                          <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
-                            <span className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              {course.enrolledCount} {t("courses.students")}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {course.completedSessions}/
-                              {course.totalSessions} {t("courses.sessions")}
-                            </span>
-                          </div>
-
-                          {/* Progress Bar */}
-                          <div className="mb-3">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-[#6B7280]">
-                                {t("courses.completion")}
-                              </span>
-                              <span className="font-medium text-[#1F2937]">
-                                {course.completionRate}%
-                              </span>
+                              <div className="absolute top-3 right-3" ref={openDropdown === course.id ? dropdownRef : undefined}>
+                                <button
+                                  onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
+                                  disabled={statusLoading === course.id}
+                                  className="p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors disabled:opacity-50"
+                                >
+                                  {statusLoading === course.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <MoreVertical className="w-4 h-4" />
+                                  )}
+                                </button>
+                                {openDropdown === course.id && (
+                                  <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20">
+                                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
+                                      {t("courses.changeStatus")}
+                                    </p>
+                                    {COURSE_STATUSES.filter((s) => s !== course.status).map((status) => (
+                                      <button
+                                        key={status}
+                                        onClick={() => handleStatusChange(course.id, status)}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                      >
+                                        {statusIcons[status]}
+                                        {t(`courses.status.${status}`)}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-[#22C55E] rounded-full transition-all"
-                                style={{
-                                  width: `${course.completionRate}%`,
-                                }}
+                            <div className="p-4">
+                              <h3 className="text-base font-semibold text-[#1F2937] mb-2 line-clamp-1">{courseTitle}</h3>
+                              <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-4 h-4" />
+                                  {course.enrolledCount} {t("courses.students")}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
+                                </span>
+                              </div>
+                              <div className="mb-3">
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className="text-[#6B7280]">{t("courses.completion")}</span>
+                                  <span className="font-medium text-[#1F2937]">{course.completionRate}%</span>
+                                </div>
+                                <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-[#22C55E] rounded-full transition-all"
+                                    style={{ width: `${course.completionRate}%` }}
+                                  />
+                                </div>
+                              </div>
+                              {nextSession && (
+                                <div className="flex items-center gap-1.5 text-xs text-[#6B7280] mb-4">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  {t("courses.nextSession")}: {nextSession}
+                                </div>
+                              )}
+                              <div className="flex gap-2">
+                                <Link
+                                  href={`/${locale}/dashboard/instructor/courses/${course.id}`}
+                                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                                >
+                                  {t("courses.viewDetails")}
+                                  {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                </Link>
+                                <button
+                                  onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
+                                  className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                                  title={t("courses.viewAnalytics")}
+                                >
+                                  <BarChart3 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
+                                  className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                                  title={t("courses.courseSettings")}
+                                >
+                                  <Settings className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* List View */}
+                  {viewMode === "list" && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] divide-y divide-[#E5E7EB]">
+                      {courses.map((course) => {
+                        const courseTitle =
+                          locale === "ar" && course.titleAr ? course.titleAr : course.title;
+                        return (
+                          <Link
+                            key={course.id}
+                            href={`/${locale}/dashboard/instructor/courses/${course.id}`}
+                            className="flex items-center gap-4 p-4 hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <div className="w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
+                              <Image
+                                src={course.thumbnail || "/student_dashboard/courses/image 473.svg"}
+                                alt={courseTitle}
+                                fill
+                                className="object-cover"
+                                unoptimized={(course.thumbnail || "").startsWith("http")}
                               />
                             </div>
-                          </div>
-
-                          {/* Next Session */}
-                          {nextSession && (
-                            <div className="flex items-center gap-1.5 text-xs text-[#6B7280] mb-4">
-                              <Clock className="w-3.5 h-3.5" />
-                              {t("courses.nextSession")}: {nextSession}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-sm font-semibold text-[#1F2937] truncate">{courseTitle}</h3>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-[#6B7280]">
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" /> {course.enrolledCount}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" /> {course.completedSessions}/{course.totalSessions}
+                                </span>
+                              </div>
                             </div>
-                          )}
+                            <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
+                              {t(`courses.status.${course.status}`)}
+                            </span>
+                            <div className="w-20">
+                              <div className="flex justify-between text-xs mb-0.5">
+                                <span className="text-[#6B7280]">{course.completionRate}%</span>
+                              </div>
+                              <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-[#22C55E] rounded-full"
+                                  style={{ width: `${course.completionRate}%` }}
+                                />
+                              </div>
+                            </div>
+                            {locale === "ar" ? <ChevronLeft className="w-4 h-4 text-[#9CA3AF]" /> : <ChevronRight className="w-4 h-4 text-[#9CA3AF]" />}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Link
-                              href={`/${locale}/dashboard/instructor/courses/${course.id}`}
-                              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
-                            >
-                              {t("courses.viewDetails")}
-                              {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                            </Link>
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <p className="text-sm text-[#6B7280]">
+                        {t("courses.showing")} {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, total)} {t("courses.of")} {total}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let page: number;
+                          if (totalPages <= 5) {
+                            page = i + 1;
+                          } else if (currentPage <= 3) {
+                            page = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            page = totalPages - 4 + i;
+                          } else {
+                            page = currentPage - 2 + i;
+                          }
+                          return (
                             <button
-                              onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
-                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                              title={t("courses.viewAnalytics")}
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-9 h-9 rounded-lg text-sm font-medium ${
+                                page === currentPage
+                                  ? "bg-[#3B82F6] text-white"
+                                  : "text-[#6B7280] hover:bg-[#F9FAFB]"
+                              }`}
                             >
-                              <BarChart3 className="w-4 h-4" />
+                              {page}
                             </button>
-                            <button
-                              onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
-                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                              title={t("courses.courseSettings")}
-                            >
-                              <Settings className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
+                          );
+                        })}
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

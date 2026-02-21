@@ -103,6 +103,7 @@ export const MATERIAL_STATUS = {
   PROCESSING: 'processing',
   LIVE: 'live',
   FAILED: 'failed',
+  ARCHIVED: 'archived',
 } as const;
 
 export type MaterialStatus =

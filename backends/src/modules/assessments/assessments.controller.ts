@@ -15,7 +15,9 @@ import { AssessmentsService } from './assessments.service';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { UpdateQuestionDto } from './dto/update-question.dto';
 import { SubmitAssessmentDto } from './dto/submit-assessment.dto';
+import { GradeSubmissionDto } from './dto/grade-submission.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -128,6 +130,31 @@ export class AssessmentsController {
     return this.assessmentsService.getQuestions(assessmentId, user);
   }
 
+  /**
+   * PATCH /assessments/:assessmentId/questions/:questionId — Update a question
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Patch(':assessmentId/questions/:questionId')
+  async updateQuestion(
+    @Param('questionId') questionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateQuestionDto,
+  ) {
+    return this.assessmentsService.updateQuestion(questionId, user, dto);
+  }
+
+  /**
+   * DELETE /assessments/:assessmentId/questions/:questionId — Delete a question
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Delete(':assessmentId/questions/:questionId')
+  async removeQuestion(
+    @Param('questionId') questionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.assessmentsService.removeQuestion(questionId, user);
+  }
+
   // ─── Submission Endpoints ─────────────────────────────────
 
   /**
@@ -158,6 +185,19 @@ export class AssessmentsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.assessmentsService.getSubmissions(assessmentId, user);
+  }
+
+  /**
+   * PATCH /assessments/:id/submissions/:submissionId/grade — Grade a submission
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Patch(':id/submissions/:submissionId/grade')
+  async gradeSubmission(
+    @Param('submissionId') submissionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: GradeSubmissionDto,
+  ) {
+    return this.assessmentsService.gradeSubmission(submissionId, user, dto);
   }
 
   // ─── Item Analysis ────────────────────────────────────────

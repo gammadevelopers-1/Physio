@@ -668,6 +668,49 @@ export class AuthService {
   }
 
   // ===========================================
+  // Change Password
+  // ===========================================
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException('Both current and new passwords are required');
+    }
+
+    if (newPassword.length < 6) {
+      throw new BadRequestException('New password must be at least 6 characters');
+    }
+
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const valid = await argon2.verify(user.passwordHash, currentPassword);
+    if (!valid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    const hashedPassword = await argon2.hash(newPassword);
+    await db
+      .update(users)
+      .set({ passwordHash: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+
+    // Revoke all trusted devices and refresh tokens — forces re-login on all devices
+    await this.revokeAllUserSessions(userId);
+
+    return { message: 'Password changed successfully' };
+  }
+
+  // ===========================================
   // Admin: Update User
   // ===========================================
   async updateUser(

@@ -1504,7 +1504,11 @@
       "statusChanged": "تم تحديث حالة الدورة بنجاح",
       "statusFailed": "فشل في تحديث حالة الدورة",
       "viewAnalytics": "عرض التحليلات",
-      "courseSettings": "إعدادات الدورة"
+      "courseSettings": "إعدادات الدورة",
+      "gridView": "عرض شبكي",
+      "listView": "عرض قائمة",
+      "showing": "عرض",
+      "of": "من"
     },
     "sidebar": {
       "instructorDashboard": "لوحة تحكم المدرب",
@@ -1525,6 +1529,7 @@
     },
     "kpi": {
       "activeCourses": "الدورات النشطة",
+      "totalStudents": "إجمالي الطلاب",
       "todaysSessions": "جلسات اليوم",
       "atRiskLearners": "المتعلمون المعرضون للخطر",
       "pendingCertificates": "الشهادات المعلقة",
@@ -1816,6 +1821,7 @@
       "deleting": "جاري الحذف...",
       "cancel": "إلغاء",
       "updateSuccess": "تم تحديث الدورة بنجاح",
+      "endDateBeforeStart": "يجب أن يكون تاريخ الانتهاء بعد تاريخ البدء",
       "updateError": "فشل في تحديث الدورة",
       "deleteSuccess": "تم حذف الدورة بنجاح",
       "deleteError": "فشل في حذف الدورة",
@@ -2273,7 +2279,12 @@
       "batchRejectSuccess": "تم رفض الشهادات بنجاح.",
       "batchFailed": "فشل في معالجة بعض الشهادات.",
       "batchRejectTitle": "رفض الشهادات دفعة واحدة",
-      "batchRejectDesc": "قدم سبباً لرفض الشهادات المحددة."
+      "batchRejectDesc": "قدم سبباً لرفض الشهادات المحددة.",
+      "approveFailed": "فشل في الموافقة على الشهادة. يرجى المحاولة مرة أخرى.",
+      "holdFailed": "فشل في تعليق الشهادة. يرجى المحاولة مرة أخرى.",
+      "batchHoldSuccess": "تم تعليق الشهادات المحددة.",
+      "batchApproveFailed": "فشل في الموافقة على الشهادات المحددة.",
+      "batchHoldFailed": "فشل في تعليق الشهادات المحددة."
     },
     "content": {
       "title": "إدارة المحتوى",
@@ -2417,6 +2428,8 @@
       "retry": "إعادة المحاولة",
       "auditTitle": "إمكانية التتبع للتدقيق",
       "auditDesc": "يتضمن كل تقرير مُصدّر طابعاً زمنياً والمرشحات المطبقة واسم المدرب للامتثال بالتدقيق.",
+      "noDataTitle": "لا توجد دورات متاحة",
+      "noDataDesc": "لم يتم تعيين أي دورات لك بعد. تتطلب التقارير دورة واحدة على الأقل مع طلاب مسجلين.",
       "attendanceDescription": "تتبع حضور الطلاب عبر جميع الجلسات مع نسب الحضور وتفاصيل مستوى الجلسة.",
       "progressReport": "تقرير التقدم",
       "progressDescription": "مراقبة تقدم الطلاب ومعدلات الإنجاز واتجاهات الأداء عبر دوراتك.",
@@ -2482,7 +2495,10 @@
       "connect": "اتصال",
       "disconnect": "قطع الاتصال",
       "profileSaved": "تم تحديث الملف الشخصي بنجاح",
-      "avatarUploadError": "فشل في رفع الصورة. يرجى المحاولة مرة أخرى."
+      "avatarUploadError": "فشل في رفع الصورة. يرجى المحاولة مرة أخرى.",
+      "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+      "passwordChangedLogout": "تم تغيير كلمة المرور بنجاح. جارٍ تسجيل الخروج من جميع الجلسات للأمان...",
+      "passwordChangeFailed": "فشل في تغيير كلمة المرور"
     },
     "reportsTab": {
       "attendanceReport": "تقرير الحضور",
@@ -2804,6 +2820,8 @@
       "statusCompleted": "مكتملة",
       "statusCancelled": "ملغاة",
       "allStatuses": "جميع الحالات",
+      "dateFrom": "من تاريخ",
+      "dateTo": "إلى تاريخ",
       "noSessions": "لم يتم العثور على جلسات",
       "noSessionsDesc": "لا توجد جلسات تطابق الفلاتر الحالية.",
       "scheduleSessionTitle": "جدولة جلسة جديدة",

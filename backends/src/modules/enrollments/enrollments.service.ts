@@ -267,7 +267,13 @@ export class EnrollmentsService {
     user: AuthenticatedUser,
     dto: MarkAttendanceDto,
   ) {
-    await this.verifySessionAccess(sessionId, user);
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (session.status !== 'live') {
+      throw new BadRequestException(
+        `Cannot mark attendance for a ${session.status} session. Only live sessions accept attendance.`,
+      );
+    }
 
     const values: Record<string, unknown> = {
       sessionId,
@@ -325,7 +331,13 @@ export class EnrollmentsService {
     user: AuthenticatedUser,
     dto: BulkMarkAttendanceDto,
   ) {
-    await this.verifySessionAccess(sessionId, user);
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (session.status !== 'live') {
+      throw new BadRequestException(
+        `Cannot mark attendance for a ${session.status} session. Only live sessions accept attendance.`,
+      );
+    }
 
     const results = [];
 
@@ -457,7 +469,7 @@ export class EnrollmentsService {
     }
 
     const [session] = await db
-      .select({ id: sessions.id })
+      .select({ id: sessions.id, status: sessions.status })
       .from(sessions)
       .where(and(...conditions))
       .limit(1);

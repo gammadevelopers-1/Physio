@@ -58,7 +58,27 @@ const InstructorDashboardContent = () => {
   // ─── Event handlers ──────────────────────────────────────
 
   const handleRefreshNotifications = () => {
-    console.log("Refreshing notifications...");
+    refetch();
+  };
+
+  const handleApproveCertificate = async (id: string) => {
+    await instructorApi.approveCertificate(id);
+  };
+
+  const handleHoldCertificate = async (id: string, note: string) => {
+    await instructorApi.holdCertificate(id, note);
+  };
+
+  const handleBatchApproveCertificates = async (ids: string[]) => {
+    await instructorApi.batchCertificates(ids, "approve");
+  };
+
+  const handleBatchHoldCertificates = async (ids: string[], note: string) => {
+    await instructorApi.batchCertificates(ids, "hold", note);
+  };
+
+  const handlePreviewCertificate = (id: string) => {
+    router.push(`/${locale}/dashboard/instructor/certificates`);
   };
 
   const handleStartSession = async (sessionId: string) => {
@@ -94,7 +114,7 @@ const InstructorDashboardContent = () => {
 
   // ─── Derived data from API ───────────────────────────────
 
-  const kpiData = dashboard ? transformToKPIData(dashboard) : { activeCourses: 0, todaysSessions: 0, atRiskLearners: 0 };
+  const kpiData = dashboard ? transformToKPIData(dashboard) : { activeCourses: 0, totalStudents: 0, todaysSessions: 0, atRiskLearners: 0 };
   const sessionCards = dashboard ? transformToSessionCards(dashboard.todaySessions) : [];
   const calendarSessions = dashboard ? transformToCalendarSessions([...dashboard.todaySessions, ...dashboard.upcomingSessions]) : [];
   const calendarEvents = dashboard ? transformToCalendarEvents(dashboard.todaySessions) : [];
@@ -202,7 +222,15 @@ const InstructorDashboardContent = () => {
               <AtRiskLearners learners={atRiskLearners} />
 
               {/* Pending Certificates */}
-              <CertificateQueue certificates={certificates} />
+              <CertificateQueue
+                certificates={certificates}
+                onApprove={handleApproveCertificate}
+                onHold={handleHoldCertificate}
+                onBatchApprove={handleBatchApproveCertificates}
+                onBatchHold={handleBatchHoldCertificates}
+                onPreview={handlePreviewCertificate}
+                onRefresh={refetch}
+              />
             </div>
           </div>
         </div>

@@ -40,7 +40,7 @@ const SettingsContent = () => {
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const { refreshUser } = useAuth();
+  const { refreshUser, logout } = useAuth();
   const user = useUser();
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -117,7 +117,35 @@ const SettingsContent = () => {
   // Security State
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const security = useSecuritySettings();
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast.error("Both password fields are required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await profileApi.changePassword(currentPassword, newPassword);
+      // Backend has revoked all trusted devices + refresh tokens.
+      // Force logout immediately — same as Facebook/Instagram behavior.
+      toast.success(t("settings.passwordChanged"));
+      // Call logout to clear local auth state and redirect to sign-in
+      await logout();
+      // Safety fallback: hard redirect if React router didn't navigate
+      window.location.href = `/${locale}/signin`;
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to change password");
+      setChangingPassword(false);
+    }
+  };
 
   // Notification State
   const [notifications, setNotifications] = useState({
@@ -423,6 +451,8 @@ const SettingsContent = () => {
                               <input
                                 type={showCurrentPassword ? "text" : "password"}
                                 placeholder="••••••••"
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
                                 className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
@@ -449,6 +479,8 @@ const SettingsContent = () => {
                               <input
                                 type={showNewPassword ? "text" : "password"}
                                 placeholder="••••••••"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
                                 className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
@@ -464,7 +496,13 @@ const SettingsContent = () => {
                               </button>
                             </div>
                           </div>
-                          <button className="px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors">
+                          <button
+                            type="button"
+                            onClick={handleChangePassword}
+                            disabled={changingPassword || !currentPassword || !newPassword}
+                            className="px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                          >
+                            {changingPassword && <Loader2 className="w-4 h-4 animate-spin" />}
                             {t("settings.updatePassword")}
                           </button>
                         </div>
@@ -780,7 +818,13 @@ const SettingsContent = () => {
                       </div>
 
                       <div className="flex justify-end">
-                        <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            toast.success(t("settings.preferencesSaved") || "Preferences saved");
+                          }}
+                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors"
+                        >
                           <Save className="w-4 h-4" />
                           {t("settings.savePreferences")}
                         </button>

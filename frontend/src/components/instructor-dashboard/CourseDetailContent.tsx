@@ -44,6 +44,8 @@ import {
   Loader2,
   Image as ImageIcon,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
@@ -223,6 +225,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   }>({ open: false, sessionId: null });
   const [cancelReason, setCancelReason] = useState("");
 
+  // ─── Students Pagination ──────────────────────────────────
+  const [studentsPage, setStudentsPage] = useState(1);
+  const STUDENTS_PER_PAGE = 10;
+
   // ─── Settings State ────────────────────────────────────────
   const [settingsForm, setSettingsForm] = useState({
     title: "",
@@ -353,6 +359,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   }, [expandedModules, moduleMaterials, courseId]);
 
   const handleUnlinkMaterial = async (materialId: string, moduleId: string) => {
+    if (!window.confirm(t("courseDetail.unlinkConfirm"))) return;
     try {
       await materialsApi.unlinkFromModule(materialId);
       setModuleMaterials((prev) => ({
@@ -593,6 +600,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
   const handleSaveSettings = async () => {
     if (!settingsForm.title.trim()) return;
+    if (settingsForm.startDate && settingsForm.endDate && settingsForm.endDate < settingsForm.startDate) {
+      toast.error(t("courseDetail.endDateBeforeStart"));
+      return;
+    }
     setSettingsSaving(true);
     try {
       const data: Record<string, unknown> = {
@@ -1045,79 +1056,114 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     )}
 
                     {/* ═══ STUDENTS ═══ */}
-                    {activeTab === "students" && (
-                      <div className="overflow-x-auto">
-                        {enrollments.length === 0 ? (
-                          <div className="text-center py-8">
-                            <Users className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
-                            <p className="text-sm text-[#6B7280]">{t("courseDetail.noStudents")}</p>
-                          </div>
-                        ) : (
-                          <table className="w-full">
-                            <thead>
-                              <tr className="text-left border-b border-[#E5E7EB]">
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.name")}</th>
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.email")}</th>
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.enrolledDate")}</th>
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.progress")}</th>
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.status")}</th>
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.lastActive")}</th>
-                                <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.actions")}</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {enrollments.map((enrollment) => {
-                                const progress = enrollment.progress;
-                                const statusColors: Record<string, string> = {
-                                  active: "bg-[#DCFCE7] text-[#22C55E]",
-                                  completed: "bg-[#EFF6FF] text-[#3B82F6]",
-                                  dropped: "bg-[#FEE2E2] text-[#EF4444]",
-                                  suspended: "bg-[#FEF3C7] text-[#D97706]",
-                                };
-                                return (
-                                  <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                                    <td className="py-3 text-sm font-medium text-[#1F2937]">
-                                      {enrollment.studentFirstName} {enrollment.studentLastName}
-                                    </td>
-                                    <td className="py-3 text-sm text-[#6B7280]">{enrollment.studentEmail}</td>
-                                    <td className="py-3 text-sm text-[#6B7280]">{formatDate(enrollment.enrolledAt)}</td>
-                                    <td className="py-3">
-                                      <div className="flex items-center gap-2">
-                                        <div className="w-20 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
-                                          <div
-                                            className={`h-full rounded-full ${
-                                              progress >= 75 ? "bg-[#22C55E]" : progress >= 50 ? "bg-[#3B82F6]" : progress >= 25 ? "bg-[#F59E0B]" : "bg-[#EF4444]"
-                                            }`}
-                                            style={{ width: `${progress}%` }}
-                                          />
-                                        </div>
-                                        <span className="text-xs text-[#6B7280]">{progress}%</span>
-                                      </div>
-                                    </td>
-                                    <td className="py-3">
-                                      <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
-                                        {t(`courseDetail.studentStatus.${enrollment.status}`)}
-                                      </span>
-                                    </td>
-                                    <td className="py-3 text-sm text-[#6B7280]">
-                                      {enrollment.lastAccessedAt ? formatDate(enrollment.lastAccessedAt) : "—"}
-                                    </td>
-                                    <td className="py-3">
-                                      <Link
-                                        href={`/${locale}/dashboard/instructor/students/${enrollment.studentId}`}
-                                        className="text-xs text-[#3B82F6] hover:underline"
-                                      >
-                                        {t("courseDetail.viewProfile")}
-                                      </Link>
-                                    </td>
+                    {activeTab === "students" && (() => {
+                      const studentsTotalPages = Math.max(1, Math.ceil(enrollments.length / STUDENTS_PER_PAGE));
+                      const paginatedEnrollments = enrollments.slice(
+                        (studentsPage - 1) * STUDENTS_PER_PAGE,
+                        studentsPage * STUDENTS_PER_PAGE
+                      );
+                      return (
+                        <div className="overflow-x-auto">
+                          {enrollments.length === 0 ? (
+                            <div className="text-center py-8">
+                              <Users className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
+                              <p className="text-sm text-[#6B7280]">{t("courseDetail.noStudents")}</p>
+                            </div>
+                          ) : (
+                            <>
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="text-left border-b border-[#E5E7EB]">
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.name")}</th>
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.email")}</th>
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.enrolledDate")}</th>
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.progress")}</th>
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.status")}</th>
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.lastActive")}</th>
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.actions")}</th>
                                   </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        )}
-                      </div>
-                    )}
+                                </thead>
+                                <tbody>
+                                  {paginatedEnrollments.map((enrollment) => {
+                                    const progress = enrollment.progress;
+                                    const statusColors: Record<string, string> = {
+                                      active: "bg-[#DCFCE7] text-[#22C55E]",
+                                      completed: "bg-[#EFF6FF] text-[#3B82F6]",
+                                      dropped: "bg-[#FEE2E2] text-[#EF4444]",
+                                      suspended: "bg-[#FEF3C7] text-[#D97706]",
+                                    };
+                                    return (
+                                      <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                                        <td className="py-3 text-sm font-medium text-[#1F2937]">
+                                          {enrollment.studentFirstName} {enrollment.studentLastName}
+                                        </td>
+                                        <td className="py-3 text-sm text-[#6B7280]">{enrollment.studentEmail}</td>
+                                        <td className="py-3 text-sm text-[#6B7280]">{formatDate(enrollment.enrolledAt)}</td>
+                                        <td className="py-3">
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-20 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                              <div
+                                                className={`h-full rounded-full ${
+                                                  progress >= 75 ? "bg-[#22C55E]" : progress >= 50 ? "bg-[#3B82F6]" : progress >= 25 ? "bg-[#F59E0B]" : "bg-[#EF4444]"
+                                                }`}
+                                                style={{ width: `${progress}%` }}
+                                              />
+                                            </div>
+                                            <span className="text-xs text-[#6B7280]">{progress}%</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-3">
+                                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                            {t(`courseDetail.studentStatus.${enrollment.status}`)}
+                                          </span>
+                                        </td>
+                                        <td className="py-3 text-sm text-[#6B7280]">
+                                          {enrollment.lastAccessedAt ? formatDate(enrollment.lastAccessedAt) : "—"}
+                                        </td>
+                                        <td className="py-3">
+                                          <Link
+                                            href={`/${locale}/dashboard/instructor/students/${enrollment.studentId}`}
+                                            className="text-xs text-[#3B82F6] hover:underline"
+                                          >
+                                            {t("courseDetail.viewProfile")}
+                                          </Link>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                              {studentsTotalPages > 1 && (
+                                <div className="flex items-center justify-between pt-4 border-t border-[#E5E7EB] mt-2">
+                                  <p className="text-xs text-[#6B7280]">
+                                    {(studentsPage - 1) * STUDENTS_PER_PAGE + 1}–{Math.min(studentsPage * STUDENTS_PER_PAGE, enrollments.length)} of {enrollments.length}
+                                  </p>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
+                                      disabled={studentsPage === 1}
+                                      className="p-1.5 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                    >
+                                      <ChevronLeft className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="text-xs text-[#6B7280] px-2">
+                                      {studentsPage} / {studentsTotalPages}
+                                    </span>
+                                    <button
+                                      onClick={() => setStudentsPage((p) => Math.min(studentsTotalPages, p + 1))}
+                                      disabled={studentsPage === studentsTotalPages}
+                                      className="p-1.5 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                    >
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* ═══ SESSIONS ═══ */}
                     {activeTab === "sessions" && (

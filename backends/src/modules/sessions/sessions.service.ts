@@ -312,7 +312,14 @@ export class SessionsService {
     user: AuthenticatedUser,
     dto: UpdateSessionDto,
   ) {
-    await this.verifySessionAccess(sessionId, user);
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    // Prevent modifications to live, completed, or cancelled sessions
+    if (session.status !== SESSION_STATUS.SCHEDULED) {
+      throw new BadRequestException(
+        `Cannot update a ${session.status} session. Only scheduled sessions can be modified.`,
+      );
+    }
 
     const updateData: Record<string, unknown> = {
       ...dto,

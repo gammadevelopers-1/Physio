@@ -84,12 +84,45 @@ const CoursePerformance = ({
   const { linePath, areaPath, points } = generateLinePath(attendanceData);
 
   const handleExportCSV = () => {
-    console.log("Exporting as CSV...");
+    const headers = ["Day", "Attendance %"];
+    const rows = days.map((day, i) => [day, `${attendanceData[i]}%`]);
+    const moduleRows = modules.map((m) => [m.name, `${m.percentage}%`]);
+
+    let csv = "Course Performance Report\n\n";
+    csv += "Attendance Trend\n";
+    csv += headers.join(",") + "\n";
+    csv += rows.map((r) => r.join(",")).join("\n");
+    csv += "\n\nModule Completion\nModule,Completion %\n";
+    csv += moduleRows.map((r) => r.join(",")).join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "course-performance.csv";
+    link.click();
+    URL.revokeObjectURL(url);
     setShowExportDropdown(false);
   };
 
   const handleExportPDF = () => {
-    console.log("Exporting as PDF...");
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    let html = `<html><head><title>Course Performance Report</title>
+    <style>body{font-family:sans-serif;padding:20px}table{border-collapse:collapse;width:100%;margin:10px 0}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f5f5f5}</style></head><body>`;
+    html += `<h1>Course Performance Report</h1>`;
+    html += `<h2>Attendance Trend</h2><table><tr><th>Day</th><th>Attendance %</th></tr>`;
+    days.forEach((day, i) => { html += `<tr><td>${day}</td><td>${attendanceData[i]}%</td></tr>`; });
+    html += `</table>`;
+    html += `<h2>Module Completion</h2><table><tr><th>Module</th><th>Completion %</th></tr>`;
+    modules.forEach((m) => { html += `<tr><td>${m.name}</td><td>${m.percentage}%</td></tr>`; });
+    html += `</table></body></html>`;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.print();
     setShowExportDropdown(false);
   };
 

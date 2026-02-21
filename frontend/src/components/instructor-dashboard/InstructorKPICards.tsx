@@ -1,12 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { BookOpen, Calendar, AlertTriangle } from "lucide-react";
+import { BookOpen, Calendar, AlertTriangle, Users } from "lucide-react";
 
 interface KPIData {
   activeCourses: number;
   todaysSessions: number;
   atRiskLearners: number;
+  totalStudents: number;
 }
 
 interface InstructorKPICardsProps {
@@ -24,6 +25,14 @@ const InstructorKPICards = ({ data }: InstructorKPICardsProps) => {
       icon: BookOpen,
       iconBg: "bg-[#FEF3C7]",
       iconColor: "text-[#D4A520]",
+    },
+    {
+      id: "totalStudents",
+      label: t("kpi.totalStudents"),
+      value: data.totalStudents,
+      icon: Users,
+      iconBg: "bg-[#DBEAFE]",
+      iconColor: "text-[#3B82F6]",
     },
     {
       id: "todaysSessions",
@@ -44,7 +53,7 @@ const InstructorKPICards = ({ data }: InstructorKPICardsProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
         return (

@@ -5,7 +5,7 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, isNull } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
@@ -151,12 +151,17 @@ export class MaterialsService {
         );
       } catch (dispatchError) {
         this.logger.warn(
-          `Processing dispatch failed for ${material.id}; marking as live without processing`,
+          `Processing dispatch failed for ${material.id}; marking as live with skipped processing`,
           dispatchError,
         );
         await db
           .update(courseMaterials)
-          .set({ status: MATERIAL_STATUS.LIVE, wcagStatus: 'pending', updatedAt: new Date() })
+          .set({
+            status: MATERIAL_STATUS.LIVE,
+            wcagStatus: 'skipped',
+            processingError: 'Processing pipeline unavailable — uploaded without processing',
+            updatedAt: new Date(),
+          })
           .where(eq(courseMaterials.id, material.id));
       }
 
@@ -174,6 +179,7 @@ export class MaterialsService {
         .update(courseMaterials)
         .set({
           status: MATERIAL_STATUS.FAILED,
+          processingError: 'File upload to storage failed',
           updatedAt: new Date(),
         })
         .where(eq(courseMaterials.id, material.id));
@@ -218,6 +224,9 @@ export class MaterialsService {
       Object.values(MATERIAL_STATUS).includes(params.status as any)
     ) {
       conditions.push(eq(courseMaterials.status, params.status));
+    } else {
+      // By default, exclude archived materials (old replaced versions)
+      conditions.push(sql`${courseMaterials.status} != 'archived'`);
     }
 
     // Filter by moduleId: specific UUID, 'none' for unassigned, or omit for all
@@ -302,6 +311,12 @@ export class MaterialsService {
       );
     }
 
+    // Archive the old version
+    await db
+      .update(courseMaterials)
+      .set({ status: MATERIAL_STATUS.ARCHIVED, updatedAt: new Date() })
+      .where(eq(courseMaterials.id, existing.id));
+
     // Create new version record with status='processing'
     const newVersion = existing.version + 1;
     const [material] = await db
@@ -349,12 +364,17 @@ export class MaterialsService {
         );
       } catch (dispatchError) {
         this.logger.warn(
-          `Processing dispatch failed for ${material.id}; marking as live without processing`,
+          `Processing dispatch failed for ${material.id}; marking as live with skipped processing`,
           dispatchError,
         );
         await db
           .update(courseMaterials)
-          .set({ status: MATERIAL_STATUS.LIVE, wcagStatus: 'pending', updatedAt: new Date() })
+          .set({
+            status: MATERIAL_STATUS.LIVE,
+            wcagStatus: 'skipped',
+            processingError: 'Processing pipeline unavailable — uploaded without processing',
+            updatedAt: new Date(),
+          })
           .where(eq(courseMaterials.id, material.id));
       }
 
@@ -371,6 +391,7 @@ export class MaterialsService {
         .update(courseMaterials)
         .set({
           status: MATERIAL_STATUS.FAILED,
+          processingError: 'File upload to storage failed',
           updatedAt: new Date(),
         })
         .where(eq(courseMaterials.id, material.id));
@@ -460,6 +481,12 @@ export class MaterialsService {
    */
   async remove(materialId: string, user: AuthenticatedUser) {
     const existing = await this.verifyMaterialAccess(materialId, user);
+
+    if (existing.status === MATERIAL_STATUS.PROCESSING) {
+      throw new BadRequestException(
+        'Cannot delete a material that is currently being processed. Wait for processing to complete or fail.',
+      );
+    }
 
     // Delete variant files from storage (before cascade deletes the rows)
     const variants = await db

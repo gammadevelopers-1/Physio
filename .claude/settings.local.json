@@ -116,7 +116,9 @@
       "Bash(npm run db:push:*)",
       "Bash(# Check the seed data to know the password grep -r \"\"password\\\\|Password\\\\|argon2\"\" /home/haseeb-raza/Desktop/physioguidance/backends/src/database/seeds/)",
       "Bash(echo:*)",
-      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 ZOOM_MOCK=true NODE_ENV=test npx jest:*)"
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 ZOOM_MOCK=true NODE_ENV=test npx jest:*)",
+      "Bash(npx drizzle-kit generate:*)",
+      "Bash(npx drizzle-kit push:*)"
     ]
   }
 }

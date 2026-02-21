@@ -9,6 +9,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { courses } from './courses';
+import { courseMaterials } from './course-materials';
 
 export const courseModules = pgTable(
   'course_modules',
@@ -38,11 +39,12 @@ export const courseModules = pgTable(
   ],
 );
 
-export const courseModulesRelations = relations(courseModules, ({ one }) => ({
+export const courseModulesRelations = relations(courseModules, ({ one, many }) => ({
   course: one(courses, {
     fields: [courseModules.courseId],
     references: [courses.id],
   }),
+  materials: many(courseMaterials),
 }));
 
 export type CourseModule = typeof courseModules.$inferSelect;

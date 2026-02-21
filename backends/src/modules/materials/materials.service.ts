@@ -5,7 +5,7 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
@@ -170,7 +170,7 @@ export class MaterialsService {
   async findAll(
     courseId: string,
     user: AuthenticatedUser,
-    params: { type?: string; status?: string },
+    params: { type?: string; status?: string; moduleId?: string },
   ) {
     await this.verifyCourseAccess(courseId, user);
 
@@ -193,11 +193,26 @@ export class MaterialsService {
       conditions.push(eq(courseMaterials.status, params.status));
     }
 
+    // Filter by moduleId: specific UUID, 'none' for unassigned, or omit for all
+    if (params.moduleId) {
+      if (params.moduleId === 'none') {
+        conditions.push(isNull(courseMaterials.moduleId));
+      } else {
+        conditions.push(eq(courseMaterials.moduleId, params.moduleId));
+      }
+    }
+
+    // Order by orderIndex when filtering by module, otherwise by createdAt
+    const orderClause =
+      params.moduleId && params.moduleId !== 'none'
+        ? asc(courseMaterials.orderIndex)
+        : desc(courseMaterials.createdAt);
+
     const data = await db
       .select()
       .from(courseMaterials)
       .where(and(...conditions))
-      .orderBy(desc(courseMaterials.createdAt));
+      .orderBy(orderClause);
 
     return data;
   }
@@ -319,6 +334,36 @@ export class MaterialsService {
         'File upload failed. Storage may not be configured.',
       );
     }
+  }
+
+  // ─── Reorder Materials in Module ─────────────────────────
+
+  /**
+   * PATCH /courses/:id/modules/:moduleId/materials/reorder
+   * Reorder materials within a module by updating orderIndex.
+   */
+  async reorderMaterials(
+    courseId: string,
+    moduleId: string,
+    user: AuthenticatedUser,
+    materialIds: string[],
+  ) {
+    await this.verifyCourseAccess(courseId, user);
+
+    for (let i = 0; i < materialIds.length; i++) {
+      await db
+        .update(courseMaterials)
+        .set({ orderIndex: i, updatedAt: new Date() })
+        .where(
+          and(
+            eq(courseMaterials.id, materialIds[i]),
+            eq(courseMaterials.courseId, courseId),
+            eq(courseMaterials.moduleId, moduleId),
+          ),
+        );
+    }
+
+    return { message: 'Materials reordered successfully' };
   }
 
   // ─── Delete ───────────────────────────────────────────────

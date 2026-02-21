@@ -12,8 +12,8 @@ import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
-import { instructorApi } from "@/lib/api";
-import type { CourseModule, CourseSession } from "@/types/instructor-dashboard";
+import { instructorApi, materialsApi } from "@/lib/api";
+import type { CourseModule, CourseSession, CourseMaterialResponse } from "@/types/instructor-dashboard";
 import {
   ArrowLeft,
   Users,
@@ -39,6 +39,11 @@ import {
   Upload,
   ArrowUp,
   ArrowDown,
+  Download,
+  Unlink,
+  Loader2,
+  Image as ImageIcon,
+  Check,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
@@ -150,7 +155,7 @@ const ModalOverlay = ({
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
     <div className="absolute inset-0" onClick={onClose} />
-    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {children}
     </div>
   </div>
@@ -186,6 +191,15 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   });
   const [moduleSaving, setModuleSaving] = useState(false);
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
+
+  // ─── Module Materials State ─────────────────────────────────
+  const [moduleMaterials, setModuleMaterials] = useState<Record<string, CourseMaterialResponse[]>>({});
+  const [loadingModuleMaterials, setLoadingModuleMaterials] = useState<Record<string, boolean>>({});
+  const [addMaterialModal, setAddMaterialModal] = useState<{ open: boolean; moduleId: string | null }>({ open: false, moduleId: null });
+  const [unassignedMaterials, setUnassignedMaterials] = useState<CourseMaterialResponse[]>([]);
+  const [loadingUnassigned, setLoadingUnassigned] = useState(false);
+  const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([]);
+  const [assigningMaterials, setAssigningMaterials] = useState(false);
 
   // ─── Session State ─────────────────────────────────────────
   const [sessionModal, setSessionModal] = useState<{
@@ -287,12 +301,92 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     };
   }, [enrollments, sessions]);
 
+  // ─── Module Material Helpers ──────────────────────────────
+
+  const getMaterialIcon = (type: string) => {
+    if (type === "video") return <Video className="w-4 h-4 text-[#3B82F6]" />;
+    if (type === "pdf") return <FileText className="w-4 h-4 text-[#EF4444]" />;
+    if (type === "image") return <ImageIcon className="w-4 h-4 text-[#22C55E]" />;
+    return <FileText className="w-4 h-4 text-[#6B7280]" />;
+  };
+
+  const formatFileSize = (size: number | string): string => {
+    const bytes = typeof size === "string" ? parseInt(size, 10) : size;
+    if (!bytes || isNaN(bytes)) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const fetchModuleMaterials = async (moduleId: string) => {
+    setLoadingModuleMaterials((prev) => ({ ...prev, [moduleId]: true }));
+    try {
+      const data = await materialsApi.list(courseId, { moduleId });
+      setModuleMaterials((prev) => ({ ...prev, [moduleId]: data }));
+    } catch {
+      toast.error(t("courseDetail.materialLoadError"));
+    } finally {
+      setLoadingModuleMaterials((prev) => ({ ...prev, [moduleId]: false }));
+    }
+  };
+
+  const handleUnlinkMaterial = async (materialId: string, moduleId: string) => {
+    try {
+      await materialsApi.unlinkFromModule(materialId);
+      setModuleMaterials((prev) => ({
+        ...prev,
+        [moduleId]: (prev[moduleId] || []).filter((m) => m.id !== materialId),
+      }));
+      toast.success(t("courseDetail.materialUnlinked"));
+    } catch {
+      toast.error(t("courseDetail.materialUnlinkError"));
+    }
+  };
+
+  const openAddMaterialModal = async (moduleId: string) => {
+    setAddMaterialModal({ open: true, moduleId });
+    setSelectedMaterialIds([]);
+    setLoadingUnassigned(true);
+    try {
+      const data = await materialsApi.listUnassigned(courseId);
+      setUnassignedMaterials(data);
+    } catch {
+      toast.error(t("courseDetail.materialLoadError"));
+    } finally {
+      setLoadingUnassigned(false);
+    }
+  };
+
+  const handleAssignMaterials = async () => {
+    if (!addMaterialModal.moduleId || selectedMaterialIds.length === 0) return;
+    setAssigningMaterials(true);
+    try {
+      await Promise.all(
+        selectedMaterialIds.map((id) =>
+          materialsApi.assignToModule(id, addMaterialModal.moduleId!)
+        )
+      );
+      toast.success(t("courseDetail.materialAssigned"));
+      setAddMaterialModal({ open: false, moduleId: null });
+      // Refresh the module materials
+      fetchModuleMaterials(addMaterialModal.moduleId!);
+    } catch {
+      toast.error(t("courseDetail.materialAssignError"));
+    } finally {
+      setAssigningMaterials(false);
+    }
+  };
+
   // ─── Module Handlers ───────────────────────────────────────
 
   const toggleModule = (moduleId: string) => {
+    const isExpanding = !expandedModules.includes(moduleId);
     setExpandedModules((prev) =>
       prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId]
     );
+    if (isExpanding && !moduleMaterials[moduleId]) {
+      fetchModuleMaterials(moduleId);
+    }
   };
 
   const openAddModule = () => {
@@ -823,8 +917,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 </div>
                               </div>
                               {expandedModules.includes(mod.id) && (
-                                <div className="p-4 border-t border-[#E5E7EB]">
-                                  <div className="flex items-center gap-4 text-sm text-[#6B7280]">
+                                <div className="border-t border-[#E5E7EB]">
+                                  {/* Module metadata */}
+                                  <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-sm text-[#6B7280]">
                                     {getModuleIcon(mod.type)}
                                     <span className="capitalize">{t(`courseDetail.moduleTypes.${mod.type}`)}</span>
                                     {mod.durationMinutes && (
@@ -835,6 +930,82 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     )}
                                     {mod.titleAr && (
                                       <span className="text-xs text-[#9CA3AF]" dir="rtl">{mod.titleAr}</span>
+                                    )}
+                                  </div>
+
+                                  {/* Module materials */}
+                                  <div className="px-4 pb-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wide">
+                                        {t("courseDetail.moduleMaterials")}
+                                      </span>
+                                      <button
+                                        onClick={() => openAddMaterialModal(mod.id)}
+                                        className="flex items-center gap-1 text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                        {t("courseDetail.addMaterial")}
+                                      </button>
+                                    </div>
+
+                                    {loadingModuleMaterials[mod.id] ? (
+                                      <div className="flex items-center justify-center py-4">
+                                        <Loader2 className="w-5 h-5 text-[#3B82F6] animate-spin" />
+                                      </div>
+                                    ) : (moduleMaterials[mod.id] || []).length === 0 ? (
+                                      <div className="text-center py-4">
+                                        <FileText className="w-8 h-8 text-[#D1D5DB] mx-auto mb-2" />
+                                        <p className="text-xs text-[#9CA3AF]">{t("courseDetail.noModuleMaterials")}</p>
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-1.5">
+                                        {(moduleMaterials[mod.id] || []).map((mat) => (
+                                          <div
+                                            key={mat.id}
+                                            className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[#E5E7EB] transition-colors"
+                                          >
+                                            {getMaterialIcon(mat.type)}
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-[#1F2937] truncate">{mat.title}</p>
+                                              <p className="text-xs text-[#9CA3AF]">
+                                                {mat.type.toUpperCase()}
+                                                {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}
+                                              </p>
+                                            </div>
+                                            <span
+                                              className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                                mat.status === "live"
+                                                  ? "bg-[#DCFCE7] text-[#22C55E]"
+                                                  : mat.status === "processing"
+                                                    ? "bg-[#FEF3C7] text-[#D97706]"
+                                                    : "bg-[#FEE2E2] text-[#EF4444]"
+                                              }`}
+                                            >
+                                              {mat.status}
+                                            </span>
+                                            <div className="flex items-center gap-0.5">
+                                              {mat.fileUrl && (
+                                                <a
+                                                  href={mat.fileUrl}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="p-1 hover:bg-[#E5E7EB] rounded"
+                                                  title={t("courseDetail.download")}
+                                                >
+                                                  <Download className="w-3.5 h-3.5 text-[#6B7280]" />
+                                                </a>
+                                              )}
+                                              <button
+                                                onClick={() => handleUnlinkMaterial(mat.id, mod.id)}
+                                                className="p-1 hover:bg-[#FEE2E2] rounded"
+                                                title={t("courseDetail.unlinkMaterial")}
+                                              >
+                                                <Unlink className="w-3.5 h-3.5 text-[#EF4444]" />
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
                                     )}
                                   </div>
                                 </div>
@@ -1384,6 +1555,94 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
               >
                 {moduleSaving ? t("courseDetail.saving") : t("courseDetail.saveModule")}
+              </button>
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ═══ ADD MATERIAL TO MODULE MODAL ═══ */}
+      {addMaterialModal.open && (
+        <ModalOverlay onClose={() => setAddMaterialModal({ open: false, moduleId: null })}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[#1F2937]">
+                {t("courseDetail.addExisting")}
+              </h3>
+              <button
+                onClick={() => setAddMaterialModal({ open: false, moduleId: null })}
+                className="p-1 hover:bg-[#F3F4F6] rounded"
+              >
+                <X className="w-5 h-5 text-[#6B7280]" />
+              </button>
+            </div>
+            <p className="text-sm text-[#6B7280] mb-4">
+              {t("courseDetail.addExistingDescription")}
+            </p>
+
+            {loadingUnassigned ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+              </div>
+            ) : unassignedMaterials.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="w-10 h-10 text-[#D1D5DB] mx-auto mb-2" />
+                <p className="text-sm text-[#9CA3AF]">{t("courseDetail.noUnassignedMaterials")}</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {unassignedMaterials.map((mat) => {
+                  const isSelected = selectedMaterialIds.includes(mat.id);
+                  return (
+                    <button
+                      key={mat.id}
+                      onClick={() =>
+                        setSelectedMaterialIds((prev) =>
+                          isSelected ? prev.filter((id) => id !== mat.id) : [...prev, mat.id]
+                        )
+                      }
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                        isSelected
+                          ? "border-[#3B82F6] bg-[#EFF6FF]"
+                          : "border-[#E5E7EB] hover:border-[#D1D5DB]"
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                          isSelected ? "border-[#3B82F6] bg-[#3B82F6]" : "border-[#D1D5DB]"
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      {getMaterialIcon(mat.type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1F2937] truncate">{mat.title}</p>
+                        <p className="text-xs text-[#9CA3AF]">
+                          {mat.type.toUpperCase()}
+                          {mat.fileSize ? ` · ${formatFileSize(mat.fileSize)}` : ""}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setAddMaterialModal({ open: false, moduleId: null })}
+                className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              >
+                {t("courseDetail.cancel")}
+              </button>
+              <button
+                onClick={handleAssignMaterials}
+                disabled={assigningMaterials || selectedMaterialIds.length === 0}
+                className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+              >
+                {assigningMaterials
+                  ? t("courseDetail.saving")
+                  : `${t("courseDetail.assignToModule")} (${selectedMaterialIds.length})`}
               </button>
             </div>
           </div>

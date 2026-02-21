@@ -873,10 +873,11 @@ export const profileApi = {
 // Materials API (content management)
 // ===========================================
 export const materialsApi = {
-  list: (courseId: string, params?: { type?: string; status?: string }) => {
+  list: (courseId: string, params?: { type?: string; status?: string; moduleId?: string }) => {
     const sp = new URLSearchParams();
     if (params?.type && params.type !== 'all') sp.set('type', params.type);
     if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.moduleId) sp.set('moduleId', params.moduleId);
     const qs = sp.toString();
     return api.get<CourseMaterialResponse[]>(`/courses/${courseId}/materials${qs ? `?${qs}` : ''}`);
   },
@@ -932,8 +933,20 @@ export const materialsApi = {
     });
   },
 
-  update: (materialId: string, data: { title?: string; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string }) =>
+  update: (materialId: string, data: { title?: string; moduleId?: string | null; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string }) =>
     api.patch<CourseMaterialResponse>(`/materials/${materialId}`, data),
+
+  assignToModule: (materialId: string, moduleId: string) =>
+    api.patch<CourseMaterialResponse>(`/materials/${materialId}`, { moduleId }),
+
+  unlinkFromModule: (materialId: string) =>
+    api.patch<CourseMaterialResponse>(`/materials/${materialId}`, { moduleId: null }),
+
+  listUnassigned: (courseId: string) =>
+    api.get<CourseMaterialResponse[]>(`/courses/${courseId}/materials?moduleId=none`),
+
+  reorderInModule: (courseId: string, moduleId: string, materialIds: string[]) =>
+    api.patch<{ message: string }>(`/courses/${courseId}/modules/${moduleId}/materials/reorder`, { materialIds }),
 
   replace: (materialId: string, file: File, title?: string) => {
     const fd = new FormData();

@@ -106,6 +106,8 @@ interface UploadModalProps {
 
 const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
   const [selectedCourseId, setSelectedCourseId] = useState(courses[0]?.id || "");
+  const [selectedModuleId, setSelectedModuleId] = useState("");
+  const [courseModules, setCourseModules] = useState<{ id: string; title: string }[]>([]);
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [detectedType, setDetectedType] = useState<MaterialType | null>(null);
@@ -114,6 +116,25 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
+
+  // Fetch modules when course changes
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setCourseModules([]);
+      setSelectedModuleId("");
+      return;
+    }
+    let cancelled = false;
+    instructorApi.getCourseDetail(selectedCourseId).then((data) => {
+      if (!cancelled && data?.modules) {
+        setCourseModules(data.modules.map((m: { id: string; title: string }) => ({ id: m.id, title: m.title })));
+      }
+    }).catch(() => {
+      if (!cancelled) setCourseModules([]);
+    });
+    setSelectedModuleId("");
+    return () => { cancelled = true; };
+  }, [selectedCourseId]);
 
   const handleFileSelect = (f: File) => {
     if (!ALLOWED_MIMES.includes(f.type)) {
@@ -153,6 +174,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
         title.trim(),
         detectedType,
         (pct) => setProgress(pct),
+        selectedModuleId || undefined,
       );
       toast.success(t("content.uploadSuccess"));
       onUploaded();
@@ -167,7 +189,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.uploadTitle")}</h3>
@@ -247,6 +269,23 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               ))}
             </select>
           </div>
+
+          {/* Module (optional) */}
+          {courseModules.length > 0 && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-[#374151] mb-1">{t("content.selectModule")}</label>
+              <select
+                value={selectedModuleId}
+                onChange={(e) => setSelectedModuleId(e.target.value)}
+                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              >
+                <option value="">{t("content.noModule")}</option>
+                {courseModules.map((m) => (
+                  <option key={m.id} value={m.id}>{m.title}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Progress */}
           {uploading && (

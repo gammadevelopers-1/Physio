@@ -18,6 +18,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { MaterialsService } from './materials.service';
 import { UploadMaterialDto } from './dto/upload-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
+import { ReorderMaterialsDto } from './dto/reorder-materials.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -100,7 +101,8 @@ export class MaterialsController {
   }
 
   /**
-   * GET /courses/:id/materials — List materials (?type, ?status)
+   * GET /courses/:id/materials — List materials (?type, ?status, ?moduleId)
+   * moduleId can be a UUID (filter by module) or 'none' (unassigned only)
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
   @Get('courses/:id/materials')
@@ -109,8 +111,24 @@ export class MaterialsController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('type') type?: string,
     @Query('status') status?: string,
+    @Query('moduleId') moduleId?: string,
   ) {
-    return this.materialsService.findAll(courseId, user, { type, status });
+    return this.materialsService.findAll(courseId, user, { type, status, moduleId });
+  }
+
+  /**
+   * PATCH /courses/:id/modules/:moduleId/materials/reorder
+   * Reorder materials within a module.
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Patch('courses/:id/modules/:moduleId/materials/reorder')
+  async reorderMaterials(
+    @Param('id') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ReorderMaterialsDto,
+  ) {
+    return this.materialsService.reorderMaterials(courseId, moduleId, user, dto.materialIds);
   }
 
   // ─── Material-scoped Endpoints ────────────────────────────

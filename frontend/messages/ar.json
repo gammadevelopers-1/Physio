@@ -1822,7 +1822,22 @@
       "statusUpdateSuccess": "تم تحديث حالة الدورة",
       "statusUpdateError": "فشل في تحديث الحالة",
       "thumbnailSuccess": "تم تحديث الصورة المصغرة",
-      "thumbnailError": "فشل في رفع الصورة المصغرة"
+      "thumbnailError": "فشل في رفع الصورة المصغرة",
+      "moduleMaterials": "المحتوى",
+      "noModuleMaterials": "لا يوجد محتوى في هذه الوحدة",
+      "addMaterial": "إضافة محتوى",
+      "addExisting": "إضافة محتوى موجود",
+      "addExistingDescription": "اختر محتوى من مكتبتك لإضافته إلى هذه الوحدة.",
+      "noUnassignedMaterials": "لا يوجد محتوى غير مخصص. قم بتحميل المحتوى أولاً من صفحة المحتوى.",
+      "unlinkMaterial": "إزالة من الوحدة",
+      "unlinkConfirm": "هل تريد إزالة هذا المحتوى من الوحدة؟ سيبقى في مكتبة المحتوى.",
+      "assignToModule": "تخصيص للوحدة",
+      "materialAssigned": "تم تخصيص المحتوى للوحدة",
+      "materialUnlinked": "تم إزالة المحتوى من الوحدة",
+      "materialLoadError": "فشل في تحميل المحتوى",
+      "materialUnlinkError": "فشل في إزالة المحتوى من الوحدة",
+      "materialAssignError": "فشل في تخصيص المحتوى للوحدة",
+      "download": "تحميل"
     },
     "createCourse": {
       "title": "إنشاء دورة جديدة",
@@ -2352,7 +2367,9 @@
       "updateError": "فشل في تحديث المادة. يرجى المحاولة مرة أخرى.",
       "deleteConfirmTitle": "حذف المادة",
       "deleteConfirmDesc": "هل أنت متأكد من حذف هذه المادة؟ لا يمكن التراجع عن هذا الإجراء.",
-      "deleteSuccess": "تم حذف المادة بنجاح."
+      "deleteSuccess": "تم حذف المادة بنجاح.",
+      "selectModule": "الوحدة (اختياري)",
+      "noModule": "بدون وحدة — محتوى على مستوى الدورة"
     },
     "reports": {
       "title": "التقارير",

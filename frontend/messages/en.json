@@ -1610,7 +1610,22 @@
       "statusUpdateSuccess": "Course status updated",
       "statusUpdateError": "Failed to update status",
       "thumbnailSuccess": "Thumbnail updated",
-      "thumbnailError": "Failed to upload thumbnail"
+      "thumbnailError": "Failed to upload thumbnail",
+      "moduleMaterials": "Materials",
+      "noModuleMaterials": "No materials in this module",
+      "addMaterial": "Add Material",
+      "addExisting": "Add Existing Materials",
+      "addExistingDescription": "Select materials from your content library to add to this module.",
+      "noUnassignedMaterials": "No unassigned materials available. Upload materials first from the Content page.",
+      "unlinkMaterial": "Remove from Module",
+      "unlinkConfirm": "Remove this material from the module? It will remain in your content library.",
+      "assignToModule": "Assign to Module",
+      "materialAssigned": "Material assigned to module",
+      "materialUnlinked": "Material removed from module",
+      "materialLoadError": "Failed to load materials",
+      "materialUnlinkError": "Failed to remove material from module",
+      "materialAssignError": "Failed to assign materials to module",
+      "download": "Download"
     },
     "createCourse": {
       "title": "Create New Course",
@@ -2140,7 +2155,9 @@
       "updateError": "Failed to update material. Please try again.",
       "deleteConfirmTitle": "Delete Material",
       "deleteConfirmDesc": "Are you sure you want to delete this material? This action cannot be undone.",
-      "deleteSuccess": "Material deleted successfully."
+      "deleteSuccess": "Material deleted successfully.",
+      "selectModule": "Module (Optional)",
+      "noModule": "No module — course-level content"
     },
     "reports": {
       "title": "Reports",

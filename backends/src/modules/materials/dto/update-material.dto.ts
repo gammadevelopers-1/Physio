@@ -4,6 +4,8 @@ import {
   IsIn,
   IsUUID,
   MaxLength,
+  ValidateIf,
+  Allow,
 } from 'class-validator';
 import { MATERIAL_TYPE, MaterialType } from '../../../database/schema';
 
@@ -23,8 +25,10 @@ export class UpdateMaterialDto {
   type?: MaterialType;
 
   @IsOptional()
+  @ValidateIf((o) => o.moduleId !== null)
   @IsUUID('4', { message: 'Module ID must be a valid UUID' })
-  moduleId?: string;
+  @Allow()
+  moduleId?: string | null;
 
   @IsOptional()
   @IsString()

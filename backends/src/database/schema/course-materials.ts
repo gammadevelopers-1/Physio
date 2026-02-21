@@ -21,7 +21,7 @@ export const courseMaterials = pgTable(
     courseId: uuid('course_id')
       .notNull()
       .references(() => courses.id, { onDelete: 'cascade' }),
-    moduleId: uuid('module_id').references(() => courseModules.id),
+    moduleId: uuid('module_id').references(() => courseModules.id, { onDelete: 'set null' }),
     title: varchar('title', { length: 255 }).notNull(),
     type: varchar('type', { length: 20 }).notNull(),
     fileUrl: varchar('file_url', { length: 500 }),
@@ -29,6 +29,7 @@ export const courseMaterials = pgTable(
     mimeType: varchar('mime_type', { length: 100 }),
     version: integer('version').notNull().default(1),
     previousVersionId: uuid('previous_version_id'),
+    orderIndex: integer('order_index').notNull().default(0),
     status: varchar('status', { length: 20 }).notNull().default('processing'),
     wcagStatus: varchar('wcag_status', { length: 20 }).notNull().default('pending'),
     captionsUrl: varchar('captions_url', { length: 500 }),
@@ -51,6 +52,7 @@ export const courseMaterials = pgTable(
     index('course_materials_type_idx').on(table.type),
     index('course_materials_status_idx').on(table.status),
     index('course_materials_uploaded_by_idx').on(table.uploadedBy),
+    index('course_materials_module_order_idx').on(table.moduleId, table.orderIndex),
     check(
       'course_materials_type_check',
       sql`${table.type} IN ('video', 'pdf', 'document', 'image')`,

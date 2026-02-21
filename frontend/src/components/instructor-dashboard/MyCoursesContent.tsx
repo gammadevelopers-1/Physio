@@ -458,14 +458,14 @@ const MyCoursesContent = () => {
                                   {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                                 </Link>
                                 <button
-                                  onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
+                                  onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}?tab=analytics`)}
                                   className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                                   title={t("courses.viewAnalytics")}
                                 >
                                   <BarChart3 className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}`)}
+                                  onClick={() => router.push(`/${locale}/dashboard/instructor/courses/${course.id}?tab=settings`)}
                                   className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                                   title={t("courses.courseSettings")}
                                 >

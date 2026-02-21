@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { setRequestLocale } from "next-intl/server";
 import { CourseDetailContent } from "@/components/instructor-dashboard";
 
@@ -16,7 +17,9 @@ export default async function CourseDetailPage({
 
   return (
     <main className="min-h-screen bg-[#F9FAFB]">
-      <CourseDetailContent courseId={courseId} />
+      <Suspense>
+        <CourseDetailContent courseId={courseId} />
+      </Suspense>
     </main>
   );
 }

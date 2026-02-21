@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
@@ -175,9 +175,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const { course, enrollments, sessions, loading, error, refetch } =
     useInstructorCourseDetail(courseId);
 
-  const [activeTab, setActiveTab] = useState<
-    "overview" | "modules" | "students" | "sessions" | "analytics" | "settings"
-  >("overview");
+  const searchParams = useSearchParams();
+  const validTabs = ["overview", "modules", "students", "sessions", "analytics", "settings"] as const;
+  type TabId = (typeof validTabs)[number];
+  const initialTab = validTabs.includes(searchParams.get("tab") as TabId)
+    ? (searchParams.get("tab") as TabId)
+    : "overview";
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
   // ─── Module State ──────────────────────────────────────────
   const [expandedModules, setExpandedModules] = useState<string[]>([]);

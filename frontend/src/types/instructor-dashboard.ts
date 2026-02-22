@@ -144,6 +144,18 @@ export interface AssessmentResponse {
   durationMinutes: number | null;
   attemptsAllowed: number;
   status: string;
+  // Proctoring
+  proctoringEnabled: boolean;
+  proctoringRules: {
+    webcamRequired?: boolean;
+    browserLockdown?: boolean;
+    tabSwitchAlert?: boolean;
+  } | null;
+  timeLimitEnforced: boolean;
+  // Retake rules
+  maxRetakes: number;
+  retakeCoolingHours: number;
+  retakeScorePolicy: string;
   createdAt: string;
   updatedAt: string;
   submissionCount?: number;

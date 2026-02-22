@@ -4,6 +4,8 @@ import {
   varchar,
   integer,
   timestamp,
+  boolean,
+  jsonb,
   index,
   check,
 } from 'drizzle-orm/pg-core';
@@ -26,6 +28,18 @@ export const assessments = pgTable(
     durationMinutes: integer('duration_minutes'),
     attemptsAllowed: integer('attempts_allowed').notNull().default(1),
     status: varchar('status', { length: 20 }).notNull().default('draft'),
+    // Proctoring
+    proctoringEnabled: boolean('proctoring_enabled').notNull().default(false),
+    proctoringRules: jsonb('proctoring_rules').$type<{
+      webcamRequired?: boolean;
+      browserLockdown?: boolean;
+      tabSwitchAlert?: boolean;
+    }>(),
+    timeLimitEnforced: boolean('time_limit_enforced').notNull().default(true),
+    // Retake rules
+    maxRetakes: integer('max_retakes').notNull().default(0),
+    retakeCoolingHours: integer('retake_cooling_hours').notNull().default(24),
+    retakeScorePolicy: varchar('retake_score_policy', { length: 20 }).notNull().default('highest'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

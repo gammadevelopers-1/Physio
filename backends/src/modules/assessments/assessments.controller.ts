@@ -225,4 +225,18 @@ export class AssessmentsController {
   ) {
     return this.assessmentsService.getItemAnalysis(assessmentId, user);
   }
+
+  // ─── Blueprint Coverage ──────────────────────────────────
+
+  /**
+   * GET /assessments/blueprint/:courseId — Module-to-assessment coverage matrix
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('blueprint/:courseId')
+  async getBlueprint(
+    @Param('courseId') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.assessmentsService.getBlueprint(courseId, user);
+  }
 }

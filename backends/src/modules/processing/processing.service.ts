@@ -132,12 +132,12 @@ export class ProcessingService {
       .where(eq(courseMaterials.id, materialId));
   }
 
-  /** Mark material as live (all processing complete) */
+  /** Mark material as pending review (all processing complete, awaiting manager approval) */
   async markLive(materialId: string): Promise<void> {
     await db
       .update(courseMaterials)
       .set({
-        status: MATERIAL_STATUS.LIVE,
+        status: MATERIAL_STATUS.PENDING_REVIEW,
         processingStep: PROCESSING_STEPS.COMPLETE,
         updatedAt: new Date(),
       })

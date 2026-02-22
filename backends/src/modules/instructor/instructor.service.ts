@@ -3,7 +3,7 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, sql, inArray, count, asc, desc } from 'drizzle-orm';
+import { eq, and, sql, inArray, count, asc, desc, gte, lte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -17,6 +17,8 @@ import {
   submissions,
   questions,
   interventions,
+  userRoles,
+  roles,
   ATTENDANCE_STATUS,
   INTERVENTION_TYPE,
 } from '../../database/schema';
@@ -1211,5 +1213,254 @@ export class InstructorService {
       .returning();
 
     return intervention;
+  }
+
+  // ─── Instructor Roster ──────────────────────────────────────
+
+  /**
+   * GET /instructor/roster
+   * Enriched instructor list with workload metrics.
+   * Only available to MANAGER and ADMIN roles.
+   */
+  async getInstructorRoster() {
+    // Get all instructors via user_roles junction table
+    const instructorsList = await db
+      .selectDistinct({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(eq(roles.name, 'INSTRUCTOR'))
+      .orderBy(asc(users.firstName));
+
+    if (instructorsList.length === 0) return [];
+
+    const instructorIds = instructorsList.map((i) => i.id);
+
+    // Batch: courses per instructor
+    const courseCounts = await db
+      .select({
+        instructorId: courses.instructorId,
+        coursesCount: count(),
+      })
+      .from(courses)
+      .where(inArray(courses.instructorId, instructorIds))
+      .groupBy(courses.instructorId);
+
+    const courseCountMap = new Map(
+      courseCounts.map((c) => [c.instructorId, Number(c.coursesCount)]),
+    );
+
+    // Batch: distinct students per instructor (via courses → enrollments)
+    const studentCounts = await db
+      .select({
+        instructorId: courses.instructorId,
+        studentsCount: sql<number>`COUNT(DISTINCT ${enrollments.studentId})`.as('students_count'),
+      })
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .where(
+        and(
+          inArray(courses.instructorId, instructorIds),
+          eq(enrollments.status, 'active'),
+        ),
+      )
+      .groupBy(courses.instructorId);
+
+    const studentCountMap = new Map(
+      studentCounts.map((s) => [s.instructorId, Number(s.studentsCount)]),
+    );
+
+    // Batch: sessions this week per instructor
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const weeklyLoad = await db
+      .select({
+        instructorId: sessions.instructorId,
+        sessionsThisWeek: count(),
+        minutesThisWeek: sql<number>`COALESCE(SUM(${sessions.durationMinutes}), 0)`.as('minutes_week'),
+      })
+      .from(sessions)
+      .where(
+        and(
+          inArray(sessions.instructorId, instructorIds),
+          gte(sessions.scheduledAt, weekStart),
+          lte(sessions.scheduledAt, weekEnd),
+          sql`${sessions.status} IN ('scheduled', 'live', 'completed')`,
+        ),
+      )
+      .groupBy(sessions.instructorId);
+
+    const loadMap = new Map(
+      weeklyLoad.map((w) => [
+        w.instructorId,
+        {
+          sessionsThisWeek: Number(w.sessionsThisWeek),
+          hoursThisWeek: Math.round((Number(w.minutesThisWeek) / 60) * 10) / 10,
+        },
+      ]),
+    );
+
+    return instructorsList.map((inst) => {
+      const load = loadMap.get(inst.id) || { sessionsThisWeek: 0, hoursThisWeek: 0 };
+      const status: 'available' | 'busy' | 'overloaded' =
+        load.hoursThisWeek > 15 ? 'overloaded' : load.hoursThisWeek >= 10 ? 'busy' : 'available';
+
+      return {
+        ...inst,
+        coursesCount: courseCountMap.get(inst.id) || 0,
+        studentsCount: studentCountMap.get(inst.id) || 0,
+        sessionsThisWeek: load.sessionsThisWeek,
+        hoursThisWeek: load.hoursThisWeek,
+        status,
+      };
+    });
+  }
+
+  // ─── Instructor Performance ──────────────────────────────────
+
+  /**
+   * GET /instructor/:id/performance
+   * Returns performance KPIs for a specific instructor.
+   */
+  async getInstructorPerformance(instructorId: string) {
+    // Verify instructor exists
+    const [instructor] = await db
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .from(users)
+      .where(eq(users.id, instructorId))
+      .limit(1);
+
+    if (!instructor) {
+      throw new NotFoundException('Instructor not found');
+    }
+
+    // Get instructor's courses
+    const instructorCourses = await db
+      .select({ id: courses.id, title: courses.title, status: courses.status })
+      .from(courses)
+      .where(eq(courses.instructorId, instructorId));
+
+    const courseIds = instructorCourses.map((c) => c.id);
+
+    // Completion rate: avg enrollment progress across all active courses
+    let completionRate = 0;
+    if (courseIds.length > 0) {
+      const [avgResult] = await db
+        .select({ avg: sql<number>`COALESCE(ROUND(AVG(${enrollments.progress})), 0)`.as('avg_progress') })
+        .from(enrollments)
+        .where(inArray(enrollments.courseId, courseIds));
+      completionRate = Number(avgResult?.avg) || 0;
+    }
+
+    // Attendance rate: present+late / total attendance records
+    let attendanceRate = 0;
+    if (courseIds.length > 0) {
+      const sessionIds = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(inArray(sessions.courseId, courseIds));
+      const sIds = sessionIds.map((s) => s.id);
+
+      if (sIds.length > 0) {
+        const [attnResult] = await db
+          .select({
+            total: count(),
+            present: sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as('present_count'),
+          })
+          .from(attendance)
+          .where(inArray(attendance.sessionId, sIds));
+        const total = Number(attnResult?.total) || 0;
+        const present = Number(attnResult?.present) || 0;
+        attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0;
+      }
+    }
+
+    // Content quality: approved vs rejected materials
+    let contentApproved = 0;
+    let contentRejected = 0;
+    let contentPending = 0;
+    if (courseIds.length > 0) {
+      const materialStats = await db
+        .select({
+          status: courseMaterials.status,
+          cnt: count(),
+        })
+        .from(courseMaterials)
+        .where(inArray(courseMaterials.courseId, courseIds))
+        .groupBy(courseMaterials.status);
+
+      for (const m of materialStats) {
+        if (m.status === 'live') contentApproved += Number(m.cnt);
+        else if (m.status === 'failed') contentRejected += Number(m.cnt);
+        else if (m.status === 'pending_review') contentPending += Number(m.cnt);
+      }
+    }
+
+    // Total students
+    let totalStudents = 0;
+    if (courseIds.length > 0) {
+      const [studentCount] = await db
+        .select({ count: sql<number>`COUNT(DISTINCT ${enrollments.studentId})`.as('count') })
+        .from(enrollments)
+        .where(
+          and(
+            inArray(enrollments.courseId, courseIds),
+            eq(enrollments.status, 'active'),
+          ),
+        );
+      totalStudents = Number(studentCount?.count) || 0;
+    }
+
+    // Sessions stats
+    let totalSessions = 0;
+    let completedSessions = 0;
+    if (courseIds.length > 0) {
+      const sessionStats = await db
+        .select({
+          status: sessions.status,
+          cnt: count(),
+        })
+        .from(sessions)
+        .where(inArray(sessions.courseId, courseIds))
+        .groupBy(sessions.status);
+
+      for (const s of sessionStats) {
+        totalSessions += Number(s.cnt);
+        if (s.status === 'completed') completedSessions += Number(s.cnt);
+      }
+    }
+
+    return {
+      instructor: {
+        id: instructor.id,
+        firstName: instructor.firstName,
+        lastName: instructor.lastName,
+        email: instructor.email,
+      },
+      coursesCount: instructorCourses.length,
+      totalStudents,
+      completionRate,
+      attendanceRate,
+      contentQuality: {
+        approved: contentApproved,
+        rejected: contentRejected,
+        pending: contentPending,
+        total: contentApproved + contentRejected + contentPending,
+      },
+      sessions: {
+        total: totalSessions,
+        completed: completedSessions,
+      },
+      courses: instructorCourses.map((c) => ({ id: c.id, title: c.title, status: c.status })),
+    };
   }
 }

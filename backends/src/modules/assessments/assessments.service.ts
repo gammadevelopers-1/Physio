@@ -754,6 +754,101 @@ export class AssessmentsService {
     };
   }
 
+  /**
+   * Blueprint coverage: modules × assessments matrix for a course.
+   * Shows which modules have assessment coverage and identifies gaps.
+   */
+  async getBlueprint(courseId: string, user: AuthenticatedUser) {
+    await this.verifyCourseAccess(courseId, user);
+
+    const { courseModules } = await import('../../database/schema');
+
+    // Get all modules for the course
+    const modules = await db
+      .select({
+        id: courseModules.id,
+        title: courseModules.title,
+        orderIndex: courseModules.orderIndex,
+      })
+      .from(courseModules)
+      .where(eq(courseModules.courseId, courseId))
+      .orderBy(asc(courseModules.orderIndex));
+
+    // Get all assessments for the course
+    const courseAssessments = await db
+      .select({
+        id: assessments.id,
+        title: assessments.title,
+        type: assessments.type,
+        moduleId: assessments.moduleId,
+        totalMarks: assessments.totalMarks,
+        status: assessments.status,
+      })
+      .from(assessments)
+      .where(eq(assessments.courseId, courseId));
+
+    // Get question counts per assessment
+    const questionCounts = await db
+      .select({
+        assessmentId: questions.assessmentId,
+        count: count(),
+      })
+      .from(questions)
+      .where(eq(questions.courseId, courseId))
+      .groupBy(questions.assessmentId);
+
+    const qCountMap = new Map<string, number>();
+    for (const qc of questionCounts) {
+      if (qc.assessmentId) qCountMap.set(qc.assessmentId, Number(qc.count));
+    }
+
+    // Build matrix: each module → which assessments cover it
+    const matrix = modules.map((mod) => {
+      const linked = courseAssessments
+        .filter((a) => a.moduleId === mod.id)
+        .map((a) => ({
+          assessmentId: a.id,
+          title: a.title,
+          type: a.type,
+          status: a.status,
+          totalMarks: a.totalMarks,
+          questionCount: qCountMap.get(a.id) || 0,
+        }));
+
+      return {
+        moduleId: mod.id,
+        moduleTitle: mod.title,
+        orderIndex: mod.orderIndex,
+        covered: linked.length > 0,
+        assessments: linked,
+      };
+    });
+
+    // Assessments not linked to any module
+    const unlinked = courseAssessments
+      .filter((a) => !a.moduleId)
+      .map((a) => ({
+        assessmentId: a.id,
+        title: a.title,
+        type: a.type,
+        status: a.status,
+        totalMarks: a.totalMarks,
+        questionCount: qCountMap.get(a.id) || 0,
+      }));
+
+    const coveredCount = matrix.filter((m) => m.covered).length;
+
+    return {
+      courseId,
+      totalModules: modules.length,
+      coveredModules: coveredCount,
+      gapModules: modules.length - coveredCount,
+      coveragePercent: modules.length > 0 ? Math.round((coveredCount / modules.length) * 100) : 100,
+      matrix,
+      unlinkedAssessments: unlinked,
+    };
+  }
+
   // ─── Helpers ──────────────────────────────────────────────
 
   /**

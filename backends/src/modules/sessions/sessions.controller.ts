@@ -54,6 +54,7 @@ export class SessionsController {
     @Query('dateRange') dateRange?: string,
     @Query('status') status?: string,
     @Query('courseId') courseId?: string,
+    @Query('instructorId') instructorId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -61,9 +62,19 @@ export class SessionsController {
       dateRange,
       status,
       courseId,
+      instructorId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
+  }
+
+  /**
+   * GET /sessions/conflicts — Detect scheduling conflicts across instructors
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('conflicts')
+  async detectConflicts() {
+    return this.sessionsService.detectConflicts();
   }
 
   /**
@@ -84,6 +95,18 @@ export class SessionsController {
   @Get('upcoming')
   async findUpcoming(@CurrentUser() user: AuthenticatedUser) {
     return this.sessionsService.findUpcoming(user);
+  }
+
+  /**
+   * GET /sessions/instructor-load/:instructorId — Get instructor's weekly load
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('instructor-load/:instructorId')
+  async getInstructorLoad(
+    @Param('instructorId') instructorId: string,
+    @Query('weekStart') weekStart?: string,
+  ) {
+    return this.sessionsService.getInstructorLoad(instructorId, weekStart);
   }
 
   /**
@@ -160,6 +183,47 @@ export class SessionsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sessionsService.delete(id, user);
+  }
+
+  // ─── Manager Oversight Actions ──────────────────────────────
+
+  /**
+   * POST /sessions/:id/cancel-on-behalf — Cancel a session on behalf of instructor
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/cancel-on-behalf')
+  async cancelOnBehalf(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { reason: string },
+  ) {
+    return this.sessionsService.cancelOnBehalf(id, user, body.reason);
+  }
+
+  /**
+   * PATCH /sessions/:id/reschedule — Reschedule a session
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':id/reschedule')
+  async reschedule(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { scheduledAt: string; durationMinutes?: number },
+  ) {
+    return this.sessionsService.reschedule(id, user, body.scheduledAt, body.durationMinutes);
+  }
+
+  /**
+   * PATCH /sessions/:id/assign-substitute — Assign substitute instructor
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':id/assign-substitute')
+  async assignSubstitute(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { instructorId: string },
+  ) {
+    return this.sessionsService.assignSubstitute(id, user, body.instructorId);
   }
 
   // ─── Zoom Sync Endpoints ──────────────────────────────────

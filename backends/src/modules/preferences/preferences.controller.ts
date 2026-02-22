@@ -8,9 +8,11 @@ import {
 import { PreferencesService } from './preferences.service';
 import { UpdateNotificationPrefsDto } from './dto/update-notification-prefs.dto';
 import { UpdateUiPrefsDto } from './dto/update-ui-prefs.dto';
-import { JwtAuthGuard } from '../auth/guards';
-import { CurrentUser } from '../auth/decorators';
+import { UpdatePolicyPrefsDto } from './dto/update-policy-prefs.dto';
+import { JwtAuthGuard, RolesGuard } from '../auth/guards';
+import { CurrentUser, Roles } from '../auth/decorators';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { UserRole } from '../../database/schema';
 
 @Controller('preferences')
 @UseGuards(JwtAuthGuard)
@@ -45,5 +47,18 @@ export class PreferencesController {
     @Body() dto: UpdateUiPrefsDto,
   ) {
     return this.preferencesService.updateUiPreferences(user.id, dto);
+  }
+
+  /**
+   * PATCH /preferences/policies — Update default policy preferences (MANAGER/ADMIN only)
+   */
+  @Patch('policies')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  async updatePolicies(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdatePolicyPrefsDto,
+  ) {
+    return this.preferencesService.updatePolicies(user.id, dto);
   }
 }

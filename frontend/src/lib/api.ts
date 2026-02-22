@@ -893,6 +893,8 @@ export const preferencesApi = {
     api.patch<Record<string, unknown>>('/preferences/notifications', data),
   updateUi: (data: Record<string, unknown>) =>
     api.patch<Record<string, unknown>>('/preferences/ui', data),
+  updatePolicies: (data: Record<string, unknown>) =>
+    api.patch<Record<string, unknown>>('/preferences/policies', data),
 };
 
 // ===========================================
@@ -1040,7 +1042,7 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion';
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'satisfaction' | 'instructor-performance';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {
@@ -1099,6 +1101,30 @@ export const reportsApi = {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   },
+
+  // Scheduled Reports CRUD
+  getScheduled: () =>
+    api.get<Array<{
+      id: string;
+      userId: string;
+      reportType: string;
+      format: string;
+      courseId: string | null;
+      frequency: string;
+      enabled: boolean;
+      lastRunAt: string | null;
+      nextRunAt: string | null;
+      createdAt: string;
+    }>>('/instructor/reports/scheduled'),
+
+  createScheduled: (data: { reportType: string; format?: string; courseId?: string; frequency: string }) =>
+    api.post<{ id: string }>('/instructor/reports/scheduled', data),
+
+  updateScheduled: (id: string, data: { enabled?: boolean; frequency?: string; format?: string }) =>
+    api.patch<{ id: string }>(`/instructor/reports/scheduled/${id}`, data),
+
+  deleteScheduled: (id: string) =>
+    api.delete<{ message: string }>(`/instructor/reports/scheduled/${id}`),
 };
 
 // ===========================================
@@ -1187,11 +1213,12 @@ export const courseManagerApi = {
     api.get<InstructorListItem[]>('/auth/instructors'),
 
   // Sessions
-  getSessions: (params?: SessionsParams) => {
+  getSessions: (params?: SessionsParams & { instructorId?: string }) => {
     const sp = new URLSearchParams();
     if (params?.dateRange) sp.set('dateRange', params.dateRange);
     if (params?.status) sp.set('status', params.status);
     if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.instructorId) sp.set('instructorId', params.instructorId);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
     const qs = sp.toString();
@@ -1200,6 +1227,62 @@ export const courseManagerApi = {
 
   getUpcomingSessions: () =>
     api.get<CourseSession[]>('/sessions/upcoming'),
+
+  getSessionConflicts: () =>
+    api.get<Array<{
+      sessionA: { id: string; title: string; scheduledAt: string; durationMinutes: number };
+      sessionB: { id: string; title: string; scheduledAt: string; durationMinutes: number };
+      instructorName: string;
+      instructorId: string;
+    }>>('/sessions/conflicts'),
+
+  // Session oversight actions
+  cancelSessionOnBehalf: (sessionId: string, reason: string) =>
+    api.post(`/sessions/${sessionId}/cancel-on-behalf`, { reason }),
+
+  rescheduleSession: (sessionId: string, scheduledAt: string, durationMinutes?: number) =>
+    api.patch(`/sessions/${sessionId}/reschedule`, { scheduledAt, durationMinutes }),
+
+  assignSubstitute: (sessionId: string, instructorId: string) =>
+    api.patch(`/sessions/${sessionId}/assign-substitute`, { instructorId }),
+
+  getInstructorLoad: (instructorId: string, weekStart?: string) => {
+    const params = weekStart ? `?weekStart=${weekStart}` : '';
+    return api.get<{ instructorId: string; weekStart: string; sessionsCount: number; hoursTotal: number }>(
+      `/sessions/instructor-load/${instructorId}${params}`
+    );
+  },
+
+  // Instructor roster with workload metrics
+  getInstructorRoster: () =>
+    api.get<Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      coursesCount: number;
+      studentsCount: number;
+      sessionsThisWeek: number;
+      hoursThisWeek: number;
+      status: 'available' | 'busy' | 'overloaded';
+    }>>('/instructor/roster'),
+
+  // Assign instructor to course
+  assignInstructor: (courseId: string, instructorId: string) =>
+    api.patch(`/courses/${courseId}/assign-instructor`, { instructorId }),
+
+  // Instructor performance KPIs
+  getInstructorPerformance: (instructorId: string) =>
+    api.get<{
+      instructor: { id: string; firstName: string | null; lastName: string | null; email: string };
+      coursesCount: number;
+      totalStudents: number;
+      completionRate: number;
+      attendanceRate: number;
+      contentQuality: { approved: number; rejected: number; pending: number; total: number };
+      sessions: { total: number; completed: number };
+      courses: Array<{ id: string; title: string; status: string }>;
+    }>(`/instructor/${instructorId}/performance`),
 
   // Dashboard summary (reuses instructor endpoint — MANAGER now has access)
   getDashboardSummary: () =>
@@ -1217,6 +1300,38 @@ export const courseManagerApi = {
     return api.get<AssessmentsResponse>(`/assessments${qs ? `?${qs}` : ''}`);
   },
 
+  // Assessment blueprint coverage
+  getBlueprint: (courseId: string) =>
+    api.get<{
+      courseId: string;
+      totalModules: number;
+      coveredModules: number;
+      gapModules: number;
+      coveragePercent: number;
+      matrix: Array<{
+        moduleId: string;
+        moduleTitle: string;
+        orderIndex: number;
+        covered: boolean;
+        assessments: Array<{
+          assessmentId: string;
+          title: string;
+          type: string;
+          status: string;
+          totalMarks: number;
+          questionCount: number;
+        }>;
+      }>;
+      unlinkedAssessments: Array<{
+        assessmentId: string;
+        title: string;
+        type: string;
+        status: string;
+        totalMarks: number;
+        questionCount: number;
+      }>;
+    }>(`/assessments/blueprint/${courseId}`),
+
   // Course detail (single course with modules)
   getCourseDetail: (courseId: string) =>
     api.get<CourseDetailResponse>(`/courses/${courseId}`),
@@ -1228,6 +1343,47 @@ export const courseManagerApi = {
   // Delete course (draft only)
   deleteCourse: (courseId: string) =>
     api.delete(`/courses/${courseId}`),
+
+  // Content Review
+  getPendingReviews: () =>
+    api.get<{
+      data: Array<{
+        id: string;
+        courseId: string;
+        moduleId: string | null;
+        title: string;
+        type: string;
+        fileUrl: string | null;
+        fileSize: number | null;
+        mimeType: string | null;
+        wcagStatus: string;
+        createdAt: string;
+        courseTitle: string;
+        instructorFirstName: string | null;
+        instructorLastName: string | null;
+        instructorEmail: string;
+      }>;
+      stats: { pending: number; approved: number; rejected: number };
+    }>('/materials/pending-review'),
+
+  reviewMaterial: (id: string, data: { decision: 'approved' | 'rejected'; comment?: string }) =>
+    api.patch(`/materials/${id}/review`, data),
+
+  // Course Ratings
+  getAllCourseRatings: () =>
+    api.get<Record<string, { avgRating: number; totalRatings: number }>>('/courses/ratings/all'),
+
+  getCourseRatings: (courseId: string) =>
+    api.get<Array<{
+      id: string;
+      rating: number;
+      reviewText: string | null;
+      createdAt: string;
+      studentName: string;
+    }>>(`/courses/${courseId}/ratings`),
+
+  getCourseRatingStats: (courseId: string) =>
+    api.get<{ avgRating: number; totalRatings: number }>(`/courses/${courseId}/ratings/stats`),
 };
 
 // ===========================================
@@ -1378,6 +1534,49 @@ export const nelcComplianceApi = {
 
   getCourseCompliance: (courseId: string) =>
     api.get<CourseComplianceResult>(`/nelc-compliance/course/${courseId}`),
+
+  getAllCoursesCompliance: () =>
+    api.get<Array<{
+      courseId: string;
+      courseTitle: string;
+      instructorName: string;
+      overallStatus: 'passed' | 'review' | 'failed';
+      summary: { passed: number; review: number; failed: number; total: number };
+    }>>('/nelc-compliance/all-courses'),
+
+  getVirtualClassCompliance: () =>
+    api.get<Array<{
+      sessionId: string;
+      sessionTitle: string;
+      courseTitle: string;
+      instructorName: string;
+      type: string;
+      scheduledAt: string | null;
+      durationMinutes: number;
+      status: string;
+      hasZoomLink: boolean;
+      hasRecording: boolean;
+      overallStatus: 'passed' | 'review' | 'failed';
+      checks: Array<{ rule: string; status: 'passed' | 'review' | 'failed'; detail: string }>;
+    }>>('/nelc-compliance/virtual-classes'),
+
+  downloadEvidence: async (courseId: string) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    const token = getAccessToken();
+    const res = await fetch(`${API_URL}/nelc-compliance/course/${courseId}/evidence`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error('Failed to download evidence');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nelc-evidence-${courseId.slice(0, 8)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
 };
 
 export default api;

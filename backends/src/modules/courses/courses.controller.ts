@@ -67,6 +67,19 @@ export class CoursesController {
   }
 
   /**
+   * PATCH /courses/:id/assign-instructor — Reassign instructor for a course
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':id/assign-instructor')
+  async assignInstructor(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { instructorId: string },
+  ) {
+    return this.coursesService.reassignInstructor(courseId, body.instructorId, user);
+  }
+
+  /**
    * GET /courses/:id — Course detail with modules
    */
   @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
@@ -158,5 +171,53 @@ export class CoursesController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.coursesService.removeModule(courseId, moduleId, user);
+  }
+
+  // ─── Course Ratings ─────────────────────────────────────────
+
+  /**
+   * POST /courses/:id/ratings — Rate a course (student)
+   */
+  @Post(':id/ratings')
+  async rateCourse(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { rating: number; reviewText?: string },
+  ) {
+    return this.coursesService.rateCourse(courseId, user.id, body.rating, body.reviewText);
+  }
+
+  /**
+   * GET /courses/:id/ratings — Get all ratings for a course
+   */
+  @Get(':id/ratings')
+  async getCourseRatings(@Param('id') courseId: string) {
+    return this.coursesService.getCourseRatings(courseId);
+  }
+
+  /**
+   * GET /courses/:id/ratings/stats — Get average rating for a course
+   */
+  @Get(':id/ratings/stats')
+  async getCourseRatingStats(@Param('id') courseId: string) {
+    return this.coursesService.getCourseRatingStats(courseId);
+  }
+
+  /**
+   * GET /courses/ratings/all — Get all course rating averages (for dashboard)
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('ratings/all')
+  async getAllCourseRatings() {
+    return this.coursesService.getAllCourseRatings();
+  }
+
+  /**
+   * DELETE /courses/:id/ratings/:ratingId — Delete a rating (admin/manager)
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Delete(':id/ratings/:ratingId')
+  async deleteRating(@Param('ratingId') ratingId: string) {
+    return this.coursesService.deleteRating(ratingId);
   }
 }

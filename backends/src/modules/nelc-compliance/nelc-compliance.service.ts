@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, StreamableFile } from '@nestjs/common';
 import { eq, and, count, isNotNull, isNull, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -7,6 +7,10 @@ import {
   enrollments,
   attendance,
   sessionAssistants,
+  courseMaterials,
+  assessments,
+  submissions,
+  users,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -15,6 +19,7 @@ import {
   classifyCourse,
   getNelcMaxEnrollment,
 } from '../courses/nelc-config';
+import * as archiver from 'archiver';
 
 export type ComplianceStatus = 'passed' | 'review' | 'failed';
 
@@ -203,6 +208,250 @@ export class NelcComplianceService {
     };
   }
 
+  /**
+   * All-courses compliance report for the Course Manager dashboard page.
+   * Returns per-course compliance with course title + instructor name.
+   */
+  async getAllCoursesCompliance(
+    user: AuthenticatedUser,
+  ): Promise<
+    Array<{
+      courseId: string;
+      courseTitle: string;
+      instructorName: string;
+      overallStatus: ComplianceStatus;
+      summary: { passed: number; review: number; failed: number; total: number };
+    }>
+  > {
+    const isAdmin =
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN') ||
+      user.roles.includes('MANAGER');
+
+    const conditions = isAdmin ? [] : [eq(courses.instructorId, user.id)];
+
+    const allCourses = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        instructorId: courses.instructorId,
+      })
+      .from(courses)
+      .where(conditions.length ? and(...conditions) : undefined);
+
+    // Batch-fetch instructor names
+    const instructorIds = [...new Set(allCourses.map((c) => c.instructorId).filter(Boolean))];
+    const instructorMap = new Map<string, string>();
+
+    if (instructorIds.length > 0) {
+      const { users } = await import('../../database/schema');
+      const instructors = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(sql`${users.id} IN (${sql.join(instructorIds.map((id) => sql`${id}`), sql`, `)})`);
+      for (const inst of instructors) {
+        instructorMap.set(
+          inst.id,
+          `${inst.firstName || ''} ${inst.lastName || ''}`.trim() || 'Unknown',
+        );
+      }
+    }
+
+    const results = [];
+
+    for (const course of allCourses) {
+      const compliance = await this.getCourseCompliance(course.id);
+      results.push({
+        courseId: course.id,
+        courseTitle: course.title,
+        instructorName: instructorMap.get(course.instructorId!) || 'Unknown',
+        overallStatus: compliance.overallStatus,
+        summary: compliance.summary,
+      });
+    }
+
+    return results;
+  }
+
+  /**
+   * Generate a ZIP evidence bundle for a course's NELC compliance.
+   * Contains: compliance-checks.json, attendance.csv, sessions.csv, materials.csv
+   */
+  async generateEvidenceBundle(courseId: string): Promise<archiver.Archiver> {
+    // 1. Compliance checks JSON
+    const compliance = await this.getCourseCompliance(courseId);
+
+    // 2. Course info
+    const [course] = await db
+      .select({ id: courses.id, title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    // 3. Session records
+    const sessionRows = await db
+      .select({
+        id: sessions.id,
+        title: sessions.title,
+        type: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        status: sessions.status,
+        zoomLink: sessions.zoomLink,
+        meetingId: sessions.meetingId,
+      })
+      .from(sessions)
+      .where(eq(sessions.courseId, courseId));
+
+    // 4. Attendance records
+    const attendanceRows = await db
+      .select({
+        sessionId: attendance.sessionId,
+        studentId: attendance.studentId,
+        status: attendance.status,
+        joinedAt: attendance.joinedAt,
+        leftAt: attendance.leftAt,
+        durationMinutes: attendance.durationMinutes,
+      })
+      .from(attendance)
+      .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+      .where(eq(sessions.courseId, courseId));
+
+    // 5. Materials audit (with reviewer info)
+    const materialRows = await db
+      .select({
+        id: courseMaterials.id,
+        title: courseMaterials.title,
+        type: courseMaterials.type,
+        status: courseMaterials.status,
+        wcagStatus: courseMaterials.wcagStatus,
+        version: courseMaterials.version,
+        createdAt: courseMaterials.createdAt,
+        reviewedBy: courseMaterials.reviewedBy,
+        reviewNote: courseMaterials.reviewNote,
+      })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.courseId, courseId));
+
+    // 6. Assessment results
+    const courseAssessments = await db
+      .select({ id: assessments.id, title: assessments.title })
+      .from(assessments)
+      .where(eq(assessments.courseId, courseId));
+
+    const assessmentIds = courseAssessments.map((a) => a.id);
+    const submissionRows = assessmentIds.length > 0
+      ? await db
+          .select({
+            assessmentId: submissions.assessmentId,
+            studentId: submissions.studentId,
+            score: submissions.score,
+            totalMarks: submissions.totalMarks,
+            percentage: submissions.percentage,
+            status: submissions.status,
+            submittedAt: submissions.submittedAt,
+          })
+          .from(submissions)
+          .where(sql`${submissions.assessmentId} IN (${sql.join(assessmentIds.map((id) => sql`${id}`), sql`, `)})`)
+      : [];
+
+    // Build ZIP archive
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    // Cover summary (text)
+    const coverText = [
+      '=== NELC Compliance Evidence Bundle ===',
+      '',
+      `Course: ${course?.title || 'Unknown'}`,
+      `Course ID: ${courseId}`,
+      `Generated: ${new Date().toISOString()}`,
+      '',
+      '--- Compliance Summary ---',
+      `Overall Status: ${compliance.overallStatus.toUpperCase()}`,
+      `Sessions Passed: ${compliance.summary.passed}`,
+      `Sessions Review: ${compliance.summary.review}`,
+      `Sessions Failed: ${compliance.summary.failed}`,
+      `Total Sessions: ${compliance.summary.total}`,
+      '',
+      '--- Data Included ---',
+      `Sessions: ${sessionRows.length}`,
+      `Attendance Records: ${attendanceRows.length}`,
+      `Materials: ${materialRows.length}`,
+      `Assessments: ${courseAssessments.length}`,
+      `Submissions: ${submissionRows.length}`,
+      '',
+      'Files:',
+      '  compliance-checks.json  — Detailed compliance check results per session',
+      '  sessions.csv            — All session records',
+      '  attendance.csv          — Full attendance log with timestamps',
+      '  materials-audit.csv     — Material audit trail with review status',
+      '  assessment-results.csv  — Assessment submission results',
+      '  cover-summary.txt       — This file',
+    ].join('\n');
+    archive.append(coverText, { name: 'cover-summary.txt' });
+
+    // compliance-checks.json
+    archive.append(
+      JSON.stringify(
+        {
+          courseId,
+          courseTitle: course?.title || 'Unknown',
+          generatedAt: new Date().toISOString(),
+          overallStatus: compliance.overallStatus,
+          summary: compliance.summary,
+          sessionResults: compliance.sessionResults,
+        },
+        null,
+        2,
+      ),
+      { name: 'compliance-checks.json' },
+    );
+
+    // sessions.csv
+    const sessionsCsv = [
+      'session_id,title,type,scheduled_at,duration_minutes,status,zoom_link,meeting_id',
+      ...sessionRows.map(
+        (s) =>
+          `"${s.id}","${(s.title || '').replace(/"/g, '""')}","${s.type}","${s.scheduledAt?.toISOString() || ''}",${s.durationMinutes || ''},"${s.status}","${s.zoomLink || ''}","${s.meetingId || ''}"`,
+      ),
+    ].join('\n');
+    archive.append(sessionsCsv, { name: 'sessions.csv' });
+
+    // attendance.csv
+    const attendanceCsv = [
+      'session_id,student_id,status,joined_at,left_at,duration_minutes',
+      ...attendanceRows.map(
+        (a) =>
+          `"${a.sessionId}","${a.studentId}","${a.status}","${a.joinedAt?.toISOString() || ''}","${a.leftAt?.toISOString() || ''}",${a.durationMinutes || ''}`,
+      ),
+    ].join('\n');
+    archive.append(attendanceCsv, { name: 'attendance.csv' });
+
+    // materials-audit.csv (enhanced with review info)
+    const materialsCsv = [
+      'material_id,title,type,status,wcag_status,version,reviewed_by,review_note,created_at',
+      ...materialRows.map(
+        (m) =>
+          `"${m.id}","${(m.title || '').replace(/"/g, '""')}","${m.type}","${m.status}","${m.wcagStatus}",${m.version},"${m.reviewedBy || ''}","${(m.reviewNote || '').replace(/"/g, '""')}","${m.createdAt?.toISOString() || ''}"`,
+      ),
+    ].join('\n');
+    archive.append(materialsCsv, { name: 'materials-audit.csv' });
+
+    // assessment-results.csv
+    const assessmentMap = new Map(courseAssessments.map((a) => [a.id, a.title]));
+    const assessmentsCsv = [
+      'assessment_id,assessment_title,student_id,score,total_marks,percentage,status,submitted_at',
+      ...submissionRows.map(
+        (s) =>
+          `"${s.assessmentId}","${(assessmentMap.get(s.assessmentId) || '').replace(/"/g, '""')}","${s.studentId}",${s.score ?? ''},${s.totalMarks ?? ''},${s.percentage ?? ''},"${s.status}","${s.submittedAt?.toISOString() || ''}"`,
+      ),
+    ].join('\n');
+    archive.append(assessmentsCsv, { name: 'assessment-results.csv' });
+
+    archive.finalize();
+    return archive;
+  }
+
   // ─── Individual Compliance Checks ─────────────────────────
 
   private async checkEnrollmentLimit(
@@ -383,5 +632,84 @@ export class NelcComplianceService {
     if (checks.some((c) => c.status === 'failed')) return 'failed';
     if (checks.some((c) => c.status === 'review')) return 'review';
     return 'passed';
+  }
+
+  /**
+   * Get virtual class (Zoom/hybrid) sessions with compliance details.
+   * Returns per-session compliance checks for Zoom-specific NELC rules.
+   */
+  async getVirtualClassCompliance(
+    user: AuthenticatedUser,
+  ): Promise<
+    Array<{
+      sessionId: string;
+      sessionTitle: string;
+      courseTitle: string;
+      instructorName: string;
+      type: string;
+      scheduledAt: Date | null;
+      durationMinutes: number;
+      status: string;
+      hasZoomLink: boolean;
+      hasRecording: boolean;
+      overallStatus: ComplianceStatus;
+      checks: ComplianceCheck[];
+    }>
+  > {
+    const isAdmin =
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN') ||
+      user.roles.includes('MANAGER');
+
+    const conditions = [
+      sql`${sessions.type} IN ('zoom', 'hybrid')`,
+    ];
+    if (!isAdmin) {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
+
+    const virtualSessions = await db
+      .select({
+        id: sessions.id,
+        title: sessions.title,
+        type: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        status: sessions.status,
+        zoomLink: sessions.zoomLink,
+        meetingId: sessions.meetingId,
+        zoomSyncedAt: sessions.zoomSyncedAt,
+        courseId: sessions.courseId,
+        courseTitle: courses.title,
+        instructorId: sessions.instructorId,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+      })
+      .from(sessions)
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .innerJoin(users, eq(sessions.instructorId, users.id))
+      .where(and(...conditions))
+      .orderBy(sessions.scheduledAt);
+
+    const results = [];
+    for (const s of virtualSessions) {
+      const compliance = await this.validateSessionCompliance(s.id);
+      results.push({
+        sessionId: s.id,
+        sessionTitle: s.title,
+        courseTitle: s.courseTitle,
+        instructorName: `${s.instructorFirstName || ''} ${s.instructorLastName || ''}`.trim() || 'Unknown',
+        type: s.type,
+        scheduledAt: s.scheduledAt,
+        durationMinutes: s.durationMinutes,
+        status: s.status,
+        hasZoomLink: !!(s.zoomLink || s.meetingId),
+        hasRecording: !!s.zoomSyncedAt,
+        overallStatus: compliance.overallStatus,
+        checks: compliance.checks,
+      });
+    }
+
+    return results;
   }
 }

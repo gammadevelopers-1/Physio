@@ -4,6 +4,7 @@ import {
   varchar,
   timestamp,
   boolean,
+  integer,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
@@ -33,6 +34,19 @@ export const userPreferences = pgTable('user_preferences', {
   defaultView: varchar('default_view', { length: 30 }).default('dashboard'),
   compactMode: boolean('compact_mode').default(false),
   showTips: boolean('show_tips').default(true),
+
+  // Accessibility preferences
+  highContrast: boolean('high_contrast').default(false),
+  fontSize: varchar('font_size', { length: 10 }).default('medium'),
+  reduceMotion: boolean('reduce_motion').default(false),
+
+  // Default policy preferences (Course Manager)
+  policyEnrollmentLimit: integer('policy_enrollment_limit').default(30),
+  policyRequireContentReview: boolean('policy_require_content_review').default(true),
+  policyAutoApproveCertificates: boolean('policy_auto_approve_certificates').default(false),
+  policyCancellationNoticeHours: integer('policy_cancellation_notice_hours').default(24),
+  policyMaxInstructorWeeklyHours: integer('policy_max_instructor_weekly_hours').default(15),
+  policyEnforceNelcCompliance: boolean('policy_enforce_nelc_compliance').default(true),
 
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),

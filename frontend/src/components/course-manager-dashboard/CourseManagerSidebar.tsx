@@ -13,6 +13,7 @@ import {
   Users,
   FileCheck,
   ClipboardCheck,
+  ShieldCheck,
   BarChart3,
   Settings,
   Pencil,
@@ -86,6 +87,11 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
       label: t("sidebar.assessments"),
       href: `/${locale}/dashboard/manager/assessments`,
       icon: ClipboardCheck,
+    },
+    {
+      label: t("sidebar.nelcCompliance") || "NELC Compliance",
+      href: `/${locale}/dashboard/manager/nelc-compliance`,
+      icon: ShieldCheck,
     },
     {
       label: t("sidebar.reports"),

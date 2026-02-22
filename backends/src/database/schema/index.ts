@@ -45,6 +45,12 @@ export * from './nelc-audit-logs';
 export * from './session-assistants';
 export * from './attendance-logs';
 
+// Scheduled Reports schemas
+export * from './scheduled-reports';
+
+// Course Ratings schemas
+export * from './course-ratings';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

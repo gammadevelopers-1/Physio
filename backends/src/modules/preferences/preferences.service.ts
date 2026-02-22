@@ -4,6 +4,7 @@ import { db } from '../../database';
 import { userPreferences } from '../../database/schema';
 import { UpdateNotificationPrefsDto } from './dto/update-notification-prefs.dto';
 import { UpdateUiPrefsDto } from './dto/update-ui-prefs.dto';
+import { UpdatePolicyPrefsDto } from './dto/update-policy-prefs.dto';
 
 @Injectable()
 export class PreferencesService {
@@ -74,6 +75,32 @@ export class PreferencesService {
     if (dto.defaultView !== undefined) updateData.defaultView = dto.defaultView;
     if (dto.compactMode !== undefined) updateData.compactMode = dto.compactMode;
     if (dto.showTips !== undefined) updateData.showTips = dto.showTips;
+    if (dto.highContrast !== undefined) updateData.highContrast = dto.highContrast;
+    if (dto.fontSize !== undefined) updateData.fontSize = dto.fontSize;
+    if (dto.reduceMotion !== undefined) updateData.reduceMotion = dto.reduceMotion;
+
+    const [updated] = await db
+      .update(userPreferences)
+      .set(updateData)
+      .where(eq(userPreferences.userId, userId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Update default policy preferences.
+   */
+  async updatePolicies(userId: string, dto: UpdatePolicyPrefsDto) {
+    await this.getPreferences(userId);
+
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    if (dto.policyEnrollmentLimit !== undefined) updateData.policyEnrollmentLimit = dto.policyEnrollmentLimit;
+    if (dto.policyRequireContentReview !== undefined) updateData.policyRequireContentReview = dto.policyRequireContentReview;
+    if (dto.policyAutoApproveCertificates !== undefined) updateData.policyAutoApproveCertificates = dto.policyAutoApproveCertificates;
+    if (dto.policyCancellationNoticeHours !== undefined) updateData.policyCancellationNoticeHours = dto.policyCancellationNoticeHours;
+    if (dto.policyMaxInstructorWeeklyHours !== undefined) updateData.policyMaxInstructorWeeklyHours = dto.policyMaxInstructorWeeklyHours;
+    if (dto.policyEnforceNelcCompliance !== undefined) updateData.policyEnforceNelcCompliance = dto.policyEnforceNelcCompliance;
 
     const [updated] = await db
       .update(userPreferences)

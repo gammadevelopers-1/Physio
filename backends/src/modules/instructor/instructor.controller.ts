@@ -30,6 +30,15 @@ export class InstructorController {
   }
 
   /**
+   * GET /instructor/roster — Enriched instructor list with workload metrics
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('roster')
+  async getInstructorRoster() {
+    return this.instructorService.getInstructorRoster();
+  }
+
+  /**
    * GET /instructor/students — All students across instructor's courses
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
@@ -62,6 +71,15 @@ export class InstructorController {
     @Body() dto: CreateInterventionDto,
   ) {
     return this.instructorService.createIntervention(user, dto);
+  }
+
+  /**
+   * GET /instructor/:id/performance — Instructor performance KPIs
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get(':id/performance')
+  async getInstructorPerformance(@Param('id') instructorId: string) {
+    return this.instructorService.getInstructorPerformance(instructorId);
   }
 
   /**

@@ -4,6 +4,8 @@ import {
   IsInt,
   IsIn,
   IsUUID,
+  IsBoolean,
+  IsObject,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -60,4 +62,37 @@ export class UpdateAssessmentDto {
     message: `Status must be one of: ${validStatuses.join(', ')}`,
   })
   status?: AssessmentStatus;
+
+  // Proctoring
+  @IsOptional()
+  @IsBoolean()
+  proctoringEnabled?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  proctoringRules?: {
+    webcamRequired?: boolean;
+    browserLockdown?: boolean;
+    tabSwitchAlert?: boolean;
+  };
+
+  @IsOptional()
+  @IsBoolean()
+  timeLimitEnforced?: boolean;
+
+  // Retake rules
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  maxRetakes?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  retakeCoolingHours?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['highest', 'latest', 'average'], { message: 'Score policy must be highest, latest, or average' })
+  retakeScorePolicy?: string;
 }

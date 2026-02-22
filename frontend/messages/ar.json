@@ -2472,6 +2472,10 @@
       "enrollmentDesc": "تتبع حالة تسجيل الطلاب والتقدم وآخر نشاط عبر الدورات.",
       "completionReport": "تقرير الإكمال",
       "completionDesc": "عرض التسجيلات المكتملة مع حالة طلب الشهادة لكل طالب.",
+      "satisfactionReport": "تقرير الرضا",
+      "satisfactionDesc": "عرض مقاييس رضا الدورة بما في ذلك معدلات الإكمال والحضور ودرجات التقييم.",
+      "instructor-performanceReport": "تقرير أداء المدرب",
+      "instructor-performanceDesc": "مقارنة مقاييس المدربين بما في ذلك الدورات والطلاب ومعدلات الإكمال والحضور.",
       "exportReport": "تصدير التقرير",
       "selectCourse": "الدورة",
       "chooseCourse": "اختر دورة...",
@@ -2679,7 +2683,9 @@
       "changeStatus": "تغيير الحالة",
       "statusChanged": "تم تحديث حالة الدورة بنجاح",
       "statusFailed": "فشل في تحديث حالة الدورة",
-      "manageCourse": "إدارة الدورة"
+      "manageCourse": "إدارة الدورة",
+      "statusDistribution": "توزيع الحالة",
+      "enrollmentByCategory": "التسجيل حسب الفئة"
     },
     "schedules": {
       "title": "الجداول والجلسات",
@@ -2720,7 +2726,21 @@
       "compliant": "ممتثل لـ NELC",
       "passed": "ناجح",
       "review": "مراجعة",
-      "failed": "فاشل"
+      "failed": "فاشل",
+      "coursesTab": "الدورات",
+      "virtualClassesTab": "الفصول الافتراضية",
+      "noVirtualClasses": "لم يتم العثور على فصول افتراضية",
+      "noVirtualClassesDesc": "لا توجد جلسات Zoom أو هجينة بعد.",
+      "adjustFilter": "حاول تعديل البحث أو الفلتر.",
+      "vcSession": "الجلسة",
+      "vcCourse": "الدورة",
+      "vcInstructor": "المدرب",
+      "vcType": "النوع",
+      "vcZoom": "إعدادات Zoom",
+      "vcStatus": "الحالة",
+      "vcLink": "الرابط",
+      "vcRecording": "مُزامن",
+      "vcComplianceChecks": "فحوصات الامتثال"
     },
     "courseStats": {
       "title": "إحصائيات الدورات",
@@ -3063,7 +3083,51 @@
         "view": "عرض",
         "edit": "تعديل",
         "analytics": "التحليلات",
-        "duplicate": "نسخ"
+        "duplicate": "نسخ",
+        "configure": "إعداد"
+      },
+      "proctoring": {
+        "title": "إعدادات المراقبة",
+        "enabled": "المراقبة مفعلة",
+        "webcamRequired": "كاميرا الويب مطلوبة",
+        "browserLockdown": "قفل المتصفح",
+        "tabSwitchAlert": "تنبيه تبديل التبويب",
+        "timeLimitEnforced": "فرض الحد الزمني"
+      },
+      "retake": {
+        "title": "قواعد إعادة المحاولة",
+        "maxRetakes": "أقصى عدد إعادات",
+        "coolingHours": "فترة الانتظار (ساعات)",
+        "scorePolicy": "سياسة الدرجة",
+        "policies": {
+          "highest": "أعلى درجة",
+          "latest": "آخر درجة",
+          "average": "متوسط الدرجات"
+        },
+        "unlimited": "غير محدود"
+      },
+      "settings": {
+        "save": "حفظ الإعدادات",
+        "saving": "جاري الحفظ...",
+        "saved": "تم حفظ الإعدادات بنجاح",
+        "error": "فشل في حفظ الإعدادات"
+      },
+      "tabs": {
+        "assessments": "التقييمات",
+        "blueprint": "تغطية المخطط"
+      },
+      "blueprint": {
+        "selectCourse": "اختر دورة...",
+        "coverage": "التغطية",
+        "coveredModules": "الوحدات المغطاة",
+        "gaps": "الفجوات",
+        "module": "الوحدة",
+        "linked": "التقييمات المرتبطة",
+        "questions": "أسئلة",
+        "unlinked": "تقييمات غير مرتبطة",
+        "unlinkedDesc": "هذه التقييمات غير مرتبطة بأي وحدة",
+        "noCourse": "اختر دورة لعرض تغطية مخطط التقييم",
+        "noModules": "هذه الدورة لا تحتوي على وحدات بعد"
       }
     },
     "reportsPage": {
@@ -3079,6 +3143,10 @@
       "enrollmentDesc": "تتبع حالة تسجيل الطلاب والتقدم وآخر نشاط عبر الدورات.",
       "completionReport": "تقرير الإكمال",
       "completionDesc": "عرض التسجيلات المكتملة مع حالة طلب الشهادة لكل طالب.",
+      "satisfactionReport": "تقرير الرضا",
+      "satisfactionDesc": "عرض مقاييس رضا الدورة بما في ذلك معدلات الإكمال والحضور ودرجات التقييم.",
+      "instructor-performanceReport": "تقرير أداء المدرب",
+      "instructor-performanceDesc": "مقارنة مقاييس المدربين بما في ذلك الدورات والطلاب ومعدلات الإكمال والحضور.",
       "exportReport": "تصدير التقرير",
       "selectCourse": "الدورة",
       "chooseCourse": "اختر دورة...",
@@ -3115,6 +3183,7 @@
         "notifications": "الإشعارات",
         "security": "الأمان",
         "preferences": "التفضيلات",
+        "policies": "السياسات",
         "integrations": "التكاملات"
       },
       "profile": {
@@ -3151,7 +3220,9 @@
         "complianceAlert": "تنبيهات الامتثال NELC",
         "newSubmission": "تقديم محتوى جديد",
         "approvalRequired": "إشعارات تتطلب الموافقة",
-        "systemUpdates": "تحديثات النظام"
+        "systemUpdates": "تحديثات النظام",
+        "saved": "تم حفظ تفضيلات الإشعارات بنجاح",
+        "error": "فشل في حفظ تفضيلات الإشعارات"
       },
       "security": {
         "title": "إعدادات الأمان",
@@ -3181,7 +3252,38 @@
         "compactModeDesc": "استخدام مسافات أصغر وتخطيطات مضغوطة",
         "showTips": "إظهار النصائح",
         "showTipsDesc": "عرض النصائح والاقتراحات المفيدة",
-        "savePreferences": "حفظ التفضيلات"
+        "accessibility": "إمكانية الوصول",
+        "highContrast": "تباين عالي",
+        "highContrastDesc": "زيادة التباين لتحسين الرؤية",
+        "fontSize": "حجم الخط",
+        "fontSizeDesc": "ضبط حجم النص الافتراضي",
+        "fontSmall": "صغير",
+        "fontMedium": "متوسط",
+        "fontLarge": "كبير",
+        "reduceMotion": "تقليل الحركة",
+        "reduceMotionDesc": "تقليل الرسوم المتحركة والانتقالات",
+        "savePreferences": "حفظ التفضيلات",
+        "saved": "تم حفظ التفضيلات بنجاح",
+        "error": "فشل في حفظ التفضيلات"
+      },
+      "policies": {
+        "title": "السياسات الافتراضية",
+        "description": "تكوين السياسات الافتراضية على مستوى المنصة للدورات والجلسات والامتثال.",
+        "enrollmentLimit": "حد التسجيل الافتراضي",
+        "enrollmentLimitDesc": "الحد الأقصى للطلاب المسموح بهم لكل دورة افتراضيًا",
+        "cancellationNotice": "إشعار الإلغاء (ساعات)",
+        "cancellationNoticeDesc": "الحد الأدنى لفترة الإشعار لإلغاء الجلسات",
+        "maxInstructorHours": "الحد الأقصى لساعات المدرب الأسبوعية",
+        "maxInstructorHoursDesc": "الحد الأقصى لساعات التدريس لكل مدرب في الأسبوع",
+        "requireContentReview": "طلب مراجعة المحتوى",
+        "requireContentReviewDesc": "يجب مراجعة المحتوى الجديد قبل نشره",
+        "autoApproveCertificates": "الموافقة التلقائية على الشهادات",
+        "autoApproveCertificatesDesc": "إصدار الشهادات تلقائيًا عند إكمال الدورة",
+        "enforceNelcCompliance": "فرض امتثال NELC",
+        "enforceNelcComplianceDesc": "فرض فحوصات امتثال NELC لجميع الدورات",
+        "save": "حفظ السياسات",
+        "saved": "تم حفظ السياسات بنجاح",
+        "error": "فشل في حفظ السياسات"
       },
       "integrations": {
         "title": "التكاملات",
@@ -3695,6 +3797,15 @@
       "generate": "إنشاء",
       "schedule": "جدولة",
       "scheduledReports": "التقارير المجدولة",
+      "addSchedule": "إضافة جدولة",
+      "noSchedules": "لا توجد تقارير مجدولة بعد. أنشئ واحدًا لأتمتة إنشاء التقارير المتكررة.",
+      "daily": "يومي",
+      "weekly": "أسبوعي",
+      "monthly": "شهري",
+      "create": "إنشاء",
+      "cancel": "إلغاء",
+      "scheduleCreated": "تم إنشاء التقرير المجدول بنجاح",
+      "scheduleError": "فشل في إدارة التقرير المجدول",
       "table": {
         "reportName": "اسم التقرير",
         "frequency": "التكرار",

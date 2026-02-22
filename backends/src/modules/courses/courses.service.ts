@@ -11,6 +11,8 @@ import {
   courseModules,
   enrollments,
   sessions,
+  courseRatings,
+  users,
   COURSE_STATUS,
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
@@ -429,5 +431,171 @@ export class CoursesService {
     }
 
     return course;
+  }
+
+  /**
+   * Reassign instructor for a course.
+   * Only MANAGER and ADMIN can do this.
+   */
+  async reassignInstructor(
+    courseId: string,
+    newInstructorId: string,
+    user: AuthenticatedUser,
+  ) {
+    // Verify the course exists
+    const [course] = await db
+      .select({ id: courses.id, title: courses.title, instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.instructorId === newInstructorId) {
+      throw new BadRequestException('This instructor is already assigned to this course');
+    }
+
+    // Update the course's instructorId
+    const [updated] = await db
+      .update(courses)
+      .set({ instructorId: newInstructorId, updatedAt: new Date() })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Also update sessions for this course to the new instructor
+    await db
+      .update(sessions)
+      .set({ instructorId: newInstructorId, updatedAt: new Date() })
+      .where(
+        and(
+          eq(sessions.courseId, courseId),
+          sql`${sessions.status} IN ('scheduled')`,
+        ),
+      );
+
+    this.logger.log(
+      `Course "${course.title}" reassigned from ${course.instructorId} to ${newInstructorId} by ${user.id}`,
+    );
+
+    return updated;
+  }
+
+  // ─── Course Ratings ─────────────────────────────────────────
+
+  /**
+   * Create or update a rating for a course.
+   */
+  async rateCourse(
+    courseId: string,
+    studentId: string,
+    rating: number,
+    reviewText?: string,
+  ) {
+    const [existing] = await db
+      .select()
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.courseId, courseId),
+          eq(courseRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      const [updated] = await db
+        .update(courseRatings)
+        .set({ rating, reviewText, updatedAt: new Date() })
+        .where(eq(courseRatings.id, existing.id))
+        .returning();
+      return updated;
+    }
+
+    const [created] = await db
+      .insert(courseRatings)
+      .values({ courseId, studentId, rating, reviewText })
+      .returning();
+    return created;
+  }
+
+  /**
+   * Get average rating and count for a course.
+   */
+  async getCourseRatingStats(courseId: string) {
+    const [result] = await db
+      .select({
+        avgRating: sql<number>`COALESCE(AVG(${courseRatings.rating}), 0)`,
+        totalRatings: count(),
+      })
+      .from(courseRatings)
+      .where(eq(courseRatings.courseId, courseId));
+
+    return {
+      avgRating: Number(Number(result?.avgRating || 0).toFixed(1)),
+      totalRatings: Number(result?.totalRatings || 0),
+    };
+  }
+
+  /**
+   * Get all ratings for a course, including student name.
+   */
+  async getCourseRatings(courseId: string) {
+    const ratings = await db
+      .select({
+        id: courseRatings.id,
+        rating: courseRatings.rating,
+        reviewText: courseRatings.reviewText,
+        createdAt: courseRatings.createdAt,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+      })
+      .from(courseRatings)
+      .innerJoin(users, eq(courseRatings.studentId, users.id))
+      .where(eq(courseRatings.courseId, courseId))
+      .orderBy(desc(courseRatings.createdAt));
+
+    return ratings.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      reviewText: r.reviewText,
+      createdAt: r.createdAt,
+      studentName: `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() || 'Anonymous',
+    }));
+  }
+
+  /**
+   * Get average ratings for all courses (bulk query for dashboard).
+   */
+  async getAllCourseRatings() {
+    const stats = await db
+      .select({
+        courseId: courseRatings.courseId,
+        avgRating: sql<number>`COALESCE(AVG(${courseRatings.rating}), 0)`,
+        totalRatings: count(),
+      })
+      .from(courseRatings)
+      .groupBy(courseRatings.courseId);
+
+    const map: Record<string, { avgRating: number; totalRatings: number }> = {};
+    for (const s of stats) {
+      map[s.courseId] = {
+        avgRating: Number(Number(s.avgRating || 0).toFixed(1)),
+        totalRatings: Number(s.totalRatings || 0),
+      };
+    }
+    return map;
+  }
+
+  /**
+   * Delete a rating (admin/manager).
+   */
+  async deleteRating(ratingId: string) {
+    const [deleted] = await db
+      .delete(courseRatings)
+      .where(eq(courseRatings.id, ratingId))
+      .returning();
+    return deleted;
   }
 }

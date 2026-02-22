@@ -23,3 +23,4 @@ export { default as ContentReviewContent } from "./ContentReviewContent";
 export { default as AssessmentsContent } from "./AssessmentsContent";
 export { default as ReportsContent } from "./ReportsContent";
 export { default as SettingsContent } from "./SettingsContent";
+export { default as NELCComplianceCenterContent } from "./NELCComplianceCenterContent";

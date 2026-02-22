@@ -1,7 +1,12 @@
 import {
   Controller,
   Get,
+  Post,
+  Patch,
+  Delete,
   Query,
+  Body,
+  Param,
   UseGuards,
   Res,
   StreamableFile,
@@ -127,5 +132,89 @@ export class ReportsController {
     });
 
     return new StreamableFile(result.buffer);
+  }
+
+  // ─── 5. Satisfaction Report ────────────────────────────────
+
+  /**
+   * GET /instructor/reports/satisfaction
+   * Query: ?courseId, ?format=csv|pdf|xlsx
+   */
+  @Get('satisfaction')
+  async getSatisfactionReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+    @Query('format') format?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateSatisfactionReport(
+      user,
+      courseId,
+      format,
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
+  // ─── 6. Instructor Performance Report ──────────────────────
+
+  /**
+   * GET /instructor/reports/instructor-performance
+   * Query: ?format=csv|pdf|xlsx
+   */
+  @Get('instructor-performance')
+  async getInstructorPerformanceReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('format') format?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateInstructorPerformanceReport(
+      user,
+      format,
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
+  // ─── Scheduled Reports CRUD ──────────────────────────────
+
+  @Get('scheduled')
+  async getScheduledReports(@CurrentUser() user: AuthenticatedUser) {
+    return this.reportsService.getScheduledReports(user);
+  }
+
+  @Post('scheduled')
+  async createScheduledReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { reportType: string; format?: string; courseId?: string; frequency: string },
+  ) {
+    return this.reportsService.createScheduledReport(user, body);
+  }
+
+  @Patch('scheduled/:id')
+  async updateScheduledReport(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { enabled?: boolean; frequency?: string; format?: string },
+  ) {
+    return this.reportsService.updateScheduledReport(id, user, body);
+  }
+
+  @Delete('scheduled/:id')
+  async deleteScheduledReport(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.reportsService.deleteScheduledReport(id, user);
   }
 }

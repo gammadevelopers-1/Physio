@@ -5,12 +5,13 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, isNull, sql } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull, sql, count } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
   courseMaterials,
   courses,
+  users,
   materialVariants,
   MATERIAL_STATUS,
 } from '../../database/schema';
@@ -62,7 +63,9 @@ export class MaterialsService {
 
   private isAdmin(user: AuthenticatedUser): boolean {
     return (
-      user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN') ||
+      user.roles.includes('MANAGER')
     );
   }
 
@@ -157,7 +160,7 @@ export class MaterialsService {
         await db
           .update(courseMaterials)
           .set({
-            status: MATERIAL_STATUS.LIVE,
+            status: MATERIAL_STATUS.PENDING_REVIEW,
             wcagStatus: 'skipped',
             processingError: 'Processing pipeline unavailable — uploaded without processing',
             updatedAt: new Date(),
@@ -370,7 +373,7 @@ export class MaterialsService {
         await db
           .update(courseMaterials)
           .set({
-            status: MATERIAL_STATUS.LIVE,
+            status: MATERIAL_STATUS.PENDING_REVIEW,
             wcagStatus: 'skipped',
             processingError: 'Processing pipeline unavailable — uploaded without processing',
             updatedAt: new Date(),
@@ -471,6 +474,119 @@ export class MaterialsService {
       .orderBy(asc(materialVariants.resolution));
 
     return variants;
+  }
+
+  // ─── Content Review (Course Manager) ─────────────────────
+
+  /**
+   * GET /materials/pending-review
+   * Returns all materials with status='pending_review'.
+   * MANAGER/ADMIN see all, INSTRUCTOR sees own.
+   */
+  async findPendingReview(user: AuthenticatedUser) {
+    const conditions: ReturnType<typeof eq>[] = [
+      eq(courseMaterials.status, MATERIAL_STATUS.PENDING_REVIEW),
+    ];
+
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(courseMaterials.uploadedBy, user.id));
+    }
+
+    const data = await db
+      .select({
+        id: courseMaterials.id,
+        courseId: courseMaterials.courseId,
+        moduleId: courseMaterials.moduleId,
+        title: courseMaterials.title,
+        type: courseMaterials.type,
+        fileUrl: courseMaterials.fileUrl,
+        fileSize: courseMaterials.fileSize,
+        mimeType: courseMaterials.mimeType,
+        wcagStatus: courseMaterials.wcagStatus,
+        createdAt: courseMaterials.createdAt,
+        courseTitle: courses.title,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+        instructorEmail: users.email,
+      })
+      .from(courseMaterials)
+      .innerJoin(courses, eq(courseMaterials.courseId, courses.id))
+      .innerJoin(users, eq(courses.instructorId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(courseMaterials.createdAt));
+
+    // Get counts by status for stats
+    const [pendingCount] = await db
+      .select({ count: count() })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.status, MATERIAL_STATUS.PENDING_REVIEW));
+
+    const [approvedCount] = await db
+      .select({ count: count() })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.status, MATERIAL_STATUS.LIVE));
+
+    const [rejectedCount] = await db
+      .select({ count: count() })
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.status, MATERIAL_STATUS.FAILED),
+          sql`${courseMaterials.reviewedBy} IS NOT NULL`,
+        ),
+      );
+
+    return {
+      data,
+      stats: {
+        pending: Number(pendingCount?.count || 0),
+        approved: Number(approvedCount?.count || 0),
+        rejected: Number(rejectedCount?.count || 0),
+      },
+    };
+  }
+
+  /**
+   * PATCH /materials/:id/review
+   * Approve or reject a pending material.
+   */
+  async reviewMaterial(
+    materialId: string,
+    user: AuthenticatedUser,
+    decision: 'approved' | 'rejected',
+    comment?: string,
+  ) {
+    const [material] = await db
+      .select()
+      .from(courseMaterials)
+      .where(eq(courseMaterials.id, materialId))
+      .limit(1);
+
+    if (!material) {
+      throw new NotFoundException('Material not found');
+    }
+
+    if (material.status !== MATERIAL_STATUS.PENDING_REVIEW) {
+      throw new BadRequestException(
+        'Only materials with pending_review status can be reviewed',
+      );
+    }
+
+    const newStatus =
+      decision === 'approved' ? MATERIAL_STATUS.LIVE : MATERIAL_STATUS.FAILED;
+
+    const [updated] = await db
+      .update(courseMaterials)
+      .set({
+        status: newStatus,
+        reviewedBy: user.id,
+        reviewNote: comment || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(courseMaterials.id, materialId))
+      .returning();
+
+    return updated;
   }
 
   // ─── Delete ───────────────────────────────────────────────

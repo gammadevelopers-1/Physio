@@ -33,4 +33,17 @@ export class UpdateUiPrefsDto {
   @IsOptional()
   @IsBoolean()
   showTips?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  highContrast?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  fontSize?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  reduceMotion?: boolean;
 }

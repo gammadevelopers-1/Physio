@@ -27,6 +27,8 @@ import {
   Loader2,
   AlertCircle,
   X,
+  Heart,
+  Award,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -91,6 +93,22 @@ const REPORT_TYPES: ReportTypeConfig[] = [
     icon: UserCheck,
     iconBg: "bg-[#FCE7F3]",
     iconColor: "text-[#EC4899]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+  {
+    id: "satisfaction",
+    icon: Heart,
+    iconBg: "bg-[#FEF3C7]",
+    iconColor: "text-[#F59E0B]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+  {
+    id: "instructor-performance",
+    icon: Award,
+    iconBg: "bg-[#E0E7FF]",
+    iconColor: "text-[#8B5CF6]",
     requiresCourse: false,
     supportsDateRange: false,
   },
@@ -347,6 +365,19 @@ const ReportsContent = () => {
   const [filterCourse, setFilterCourse] = useState("");
   const [filterFormat, setFilterFormat] = useState<ReportFormat>("pdf");
 
+  // Scheduled reports
+  const [scheduledReports, setScheduledReports] = useState<Array<{
+    id: string;
+    reportType: string;
+    format: string;
+    frequency: string;
+    enabled: boolean;
+    lastRunAt: string | null;
+    nextRunAt: string | null;
+  }>>([]);
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ reportType: "attendance", frequency: "weekly", format: "csv" as string });
+
   // Fetch courses
   const fetchCourses = useCallback(async () => {
     setLoadingCourses(true);
@@ -363,6 +394,7 @@ const ReportsContent = () => {
 
   useEffect(() => {
     fetchCourses();
+    reportsApi.getScheduled().then(setScheduledReports).catch(() => {});
   }, [fetchCourses]);
 
   // Quick generate — uses the global filter course + selected format
@@ -384,6 +416,40 @@ const ReportsContent = () => {
       toast.error(message);
     } finally {
       setGeneratingReport(null);
+    }
+  };
+
+  const handleCreateSchedule = async () => {
+    try {
+      const created = await reportsApi.createScheduled({
+        reportType: scheduleForm.reportType,
+        frequency: scheduleForm.frequency,
+        format: scheduleForm.format,
+        courseId: filterCourse || undefined,
+      });
+      setScheduledReports((prev) => [created as unknown as typeof prev[0], ...prev]);
+      setShowScheduleForm(false);
+      toast.success(t("reportsPage.scheduleCreated"));
+    } catch {
+      toast.error(t("reportsPage.scheduleError"));
+    }
+  };
+
+  const handleToggleSchedule = async (id: string, enabled: boolean) => {
+    try {
+      await reportsApi.updateScheduled(id, { enabled });
+      setScheduledReports((prev) => prev.map((s) => s.id === id ? { ...s, enabled } : s));
+    } catch {
+      toast.error(t("reportsPage.scheduleError"));
+    }
+  };
+
+  const handleDeleteSchedule = async (id: string) => {
+    try {
+      await reportsApi.deleteScheduled(id);
+      setScheduledReports((prev) => prev.filter((s) => s.id !== id));
+    } catch {
+      toast.error(t("reportsPage.scheduleError"));
     }
   };
 
@@ -602,6 +668,104 @@ const ReportsContent = () => {
                   ))}
                 </div>
               )}
+
+              {/* Scheduled Reports */}
+              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+                  <h3 className="text-sm font-semibold text-[#1F2937]">
+                    {t("reportsPage.scheduledReports")}
+                  </h3>
+                  <button
+                    onClick={() => setShowScheduleForm(!showScheduleForm)}
+                    className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB]"
+                  >
+                    {showScheduleForm ? t("reportsPage.cancel") : t("reportsPage.addSchedule")}
+                  </button>
+                </div>
+
+                {showScheduleForm && (
+                  <div className="p-4 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <select
+                        value={scheduleForm.reportType}
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, reportType: e.target.value })}
+                        className="flex-1 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm"
+                      >
+                        {REPORT_TYPES.map((rt) => (
+                          <option key={rt.id} value={rt.id}>{t(`reportsPage.${rt.id}Report`)}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={scheduleForm.frequency}
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, frequency: e.target.value })}
+                        className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm"
+                      >
+                        <option value="daily">{t("reportsPage.daily")}</option>
+                        <option value="weekly">{t("reportsPage.weekly")}</option>
+                        <option value="monthly">{t("reportsPage.monthly")}</option>
+                      </select>
+                      <select
+                        value={scheduleForm.format}
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, format: e.target.value })}
+                        className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm"
+                      >
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF</option>
+                        <option value="xlsx">Excel</option>
+                      </select>
+                      <button
+                        onClick={handleCreateSchedule}
+                        className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB]"
+                      >
+                        {t("reportsPage.create")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {scheduledReports.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <p className="text-sm text-[#6B7280]">{t("reportsPage.noSchedules")}</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-[#E5E7EB]">
+                    {scheduledReports.map((sr) => (
+                      <div key={sr.id} className="flex items-center justify-between p-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${sr.enabled ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`} />
+                          <div>
+                            <p className="text-sm font-medium text-[#1F2937]">
+                              {t(`reportsPage.${sr.reportType}Report`)}
+                            </p>
+                            <p className="text-xs text-[#6B7280]">
+                              {sr.frequency} &middot; {sr.format.toUpperCase()}
+                              {sr.nextRunAt && ` &middot; Next: ${new Date(sr.nextRunAt).toLocaleDateString()}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleSchedule(sr.id, !sr.enabled)}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                              sr.enabled ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
+                            }`}
+                          >
+                            <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
+                              sr.enabled ? "translate-x-[18px]" : "translate-x-[3px]"
+                            }`} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSchedule(sr.id)}
+                            className="p-1 text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Audit note */}
               <div className="bg-[#EFF6FF] rounded-xl border border-[#BFDBFE] p-4">

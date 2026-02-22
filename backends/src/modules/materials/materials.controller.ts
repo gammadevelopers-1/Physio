@@ -19,6 +19,7 @@ import { MaterialsService } from './materials.service';
 import { UploadMaterialDto } from './dto/upload-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { ReorderMaterialsDto } from './dto/reorder-materials.dto';
+import { ReviewMaterialDto } from './dto/review-material.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -104,7 +105,7 @@ export class MaterialsController {
    * GET /courses/:id/materials — List materials (?type, ?status, ?moduleId)
    * moduleId can be a UUID (filter by module) or 'none' (unassigned only)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('courses/:id/materials')
   async findAll(
     @Param('id') courseId: string,
@@ -131,12 +132,41 @@ export class MaterialsController {
     return this.materialsService.reorderMaterials(courseId, moduleId, user, dto.materialIds);
   }
 
+  // ─── Content Review Endpoints ────────────────────────────
+
+  /**
+   * GET /materials/pending-review — List all materials awaiting review
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('materials/pending-review')
+  async getPendingReview(@CurrentUser() user: AuthenticatedUser) {
+    return this.materialsService.findPendingReview(user);
+  }
+
+  /**
+   * PATCH /materials/:id/review — Approve or reject a material
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch('materials/:id/review')
+  async reviewMaterial(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ReviewMaterialDto,
+  ) {
+    return this.materialsService.reviewMaterial(
+      materialId,
+      user,
+      dto.decision,
+      dto.comment,
+    );
+  }
+
   // ─── Material-scoped Endpoints ────────────────────────────
 
   /**
    * GET /materials/:id/status — Lightweight polling endpoint
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('materials/:id/status')
   async getStatus(
     @Param('id') materialId: string,
@@ -148,7 +178,7 @@ export class MaterialsController {
   /**
    * GET /materials/:id/variants — Transcoded video variants
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('materials/:id/variants')
   async getVariants(
     @Param('id') materialId: string,

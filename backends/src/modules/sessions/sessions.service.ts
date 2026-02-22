@@ -10,6 +10,8 @@ import { db } from '../../database';
 import {
   sessions,
   courses,
+  users,
+  enrollments,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -21,6 +23,7 @@ import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
+import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 
 @Injectable()
 export class SessionsService {
@@ -166,6 +169,7 @@ export class SessionsService {
       dateRange?: string;
       status?: string;
       courseId?: string;
+      instructorId?: string;
       page?: number;
       limit?: number;
     },
@@ -207,16 +211,71 @@ export class SessionsService {
       conditions.push(eq(sessions.courseId, params.courseId));
     }
 
+    if (params.instructorId) {
+      conditions.push(eq(sessions.instructorId, params.instructorId));
+    }
+
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
+    // Subquery for enrolled count per course
+    const enrolledCountSq = db
+      .select({
+        courseId: enrollments.courseId,
+        enrolledCount: count().as('enrolled_count'),
+      })
+      .from(enrollments)
+      .where(eq(enrollments.status, 'active'))
+      .groupBy(enrollments.courseId)
+      .as('enrolled_sq');
+
     const data = await db
-      .select()
+      .select({
+        id: sessions.id,
+        courseId: sessions.courseId,
+        instructorId: sessions.instructorId,
+        title: sessions.title,
+        type: sessions.type,
+        status: sessions.status,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        venueAddress: sessions.venueAddress,
+        zoomLink: sessions.zoomLink,
+        meetingId: sessions.meetingId,
+        cancelReason: sessions.cancelReason,
+        createdAt: sessions.createdAt,
+        updatedAt: sessions.updatedAt,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+        instructorEmail: users.email,
+        // Capacity fields
+        enrolledCount: enrolledCountSq.enrolledCount,
+        maxEnrollment: courses.maxEnrollment,
+        courseStartDate: courses.startDate,
+        courseEndDate: courses.endDate,
+      })
       .from(sessions)
+      .leftJoin(users, eq(sessions.instructorId, users.id))
+      .leftJoin(courses, eq(sessions.courseId, courses.id))
+      .leftJoin(enrolledCountSq, eq(sessions.courseId, enrolledCountSq.courseId))
       .where(whereClause)
       .orderBy(desc(sessions.scheduledAt))
       .limit(limit)
       .offset(offset);
+
+    // Enrich with NELC capacity
+    const enrichedData = data.map((row) => {
+      const classification = classifyCourse(row.courseStartDate, row.courseEndDate);
+      const nelcLimit = row.maxEnrollment || getNelcMaxEnrollment(classification);
+      const enrolled = Number(row.enrolledCount) || 0;
+      const capacityPercent = nelcLimit > 0 ? Math.round((enrolled / nelcLimit) * 100) : 0;
+      return {
+        ...row,
+        enrolledCount: enrolled,
+        nelcLimit,
+        capacityPercent,
+      };
+    });
 
     const [countResult] = await db
       .select({ count: count() })
@@ -224,7 +283,7 @@ export class SessionsService {
       .where(whereClause);
 
     return {
-      data,
+      data: enrichedData,
       total: countResult?.count || 0,
       page,
       limit,
@@ -539,6 +598,217 @@ export class SessionsService {
     await db.delete(sessions).where(eq(sessions.id, sessionId));
 
     return { message: 'Session deleted successfully' };
+  }
+
+  // ─── Manager Oversight Actions ─────────────────────────────────
+
+  /**
+   * Cancel a session on behalf of an instructor (Manager action).
+   */
+  async cancelOnBehalf(sessionId: string, user: AuthenticatedUser, reason: string) {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
+      throw new BadRequestException(`Cannot cancel a ${session.status} session`);
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.CANCELLED,
+        cancelReason: `[Manager] ${reason}`,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.SESSION_CANCELLED,
+      entityType: 'session',
+      entityId: updated.id,
+      userId: user.id,
+      metadata: { sessionId: updated.id, courseId: updated.courseId, cancelReason: reason, cancelledBy: 'manager' },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Reschedule a session (Manager action).
+   */
+  async reschedule(sessionId: string, user: AuthenticatedUser, newDate: string, newDuration?: number) {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
+      throw new BadRequestException(`Cannot reschedule a ${session.status} session`);
+    }
+
+    const updateData: Record<string, unknown> = {
+      scheduledAt: new Date(newDate),
+      updatedAt: new Date(),
+    };
+    if (newDuration) {
+      updateData.durationMinutes = newDuration;
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set(updateData)
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Assign a substitute instructor (Manager action).
+   */
+  async assignSubstitute(sessionId: string, user: AuthenticatedUser, newInstructorId: string) {
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
+      throw new BadRequestException(`Cannot reassign a ${session.status} session`);
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set({
+        instructorId: newInstructorId,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    return updated;
+  }
+
+  // ─── Conflict Detection ──────────────────────────────────────
+
+  /**
+   * Detect scheduling conflicts: sessions that overlap for the same instructor.
+   */
+  async detectConflicts() {
+    // Get all non-cancelled scheduled sessions
+    const allSessions = await db
+      .select({
+        id: sessions.id,
+        title: sessions.title,
+        instructorId: sessions.instructorId,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+      })
+      .from(sessions)
+      .leftJoin(users, eq(sessions.instructorId, users.id))
+      .where(
+        and(
+          sql`${sessions.status} IN ('scheduled', 'live')`,
+          sql`${sessions.instructorId} IS NOT NULL`,
+        ),
+      )
+      .orderBy(asc(sessions.scheduledAt));
+
+    const conflicts: Array<{
+      sessionA: { id: string; title: string; scheduledAt: Date; durationMinutes: number };
+      sessionB: { id: string; title: string; scheduledAt: Date; durationMinutes: number };
+      instructorName: string;
+      instructorId: string;
+    }> = [];
+
+    // Group by instructorId
+    const byInstructor = new Map<string, typeof allSessions>();
+    for (const s of allSessions) {
+      if (!s.instructorId) continue;
+      if (!byInstructor.has(s.instructorId)) {
+        byInstructor.set(s.instructorId, []);
+      }
+      byInstructor.get(s.instructorId)!.push(s);
+    }
+
+    // Check for time overlaps within each instructor's sessions
+    for (const [instructorId, instrSessions] of byInstructor) {
+      for (let i = 0; i < instrSessions.length; i++) {
+        for (let j = i + 1; j < instrSessions.length; j++) {
+          const a = instrSessions[i];
+          const b = instrSessions[j];
+
+          const aStart = new Date(a.scheduledAt).getTime();
+          const aEnd = aStart + (a.durationMinutes || 60) * 60000;
+          const bStart = new Date(b.scheduledAt).getTime();
+          const bEnd = bStart + (b.durationMinutes || 60) * 60000;
+
+          // Overlap if one starts before the other ends
+          if (aStart < bEnd && bStart < aEnd) {
+            conflicts.push({
+              sessionA: { id: a.id, title: a.title, scheduledAt: a.scheduledAt, durationMinutes: a.durationMinutes },
+              sessionB: { id: b.id, title: b.title, scheduledAt: b.scheduledAt, durationMinutes: b.durationMinutes },
+              instructorName: `${a.instructorFirstName || ''} ${a.instructorLastName || ''}`.trim(),
+              instructorId,
+            });
+          }
+        }
+      }
+    }
+
+    return conflicts;
+  }
+
+  /**
+   * Get instructor load for a given week.
+   * Returns sessions count and total hours for the instructor.
+   */
+  async getInstructorLoad(instructorId: string, weekStart?: string) {
+    const start = weekStart
+      ? new Date(weekStart)
+      : (() => {
+          const d = new Date();
+          d.setDate(d.getDate() - d.getDay()); // start of current week (Sunday)
+          d.setHours(0, 0, 0, 0);
+          return d;
+        })();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+
+    const result = await db
+      .select({
+        sessionsCount: count(),
+        totalMinutes: sql<number>`COALESCE(SUM(${sessions.durationMinutes}), 0)`,
+      })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.instructorId, instructorId),
+          gte(sessions.scheduledAt, start),
+          lte(sessions.scheduledAt, end),
+          sql`${sessions.status} IN ('scheduled', 'live', 'completed')`,
+        ),
+      );
+
+    return {
+      instructorId,
+      weekStart: start.toISOString(),
+      sessionsCount: result[0]?.sessionsCount || 0,
+      hoursTotal: Math.round((Number(result[0]?.totalMinutes) || 0) / 60 * 10) / 10,
+    };
   }
 
   // ─── Helpers ────────────────────────────────────────────────

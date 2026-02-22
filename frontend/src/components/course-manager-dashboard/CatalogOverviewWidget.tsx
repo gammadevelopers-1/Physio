@@ -80,6 +80,57 @@ const CatalogOverviewWidget = ({
 
   const categories = Array.from(new Set(courses.map((c) => c.category)));
 
+  // Chart data
+  const statusCounts = {
+    active: courses.filter((c) => c.status === "active").length,
+    preparing: courses.filter((c) => c.status === "preparing").length,
+    completed: courses.filter((c) => c.status === "completed").length,
+    archived: courses.filter((c) => c.status === "archived").length,
+  };
+
+  const categoryEnrollment = categories.map((cat) => {
+    const catCourses = courses.filter((c) => c.category === cat);
+    return {
+      category: cat,
+      enrolled: catCourses.reduce((sum, c) => sum + c.enrolled, 0),
+      capacity: catCourses.reduce((sum, c) => sum + c.capacity, 0),
+    };
+  });
+
+  const maxEnrollment = Math.max(...categoryEnrollment.map((c) => c.capacity), 1);
+
+  // Donut chart helpers
+  const donutData = [
+    { label: t("catalog.active"), count: statusCounts.active, color: "#22C55E" },
+    { label: t("catalog.preparing"), count: statusCounts.preparing, color: "#F59E0B" },
+    { label: t("catalog.completed"), count: statusCounts.completed, color: "#3B82F6" },
+    { label: t("catalog.archived"), count: statusCounts.archived, color: "#9CA3AF" },
+  ].filter((d) => d.count > 0);
+
+  const total = donutData.reduce((sum, d) => sum + d.count, 0);
+
+  const donutSegments = (() => {
+    let cumulativePercent = 0;
+    return donutData.map((d) => {
+      const percent = total > 0 ? d.count / total : 0;
+      const startAngle = cumulativePercent * 2 * Math.PI - Math.PI / 2;
+      cumulativePercent += percent;
+      const endAngle = cumulativePercent * 2 * Math.PI - Math.PI / 2;
+      const largeArc = percent > 0.5 ? 1 : 0;
+      const r = 40;
+      const cx = 50;
+      const cy = 50;
+      const x1 = cx + r * Math.cos(startAngle);
+      const y1 = cy + r * Math.sin(startAngle);
+      const x2 = cx + r * Math.cos(endAngle);
+      const y2 = cy + r * Math.sin(endAngle);
+      return {
+        ...d,
+        path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
+      };
+    });
+  })();
+
   const statusColors = {
     active:
       "bg-[var(--functional-green-400)]/10 text-[var(--functional-green-600)]",
@@ -166,6 +217,73 @@ const CatalogOverviewWidget = ({
           />
         </Link>
       </div>
+
+      {/* Charts Section */}
+      {courses.length > 0 && (
+        <div className="px-4 sm:px-5 py-4 border-b border-[#E5E7EB]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Donut Chart — Status Distribution */}
+            <div>
+              <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+                {t("catalog.statusDistribution")}
+              </p>
+              <div className="flex items-center gap-6">
+                <svg viewBox="0 0 100 100" className="w-24 h-24 flex-shrink-0">
+                  {donutSegments.length === 1 ? (
+                    <circle cx="50" cy="50" r="40" fill={donutSegments[0].color} />
+                  ) : (
+                    donutSegments.map((seg, i) => (
+                      <path key={i} d={seg.path} fill={seg.color} />
+                    ))
+                  )}
+                  <circle cx="50" cy="50" r="24" fill="white" />
+                  <text x="50" y="50" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold" fill="#1F2937" fontSize="14">
+                    {total}
+                  </text>
+                </svg>
+                <div className="flex flex-col gap-1.5">
+                  {donutData.map((d, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                      <span className="text-xs text-[#374151]">{d.label}</span>
+                      <span className="text-xs font-medium text-[#1F2937]">{d.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bar Chart — Enrollment by Category */}
+            <div>
+              <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
+                {t("catalog.enrollmentByCategory")}
+              </p>
+              <div className="space-y-2">
+                {categoryEnrollment.slice(0, 5).map((cat, i) => (
+                  <div key={i}>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-xs text-[#374151] truncate max-w-[120px]">{cat.category}</span>
+                      <span className="text-xs font-medium text-[#1F2937]">{cat.enrolled}/{cat.capacity}</span>
+                    </div>
+                    <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${(cat.capacity / maxEnrollment) * 100}%`,
+                          background: `linear-gradient(90deg, #3B82F6 ${cat.capacity > 0 ? (cat.enrolled / cat.capacity) * 100 : 0}%, #BFDBFE ${cat.capacity > 0 ? (cat.enrolled / cat.capacity) * 100 : 0}%)`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+                {categoryEnrollment.length === 0 && (
+                  <p className="text-xs text-[#9CA3AF]">No data</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="px-4 sm:px-5 py-4 border-b border-[#E5E7EB]">

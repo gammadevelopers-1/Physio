@@ -2291,6 +2291,10 @@
       "enrollmentDesc": "Track student enrollment status, progress, and last activity across courses.",
       "completionReport": "Completion Report",
       "completionDesc": "View completed enrollments with certificate request status for each student.",
+      "satisfactionReport": "Satisfaction Report",
+      "satisfactionDesc": "View course satisfaction metrics including completion rates, attendance, and assessment scores.",
+      "instructor-performanceReport": "Instructor Performance Report",
+      "instructor-performanceDesc": "Compare instructor metrics including courses, students, completion rates, and attendance.",
       "exportReport": "Export Report",
       "selectCourse": "Course",
       "chooseCourse": "Select a course...",
@@ -2498,7 +2502,9 @@
       "changeStatus": "Change Status",
       "statusChanged": "Course status updated successfully",
       "statusFailed": "Failed to update course status",
-      "manageCourse": "Manage Course"
+      "manageCourse": "Manage Course",
+      "statusDistribution": "Status Distribution",
+      "enrollmentByCategory": "Enrollment by Category"
     },
     "schedules": {
       "title": "Schedules & Sessions",
@@ -2539,7 +2545,21 @@
       "compliant": "NELC Compliant",
       "passed": "Passed",
       "review": "Review",
-      "failed": "Failed"
+      "failed": "Failed",
+      "coursesTab": "Courses",
+      "virtualClassesTab": "Virtual Classes",
+      "noVirtualClasses": "No virtual classes found",
+      "noVirtualClassesDesc": "No Zoom or hybrid sessions exist yet.",
+      "adjustFilter": "Try adjusting your search or filter.",
+      "vcSession": "Session",
+      "vcCourse": "Course",
+      "vcInstructor": "Instructor",
+      "vcType": "Type",
+      "vcZoom": "Zoom Config",
+      "vcStatus": "Status",
+      "vcLink": "Link",
+      "vcRecording": "Synced",
+      "vcComplianceChecks": "Compliance Checks"
     },
     "courseStats": {
       "title": "Course Statistics",
@@ -2851,7 +2871,51 @@
         "view": "View",
         "edit": "Edit",
         "analytics": "Analytics",
-        "duplicate": "Duplicate"
+        "duplicate": "Duplicate",
+        "configure": "Configure"
+      },
+      "proctoring": {
+        "title": "Proctoring Settings",
+        "enabled": "Proctoring Enabled",
+        "webcamRequired": "Webcam Required",
+        "browserLockdown": "Browser Lockdown",
+        "tabSwitchAlert": "Tab Switch Alert",
+        "timeLimitEnforced": "Time Limit Enforced"
+      },
+      "retake": {
+        "title": "Retake Rules",
+        "maxRetakes": "Max Retakes",
+        "coolingHours": "Cooling Period (hours)",
+        "scorePolicy": "Score Policy",
+        "policies": {
+          "highest": "Highest Score",
+          "latest": "Latest Score",
+          "average": "Average Score"
+        },
+        "unlimited": "Unlimited"
+      },
+      "settings": {
+        "save": "Save Settings",
+        "saving": "Saving...",
+        "saved": "Settings saved successfully",
+        "error": "Failed to save settings"
+      },
+      "tabs": {
+        "assessments": "Assessments",
+        "blueprint": "Blueprint Coverage"
+      },
+      "blueprint": {
+        "selectCourse": "Select a course...",
+        "coverage": "Coverage",
+        "coveredModules": "Covered Modules",
+        "gaps": "Gaps",
+        "module": "Module",
+        "linked": "Linked Assessments",
+        "questions": "questions",
+        "unlinked": "Unlinked Assessments",
+        "unlinkedDesc": "These assessments are not linked to any module",
+        "noCourse": "Select a course to view assessment blueprint coverage",
+        "noModules": "This course has no modules yet"
       }
     },
     "reportsPage": {
@@ -2867,6 +2931,10 @@
       "enrollmentDesc": "Track student enrollment status, progress, and last activity across courses.",
       "completionReport": "Completion Report",
       "completionDesc": "View completed enrollments with certificate request status for each student.",
+      "satisfactionReport": "Satisfaction Report",
+      "satisfactionDesc": "View course satisfaction metrics including completion rates, attendance, and assessment scores.",
+      "instructor-performanceReport": "Instructor Performance Report",
+      "instructor-performanceDesc": "Compare instructor metrics including courses, students, completion rates, and attendance.",
       "exportReport": "Export Report",
       "selectCourse": "Course",
       "chooseCourse": "Select a course...",
@@ -2890,7 +2958,17 @@
       "loadError": "Failed to load courses.",
       "retry": "Retry",
       "auditTitle": "Audit Traceability",
-      "auditDesc": "Each exported report includes a timestamp, applied filters, and manager name for audit compliance."
+      "auditDesc": "Each exported report includes a timestamp, applied filters, and manager name for audit compliance.",
+      "scheduledReports": "Scheduled Reports",
+      "addSchedule": "Add Schedule",
+      "noSchedules": "No scheduled reports yet. Create one to automate recurring report generation.",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "create": "Create",
+      "cancel": "Cancel",
+      "scheduleCreated": "Scheduled report created successfully",
+      "scheduleError": "Failed to manage scheduled report"
     },
     "settingsPage": {
       "title": "Settings",
@@ -2903,6 +2981,7 @@
         "notifications": "Notifications",
         "security": "Security",
         "preferences": "Preferences",
+        "policies": "Policies",
         "integrations": "Integrations"
       },
       "profile": {
@@ -2939,7 +3018,9 @@
         "complianceAlert": "NELC compliance alerts",
         "newSubmission": "New content submission",
         "approvalRequired": "Approval required notifications",
-        "systemUpdates": "System updates"
+        "systemUpdates": "System updates",
+        "saved": "Notification preferences saved successfully",
+        "error": "Failed to save notification preferences"
       },
       "security": {
         "title": "Security Settings",
@@ -2969,7 +3050,38 @@
         "compactModeDesc": "Use smaller spacing and condensed layouts",
         "showTips": "Show Tips",
         "showTipsDesc": "Display helpful tips and suggestions",
-        "savePreferences": "Save Preferences"
+        "accessibility": "Accessibility",
+        "highContrast": "High Contrast",
+        "highContrastDesc": "Increase contrast for better visibility",
+        "fontSize": "Font Size",
+        "fontSizeDesc": "Adjust the default text size",
+        "fontSmall": "Small",
+        "fontMedium": "Medium",
+        "fontLarge": "Large",
+        "reduceMotion": "Reduce Motion",
+        "reduceMotionDesc": "Minimize animations and transitions",
+        "savePreferences": "Save Preferences",
+        "saved": "Preferences saved successfully",
+        "error": "Failed to save preferences"
+      },
+      "policies": {
+        "title": "Default Policies",
+        "description": "Configure platform-wide default policies for courses, sessions, and compliance.",
+        "enrollmentLimit": "Default Enrollment Limit",
+        "enrollmentLimitDesc": "Maximum students allowed per course by default",
+        "cancellationNotice": "Cancellation Notice (hours)",
+        "cancellationNoticeDesc": "Minimum notice period for session cancellations",
+        "maxInstructorHours": "Max Instructor Weekly Hours",
+        "maxInstructorHoursDesc": "Maximum teaching hours per instructor per week",
+        "requireContentReview": "Require Content Review",
+        "requireContentReviewDesc": "New content must be reviewed before going live",
+        "autoApproveCertificates": "Auto-Approve Certificates",
+        "autoApproveCertificatesDesc": "Automatically issue certificates upon course completion",
+        "enforceNelcCompliance": "Enforce NELC Compliance",
+        "enforceNelcComplianceDesc": "Enforce NELC compliance checks for all courses",
+        "save": "Save Policies",
+        "saved": "Policies saved successfully",
+        "error": "Failed to save policies"
       },
       "integrations": {
         "title": "Integrations",

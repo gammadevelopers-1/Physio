@@ -15,6 +15,7 @@ import {
   submissions,
   certificateRequests,
   users,
+  scheduledReports,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
@@ -45,7 +46,9 @@ export class ReportsService {
 
   private isAdmin(user: AuthenticatedUser): boolean {
     return (
-      user.roles.includes('ADMIN') || user.roles.includes('SUPER_ADMIN')
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN') ||
+      user.roles.includes('MANAGER')
     );
   }
 
@@ -471,6 +474,344 @@ export class ReportsService {
     ]);
 
     return this.formatReport('Completion Report', headers, rows, format, metadata);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── Satisfaction Report ──────────────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async generateSatisfactionReport(
+    user: AuthenticatedUser,
+    courseId?: string,
+    format?: string,
+  ): Promise<ReportResult> {
+    const fmt = this.validateFormat(format);
+    const courseIds = await this.resolveCourseIds(user, courseId);
+    if (courseIds.length === 0) {
+      return this.formatReport('Satisfaction Report', [], [], fmt);
+    }
+
+    const metadata = await this.buildMetadata(user, courseId);
+
+    // Satisfaction = per-course completion rate, attendance rate, and avg assessment score
+    const courseRows = await db
+      .select({
+        courseId: courses.id,
+        title: courses.title,
+      })
+      .from(courses)
+      .where(inArray(courses.id, courseIds));
+
+    const headers = [
+      'Course',
+      'Total Enrolled',
+      'Completed',
+      'Completion Rate',
+      'Avg Attendance',
+      'Avg Assessment Score',
+    ];
+
+    const rows: string[][] = [];
+
+    for (const course of courseRows) {
+      // Enrollment stats
+      const [enrollStats] = await db
+        .select({
+          total: count(),
+          completed: sql<number>`COUNT(CASE WHEN ${enrollments.status} = 'completed' OR ${enrollments.progress} = 100 THEN 1 END)`,
+        })
+        .from(enrollments)
+        .where(eq(enrollments.courseId, course.courseId));
+
+      const totalEnrolled = Number(enrollStats?.total || 0);
+      const completedCount = Number(enrollStats?.completed || 0);
+      const completionRate = totalEnrolled > 0 ? Math.round((completedCount / totalEnrolled) * 100) : 0;
+
+      // Attendance rate
+      const [attStats] = await db
+        .select({
+          total: count(),
+          present: sql<number>`COUNT(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 END)`,
+        })
+        .from(attendance)
+        .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+        .where(eq(sessions.courseId, course.courseId));
+
+      const totalAtt = Number(attStats?.total || 0);
+      const presentAtt = Number(attStats?.present || 0);
+      const attRate = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
+
+      // Avg assessment score
+      const [scoreStats] = await db
+        .select({
+          avgScore: sql<number>`ROUND(AVG(${submissions.score}::numeric), 1)`,
+        })
+        .from(submissions)
+        .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
+        .where(eq(assessments.courseId, course.courseId));
+
+      rows.push([
+        course.title,
+        String(totalEnrolled),
+        String(completedCount),
+        `${completionRate}%`,
+        `${attRate}%`,
+        scoreStats?.avgScore != null ? String(scoreStats.avgScore) : 'N/A',
+      ]);
+    }
+
+    return this.formatReport('Satisfaction Report', headers, rows, fmt, metadata);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── Instructor Performance Report ────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async generateInstructorPerformanceReport(
+    user: AuthenticatedUser,
+    format?: string,
+  ): Promise<ReportResult> {
+    const fmt = this.validateFormat(format);
+
+    if (!this.isAdmin(user)) {
+      // Non-admins can only see their own performance
+      return this.generateSingleInstructorReport(user.id, fmt, user);
+    }
+
+    // Admin/Manager: all instructors
+    const { userRoles, roles } = await import('../../database/schema');
+
+    const instructors = await db
+      .selectDistinct({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(eq(roles.name, 'INSTRUCTOR'));
+
+    const headers = [
+      'Instructor',
+      'Email',
+      'Courses',
+      'Total Students',
+      'Avg Completion Rate',
+      'Avg Attendance Rate',
+      'Sessions This Month',
+    ];
+
+    const rows: string[][] = [];
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    for (const inst of instructors) {
+      const name = `${inst.firstName || ''} ${inst.lastName || ''}`.trim() || 'Unknown';
+
+      // Courses count
+      const [courseStats] = await db
+        .select({ count: count() })
+        .from(courses)
+        .where(eq(courses.instructorId, inst.id));
+
+      // Students count
+      const [studentStats] = await db
+        .select({ count: sql<number>`COUNT(DISTINCT ${enrollments.studentId})` })
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(eq(courses.instructorId, inst.id));
+
+      // Avg completion rate
+      const [compStats] = await db
+        .select({
+          total: count(),
+          completed: sql<number>`COUNT(CASE WHEN ${enrollments.status} = 'completed' OR ${enrollments.progress} = 100 THEN 1 END)`,
+        })
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(eq(courses.instructorId, inst.id));
+
+      const compTotal = Number(compStats?.total || 0);
+      const compDone = Number(compStats?.completed || 0);
+      const compRate = compTotal > 0 ? Math.round((compDone / compTotal) * 100) : 0;
+
+      // Avg attendance rate
+      const [attStats] = await db
+        .select({
+          total: count(),
+          present: sql<number>`COUNT(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 END)`,
+        })
+        .from(attendance)
+        .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+        .innerJoin(courses, eq(sessions.courseId, courses.id))
+        .where(eq(courses.instructorId, inst.id));
+
+      const attTotal = Number(attStats?.total || 0);
+      const attPresent = Number(attStats?.present || 0);
+      const attRate = attTotal > 0 ? Math.round((attPresent / attTotal) * 100) : 0;
+
+      // Sessions this month
+      const [sessStats] = await db
+        .select({ count: count() })
+        .from(sessions)
+        .innerJoin(courses, eq(sessions.courseId, courses.id))
+        .where(
+          and(
+            eq(courses.instructorId, inst.id),
+            gte(sessions.scheduledAt, monthStart),
+          ),
+        );
+
+      rows.push([
+        name,
+        inst.email,
+        String(courseStats?.count || 0),
+        String(studentStats?.count || 0),
+        `${compRate}%`,
+        `${attRate}%`,
+        String(sessStats?.count || 0),
+      ]);
+    }
+
+    const metadata: ReportMetadata = { filters: 'All Instructors' };
+    return this.formatReport('Instructor Performance Report', headers, rows, fmt, metadata);
+  }
+
+  private async generateSingleInstructorReport(
+    instructorId: string,
+    format: ReportFormat,
+    user: AuthenticatedUser,
+  ): Promise<ReportResult> {
+    const metadata = await this.buildMetadata(user);
+    // Same logic but for a single instructor — reuse the loop body
+    const [inst] = await db
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .from(users)
+      .where(eq(users.id, instructorId))
+      .limit(1);
+
+    if (!inst) {
+      return this.formatReport('Instructor Performance Report', [], [], format, metadata);
+    }
+
+    const name = `${inst.firstName || ''} ${inst.lastName || ''}`.trim() || 'Unknown';
+
+    const headers = ['Metric', 'Value'];
+
+    const [courseStats] = await db.select({ count: count() }).from(courses).where(eq(courses.instructorId, inst.id));
+    const [studentStats] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${enrollments.studentId})` })
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .where(eq(courses.instructorId, inst.id));
+
+    const rows: string[][] = [
+      ['Instructor', name],
+      ['Email', inst.email],
+      ['Courses', String(courseStats?.count || 0)],
+      ['Total Students', String(studentStats?.count || 0)],
+    ];
+
+    return this.formatReport('Instructor Performance Report', headers, rows, format, metadata);
+  }
+
+  private async buildMetadata(user: AuthenticatedUser, courseId?: string): Promise<ReportMetadata> {
+    const instructorName = await this.getInstructorName(user.id);
+    const filters = courseId ? `Course: ${await this.getCourseName(courseId)}` : 'All Courses';
+    return { instructorName, filters };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── Scheduled Reports CRUD ───────────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async getScheduledReports(user: AuthenticatedUser) {
+    return db
+      .select()
+      .from(scheduledReports)
+      .where(eq(scheduledReports.userId, user.id))
+      .orderBy(desc(scheduledReports.createdAt));
+  }
+
+  async createScheduledReport(
+    user: AuthenticatedUser,
+    data: {
+      reportType: string;
+      format?: string;
+      courseId?: string;
+      frequency: string;
+    },
+  ) {
+    const nextRunAt = this.calculateNextRunAt(data.frequency);
+
+    const [created] = await db
+      .insert(scheduledReports)
+      .values({
+        userId: user.id,
+        reportType: data.reportType,
+        format: data.format || 'csv',
+        courseId: data.courseId || null,
+        frequency: data.frequency,
+        enabled: true,
+        nextRunAt,
+      })
+      .returning();
+
+    return created;
+  }
+
+  async updateScheduledReport(
+    id: string,
+    user: AuthenticatedUser,
+    data: { enabled?: boolean; frequency?: string; format?: string },
+  ) {
+    const [existing] = await db
+      .select()
+      .from(scheduledReports)
+      .where(and(eq(scheduledReports.id, id), eq(scheduledReports.userId, user.id)))
+      .limit(1);
+
+    if (!existing) throw new NotFoundException('Scheduled report not found');
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (data.enabled !== undefined) updates.enabled = data.enabled;
+    if (data.frequency) {
+      updates.frequency = data.frequency;
+      updates.nextRunAt = this.calculateNextRunAt(data.frequency);
+    }
+    if (data.format) updates.format = data.format;
+
+    const [updated] = await db
+      .update(scheduledReports)
+      .set(updates)
+      .where(eq(scheduledReports.id, id))
+      .returning();
+
+    return updated;
+  }
+
+  async deleteScheduledReport(id: string, user: AuthenticatedUser) {
+    const [existing] = await db
+      .select()
+      .from(scheduledReports)
+      .where(and(eq(scheduledReports.id, id), eq(scheduledReports.userId, user.id)))
+      .limit(1);
+
+    if (!existing) throw new NotFoundException('Scheduled report not found');
+
+    await db.delete(scheduledReports).where(eq(scheduledReports.id, id));
+    return { message: 'Scheduled report deleted' };
+  }
+
+  private calculateNextRunAt(frequency: string): Date {
+    const now = new Date();
+    switch (frequency) {
+      case 'daily':
+        return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      case 'weekly':
+        return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      case 'monthly':
+        return new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+      default:
+        return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════

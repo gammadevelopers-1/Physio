@@ -8,6 +8,7 @@ interface SessionsParams {
   dateRange?: string;
   status?: string;
   courseId?: string;
+  instructorId?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -57,6 +58,7 @@ export function useCourseManagerSessions(
         dateRange: params.dateRange,
         status: params.status,
         courseId: params.courseId,
+        instructorId: params.instructorId,
         page: params.page,
         limit: params.limit,
       });
@@ -84,6 +86,7 @@ export function useCourseManagerSessions(
     params.dateRange,
     params.status,
     params.courseId,
+    params.instructorId,
     params.page,
     params.limit,
     debouncedSearch,

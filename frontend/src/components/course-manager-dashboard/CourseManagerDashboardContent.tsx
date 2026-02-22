@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Loader2, AlertTriangle, RefreshCw } from "lucide-react";
@@ -17,18 +17,35 @@ import UpcomingSessionsWidget from "./UpcomingSessionsWidget";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerDashboard } from "@/hooks/useCourseManagerDashboard";
 import { courseManagerApi, ApiError } from "@/lib/api";
+import { useContentReview } from "@/hooks/useContentReview";
+import { useNELCCompliance } from "@/hooks/useNELCCompliance";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const manager = useManagerProfile();
   const { summary, courses, instructors, loading, error, refetch, silentRefetch } =
     useCourseManagerDashboard();
+  const { items: reviewItems, stats: reviewStats, approve: approveReview, reject: rejectReview } =
+    useContentReview();
+  const { overallPercentage: nelcScore } = useNELCCompliance();
+  const [ratingsMap, setRatingsMap] = useState<Record<string, { avgRating: number; totalRatings: number }>>({});
+
+  useEffect(() => {
+    courseManagerApi.getAllCourseRatings().then(setRatingsMap).catch(() => {});
+  }, []);
 
   // Derive KPI data from real courses
+  const activeCoursesList = courses.filter((c) => c.status === "active");
   const kpiData = {
     totalCourses: courses.length,
     totalEnrollments: courses.reduce((sum, c) => sum + c.enrolledCount, 0),
-    pendingReviews: 0,
+    pendingReviews: reviewStats.pending,
+    avgCompletionRate:
+      activeCoursesList.length > 0
+        ? Math.round(activeCoursesList.reduce((sum, c) => sum + c.completionRate, 0) / activeCoursesList.length)
+        : 0,
+    activeInstructors: instructors.length,
+    nelcScore,
   };
 
   // Derive course stats from real data
@@ -64,7 +81,7 @@ const CourseManagerDashboardContent = () => {
     enrolled: c.enrolledCount,
     capacity: c.maxEnrollment || 0,
     completionRate: c.completionRate > 0 ? c.completionRate : null,
-    rating: null,
+    rating: ratingsMap[c.id]?.avgRating ?? null,
   }));
 
   // Handle status change from CatalogOverviewWidget
@@ -183,9 +200,28 @@ const CourseManagerDashboardContent = () => {
 
               <div className="mb-6">
                 <ContentReviewQueue
-                  items={[]}
-                  onApprove={() => {}}
-                  onReject={() => {}}
+                  items={reviewItems.slice(0, 3).map((item) => ({
+                    id: item.id,
+                    type: item.type as "video" | "pdf" | "quiz",
+                    title: item.title,
+                    courseName: item.courseTitle,
+                    submittedBy: `${item.instructorFirstName || ""} ${item.instructorLastName || ""}`.trim() || item.instructorEmail,
+                    checklist: [
+                      { id: "wcag", label: "WCAG", passed: item.wcagStatus === "pass" || item.wcagStatus === "skipped" },
+                    ],
+                  }))}
+                  onApprove={async (id) => {
+                    try {
+                      await approveReview(id);
+                      toast.success("Content approved");
+                    } catch { toast.error("Failed to approve"); }
+                  }}
+                  onReject={async (id) => {
+                    try {
+                      await rejectReview(id);
+                      toast.success("Content rejected");
+                    } catch { toast.error("Failed to reject"); }
+                  }}
                   onPreview={() => {}}
                 />
               </div>

@@ -99,6 +99,16 @@ export interface DashboardTabAssessment {
   avgScore: number;
 }
 
+export interface DashboardPendingSubmission {
+  id: string;
+  studentName: string;
+  assessmentTitle: string;
+  courseName: string;
+  submittedAt: string;
+  daysOverdue: number;
+  assessmentId: string;
+}
+
 export interface DashboardSummaryResponse {
   kpis: DashboardKPIs;
   todaySessions: DashboardSession[];
@@ -112,6 +122,7 @@ export interface DashboardSummaryResponse {
   questionAnalysis: DashboardQuestionAnalysis[];
   materials: DashboardMaterial[];
   tabAssessments: DashboardTabAssessment[];
+  pendingSubmissions: DashboardPendingSubmission[];
 }
 
 // ─── Course Enrollments API Response ────────────────────────
@@ -558,5 +569,14 @@ export interface InterventionResponse {
   type: InterventionType;
   message: string | null;
   metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface InterventionRecord {
+  id: string;
+  type: InterventionType;
+  message: string | null;
+  instructorName: string;
+  courseName: string | null;
   createdAt: string;
 }

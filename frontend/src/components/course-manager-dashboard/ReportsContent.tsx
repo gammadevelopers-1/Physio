@@ -30,6 +30,7 @@ import {
   Heart,
   Award,
   Shield,
+  Layers,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -94,6 +95,14 @@ const REPORT_TYPES: ReportTypeConfig[] = [
     icon: UserCheck,
     iconBg: "bg-[#FCE7F3]",
     iconColor: "text-[#EC4899]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+  {
+    id: "course-catalog",
+    icon: Layers,
+    iconBg: "bg-[#FEF9C3]",
+    iconColor: "text-[#CA8A04]",
     requiresCourse: false,
     supportsDateRange: false,
   },

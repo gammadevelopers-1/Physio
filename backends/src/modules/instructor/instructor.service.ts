@@ -415,6 +415,55 @@ export class InstructorService {
       }));
     }
 
+    // ─── Pending Submissions (Assessments Needing Attention) ──
+    let pendingSubmissions: {
+      id: string;
+      studentName: string;
+      assessmentTitle: string;
+      courseName: string;
+      submittedAt: string;
+      daysOverdue: number;
+      assessmentId: string;
+    }[] = [];
+
+    if (courseIds.length > 0) {
+      const rawPending = await db
+        .select({
+          id: submissions.id,
+          assessmentId: submissions.assessmentId,
+          submittedAt: submissions.submittedAt,
+          studentFirstName: users.firstName,
+          studentLastName: users.lastName,
+          assessmentTitle: assessments.title,
+          courseTitle: courses.title,
+        })
+        .from(submissions)
+        .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
+        .innerJoin(courses, eq(assessments.courseId, courses.id))
+        .innerJoin(users, eq(submissions.studentId, users.id))
+        .where(
+          and(
+            inArray(assessments.courseId, courseIds),
+            eq(submissions.status, 'submitted'),
+          ),
+        )
+        .orderBy(asc(submissions.submittedAt))
+        .limit(10);
+
+      const now = Date.now();
+      pendingSubmissions = rawPending.map((r) => ({
+        id: r.id,
+        studentName: `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() || 'Unknown',
+        assessmentTitle: r.assessmentTitle,
+        courseName: r.courseTitle,
+        submittedAt: r.submittedAt?.toISOString() || new Date().toISOString(),
+        daysOverdue: r.submittedAt
+          ? Math.max(0, Math.floor((now - r.submittedAt.getTime()) / 86400000))
+          : 0,
+        assessmentId: r.assessmentId,
+      }));
+    }
+
     // ─── Assessments for Assessments tab ────────────────────
     let tabAssessments: {
       id: string;
@@ -498,6 +547,7 @@ export class InstructorService {
       questionAnalysis,
       materials,
       tabAssessments,
+      pendingSubmissions,
     };
   }
 
@@ -1214,6 +1264,72 @@ export class InstructorService {
       .returning();
 
     return intervention;
+  }
+
+  /**
+   * GET /instructor/students/:studentId/interventions
+   * Returns the intervention log for a given student.
+   */
+  async getStudentInterventions(user: AuthenticatedUser, studentId: string) {
+    // Verify instructor has access to student's courses
+    const courseConditions = this.isAdmin(user)
+      ? []
+      : [eq(courses.instructorId, user.id)];
+
+    const instructorCourseIds = (
+      await db
+        .select({ id: courses.id })
+        .from(courses)
+        .where(courseConditions.length > 0 ? and(...courseConditions) : undefined)
+    ).map((c) => c.id);
+
+    if (!this.isAdmin(user) && instructorCourseIds.length === 0) {
+      return [];
+    }
+
+    // Build where conditions
+    const conditions = [eq(interventions.studentId, studentId)];
+    if (!this.isAdmin(user) && instructorCourseIds.length > 0) {
+      conditions.push(inArray(interventions.courseId, instructorCourseIds));
+    }
+
+    // Alias for instructor user
+    const instructorUser = users;
+
+    const rows = await db
+      .select({
+        id: interventions.id,
+        type: interventions.type,
+        message: interventions.message,
+        createdAt: interventions.createdAt,
+        courseId: interventions.courseId,
+        instructorFirstName: instructorUser.firstName,
+        instructorLastName: instructorUser.lastName,
+      })
+      .from(interventions)
+      .innerJoin(instructorUser, eq(interventions.instructorId, instructorUser.id))
+      .where(and(...conditions))
+      .orderBy(desc(interventions.createdAt));
+
+    // Batch-fetch course names
+    const uniqueCourseIds = [...new Set(rows.filter((r) => r.courseId).map((r) => r.courseId!))];
+    const courseNames =
+      uniqueCourseIds.length > 0
+        ? await db
+            .select({ id: courses.id, title: courses.title })
+            .from(courses)
+            .where(inArray(courses.id, uniqueCourseIds))
+        : [];
+    const courseNameMap = new Map(courseNames.map((c) => [c.id, c.title]));
+
+    return rows.map((r) => ({
+      id: r.id,
+      type: r.type as 'email' | 'makeup_session' | 'ticket',
+      message: r.message,
+      instructorName: `${r.instructorFirstName || ''} ${r.instructorLastName || ''}`.trim() || 'Unknown',
+      courseName: r.courseId ? courseNameMap.get(r.courseId) || null : null,
+      createdAt: r.createdAt.toISOString(),
+    }));
   }
 
   // ─── Instructor Roster ──────────────────────────────────────

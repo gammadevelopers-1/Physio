@@ -1389,6 +1389,15 @@
       "makeupSessionInfo": "Make-up session intervention recorded",
       "actionFailed": "Action failed. Please try again."
     },
+    "needsGrading": {
+      "title": "Needs Grading",
+      "empty": "All submissions are graded. You're all caught up!",
+      "today": "Submitted today",
+      "dayAgo": "Submitted 1 day ago",
+      "daysAgo": "Submitted {days} days ago",
+      "grade": "Grade",
+      "viewAll": "View All Submissions"
+    },
     "tabs": {
       "contentManagement": "Content Management",
       "reports": "Reports",
@@ -1905,6 +1914,7 @@
       "tabAttendance": "Attendance",
       "tabAssessments": "Assessments",
       "tabActivity": "Activity",
+      "tabInterventions": "Interventions",
       "totalCourses": "Total Courses",
       "completed": "Completed",
       "avgAttendance": "Avg. Attendance",
@@ -1948,7 +1958,23 @@
       "statusPresent": "Present",
       "statusAbsent": "Absent",
       "statusLate": "Late",
-      "statusExcused": "Excused"
+      "statusExcused": "Excused",
+      "interventionsTitle": "Interventions",
+      "addIntervention": "Add Intervention",
+      "interventionTypeLabel": "Type",
+      "interventionEmail": "Email Reminder",
+      "interventionMakeup": "Makeup Session",
+      "interventionTicket": "Support Ticket",
+      "interventionCourse": "Course (optional)",
+      "interventionAnyCourse": "Any course",
+      "interventionNote": "Note",
+      "interventionNotePlaceholder": "Add a note about this intervention...",
+      "interventionCancel": "Cancel",
+      "submitIntervention": "Submit",
+      "interventionCreated": "Intervention recorded successfully",
+      "interventionFailed": "Failed to create intervention",
+      "noInterventions": "No interventions recorded yet.",
+      "interventionBy": "By {name}"
     },
     "assessments": {
       "title": "Assessments",
@@ -3080,7 +3106,9 @@
       "scheduleError": "Failed to manage scheduled report",
       "recipientEmail": "Recipient Email",
       "recipientEmailPlaceholder": "email@example.com",
-      "emailDelivery": "Email Delivery"
+      "emailDelivery": "Email Delivery",
+      "course-catalogReport": "Course Catalog Report",
+      "course-catalogDesc": "All courses with enrollment, completion rate, and ratings"
     },
     "settingsPage": {
       "title": "Settings",

@@ -8,9 +8,13 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { instructorApi } from "@/lib/api";
+import { toast } from "sonner";
 import type {
   StudentDetailResponse,
   AtRiskStudent,
+  InterventionRecord,
+  InterventionType,
+  CreateInterventionPayload,
 } from "@/types/instructor-dashboard";
 import {
   ArrowLeft,
@@ -27,6 +31,10 @@ import {
   RefreshCw,
   TrendingUp,
   Award,
+  Plus,
+  Ticket,
+  Loader2,
+  MessageSquare,
 } from "lucide-react";
 
 interface StudentDetailContentProps {
@@ -42,7 +50,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
   const isRTL = locale === "ar";
 
   const [activeTab, setActiveTab] = useState<
-    "overview" | "attendance" | "assessments" | "activity"
+    "overview" | "attendance" | "assessments" | "interventions"
   >("overview");
 
   const [student, setStudent] = useState<StudentDetailResponse | null>(null);
@@ -51,16 +59,26 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Interventions state
+  const [interventions, setInterventions] = useState<InterventionRecord[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [interventionType, setInterventionType] = useState<InterventionType>("email");
+  const [interventionMessage, setInterventionMessage] = useState("");
+  const [interventionCourseId, setInterventionCourseId] = useState("");
+  const [submittingIntervention, setSubmittingIntervention] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [detail, atRiskData] = await Promise.all([
+      const [detail, atRiskData, interventionData] = await Promise.all([
         instructorApi.getStudentDetail(studentId),
         instructorApi.getAtRiskStudents(),
+        instructorApi.getStudentInterventions(studentId).catch(() => [] as InterventionRecord[]),
       ]);
 
       setStudent(detail as StudentDetailResponse);
+      setInterventions(interventionData as InterventionRecord[]);
 
       // Determine risk status
       const atRiskEntry = (atRiskData as AtRiskStudent[]).find(
@@ -217,8 +235,48 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
     { id: "overview" as const, label: t("studentDetail.tabOverview") },
     { id: "attendance" as const, label: t("studentDetail.tabAttendance") },
     { id: "assessments" as const, label: t("studentDetail.tabAssessments") },
-    { id: "activity" as const, label: t("studentDetail.tabActivity") },
+    { id: "interventions" as const, label: t("studentDetail.tabInterventions") },
   ];
+
+  const handleSubmitIntervention = async () => {
+    setSubmittingIntervention(true);
+    try {
+      const payload: CreateInterventionPayload = {
+        type: interventionType,
+        studentId,
+        message: interventionMessage || undefined,
+        courseId: interventionCourseId || undefined,
+      };
+      await instructorApi.createIntervention(payload);
+      toast.success(t("studentDetail.interventionCreated"));
+      setShowAddForm(false);
+      setInterventionMessage("");
+      setInterventionCourseId("");
+      // Refresh interventions
+      const fresh = await instructorApi.getStudentInterventions(studentId);
+      setInterventions(fresh as InterventionRecord[]);
+    } catch {
+      toast.error(t("studentDetail.interventionFailed"));
+    } finally {
+      setSubmittingIntervention(false);
+    }
+  };
+
+  const getInterventionIcon = (type: InterventionType) => {
+    switch (type) {
+      case "email": return <Mail className="w-4 h-4 text-[#3B82F6]" />;
+      case "makeup_session": return <Calendar className="w-4 h-4 text-[#8B5CF6]" />;
+      case "ticket": return <Ticket className="w-4 h-4 text-[#F59E0B]" />;
+    }
+  };
+
+  const getInterventionLabel = (type: InterventionType) => {
+    switch (type) {
+      case "email": return t("studentDetail.interventionEmail");
+      case "makeup_session": return t("studentDetail.interventionMakeup");
+      case "ticket": return t("studentDetail.interventionTicket");
+    }
+  };
 
   return (
     <>
@@ -801,103 +859,137 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         </div>
                       )}
 
-                      {/* Activity Tab */}
-                      {activeTab === "activity" && (
+                      {/* Interventions Tab */}
+                      {activeTab === "interventions" && (
                         <div className="space-y-4">
-                          <h3 className="text-base font-semibold text-[#1F2937]">
-                            {t("studentDetail.recentActivity")}
-                          </h3>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-base font-semibold text-[#1F2937]">
+                              {t("studentDetail.interventionsTitle")}
+                            </h3>
+                            <button
+                              onClick={() => setShowAddForm(!showAddForm)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+                            >
+                              <Plus className="w-4 h-4" />
+                              {t("studentDetail.addIntervention")}
+                            </button>
+                          </div>
 
-                          {/* Activity is derived from enrollment data since there's no activity log API */}
-                          {student.enrollments.length === 0 ? (
+                          {/* Add Intervention Form */}
+                          {showAddForm && (
+                            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] space-y-3">
+                              {/* Type selector */}
+                              <div>
+                                <label className="block text-sm font-medium text-[#374151] mb-1">
+                                  {t("studentDetail.interventionTypeLabel")}
+                                </label>
+                                <select
+                                  value={interventionType}
+                                  onChange={(e) => setInterventionType(e.target.value as InterventionType)}
+                                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                                >
+                                  <option value="email">{t("studentDetail.interventionEmail")}</option>
+                                  <option value="makeup_session">{t("studentDetail.interventionMakeup")}</option>
+                                  <option value="ticket">{t("studentDetail.interventionTicket")}</option>
+                                </select>
+                              </div>
+
+                              {/* Course selector (optional) */}
+                              {student.enrollments.length > 0 && (
+                                <div>
+                                  <label className="block text-sm font-medium text-[#374151] mb-1">
+                                    {t("studentDetail.interventionCourse")}
+                                  </label>
+                                  <select
+                                    value={interventionCourseId}
+                                    onChange={(e) => setInterventionCourseId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                                  >
+                                    <option value="">{t("studentDetail.interventionAnyCourse")}</option>
+                                    {student.enrollments.map((e) => (
+                                      <option key={e.courseId} value={e.courseId}>
+                                        {locale === "ar" && e.courseTitleAr ? e.courseTitleAr : e.courseTitle}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+
+                              {/* Message */}
+                              <div>
+                                <label className="block text-sm font-medium text-[#374151] mb-1">
+                                  {t("studentDetail.interventionNote")}
+                                </label>
+                                <textarea
+                                  value={interventionMessage}
+                                  onChange={(e) => setInterventionMessage(e.target.value)}
+                                  placeholder={t("studentDetail.interventionNotePlaceholder")}
+                                  maxLength={2000}
+                                  rows={3}
+                                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+                                />
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex items-center gap-2 justify-end">
+                                <button
+                                  onClick={() => setShowAddForm(false)}
+                                  className="px-3 py-1.5 text-sm font-medium text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors"
+                                >
+                                  {t("studentDetail.interventionCancel")}
+                                </button>
+                                <button
+                                  onClick={handleSubmitIntervention}
+                                  disabled={submittingIntervention}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50"
+                                >
+                                  {submittingIntervention && <Loader2 className="w-4 h-4 animate-spin" />}
+                                  {t("studentDetail.submitIntervention")}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Interventions Timeline */}
+                          {interventions.length === 0 ? (
                             <div className="text-center py-8">
-                              <Clock className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                              <MessageSquare className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
                               <p className="text-sm text-[#6B7280]">
-                                {t("studentDetail.noActivity") ||
-                                  "No recent activity to display."}
+                                {t("studentDetail.noInterventions")}
                               </p>
                             </div>
                           ) : (
                             <div className="space-y-3">
-                              {/* Generate activity timeline from enrollments */}
-                              {student.enrollments
-                                .filter((e) => e.lastAccessedAt || e.completedAt)
-                                .sort((a, b) => {
-                                  const dateA = new Date(
-                                    a.lastAccessedAt || a.completedAt || a.enrolledAt
-                                  ).getTime();
-                                  const dateB = new Date(
-                                    b.lastAccessedAt || b.completedAt || b.enrolledAt
-                                  ).getTime();
-                                  return dateB - dateA;
-                                })
-                                .map((enrollment) => (
-                                  <div
-                                    key={`activity-${enrollment.id}`}
-                                    className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl"
-                                  >
-                                    <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center">
-                                      {enrollment.status === "completed" ? (
-                                        <CheckCircle className="w-4 h-4 text-[#22C55E]" />
-                                      ) : (
-                                        <BookOpen className="w-4 h-4 text-[#3B82F6]" />
+                              {interventions.map((iv) => (
+                                <div
+                                  key={iv.id}
+                                  className="flex items-start gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]"
+                                >
+                                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    {getInterventionIcon(iv.type)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="text-sm font-medium text-[#1F2937]">
+                                        {getInterventionLabel(iv.type)}
+                                      </span>
+                                      {iv.courseName && (
+                                        <span className="text-[11px] text-[#6B7280] bg-[#F3F4F6] px-1.5 py-0.5 rounded">
+                                          {iv.courseName}
+                                        </span>
                                       )}
                                     </div>
-                                    <div className="flex-1">
-                                      <p className="text-sm text-[#1F2937]">
-                                        {enrollment.status === "completed"
-                                          ? `${t("studentDetail.courseCompleted")}: `
-                                          : `${t("studentDetail.courseInProgress")}: `}
-                                        <span className="font-medium">
-                                          {locale === "ar" &&
-                                          enrollment.courseTitleAr
-                                            ? enrollment.courseTitleAr
-                                            : enrollment.courseTitle}
-                                        </span>
-                                        {enrollment.status !== "completed" &&
-                                          ` (${enrollment.progress}%)`}
+                                    {iv.message && (
+                                      <p className="text-sm text-[#4B5563] mb-1">
+                                        {iv.message}
                                       </p>
-                                      <p className="text-xs text-[#9CA3AF]">
-                                        {formatLastActive(
-                                          enrollment.lastAccessedAt ||
-                                            enrollment.completedAt
-                                        )}
-                                      </p>
-                                    </div>
+                                    )}
+                                    <p className="text-xs text-[#9CA3AF]">
+                                      {t("studentDetail.interventionBy", { name: iv.instructorName })} · {formatDate(iv.createdAt)}
+                                    </p>
                                   </div>
-                                ))}
-
-                              {/* Enrollment events */}
-                              {student.enrollments
-                                .sort(
-                                  (a, b) =>
-                                    new Date(b.enrolledAt).getTime() -
-                                    new Date(a.enrolledAt).getTime()
-                                )
-                                .map((enrollment) => (
-                                  <div
-                                    key={`enrolled-${enrollment.id}`}
-                                    className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl"
-                                  >
-                                    <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center">
-                                      <Calendar className="w-4 h-4 text-[#8B5CF6]" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-sm text-[#1F2937]">
-                                        {t("studentDetail.enrolled")}:{" "}
-                                        <span className="font-medium">
-                                          {locale === "ar" &&
-                                          enrollment.courseTitleAr
-                                            ? enrollment.courseTitleAr
-                                            : enrollment.courseTitle}
-                                        </span>
-                                      </p>
-                                      <p className="text-xs text-[#9CA3AF]">
-                                        {formatDate(enrollment.enrolledAt)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

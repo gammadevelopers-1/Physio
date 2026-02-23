@@ -770,6 +770,106 @@ export class ReportsService {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // ─── Course Catalog Report ────────────────────────────────
+  // Columns: Course Title, Status, Instructor, Enrolled, Completion Rate, Avg Rating
+  // ═══════════════════════════════════════════════════════════
+
+  async generateCourseCatalogReport(
+    user: AuthenticatedUser,
+    params: { courseId?: string; format?: string },
+  ): Promise<ReportResult> {
+    const format = this.validateFormat(params.format);
+    const metadata = await this.buildMetadata(user, params.courseId);
+
+    const headers = [
+      'Course Title',
+      'Status',
+      'Instructor',
+      'Enrolled',
+      'Completion Rate',
+      'Avg Rating',
+    ];
+
+    // Build course query conditions
+    const conditions = [];
+    if (params.courseId) {
+      await this.verifyCourseAccess(params.courseId, user);
+      conditions.push(eq(courses.id, params.courseId));
+    } else if (!this.isAdmin(user)) {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
+
+    const courseData = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        status: courses.status,
+        instructorId: courses.instructorId,
+      })
+      .from(courses)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(asc(courses.title));
+
+    if (courseData.length === 0) {
+      return this.formatReport('Course Catalog Report', headers, [], format, metadata);
+    }
+
+    // Batch-fetch instructor names
+    const instructorIds = [...new Set(courseData.map((c) => c.instructorId))];
+    const instructors = await db
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(inArray(users.id, instructorIds));
+    const instructorMap = new Map(
+      instructors.map((i) => [i.id, `${i.firstName || ''} ${i.lastName || ''}`.trim() || 'Unknown']),
+    );
+
+    // Batch-fetch enrollment counts and completion rates
+    const courseIds = courseData.map((c) => c.id);
+    const enrollmentStats = await db
+      .select({
+        courseId: enrollments.courseId,
+        enrolledCount: count(),
+        completedCount: sql<number>`SUM(CASE WHEN ${enrollments.status} = 'completed' THEN 1 ELSE 0 END)`.as('completed'),
+      })
+      .from(enrollments)
+      .where(inArray(enrollments.courseId, courseIds))
+      .groupBy(enrollments.courseId);
+    const enrollMap = new Map(enrollmentStats.map((e) => [e.courseId, e]));
+
+    // Batch-fetch average ratings
+    const { courseRatings: courseRatingsTable } = await import('../../database/schema');
+    const ratingStats = await db
+      .select({
+        courseId: courseRatingsTable.courseId,
+        avgRating: sql<number>`ROUND(AVG(${courseRatingsTable.rating}), 1)`.as('avg_rating'),
+      })
+      .from(courseRatingsTable)
+      .where(inArray(courseRatingsTable.courseId, courseIds))
+      .groupBy(courseRatingsTable.courseId);
+    const ratingMap = new Map(ratingStats.map((r) => [r.courseId, Number(r.avgRating)]));
+
+    const rows = courseData.map((c) => {
+      const enroll = enrollMap.get(c.id);
+      const enrolled = Number(enroll?.enrolledCount || 0);
+      const completed = Number(enroll?.completedCount || 0);
+      const completionRate = enrolled > 0 ? Math.round((completed / enrolled) * 100) : 0;
+      const rating = ratingMap.get(c.id);
+
+      return [
+        c.title,
+        c.status || '',
+        instructorMap.get(c.instructorId) || 'Unassigned',
+        String(enrolled),
+        `${completionRate}%`,
+        rating !== undefined ? String(rating) : 'N/A',
+      ];
+    });
+
+    return this.formatReport('Course Catalog Report', headers, rows, format, metadata);
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // ─── Scheduled Reports CRUD ───────────────────────────────
   // ═══════════════════════════════════════════════════════════
 

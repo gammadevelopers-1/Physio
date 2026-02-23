@@ -19,6 +19,7 @@ import CertificateQueue from "./CertificateQueue";
 import SessionsCalendarWidget from "./SessionsCalendarWidget";
 import AssessmentAnalysisWidget from "./AssessmentAnalysisWidget";
 import RecentFeedbackWidget from "./RecentFeedbackWidget";
+import AssessmentsNeedingAttention from "./AssessmentsNeedingAttention";
 import DashboardSkeleton from "./DashboardSkeleton";
 import DashboardError from "./DashboardError";
 import { useInstructorDashboard } from "@/hooks/useInstructorDashboard";
@@ -48,6 +49,7 @@ const InstructorDashboardContent = () => {
   const questionAnalysis = dashboard?.questionAnalysis ?? [];
   const contentFiles = dashboard?.materials ?? [];
   const tabAssessments = dashboard?.tabAssessments ?? [];
+  const pendingSubmissions = dashboard?.pendingSubmissions ?? [];
 
   // Reports tab shows static report type definitions (functional UI, not data)
   const reports = [
@@ -271,6 +273,9 @@ const InstructorDashboardContent = () => {
 
               {/* At-Risk Learners */}
               <AtRiskLearners learners={atRiskLearners} />
+
+              {/* Assessments Needing Attention */}
+              <AssessmentsNeedingAttention submissions={pendingSubmissions} />
 
               {/* Pending Certificates */}
               <CertificateQueue

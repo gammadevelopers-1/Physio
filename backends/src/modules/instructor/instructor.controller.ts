@@ -83,6 +83,19 @@ export class InstructorController {
   }
 
   /**
+   * GET /instructor/students/:studentId/interventions — List interventions for a student
+   * NOTE: Must be defined BEFORE :id route to avoid matching as param
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('students/:studentId/interventions')
+  async getStudentInterventions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('studentId') studentId: string,
+  ) {
+    return this.instructorService.getStudentInterventions(user, studentId);
+  }
+
+  /**
    * GET /instructor/:id/performance — Instructor performance KPIs
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)

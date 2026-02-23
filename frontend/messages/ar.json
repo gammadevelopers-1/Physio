@@ -1601,6 +1601,15 @@
       "makeupSessionInfo": "تم تسجيل تدخل الجلسة التعويضية",
       "actionFailed": "فشل الإجراء. يرجى المحاولة مرة أخرى."
     },
+    "needsGrading": {
+      "title": "بحاجة للتصحيح",
+      "empty": "تم تصحيح جميع الإجابات. لا يوجد شيء معلق!",
+      "today": "تم التقديم اليوم",
+      "dayAgo": "تم التقديم منذ يوم واحد",
+      "daysAgo": "تم التقديم منذ {days} أيام",
+      "grade": "تصحيح",
+      "viewAll": "عرض جميع الإجابات"
+    },
     "tabs": {
       "contentManagement": "إدارة المحتوى",
       "reports": "التقارير",
@@ -2086,6 +2095,7 @@
       "tabAttendance": "الحضور",
       "tabAssessments": "التقييمات",
       "tabActivity": "النشاط",
+      "tabInterventions": "التدخلات",
       "totalCourses": "إجمالي الدورات",
       "completed": "مكتمل",
       "avgAttendance": "متوسط الحضور",
@@ -2129,7 +2139,23 @@
       "statusPresent": "حاضر",
       "statusAbsent": "غائب",
       "statusLate": "متأخر",
-      "statusExcused": "معذور"
+      "statusExcused": "معذور",
+      "interventionsTitle": "التدخلات",
+      "addIntervention": "إضافة تدخل",
+      "interventionTypeLabel": "النوع",
+      "interventionEmail": "تذكير بالبريد الإلكتروني",
+      "interventionMakeup": "جلسة تعويضية",
+      "interventionTicket": "تذكرة دعم",
+      "interventionCourse": "الدورة (اختياري)",
+      "interventionAnyCourse": "أي دورة",
+      "interventionNote": "ملاحظة",
+      "interventionNotePlaceholder": "أضف ملاحظة حول هذا التدخل...",
+      "interventionCancel": "إلغاء",
+      "submitIntervention": "إرسال",
+      "interventionCreated": "تم تسجيل التدخل بنجاح",
+      "interventionFailed": "فشل في إنشاء التدخل",
+      "noInterventions": "لم يتم تسجيل أي تدخلات بعد.",
+      "interventionBy": "بواسطة {name}"
     },
     "assessments": {
       "title": "التقييمات",
@@ -3292,7 +3318,9 @@
       "scheduleError": "فشل في إدارة التقرير المجدول",
       "recipientEmail": "البريد الإلكتروني للمستلم",
       "recipientEmailPlaceholder": "email@example.com",
-      "emailDelivery": "التسليم بالبريد الإلكتروني"
+      "emailDelivery": "التسليم بالبريد الإلكتروني",
+      "course-catalogReport": "تقرير كتالوج الدورات",
+      "course-catalogDesc": "جميع الدورات مع أعداد التسجيل ونسبة الإكمال والتقييمات"
     },
     "settingsPage": {
       "title": "الإعدادات",

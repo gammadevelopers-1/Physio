@@ -648,6 +648,7 @@ import type {
   BatchCertificateResult,
   CreateInterventionPayload,
   InterventionResponse,
+  InterventionRecord,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -839,6 +840,9 @@ export const instructorApi = {
   // Interventions
   createIntervention: (data: CreateInterventionPayload) =>
     api.post<InterventionResponse>('/instructor/interventions', data),
+
+  getStudentInterventions: (studentId: string) =>
+    api.get<InterventionRecord[]>(`/instructor/students/${studentId}/interventions`),
 
   // Certificates
   getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {
@@ -1045,7 +1049,7 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'satisfaction' | 'instructor-performance' | 'nelc-compliance';
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'course-catalog' | 'satisfaction' | 'instructor-performance' | 'nelc-compliance';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {

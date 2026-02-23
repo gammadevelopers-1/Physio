@@ -208,6 +208,28 @@ export class ReportsController {
     return new StreamableFile(result.buffer);
   }
 
+  // ─── Course Catalog Report ───────────────────────────────
+
+  @Get('course-catalog')
+  async getCourseCatalogReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+    @Query('format') format?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateCourseCatalogReport(
+      user,
+      { courseId, format },
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
   // ─── Generic Table Export ────────────────────────────────
 
   /**

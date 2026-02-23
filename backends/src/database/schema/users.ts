@@ -18,6 +18,8 @@ export const users = pgTable('users', {
   // Profile
   firstName: varchar('first_name', { length: 100 }),
   lastName: varchar('last_name', { length: 100 }),
+  firstNameAr: varchar('first_name_ar', { length: 100 }),
+  lastNameAr: varchar('last_name_ar', { length: 100 }),
   phone: varchar('phone', { length: 20 }),
   avatar: varchar('avatar', { length: 500 }),
 
@@ -25,6 +27,11 @@ export const users = pgTable('users', {
   bio: varchar('bio', { length: 1000 }),
   location: varchar('location', { length: 200 }),
   language: varchar('language', { length: 10 }).default('en'),
+
+  // Instructor-specific fields
+  department: varchar('department', { length: 100 }),
+  specialty: varchar('specialty', { length: 100 }),
+  instructorStatus: varchar('instructor_status', { length: 20 }),
 
   // Active Role - The currently selected role for multi-role users
   // This is stored as varchar to avoid circular dependency with roles table

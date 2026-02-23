@@ -24,7 +24,10 @@ import {
   LayoutGrid,
   CheckCircle2,
   XCircle,
+  Flag,
 } from "lucide-react";
+import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
+import ExportButton from "@/components/shared/ExportButton";
 
 interface ProctoringRules {
   webcamRequired?: boolean;
@@ -39,6 +42,7 @@ interface SettingsForm {
   maxRetakes: number;
   retakeCoolingHours: number;
   retakeScorePolicy: string;
+  retakeScope: string;
 }
 
 const AssessmentsContent = () => {
@@ -65,6 +69,21 @@ const AssessmentsContent = () => {
   const [blueprintData, setBlueprintData] = useState<Awaited<ReturnType<typeof courseManagerApi.getBlueprint>> | null>(null);
   const [blueprintLoading, setBlueprintLoading] = useState(false);
   const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
+
+  // Difficulty distribution state (per-assessment, fetched on demand in blueprint)
+  const [difficultyData, setDifficultyData] = useState<Record<string, { easy: number; medium: number; hard: number; unset: number; total: number }>>({});
+
+  // Flag modal state
+  const [flagModal, setFlagModal] = useState<{ assessmentId: string; title: string } | null>(null);
+  const [flagReason, setFlagReason] = useState("");
+  const [flagging, setFlagging] = useState(false);
+  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set());
+
+  // Override modal state
+  const [overrideModal, setOverrideModal] = useState<{ assessmentId: string; title: string } | null>(null);
+  const [overrideStudents, setOverrideStudents] = useState<Array<{ id: string; name: string }>>([]);
+  const [overrideForm, setOverrideForm] = useState({ studentId: "", overrideType: "time_extension", value: 30, reason: "" });
+  const [overrideSubmitting, setOverrideSubmitting] = useState(false);
 
   const fetchAssessments = useCallback(() => {
     setLoading(true);
@@ -105,6 +124,73 @@ const AssessmentsContent = () => {
   useEffect(() => {
     if (blueprintCourseId) fetchBlueprint(blueprintCourseId);
   }, [blueprintCourseId, fetchBlueprint]);
+
+  // Populate flaggedIds from fetched assessments (check for flaggedAt field)
+  useEffect(() => {
+    const flagged = new Set<string>();
+    for (const a of assessments) {
+      if (a.flaggedAt) {
+        flagged.add(a.id);
+      }
+    }
+    setFlaggedIds(flagged);
+  }, [assessments]);
+
+  // Fetch difficulty distribution for all assessments in blueprint when data changes
+  useEffect(() => {
+    if (!blueprintData) return;
+    const allAssessmentIds = new Set<string>();
+    for (const row of blueprintData.matrix) {
+      for (const a of row.assessments) {
+        allAssessmentIds.add(a.assessmentId);
+      }
+    }
+    for (const a of blueprintData.unlinkedAssessments) {
+      allAssessmentIds.add(a.assessmentId);
+    }
+    for (const id of allAssessmentIds) {
+      if (!difficultyData[id]) {
+        courseManagerApi.getDifficultyDistribution(id).then((data) => {
+          setDifficultyData((prev) => ({ ...prev, [id]: data }));
+        }).catch(() => {});
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blueprintData]);
+
+  const handleFlag = async () => {
+    if (!flagModal || !flagReason.trim()) return;
+    setFlagging(true);
+    try {
+      await courseManagerApi.flagAssessment(flagModal.assessmentId, flagReason.trim());
+      setFlaggedIds((prev) => new Set(prev).add(flagModal.assessmentId));
+      setFlagModal(null);
+      setFlagReason("");
+    } catch {
+      // silently handle
+    } finally {
+      setFlagging(false);
+    }
+  };
+
+  const handleOverride = async () => {
+    if (!overrideModal || !overrideForm.studentId || !overrideForm.reason.trim()) return;
+    setOverrideSubmitting(true);
+    try {
+      await courseManagerApi.createOverride(overrideModal.assessmentId, {
+        studentId: overrideForm.studentId,
+        overrideType: overrideForm.overrideType,
+        value: overrideForm.value,
+        reason: overrideForm.reason.trim(),
+      });
+      setOverrideModal(null);
+      setOverrideForm({ studentId: "", overrideType: "time_extension", value: 30, reason: "" });
+    } catch {
+      alert(t("assessmentsPage.override.error"));
+    } finally {
+      setOverrideSubmitting(false);
+    }
+  };
 
   const filteredAssessments = assessments.filter((a) =>
     a.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -149,6 +235,7 @@ const AssessmentsContent = () => {
         maxRetakes: assessment.maxRetakes ?? 0,
         retakeCoolingHours: assessment.retakeCoolingHours ?? 24,
         retakeScorePolicy: assessment.retakeScorePolicy ?? "highest",
+        retakeScope: assessment.retakeScope ?? "full",
       });
       setSaveSuccess(null);
     }
@@ -166,6 +253,7 @@ const AssessmentsContent = () => {
         maxRetakes: settingsForm.maxRetakes,
         retakeCoolingHours: settingsForm.retakeCoolingHours,
         retakeScorePolicy: settingsForm.retakeScorePolicy,
+        retakeScope: settingsForm.retakeScope,
       });
       setSaveSuccess(expandedId);
       // Update local state
@@ -180,6 +268,7 @@ const AssessmentsContent = () => {
                 maxRetakes: settingsForm.maxRetakes,
                 retakeCoolingHours: settingsForm.retakeCoolingHours,
                 retakeScorePolicy: settingsForm.retakeScorePolicy,
+                retakeScope: settingsForm.retakeScope,
               }
             : a
         )
@@ -347,6 +436,19 @@ const AssessmentsContent = () => {
                   <option value="average">{t("assessmentsPage.retake.policies.average")}</option>
                 </select>
               </div>
+              <div>
+                <label className="text-sm text-[#374151] block mb-1">
+                  {t("assessmentsPage.retake.scope")}
+                </label>
+                <select
+                  value={settingsForm.retakeScope}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, retakeScope: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                >
+                  <option value="full">{t("assessmentsPage.retake.scopeFull")}</option>
+                  <option value="failed_sections">{t("assessmentsPage.retake.scopeFailedSections")}</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -388,6 +490,14 @@ const AssessmentsContent = () => {
 
   const renderProctoringIndicators = (assessment: AssessmentResponse) => {
     const indicators = [];
+    if (flaggedIds.has(assessment.id)) {
+      indicators.push(
+        <span key="flagged" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[#FFF7ED] text-[#EA580C]">
+          <Flag className="w-3 h-3" />
+          {t("assessmentsPage.flaggedBadge")}
+        </span>
+      );
+    }
     if (assessment.proctoringEnabled) {
       indicators.push(
         <span key="proctor" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[#EFF6FF] text-[#3B82F6]">
@@ -431,6 +541,13 @@ const AssessmentsContent = () => {
                     {t("assessmentsPage.subtitle")}
                   </p>
                 </div>
+                <ExportButton
+                  tableType="assessments"
+                  filters={{
+                    ...(typeFilter !== "all" ? { type: typeFilter } : {}),
+                    ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+                  }}
+                />
               </div>
 
               {/* Tabs */}
@@ -462,7 +579,7 @@ const AssessmentsContent = () => {
               {activeTab === "assessments" && (
               <>
               {/* Stats Summary */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.total")}</p>
                   <p className="text-2xl font-bold text-[#1F2937] mt-1">{assessments.length}</p>
@@ -489,6 +606,15 @@ const AssessmentsContent = () => {
                   </div>
                   <p className="text-2xl font-bold text-[#8B5CF6] mt-1">
                     {assessments.filter((a) => a.maxRetakes > 0).length}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="flex items-center gap-1">
+                    <Flag className="w-3 h-3 text-[#EA580C]" />
+                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.flagged")}</p>
+                  </div>
+                  <p className="text-2xl font-bold text-[#EA580C] mt-1">
+                    {flaggedIds.size}
                   </p>
                 </div>
               </div>
@@ -532,8 +658,14 @@ const AssessmentsContent = () => {
               </div>
 
               {loading && (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                  <table className="w-full">
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <SkeletonTableRow key={i} cols={6} />
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
 
@@ -602,7 +734,7 @@ const AssessmentsContent = () => {
                                       {t(`assessmentsPage.status.${assessment.status}`)}
                                     </span>
                                   </div>
-                                  <div className="px-4 py-4">
+                                  <div className="px-4 py-4 flex items-center gap-1">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -616,6 +748,22 @@ const AssessmentsContent = () => {
                                       title={t("assessmentsPage.actions.configure")}
                                     >
                                       <Settings className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
+                                        courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
+                                          setOverrideStudents(res.data.map((e: any) => ({
+                                            id: e.studentId || e.userId || e.id,
+                                            name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
+                                          })));
+                                        }).catch(() => setOverrideStudents([]));
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                      title={t("assessmentsPage.override.title")}
+                                    >
+                                      <Shield className="w-4 h-4" />
                                     </button>
                                   </div>
                                 </div>
@@ -727,7 +875,7 @@ const AssessmentsContent = () => {
                   {blueprintCourseId && !blueprintLoading && blueprintData && (
                     <>
                       {/* Coverage Summary */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
                           <p className="text-3xl font-bold text-[#3B82F6]">{blueprintData.coveragePercent}%</p>
                           <p className="text-xs text-[#6B7280] mt-1">{t("assessmentsPage.blueprint.coverage")}</p>
@@ -744,6 +892,45 @@ const AssessmentsContent = () => {
                           <p className="text-3xl font-bold text-[#EF4444]">{blueprintData.gapModules}</p>
                           <p className="text-xs text-[#6B7280] mt-1">{t("assessmentsPage.blueprint.gaps")}</p>
                         </div>
+                        {/* Difficulty Distribution Summary */}
+                        {(() => {
+                          const allIds = [
+                            ...blueprintData.matrix.flatMap((r) => r.assessments.map((a) => a.assessmentId)),
+                            ...blueprintData.unlinkedAssessments.map((a) => a.assessmentId),
+                          ];
+                          const totals = { easy: 0, medium: 0, hard: 0 };
+                          let totalQ = 0;
+                          for (const id of allIds) {
+                            const d = difficultyData[id];
+                            if (d) {
+                              totals.easy += d.easy;
+                              totals.medium += d.medium;
+                              totals.hard += d.hard;
+                              totalQ += d.total;
+                            }
+                          }
+                          return (
+                            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                              <p className="text-xs text-[#6B7280] mb-2">{t("assessmentsPage.difficulty.title")}</p>
+                              {totalQ > 0 ? (
+                                <>
+                                  <div className="flex h-3 rounded-full overflow-hidden mb-2">
+                                    <div className="bg-[#22C55E]" style={{ width: `${(totals.easy / totalQ) * 100}%` }} />
+                                    <div className="bg-[#F59E0B]" style={{ width: `${(totals.medium / totalQ) * 100}%` }} />
+                                    <div className="bg-[#EF4444]" style={{ width: `${(totals.hard / totalQ) * 100}%` }} />
+                                  </div>
+                                  <div className="flex justify-between text-[10px] text-[#6B7280]">
+                                    <span className="text-[#22C55E]">{t("assessmentsPage.difficulty.easy")} {totals.easy}</span>
+                                    <span className="text-[#F59E0B]">{t("assessmentsPage.difficulty.medium")} {totals.medium}</span>
+                                    <span className="text-[#EF4444]">{t("assessmentsPage.difficulty.hard")} {totals.hard}</span>
+                                  </div>
+                                </>
+                              ) : (
+                                <p className="text-sm text-[#9CA3AF]">—</p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Coverage Grid */}
@@ -783,18 +970,51 @@ const AssessmentsContent = () => {
                                     </td>
                                     <td className="px-4 py-3">
                                       {row.assessments.length > 0 ? (
-                                        <div className="flex flex-wrap gap-2">
-                                          {row.assessments.map((a) => (
-                                            <span
-                                              key={a.assessmentId}
-                                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getTypeBadge(a.type)}`}
-                                            >
-                                              {a.title} ({a.questionCount} {t("assessmentsPage.blueprint.questions")})
-                                            </span>
-                                          ))}
+                                        <div className="space-y-1.5">
+                                          {row.assessments.map((a) => {
+                                            const d = difficultyData[a.assessmentId];
+                                            return (
+                                              <div key={a.assessmentId} className="flex items-center gap-2">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getTypeBadge(a.type)}`}>
+                                                  {a.title} ({a.questionCount} {t("assessmentsPage.blueprint.questions")})
+                                                </span>
+                                                {d && d.total > 0 && (
+                                                  <div className="flex h-1.5 w-16 rounded-full overflow-hidden" title={`E:${d.easy} M:${d.medium} H:${d.hard}`}>
+                                                    <div className="bg-[#22C55E]" style={{ width: `${(d.easy / d.total) * 100}%` }} />
+                                                    <div className="bg-[#F59E0B]" style={{ width: `${(d.medium / d.total) * 100}%` }} />
+                                                    <div className="bg-[#EF4444]" style={{ width: `${(d.hard / d.total) * 100}%` }} />
+                                                  </div>
+                                                )}
+                                                {flaggedIds.has(a.assessmentId) ? (
+                                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-[#EA580C]">
+                                                    <Flag className="w-3 h-3" />
+                                                    {t("assessmentsPage.flaggedBadge")}
+                                                  </span>
+                                                ) : d && d.total > 0 && (d.easy / d.total > 0.8 || d.medium / d.total > 0.8 || d.hard / d.total > 0.8) ? (
+                                                  <button
+                                                    onClick={(e) => { e.stopPropagation(); setFlagModal({ assessmentId: a.assessmentId, title: a.title }); }}
+                                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-[#EA580C] bg-[#FFF7ED] hover:bg-[#FFEDD5] transition-colors"
+                                                    title={t("assessmentsPage.flagForReview")}
+                                                  >
+                                                    <Flag className="w-3 h-3" />
+                                                  </button>
+                                                ) : null}
+                                              </div>
+                                            );
+                                          })}
                                         </div>
                                       ) : (
-                                        <span className="text-xs text-[#9CA3AF]">—</span>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs text-[#9CA3AF]">—</span>
+                                          <button
+                                            onClick={() => setFlagModal({ assessmentId: row.moduleId, title: row.moduleTitle })}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-[#EA580C] bg-[#FFF7ED] hover:bg-[#FFEDD5] transition-colors"
+                                            title={t("assessmentsPage.flagForReview")}
+                                          >
+                                            <Flag className="w-3 h-3" />
+                                            {t("assessmentsPage.flagForReview")}
+                                          </button>
+                                        </div>
                                       )}
                                     </td>
                                   </tr>
@@ -834,6 +1054,152 @@ const AssessmentsContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Emergency Override Modal */}
+      {overrideModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
+                <Shield className="w-5 h-5 text-[#3B82F6]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("assessmentsPage.override.title")}
+                </h3>
+                <p className="text-sm text-[#6B7280]">{overrideModal.title}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              {/* Student Select */}
+              <div>
+                <label className="text-sm font-medium text-[#374151] block mb-1">
+                  {t("assessmentsPage.override.selectStudent")}
+                </label>
+                <select
+                  value={overrideForm.studentId}
+                  onChange={(e) => setOverrideForm({ ...overrideForm, studentId: e.target.value })}
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                >
+                  <option value="">{t("assessmentsPage.override.selectStudent")}</option>
+                  {overrideStudents.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Override Type */}
+              <div>
+                <label className="text-sm font-medium text-[#374151] block mb-1">
+                  {t("assessmentsPage.override.type")}
+                </label>
+                <div className="flex gap-3">
+                  <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm" style={{ borderColor: overrideForm.overrideType === 'time_extension' ? '#3B82F6' : '#E5E7EB', background: overrideForm.overrideType === 'time_extension' ? '#EFF6FF' : 'white' }}>
+                    <input type="radio" name="overrideType" value="time_extension" checked={overrideForm.overrideType === 'time_extension'} onChange={(e) => setOverrideForm({ ...overrideForm, overrideType: e.target.value, value: 30 })} className="sr-only" />
+                    {t("assessmentsPage.override.timeExtension")}
+                  </label>
+                  <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm" style={{ borderColor: overrideForm.overrideType === 'extra_attempts' ? '#3B82F6' : '#E5E7EB', background: overrideForm.overrideType === 'extra_attempts' ? '#EFF6FF' : 'white' }}>
+                    <input type="radio" name="overrideType" value="extra_attempts" checked={overrideForm.overrideType === 'extra_attempts'} onChange={(e) => setOverrideForm({ ...overrideForm, overrideType: e.target.value, value: 1 })} className="sr-only" />
+                    {t("assessmentsPage.override.extraAttempts")}
+                  </label>
+                </div>
+              </div>
+              {/* Value */}
+              <div>
+                <label className="text-sm font-medium text-[#374151] block mb-1">
+                  {overrideForm.overrideType === 'time_extension' ? t("assessmentsPage.override.minutes") : t("assessmentsPage.override.attempts")}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={overrideForm.value}
+                  onChange={(e) => setOverrideForm({ ...overrideForm, value: Math.max(1, parseInt(e.target.value) || 1) })}
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                />
+              </div>
+              {/* Reason */}
+              <div>
+                <label className="text-sm font-medium text-[#374151] block mb-1">
+                  {t("assessmentsPage.override.reason")}
+                </label>
+                <textarea
+                  value={overrideForm.reason}
+                  onChange={(e) => setOverrideForm({ ...overrideForm, reason: e.target.value })}
+                  rows={3}
+                  placeholder={t("assessmentsPage.override.reasonPlaceholder")}
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 justify-end mt-6">
+              <button
+                onClick={() => { setOverrideModal(null); setOverrideForm({ studentId: "", overrideType: "time_extension", value: 30, reason: "" }); }}
+                className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              >
+                {t("assessmentsPage.override.cancel")}
+              </button>
+              <button
+                onClick={handleOverride}
+                disabled={overrideSubmitting || !overrideForm.studentId || !overrideForm.reason.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#93C5FD] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {overrideSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+                {t("assessmentsPage.override.grant")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Flag Confirmation Modal */}
+      {flagModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#FFF7ED] flex items-center justify-center">
+                <Flag className="w-5 h-5 text-[#EA580C]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("assessmentsPage.flag.title")}
+                </h3>
+                <p className="text-sm text-[#6B7280]">{flagModal.title}</p>
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="text-sm font-medium text-[#374151] block mb-1">
+                {t("assessmentsPage.flag.reason")}
+              </label>
+              <textarea
+                value={flagReason}
+                onChange={(e) => setFlagReason(e.target.value)}
+                rows={3}
+                placeholder={t("assessmentsPage.flag.reasonPlaceholder")}
+                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EA580C] focus:border-transparent resize-none"
+              />
+            </div>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={() => { setFlagModal(null); setFlagReason(""); }}
+                className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              >
+                {t("assessmentsPage.flag.cancel")}
+              </button>
+              <button
+                onClick={handleFlag}
+                disabled={flagging || !flagReason.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#EA580C] hover:bg-[#C2410C] disabled:bg-[#FDBA74] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {flagging ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Flag className="w-4 h-4" />
+                )}
+                {t("assessmentsPage.flag.submit")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

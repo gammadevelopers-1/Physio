@@ -74,6 +74,19 @@ export class NelcComplianceController {
   }
 
   /**
+   * GET /nelc-compliance/course/:id/scorecard — 7-category compliance scorecard
+   */
+  @Roles(
+    'MANAGER' as UserRole,
+    'ADMIN' as UserRole,
+    'SUPER_ADMIN' as UserRole,
+  )
+  @Get('course/:id/scorecard')
+  async getCourseScorecard(@Param('id') courseId: string) {
+    return this.complianceService.getCourseComplianceScorecard(courseId);
+  }
+
+  /**
    * GET /nelc-compliance/course/:id/evidence — Download evidence ZIP
    */
   @Roles(

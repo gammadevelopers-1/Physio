@@ -27,7 +27,10 @@ import {
   UserPlus,
   X,
   Check,
+  ClipboardList,
 } from "lucide-react";
+import SkeletonCard from "@/components/shared/SkeletonCard";
+import ExportButton from "@/components/shared/ExportButton";
 
 // 10-color palette for instructor color-coding
 const INSTRUCTOR_COLORS = [
@@ -66,6 +69,19 @@ interface InstructorOption {
   name: string;
 }
 
+interface AttendanceEntry {
+  id: string;
+  studentId: string;
+  status: string;
+  joinedAt: string | null;
+  leftAt: string | null;
+  durationMinutes: number | null;
+  note: string | null;
+  studentFirstName: string | null;
+  studentLastName: string | null;
+  studentEmail: string;
+}
+
 const SessionsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const manager = useManagerProfile();
@@ -81,6 +97,14 @@ const SessionsContent = () => {
     instructorName: string;
   }>>([]);
 
+  // Advanced filters
+  const [courseFilter, setCourseFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [coursesList, setCoursesList] = useState<{ id: string; title: string }[]>([]);
+
   // Action modal states
   const [actionDropdown, setActionDropdown] = useState<string | null>(null);
   const [cancelModal, setCancelModal] = useState<{ id: string; title: string } | null>(null);
@@ -92,18 +116,48 @@ const SessionsContent = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState(false);
 
+  // Attendance modal state
+  const [attendanceModal, setAttendanceModal] = useState<{ id: string; title: string } | null>(null);
+  const [attendanceData, setAttendanceData] = useState<Array<{
+    studentId: string;
+    status: string;
+    joinedAt: string | null;
+    leftAt: string | null;
+    durationMinutes: number | null;
+    note: string | null;
+    studentFirstName?: string;
+    studentLastName?: string;
+    studentEmail?: string;
+  }>>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  // Build dateRange for backend: "YYYY-MM-DD,YYYY-MM-DD"
+  const dateRange = useMemo(() => {
+    if (dateFrom && dateTo) return `${dateFrom},${dateTo}`;
+    if (dateFrom) return `${dateFrom},`;
+    if (dateTo) return `,${dateTo}`;
+    return undefined;
+  }, [dateFrom, dateTo]);
+
   const { sessions: rawSessions, totalPages, loading, error, refetch } =
     useCourseManagerSessions({
       status: statusFilter || undefined,
       instructorId: instructorFilter || undefined,
+      courseId: courseFilter || undefined,
+      dateRange,
       page: currentPage,
       limit: 20,
     });
 
   // Cast to extended type since backend now includes instructor fields
-  const sessions = rawSessions as unknown as SessionWithInstructor[];
+  // Apply client-side type filter (not supported by backend)
+  const sessions = useMemo(() => {
+    const all = rawSessions as unknown as SessionWithInstructor[];
+    if (!typeFilter) return all;
+    return all.filter((s) => s.type === typeFilter);
+  }, [rawSessions, typeFilter]);
 
-  // Fetch instructors for filter dropdown
+  // Fetch instructors and courses for filter dropdowns
   useEffect(() => {
     courseManagerApi.getInstructors().then((data) => {
       setInstructors(
@@ -112,6 +166,9 @@ const SessionsContent = () => {
           name: `${i.firstName || ""} ${i.lastName || ""}`.trim() || i.email,
         }))
       );
+    }).catch(() => {});
+    courseManagerApi.getCourses({ limit: 200 }).then((res) => {
+      setCoursesList((res.data || []).map((c: { id: string; title: string }) => ({ id: c.id, title: c.title })));
     }).catch(() => {});
   }, []);
 
@@ -220,6 +277,27 @@ const SessionsContent = () => {
     setActionLoading(false);
   };
 
+  // Fetch attendance when modal opens
+  useEffect(() => {
+    if (attendanceModal) {
+      setAttendanceLoading(true);
+      setAttendanceData([]);
+      courseManagerApi.getSessionAttendance(attendanceModal.id)
+        .then((data) => setAttendanceData(data as any))
+        .catch(() => {})
+        .finally(() => setAttendanceLoading(false));
+    }
+  }, [attendanceModal]);
+
+  const attendanceStats = useMemo(() => {
+    const total = attendanceData.length;
+    const present = attendanceData.filter((a) => a.status === "present").length;
+    const absent = attendanceData.filter((a) => a.status === "absent").length;
+    const late = attendanceData.filter((a) => a.status === "late").length;
+    const excused = attendanceData.filter((a) => a.status === "excused").length;
+    return { total, present, absent, late, excused };
+  }, [attendanceData]);
+
   const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).getDay();
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -319,38 +397,46 @@ const SessionsContent = () => {
               {getStatusBadge(session.status).label}
             </span>
             {/* Action dropdown */}
-            {(session.status === "scheduled" || session.status === "live") && (
-              <div className="relative">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setActionDropdown(actionDropdown === session.id ? null : session.id); }}
-                  className="p-1.5 hover:bg-[#F3F4F6] rounded-lg transition-colors"
-                >
-                  <MoreVertical className="w-4 h-4 text-[#6B7280]" />
-                </button>
-                {actionDropdown === session.id && (
-                  <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 py-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setCancelModal({ id: session.id, title: session.title }); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2]"
-                    >
-                      <XCircle className="w-4 h-4" /> Cancel Session
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); setRescheduleDate(session.scheduledAt.slice(0, 16)); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
-                    >
-                      <CalendarClock className="w-4 h-4" /> Reschedule
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setSubstituteModal({ id: session.id, title: session.title }); setSubstituteId(""); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
-                    >
-                      <UserPlus className="w-4 h-4" /> Assign Substitute
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="relative">
+              <button
+                onClick={(e) => { e.stopPropagation(); setActionDropdown(actionDropdown === session.id ? null : session.id); }}
+                className="p-1.5 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              >
+                <MoreVertical className="w-4 h-4 text-[#6B7280]" />
+              </button>
+              {actionDropdown === session.id && (
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 py-1">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title }); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                  >
+                    <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
+                  </button>
+                  {(session.status === "scheduled" || session.status === "live") && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setCancelModal({ id: session.id, title: session.title }); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2]"
+                      >
+                        <XCircle className="w-4 h-4" /> {t("sessionsPage.cancelSession")}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); setRescheduleDate(session.scheduledAt.slice(0, 16)); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                      >
+                        <CalendarClock className="w-4 h-4" /> {t("sessionsPage.reschedule")}
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setSubstituteModal({ id: session.id, title: session.title }); setSubstituteId(""); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                      >
+                        <UserPlus className="w-4 h-4" /> {t("sessionsPage.assignSubstitute")}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -408,13 +494,86 @@ const SessionsContent = () => {
                     onChange={(e) => { setInstructorFilter(e.target.value); setCurrentPage(1); }}
                     className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
                   >
-                    <option value="">All Instructors</option>
+                    <option value="">{t("sessionsPage.allInstructors")}</option>
                     {instructors.map((inst) => (
                       <option key={inst.id} value={inst.id}>{inst.name}</option>
                     ))}
                   </select>
+                  <button
+                    onClick={() => setShowMoreFilters(!showMoreFilters)}
+                    className="px-3 py-2 text-sm text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                  >
+                    {showMoreFilters ? t("sessionsPage.lessFilters") : t("sessionsPage.moreFilters")}
+                  </button>
+                  <ExportButton
+                    tableType="sessions"
+                    filters={{
+                      ...(statusFilter ? { status: statusFilter } : {}),
+                      ...(courseFilter ? { courseId: courseFilter } : {}),
+                    }}
+                  />
                 </div>
               </div>
+
+              {/* Advanced Filters Panel */}
+              {showMoreFilters && (
+                <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.filterByCourse")}</label>
+                      <select
+                        value={courseFilter}
+                        onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}
+                        className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                      >
+                        <option value="">{t("sessionsPage.allCourses")}</option>
+                        {coursesList.map((c) => (
+                          <option key={c.id} value={c.id}>{c.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.filterByType")}</label>
+                      <select
+                        value={typeFilter}
+                        onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
+                        className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                      >
+                        <option value="">{t("sessionsPage.allTypes")}</option>
+                        <option value="zoom">{t("sessionsPage.typeZoom")}</option>
+                        <option value="onsite">{t("sessionsPage.typeOnsite")}</option>
+                        <option value="hybrid">{t("sessionsPage.typeHybrid")}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.dateFrom")}</label>
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
+                        className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.dateTo")}</label>
+                      <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
+                        className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                      />
+                    </div>
+                  </div>
+                  {(courseFilter || typeFilter || dateFrom || dateTo) && (
+                    <button
+                      onClick={() => { setCourseFilter(""); setTypeFilter(""); setDateFrom(""); setDateTo(""); setCurrentPage(1); }}
+                      className="mt-3 text-xs text-[#EF4444] hover:text-[#B91C1C] transition-colors"
+                    >
+                      {t("sessionsPage.clearFilters")}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Conflict Warning Banner */}
               {conflicts.length > 0 && (
@@ -438,8 +597,10 @@ const SessionsContent = () => {
               )}
 
               {loading && (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                <div className="space-y-4">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
                 </div>
               )}
 
@@ -635,6 +796,97 @@ const SessionsContent = () => {
                   <button onClick={handleAssignSubstitute} disabled={!substituteId || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Assign
                   </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Attendance Modal */}
+      {attendanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-2xl p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">{t("sessionsPage.attendanceTitle")}</h3>
+                <p className="text-sm text-[#6B7280]">{attendanceModal.title}</p>
+              </div>
+              <button onClick={() => setAttendanceModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+                <X className="w-5 h-5 text-[#6B7280]" />
+              </button>
+            </div>
+
+            {attendanceLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+              </div>
+            ) : attendanceData.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
+                <p className="text-sm text-[#6B7280]">{t("sessionsPage.noAttendance")}</p>
+              </div>
+            ) : (
+              <>
+                {/* Summary bar */}
+                <div className="grid grid-cols-5 gap-2 mb-4">
+                  {[
+                    { label: t("sessionsPage.attendTotal"), count: attendanceStats.total, color: "text-[#1F2937]" },
+                    { label: t("sessionsPage.attendPresent"), count: attendanceStats.present, color: "text-[#22C55E]" },
+                    { label: t("sessionsPage.attendAbsent"), count: attendanceStats.absent, color: "text-[#EF4444]" },
+                    { label: t("sessionsPage.attendLate"), count: attendanceStats.late, color: "text-[#F59E0B]" },
+                    { label: t("sessionsPage.attendExcused"), count: attendanceStats.excused, color: "text-[#3B82F6]" },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-[#F9FAFB] rounded-lg p-2 text-center">
+                      <p className={`text-lg font-bold ${s.color}`}>{s.count}</p>
+                      <p className="text-[10px] text-[#6B7280]">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Attendance table */}
+                <div className="overflow-x-auto border border-[#E5E7EB] rounded-lg">
+                  <table className="w-full text-sm">
+                    <thead className="bg-[#F9FAFB] text-[#6B7280]">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendStudent")}</th>
+                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendStatus")}</th>
+                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendJoinedAt")}</th>
+                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendLeftAt")}</th>
+                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendDuration")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E5E7EB]">
+                      {attendanceData.map((record, idx) => {
+                        const name = [record.studentFirstName, record.studentLastName].filter(Boolean).join(" ") || record.studentEmail || record.studentId;
+                        const statusColors: Record<string, string> = {
+                          present: "bg-[#D1FAE5] text-[#065F46]",
+                          absent: "bg-[#FEE2E2] text-[#991B1B]",
+                          late: "bg-[#FEF3C7] text-[#92400E]",
+                          excused: "bg-[#DBEAFE] text-[#1E40AF]",
+                        };
+                        return (
+                          <tr key={`${record.studentId}-${idx}`} className="hover:bg-[#F9FAFB]">
+                            <td className="px-3 py-2 text-[#1F2937]">{name}</td>
+                            <td className="px-3 py-2">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                {record.status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-[#6B7280]">
+                              {record.joinedAt ? new Date(record.joinedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "\u2014"}
+                            </td>
+                            <td className="px-3 py-2 text-[#6B7280]">
+                              {record.leftAt ? new Date(record.leftAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "\u2014"}
+                            </td>
+                            <td className="px-3 py-2 text-[#6B7280]">
+                              {record.durationMinutes != null ? `${record.durationMinutes}min` : "\u2014"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </>
             )}

@@ -26,6 +26,7 @@ export * from './attendance';
 export * from './assessments';
 export * from './questions';
 export * from './submissions';
+export * from './assessment-overrides';
 
 // Course Material schemas
 export * from './course-materials';
@@ -44,6 +45,9 @@ export * from './interventions';
 export * from './nelc-audit-logs';
 export * from './session-assistants';
 export * from './attendance-logs';
+
+// Audit Logs schemas
+export * from './audit-logs';
 
 // Scheduled Reports schemas
 export * from './scheduled-reports';

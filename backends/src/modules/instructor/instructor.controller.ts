@@ -39,6 +39,15 @@ export class InstructorController {
   }
 
   /**
+   * GET /instructor/suggestions — Roster sorted by least-loaded, with recommended flag
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('suggestions')
+  async suggestInstructor() {
+    return this.instructorService.suggestInstructor();
+  }
+
+  /**
    * GET /instructor/students — All students across instructor's courses
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

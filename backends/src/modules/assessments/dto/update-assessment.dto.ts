@@ -95,4 +95,9 @@ export class UpdateAssessmentDto {
   @IsString()
   @IsIn(['highest', 'latest', 'average'], { message: 'Score policy must be highest, latest, or average' })
   retakeScorePolicy?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['full', 'failed_sections'], { message: 'Retake scope must be full or failed_sections' })
+  retakeScope?: string;
 }

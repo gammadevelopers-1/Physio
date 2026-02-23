@@ -53,8 +53,11 @@ const SettingsContent = () => {
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
+    firstNameAr: "",
+    lastNameAr: "",
     email: "",
     phone: "",
+    department: "",
     location: "",
     language: "en",
     bio: "",
@@ -68,8 +71,11 @@ const SettingsContent = () => {
         ...prev,
         firstName: user.firstName || "",
         lastName: user.lastName || "",
+        firstNameAr: user.firstNameAr || "",
+        lastNameAr: user.lastNameAr || "",
         email: user.email,
         phone: user.phone || "",
+        department: user.department || "",
       }));
     }
   }, [user]);
@@ -101,7 +107,10 @@ const SettingsContent = () => {
       await profileApi.update({
         firstName: profileData.firstName,
         lastName: profileData.lastName,
+        firstNameAr: profileData.firstNameAr,
+        lastNameAr: profileData.lastNameAr,
         phone: profileData.phone,
+        department: profileData.department,
       });
       await refreshUser();
       toast.success(t("settingsPage.profileUpdated"));
@@ -412,6 +421,34 @@ const SettingsContent = () => {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                              {t("settingsPage.profile.firstNameAr")}
+                            </label>
+                            <input
+                              type="text"
+                              dir="rtl"
+                              value={profileData.firstNameAr}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, firstNameAr: e.target.value })
+                              }
+                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                              {t("settingsPage.profile.lastNameAr")}
+                            </label>
+                            <input
+                              type="text"
+                              dir="rtl"
+                              value={profileData.lastNameAr}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, lastNameAr: e.target.value })
+                              }
+                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.email")}
                             </label>
                             <div className="relative">
@@ -443,6 +480,19 @@ const SettingsContent = () => {
                                 className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                              {t("settingsPage.profile.department")}
+                            </label>
+                            <input
+                              type="text"
+                              value={profileData.department}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, department: e.target.value })
+                              }
+                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            />
                           </div>
                         </div>
                       </div>

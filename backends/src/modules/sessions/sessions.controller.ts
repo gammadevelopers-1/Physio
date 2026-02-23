@@ -110,6 +110,19 @@ export class SessionsController {
   }
 
   /**
+   * GET /sessions/instructor-schedule/:instructorId — Get instructor's 2-week schedule
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('instructor-schedule/:instructorId')
+  async getInstructorSchedule(
+    @Param('instructorId') instructorId: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.sessionsService.getInstructorSchedule(instructorId, startDate, endDate);
+  }
+
+  /**
    * GET /sessions/:id — Session detail
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

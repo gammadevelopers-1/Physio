@@ -17,7 +17,10 @@ import {
   users,
   scheduledReports,
 } from '../../database/schema';
+import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
 
 type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
@@ -41,6 +44,11 @@ const CONTENT_TYPES: Record<ReportFormat, string> = {
 @Injectable()
 export class ReportsService {
   private readonly logger = new Logger(ReportsService.name);
+
+  constructor(
+    private readonly nelcComplianceService: NelcComplianceService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -712,6 +720,49 @@ export class ReportsService {
     return this.formatReport('Instructor Performance Report', headers, rows, format, metadata);
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // ─── NELC Compliance Matrix Report ──────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async generateNelcComplianceReport(
+    user: AuthenticatedUser,
+    params: { courseId?: string; format?: string },
+  ): Promise<ReportResult> {
+    const format = this.validateFormat(params.format);
+    const metadata = await this.buildMetadata(user, params.courseId);
+
+    // Get all courses the user has access to
+    const coursesData = await this.nelcComplianceService.getAllCoursesCompliance(user);
+    const filtered = params.courseId
+      ? coursesData.filter((c) => c.courseId === params.courseId)
+      : coursesData;
+
+    const headers = ['Course', 'Category', 'Rule', 'Status', 'Detail'];
+    const rows: string[][] = [];
+
+    // For each course, fetch the detailed 7-category scorecard
+    for (const course of filtered) {
+      const scorecard = await this.nelcComplianceService.getCourseComplianceScorecard(course.courseId);
+      for (const cat of scorecard.categories) {
+        for (const check of cat.checks) {
+          rows.push([
+            course.courseTitle,
+            cat.label,
+            check.rule,
+            check.status,
+            check.detail,
+          ]);
+        }
+      }
+    }
+
+    if (rows.length === 0) {
+      rows.push(['No compliance data available', '', '', '', '']);
+    }
+
+    return this.formatReport('NELC Compliance Matrix', headers, rows, format, metadata);
+  }
+
   private async buildMetadata(user: AuthenticatedUser, courseId?: string): Promise<ReportMetadata> {
     const instructorName = await this.getInstructorName(user.id);
     const filters = courseId ? `Course: ${await this.getCourseName(courseId)}` : 'All Courses';
@@ -737,6 +788,7 @@ export class ReportsService {
       format?: string;
       courseId?: string;
       frequency: string;
+      recipientEmail?: string;
     },
   ) {
     const nextRunAt = this.calculateNextRunAt(data.frequency);
@@ -749,6 +801,7 @@ export class ReportsService {
         format: data.format || 'csv',
         courseId: data.courseId || null,
         frequency: data.frequency,
+        recipientEmail: data.recipientEmail || null,
         enabled: true,
         nextRunAt,
       })
@@ -812,6 +865,293 @@ export class ReportsService {
       default:
         return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── Generic Table Export ──────────────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async exportTable(
+    user: AuthenticatedUser,
+    type: string,
+    format: string,
+    filters?: Record<string, string>,
+  ): Promise<ReportResult> {
+    const fmt = this.validateFormat(format);
+
+    switch (type) {
+      case 'sessions':
+        return this.exportSessionsTable(user, fmt, filters);
+      case 'instructors':
+        return this.exportInstructorsTable(user, fmt);
+      case 'assessments':
+        return this.exportAssessmentsTable(user, fmt, filters);
+      case 'content-review':
+        return this.exportContentReviewTable(user, fmt);
+      case 'nelc-courses':
+        return this.exportNelcCoursesTable(user, fmt);
+      default:
+        throw new BadRequestException(
+          `Unknown table type: ${type}. Valid types: sessions, instructors, assessments, content-review, nelc-courses`,
+        );
+    }
+  }
+
+  private async exportSessionsTable(
+    user: AuthenticatedUser,
+    format: ReportFormat,
+    filters?: Record<string, string>,
+  ): Promise<ReportResult> {
+    const conditions: any[] = [];
+    if (filters?.status) {
+      conditions.push(eq(sessions.status, filters.status));
+    }
+    if (filters?.courseId) {
+      conditions.push(eq(sessions.courseId, filters.courseId));
+    }
+
+    const data = await db
+      .select({
+        title: sessions.title,
+        courseTitle: courses.title,
+        type: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        status: sessions.status,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+        instructorEmail: users.email,
+        venueAddress: sessions.venueAddress,
+      })
+      .from(sessions)
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .innerJoin(users, eq(courses.instructorId, users.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(sessions.scheduledAt));
+
+    const headers = [
+      'Session Title',
+      'Course',
+      'Type',
+      'Scheduled At',
+      'Duration (min)',
+      'Status',
+      'Instructor',
+      'Venue',
+    ];
+
+    const rows = data.map((row) => [
+      row.title || '',
+      row.courseTitle || '',
+      row.type || '',
+      this.formatDate(row.scheduledAt),
+      String(row.durationMinutes || 0),
+      row.status || '',
+      `${row.instructorFirstName || ''} ${row.instructorLastName || ''}`.trim() || row.instructorEmail || '',
+      row.venueAddress || '',
+    ]);
+
+    return this.formatReport('Sessions Export', headers, rows, format);
+  }
+
+  private async exportInstructorsTable(
+    user: AuthenticatedUser,
+    format: ReportFormat,
+  ): Promise<ReportResult> {
+    const { userRoles, roles } = await import('../../database/schema');
+
+    const instructors = await db
+      .selectDistinct({
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        id: users.id,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(eq(roles.name, 'INSTRUCTOR'));
+
+    const headers = [
+      'Instructor Name',
+      'Email',
+      'Courses',
+      'Total Students',
+    ];
+
+    const rows: string[][] = [];
+
+    for (const inst of instructors) {
+      const [courseStats] = await db
+        .select({ count: count() })
+        .from(courses)
+        .where(eq(courses.instructorId, inst.id));
+
+      const [studentStats] = await db
+        .select({
+          count: sql<number>`COUNT(DISTINCT ${enrollments.studentId})`,
+        })
+        .from(enrollments)
+        .innerJoin(courses, eq(enrollments.courseId, courses.id))
+        .where(eq(courses.instructorId, inst.id));
+
+      rows.push([
+        `${inst.firstName || ''} ${inst.lastName || ''}`.trim() || 'Unknown',
+        inst.email,
+        String(courseStats?.count || 0),
+        String(studentStats?.count || 0),
+      ]);
+    }
+
+    return this.formatReport('Instructors Export', headers, rows, format);
+  }
+
+  private async exportAssessmentsTable(
+    user: AuthenticatedUser,
+    format: ReportFormat,
+    filters?: Record<string, string>,
+  ): Promise<ReportResult> {
+    const conditions: any[] = [];
+    if (filters?.type) {
+      conditions.push(eq(assessments.type, filters.type));
+    }
+    if (filters?.status) {
+      conditions.push(eq(assessments.status, filters.status));
+    }
+    if (filters?.courseId) {
+      conditions.push(eq(assessments.courseId, filters.courseId));
+    }
+
+    const data = await db
+      .select({
+        title: assessments.title,
+        courseTitle: courses.title,
+        type: assessments.type,
+        totalMarks: assessments.totalMarks,
+        passingMarks: assessments.passingMarks,
+        status: assessments.status,
+        durationMinutes: assessments.durationMinutes,
+      })
+      .from(assessments)
+      .innerJoin(courses, eq(assessments.courseId, courses.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(assessments.createdAt));
+
+    const headers = [
+      'Assessment',
+      'Course',
+      'Type',
+      'Total Marks',
+      'Passing Marks',
+      'Duration (min)',
+      'Status',
+    ];
+
+    const rows = data.map((row) => [
+      row.title || '',
+      row.courseTitle || '',
+      row.type || '',
+      String(row.totalMarks || 0),
+      String(row.passingMarks || 0),
+      String(row.durationMinutes || ''),
+      row.status || '',
+    ]);
+
+    return this.formatReport('Assessments Export', headers, rows, format);
+  }
+
+  private async exportContentReviewTable(
+    user: AuthenticatedUser,
+    format: ReportFormat,
+  ): Promise<ReportResult> {
+    const data = await db
+      .select({
+        title: courseMaterials.title,
+        type: courseMaterials.type,
+        status: courseMaterials.status,
+        wcagStatus: courseMaterials.wcagStatus,
+        courseTitle: courses.title,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+        instructorEmail: users.email,
+        createdAt: courseMaterials.createdAt,
+        reviewNote: courseMaterials.reviewNote,
+      })
+      .from(courseMaterials)
+      .innerJoin(courses, eq(courseMaterials.courseId, courses.id))
+      .innerJoin(users, eq(courses.instructorId, users.id))
+      .where(
+        sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`,
+      )
+      .orderBy(desc(courseMaterials.createdAt));
+
+    const headers = [
+      'Content Title',
+      'Type',
+      'Course',
+      'Instructor',
+      'Status',
+      'WCAG Status',
+      'Submitted At',
+      'Review Note',
+    ];
+
+    const rows = data.map((row) => [
+      row.title || '',
+      row.type || '',
+      row.courseTitle || '',
+      `${row.instructorFirstName || ''} ${row.instructorLastName || ''}`.trim() || row.instructorEmail || '',
+      row.status || '',
+      row.wcagStatus || '',
+      this.formatDate(row.createdAt),
+      row.reviewNote || '',
+    ]);
+
+    return this.formatReport('Content Review Export', headers, rows, format);
+  }
+
+  private async exportNelcCoursesTable(
+    user: AuthenticatedUser,
+    format: ReportFormat,
+  ): Promise<ReportResult> {
+    const coursesData =
+      await this.nelcComplianceService.getAllCoursesCompliance(user);
+
+    const headers = [
+      'Course',
+      'Instructor',
+      'Overall Status',
+      'Passed',
+      'Review',
+      'Failed',
+      'Total Checks',
+    ];
+
+    const rows = coursesData.map((c) => [
+      c.courseTitle,
+      c.instructorName,
+      c.overallStatus,
+      String(c.summary.passed),
+      String(c.summary.review),
+      String(c.summary.failed),
+      String(c.summary.total),
+    ]);
+
+    return this.formatReport('NELC Compliance Export', headers, rows, format);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // ─── Audit Helper ──────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async logReportGenerated(userId: string, reportType: string, format: string) {
+    await this.auditLogService.log({
+      entityType: 'report',
+      entityId: reportType,
+      action: 'report.generated',
+      performedBy: userId,
+      metadata: { reportType, format },
+    }).catch(() => {});
   }
 
   // ═══════════════════════════════════════════════════════════

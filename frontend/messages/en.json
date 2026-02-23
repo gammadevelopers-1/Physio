@@ -2295,6 +2295,8 @@
       "satisfactionDesc": "View course satisfaction metrics including completion rates, attendance, and assessment scores.",
       "instructor-performanceReport": "Instructor Performance Report",
       "instructor-performanceDesc": "Compare instructor metrics including courses, students, completion rates, and attendance.",
+      "nelc-complianceReport": "NELC Compliance Matrix",
+      "nelc-complianceDesc": "Clause-by-clause NELC compliance status across all courses with category breakdowns.",
       "exportReport": "Export Report",
       "selectCourse": "Course",
       "chooseCourse": "Select a course...",
@@ -2559,7 +2561,13 @@
       "vcStatus": "Status",
       "vcLink": "Link",
       "vcRecording": "Synced",
-      "vcComplianceChecks": "Compliance Checks"
+      "vcComplianceChecks": "Compliance Checks",
+      "loadingScorecard": "Loading compliance scorecard...",
+      "overallScore": "Overall Compliance Score",
+      "exportEvidence": "Export Evidence",
+      "scorecardUnavailable": "Compliance scorecard unavailable",
+      "bundleContents": "ZIP includes: compliance checks with NELC clauses, sessions, attendance, materials audit, assessment results, instructor credentials, student feedback, accessibility report, and policies",
+      "bundleContentsShort": "9 files included in ZIP"
     },
     "courseStats": {
       "title": "Course Statistics",
@@ -2751,7 +2759,36 @@
         "time": "Time",
         "cancel": "Cancel",
         "schedule": "Schedule"
-      }
+      },
+      "allInstructors": "All Instructors",
+      "moreFilters": "More Filters",
+      "lessFilters": "Less Filters",
+      "filterByCourse": "Course",
+      "allCourses": "All Courses",
+      "filterByType": "Delivery Type",
+      "allTypes": "All Types",
+      "typeZoom": "Zoom",
+      "typeOnsite": "On-site",
+      "typeHybrid": "Hybrid",
+      "dateFrom": "From Date",
+      "dateTo": "To Date",
+      "clearFilters": "Clear all filters",
+      "viewAttendance": "View Attendance",
+      "cancelSession": "Cancel Session",
+      "reschedule": "Reschedule",
+      "assignSubstitute": "Assign Substitute",
+      "attendanceTitle": "Session Attendance",
+      "noAttendance": "No attendance records for this session",
+      "attendTotal": "Total",
+      "attendPresent": "Present",
+      "attendAbsent": "Absent",
+      "attendLate": "Late",
+      "attendExcused": "Excused",
+      "attendStudent": "Student",
+      "attendStatus": "Status",
+      "attendJoinedAt": "Joined At",
+      "attendLeftAt": "Left At",
+      "attendDuration": "Duration"
     },
     "instructorsPage": {
       "title": "Instructors",
@@ -2769,7 +2806,8 @@
         "total": "Total Instructors",
         "available": "Available",
         "overloaded": "Overloaded",
-        "avgRating": "Avg Rating"
+        "avgRating": "Avg Rating",
+        "onLeave": "On Leave"
       },
       "filters": {
         "allStatus": "All Status",
@@ -2783,7 +2821,20 @@
         "busy": "Busy",
         "overloaded": "Overloaded",
         "on_leave": "On Leave"
-      }
+      },
+      "rating": "Rating",
+      "completionRate": "Completion",
+      "recommended": "Recommended",
+      "assignTitle": "Assign Instructor",
+      "assignDesc": "Assign to a course:",
+      "assignSuccess": "Instructor assigned successfully!",
+      "selectCourse": "Select a course...",
+      "cancel": "Cancel",
+      "assign": "Assign",
+      "scheduleTitle": "2-Week Schedule",
+      "noSessions": "No sessions",
+      "overloadWarning": "This instructor has {hours}h scheduled this week",
+      "suggestAlternative": "Consider assigning to {name} instead (least loaded)"
     },
     "contentReviewPage": {
       "title": "Content Review",
@@ -2793,12 +2844,30 @@
       "preview": "Preview",
       "approve": "Approve",
       "reject": "Reject",
+      "requestChanges": "Request Changes",
+      "approved": "Content approved successfully",
+      "rejected": "Content rejected",
+      "changesRequestedSuccess": "Changes requested successfully",
+      "rejectTitle": "Reject Content",
+      "rejectDesc": "Please provide a reason for rejecting this content.",
+      "requestChangesTitle": "Request Changes",
+      "requestChangesDesc": "Describe the changes needed before this content can be approved.",
+      "commentPlaceholder": "Enter your feedback or reason...",
+      "cancel": "Cancel",
+      "confirmReject": "Reject",
+      "confirmRequestChanges": "Request Changes",
+      "previousNote": "Previous Review Note",
+      "complianceChecklist": "Compliance Checklist",
+      "loadingChecklist": "Loading compliance checks...",
+      "checksPassed": "checks passed",
+      "checklistUnavailable": "Compliance checklist unavailable",
       "noContent": "No Content Found",
       "noContentDesc": "No content items match your filters",
       "emptyTitle": "No Content Submissions",
       "emptyDesc": "Content review submissions will appear here when instructors submit materials for review.",
       "stats": {
         "pending": "Pending",
+        "changesRequested": "Changes Requested",
         "approved": "Approved",
         "rejected": "Rejected",
         "total": "Total"
@@ -2816,6 +2885,7 @@
       },
       "status": {
         "pending": "Pending",
+        "changesRequested": "Changes Requested",
         "approved": "Approved",
         "rejected": "Rejected"
       }
@@ -2832,7 +2902,8 @@
         "totalAttempts": "Total Attempts",
         "avgScore": "Avg Score",
         "avgCompletion": "Avg Completion",
-        "active": "Active Assessments"
+        "active": "Active Assessments",
+        "flagged": "Flagged"
       },
       "filters": {
         "allTypes": "All Types",
@@ -2892,7 +2963,26 @@
           "latest": "Latest Score",
           "average": "Average Score"
         },
-        "unlimited": "Unlimited"
+        "unlimited": "Unlimited",
+        "scope": "Retake Scope",
+        "scopeFull": "Full Assessment",
+        "scopeFailedSections": "Failed Sections Only"
+      },
+      "override": {
+        "title": "Emergency Override",
+        "selectStudent": "Select Student",
+        "type": "Override Type",
+        "timeExtension": "Time Extension",
+        "extraAttempts": "Extra Attempts",
+        "minutes": "Additional Minutes",
+        "attempts": "Additional Attempts",
+        "value": "Value",
+        "reason": "Reason",
+        "reasonPlaceholder": "Describe the emergency reason...",
+        "cancel": "Cancel",
+        "grant": "Grant Override",
+        "success": "Override granted successfully",
+        "error": "Failed to grant override"
       },
       "settings": {
         "save": "Save Settings",
@@ -2916,7 +3006,24 @@
         "unlinkedDesc": "These assessments are not linked to any module",
         "noCourse": "Select a course to view assessment blueprint coverage",
         "noModules": "This course has no modules yet"
-      }
+      },
+      "difficulty": {
+        "title": "Difficulty Distribution",
+        "easy": "Easy",
+        "medium": "Medium",
+        "hard": "Hard"
+      },
+      "flag": {
+        "title": "Flag for Review",
+        "reason": "Reason",
+        "reasonPlaceholder": "Describe why this needs review...",
+        "cancel": "Cancel",
+        "submit": "Flag Assessment",
+        "success": "Assessment flagged successfully",
+        "error": "Failed to flag assessment"
+      },
+      "flaggedBadge": "Flagged",
+      "flagForReview": "Flag for Review"
     },
     "reportsPage": {
       "title": "Reports & Analytics",
@@ -2935,6 +3042,8 @@
       "satisfactionDesc": "View course satisfaction metrics including completion rates, attendance, and assessment scores.",
       "instructor-performanceReport": "Instructor Performance Report",
       "instructor-performanceDesc": "Compare instructor metrics including courses, students, completion rates, and attendance.",
+      "nelc-complianceReport": "NELC Compliance Matrix",
+      "nelc-complianceDesc": "Clause-by-clause NELC compliance status across all courses with category breakdowns.",
       "exportReport": "Export Report",
       "selectCourse": "Course",
       "chooseCourse": "Select a course...",
@@ -2968,7 +3077,10 @@
       "create": "Create",
       "cancel": "Cancel",
       "scheduleCreated": "Scheduled report created successfully",
-      "scheduleError": "Failed to manage scheduled report"
+      "scheduleError": "Failed to manage scheduled report",
+      "recipientEmail": "Recipient Email",
+      "recipientEmailPlaceholder": "email@example.com",
+      "emailDelivery": "Email Delivery"
     },
     "settingsPage": {
       "title": "Settings",
@@ -2991,6 +3103,8 @@
         "fullName": "Full Name",
         "firstName": "First Name",
         "lastName": "Last Name",
+        "firstNameAr": "First Name (Arabic)",
+        "lastNameAr": "Last Name (Arabic)",
         "email": "Email Address",
         "phone": "Phone Number",
         "department": "Department",

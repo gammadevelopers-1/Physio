@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, isNull, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, isNull, inArray, aliasedTable } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   assessments,
@@ -12,6 +12,7 @@ import {
   submissions,
   courses,
   users,
+  assessmentOverrides,
   ASSESSMENT_STATUS,
   QUESTION_TYPE,
   QuestionOption,
@@ -847,6 +848,122 @@ export class AssessmentsService {
       matrix,
       unlinkedAssessments: unlinked,
     };
+  }
+
+  // ─── Difficulty Distribution ─────────────────────────────
+
+  /**
+   * GET /assessments/:id/difficulty-distribution
+   * Returns easy/medium/hard/unset counts for questions in the assessment.
+   */
+  async getDifficultyDistribution(assessmentId: string, user: AuthenticatedUser) {
+    await this.verifyAssessmentAccess(assessmentId, user);
+
+    const distRows = await db
+      .select({
+        difficulty: questions.difficultyLevel,
+        count: count(),
+      })
+      .from(questions)
+      .where(eq(questions.assessmentId, assessmentId))
+      .groupBy(questions.difficultyLevel);
+
+    const distribution = { easy: 0, medium: 0, hard: 0, unset: 0, total: 0 };
+    for (const row of distRows) {
+      const cnt = Number(row.count);
+      distribution.total += cnt;
+      if (row.difficulty === 'easy') distribution.easy += cnt;
+      else if (row.difficulty === 'medium') distribution.medium += cnt;
+      else if (row.difficulty === 'hard') distribution.hard += cnt;
+      else distribution.unset += cnt;
+    }
+
+    return distribution;
+  }
+
+  // ─── Assessment Flagging ───────────────────────────────────
+
+  /**
+   * POST /assessments/:id/flag
+   * Flag an assessment for review (MANAGER/ADMIN only).
+   */
+  async flagAssessment(assessmentId: string, user: AuthenticatedUser, reason: string) {
+    await this.verifyAssessmentAccess(assessmentId, user);
+
+    const [updated] = await db
+      .update(assessments)
+      .set({
+        flaggedAt: new Date(),
+        flaggedReason: reason,
+        flaggedBy: user.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(assessments.id, assessmentId))
+      .returning();
+
+    return updated;
+  }
+
+  // ─── Emergency Overrides ─────────────────────────────────
+
+  /**
+   * Grant an emergency override (time extension or extra attempts) for a student.
+   */
+  async createOverride(
+    assessmentId: string,
+    user: AuthenticatedUser,
+    data: { studentId: string; overrideType: string; value: number; reason: string; expiresAt?: string },
+  ) {
+    await this.verifyAssessmentAccess(assessmentId, user);
+
+    const [override] = await db
+      .insert(assessmentOverrides)
+      .values({
+        assessmentId,
+        studentId: data.studentId,
+        overrideType: data.overrideType,
+        value: data.value,
+        reason: data.reason,
+        grantedBy: user.id,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : undefined,
+      })
+      .returning();
+
+    return override;
+  }
+
+  /**
+   * List all overrides for an assessment, with student and granter names.
+   */
+  async getOverrides(assessmentId: string, user: AuthenticatedUser) {
+    await this.verifyAssessmentAccess(assessmentId, user);
+
+    const studentUsers = aliasedTable(users, 'student_users');
+    const granterUsers = aliasedTable(users, 'granter_users');
+
+    const data = await db
+      .select({
+        id: assessmentOverrides.id,
+        assessmentId: assessmentOverrides.assessmentId,
+        studentId: assessmentOverrides.studentId,
+        overrideType: assessmentOverrides.overrideType,
+        value: assessmentOverrides.value,
+        reason: assessmentOverrides.reason,
+        grantedBy: assessmentOverrides.grantedBy,
+        expiresAt: assessmentOverrides.expiresAt,
+        createdAt: assessmentOverrides.createdAt,
+        studentFirstName: studentUsers.firstName,
+        studentLastName: studentUsers.lastName,
+        granterFirstName: granterUsers.firstName,
+        granterLastName: granterUsers.lastName,
+      })
+      .from(assessmentOverrides)
+      .innerJoin(studentUsers, eq(assessmentOverrides.studentId, studentUsers.id))
+      .innerJoin(granterUsers, eq(assessmentOverrides.grantedBy, granterUsers.id))
+      .where(eq(assessmentOverrides.assessmentId, assessmentId))
+      .orderBy(desc(assessmentOverrides.createdAt));
+
+    return data;
   }
 
   // ─── Helpers ──────────────────────────────────────────────

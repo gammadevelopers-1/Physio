@@ -1,10 +1,10 @@
-import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength, ValidateIf } from 'class-validator';
 
 export class ReviewMaterialDto {
-  @IsIn(['approved', 'rejected'])
-  decision: 'approved' | 'rejected';
+  @IsIn(['approved', 'rejected', 'changes_requested'])
+  decision: 'approved' | 'rejected' | 'changes_requested';
 
-  @IsOptional()
+  @ValidateIf((o) => o.decision === 'changes_requested' || o.decision === 'rejected')
   @IsString()
   @MaxLength(1000)
   comment?: string;

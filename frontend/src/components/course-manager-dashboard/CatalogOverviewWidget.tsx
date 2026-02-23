@@ -144,9 +144,10 @@ const CatalogOverviewWidget = ({
   const renderDropdown = (course: Course) => (
     <div className="relative">
       <button
-        onClick={() =>
-          setOpenDropdown(openDropdown === course.id ? null : course.id)
-        }
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpenDropdown(openDropdown === course.id ? null : course.id);
+        }}
         disabled={loadingId === course.id}
         className="w-8 h-8 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F3F4F6] transition-colors disabled:opacity-50"
       >
@@ -162,7 +163,10 @@ const CatalogOverviewWidget = ({
           {/* Invisible overlay to close dropdown on outside click */}
           <div
             className="fixed inset-0 z-40"
-            onClick={() => setOpenDropdown(null)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenDropdown(null);
+            }}
           />
           <div className="absolute end-0 bottom-full mb-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
             <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
@@ -172,7 +176,10 @@ const CatalogOverviewWidget = ({
               (opt) => (
                 <button
                   key={opt.value}
-                  onClick={() => handleStatusAction(course.id, opt.value)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusAction(course.id, opt.value);
+                  }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                 >
                   {opt.icon}
@@ -183,7 +190,10 @@ const CatalogOverviewWidget = ({
             <div className="border-t border-[#E5E7EB]">
               <Link
                 href={`/${locale}/dashboard/manager/courses/${course.id}`}
-                onClick={() => setOpenDropdown(null)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenDropdown(null);
+                }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--blue-brand-blue)] hover:bg-[#F9FAFB] transition-colors"
               >
                 {t("catalog.manageCourse")}
@@ -373,9 +383,12 @@ const CatalogOverviewWidget = ({
                       {course.thumbnail}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[var(--on-surface-default)] truncate">
+                      <Link
+                        href={`/${locale}/dashboard/manager/courses/${course.id}`}
+                        className="text-sm font-medium text-[var(--on-surface-default)] truncate hover:text-[var(--blue-brand-blue)] hover:underline transition-colors"
+                      >
                         {course.name}
-                      </p>
+                      </Link>
                       <p className="text-xs text-[var(--on-surface-variant)]">
                         {course.category}
                       </p>
@@ -440,9 +453,12 @@ const CatalogOverviewWidget = ({
                 {course.thumbnail}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-[var(--on-surface-default)] truncate">
+                <Link
+                  href={`/${locale}/dashboard/manager/courses/${course.id}`}
+                  className="text-sm font-semibold text-[var(--on-surface-default)] truncate hover:text-[var(--blue-brand-blue)] hover:underline transition-colors block"
+                >
                   {course.name}
-                </p>
+                </Link>
                 <p className="text-xs text-[var(--on-surface-variant)]">
                   {course.instructor}
                 </p>

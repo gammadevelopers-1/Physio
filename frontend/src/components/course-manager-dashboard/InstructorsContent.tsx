@@ -21,18 +21,27 @@ import {
   X,
   Check,
   ChevronRight,
+  Star,
+  Calendar,
 } from "lucide-react";
+import SkeletonCard from "@/components/shared/SkeletonCard";
+import ExportButton from "@/components/shared/ExportButton";
 
 interface RosterInstructor {
   id: string;
   firstName: string | null;
   lastName: string | null;
   email: string;
+  avatar: string | null;
+  department: string | null;
+  specialty: string | null;
+  avgRating: number | null;
+  completionRate: number | null;
   coursesCount: number;
   studentsCount: number;
   sessionsThisWeek: number;
   hoursThisWeek: number;
-  status: "available" | "busy" | "overloaded";
+  status: "available" | "busy" | "overloaded" | "on_leave";
 }
 
 interface CourseOption {
@@ -40,17 +49,28 @@ interface CourseOption {
   title: string;
 }
 
+interface ScheduleSession {
+  id: string;
+  title: string;
+  courseTitle: string;
+  type: string;
+  scheduledAt: string | null;
+  durationMinutes: number;
+  status: string;
+}
+
 const STATUS_CONFIG = {
   available: { bg: "bg-[#D1FAE5]", text: "text-[#065F46]", bar: "bg-[#22C55E]" },
   busy: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", bar: "bg-[#F59E0B]" },
   overloaded: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", bar: "bg-[#EF4444]" },
+  on_leave: { bg: "bg-[#E0E7FF]", text: "text-[#3730A3]", bar: "bg-[#6366F1]" },
 };
 
 const InstructorsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const manager = useManagerProfile();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "busy" | "overloaded">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "busy" | "overloaded" | "on_leave">("all");
   const [instructors, setInstructors] = useState<RosterInstructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +84,9 @@ const InstructorsContent = () => {
   const [selectedCourseId, setSelectedCourseId] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [assignSuccess, setAssignSuccess] = useState(false);
+  const [schedule, setSchedule] = useState<ScheduleSession[]>([]);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
 
   const fetchRoster = () => {
     setLoading(true);
@@ -81,7 +104,7 @@ const InstructorsContent = () => {
     fetchRoster();
   }, []);
 
-  // Fetch courses when assignment modal opens
+  // Fetch courses + schedule when assignment modal opens
   useEffect(() => {
     if (assignModal) {
       courseManagerApi.getCourses({ limit: 100 }).then((res) => {
@@ -92,7 +115,25 @@ const InstructorsContent = () => {
           }))
         );
       }).catch(() => {});
+
+      // Fetch instructor schedule
+      setScheduleLoading(true);
+      setSchedule([]);
+      setSuggestion(null);
+      courseManagerApi.getInstructorSchedule(assignModal.instructorId).then(setSchedule).catch(() => {}).finally(() => setScheduleLoading(false));
+
+      // If overloaded, fetch suggestion
+      const inst = instructors.find((i) => i.id === assignModal.instructorId);
+      if (inst && (inst.status === "busy" || inst.status === "overloaded")) {
+        courseManagerApi.getInstructorSuggestions().then((suggestions) => {
+          const best = suggestions.find((s) => s.recommended && s.id !== assignModal.instructorId);
+          if (best) {
+            setSuggestion([best.firstName, best.lastName].filter(Boolean).join(" ") || best.email);
+          }
+        }).catch(() => {});
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assignModal]);
 
   const filtered = useMemo(() => {
@@ -115,6 +156,7 @@ const InstructorsContent = () => {
     available: instructors.filter((i) => i.status === "available").length,
     busy: instructors.filter((i) => i.status === "busy").length,
     overloaded: instructors.filter((i) => i.status === "overloaded").length,
+    onLeave: instructors.filter((i) => i.status === "on_leave").length,
   }), [instructors]);
 
   const getInitials = (inst: RosterInstructor) => {
@@ -148,6 +190,33 @@ const InstructorsContent = () => {
   // Max hours for load bar scale (cap at 20h)
   const maxHours = 20;
 
+  // Find least-loaded instructor for recommended badge
+  const recommendedId = useMemo(() => {
+    if (instructors.length === 0) return null;
+    const sorted = [...instructors].sort((a, b) => a.hoursThisWeek - b.hoursThisWeek);
+    return sorted[0]?.id || null;
+  }, [instructors]);
+
+  // Build 2-week schedule grid from sessions
+  const scheduleGrid = useMemo(() => {
+    if (schedule.length === 0) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const days: { date: Date; label: string; sessions: ScheduleSession[] }[] = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dayLabel = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      const daySessions = schedule.filter((s) => {
+        if (!s.scheduledAt) return false;
+        const sd = new Date(s.scheduledAt);
+        return sd.getFullYear() === d.getFullYear() && sd.getMonth() === d.getMonth() && sd.getDate() === d.getDate();
+      });
+      days.push({ date: d, label: dayLabel, sessions: daySessions });
+    }
+    return days;
+  }, [schedule]);
+
   return (
     <>
       <CourseManagerNavbar manager={manager} />
@@ -166,10 +235,11 @@ const InstructorsContent = () => {
                   <h1 className="text-2xl font-bold text-[#1F2937]">{t("instructorsPage.title")}</h1>
                   <p className="text-sm text-[#6B7280] mt-1">{t("instructorsPage.subtitle")}</p>
                 </div>
+                <ExportButton tableType="instructors" />
               </div>
 
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.total")}</p>
                   <p className="text-2xl font-bold text-[#1F2937] mt-1">{stats.total}</p>
@@ -185,6 +255,10 @@ const InstructorsContent = () => {
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.overloaded")}</p>
                   <p className="text-2xl font-bold text-[#EF4444] mt-1">{stats.overloaded}</p>
+                </div>
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.onLeave")}</p>
+                  <p className="text-2xl font-bold text-[#6366F1] mt-1">{stats.onLeave}</p>
                 </div>
               </div>
 
@@ -209,12 +283,15 @@ const InstructorsContent = () => {
                   <option value="available">{t("instructorsPage.filters.available")}</option>
                   <option value="busy">{t("instructorsPage.filters.busy")}</option>
                   <option value="overloaded">{t("instructorsPage.filters.overloaded")}</option>
+                  <option value="on_leave">{t("instructorsPage.filters.onLeave")}</option>
                 </select>
               </div>
 
               {loading && (
-                <div className="flex items-center justify-center py-20">
-                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
                 </div>
               )}
 
@@ -246,14 +323,40 @@ const InstructorsContent = () => {
 
                     return (
                       <div key={instructor.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow">
+                        {/* Recommended badge */}
+                        {recommendedId === instructor.id && (
+                          <div className="flex items-center gap-1 mb-2 px-2 py-1 bg-[#FEF3C7] rounded-lg w-fit">
+                            <Star className="w-3 h-3 text-[#F59E0B] fill-[#F59E0B]" />
+                            <span className="text-[10px] font-semibold text-[#92400E]">{t("instructorsPage.recommended")}</span>
+                          </div>
+                        )}
+
                         {/* Header */}
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 bg-[#EFF6FF] rounded-full flex items-center justify-center flex-shrink-0">
+                          {instructor.avatar ? (
+                            <img
+                              src={instructor.avatar}
+                              alt={getName(instructor)}
+                              className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                              onError={(e) => {
+                                const target = e.currentTarget;
+                                target.style.display = 'none';
+                                target.nextElementSibling?.classList.remove('hidden');
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-12 h-12 bg-[#EFF6FF] rounded-full flex items-center justify-center flex-shrink-0 ${instructor.avatar ? 'hidden' : ''}`}>
                             <span className="text-sm font-semibold text-[#3B82F6]">{getInitials(instructor)}</span>
                           </div>
                           <div className="min-w-0">
                             <h3 className="text-sm font-semibold text-[#1F2937] truncate">{getName(instructor)}</h3>
                             <p className="text-xs text-[#6B7280] truncate">{instructor.email}</p>
+                            {(instructor.department || instructor.specialty) && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {instructor.department && <span className="px-1.5 py-0.5 bg-[#F3F4F6] text-[#6B7280] text-[9px] rounded">{instructor.department}</span>}
+                                {instructor.specialty && <span className="px-1.5 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[9px] rounded">{instructor.specialty}</span>}
+                              </div>
+                            )}
                           </div>
                           <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold ${config.bg} ${config.text} flex-shrink-0`}>
                             {t(`instructorsPage.status.${instructor.status}`)}
@@ -261,7 +364,7 @@ const InstructorsContent = () => {
                         </div>
 
                         {/* Metrics */}
-                        <div className="grid grid-cols-3 gap-3 mb-4">
+                        <div className="grid grid-cols-4 gap-3 mb-4">
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
                               <BookOpen className="w-3.5 h-3.5" />
@@ -282,6 +385,13 @@ const InstructorsContent = () => {
                             </div>
                             <p className="text-lg font-bold text-[#1F2937]">{instructor.sessionsThisWeek}</p>
                             <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.weekly")}</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
+                              <Star className="w-3.5 h-3.5" />
+                            </div>
+                            <p className="text-lg font-bold text-[#1F2937]">{instructor.avgRating?.toFixed(1) || "—"}</p>
+                            <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.rating")}</p>
                           </div>
                         </div>
 
@@ -337,9 +447,9 @@ const InstructorsContent = () => {
       {/* Assignment Modal */}
       {assignModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-6">
+          <div className="bg-white rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">Assign Instructor</h3>
+              <h3 className="text-lg font-semibold text-[#1F2937]">{t("instructorsPage.assignTitle")}</h3>
               <button onClick={() => setAssignModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
                 <X className="w-5 h-5 text-[#6B7280]" />
               </button>
@@ -350,19 +460,94 @@ const InstructorsContent = () => {
                 <div className="w-12 h-12 bg-[#D1FAE5] rounded-full flex items-center justify-center mx-auto mb-3">
                   <Check className="w-6 h-6 text-[#22C55E]" />
                 </div>
-                <p className="text-sm font-medium text-[#1F2937]">Instructor assigned successfully!</p>
+                <p className="text-sm font-medium text-[#1F2937]">{t("instructorsPage.assignSuccess")}</p>
               </div>
             ) : (
               <>
                 <p className="text-sm text-[#6B7280] mb-4">
-                  Assign <span className="font-medium text-[#1F2937]">{assignModal.instructorName}</span> to a course:
+                  {t("instructorsPage.assignDesc")} <span className="font-medium text-[#1F2937]">{assignModal.instructorName}</span>
                 </p>
+
+                {/* Overload Warning */}
+                {(() => {
+                  const inst = instructors.find((i) => i.id === assignModal.instructorId);
+                  if (inst && (inst.status === "busy" || inst.status === "overloaded")) {
+                    return (
+                      <div className={`mb-4 p-3 rounded-lg border ${inst.status === "overloaded" ? "bg-[#FEE2E2] border-[#FECACA]" : "bg-[#FEF3C7] border-[#FDE68A]"}`}>
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${inst.status === "overloaded" ? "text-[#EF4444]" : "text-[#F59E0B]"}`} />
+                          <div>
+                            <p className={`text-xs font-medium ${inst.status === "overloaded" ? "text-[#991B1B]" : "text-[#92400E]"}`}>
+                              {t("instructorsPage.overloadWarning", { hours: inst.hoursThisWeek })}
+                            </p>
+                            {suggestion && (
+                              <p className="text-xs text-[#6B7280] mt-1">
+                                {t("instructorsPage.suggestAlternative", { name: suggestion })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* 2-Week Schedule Mini Grid */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-[#6B7280]" />
+                    <span className="text-xs font-medium text-[#6B7280]">{t("instructorsPage.scheduleTitle")}</span>
+                  </div>
+                  {scheduleLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-5 h-5 text-[#3B82F6] animate-spin" />
+                    </div>
+                  ) : scheduleGrid.length > 0 ? (
+                    <div className="grid grid-cols-7 gap-1">
+                      {scheduleGrid.map((day) => {
+                        const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+                        return (
+                          <div
+                            key={day.label}
+                            className={`rounded-md p-1 text-center min-h-[52px] ${isWeekend ? "bg-[#F3F4F6]" : "bg-[#F9FAFB]"}`}
+                            title={day.sessions.length > 0 ? day.sessions.map((s) => `${s.title} (${s.durationMinutes}min)`).join(", ") : t("instructorsPage.noSessions")}
+                          >
+                            <p className="text-[9px] text-[#9CA3AF] leading-tight">{day.label.split(",")[0]}</p>
+                            {day.sessions.length > 0 ? (
+                              <div className="mt-1 space-y-0.5">
+                                {day.sessions.slice(0, 3).map((s, idx) => (
+                                  <div
+                                    key={`${s.id}-${idx}`}
+                                    className="h-1.5 rounded-full bg-[#3B82F6]"
+                                    title={`${s.title} (${s.durationMinutes}min)`}
+                                  />
+                                ))}
+                                {day.sessions.length > 3 && (
+                                  <p className="text-[8px] text-[#6B7280]">+{day.sessions.length - 3}</p>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="mt-2">
+                                <div className="h-1.5 rounded-full bg-[#E5E7EB]" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#9CA3AF] text-center py-3">{t("instructorsPage.noSessions")}</p>
+                  )}
+                </div>
+
+                {/* Course Select */}
                 <select
                   value={selectedCourseId}
                   onChange={(e) => setSelectedCourseId(e.target.value)}
                   className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
-                  <option value="">Select a course...</option>
+                  <option value="">{t("instructorsPage.selectCourse")}</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>{c.title}</option>
                   ))}
@@ -372,7 +557,7 @@ const InstructorsContent = () => {
                     onClick={() => setAssignModal(null)}
                     className="px-4 py-2 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
                   >
-                    Cancel
+                    {t("instructorsPage.cancel")}
                   </button>
                   <button
                     onClick={handleAssign}
@@ -380,7 +565,7 @@ const InstructorsContent = () => {
                     className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2"
                   >
                     {assigning && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Assign
+                    {t("instructorsPage.assign")}
                   </button>
                 </div>
               </>

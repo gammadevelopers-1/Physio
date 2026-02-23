@@ -226,6 +226,63 @@ export class AssessmentsController {
     return this.assessmentsService.getItemAnalysis(assessmentId, user);
   }
 
+  // ─── Difficulty Distribution ─────────────────────────────
+
+  /**
+   * GET /assessments/:id/difficulty-distribution — Question difficulty breakdown
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get(':id/difficulty-distribution')
+  async getDifficultyDistribution(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.assessmentsService.getDifficultyDistribution(assessmentId, user);
+  }
+
+  // ─── Assessment Flagging ───────────────────────────────────
+
+  /**
+   * POST /assessments/:id/flag — Flag assessment for review
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/flag')
+  async flagAssessment(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { reason: string },
+  ) {
+    return this.assessmentsService.flagAssessment(assessmentId, user, body.reason);
+  }
+
+  // ─── Emergency Overrides ─────────────────────────────────
+
+  /**
+   * POST /assessments/:id/override — Grant emergency override
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/override')
+  @HttpCode(HttpStatus.CREATED)
+  async createOverride(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { studentId: string; overrideType: string; value: number; reason: string; expiresAt?: string },
+  ) {
+    return this.assessmentsService.createOverride(assessmentId, user, body);
+  }
+
+  /**
+   * GET /assessments/:id/overrides — List overrides for assessment
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get(':id/overrides')
+  async getOverrides(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.assessmentsService.getOverrides(assessmentId, user);
+  }
+
   // ─── Blueprint Coverage ──────────────────────────────────
 
   /**

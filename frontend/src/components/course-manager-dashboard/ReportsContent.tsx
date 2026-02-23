@@ -29,6 +29,7 @@ import {
   X,
   Heart,
   Award,
+  Shield,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -109,6 +110,14 @@ const REPORT_TYPES: ReportTypeConfig[] = [
     icon: Award,
     iconBg: "bg-[#E0E7FF]",
     iconColor: "text-[#8B5CF6]",
+    requiresCourse: false,
+    supportsDateRange: false,
+  },
+  {
+    id: "nelc-compliance",
+    icon: Shield,
+    iconBg: "bg-[#FEE2E2]",
+    iconColor: "text-[#EF4444]",
     requiresCourse: false,
     supportsDateRange: false,
   },
@@ -374,9 +383,10 @@ const ReportsContent = () => {
     enabled: boolean;
     lastRunAt: string | null;
     nextRunAt: string | null;
+    recipientEmail?: string | null;
   }>>([]);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({ reportType: "attendance", frequency: "weekly", format: "csv" as string });
+  const [scheduleForm, setScheduleForm] = useState({ reportType: "attendance", frequency: "weekly", format: "csv" as string, email: "" });
 
   // Fetch courses
   const fetchCourses = useCallback(async () => {
@@ -426,9 +436,11 @@ const ReportsContent = () => {
         frequency: scheduleForm.frequency,
         format: scheduleForm.format,
         courseId: filterCourse || undefined,
+        recipientEmail: scheduleForm.email || undefined,
       });
       setScheduledReports((prev) => [created as unknown as typeof prev[0], ...prev]);
       setShowScheduleForm(false);
+      setScheduleForm({ reportType: "attendance", frequency: "weekly", format: "csv", email: "" });
       toast.success(t("reportsPage.scheduleCreated"));
     } catch {
       toast.error(t("reportsPage.scheduleError"));
@@ -713,9 +725,23 @@ const ReportsContent = () => {
                         <option value="pdf">PDF</option>
                         <option value="xlsx">Excel</option>
                       </select>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3 mt-3">
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-[#6B7280] mb-1">
+                          {t("reportsPage.recipientEmail")}
+                        </label>
+                        <input
+                          type="email"
+                          value={scheduleForm.email}
+                          onChange={(e) => setScheduleForm({ ...scheduleForm, email: e.target.value })}
+                          placeholder={t("reportsPage.recipientEmailPlaceholder")}
+                          className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        />
+                      </div>
                       <button
                         onClick={handleCreateSchedule}
-                        className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB]"
+                        className="self-end px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB]"
                       >
                         {t("reportsPage.create")}
                       </button>
@@ -739,8 +765,13 @@ const ReportsContent = () => {
                             </p>
                             <p className="text-xs text-[#6B7280]">
                               {sr.frequency} &middot; {sr.format.toUpperCase()}
-                              {sr.nextRunAt && ` &middot; Next: ${new Date(sr.nextRunAt).toLocaleDateString()}`}
+                              {sr.nextRunAt && ` \u00B7 Next: ${new Date(sr.nextRunAt).toLocaleDateString()}`}
                             </p>
+                            {sr.recipientEmail && (
+                              <p className="text-xs text-[#3B82F6]">
+                                {t("reportsPage.emailDelivery")}: {sr.recipientEmail}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

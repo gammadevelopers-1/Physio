@@ -268,9 +268,12 @@ export interface User {
   email: string;
   firstName: string | null;
   lastName: string | null;
+  firstNameAr?: string | null;
+  lastNameAr?: string | null;
   phone?: string | null;
   avatar?: string | null;
   activeRole: string;
+  department?: string | null;
   roles: string[];
   isActive: boolean;
   isVerified: boolean;
@@ -871,7 +874,7 @@ export const instructorApi = {
 // Profile API (self-service)
 // ===========================================
 export const profileApi = {
-  update: (data: { firstName?: string; lastName?: string; phone?: string; avatar?: string; bio?: string; location?: string; language?: string }) =>
+  update: (data: { firstName?: string; lastName?: string; firstNameAr?: string; lastNameAr?: string; phone?: string; avatar?: string; bio?: string; location?: string; language?: string; department?: string }) =>
     api.patch<User>('/auth/profile', data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
@@ -1042,7 +1045,7 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'satisfaction' | 'instructor-performance';
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'satisfaction' | 'instructor-performance' | 'nelc-compliance';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {
@@ -1114,10 +1117,11 @@ export const reportsApi = {
       enabled: boolean;
       lastRunAt: string | null;
       nextRunAt: string | null;
+      recipientEmail: string | null;
       createdAt: string;
     }>>('/instructor/reports/scheduled'),
 
-  createScheduled: (data: { reportType: string; format?: string; courseId?: string; frequency: string }) =>
+  createScheduled: (data: { reportType: string; format?: string; courseId?: string; frequency: string; recipientEmail?: string }) =>
     api.post<{ id: string }>('/instructor/reports/scheduled', data),
 
   updateScheduled: (id: string, data: { enabled?: boolean; frequency?: string; format?: string }) =>
@@ -1236,6 +1240,10 @@ export const courseManagerApi = {
       instructorId: string;
     }>>('/sessions/conflicts'),
 
+  // View attendance for a session
+  getSessionAttendance: (sessionId: string) =>
+    api.get<AttendanceRecord[]>(`/sessions/${sessionId}/attendance`),
+
   // Session oversight actions
   cancelSessionOnBehalf: (sessionId: string, reason: string) =>
     api.post(`/sessions/${sessionId}/cancel-on-behalf`, { reason }),
@@ -1260,11 +1268,16 @@ export const courseManagerApi = {
       firstName: string | null;
       lastName: string | null;
       email: string;
+      avatar: string | null;
+      department: string | null;
+      specialty: string | null;
+      avgRating: number | null;
+      completionRate: number | null;
       coursesCount: number;
       studentsCount: number;
       sessionsThisWeek: number;
       hoursThisWeek: number;
-      status: 'available' | 'busy' | 'overloaded';
+      status: 'available' | 'busy' | 'overloaded' | 'on_leave';
     }>>('/instructor/roster'),
 
   // Assign instructor to course
@@ -1274,7 +1287,7 @@ export const courseManagerApi = {
   // Instructor performance KPIs
   getInstructorPerformance: (instructorId: string) =>
     api.get<{
-      instructor: { id: string; firstName: string | null; lastName: string | null; email: string };
+      instructor: { id: string; firstName: string | null; lastName: string | null; email: string; avatar: string | null };
       coursesCount: number;
       totalStudents: number;
       completionRate: number;
@@ -1283,6 +1296,39 @@ export const courseManagerApi = {
       sessions: { total: number; completed: number };
       courses: Array<{ id: string; title: string; status: string }>;
     }>(`/instructor/${instructorId}/performance`),
+
+  // Instructor schedule (2-week view)
+  getInstructorSchedule: (instructorId: string, startDate?: string, endDate?: string) => {
+    const sp = new URLSearchParams();
+    if (startDate) sp.set('startDate', startDate);
+    if (endDate) sp.set('endDate', endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      id: string;
+      title: string;
+      courseId: string;
+      courseTitle: string;
+      type: string;
+      scheduledAt: string | null;
+      durationMinutes: number;
+      status: string;
+    }>>(`/sessions/instructor-schedule/${instructorId}${qs ? `?${qs}` : ''}`);
+  },
+
+  // Instructor suggestions (sorted by least-loaded)
+  getInstructorSuggestions: () =>
+    api.get<Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      coursesCount: number;
+      studentsCount: number;
+      sessionsThisWeek: number;
+      hoursThisWeek: number;
+      status: 'available' | 'busy' | 'overloaded';
+      recommended: boolean;
+    }>>('/instructor/suggestions'),
 
   // Dashboard summary (reuses instructor endpoint — MANAGER now has access)
   getDashboardSummary: () =>
@@ -1332,6 +1378,31 @@ export const courseManagerApi = {
       }>;
     }>(`/assessments/blueprint/${courseId}`),
 
+  // Difficulty distribution for an assessment
+  getDifficultyDistribution: (assessmentId: string) =>
+    api.get<{
+      easy: number;
+      medium: number;
+      hard: number;
+      unset: number;
+      total: number;
+    }>(`/assessments/${assessmentId}/difficulty-distribution`),
+
+  // Flag an assessment for review
+  flagAssessment: (assessmentId: string, reason: string) =>
+    api.post(`/assessments/${assessmentId}/flag`, { reason }),
+
+  // Emergency override
+  createOverride: (assessmentId: string, data: { studentId: string; overrideType: string; value: number; reason: string }) =>
+    api.post(`/assessments/${assessmentId}/override`, data),
+
+  getOverrides: (assessmentId: string) =>
+    api.get<Array<{ id: string; assessmentId: string; studentId: string; overrideType: string; value: number; reason: string; grantedBy: string; expiresAt: string | null; createdAt: string; studentFirstName?: string; studentLastName?: string; granterFirstName?: string; granterLastName?: string }>>(`/assessments/${assessmentId}/overrides`),
+
+  // Enrollments for a course
+  getEnrollments: (params: { courseId: string }) =>
+    api.get<{ data: CourseEnrollment[] }>(`/courses/${params.courseId}/enrollments`),
+
   // Course detail (single course with modules)
   getCourseDetail: (courseId: string) =>
     api.get<CourseDetailResponse>(`/courses/${courseId}`),
@@ -1353,21 +1424,37 @@ export const courseManagerApi = {
         moduleId: string | null;
         title: string;
         type: string;
+        status: string;
         fileUrl: string | null;
         fileSize: number | null;
         mimeType: string | null;
         wcagStatus: string;
+        reviewNote: string | null;
         createdAt: string;
         courseTitle: string;
         instructorFirstName: string | null;
         instructorLastName: string | null;
         instructorEmail: string;
       }>;
-      stats: { pending: number; approved: number; rejected: number };
+      stats: { pending: number; changesRequested: number; approved: number; rejected: number };
     }>('/materials/pending-review'),
 
-  reviewMaterial: (id: string, data: { decision: 'approved' | 'rejected'; comment?: string }) =>
+  reviewMaterial: (id: string, data: { decision: 'approved' | 'rejected' | 'changes_requested'; comment?: string }) =>
     api.patch(`/materials/${id}/review`, data),
+
+  getComplianceChecklist: (materialId: string) =>
+    api.get<{
+      materialId: string;
+      courseId: string;
+      overallStatus: 'passed' | 'review' | 'failed';
+      passedCount: number;
+      totalChecks: number;
+      checks: Array<{
+        rule: string;
+        status: 'passed' | 'review' | 'failed';
+        detail: string;
+      }>;
+    }>(`/materials/${materialId}/compliance-checklist`),
 
   // Course Ratings
   getAllCourseRatings: () =>
@@ -1543,6 +1630,20 @@ export const nelcComplianceApi = {
       overallStatus: 'passed' | 'review' | 'failed';
       summary: { passed: number; review: number; failed: number; total: number };
     }>>('/nelc-compliance/all-courses'),
+
+  getCourseScorecard: (courseId: string) =>
+    api.get<{
+      courseId: string;
+      overallStatus: 'passed' | 'review' | 'failed';
+      overallScore: number;
+      categories: Array<{
+        category: string;
+        label: string;
+        icon: string;
+        status: 'passed' | 'review' | 'failed';
+        checks: Array<{ rule: string; status: 'passed' | 'review' | 'failed'; detail: string }>;
+      }>;
+    }>(`/nelc-compliance/course/${courseId}/scorecard`),
 
   getVirtualClassCompliance: () =>
     api.get<Array<{

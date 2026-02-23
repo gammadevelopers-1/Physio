@@ -22,6 +22,7 @@ import { CancelSessionDto } from './dto/cancel-session.dto';
 import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 
@@ -33,6 +34,7 @@ export class SessionsService {
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
     private readonly auditService: NelcAuditService,
     private readonly assistantsService: SessionAssistantsService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -115,6 +117,15 @@ export class SessionsService {
         this.logger.warn('Auto-allocation failed for session', err);
       });
 
+      // Audit log
+      await this.auditLogService.log({
+        entityType: 'session',
+        entityId: session.id,
+        action: 'session.created',
+        performedBy: user.id,
+        metadata: { courseId: dto.courseId, scheduledAt: dto.scheduledAt },
+      }).catch(() => {});
+
       return session;
     }
 
@@ -154,6 +165,15 @@ export class SessionsService {
     await this.assistantsService.checkAndAllocate(session.id).catch((err) => {
       this.logger.warn('Auto-allocation failed for session', err);
     });
+
+    // Audit log
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: session.id,
+      action: 'session.created',
+      performedBy: user.id,
+      metadata: { courseId: dto.courseId, scheduledAt: dto.scheduledAt },
+    }).catch(() => {});
 
     return session;
   }
@@ -463,6 +483,14 @@ export class SessionsService {
       },
     });
 
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.started',
+      performedBy: user.id,
+      metadata: { courseId: updated.courseId },
+    }).catch(() => {});
+
     return { ...updated, zoomStartUrl };
   }
 
@@ -533,6 +561,14 @@ export class SessionsService {
       },
     });
 
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.ended',
+      performedBy: user.id,
+      metadata: { courseId: updated.courseId },
+    }).catch(() => {});
+
     return { ...updated, zoomEndedSuccessfully, zoomErrorMessage };
   }
 
@@ -576,6 +612,14 @@ export class SessionsService {
         cancelReason: dto.cancelReason,
       },
     });
+
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.cancelled',
+      performedBy: user.id,
+      metadata: { courseId: updated.courseId, reason: dto.cancelReason },
+    }).catch(() => {});
 
     return updated;
   }
@@ -636,6 +680,14 @@ export class SessionsService {
       metadata: { sessionId: updated.id, courseId: updated.courseId, cancelReason: reason, cancelledBy: 'manager' },
     });
 
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.cancelled',
+      performedBy: user.id,
+      metadata: { courseId: updated.courseId, reason, cancelledBy: 'manager' },
+    }).catch(() => {});
+
     return updated;
   }
 
@@ -669,6 +721,14 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.rescheduled',
+      performedBy: user.id,
+      metadata: { newDate, newDuration, oldDate: session.scheduledAt },
+    }).catch(() => {});
+
     return updated;
   }
 
@@ -696,6 +756,14 @@ export class SessionsService {
       })
       .where(eq(sessions.id, sessionId))
       .returning();
+
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.substitute_assigned',
+      performedBy: user.id,
+      metadata: { oldInstructorId: session.instructorId, newInstructorId },
+    }).catch(() => {});
 
     return updated;
   }
@@ -809,6 +877,49 @@ export class SessionsService {
       sessionsCount: result[0]?.sessionsCount || 0,
       hoursTotal: Math.round((Number(result[0]?.totalMinutes) || 0) / 60 * 10) / 10,
     };
+  }
+
+  /**
+   * Get an instructor's schedule for the next 2 weeks (or custom range).
+   */
+  async getInstructorSchedule(
+    instructorId: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const start = startDate ? new Date(startDate) : new Date();
+    const end = endDate
+      ? new Date(endDate)
+      : (() => {
+          const d = new Date(start);
+          d.setDate(d.getDate() + 14);
+          return d;
+        })();
+
+    const rows = await db
+      .select({
+        id: sessions.id,
+        title: sessions.title,
+        courseId: sessions.courseId,
+        courseTitle: courses.title,
+        type: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        status: sessions.status,
+      })
+      .from(sessions)
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .where(
+        and(
+          eq(sessions.instructorId, instructorId),
+          gte(sessions.scheduledAt, start),
+          lte(sessions.scheduledAt, end),
+          sql`${sessions.status} IN ('scheduled', 'live', 'completed')`,
+        ),
+      )
+      .orderBy(asc(sessions.scheduledAt));
+
+    return rows;
   }
 
   // ─── Helpers ────────────────────────────────────────────────

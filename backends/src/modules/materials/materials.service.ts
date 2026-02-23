@@ -5,20 +5,27 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, isNull, sql, count } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull, sql, count, inArray, sum } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
   courseMaterials,
   courses,
+  courseModules,
+  assessments,
   users,
   materialVariants,
   MATERIAL_STATUS,
 } from '../../database/schema';
+import {
+  classifyCourse,
+  getNelcMaxEnrollment,
+} from '../courses/nelc-config';
 import { StorageService } from '../storage/storage.service';
 import { ProcessingService } from '../processing/processing.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { UpdateMaterialDto } from './dto/update-material.dto';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
 
 /** Allowed MIME types per material type */
 const ALLOWED_MIMES: Record<string, string[]> = {
@@ -57,6 +64,7 @@ export class MaterialsService {
   constructor(
     private storageService: StorageService,
     private processingService: ProcessingService,
+    private auditLogService: AuditLogService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -484,9 +492,10 @@ export class MaterialsService {
    * MANAGER/ADMIN see all, INSTRUCTOR sees own.
    */
   async findPendingReview(user: AuthenticatedUser) {
-    const conditions: ReturnType<typeof eq>[] = [
-      eq(courseMaterials.status, MATERIAL_STATUS.PENDING_REVIEW),
-    ];
+    // Include both pending_review and changes_requested materials
+    const statusCondition = sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`;
+
+    const conditions: ReturnType<typeof eq>[] = [statusCondition as any];
 
     if (!this.isAdmin(user)) {
       conditions.push(eq(courseMaterials.uploadedBy, user.id));
@@ -499,10 +508,12 @@ export class MaterialsService {
         moduleId: courseMaterials.moduleId,
         title: courseMaterials.title,
         type: courseMaterials.type,
+        status: courseMaterials.status,
         fileUrl: courseMaterials.fileUrl,
         fileSize: courseMaterials.fileSize,
         mimeType: courseMaterials.mimeType,
         wcagStatus: courseMaterials.wcagStatus,
+        reviewNote: courseMaterials.reviewNote,
         createdAt: courseMaterials.createdAt,
         courseTitle: courses.title,
         instructorFirstName: users.firstName,
@@ -520,6 +531,11 @@ export class MaterialsService {
       .select({ count: count() })
       .from(courseMaterials)
       .where(eq(courseMaterials.status, MATERIAL_STATUS.PENDING_REVIEW));
+
+    const [changesRequestedCount] = await db
+      .select({ count: count() })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.status, MATERIAL_STATUS.CHANGES_REQUESTED));
 
     const [approvedCount] = await db
       .select({ count: count() })
@@ -540,6 +556,7 @@ export class MaterialsService {
       data,
       stats: {
         pending: Number(pendingCount?.count || 0),
+        changesRequested: Number(changesRequestedCount?.count || 0),
         approved: Number(approvedCount?.count || 0),
         rejected: Number(rejectedCount?.count || 0),
       },
@@ -553,7 +570,7 @@ export class MaterialsService {
   async reviewMaterial(
     materialId: string,
     user: AuthenticatedUser,
-    decision: 'approved' | 'rejected',
+    decision: 'approved' | 'rejected' | 'changes_requested',
     comment?: string,
   ) {
     const [material] = await db
@@ -566,14 +583,29 @@ export class MaterialsService {
       throw new NotFoundException('Material not found');
     }
 
-    if (material.status !== MATERIAL_STATUS.PENDING_REVIEW) {
+    // Allow review from pending_review or changes_requested status
+    if (
+      material.status !== MATERIAL_STATUS.PENDING_REVIEW &&
+      material.status !== MATERIAL_STATUS.CHANGES_REQUESTED
+    ) {
       throw new BadRequestException(
-        'Only materials with pending_review status can be reviewed',
+        'Only materials with pending_review or changes_requested status can be reviewed',
       );
     }
 
-    const newStatus =
-      decision === 'approved' ? MATERIAL_STATUS.LIVE : MATERIAL_STATUS.FAILED;
+    // Require comment for changes_requested and rejected decisions
+    if ((decision === 'changes_requested' || decision === 'rejected') && !comment) {
+      throw new BadRequestException(
+        'A comment is required when requesting changes or rejecting',
+      );
+    }
+
+    const statusMap: Record<string, string> = {
+      approved: MATERIAL_STATUS.LIVE,
+      rejected: MATERIAL_STATUS.FAILED,
+      changes_requested: MATERIAL_STATUS.CHANGES_REQUESTED,
+    };
+    const newStatus = statusMap[decision];
 
     const [updated] = await db
       .update(courseMaterials)
@@ -586,7 +618,183 @@ export class MaterialsService {
       .where(eq(courseMaterials.id, materialId))
       .returning();
 
+    const actionMap: Record<string, string> = {
+      approved: 'material.approved',
+      rejected: 'material.rejected',
+      changes_requested: 'material.changes_requested',
+    };
+    await this.auditLogService.log({
+      entityType: 'material',
+      entityId: materialId,
+      action: actionMap[decision],
+      performedBy: user.id,
+      metadata: { courseId: material.courseId, decision, comment },
+    }).catch(() => {});
+
     return updated;
+  }
+
+  // ─── Compliance Checklist ─────────────────────────────────
+
+  /**
+   * GET /materials/:id/compliance-checklist
+   * Computes 5 compliance checks for the material's course:
+   * 1. Learning Objectives (>=3 modules)
+   * 2. Assessment Alignment (each module has at least 1 assessment)
+   * 3. Hours Compliance (total hours >= NELC minimum)
+   * 4. WCAG Compliance (captions, wcagStatus)
+   * 5. NELC Checklist (mandatory fields filled, bilingual content)
+   */
+  async getComplianceChecklist(materialId: string, user: AuthenticatedUser) {
+    const material = await this.verifyMaterialAccess(materialId, user);
+
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, material.courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Fetch course modules
+    const modules = await db
+      .select()
+      .from(courseModules)
+      .where(eq(courseModules.courseId, course.id));
+
+    // Fetch assessments for the course
+    const courseAssessments = await db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.courseId, course.id));
+
+    // Fetch all materials for the course (non-archived)
+    const allMaterials = await db
+      .select()
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.courseId, course.id),
+          sql`${courseMaterials.status} != 'archived'`,
+        ),
+      );
+
+    // ── Check 1: Learning Objectives (>=3 modules in the course)
+    const moduleCount = modules.length;
+    const learningObjectives = {
+      rule: 'learning_objectives',
+      status: moduleCount >= 3 ? ('passed' as const) : ('failed' as const),
+      detail:
+        moduleCount >= 3
+          ? `Course has ${moduleCount} modules (minimum 3)`
+          : `Course has only ${moduleCount} module(s) — at least 3 required`,
+    };
+
+    // ── Check 2: Assessment Alignment (each module covered by at least 1 assessment)
+    const modulesWithAssessments = new Set(
+      courseAssessments.filter((a) => a.moduleId).map((a) => a.moduleId),
+    );
+    const uncoveredModules = modules.filter(
+      (m) => !modulesWithAssessments.has(m.id),
+    );
+    const assessmentAlignment = {
+      rule: 'assessment_alignment',
+      status:
+        modules.length === 0
+          ? ('failed' as const)
+          : uncoveredModules.length === 0
+            ? ('passed' as const)
+            : ('failed' as const),
+      detail:
+        modules.length === 0
+          ? 'No modules exist to assess'
+          : uncoveredModules.length === 0
+            ? `All ${modules.length} modules covered by assessments`
+            : `${uncoveredModules.length} of ${modules.length} module(s) have no linked assessment`,
+    };
+
+    // ── Check 3: Hours Compliance (total duration vs NELC minimum)
+    const totalMinutes = modules.reduce(
+      (s, m) => s + (m.durationMinutes || 0),
+      0,
+    );
+    const classification = classifyCourse(course.startDate, course.endDate);
+    const nelcMinHours = classification === 'long' ? 25 : 5;
+    const totalHours = totalMinutes / 60;
+    const hoursCompliance = {
+      rule: 'hours_compliance',
+      status: totalHours >= nelcMinHours ? ('passed' as const) : ('failed' as const),
+      detail:
+        totalHours >= nelcMinHours
+          ? `${totalHours.toFixed(1)} hours meets ${nelcMinHours}h minimum for ${classification} course`
+          : `${totalHours.toFixed(1)} hours is below ${nelcMinHours}h minimum for ${classification} course`,
+    };
+
+    // ── Check 4: WCAG Compliance (captions, transcript, wcagStatus)
+    const videoMaterials = allMaterials.filter((m) => m.type === 'video');
+    const videosWithCaptions = videoMaterials.filter((m) => m.captionsUrl).length;
+    const wcagCompliant = allMaterials.filter(
+      (m) => m.wcagStatus === 'compliant',
+    ).length;
+    const currentMaterialWcag = material.wcagStatus === 'compliant';
+    const allWcagOk =
+      allMaterials.length > 0 &&
+      wcagCompliant === allMaterials.length &&
+      (videoMaterials.length === 0 || videosWithCaptions === videoMaterials.length);
+    const wcagCheck = {
+      rule: 'wcag_compliance',
+      status: allWcagOk
+        ? ('passed' as const)
+        : currentMaterialWcag
+          ? ('review' as const)
+          : ('failed' as const),
+      detail: allWcagOk
+        ? `All ${allMaterials.length} materials WCAG compliant, ${videosWithCaptions}/${videoMaterials.length} videos captioned`
+        : `${wcagCompliant}/${allMaterials.length} materials compliant, ${videosWithCaptions}/${videoMaterials.length} videos captioned`,
+    };
+
+    // ── Check 5: NELC Checklist (mandatory fields)
+    const missingFields: string[] = [];
+    if (!course.title) missingFields.push('title');
+    if (!course.titleAr) missingFields.push('titleAr');
+    if (!course.description) missingFields.push('description');
+    if (!course.startDate) missingFields.push('startDate');
+    if (!course.endDate) missingFields.push('endDate');
+    const nelcChecklist = {
+      rule: 'nelc_checklist',
+      status: missingFields.length === 0 ? ('passed' as const) : ('failed' as const),
+      detail:
+        missingFields.length === 0
+          ? 'All mandatory fields filled (title, titleAr, description, dates)'
+          : `Missing: ${missingFields.join(', ')}`,
+    };
+
+    const checks = [
+      learningObjectives,
+      assessmentAlignment,
+      hoursCompliance,
+      wcagCheck,
+      nelcChecklist,
+    ];
+
+    const passedCount = checks.filter((c) => c.status === 'passed').length;
+    const overallStatus =
+      passedCount === checks.length
+        ? 'passed'
+        : passedCount >= 3
+          ? 'review'
+          : 'failed';
+
+    return {
+      materialId,
+      courseId: course.id,
+      overallStatus,
+      passedCount,
+      totalChecks: checks.length,
+      checks,
+    };
   }
 
   // ─── Delete ───────────────────────────────────────────────

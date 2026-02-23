@@ -472,9 +472,12 @@ export class AuthService {
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
+        firstNameAr: users.firstNameAr,
+        lastNameAr: users.lastNameAr,
         phone: users.phone,
         avatar: users.avatar,
         activeRole: users.activeRole,
+        department: users.department,
         isActive: users.isActive,
         isVerified: users.isVerified,
         lastLoginAt: users.lastLoginAt,
@@ -659,11 +662,14 @@ export class AuthService {
     const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
+    if (dto.firstNameAr !== undefined) updateData.firstNameAr = dto.firstNameAr;
+    if (dto.lastNameAr !== undefined) updateData.lastNameAr = dto.lastNameAr;
     if (dto.phone !== undefined) updateData.phone = dto.phone;
     if (dto.avatar !== undefined) updateData.avatar = dto.avatar;
     if (dto.bio !== undefined) updateData.bio = dto.bio;
     if (dto.location !== undefined) updateData.location = dto.location;
     if (dto.language !== undefined) updateData.language = dto.language;
+    if (dto.department !== undefined) updateData.department = dto.department;
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 

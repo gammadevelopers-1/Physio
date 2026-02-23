@@ -2,6 +2,7 @@ import {
   pgTable,
   uuid,
   varchar,
+  text,
   integer,
   timestamp,
   boolean,
@@ -12,6 +13,7 @@ import {
 import { relations, sql } from 'drizzle-orm';
 import { courses } from './courses';
 import { courseModules } from './course-modules';
+import { users } from './users';
 
 export const assessments = pgTable(
   'assessments',
@@ -40,6 +42,11 @@ export const assessments = pgTable(
     maxRetakes: integer('max_retakes').notNull().default(0),
     retakeCoolingHours: integer('retake_cooling_hours').notNull().default(24),
     retakeScorePolicy: varchar('retake_score_policy', { length: 20 }).notNull().default('highest'),
+    retakeScope: varchar('retake_scope', { length: 20 }).notNull().default('full'),
+    // Flagging (manager review)
+    flaggedAt: timestamp('flagged_at'),
+    flaggedReason: text('flagged_reason'),
+    flaggedBy: uuid('flagged_by').references(() => users.id),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -55,6 +62,10 @@ export const assessments = pgTable(
     check(
       'assessments_status_check',
       sql`${table.status} IN ('draft', 'published', 'closed')`,
+    ),
+    check(
+      'assessments_retake_scope_check',
+      sql`${table.retakeScope} IN ('full', 'failed_sections')`,
     ),
   ],
 );

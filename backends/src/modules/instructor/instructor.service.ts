@@ -19,6 +19,7 @@ import {
   interventions,
   userRoles,
   roles,
+  courseRatings,
   ATTENDANCE_STATUS,
   INTERVENTION_TYPE,
 } from '../../database/schema';
@@ -1230,6 +1231,10 @@ export class InstructorService {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
+        avatar: users.avatar,
+        department: users.department,
+        specialty: users.specialty,
+        instructorStatus: users.instructorStatus,
       })
       .from(users)
       .innerJoin(userRoles, eq(users.id, userRoles.userId))
@@ -1275,6 +1280,36 @@ export class InstructorService {
       studentCounts.map((s) => [s.instructorId, Number(s.studentsCount)]),
     );
 
+    // Batch: avg rating per instructor (via courses → courseRatings)
+    const avgRatings = await db
+      .select({
+        instructorId: courses.instructorId,
+        avgRating: sql<number>`COALESCE(ROUND(AVG(${courseRatings.rating})::NUMERIC, 1), 0)`.as('avg_rating'),
+      })
+      .from(courseRatings)
+      .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+      .where(inArray(courses.instructorId, instructorIds))
+      .groupBy(courses.instructorId);
+
+    const avgRatingMap = new Map(
+      avgRatings.map((r) => [r.instructorId, Number(r.avgRating)]),
+    );
+
+    // Batch: completion rate per instructor (avg progress via courses → enrollments)
+    const completionRates = await db
+      .select({
+        instructorId: courses.instructorId,
+        completionRate: sql<number>`COALESCE(ROUND(AVG(${enrollments.progress})), 0)`.as('completion_rate'),
+      })
+      .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
+      .where(inArray(courses.instructorId, instructorIds))
+      .groupBy(courses.instructorId);
+
+    const completionRateMap = new Map(
+      completionRates.map((c) => [c.instructorId, Number(c.completionRate)]),
+    );
+
     // Batch: sessions this week per instructor
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
@@ -1311,18 +1346,40 @@ export class InstructorService {
 
     return instructorsList.map((inst) => {
       const load = loadMap.get(inst.id) || { sessionsThisWeek: 0, hoursThisWeek: 0 };
-      const status: 'available' | 'busy' | 'overloaded' =
-        load.hoursThisWeek > 15 ? 'overloaded' : load.hoursThisWeek >= 10 ? 'busy' : 'available';
+      const status: 'available' | 'busy' | 'overloaded' | 'on_leave' =
+        inst.instructorStatus === 'on_leave'
+          ? 'on_leave'
+          : load.hoursThisWeek > 15
+            ? 'overloaded'
+            : load.hoursThisWeek >= 10
+              ? 'busy'
+              : 'available';
 
       return {
         ...inst,
+        department: inst.department,
+        specialty: inst.specialty,
         coursesCount: courseCountMap.get(inst.id) || 0,
         studentsCount: studentCountMap.get(inst.id) || 0,
+        avgRating: avgRatingMap.get(inst.id) || 0,
+        completionRate: completionRateMap.get(inst.id) || 0,
         sessionsThisWeek: load.sessionsThisWeek,
         hoursThisWeek: load.hoursThisWeek,
         status,
       };
     });
+  }
+
+  /**
+   * Get instructor suggestions sorted by availability (least loaded first).
+   */
+  async suggestInstructor() {
+    const roster = await this.getInstructorRoster();
+    const sorted = [...roster].sort((a, b) => a.hoursThisWeek - b.hoursThisWeek);
+    return sorted.map((inst, idx) => ({
+      ...inst,
+      recommended: idx === 0,
+    }));
   }
 
   // ─── Instructor Performance ──────────────────────────────────
@@ -1334,7 +1391,7 @@ export class InstructorService {
   async getInstructorPerformance(instructorId: string) {
     // Verify instructor exists
     const [instructor] = await db
-      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email, avatar: users.avatar })
       .from(users)
       .where(eq(users.id, instructorId))
       .limit(1);
@@ -1445,6 +1502,7 @@ export class InstructorService {
         firstName: instructor.firstName,
         lastName: instructor.lastName,
         email: instructor.email,
+        avatar: instructor.avatar,
       },
       coursesCount: instructorCourses.length,
       totalStudents,

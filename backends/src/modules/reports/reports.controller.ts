@@ -186,6 +186,56 @@ export class ReportsController {
     return new StreamableFile(result.buffer);
   }
 
+  // ─── NELC Compliance Matrix ─────────────────────────────
+
+  @Get('nelc-compliance')
+  async getNelcComplianceReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+    @Query('format') format?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateNelcComplianceReport(
+      user,
+      { courseId, format },
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
+  // ─── Generic Table Export ────────────────────────────────
+
+  /**
+   * POST /instructor/reports/export-table
+   * Body: { type: string, format: string, filters?: Record<string, string> }
+   * Returns binary file download for any table view.
+   */
+  @Post('export-table')
+  async exportTable(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { type: string; format: string; filters?: Record<string, string> },
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.exportTable(
+      user,
+      body.type,
+      body.format,
+      body.filters,
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
   // ─── Scheduled Reports CRUD ──────────────────────────────
 
   @Get('scheduled')
@@ -196,7 +246,7 @@ export class ReportsController {
   @Post('scheduled')
   async createScheduledReport(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: { reportType: string; format?: string; courseId?: string; frequency: string },
+    @Body() body: { reportType: string; format?: string; courseId?: string; frequency: string; recipientEmail?: string },
   ) {
     return this.reportsService.createScheduledReport(user, body);
   }

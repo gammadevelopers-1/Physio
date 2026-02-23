@@ -64,7 +64,7 @@ export const courseMaterials = pgTable(
     ),
     check(
       'course_materials_status_check',
-      sql`${table.status} IN ('processing', 'pending_review', 'live', 'failed', 'archived')`,
+      sql`${table.status} IN ('processing', 'pending_review', 'live', 'failed', 'archived', 'changes_requested')`,
     ),
   ],
 );
@@ -107,6 +107,7 @@ export const MATERIAL_STATUS = {
   LIVE: 'live',
   FAILED: 'failed',
   ARCHIVED: 'archived',
+  CHANGES_REQUESTED: 'changes_requested',
 } as const;
 
 export type MaterialStatus =

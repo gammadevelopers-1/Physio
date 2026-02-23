@@ -42,4 +42,19 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(10)
   language?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  firstNameAr?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  lastNameAr?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  department?: string;
 }

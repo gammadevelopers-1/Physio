@@ -4,6 +4,7 @@ import { db } from '../../database';
 import {
   sessions,
   courses,
+  courseModules,
   enrollments,
   attendance,
   sessionAssistants,
@@ -11,8 +12,12 @@ import {
   assessments,
   submissions,
   users,
+  userPreferences,
+  roleRequests,
   SESSION_STATUS,
   SESSION_TYPE,
+  MATERIAL_STATUS,
+  courseRatings,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import {
@@ -274,6 +279,330 @@ export class NelcComplianceService {
   }
 
   /**
+   * 7-category course-level scorecard per NELC spec:
+   * 1. Course Structure — modules, hours, bilingual content
+   * 2. Accessibility — WCAG, captions, transcripts
+   * 3. Virtual Classes — enrollment limits, assistants, Zoom, attendance
+   * 4. Assessment Quality — blueprint coverage, graded submissions
+   * 5. Policies — content review + NELC compliance policies enabled
+   * 6. Data Protection — manual verification (defaults to 'review')
+   * 7. Instructor Qualifications — role request approved, credentials uploaded
+   */
+  async getCourseComplianceScorecard(courseId: string) {
+    // Fetch course
+    const [course] = await db
+      .select()
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      return { courseId, overallStatus: 'failed' as ComplianceStatus, overallScore: 0, categories: [] };
+    }
+
+    // Fetch related data in parallel
+    const [modules, materials, courseAssessments, courseSessions, enrollmentRows] = await Promise.all([
+      db.select().from(courseModules).where(eq(courseModules.courseId, courseId)),
+      db.select().from(courseMaterials).where(
+        and(eq(courseMaterials.courseId, courseId), sql`${courseMaterials.status} != 'archived'`),
+      ),
+      db.select().from(assessments).where(eq(assessments.courseId, courseId)),
+      db.select().from(sessions).where(eq(sessions.courseId, courseId)),
+      db.select({ count: count() }).from(enrollments).where(
+        and(eq(enrollments.courseId, courseId), eq(enrollments.status, 'active')),
+      ),
+    ]);
+
+    const categories: Array<{
+      category: string;
+      label: string;
+      icon: string;
+      status: ComplianceStatus;
+      checks: Array<{ rule: string; status: ComplianceStatus; detail: string }>;
+    }> = [];
+
+    // ─── 1. Course Structure ───
+    const structureChecks: ComplianceCheck[] = [];
+    const moduleCount = modules.length;
+    structureChecks.push({
+      rule: 'modules_count',
+      status: moduleCount >= 3 ? 'passed' : 'failed',
+      detail: moduleCount >= 3 ? `${moduleCount} modules (min 3)` : `Only ${moduleCount} module(s)`,
+    });
+
+    const totalMinutes = modules.reduce((s, m) => s + (m.durationMinutes || 0), 0);
+    const classification = classifyCourse(course.startDate, course.endDate);
+    const nelcMinHours = classification === 'long' ? 25 : 5;
+    const totalHours = totalMinutes / 60;
+    structureChecks.push({
+      rule: 'hours_compliance',
+      status: totalHours >= nelcMinHours ? 'passed' : 'failed',
+      detail: `${totalHours.toFixed(1)}h / ${nelcMinHours}h minimum (${classification} course)`,
+    });
+
+    const modulesWithMaterials = new Set(materials.filter((m) => m.moduleId).map((m) => m.moduleId));
+    const modulesLackingMaterials = modules.filter((m) => !modulesWithMaterials.has(m.id));
+    structureChecks.push({
+      rule: 'modules_with_materials',
+      status: modules.length > 0 && modulesLackingMaterials.length === 0 ? 'passed' : 'failed',
+      detail: modulesLackingMaterials.length === 0
+        ? 'All modules have materials'
+        : `${modulesLackingMaterials.length} module(s) lack materials`,
+    });
+
+    structureChecks.push({
+      rule: 'bilingual_content',
+      status: course.title && course.titleAr ? 'passed' : 'failed',
+      detail: course.titleAr ? 'Course has EN + AR titles' : 'Missing Arabic title (titleAr)',
+    });
+
+    categories.push({
+      category: 'course_structure',
+      label: 'Course Structure',
+      icon: 'BookOpen',
+      status: this.calculateOverallStatus(structureChecks),
+      checks: structureChecks,
+    });
+
+    // ─── 2. Accessibility ───
+    const accessChecks: ComplianceCheck[] = [];
+    const videoMaterials = materials.filter((m) => m.type === 'video');
+    const wcagCompliant = materials.filter((m) => m.wcagStatus === 'compliant').length;
+    accessChecks.push({
+      rule: 'wcag_status',
+      status: materials.length === 0 || wcagCompliant === materials.length ? 'passed' : 'failed',
+      detail: `${wcagCompliant}/${materials.length} materials WCAG compliant`,
+    });
+
+    const videosWithCaptions = videoMaterials.filter((m) => m.captionsUrl).length;
+    accessChecks.push({
+      rule: 'video_captions',
+      status: videoMaterials.length === 0 || videosWithCaptions === videoMaterials.length ? 'passed' : 'failed',
+      detail: videoMaterials.length === 0
+        ? 'No videos to caption'
+        : `${videosWithCaptions}/${videoMaterials.length} videos have captions`,
+    });
+
+    const videosWithTranscript = videoMaterials.filter((m) => m.transcriptUrl).length;
+    accessChecks.push({
+      rule: 'video_transcripts',
+      status: videoMaterials.length === 0 || videosWithTranscript === videoMaterials.length ? 'passed' : 'review',
+      detail: videoMaterials.length === 0
+        ? 'No videos'
+        : `${videosWithTranscript}/${videoMaterials.length} videos have transcripts`,
+    });
+
+    categories.push({
+      category: 'accessibility',
+      label: 'Accessibility',
+      icon: 'Eye',
+      status: this.calculateOverallStatus(accessChecks),
+      checks: accessChecks,
+    });
+
+    // ─── 3. Virtual Classes (reuse existing session checks) ───
+    const vcChecks: ComplianceCheck[] = [];
+    if (courseSessions.length === 0) {
+      vcChecks.push({ rule: 'sessions_exist', status: 'review', detail: 'No sessions created yet' });
+    } else {
+      const enrolled = Number(enrollmentRows[0]?.count || 0);
+      const nelcMax = getNelcMaxEnrollment(classification);
+      vcChecks.push({
+        rule: 'enrollment_limit',
+        status: enrolled > nelcMax ? 'failed' : enrolled >= nelcMax * 0.9 ? 'review' : 'passed',
+        detail: `${enrolled}/${nelcMax} enrolled (${classification} course)`,
+      });
+
+      const zoomSessions = courseSessions.filter(
+        (s) => s.type === SESSION_TYPE.ZOOM || s.type === SESSION_TYPE.HYBRID,
+      );
+      const zoomConfigured = zoomSessions.filter((s) => s.meetingId || s.zoomLink).length;
+      if (zoomSessions.length > 0) {
+        vcChecks.push({
+          rule: 'zoom_configuration',
+          status: zoomConfigured === zoomSessions.length ? 'passed' : 'failed',
+          detail: `${zoomConfigured}/${zoomSessions.length} virtual sessions configured`,
+        });
+      }
+
+      const completedSessions = courseSessions.filter((s) => s.status === SESSION_STATUS.COMPLETED);
+      if (completedSessions.length > 0) {
+        const sessionsWithAttendance = await Promise.all(
+          completedSessions.map(async (s) => {
+            const [c] = await db.select({ count: count() }).from(attendance).where(eq(attendance.sessionId, s.id));
+            return Number(c?.count || 0) > 0;
+          }),
+        );
+        const tracked = sessionsWithAttendance.filter(Boolean).length;
+        vcChecks.push({
+          rule: 'attendance_tracking',
+          status: tracked === completedSessions.length ? 'passed' : 'failed',
+          detail: `${tracked}/${completedSessions.length} completed sessions have attendance`,
+        });
+      }
+    }
+
+    categories.push({
+      category: 'virtual_classes',
+      label: 'Virtual Classes',
+      icon: 'Video',
+      status: this.calculateOverallStatus(vcChecks),
+      checks: vcChecks,
+    });
+
+    // ─── 4. Assessment Quality ───
+    const assessChecks: ComplianceCheck[] = [];
+    if (courseAssessments.length === 0) {
+      assessChecks.push({ rule: 'assessments_exist', status: 'failed', detail: 'No assessments created' });
+    } else {
+      const modulesWithAssessments = new Set(courseAssessments.filter((a) => a.moduleId).map((a) => a.moduleId));
+      const coveredCount = modules.filter((m) => modulesWithAssessments.has(m.id)).length;
+      const coveragePercent = modules.length > 0 ? Math.round((coveredCount / modules.length) * 100) : 0;
+      assessChecks.push({
+        rule: 'blueprint_coverage',
+        status: coveragePercent >= 80 ? 'passed' : coveragePercent >= 50 ? 'review' : 'failed',
+        detail: `${coveragePercent}% module coverage (${coveredCount}/${modules.length} modules)`,
+      });
+
+      const publishedAssessments = courseAssessments.filter((a) => a.status === 'published');
+      const assessmentIds = publishedAssessments.map((a) => a.id);
+      if (assessmentIds.length > 0) {
+        const submissionCounts = await db
+          .select({
+            assessmentId: submissions.assessmentId,
+            count: count(),
+          })
+          .from(submissions)
+          .where(sql`${submissions.assessmentId} IN (${sql.join(assessmentIds.map((id) => sql`${id}`), sql`, `)})`)
+          .groupBy(submissions.assessmentId);
+        const withSubmissions = submissionCounts.filter((s) => Number(s.count) > 0).length;
+        assessChecks.push({
+          rule: 'graded_submissions',
+          status: withSubmissions === publishedAssessments.length ? 'passed' : 'review',
+          detail: `${withSubmissions}/${publishedAssessments.length} published assessments have submissions`,
+        });
+      }
+    }
+
+    categories.push({
+      category: 'assessment_quality',
+      label: 'Assessment Quality',
+      icon: 'FileText',
+      status: this.calculateOverallStatus(assessChecks),
+      checks: assessChecks,
+    });
+
+    // ─── 5. Policies ───
+    const policyChecks: ComplianceCheck[] = [];
+    const [instructorPrefs] = course.instructorId
+      ? await db.select().from(userPreferences).where(eq(userPreferences.userId, course.instructorId)).limit(1)
+      : [null];
+
+    policyChecks.push({
+      rule: 'content_review_policy',
+      status: instructorPrefs?.policyRequireContentReview ? 'passed' : 'failed',
+      detail: instructorPrefs?.policyRequireContentReview
+        ? 'Content review policy enabled'
+        : 'Content review policy not enabled',
+    });
+
+    policyChecks.push({
+      rule: 'nelc_compliance_policy',
+      status: instructorPrefs?.policyEnforceNelcCompliance ? 'passed' : 'failed',
+      detail: instructorPrefs?.policyEnforceNelcCompliance
+        ? 'NELC compliance enforcement enabled'
+        : 'NELC compliance enforcement not enabled',
+    });
+
+    policyChecks.push({
+      rule: 'bilingual_descriptions',
+      status: course.description && course.descriptionAr ? 'passed' : 'failed',
+      detail: course.descriptionAr
+        ? 'Course has EN + AR descriptions'
+        : 'Missing Arabic description',
+    });
+
+    categories.push({
+      category: 'policies',
+      label: 'Policies',
+      icon: 'Shield',
+      status: this.calculateOverallStatus(policyChecks),
+      checks: policyChecks,
+    });
+
+    // ─── 6. Data Protection (manual verification — defaults to review) ───
+    categories.push({
+      category: 'data_protection',
+      label: 'Data Protection',
+      icon: 'Lock',
+      status: 'review',
+      checks: [
+        { rule: 'pdp_compliance', status: 'review', detail: 'Requires manual verification of personal data protection' },
+        { rule: 'data_retention', status: 'review', detail: 'Data retention policy requires manual review' },
+        { rule: 'privacy_policy', status: 'review', detail: 'Privacy policy and consent verification needed' },
+      ],
+    });
+
+    // ─── 7. Instructor Qualifications ───
+    const qualChecks: ComplianceCheck[] = [];
+    if (course.instructorId) {
+      const [roleRequest] = await db
+        .select()
+        .from(roleRequests)
+        .where(and(eq(roleRequests.userId, course.instructorId), eq(roleRequests.requestedRole, 'INSTRUCTOR')))
+        .limit(1);
+
+      qualChecks.push({
+        rule: 'role_approved',
+        status: roleRequest?.status === 'APPROVED' ? 'passed' : roleRequest ? 'review' : 'failed',
+        detail: roleRequest?.status === 'APPROVED'
+          ? 'Instructor role request approved'
+          : roleRequest
+            ? `Role request status: ${roleRequest.status}`
+            : 'No instructor role request found',
+      });
+
+      const hasResume = roleRequest?.resumeFiles && (Array.isArray(roleRequest.resumeFiles) ? (roleRequest.resumeFiles as any[]).length > 0 : true);
+      qualChecks.push({
+        rule: 'credentials_uploaded',
+        status: hasResume ? 'passed' : 'review',
+        detail: hasResume ? 'Resume/credentials on file' : 'No resume/credentials uploaded',
+      });
+    } else {
+      qualChecks.push({
+        rule: 'instructor_assigned',
+        status: 'failed',
+        detail: 'No instructor assigned to course',
+      });
+    }
+
+    categories.push({
+      category: 'instructor_qualifications',
+      label: 'Instructor Qualifications',
+      icon: 'GraduationCap',
+      status: this.calculateOverallStatus(qualChecks),
+      checks: qualChecks,
+    });
+
+    // Calculate overall score
+    const passedCategories = categories.filter((c) => c.status === 'passed').length;
+    const overallScore = Math.round((passedCategories / categories.length) * 100);
+    const overallStatus: ComplianceStatus =
+      categories.some((c) => c.status === 'failed')
+        ? 'failed'
+        : categories.some((c) => c.status === 'review')
+          ? 'review'
+          : 'passed';
+
+    return {
+      courseId,
+      overallStatus,
+      overallScore,
+      categories,
+    };
+  }
+
+  /**
    * Generate a ZIP evidence bundle for a course's NELC compliance.
    * Contains: compliance-checks.json, attendance.csv, sessions.csv, materials.csv
    */
@@ -281,9 +610,18 @@ export class NelcComplianceService {
     // 1. Compliance checks JSON
     const compliance = await this.getCourseCompliance(courseId);
 
-    // 2. Course info
+    // 2. Course info (expanded for evidence bundle)
     const [course] = await db
-      .select({ id: courses.id, title: courses.title })
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        description: courses.description,
+        descriptionAr: courses.descriptionAr,
+        instructorId: courses.instructorId,
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+      })
       .from(courses)
       .where(eq(courses.id, courseId))
       .limit(1);
@@ -355,6 +693,92 @@ export class NelcComplianceService {
           .where(sql`${submissions.assessmentId} IN (${sql.join(assessmentIds.map((id) => sql`${id}`), sql`, `)})`)
       : [];
 
+    // 7. Instructor credentials (role request + profile)
+    const instructorCredentials = course?.instructorId
+      ? await db
+          .select({
+            userId: roleRequests.userId,
+            requestedRole: roleRequests.requestedRole,
+            status: roleRequests.status,
+            profileData: roleRequests.profileData,
+            resumeFiles: roleRequests.resumeFiles,
+            createdAt: roleRequests.createdAt,
+          })
+          .from(roleRequests)
+          .where(eq(roleRequests.userId, course.instructorId))
+          .limit(1)
+      : [];
+
+    // 8. Student feedback / ratings
+    const ratingsRows = await db
+      .select({
+        studentId: courseRatings.studentId,
+        rating: courseRatings.rating,
+        reviewText: courseRatings.reviewText,
+        createdAt: courseRatings.createdAt,
+      })
+      .from(courseRatings)
+      .where(eq(courseRatings.courseId, courseId));
+
+    // 9. Accessibility report (aggregate materials WCAG)
+    const allMaterials = materialRows;
+    const videoMaterials = allMaterials.filter((m) => m.type === 'video');
+    const accessibilityReport = {
+      courseId,
+      generatedAt: new Date().toISOString(),
+      totalMaterials: allMaterials.length,
+      wcagCompliant: allMaterials.filter((m) => m.wcagStatus === 'compliant').length,
+      wcagNonCompliant: allMaterials.filter((m) => m.wcagStatus === 'non_compliant').length,
+      wcagPending: allMaterials.filter((m) => m.wcagStatus === 'pending' || m.wcagStatus === 'not_applicable').length,
+      totalVideos: videoMaterials.length,
+      complianceRate: allMaterials.length > 0
+        ? Math.round((allMaterials.filter((m) => m.wcagStatus === 'compliant').length / allMaterials.length) * 100)
+        : 100,
+    };
+
+    // 10. Instructor policy settings
+    const policyRows = course?.instructorId
+      ? await db
+          .select({
+            policyEnrollmentLimit: userPreferences.policyEnrollmentLimit,
+            policyRequireContentReview: userPreferences.policyRequireContentReview,
+            policyAutoApproveCertificates: userPreferences.policyAutoApproveCertificates,
+            policyCancellationNoticeHours: userPreferences.policyCancellationNoticeHours,
+            policyMaxInstructorWeeklyHours: userPreferences.policyMaxInstructorWeeklyHours,
+            policyEnforceNelcCompliance: userPreferences.policyEnforceNelcCompliance,
+          })
+          .from(userPreferences)
+          .where(eq(userPreferences.userId, course.instructorId))
+          .limit(1)
+      : [];
+
+    // NELC clause mapping (static)
+    const NELC_CLAUSE_MAP: Record<string, string> = {
+      enrollment_limit: 'NELC-VC-001',
+      zoom_config: 'NELC-VC-002',
+      assistant_allocation: 'NELC-VC-003',
+      attendance_tracking: 'NELC-VC-004',
+      attendance_sync: 'NELC-VC-005',
+      modules_count: 'NELC-CS-001',
+      hours_compliance: 'NELC-CS-002',
+      modules_with_materials: 'NELC-CS-003',
+      bilingual_content: 'NELC-CS-004',
+      wcag_status: 'NELC-AC-001',
+      video_captions: 'NELC-AC-002',
+      video_transcripts: 'NELC-AC-003',
+      blueprint_coverage: 'NELC-AQ-001',
+      graded_submissions: 'NELC-AQ-002',
+      content_review_policy: 'NELC-PL-001',
+      nelc_compliance_policy: 'NELC-PL-002',
+      bilingual_descriptions: 'NELC-PL-003',
+      data_protection_pdp: 'NELC-DP-001',
+      data_retention: 'NELC-DP-002',
+      privacy_policy: 'NELC-DP-003',
+      consent_management: 'NELC-DP-004',
+      role_request_approved: 'NELC-IQ-001',
+      credentials_uploaded: 'NELC-IQ-002',
+    };
+
     // Build ZIP archive
     const archive = archiver('zip', { zlib: { level: 9 } });
 
@@ -379,18 +803,30 @@ export class NelcComplianceService {
       `Materials: ${materialRows.length}`,
       `Assessments: ${courseAssessments.length}`,
       `Submissions: ${submissionRows.length}`,
+      `Student Ratings: ${ratingsRows.length}`,
       '',
       'Files:',
-      '  compliance-checks.json  — Detailed compliance check results per session',
-      '  sessions.csv            — All session records',
-      '  attendance.csv          — Full attendance log with timestamps',
-      '  materials-audit.csv     — Material audit trail with review status',
-      '  assessment-results.csv  — Assessment submission results',
-      '  cover-summary.txt       — This file',
+      '  compliance-checks.json     — Compliance checks with NELC clause references',
+      '  sessions.csv               — All session records',
+      '  attendance.csv             — Full attendance log with timestamps',
+      '  materials-audit.csv        — Material audit trail with review status',
+      '  assessment-results.csv     — Assessment submission results',
+      '  instructor-credentials.json — Instructor role request and profile data',
+      '  student-feedback.csv       — Student ratings and feedback',
+      '  accessibility-report.json  — WCAG compliance summary for all materials',
+      '  policies.json              — Instructor policy configuration',
+      '  cover-summary.txt          — This file',
     ].join('\n');
     archive.append(coverText, { name: 'cover-summary.txt' });
 
-    // compliance-checks.json
+    // compliance-checks.json (with NELC clause mapping)
+    const enrichedSessionResults = compliance.sessionResults.map((sr: any) => ({
+      ...sr,
+      checks: sr.checks.map((chk: ComplianceCheck) => ({
+        ...chk,
+        nelcClause: NELC_CLAUSE_MAP[chk.rule] || null,
+      })),
+    }));
     archive.append(
       JSON.stringify(
         {
@@ -399,7 +835,8 @@ export class NelcComplianceService {
           generatedAt: new Date().toISOString(),
           overallStatus: compliance.overallStatus,
           summary: compliance.summary,
-          sessionResults: compliance.sessionResults,
+          clauseMapping: NELC_CLAUSE_MAP,
+          sessionResults: enrichedSessionResults,
         },
         null,
         2,
@@ -447,6 +884,66 @@ export class NelcComplianceService {
       ),
     ].join('\n');
     archive.append(assessmentsCsv, { name: 'assessment-results.csv' });
+
+    // instructor-credentials.json
+    const credentialData = instructorCredentials[0] || null;
+    archive.append(
+      JSON.stringify(
+        {
+          courseId,
+          instructorId: course?.instructorId || null,
+          generatedAt: new Date().toISOString(),
+          roleRequest: credentialData
+            ? {
+                status: credentialData.status,
+                requestedRole: credentialData.requestedRole,
+                profileData: credentialData.profileData,
+                resumeFiles: credentialData.resumeFiles,
+                submittedAt: credentialData.createdAt?.toISOString() || null,
+              }
+            : { note: 'No role request found for this instructor' },
+        },
+        null,
+        2,
+      ),
+      { name: 'instructor-credentials.json' },
+    );
+
+    // student-feedback.csv
+    const avgRating = ratingsRows.length > 0
+      ? (ratingsRows.reduce((sum, r) => sum + r.rating, 0) / ratingsRows.length).toFixed(2)
+      : 'N/A';
+    const feedbackCsv = [
+      `# Summary: ${ratingsRows.length} ratings, Average: ${avgRating}`,
+      'student_id,rating,review_text,created_at',
+      ...ratingsRows.map(
+        (r) =>
+          `"${r.studentId}",${r.rating},"${(r.reviewText || '').replace(/"/g, '""')}","${r.createdAt?.toISOString() || ''}"`,
+      ),
+    ].join('\n');
+    archive.append(feedbackCsv, { name: 'student-feedback.csv' });
+
+    // accessibility-report.json
+    archive.append(
+      JSON.stringify(accessibilityReport, null, 2),
+      { name: 'accessibility-report.json' },
+    );
+
+    // policies.json
+    const policyData = policyRows[0] || null;
+    archive.append(
+      JSON.stringify(
+        {
+          courseId,
+          instructorId: course?.instructorId || null,
+          generatedAt: new Date().toISOString(),
+          policies: policyData || { note: 'No policy preferences found for this instructor' },
+        },
+        null,
+        2,
+      ),
+      { name: 'policies.json' },
+    );
 
     archive.finalize();
     return archive;

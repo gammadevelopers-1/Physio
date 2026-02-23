@@ -21,6 +21,7 @@ export const scheduledReports = pgTable(
     format: varchar('format', { length: 10 }).notNull().default('csv'),
     courseId: uuid('course_id'), // optional — null means all courses
     frequency: varchar('frequency', { length: 20 }).notNull(), // daily, weekly, monthly
+    recipientEmail: varchar('recipient_email', { length: 255 }),
     enabled: boolean('enabled').notNull().default(true),
     lastRunAt: timestamp('last_run_at'),
     nextRunAt: timestamp('next_run_at'),

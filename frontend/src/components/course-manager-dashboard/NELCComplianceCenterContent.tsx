@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import { useTranslations } from "next-intl";
 import {
   ShieldCheck,
@@ -16,13 +16,21 @@ import {
   Download,
   Video,
   Monitor,
+  BookOpen,
+  Eye,
+  FileText,
+  Shield,
+  Lock,
+  GraduationCap,
 } from "lucide-react";
+import SkeletonCard from "@/components/shared/SkeletonCard";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useNELCCompliance } from "@/hooks/useNELCCompliance";
 import { nelcComplianceApi } from "@/lib/api";
+import ExportButton from "@/components/shared/ExportButton";
 
 interface VirtualClassSession {
   sessionId: string;
@@ -45,6 +53,31 @@ const STATUS_CONFIG = {
   failed: { label: "Failed", bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", icon: XCircle },
 };
 
+const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
+  course_structure: BookOpen,
+  accessibility: Eye,
+  virtual_classes: Video,
+  assessment_quality: FileText,
+  policies: Shield,
+  data_protection: Lock,
+  instructor_qualifications: GraduationCap,
+};
+
+interface ScorecardCategory {
+  category: string;
+  label: string;
+  icon: string;
+  status: "passed" | "review" | "failed";
+  checks: Array<{ rule: string; status: "passed" | "review" | "failed"; detail: string }>;
+}
+
+interface CourseScorecard {
+  courseId: string;
+  overallStatus: "passed" | "review" | "failed";
+  overallScore: number;
+  categories: ScorecardCategory[];
+}
+
 const NELCComplianceCenterContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const manager = useManagerProfile();
@@ -55,6 +88,22 @@ const NELCComplianceCenterContent = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | "passed" | "review" | "failed">("all");
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [scorecards, setScorecards] = useState<Record<string, CourseScorecard>>({});
+  const [scorecardLoading, setScorecardLoading] = useState<Record<string, boolean>>({});
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  const fetchScorecard = useCallback(async (courseId: string) => {
+    if (scorecards[courseId]) return;
+    setScorecardLoading((prev) => ({ ...prev, [courseId]: true }));
+    try {
+      const result = await nelcComplianceApi.getCourseScorecard(courseId);
+      setScorecards((prev) => ({ ...prev, [courseId]: result }));
+    } catch {
+      // silently fail
+    } finally {
+      setScorecardLoading((prev) => ({ ...prev, [courseId]: false }));
+    }
+  }, [scorecards]);
 
   // Virtual Classes state
   const [virtualClasses, setVirtualClasses] = useState<VirtualClassSession[]>([]);
@@ -120,10 +169,25 @@ const NELCComplianceCenterContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
-            <p className="text-sm text-[#6B7280]">{t("dashboard.loading")}</p>
+        <div className="bg-[#F9FAFB] min-h-screen">
+          <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="hidden lg:block lg:flex-shrink-0">
+                <CourseManagerSidebar manager={manager} />
+              </div>
+              <CourseManagerMobileSidebar manager={manager} />
+              <div className="flex-1 min-w-0">
+                <div className="mb-6">
+                  <div className="h-7 bg-[#E5E7EB] rounded w-56 animate-pulse mb-2" />
+                  <div className="h-4 bg-[#E5E7EB] rounded w-80 animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonCard key={i} />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </>
@@ -165,11 +229,14 @@ const NELCComplianceCenterContent = () => {
 
             <div className="flex-1 min-w-0">
               {/* Header */}
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold text-[#1F2937]">{t("nelc.title")}</h1>
-                <p className="text-sm text-[#6B7280] mt-1">
-                  Monitor NELC compliance across all courses and sessions
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                  <h1 className="text-2xl font-bold text-[#1F2937]">{t("nelc.title")}</h1>
+                  <p className="text-sm text-[#6B7280] mt-1">
+                    Monitor NELC compliance across all courses and sessions
+                  </p>
+                </div>
+                <ExportButton tableType="nelc-courses" />
               </div>
 
               {/* Summary Bar */}
@@ -287,13 +354,15 @@ const NELCComplianceCenterContent = () => {
                           const isExpanded = expandedCourse === course.courseId;
 
                           return (
-                            <>
+                            <Fragment key={course.courseId}>
                               <tr
-                                key={course.courseId}
                                 className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
-                                onClick={() =>
-                                  setExpandedCourse(isExpanded ? null : course.courseId)
-                                }
+                                onClick={() => {
+                                  const next = isExpanded ? null : course.courseId;
+                                  setExpandedCourse(next);
+                                  setExpandedCategory(null);
+                                  if (next) fetchScorecard(next);
+                                }}
                               >
                                 <td className="px-4 py-3">
                                   <p className="text-sm font-medium text-[#1F2937]">
@@ -338,35 +407,95 @@ const NELCComplianceCenterContent = () => {
                                 </td>
                               </tr>
                               {isExpanded && (
-                                <tr key={`${course.courseId}-detail`}>
-                                  <td colSpan={5} className="px-4 py-3 bg-[#F9FAFB]">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                      <div className="bg-white rounded-lg border border-[#E5E7EB] p-3 text-center">
-                                        <p className="text-lg font-bold text-[#22C55E]">
-                                          {course.summary.passed}
-                                        </p>
-                                        <p className="text-xs text-[#6B7280]">Sessions Passed</p>
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-4 bg-[#F9FAFB]">
+                                    {scorecardLoading[course.courseId] ? (
+                                      <div className="flex items-center gap-2 py-6 justify-center">
+                                        <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
+                                        <span className="text-sm text-[#6B7280]">{t("nelc.loadingScorecard")}</span>
                                       </div>
-                                      <div className="bg-white rounded-lg border border-[#E5E7EB] p-3 text-center">
-                                        <p className="text-lg font-bold text-[#F59E0B]">
-                                          {course.summary.review}
-                                        </p>
-                                        <p className="text-xs text-[#6B7280]">Needs Review</p>
-                                      </div>
-                                      <div className="bg-white rounded-lg border border-[#E5E7EB] p-3 text-center">
-                                        <p className="text-lg font-bold text-[#EF4444]">
-                                          {course.summary.failed}
-                                        </p>
-                                        <p className="text-xs text-[#6B7280]">Sessions Failed</p>
-                                      </div>
-                                      <div className="bg-white rounded-lg border border-[#E5E7EB] p-3 text-center">
-                                        <p className="text-lg font-bold text-[#3B82F6]">
-                                          {course.summary.total}
-                                        </p>
-                                        <p className="text-xs text-[#6B7280]">Total Sessions</p>
-                                      </div>
-                                    </div>
-                                    <div className="mt-3 flex justify-end">
+                                    ) : scorecards[course.courseId] ? (
+                                      <>
+                                        {/* Score summary */}
+                                        <div className="flex items-center gap-3 mb-4">
+                                          <div className="text-2xl font-bold text-[#3B82F6]">
+                                            {scorecards[course.courseId].overallScore}%
+                                          </div>
+                                          <span className="text-sm text-[#6B7280]">{t("nelc.overallScore")}</span>
+                                        </div>
+
+                                        {/* 7 Category Cards */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4 items-start">
+                                          {scorecards[course.courseId].categories.map((cat) => {
+                                            const catConfig = STATUS_CONFIG[cat.status];
+                                            const CatStatusIcon = catConfig.icon;
+                                            const CatIcon = CATEGORY_ICONS[cat.category] || ShieldCheck;
+                                            const isCatExpanded = expandedCategory === `${course.courseId}-${cat.category}`;
+
+                                            return (
+                                              <div
+                                                key={cat.category}
+                                                className="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setExpandedCategory(
+                                                    isCatExpanded ? null : `${course.courseId}-${cat.category}`
+                                                  );
+                                                }}
+                                              >
+                                                <div className="p-3 flex items-center gap-3">
+                                                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${catConfig.bg}`}>
+                                                    <CatIcon className={`w-4 h-4 ${catConfig.text}`} />
+                                                  </div>
+                                                  <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-semibold text-[#1F2937] truncate">
+                                                      {cat.label}
+                                                    </p>
+                                                    <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${catConfig.text}`}>
+                                                      <CatStatusIcon className="w-3 h-3" />
+                                                      {catConfig.label}
+                                                    </span>
+                                                  </div>
+                                                  {isCatExpanded ? (
+                                                    <ChevronUp className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                                                  ) : (
+                                                    <ChevronDown className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                                                  )}
+                                                </div>
+
+                                                {isCatExpanded && (
+                                                  <div className="border-t border-[#E5E7EB] p-3 space-y-1.5">
+                                                    {cat.checks.map((check) => {
+                                                      const chkConfig = STATUS_CONFIG[check.status];
+                                                      const ChkIcon = chkConfig.icon;
+                                                      return (
+                                                        <div key={check.rule} className="flex items-start gap-2">
+                                                          <ChkIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${chkConfig.text}`} />
+                                                          <div className="min-w-0">
+                                                            <p className="text-xs font-medium text-[#1F2937] capitalize">
+                                                              {check.rule.replace(/_/g, " ")}
+                                                            </p>
+                                                            <p className="text-[10px] text-[#6B7280]">{check.detail}</p>
+                                                          </div>
+                                                        </div>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <p className="text-sm text-[#9CA3AF] py-4 text-center">{t("nelc.scorecardUnavailable")}</p>
+                                    )}
+
+                                    {/* Export Evidence button */}
+                                    <div className="flex justify-end items-center gap-3">
+                                      <span className="text-xs text-[#9CA3AF]" title={t("nelc.bundleContents")}>
+                                        {t("nelc.bundleContentsShort")}
+                                      </span>
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -374,19 +503,20 @@ const NELCComplianceCenterContent = () => {
                                         }}
                                         disabled={downloadingId === course.courseId}
                                         className="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#93C5FD] text-white text-sm font-medium rounded-lg transition-colors"
+                                        title={t("nelc.bundleContents")}
                                       >
                                         {downloadingId === course.courseId ? (
                                           <Loader2 className="w-4 h-4 animate-spin" />
                                         ) : (
                                           <Download className="w-4 h-4" />
                                         )}
-                                        Export Evidence
+                                        {t("nelc.exportEvidence")}
                                       </button>
                                     </div>
                                   </td>
                                 </tr>
                               )}
-                            </>
+                            </Fragment>
                           );
                         })}
                       </tbody>
@@ -455,9 +585,8 @@ const NELCComplianceCenterContent = () => {
                               const isExpanded = expandedSession === vc.sessionId;
 
                               return (
-                                <>
+                                <Fragment key={vc.sessionId}>
                                   <tr
-                                    key={vc.sessionId}
                                     className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                                     onClick={() =>
                                       setExpandedSession(isExpanded ? null : vc.sessionId)
@@ -533,7 +662,7 @@ const NELCComplianceCenterContent = () => {
                                     </td>
                                   </tr>
                                   {isExpanded && (
-                                    <tr key={`${vc.sessionId}-detail`}>
+                                    <tr>
                                       <td colSpan={7} className="px-4 py-3 bg-[#F9FAFB]">
                                         <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
                                           {t("nelc.vcComplianceChecks")}
@@ -563,7 +692,7 @@ const NELCComplianceCenterContent = () => {
                                       </td>
                                     </tr>
                                   )}
-                                </>
+                                </Fragment>
                               );
                             })}
                           </tbody>

@@ -161,6 +161,18 @@ export class MaterialsController {
     );
   }
 
+  /**
+   * GET /materials/:id/compliance-checklist — 5-check compliance checklist
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('materials/:id/compliance-checklist')
+  async getComplianceChecklist(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.getComplianceChecklist(materialId, user);
+  }
+
   // ─── Material-scoped Endpoints ────────────────────────────
 
   /**

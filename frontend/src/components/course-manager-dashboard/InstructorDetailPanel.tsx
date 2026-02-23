@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 interface InstructorPerformance {
-  instructor: { id: string; firstName: string | null; lastName: string | null; email: string };
+  instructor: { id: string; firstName: string | null; lastName: string | null; email: string; avatar: string | null };
   coursesCount: number;
   totalStudents: number;
   completionRate: number;
@@ -89,7 +89,19 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
             <>
               {/* Profile Header */}
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 bg-[#EFF6FF] rounded-full flex items-center justify-center">
+                {data.instructor.avatar ? (
+                  <img
+                    src={data.instructor.avatar}
+                    alt={getName()}
+                    className="w-16 h-16 rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`w-16 h-16 bg-[#EFF6FF] rounded-full flex items-center justify-center ${data.instructor.avatar ? 'hidden' : ''}`}>
                   <span className="text-lg font-semibold text-[#3B82F6]">{getInitials()}</span>
                 </div>
                 <div>

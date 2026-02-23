@@ -156,6 +156,11 @@ export interface AssessmentResponse {
   maxRetakes: number;
   retakeCoolingHours: number;
   retakeScorePolicy: string;
+  retakeScope: string;
+  // Flagging
+  flaggedAt: string | null;
+  flaggedReason: string | null;
+  flaggedBy: string | null;
   createdAt: string;
   updatedAt: string;
   submissionCount?: number;

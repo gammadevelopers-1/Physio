@@ -9,11 +9,13 @@ import { db } from '../../database';
 import {
   courses,
   courseModules,
+  courseMaterials,
   enrollments,
   sessions,
   courseRatings,
   users,
   COURSE_STATUS,
+  NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -23,10 +25,13 @@ import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { classifyCourse, getNelcMaxEnrollment } from './nelc-config';
+import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 
 @Injectable()
 export class CoursesService {
   private readonly logger = new Logger(CoursesService.name);
+
+  constructor(private readonly auditService: NelcAuditService) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -664,6 +669,119 @@ export class CoursesService {
       .from(courseModules)
       .where(eq(courseModules.courseId, courseId))
       .orderBy(asc(courseModules.orderIndex));
+
+    return updated;
+  }
+
+  // ─── Course Activation / Deactivation ──────────────────────
+
+  /**
+   * Activate a course — validates all materials have been reviewed (status = 'live').
+   * Only MANAGER and ADMIN can activate a course.
+   */
+  async activate(courseId: string, user: AuthenticatedUser) {
+    const [course] = await db
+      .select({ id: courses.id, status: courses.status, title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.status === COURSE_STATUS.ACTIVE) {
+      throw new BadRequestException('Course is already active');
+    }
+
+    if (course.status !== COURSE_STATUS.DRAFT) {
+      throw new BadRequestException(
+        'Only draft courses can be activated',
+      );
+    }
+
+    // Check all materials have been reviewed (status = 'live')
+    const pendingMaterials = await db
+      .select({
+        id: courseMaterials.id,
+        title: courseMaterials.title,
+        status: courseMaterials.status,
+      })
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.courseId, courseId),
+          sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+        ),
+      );
+
+    if (pendingMaterials.length > 0) {
+      const pendingList = pendingMaterials.map(
+        (m) => `${m.title || m.id} (${m.status})`,
+      );
+      throw new BadRequestException({
+        message: 'Cannot activate course: some materials have not been reviewed',
+        pendingMaterials: pendingList,
+      });
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set({ status: COURSE_STATUS.ACTIVE, updatedAt: new Date() })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Log NELC audit event
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.COURSE_ACTIVATED,
+      entityType: 'course',
+      entityId: courseId,
+      userId: user.id,
+      metadata: { courseTitle: course.title },
+    });
+
+    this.logger.log(`Course "${course.title}" activated by ${user.id}`);
+
+    return updated;
+  }
+
+  /**
+   * Deactivate (archive) an active course.
+   * Only MANAGER and ADMIN can deactivate a course.
+   */
+  async deactivate(courseId: string, user: AuthenticatedUser) {
+    const [course] = await db
+      .select({ id: courses.id, status: courses.status, title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.status !== COURSE_STATUS.ACTIVE) {
+      throw new BadRequestException(
+        'Only active courses can be deactivated',
+      );
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set({ status: COURSE_STATUS.ARCHIVED, updatedAt: new Date() })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Log NELC audit event
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.COURSE_DEACTIVATED,
+      entityType: 'course',
+      entityId: courseId,
+      userId: user.id,
+      metadata: { courseTitle: course.title },
+    });
+
+    this.logger.log(`Course "${course.title}" deactivated by ${user.id}`);
 
     return updated;
   }

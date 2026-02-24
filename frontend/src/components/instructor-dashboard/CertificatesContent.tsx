@@ -35,6 +35,7 @@ import {
   Loader2,
   RefreshCw,
   PauseCircle,
+  ShieldOff,
 } from "lucide-react";
 
 // ─── Modal Overlay ─────────────────────────────────────────
@@ -312,7 +313,7 @@ const CertificatesContent = () => {
   const [certificates, setCertificates] = useState<CertificateRequestResponse[]>([]);
   const [totalCerts, setTotalCerts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [statusCounts, setStatusCounts] = useState({ pending: 0, approved: 0, held: 0 });
+  const [statusCounts, setStatusCounts] = useState({ pending: 0, approved: 0, held: 0, revoked: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -333,6 +334,11 @@ const CertificatesContent = () => {
   const [batchNoteModal, setBatchNoteModal] = useState<"approve" | "reject" | null>(null);
   const [batchNote, setBatchNote] = useState("");
 
+  // Revoke
+  const [revokingCert, setRevokingCert] = useState<CertificateRequestResponse | null>(null);
+  const [revokeReason, setRevokeReason] = useState("");
+  const [revokeProcessing, setRevokeProcessing] = useState(false);
+
   // ── Course name lookup ───────────────────────────────────
   const courseNameMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -345,7 +351,7 @@ const CertificatesContent = () => {
     setLoading(true);
     setError("");
     try {
-      const [coursesRes, certsRes, pendingRes, approvedRes, heldRes] = await Promise.all([
+      const [coursesRes, certsRes, pendingRes, approvedRes, heldRes, revokedRes] = await Promise.all([
         instructorApi.getCourses({ limit: 100 }),
         instructorApi.getCertificates({
           courseId: selectedCourse !== "all" ? selectedCourse : undefined,
@@ -356,6 +362,7 @@ const CertificatesContent = () => {
         instructorApi.getCertificates({ status: "pending", limit: 1 }),
         instructorApi.getCertificates({ status: "approved", limit: 1 }),
         instructorApi.getCertificates({ status: "held", limit: 1 }),
+        instructorApi.getCertificates({ status: "revoked", limit: 1 }),
       ]);
       setCourses(coursesRes.data);
       setCertificates(certsRes.data);
@@ -365,6 +372,7 @@ const CertificatesContent = () => {
         pending: pendingRes.total,
         approved: approvedRes.total,
         held: heldRes.total,
+        revoked: revokedRes.total,
       });
     } catch {
       setError(t("certificates.loadError"));
@@ -393,10 +401,11 @@ const CertificatesContent = () => {
 
   // ── Stats (from global status counts) ────────────────────
   const stats = useMemo(() => ({
-    total: statusCounts.pending + statusCounts.approved + statusCounts.held,
+    total: statusCounts.pending + statusCounts.approved + statusCounts.held + statusCounts.revoked,
     pending: statusCounts.pending,
     approved: statusCounts.approved,
     held: statusCounts.held,
+    revoked: statusCounts.revoked,
   }), [statusCounts]);
 
   // ── Selection helpers ────────────────────────────────────
@@ -470,6 +479,26 @@ const CertificatesContent = () => {
     }
   };
 
+  // ── Revoke handler ─────────────────────────────────────
+  const handleRevoke = async () => {
+    if (!revokingCert || !revokeReason.trim()) {
+      toast.error(t("certificates.revokeReasonRequired"));
+      return;
+    }
+    setRevokeProcessing(true);
+    try {
+      await instructorApi.revokeCertificate(revokingCert.id, revokeReason.trim());
+      toast.success(t("certificates.revokeSuccess"));
+      setRevokingCert(null);
+      setRevokeReason("");
+      refetch();
+    } catch {
+      toast.error(t("certificates.actionError"));
+    } finally {
+      setRevokeProcessing(false);
+    }
+  };
+
   // ── Status helpers ───────────────────────────────────────
   const getStatusStyle = (status: string) => {
     switch (status) {
@@ -477,6 +506,7 @@ const CertificatesContent = () => {
       case "approved": return "bg-[#DCFCE7] text-[#22C55E]";
       case "rejected": return "bg-[#FEE2E2] text-[#EF4444]";
       case "held": return "bg-[#FFEDD5] text-[#F97316]";
+      case "revoked": return "bg-[#FEE2E2] text-[#991B1B]";
       default: return "bg-[#F3F4F6] text-[#6B7280]";
     }
   };
@@ -487,6 +517,7 @@ const CertificatesContent = () => {
       case "approved": return <CheckCircle className="w-3 h-3" />;
       case "rejected": return <XCircle className="w-3 h-3" />;
       case "held": return <PauseCircle className="w-3 h-3" />;
+      case "revoked": return <ShieldOff className="w-3 h-3" />;
       default: return null;
     }
   };
@@ -497,6 +528,7 @@ const CertificatesContent = () => {
       case "approved": return t("certificates.statusApproved");
       case "rejected": return t("certificates.statusRejected");
       case "held": return t("certificates.statusHeld");
+      case "revoked": return t("certificates.statusRevoked");
       default: return status;
     }
   };
@@ -529,6 +561,7 @@ const CertificatesContent = () => {
     { id: "approved", name: t("certificates.statusApproved") },
     { id: "rejected", name: t("certificates.statusRejected") },
     { id: "held", name: t("certificates.statusHeld") },
+    { id: "revoked", name: t("certificates.statusRevoked") },
   ];
 
   return (
@@ -784,10 +817,17 @@ const CertificatesContent = () => {
                                           </button>
                                         </>
                                       )}
-                                      {cert.status === "approved" && cert.certificateUrl && (
-                                        <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors" title={t("certificates.download")}>
-                                          <Download className="w-4 h-4" />
-                                        </a>
+                                      {cert.status === "approved" && (
+                                        <>
+                                          {cert.certificateUrl && (
+                                            <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors" title={t("certificates.download")}>
+                                              <Download className="w-4 h-4" />
+                                            </a>
+                                          )}
+                                          <button onClick={() => setRevokingCert(cert)} className="p-2 text-[#6B7280] hover:text-[#991B1B] hover:bg-[#FEE2E2] rounded-lg transition-colors" title={t("certificates.revoke")}>
+                                            <ShieldOff className="w-4 h-4" />
+                                          </button>
+                                        </>
                                       )}
                                     </div>
                                   </td>
@@ -900,10 +940,22 @@ const CertificatesContent = () => {
                                 </button>
                               </div>
                             )}
-                            {cert.status === "approved" && cert.certificateUrl && (
-                              <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-[#3B82F6] text-white rounded-lg hover:bg-[#2563EB] text-sm font-medium">
-                                <Download className="w-4 h-4" />{t("certificates.downloadCertificate")}
-                              </a>
+                            {cert.status === "approved" && (
+                              <div className="flex gap-2">
+                                {cert.certificateUrl && (
+                                  <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#3B82F6] text-white rounded-lg hover:bg-[#2563EB] text-sm font-medium">
+                                    <Download className="w-4 h-4" />{t("certificates.downloadCertificate")}
+                                  </a>
+                                )}
+                                <button onClick={() => setRevokingCert(cert)} className="flex items-center justify-center px-3 py-2 bg-[#991B1B] text-white rounded-lg hover:bg-[#7F1D1D]" title={t("certificates.revoke")}>
+                                  <ShieldOff className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                            {cert.status === "revoked" && cert.reviewNote && (
+                              <div className="p-2 bg-[#FEE2E2] rounded-lg">
+                                <p className="text-xs text-[#991B1B]"><span className="font-medium">{t("certificates.revokeReason")}:</span> {cert.reviewNote}</p>
+                              </div>
                             )}
                           </div>
                         );
@@ -926,6 +978,54 @@ const CertificatesContent = () => {
           onAction={refetch}
           t={t}
         />
+      )}
+
+      {/* Revoke Confirmation Modal */}
+      {revokingCert && (
+        <ModalOverlay onClose={() => { setRevokingCert(null); setRevokeReason(""); }}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
+                  <ShieldOff className="w-5 h-5 text-[#991B1B]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1F2937]">{t("certificates.revokeTitle")}</h3>
+                  <p className="text-sm text-[#6B7280]">{getStudentName(revokingCert)}</p>
+                </div>
+              </div>
+              <div className="p-3 bg-[#FEF9C3] rounded-lg mb-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#EAB308] flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-[#92400E]">{t("certificates.revokeWarning")}</p>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#374151] mb-1">{t("certificates.revokeReasonLabel")}</label>
+                <textarea
+                  value={revokeReason}
+                  onChange={(e) => setRevokeReason(e.target.value)}
+                  placeholder={t("certificates.revokeReasonPlaceholder")}
+                  rows={3}
+                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EF4444] resize-none"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+                  {t("certificates.cancel")}
+                </button>
+                <button
+                  onClick={handleRevoke}
+                  disabled={revokeProcessing || !revokeReason.trim()}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#991B1B] text-white rounded-lg text-sm font-medium hover:bg-[#7F1D1D] disabled:opacity-50"
+                >
+                  {revokeProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
+                  {t("certificates.confirmRevoke")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalOverlay>
       )}
 
       {/* Batch Reject Note Modal */}

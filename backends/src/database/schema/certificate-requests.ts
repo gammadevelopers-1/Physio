@@ -47,7 +47,7 @@ export const certificateRequests = pgTable(
     index('certificate_requests_status_idx').on(table.status),
     check(
       'certificate_requests_status_check',
-      sql`${table.status} IN ('pending', 'approved', 'rejected', 'held')`,
+      sql`${table.status} IN ('pending', 'approved', 'rejected', 'held', 'revoked')`,
     ),
   ],
 );
@@ -78,6 +78,7 @@ export const CERTIFICATE_STATUS = {
   APPROVED: 'approved',
   REJECTED: 'rejected',
   HELD: 'held',
+  REVOKED: 'revoked',
 } as const;
 
 export type CertificateStatus =

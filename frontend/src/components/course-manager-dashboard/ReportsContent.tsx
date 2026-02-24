@@ -31,6 +31,7 @@ import {
   Award,
   Shield,
   Layers,
+  DollarSign,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -129,6 +130,14 @@ const REPORT_TYPES: ReportTypeConfig[] = [
     iconColor: "text-[#EF4444]",
     requiresCourse: false,
     supportsDateRange: false,
+  },
+  {
+    id: "revenue",
+    icon: DollarSign,
+    iconBg: "bg-[#D1FAE5]",
+    iconColor: "text-[#059669]",
+    requiresCourse: false,
+    supportsDateRange: true,
   },
 ];
 

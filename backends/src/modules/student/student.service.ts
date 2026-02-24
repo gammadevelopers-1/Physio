@@ -35,12 +35,16 @@ import { UpdateProgressDto } from './dto/update-progress.dto';
 import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ReplyTicketDto } from './dto/reply-ticket.dto';
 import { RateTicketDto } from './dto/rate-ticket.dto';
+import { CertificatesService } from '../certificates/certificates.service';
 
 @Injectable()
 export class StudentService {
   private readonly logger = new Logger(StudentService.name);
 
-  constructor(private readonly auditService: NelcAuditService) {}
+  constructor(
+    private readonly auditService: NelcAuditService,
+    private readonly certificatesService: CertificatesService,
+  ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
 
@@ -279,16 +283,9 @@ export class StudentService {
     ];
 
     // Filter by enrollment status
+    // When "all" or undefined, show ALL enrollments including dropped
     if (params.status && params.status !== 'all') {
       conditions.push(eq(enrollments.status, params.status));
-    } else {
-      // By default show active + completed (not dropped/suspended)
-      conditions.push(
-        or(
-          eq(enrollments.status, 'active'),
-          eq(enrollments.status, 'completed'),
-        ) as any,
-      );
     }
 
     // Search by course title
@@ -353,16 +350,17 @@ export class StudentService {
     // Batch enrich with missing tasks, next deadline, and next action
     const courseIds = data.map((c) => c.id);
 
-    let missingTasksMap: Record<string, number> = {};
+    let missingTasksMap: Record<string, { count: number; assignmentCount: number }> = {};
     let nextSessionsMap: Record<string, { scheduledAt: Date; sessionType: string; zoomLink: string | null }> = {};
     let attendanceMap: Record<string, { total: number; attended: number }> = {};
 
     if (courseIds.length > 0) {
-      // Count unsubmitted published assessments per course
+      // Count unsubmitted published assessments per course (with assignment type breakdown)
       const missingTasks = await db
         .select({
           courseId: assessments.courseId,
           cnt: count(),
+          assignmentCnt: sql<number>`COUNT(CASE WHEN ${assessments.type} = 'assignment' THEN 1 END)`.mapWith(Number),
         })
         .from(assessments)
         .leftJoin(
@@ -382,7 +380,7 @@ export class StudentService {
         .groupBy(assessments.courseId);
 
       missingTasksMap = Object.fromEntries(
-        missingTasks.map((r) => [r.courseId, Number(r.cnt)]),
+        missingTasks.map((r) => [r.courseId, { count: Number(r.cnt), assignmentCount: Number(r.assignmentCnt) }]),
       );
 
       // Next upcoming session per course
@@ -428,11 +426,16 @@ export class StudentService {
     }
 
     const enriched = data.map((c) => {
-      const missingTasksCount = missingTasksMap[c.id] || 0;
+      const missingInfo = missingTasksMap[c.id] || { count: 0, assignmentCount: 0 };
+      const missingTasksCount = missingInfo.count;
       const nextSess = nextSessionsMap[c.id];
       const nextDeadline = nextSess ? nextSess.scheduledAt.toISOString() : null;
       const att = attendanceMap[c.id] || { total: 0, attended: 0 };
       const attendanceRate = att.total > 0 ? Math.round((att.attended / att.total) * 100) : 0;
+
+      // Determine the appropriate action for missing assessments
+      const missingAssessmentAction =
+        missingInfo.assignmentCount > 0 ? 'upload_assignment' : 'take_quiz';
 
       // Compute next action
       let nextAction = 'start_course';
@@ -441,12 +444,12 @@ export class StudentService {
         if (diff <= 15 * 60 * 1000 && (nextSess.sessionType === 'zoom' || nextSess.sessionType === 'blended')) {
           nextAction = 'join_zoom';
         } else if (missingTasksCount > 0) {
-          nextAction = 'take_quiz';
+          nextAction = missingAssessmentAction;
         } else if (c.progress > 0) {
           nextAction = 'resume_lesson';
         }
       } else if (missingTasksCount > 0) {
-        nextAction = 'take_quiz';
+        nextAction = missingAssessmentAction;
       } else if (c.progress > 0) {
         nextAction = 'resume_lesson';
       }
@@ -859,6 +862,22 @@ export class StudentService {
       .set(updateData)
       .where(eq(enrollments.id, enrollment.id))
       .returning();
+
+    // Auto-trigger certificate request when course is completed
+    if (newProgress >= 100) {
+      try {
+        await this.certificatesService.createRequest(courseId, studentId);
+        this.logger.log(
+          `Auto-created certificate request for student ${studentId} in course ${courseId}`,
+        );
+      } catch (error) {
+        // Don't fail the progress update if certificate creation fails
+        // (e.g. duplicate request already exists)
+        this.logger.warn(
+          `Auto-certificate request skipped for student ${studentId} in course ${courseId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    }
 
     return updated;
   }

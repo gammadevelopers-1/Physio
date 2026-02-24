@@ -870,6 +870,117 @@ export class ReportsService {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // ─── 9. Revenue Report ─────────────────────────────────────
+  // Columns: Course Title, Price, Enrollments, Revenue, Status
+  // Manager/Admin only
+  // ═══════════════════════════════════════════════════════════
+
+  async generateRevenueReport(
+    user: AuthenticatedUser,
+    params: { format?: string; dateFrom?: string; dateTo?: string },
+  ): Promise<ReportResult> {
+    const format = this.validateFormat(params.format);
+    const instructorName = await this.getInstructorName(user.id);
+
+    const filterParts: string[] = [];
+    if (params.dateFrom) filterParts.push(`From: ${params.dateFrom}`);
+    if (params.dateTo) filterParts.push(`To: ${params.dateTo}`);
+
+    const metadata: ReportMetadata = {
+      instructorName,
+      filters: filterParts.length > 0 ? filterParts.join(', ') : 'All Time',
+    };
+
+    const headers = [
+      'Course Title',
+      'Price (SAR)',
+      'Total Enrollments',
+      'Active Enrollments',
+      'Revenue (SAR)',
+      'Status',
+    ];
+
+    // Get all courses (admin sees all, manager sees all, instructor sees own)
+    const conditions = [];
+    if (!this.isAdmin(user)) {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
+
+    const courseData = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        price: courses.price,
+        status: courses.status,
+      })
+      .from(courses)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(courses.createdAt));
+
+    if (courseData.length === 0) {
+      return this.formatReport('Revenue Report', headers, [], format, metadata);
+    }
+
+    const courseIds = courseData.map((c) => c.id);
+
+    // Enrollment date filters
+    const enrollConditions: any[] = [inArray(enrollments.courseId, courseIds)];
+    if (params.dateFrom) {
+      enrollConditions.push(gte(enrollments.enrolledAt, new Date(params.dateFrom)));
+    }
+    if (params.dateTo) {
+      enrollConditions.push(lte(enrollments.enrolledAt, new Date(params.dateTo)));
+    }
+
+    // Get enrollment counts per course
+    const enrollStats = await db
+      .select({
+        courseId: enrollments.courseId,
+        totalCount: count(),
+        activeCount: sql<number>`SUM(CASE WHEN ${enrollments.status} = 'active' THEN 1 ELSE 0 END)`.as('active'),
+      })
+      .from(enrollments)
+      .where(and(...enrollConditions))
+      .groupBy(enrollments.courseId);
+    const enrollMap = new Map(enrollStats.map((e) => [e.courseId, e]));
+
+    let grandTotalRevenue = 0;
+    let grandTotalEnrollments = 0;
+
+    const rows = courseData.map((c) => {
+      const price = parseFloat(c.price || '0');
+      const enroll = enrollMap.get(c.id);
+      const total = Number(enroll?.totalCount || 0);
+      const active = Number(enroll?.activeCount || 0);
+      const revenue = price * total;
+
+      grandTotalRevenue += revenue;
+      grandTotalEnrollments += total;
+
+      return [
+        c.title,
+        price.toFixed(2),
+        String(total),
+        String(active),
+        revenue.toFixed(2),
+        c.status || '',
+      ];
+    });
+
+    // Add summary row
+    rows.push([
+      'TOTAL',
+      '',
+      String(grandTotalEnrollments),
+      '',
+      grandTotalRevenue.toFixed(2),
+      '',
+    ]);
+
+    return this.formatReport('Revenue Report', headers, rows, format, metadata);
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // ─── Scheduled Reports CRUD ───────────────────────────────
   // ═══════════════════════════════════════════════════════════
 

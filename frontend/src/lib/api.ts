@@ -874,6 +874,9 @@ export const instructorApi = {
   holdCertificate: (id: string, note: string) =>
     api.patch<CertificateRequestResponse>(`/certificates/${id}/hold`, { note }),
 
+  revokeCertificate: (id: string, reason: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/revoke`, { reason }),
+
   batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
     api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
 
@@ -1056,7 +1059,7 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'course-catalog' | 'satisfaction' | 'instructor-performance' | 'nelc-compliance';
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'course-catalog' | 'satisfaction' | 'instructor-performance' | 'nelc-compliance' | 'revenue';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {
@@ -1421,6 +1424,14 @@ export const courseManagerApi = {
   // Update course
   updateCourse: (courseId: string, data: Record<string, unknown>) =>
     api.patch<CourseDetailResponse>(`/courses/${courseId}`, data),
+
+  // Activate course (validates all content reviewed)
+  activateCourse: (courseId: string) =>
+    api.post<CourseDetailResponse>(`/courses/${courseId}/activate`, {}),
+
+  // Deactivate (archive) an active course
+  deactivateCourse: (courseId: string) =>
+    api.post<CourseDetailResponse>(`/courses/${courseId}/deactivate`, {}),
 
   // Delete course (draft only)
   deleteCourse: (courseId: string) =>

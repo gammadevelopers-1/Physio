@@ -5,13 +5,16 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   HelpCircle,
   Loader2,
   MessageSquarePlus,
   Paperclip,
+  PlayCircle,
   Plus,
+  Search,
   Send,
   Tag,
   X,
@@ -453,12 +456,150 @@ function CreateTicketForm({
   );
 }
 
+type MainTab = "tickets" | "faq" | "tutorials";
+
+const FAQ_CATEGORIES = ["enrollment", "sessions", "assessments", "certificates", "technical"] as const;
+
+function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; locale: string }) {
+  const isRTL = locale === "ar";
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const faqItems = FAQ_CATEGORIES.flatMap((cat) => {
+    const count = cat === "enrollment" ? 3 : cat === "sessions" ? 3 : cat === "assessments" ? 3 : cat === "certificates" ? 3 : 3;
+    return Array.from({ length: count }, (_, i) => ({
+      category: cat,
+      question: t(`supportPage.faq.${cat}_q${i + 1}` as Parameters<typeof t>[0]),
+      answer: t(`supportPage.faq.${cat}_a${i + 1}` as Parameters<typeof t>[0]),
+    }));
+  });
+
+  const filtered = faqItems.filter((item) => {
+    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
+    const matchesSearch = !searchQuery || item.question.toLowerCase().includes(searchQuery.toLowerCase()) || item.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div dir={isRTL ? "rtl" : "ltr"}>
+      {/* Search */}
+      <div className="relative mb-4">
+        <Search className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"} w-4 h-4 text-[#9CA3AF]`} />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t("supportPage.searchFaq")}
+          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent`}
+        />
+      </div>
+
+      {/* Category filter */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button
+          onClick={() => setActiveCategory("all")}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
+        >
+          {t("supportPage.faq.allCategories")}
+        </button>
+        {FAQ_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
+          >
+            {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
+          </button>
+        ))}
+      </div>
+
+      {/* FAQ Accordion */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-8">
+          <HelpCircle className="w-10 h-10 text-[#D1D5DB] mx-auto mb-2" />
+          <p className="text-sm text-[#6B7280]">{t("supportPage.faq.noResults")}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((item, index) => (
+            <div key={index} className="border border-[#E5E7EB] rounded-lg overflow-hidden">
+              <button
+                onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#F9FAFB] transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#F3F4F6] text-[#6B7280] flex-shrink-0">
+                    {t(`supportPage.category_${item.category}` as Parameters<typeof t>[0])}
+                  </span>
+                  <span className="text-sm font-medium text-[#1F2937] truncate">{item.question}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-[#9CA3AF] flex-shrink-0 transition-transform ${expandedIndex === index ? "rotate-180" : ""}`} />
+              </button>
+              {expandedIndex === index && (
+                <div className="px-4 pb-3 text-sm text-[#4B5563] border-t border-[#E5E7EB] pt-3">
+                  {item.answer}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const TUTORIAL_ITEMS = [
+  { key: "enroll", icon: "BookOpen", duration: "2:30" },
+  { key: "joinZoom", icon: "Video", duration: "1:45" },
+  { key: "takeAssessment", icon: "ClipboardCheck", duration: "3:15" },
+  { key: "downloadCertificate", icon: "Award", duration: "1:30" },
+  { key: "useCalendar", icon: "Calendar", duration: "2:00" },
+  { key: "navigateDashboard", icon: "LayoutDashboard", duration: "2:45" },
+] as const;
+
+function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; locale: string }) {
+  const isRTL = locale === "ar";
+
+  return (
+    <div dir={isRTL ? "rtl" : "ltr"}>
+      <p className="text-sm text-[#6B7280] mb-4">{t("supportPage.tutorials.description")}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {TUTORIAL_ITEMS.map((tutorial) => (
+          <div key={tutorial.key} className="border border-[#E5E7EB] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+            {/* Thumbnail placeholder */}
+            <div className="relative h-[120px] bg-gradient-to-br from-[#002D87] to-[#0047D4] flex items-center justify-center">
+              <PlayCircle className="w-12 h-12 text-white/80" />
+              <span className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 text-white text-[10px] font-medium rounded">
+                {tutorial.duration}
+              </span>
+              <span className="absolute top-2 left-2 px-2 py-0.5 bg-amber-400 text-[#1F2937] text-[10px] font-semibold rounded">
+                {t("supportPage.tutorials.comingSoon")}
+              </span>
+            </div>
+            {/* Info */}
+            <div className="p-3">
+              <h3 className="text-sm font-medium text-[#1F2937] mb-1">
+                {t(`supportPage.tutorials.${tutorial.key}_title` as Parameters<typeof t>[0])}
+              </h3>
+              <p className="text-xs text-[#6B7280] line-clamp-2">
+                {t(`supportPage.tutorials.${tutorial.key}_desc` as Parameters<typeof t>[0])}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const SupportContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
 
+  const [mainTab, setMainTab] = useState<MainTab>("tickets");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
@@ -522,6 +663,41 @@ const SupportContent = () => {
 
               <OfflineBanner />
 
+              {/* Main Tabs: Tickets / FAQ / Tutorials */}
+              <div className="flex gap-1 mb-4 border-b border-[#E5E7EB]">
+                {([
+                  { key: "tickets" as MainTab, label: t("supportPage.tabTickets"), icon: MessageSquarePlus },
+                  { key: "faq" as MainTab, label: t("supportPage.tabFaq"), icon: HelpCircle },
+                  { key: "tutorials" as MainTab, label: t("supportPage.tabTutorials"), icon: PlayCircle },
+                ]).map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => setMainTab(tab.key)}
+                      className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
+                        mainTab === tab.key
+                          ? "border-[#002D87] text-[#002D87]"
+                          : "border-transparent text-[#6B7280] hover:text-[#374151]"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tab Content */}
+              {mainTab === "faq" ? (
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+                  <FAQSection t={t} locale={locale} />
+                </div>
+              ) : mainTab === "tutorials" ? (
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+                  <VideoTutorials t={t} locale={locale} />
+                </div>
+              ) : (
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
                 {showForm ? (
                   <CreateTicketForm
@@ -591,6 +767,7 @@ const SupportContent = () => {
                   </>
                 )}
               </div>
+              )}
             </div>
           </div>
         </div>

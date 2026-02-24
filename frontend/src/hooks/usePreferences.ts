@@ -52,7 +52,7 @@ const DEFAULTS: UserPreferences = {
   highContrast: false,
   fontSize: "medium",
   reduceMotion: false,
-  captionsDefault: false,
+  captionsDefault: true,
   subtitlesLanguage: "en",
   profileVisibility: "full",
   dataSharing: true,

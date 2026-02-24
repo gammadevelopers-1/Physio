@@ -99,17 +99,36 @@ const CoursesContent = () => {
   });
 
   const handleStatusChange = useCallback(
-    async (courseId: string, newStatus: string) => {
+    async (courseId: string, newStatus: string, currentStatus: string) => {
       setOpenDropdown(null);
       setStatusLoading(courseId);
       try {
-        await courseManagerApi.updateCourse(courseId, { status: newStatus });
+        if (newStatus === "active" && currentStatus === "draft") {
+          // Use dedicated activate endpoint with content review validation
+          await courseManagerApi.activateCourse(courseId);
+        } else if (newStatus === "archived" && currentStatus === "active") {
+          // Use dedicated deactivate endpoint with NELC audit
+          await courseManagerApi.deactivateCourse(courseId);
+        } else {
+          await courseManagerApi.updateCourse(courseId, { status: newStatus });
+        }
         toast.success(t("coursesPage.statusChanged"));
         refetch();
       } catch (err) {
-        toast.error(
-          err instanceof ApiError ? err.message : t("coursesPage.statusFailed")
-        );
+        if (err instanceof ApiError) {
+          // Show pending materials error from activation validation
+          const parsed = (() => { try { return JSON.parse(err.message); } catch { return null; } })();
+          if (parsed?.pendingMaterials) {
+            toast.error(t("coursesPage.activationFailed"), {
+              description: parsed.pendingMaterials.join(", "),
+              duration: 8000,
+            });
+          } else {
+            toast.error(err.message);
+          }
+        } else {
+          toast.error(t("coursesPage.statusFailed"));
+        }
       } finally {
         setStatusLoading(null);
       }
@@ -384,7 +403,7 @@ const CoursesContent = () => {
                                 {COURSE_STATUSES.filter((s) => s !== course.status).map((status) => (
                                   <button
                                     key={status}
-                                    onClick={() => handleStatusChange(course.id, status)}
+                                    onClick={() => handleStatusChange(course.id, status, course.status)}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                                   >
                                     {statusIcons[status]}

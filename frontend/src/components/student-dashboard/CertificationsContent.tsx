@@ -9,6 +9,7 @@ import {
   Clock,
   Download,
   PauseCircle,
+  ShieldOff,
   XCircle,
 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
@@ -27,6 +28,7 @@ const statusOrder: Record<string, number> = {
   pending: 1,
   held: 2,
   rejected: 3,
+  revoked: 4,
 };
 
 function StatusBadge({
@@ -63,6 +65,13 @@ function StatusBadge({
         <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-orange-50 text-orange-700">
           <PauseCircle className="w-3.5 h-3.5" />
           {t("certifications.statusHeld")}
+        </span>
+      );
+    case "revoked":
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-900">
+          <ShieldOff className="w-3.5 h-3.5" />
+          {t("certifications.statusRevoked")}
         </span>
       );
     default:
@@ -155,6 +164,7 @@ function CertificateCard({
   const isPending = certificate.status === "pending";
   const isRejected = certificate.status === "rejected";
   const isHeld = certificate.status === "held";
+  const isRevoked = certificate.status === "revoked";
 
   return (
     <div className="border border-[#E5E7EB] rounded-xl overflow-hidden">
@@ -289,6 +299,30 @@ function CertificateCard({
             <EligibilityChecklist certificate={certificate} t={t} />
             <p className="mt-3 text-xs text-[#6B7280] text-center">
               {t("certifications.heldMessage")}
+            </p>
+          </>
+        )}
+
+        {/* Revoked: reason + warning */}
+        {isRevoked && (
+          <>
+            <div className="mt-2 p-3 bg-red-100 rounded-lg border border-red-200">
+              <div className="flex items-start gap-2">
+                <ShieldOff className="w-4 h-4 text-red-900 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-medium text-red-900 mb-1">
+                    {t("certifications.revokedTitle")}
+                  </p>
+                  {certificate.reviewNote && (
+                    <p className="text-xs text-red-700">
+                      {certificate.reviewNote}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-[#6B7280] text-center">
+              {t("certifications.revokedMessage")}
             </p>
           </>
         )}

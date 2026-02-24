@@ -17,13 +17,18 @@ import {
   submissions,
   users,
   CERTIFICATE_STATUS,
+  NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { StorageService } from '../storage/storage.service';
 import { EmailService } from '../email/email.service';
+import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
 import { HoldCertificateDto } from './dto/hold-certificate.dto';
+import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
 import { BatchCertificateDto } from './dto/batch-certificate.dto';
+import * as QRCode from 'qrcode';
+import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class CertificatesService {
@@ -32,6 +37,7 @@ export class CertificatesService {
   constructor(
     private readonly storageService: StorageService,
     private readonly emailService: EmailService,
+    private readonly auditService: NelcAuditService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -156,7 +162,7 @@ export class CertificatesService {
   // ─── Student Certificates ──────────────────────────────────
 
   /**
-   * GET /certificates/my-certificates — Get student's approved certificates.
+   * GET /certificates/my-certificates — Get student's approved and revoked certificates.
    */
   async getStudentCertificates(studentId: string) {
     return db
@@ -165,6 +171,7 @@ export class CertificatesService {
         courseId: certificateRequests.courseId,
         status: certificateRequests.status,
         certificateUrl: certificateRequests.certificateUrl,
+        reviewNote: certificateRequests.reviewNote,
         createdAt: certificateRequests.createdAt,
         reviewedAt: certificateRequests.reviewedAt,
         courseName: courses.title,
@@ -175,7 +182,7 @@ export class CertificatesService {
       .where(
         and(
           eq(certificateRequests.studentId, studentId),
-          eq(certificateRequests.status, CERTIFICATE_STATUS.APPROVED),
+          sql`${certificateRequests.status} IN ('approved', 'revoked')`,
         ),
       )
       .orderBy(desc(certificateRequests.reviewedAt));
@@ -557,6 +564,68 @@ export class CertificatesService {
     return updated;
   }
 
+  // ─── Revoke ─────────────────────────────────────────────────
+
+  /**
+   * PATCH /certificates/:id/revoke — Revoke an approved certificate.
+   * Only MANAGER/ADMIN can revoke. Requires a reason.
+   */
+  async revoke(
+    id: string,
+    user: AuthenticatedUser,
+    dto: RevokeCertificateDto,
+  ) {
+    const request = await this.verifyRequestAccess(id, user);
+
+    if (request.status !== CERTIFICATE_STATUS.APPROVED) {
+      throw new BadRequestException(
+        'Only approved certificates can be revoked',
+      );
+    }
+
+    const [updated] = await db
+      .update(certificateRequests)
+      .set({
+        status: CERTIFICATE_STATUS.REVOKED,
+        reviewedBy: user.id,
+        reviewNote: dto.reason,
+        reviewedAt: new Date(),
+        certificateUrl: null, // Invalidate the PDF
+      })
+      .where(eq(certificateRequests.id, id))
+      .returning();
+
+    // NELC audit log
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.CERTIFICATE_REVOKED,
+      entityType: 'certificate_request',
+      entityId: id,
+      userId: user.id,
+      metadata: {
+        courseId: request.courseId,
+        studentId: request.studentId,
+        reason: dto.reason,
+      },
+    });
+
+    // Send email notification to student
+    try {
+      const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
+      const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
+      const courseName = course?.title || 'your course';
+      await this.emailService.sendCertificateRejected(
+        request.studentEmail,
+        studentName,
+        courseName,
+        `Certificate revoked: ${dto.reason}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send certificate revocation email for request ${id}`, error);
+    }
+
+    return updated;
+  }
+
   // ─── Batch Processing ──────────────────────────────────────
 
   /**
@@ -619,11 +688,11 @@ export class CertificatesService {
     };
   }
 
-  // ─── Placeholder PDF Generation ─────────────────────────────
+  // ─── PDF Generation with QR Code ─────────────────────────────
 
   /**
-   * Generate a simple placeholder PDF certificate.
-   * Creates a minimal PDF binary and uploads to storage.
+   * Generate a certificate PDF with QR code using PDFKit.
+   * QR code links to the public verification endpoint.
    */
   private async generatePlaceholderPdf(
     requestId: string,
@@ -642,76 +711,121 @@ export class CertificatesService {
       .limit(1);
 
     const [course] = await db
-      .select({ title: courses.title })
+      .select({ title: courses.title, cmeHours: courses.cmeHours })
       .from(courses)
       .where(eq(courses.id, courseId))
       .limit(1);
 
-    const studentName = `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
+    const studentName =
+      `${student?.firstName || ''} ${student?.lastName || ''}`.trim() ||
+      'Student';
     const courseTitle = course?.title || 'Course';
     const issuedDate = new Date().toISOString().split('T')[0];
+    const certificateId = `PG-${requestId.slice(0, 8).toUpperCase()}`;
 
-    // Build a minimal valid PDF with certificate text
-    const content = [
-      'CERTIFICATE OF COMPLETION',
-      '',
-      `This is to certify that`,
-      '',
-      studentName,
-      '',
-      `has successfully completed the course`,
-      '',
-      courseTitle,
-      '',
-      `Issued on: ${issuedDate}`,
-      `Certificate ID: ${requestId}`,
-    ].join('\n');
+    // Generate QR code as PNG buffer pointing to verification endpoint
+    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+    const verifyUrl = `${appUrl}/certificates/verify/${requestId}`;
+    const qrBuffer = await QRCode.toBuffer(verifyUrl, {
+      width: 120,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    });
 
-    // Create a minimal PDF (valid PDF 1.4 structure)
-    const textStream = `BT /F1 24 Tf 50 700 Td (CERTIFICATE OF COMPLETION) Tj ET
-BT /F1 14 Tf 50 650 Td (This is to certify that) Tj ET
-BT /F1 18 Tf 50 620 Td (${this.escapePdfText(studentName)}) Tj ET
-BT /F1 14 Tf 50 590 Td (has successfully completed the course) Tj ET
-BT /F1 18 Tf 50 560 Td (${this.escapePdfText(courseTitle)}) Tj ET
-BT /F1 12 Tf 50 510 Td (Issued on: ${issuedDate}) Tj ET
-BT /F1 10 Tf 50 490 Td (Certificate ID: ${requestId}) Tj ET`;
+    // Build the PDF using PDFKit
+    const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      const doc = new PDFDocument({
+        size: 'A4',
+        layout: 'landscape',
+        margin: 50,
+      });
 
-    const streamLength = Buffer.byteLength(textStream);
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
 
-    const pdf = `%PDF-1.4
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [3 0 R] /Count 1 >>
-endobj
-3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]
-   /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
-endobj
-4 0 obj
-<< /Length ${streamLength} >>
-stream
-${textStream}
-endstream
-endobj
-5 0 obj
-<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
-endobj
-xref
-0 6
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-0000000266 00000 n
-trailer
-<< /Size 6 /Root 1 0 R >>
-startxref
-0
-%%EOF`;
+      const pageWidth = doc.page.width;
+      const centerX = pageWidth / 2;
 
-    const pdfBuffer = Buffer.from(pdf, 'utf-8');
+      // Border
+      doc
+        .rect(30, 30, pageWidth - 60, doc.page.height - 60)
+        .lineWidth(2)
+        .stroke('#002D87');
+
+      doc
+        .rect(40, 40, pageWidth - 80, doc.page.height - 80)
+        .lineWidth(0.5)
+        .stroke('#C9A84C');
+
+      // Header
+      doc
+        .fontSize(14)
+        .fillColor('#6B7280')
+        .text('PHYSIOGUIDANCE', 0, 70, { align: 'center' });
+
+      doc
+        .fontSize(32)
+        .fillColor('#002D87')
+        .text('CERTIFICATE OF COMPLETION', 0, 100, { align: 'center' });
+
+      // Decorative line
+      doc
+        .moveTo(centerX - 100, 145)
+        .lineTo(centerX + 100, 145)
+        .lineWidth(1)
+        .stroke('#C9A84C');
+
+      // Body text
+      doc
+        .fontSize(14)
+        .fillColor('#4B5563')
+        .text('This is to certify that', 0, 170, { align: 'center' });
+
+      doc
+        .fontSize(26)
+        .fillColor('#1F2937')
+        .text(studentName, 0, 200, { align: 'center' });
+
+      doc
+        .fontSize(14)
+        .fillColor('#4B5563')
+        .text('has successfully completed the course', 0, 245, {
+          align: 'center',
+        });
+
+      doc
+        .fontSize(20)
+        .fillColor('#002D87')
+        .text(courseTitle, 0, 275, { align: 'center' });
+
+      if (course?.cmeHours) {
+        doc
+          .fontSize(12)
+          .fillColor('#6B7280')
+          .text(`CME Hours: ${course.cmeHours}`, 0, 310, { align: 'center' });
+      }
+
+      // Footer info
+      const footerY = 370;
+      doc.fontSize(10).fillColor('#6B7280');
+      doc.text(`Issued on: ${issuedDate}`, 80, footerY);
+      doc.text(`Certificate ID: ${certificateId}`, 80, footerY + 16);
+
+      // QR Code (bottom right)
+      doc.image(qrBuffer, pageWidth - 200, footerY - 20, { width: 100 });
+      doc
+        .fontSize(8)
+        .fillColor('#9CA3AF')
+        .text('Scan to verify', pageWidth - 200, footerY + 85, {
+          width: 100,
+          align: 'center',
+        });
+
+      doc.end();
+    });
+
     const filename = `certificates/${requestId}.pdf`;
 
     try {
@@ -726,19 +840,6 @@ startxref
       this.logger.error('Failed to upload certificate PDF', error);
       throw new BadRequestException('Failed to generate certificate PDF');
     }
-  }
-
-  /**
-   * Escape special characters in PDF text strings.
-   */
-  private escapePdfText(text: string): string {
-    return text
-      .replace(/\\/g, '\\\\')
-      .replace(/\(/g, '\\(')
-      .replace(/\)/g, '\\)')
-      .replace(/\r\n/g, ' ')
-      .replace(/\r/g, ' ')
-      .replace(/\n/g, ' ');
   }
 
   // ─── Helpers ──────────────────────────────────────────────

@@ -230,6 +230,35 @@ export class ReportsController {
     return new StreamableFile(result.buffer);
   }
 
+  // ─── 9. Revenue Report ─────────────────────────────────────
+
+  /**
+   * GET /instructor/reports/revenue
+   * Query: ?format=csv|pdf|xlsx, ?dateFrom, ?dateTo
+   * Manager/Admin only — returns binary file download.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('revenue')
+  async getRevenueReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('format') format?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateRevenueReport(
+      user,
+      { format, dateFrom, dateTo },
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
   // ─── Generic Table Export ────────────────────────────────
 
   /**

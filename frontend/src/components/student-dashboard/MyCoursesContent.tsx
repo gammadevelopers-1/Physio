@@ -14,6 +14,7 @@ import {
   Play,
   Award,
   UserCheck,
+  Upload,
 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
@@ -27,7 +28,7 @@ import { useStudentCourses } from "@/hooks/useStudentCourses";
 import type { StudentEnrolledCourse } from "@/types/student-dashboard";
 import EmptyStateIllustration from "./EmptyStateIllustration";
 
-type TabFilter = "all" | "active" | "completed" | "upcoming";
+type TabFilter = "all" | "active" | "completed" | "upcoming" | "dropped";
 
 function relativeTime(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -67,6 +68,8 @@ const getSortForTab = (tab: TabFilter): string | undefined => {
       return "completed_date";
     case "upcoming":
       return "start_date";
+    case "dropped":
+      return "recent";
     default:
       return undefined;
   }
@@ -80,6 +83,8 @@ const getStatusForTab = (tab: TabFilter): string | undefined => {
       return "completed";
     case "upcoming":
       return "active";
+    case "dropped":
+      return "dropped";
     default:
       return undefined;
   }
@@ -115,6 +120,7 @@ const MyCoursesContent = () => {
     { key: "active", label: t("myCourses.tabs.inProgress") },
     { key: "completed", label: t("myCourses.tabs.completed") },
     { key: "upcoming", label: t("myCourses.tabs.upcoming") },
+    { key: "dropped", label: t("myCourses.tabs.dropped") },
   ];
 
   const getActionButton = (course: StudentEnrolledCourse) => {
@@ -141,6 +147,13 @@ const MyCoursesContent = () => {
           href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
           className: "btn-gold text-white hover:opacity-90",
           icon: ClipboardCheck,
+        };
+      case "upload_assignment":
+        return {
+          label: t("myCourses.uploadAssignment"),
+          href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
+          className: "bg-[#8B5CF6] text-white hover:bg-[#7C3AED]",
+          icon: Upload,
         };
       case "resume_lesson":
         return {

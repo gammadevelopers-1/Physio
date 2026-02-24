@@ -851,7 +851,8 @@
       "startTime": "Start time",
       "duration": "Duration",
       "endTime": "End time",
-      "venue": "Venue"
+      "venue": "Venue",
+      "hours": "Hours"
     },
     "whatYouWillLearn": {
       "title": "What you will learn?"
@@ -865,9 +866,6 @@
       "title": "Courses",
       "subtitle": "Explore similar programs",
       "viewAllButton": "View All Programs"
-    },
-    "courseDetails": {
-      "hours": "Hours"
     },
     "enrollment": {
       "enrollNow": "Enroll Now",
@@ -1288,7 +1286,8 @@
         "all": "All",
         "inProgress": "In progress",
         "completed": "Completed",
-        "upcoming": "Upcoming"
+        "upcoming": "Upcoming",
+        "dropped": "Dropped"
       },
       "noCoursesTitle": "No courses yet",
       "noCoursesDescription": "Your courses will appear here.",
@@ -1307,6 +1306,7 @@
       "continueLearning": "Continue Learning",
       "startCourse": "Start Course",
       "viewCertificate": "View Certificate",
+      "uploadAssignment": "Upload Assignment",
       "attendanceRate": "Attendance"
     },
     "favourites": {
@@ -1353,7 +1353,10 @@
         "courseTitle": "Advanced Cardiovascular Life Support",
         "courseDescription": "The course aims to enhance healthcare providers' skills in motivating patients and improving treatment adherence. It f...",
         "accreditedByName": "Saudi Commission for Health Specialties (SCFHS)"
-      }
+      },
+      "statusRevoked": "Revoked",
+      "revokedTitle": "Certificate Revoked",
+      "revokedMessage": "Your certificate has been revoked. Please contact your instructor for more information."
     },
     "verify": {
       "verifying": "Verifying certificate...",
@@ -1417,7 +1420,66 @@
       "attachFile": "Attach file (PDF, JPG, PNG, max 5MB)",
       "removeFile": "Remove file",
       "fileTooLarge": "File size exceeds 5MB limit",
-      "invalidFileType": "Only PDF, JPG, PNG, and WebP files are allowed"
+      "invalidFileType": "Only PDF, JPG, PNG, and WebP files are allowed",
+      "tabTickets": "My Tickets",
+      "tabFaq": "FAQ",
+      "tabTutorials": "Video Tutorials",
+      "searchFaq": "Search frequently asked questions...",
+      "faq": {
+        "allCategories": "All",
+        "enrollment": "Enrollment",
+        "sessions": "Sessions",
+        "assessments": "Assessments",
+        "certificates": "Certificates",
+        "technical": "Technical",
+        "noResults": "No results found for your search.",
+        "enrollment_q1": "How do I enroll in a course?",
+        "enrollment_a1": "Navigate to the Courses page, select the course you want to join, and click the 'Enroll' button. If the course requires payment, you'll be guided through the checkout process.",
+        "enrollment_q2": "Can I drop a course after enrolling?",
+        "enrollment_a2": "Yes, you can drop a course from your My Courses page. Please note that dropping a course may affect your records depending on the course policy.",
+        "enrollment_q3": "What is the maximum number of courses I can enroll in?",
+        "enrollment_a3": "There is no fixed limit. However, some courses may have enrollment caps based on NELC regulations (40 learners for long courses, 50 for short courses).",
+        "sessions_q1": "How do I join a Zoom session?",
+        "sessions_a1": "Go to your My Courses page, find the course with a scheduled live session, and click 'Join Session'. You'll be redirected to the Zoom meeting link provided by your instructor.",
+        "sessions_q2": "What happens if I miss a session?",
+        "sessions_a2": "Missing a session will affect your attendance rate. You need at least 70% attendance to be eligible for a certificate. Contact your instructor if you have a valid reason for missing.",
+        "sessions_q3": "Can I watch a recorded session?",
+        "sessions_a3": "If your instructor has enabled session recording, you can access recordings from the course learning page under the Sessions tab.",
+        "assessments_q1": "How are assessments graded?",
+        "assessments_a1": "Assessments are graded automatically for multiple-choice questions. Written responses are reviewed by your instructor. You need to meet the passing marks set for each assessment.",
+        "assessments_q2": "Can I retake an assessment?",
+        "assessments_a2": "Retake policies vary by course. Some assessments allow multiple attempts while others are limited. Check the assessment details for the specific retake policy.",
+        "assessments_q3": "What counts as a missing task?",
+        "assessments_a3": "A missing task is an assessment or assignment that is past its due date and has not been submitted. You can view your missing tasks from the My Courses page.",
+        "certificates_q1": "How do I get my certificate?",
+        "certificates_a1": "Once you complete a course (100% progress), a certificate request is automatically submitted. Your instructor will review it and approve it if you meet the eligibility criteria (70%+ attendance and passed all assessments).",
+        "certificates_q2": "How can I verify my certificate?",
+        "certificates_a2": "Each certificate has a unique QR code and Certificate ID. You can scan the QR code or visit the verification page and enter your Certificate ID to verify its authenticity.",
+        "certificates_q3": "Why was my certificate request rejected?",
+        "certificates_a3": "Certificate requests may be rejected if you don't meet the eligibility criteria: minimum 70% attendance, all assessments passed, and 100% course completion. Check your eligibility status on the Certificates page.",
+        "technical_q1": "I'm having trouble loading the dashboard. What should I do?",
+        "technical_a1": "Try refreshing the page, clearing your browser cache, or switching to a different browser. If the issue persists, submit a support ticket and our team will assist you.",
+        "technical_q2": "How do I reset my password?",
+        "technical_a2": "Click 'Forgot Password' on the login page and enter your email address. You'll receive a password reset link. If you don't see the email, check your spam folder.",
+        "technical_q3": "Which browsers are supported?",
+        "technical_a3": "We support the latest versions of Chrome, Firefox, Safari, and Edge. For the best experience, we recommend using Google Chrome."
+      },
+      "tutorials": {
+        "description": "Quick video tutorials for common tasks",
+        "comingSoon": "Coming Soon",
+        "enroll_title": "How to Enroll in a Course",
+        "enroll_desc": "Learn how to browse courses and complete the enrollment process.",
+        "joinZoom_title": "How to Join a Zoom Session",
+        "joinZoom_desc": "Step-by-step guide to joining your live online sessions.",
+        "takeAssessment_title": "Taking an Assessment",
+        "takeAssessment_desc": "Learn how to start, complete, and submit assessments.",
+        "downloadCertificate_title": "Downloading Your Certificate",
+        "downloadCertificate_desc": "How to view and download your course completion certificate.",
+        "useCalendar_title": "Using the Calendar",
+        "useCalendar_desc": "Navigate your schedule and manage upcoming sessions.",
+        "navigateDashboard_title": "Navigating the Dashboard",
+        "navigateDashboard_desc": "Overview of your student dashboard features and tools."
+      }
     },
     "badges": {
       "title": "Badges",
@@ -2617,7 +2679,17 @@
       "holdFailed": "Failed to hold certificate. Please try again.",
       "batchHoldSuccess": "Selected certificates placed on hold.",
       "batchApproveFailed": "Failed to approve selected certificates.",
-      "batchHoldFailed": "Failed to hold selected certificates."
+      "batchHoldFailed": "Failed to hold selected certificates.",
+      "statusRevoked": "Revoked",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke Certificate",
+      "revokeWarning": "This action cannot be undone. The certificate will be invalidated permanently.",
+      "revokeReasonLabel": "Reason for Revocation",
+      "revokeReasonPlaceholder": "Explain why this certificate is being revoked...",
+      "revokeReasonRequired": "Please provide a reason for revocation.",
+      "revokeSuccess": "Certificate revoked successfully.",
+      "confirmRevoke": "Revoke Certificate",
+      "revokeReason": "Revocation Reason"
     },
     "content": {
       "title": "Content Management",
@@ -2743,6 +2815,8 @@
       "instructor-performanceDesc": "Compare instructor metrics including courses, students, completion rates, and attendance.",
       "nelc-complianceReport": "NELC Compliance Matrix",
       "nelc-complianceDesc": "Clause-by-clause NELC compliance status across all courses with category breakdowns.",
+      "revenueReport": "Revenue Report",
+      "revenueDesc": "View revenue metrics per course including price, enrollment counts, and total revenue.",
       "exportReport": "Export Report",
       "selectCourse": "Course",
       "chooseCourse": "Select a course...",
@@ -3078,6 +3152,7 @@
       "changeStatus": "Change Status",
       "statusChanged": "Course status updated successfully",
       "statusFailed": "Failed to update course status",
+      "activationFailed": "Cannot activate course: some materials have not been reviewed yet.",
       "viewAnalytics": "View Analytics",
       "courseSettings": "Course Settings"
     },
@@ -3120,7 +3195,32 @@
       "createButton": "Create Course",
       "titleRequired": "Course title is required",
       "success": "Course created successfully!",
-      "error": "Failed to create course"
+      "error": "Failed to create course",
+      "wizardStep1": "Basic Info",
+      "wizardStep2": "Schedule & NELC",
+      "wizardStep3": "Instructor",
+      "wizardStep4": "Review",
+      "scheduleTitle": "Schedule & NELC Configuration",
+      "nelcConfig": "NELC Compliance",
+      "nelcClassification": "NELC Classification",
+      "longCourse": "Long Course (>5 days)",
+      "shortCourse": "Short Course (≤5 days)",
+      "nelcMaxCapacity": "NELC Max Capacity",
+      "nelcLearners": "learners",
+      "nelcCapacityWarning": "Warning: Max enrollment exceeds NELC capacity limit of {limit} for {type} courses.",
+      "nelcAccreditation": "NELC Accreditation Required",
+      "nelcAccreditationDesc": "This course requires NELC accreditation and must meet all compliance standards.",
+      "bilingualContent": "Bilingual Content (EN/AR)",
+      "bilingualContentDesc": "Course materials will be provided in both English and Arabic.",
+      "wcagCompliant": "WCAG 2.1 Accessible",
+      "wcagCompliantDesc": "Course content meets WCAG 2.1 accessibility guidelines.",
+      "minimumHours": "Minimum Training Hours",
+      "reviewTitle": "Review & Submit",
+      "reviewDescription": "Review all course details before creating. You can edit after creation.",
+      "back": "Back",
+      "next": "Next",
+      "instructorAssignment": "Instructor Assignment",
+      "selectedInstructor": "Selected Instructor"
     },
     "courseDetail": {
       "backToCourses": "Back to Courses",
@@ -3494,6 +3594,8 @@
       "instructor-performanceDesc": "Compare instructor metrics including courses, students, completion rates, and attendance.",
       "nelc-complianceReport": "NELC Compliance Matrix",
       "nelc-complianceDesc": "Clause-by-clause NELC compliance status across all courses with category breakdowns.",
+      "revenueReport": "Revenue Report",
+      "revenueDesc": "View revenue metrics per course including price, enrollment counts, and total revenue.",
       "exportReport": "Export Report",
       "selectCourse": "Course",
       "chooseCourse": "Select a course...",

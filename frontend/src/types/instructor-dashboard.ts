@@ -514,7 +514,7 @@ export interface MaterialVariant {
 
 // ─── Certificate Requests ──────────────────────────────────
 
-export type CertificateStatus = 'pending' | 'approved' | 'rejected' | 'held';
+export type CertificateStatus = 'pending' | 'approved' | 'rejected' | 'held' | 'revoked';
 
 export interface CertificateRequestResponse {
   id: string;

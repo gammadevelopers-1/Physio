@@ -14,6 +14,7 @@ import { CertificatesService } from './certificates.service';
 import { CreateCertificateRequestDto } from './dto/create-certificate-request.dto';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
 import { HoldCertificateDto } from './dto/hold-certificate.dto';
+import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
 import { BatchCertificateDto } from './dto/batch-certificate.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
@@ -135,6 +136,20 @@ export class CertificatesController {
     @Body() dto: HoldCertificateDto,
   ) {
     return this.certificatesService.hold(id, user, dto);
+  }
+
+  /**
+   * PATCH /certificates/:id/revoke — Revoke an approved certificate.
+   * Only MANAGER/ADMIN. Requires a reason.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch('certificates/:id/revoke')
+  async revoke(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RevokeCertificateDto,
+  ) {
+    return this.certificatesService.revoke(id, user, dto);
   }
 
   // ─── Instructor Route Prefix ────────────────────────────────

@@ -110,6 +110,32 @@ export class CoursesController {
   }
 
   /**
+   * POST /courses/:id/activate — Activate a course after content review
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  async activate(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.activate(courseId, user);
+  }
+
+  /**
+   * POST /courses/:id/deactivate — Deactivate (archive) an active course
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/deactivate')
+  @HttpCode(HttpStatus.OK)
+  async deactivate(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.deactivate(courseId, user);
+  }
+
+  /**
    * PATCH /courses/:id/assign-instructor — Reassign instructor for a course
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)

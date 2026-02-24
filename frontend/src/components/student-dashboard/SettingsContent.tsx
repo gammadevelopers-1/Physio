@@ -1,48 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { Pencil, ChevronDown, Calendar, Loader2, Shield } from "lucide-react";
+import { Pencil, ChevronDown, Calendar, Loader2, Shield, Check } from "lucide-react";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
-
-// Static mock user data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
-
-// Mock settings data
-const mockSettingsData = {
-  firstName: "Muhammad",
-  lastName: "Ibrahim",
-  email: "Ibrahim@gmail.coim",
-  scfhsNumber: "",
-  nationalId: "",
-  nationality: "Saudi Arabia",
-  gender: "",
-  dob: "12/4/2000",
-  biography: "",
-};
+import { useAuth } from "@/contexts/AuthContext";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { profileApi } from "@/lib/api";
 
 const SettingsContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const { user, refreshUser } = useAuth();
 
-  const [formData, setFormData] = useState(mockSettingsData);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    scfhsNumber: "",
+    nationalId: "",
+    nationality: "",
+    gender: "",
+    dob: "",
+    biography: "",
+  });
   const [nationalityOpen, setNationalityOpen] = useState(false);
   const [genderOpen, setGenderOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const security = useSecuritySettings();
+
+  // Populate form with real user data
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        scfhsNumber: "",
+        nationalId: "",
+        nationality: "",
+        gender: "",
+        dob: "",
+        biography: "",
+      });
+    }
+  }, [user]);
+
+  const userData = useStudentProfile();
 
   const nationalities = [
     { value: "Saudi Arabia", labelKey: "settings.nationalities.saudiArabia" },
@@ -77,7 +90,7 @@ const SettingsContent = () => {
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -85,11 +98,11 @@ const SettingsContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -138,11 +151,12 @@ const SettingsContent = () => {
                     <div className="relative">
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-gray-100">
                         <Image
-                          src={mockUser.avatar || "/images/default-avatar.png"}
-                          alt={mockUser.name}
+                          src={userData.avatar || "/images/default-avatar.png"}
+                          alt={userData.name}
                           width={96}
                           height={96}
                           className="object-cover w-full h-full"
+                          unoptimized={!!userData.avatar}
                         />
                       </div>
                       <button
@@ -376,9 +390,33 @@ const SettingsContent = () => {
                 >
                   <button
                     type="button"
-                    className="px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                    disabled={saving}
+                    onClick={async () => {
+                      setSaving(true);
+                      setSaved(false);
+                      try {
+                        await profileApi.update({
+                          firstName: formData.firstName,
+                          lastName: formData.lastName,
+                          bio: formData.biography,
+                        });
+                        await refreshUser?.();
+                        setSaved(true);
+                        setTimeout(() => setSaved(false), 3000);
+                      } catch {
+                        // TODO: show error toast
+                      } finally {
+                        setSaving(false);
+                      }
+                    }}
+                    className="px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
                   >
-                    {t("settings.saveChanges")}
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : saved ? (
+                      <Check className="w-4 h-4" />
+                    ) : null}
+                    {saved ? t("settings.saved") : t("settings.saveChanges")}
                   </button>
                 </div>
               </div>

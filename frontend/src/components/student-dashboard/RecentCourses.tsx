@@ -3,7 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ClipboardList, Heart } from "lucide-react";
+import {
+  ClipboardList,
+  Heart,
+  PlayCircle,
+  Video,
+  ClipboardCheck,
+  User,
+} from "lucide-react";
 import { useFavourites } from "@/contexts/FavouritesContext";
 
 interface Course {
@@ -12,10 +19,72 @@ interface Course {
   thumbnail: string;
   progress: number;
   status: "in_progress" | "completed" | "not_started";
+  instructorName?: string;
+  instructorAvatar?: string | null;
+  nextAction?: string;
+  nextDeadline?: string | null;
+  missingTasksCount?: number;
 }
 
 interface RecentCoursesProps {
   courses: Course[];
+}
+
+function getActionConfig(action: string) {
+  switch (action) {
+    case "join_zoom":
+      return {
+        icon: Video,
+        color: "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]",
+        key: "joinZoom" as const,
+      };
+    case "take_quiz":
+      return {
+        icon: ClipboardCheck,
+        color: "bg-[#F59E0B] text-white hover:bg-[#D97706]",
+        key: "takeQuiz" as const,
+      };
+    case "resume_lesson":
+      return {
+        icon: PlayCircle,
+        color:
+          "bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F9FAFB]",
+        key: "resumeLesson" as const,
+      };
+    default:
+      return {
+        icon: PlayCircle,
+        color:
+          "bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F9FAFB]",
+        key: "startCourse" as const,
+      };
+  }
+}
+
+function DeadlineBadge({
+  deadline,
+  t,
+}: {
+  deadline: string | null | undefined;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  if (!deadline) return null;
+  const diff = new Date(deadline).getTime() - Date.now();
+  if (diff < 0) {
+    return (
+      <span className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-red-100 text-red-700 text-[10px] font-semibold rounded-full">
+        {t("recentCourses.overdue")}
+      </span>
+    );
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    return (
+      <span className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-[10px] font-semibold rounded-full">
+        {t("recentCourses.dueSoon")}
+      </span>
+    );
+  }
+  return null;
 }
 
 const RecentCourses = ({ courses }: RecentCoursesProps) => {
@@ -24,28 +93,6 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
   const isRTL = locale === "ar";
   const { isFavourite, toggleFavourite } = useFavourites();
 
-  const getStatusLabel = (status: Course["status"]) => {
-    switch (status) {
-      case "in_progress":
-        return t("recentCourses.inProgress");
-      case "completed":
-        return t("recentCourses.completed");
-      default:
-        return t("recentCourses.notStarted");
-    }
-  };
-
-  const getStatusColor = (status: Course["status"]) => {
-    switch (status) {
-      case "in_progress":
-        return "text-[#D4A520]";
-      case "completed":
-        return "text-[#16A34A]";
-      default:
-        return "text-[#6B7280]";
-    }
-  };
-
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mt-6">
       <h2 className="text-lg font-semibold text-[#1F2937] mb-6">
@@ -53,7 +100,6 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
       </h2>
 
       {courses.length === 0 ? (
-        // Empty State
         <div className="flex flex-col items-center justify-center py-16">
           <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-4">
             <ClipboardList className="w-8 h-8 text-[#9CA3AF]" />
@@ -72,75 +118,114 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
           </Link>
         </div>
       ) : (
-        // Courses List
-        <div className="space-y-4">
-          {courses.map((course) => (
-            <div
-              key={course.id}
-              className={`flex flex-col sm:flex-row gap-4 p-4 border border-[#E5E7EB] rounded-xl relative ${isRTL ? "sm:flex-row-reverse" : ""}`}
-            >
-              {/* Favourite Button */}
-              <button
-                onClick={() => toggleFavourite(course)}
-                className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors`}
-                aria-label={
-                  isFavourite(course.id)
-                    ? t("favourites.removeFromFavourites")
-                    : t("favourites.addToFavourites")
-                }
+        <div
+          className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
+          dir={isRTL ? "rtl" : "ltr"}
+        >
+          {courses.map((course) => {
+            const actionConfig = getActionConfig(course.nextAction || "start_course");
+            const ActionIcon = actionConfig.icon;
+
+            return (
+              <div
+                key={course.id}
+                className="min-w-[280px] max-w-[320px] snap-start flex-shrink-0 border border-[#E5E7EB] rounded-xl overflow-hidden relative"
               >
-                <Heart
-                  className={`w-4 h-4 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`}
-                />
-              </button>
+                {/* Deadline Badge */}
+                <DeadlineBadge deadline={course.nextDeadline} t={t} />
 
-              {/* Course Thumbnail */}
-              <div className="w-full sm:w-[180px] h-[120px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                <Image
-                  src={course.thumbnail}
-                  alt={course.title}
-                  width={180}
-                  height={120}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+                {/* Favourite Button */}
+                <button
+                  onClick={() => toggleFavourite(course)}
+                  className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors`}
+                  aria-label={
+                    isFavourite(course.id)
+                      ? t("favourites.removeFromFavourites")
+                      : t("favourites.addToFavourites")
+                  }
+                >
+                  <Heart
+                    className={`w-3.5 h-3.5 ${isFavourite(course.id) ? "text-red-500 fill-red-500" : "text-gray-400"}`}
+                  />
+                </button>
 
-              {/* Course Info */}
-              <div className="flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-[#1F2937] mb-2 line-clamp-2">
-                    {course.title}
-                  </h3>
-                  <span className={`text-sm ${getStatusColor(course.status)}`}>
-                    {getStatusLabel(course.status)}
-                  </span>
+                {/* Thumbnail */}
+                <div className="w-full h-[130px] bg-gray-100">
+                  <Image
+                    src={course.thumbnail}
+                    alt={course.title}
+                    width={320}
+                    height={130}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
-                {/* Progress Bar */}
-                <div className="mt-3">
-                  <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                    <span className="text-sm text-[#6B7280] min-w-[40px]">
-                      {course.progress}%
-                    </span>
-                    <div className="flex-1 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                {/* Content */}
+                <div className="p-3">
+                  <h3 className="text-sm font-semibold text-[#1F2937] line-clamp-2 min-h-[40px]">
+                    {course.title}
+                  </h3>
+
+                  {/* Instructor */}
+                  {course.instructorName && (
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      {course.instructorAvatar ? (
+                        <img
+                          src={
+                            course.instructorAvatar.startsWith("http")
+                              ? course.instructorAvatar
+                              : `http://localhost:8080${course.instructorAvatar}`
+                          }
+                          alt=""
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                          <User className="w-3 h-3 text-gray-400" />
+                        </div>
+                      )}
+                      <span className="text-xs text-[#6B7280] truncate">
+                        {course.instructorName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Progress Bar */}
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-[#6B7280]">
+                        {course.progress}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                       <div
-                        className={`h-full bg-[#16A34A] rounded-full transition-all duration-300 ${isRTL ? "ms-auto" : ""}`}
+                        className="h-full bg-[#16A34A] rounded-full transition-all duration-300"
                         style={{ width: `${course.progress}%` }}
                       />
                     </div>
                   </div>
-                </div>
 
-                {/* View Course Button */}
-                <Link
-                  href={`/${locale}/dashboard/student/courses/${course.id}`}
-                  className="mt-3 w-full sm:w-auto px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
-                >
-                  {t("recentCourses.viewCourse")}
-                </Link>
+                  {/* Missing Tasks */}
+                  {(course.missingTasksCount ?? 0) > 0 && (
+                    <p className="text-[11px] text-red-600 mt-1">
+                      {t("recentCourses.missingTasks", {
+                        count: course.missingTasksCount ?? 0,
+                      })}
+                    </p>
+                  )}
+
+                  {/* Action Button */}
+                  <Link
+                    href={`/${locale}/dashboard/student/courses/${course.id}`}
+                    className={`mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${actionConfig.color}`}
+                  >
+                    <ActionIcon className="w-3.5 h-3.5" />
+                    {t(`recentCourses.${actionConfig.key}`)}
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -169,7 +169,13 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
             <p className="text-xs text-[#6B7280]">{t("sidebar.instructors")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[#16A34A]">{manager.nelcCompliance}%</p>
+            <p className={`text-xl font-bold ${
+              manager.nelcCompliance >= 80
+                ? "text-[#16A34A]"
+                : manager.nelcCompliance >= 60
+                  ? "text-[#D97706]"
+                  : "text-[#DC2626]"
+            }`}>{manager.nelcCompliance}%</p>
             <p className="text-xs text-[#6B7280]">{t("sidebar.nelc")}</p>
           </div>
         </div>

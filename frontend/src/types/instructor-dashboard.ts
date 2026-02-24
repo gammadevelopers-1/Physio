@@ -580,3 +580,39 @@ export interface InterventionRecord {
   courseName: string | null;
   createdAt: string;
 }
+
+// ─── Public Course Listing ──────────────────────────────────
+
+export interface PublicCourse {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  descriptionAr: string | null;
+  deliveryType: string;
+  thumbnail: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  enrolledCount: number;
+  totalHours: number;
+  avgRating: number;
+  totalRatings: number;
+  instructorName: string;
+  price: number;
+  cmeHours: number;
+  isCmeAccredited: boolean;
+  enrollmentDeadline: string | null;
+  language: string;
+  maxEnrollment: number | null;
+  remainingSeats: number;
+  isFull: boolean;
+  sessionCount: number;
+}
+
+export interface PublicCoursesResponse {
+  data: PublicCourse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

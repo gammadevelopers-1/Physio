@@ -8,90 +8,51 @@ import NotificationsPanel from "./NotificationsPanel";
 import CalendarPanel from "./CalendarPanel";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
-
-// Static mock data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
-
-const mockStats = {
-  courses: 2,
-  certificates: 1,
-  coursesCompleted: 2,
-};
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useStudentDashboard } from "@/hooks/useStudentDashboard";
+import { useStudentCourses } from "@/hooks/useStudentCourses";
+import { useStudentCalendar } from "@/hooks/useStudentCalendar";
+import { useStudentRecentActivity } from "@/hooks/useStudentRecentActivity";
+import { Loader2 } from "lucide-react";
 
 const DashboardHomeContent = () => {
   const t = useTranslations("studentDashboard");
+  const userData = useStudentProfile();
 
-  // Mock data with translations
-  const mockCourses = [
-    {
-      id: "acls-1",
-      title: t("mockData.courseTitleACLS"),
-      thumbnail: "/student_dashboard/courses/image 473.svg",
-      progress: 24,
-      status: "in_progress" as const,
-    },
-    {
-      id: "acls-2",
-      title: t("mockData.courseTitleACLS"),
-      thumbnail: "/student_dashboard/courses/image 491.svg",
-      progress: 24,
-      status: "in_progress" as const,
-    },
-  ];
+  const { data: dashboardStats, loading: statsLoading } =
+    useStudentDashboard();
+  const { data: recentCourses, loading: coursesLoading } = useStudentCourses({
+    status: "active",
+    limit: 6,
+  });
+  const { data: calendarEvents } = useStudentCalendar();
+  const { data: recentActivity, loading: activityLoading } =
+    useStudentRecentActivity({ limit: 10 });
 
-  const mockNotifications = [
-    {
-      id: "1",
-      title: t("notifications.courseAdded"),
-      message: t("notifications.courseAddedMessage"),
-      date: "21/1/26",
-      read: false,
-    },
-    {
-      id: "2",
-      title: t("notifications.courseAdded"),
-      message: t("notifications.courseAddedMessage"),
-      date: "21/1/26",
-      read: false,
-    },
-  ];
+  // Map enrolled courses to the format expected by RecentCourses
+  const mappedCourses = recentCourses.map((course) => ({
+    id: course.id,
+    title: course.title,
+    thumbnail: course.thumbnail || "/student_dashboard/courses/image 473.svg",
+    progress: course.progress,
+    status: (course.enrollmentStatus === "completed"
+      ? "completed"
+      : course.progress > 0
+        ? "in_progress"
+        : "not_started") as "in_progress" | "completed" | "not_started",
+    instructorName: course.instructorName,
+    instructorAvatar: course.instructorAvatar,
+    nextAction: course.nextAction,
+    nextDeadline: course.nextDeadline,
+    missingTasksCount: course.missingTasksCount,
+  }));
 
-  const mockEvents = [
-    {
-      id: "1",
-      title: t("mockData.lecture2"),
-      instructor: t("mockData.instructorFaisal"),
-      date: t("calendar.today"),
-      time: "3:00pm - 4:30pm",
-      duration: `90 ${t("calendar.mins")}`,
-      zoomLink: "https://zoom.us/j/123456789",
-    },
-    {
-      id: "2",
-      title: t("mockData.lecture3"),
-      instructor: t("mockData.instructorFaisal"),
-      date: t("mockData.tuesday"),
-      time: "3:00pm - 4:30pm",
-      duration: `90 ${t("calendar.mins")}`,
-      zoomLink: "https://zoom.us/j/123456789",
-    },
-  ];
-
-  const handleRefreshNotifications = () => {
-    // TODO: Implement refresh logic
-    console.log("Refreshing notifications...");
-  };
+  const isLoading = statsLoading || coursesLoading;
 
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -99,11 +60,11 @@ const DashboardHomeContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile, shown via MobileSidebar */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -112,23 +73,31 @@ const DashboardHomeContent = () => {
                 {t("title")}
               </h1>
 
-              {/* Stats Cards */}
-              <DashboardStats stats={mockStats} />
+              {isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+                </div>
+              ) : (
+                <>
+                  {/* Stats Cards */}
+                  <DashboardStats stats={dashboardStats} />
 
-              {/* Recent Courses */}
-              <RecentCourses courses={mockCourses} />
+                  {/* Recent Courses */}
+                  <RecentCourses courses={mappedCourses} />
+                </>
+              )}
             </div>
 
             {/* Right Sidebar */}
             <div className="w-full lg:w-[280px] lg:flex-shrink-0 space-y-4">
-              {/* Notifications */}
+              {/* Activity Timeline */}
               <NotificationsPanel
-                notifications={mockNotifications}
-                onRefresh={handleRefreshNotifications}
+                activities={recentActivity}
+                loading={activityLoading}
               />
 
               {/* Calendar */}
-              <CalendarPanel events={mockEvents} />
+              <CalendarPanel events={calendarEvents} />
             </div>
           </div>
         </div>

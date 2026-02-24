@@ -746,15 +746,45 @@
       "onSiteCourses": "دورات في الموقع",
       "liveOnline": "العيش على الانترنت",
       "hybrid": "هجين",
+      "zoom": "بث مباشر",
+      "onsite": "حضوري",
+      "blended": "هجين",
       "bha": "شا",
       "nha": "شا",
       "scfhs": "الهيئة السعودية للتخصصات الصحية",
       "paid": "مدفوع",
-      "free": "حر"
+      "free": "مجاني",
+      "all": "الكل",
+      "deliveryType": "نوع التقديم",
+      "certification": "الاعتماد",
+      "pricing": "التسعير",
+      "cmeAccredited": "معتمد CME",
+      "cmeYes": "نعم",
+      "cmeNo": "لا",
+      "availability": "التوفر",
+      "avail_open": "مفتوح",
+      "avail_starting_soon": "يبدأ قريباً",
+      "avail_full": "مكتمل",
+      "language": "اللغة",
+      "lang_en": "إنجليزي",
+      "lang_ar": "عربي",
+      "lang_both": "كلاهما",
+      "sortBy": "ترتيب حسب",
+      "sort_newest": "الأحدث",
+      "sort_starting_soon": "يبدأ قريباً",
+      "sort_popular": "الأكثر شعبية",
+      "sort_rating": "الأعلى تقييماً"
     },
     "card": {
       "viewDetails": "عرض التفاصيل",
-      "liveOnline": "العيش على الانترنت"
+      "liveOnline": "العيش على الانترنت",
+      "hoursUnit": "ساعات",
+      "tbd": "يُحدد لاحقاً",
+      "noHours": "—",
+      "free": "مجاني",
+      "sessions": "جلسات",
+      "courseFull": "الدورة مكتملة",
+      "seatsLeft": "{count} مقاعد متبقية"
     },
     "pagination": {
       "previous": "السابق",
@@ -937,6 +967,19 @@
       "title": "الدورات",
       "subtitle": "استكشف برامج مماثلة",
       "viewAllButton": "عرض جميع البرامج"
+    },
+    "courseDetails": {
+      "hours": "ساعات"
+    },
+    "enrollment": {
+      "enrollNow": "سجل الآن",
+      "enrolled": "مسجل",
+      "success": "تم التسجيل بنجاح! تحقق من لوحة التحكم.",
+      "error": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
+      "joinWaitlist": "انضم لقائمة الانتظار",
+      "waitlistMessage": "سيتم إعلامك عند توفر مقعد.",
+      "contactEnroll": "تواصل للتسجيل",
+      "contactMessage": "يرجى التواصل معنا للتسجيل في الدورات المدفوعة."
     }
   },
   "checkoutPage": {
@@ -1312,6 +1355,23 @@
       "myCertificates": "شهاداتي",
       "courseCompleted": "الدورات المكتملة"
     },
+    "kpi": {
+      "overallProgress": "التقدم العام",
+      "activeCourses": "{count} دورات نشطة",
+      "attendanceRate": "معدل الحضور",
+      "sessionsCount": "{attended} من {total} جلسة",
+      "certificates": "الشهادات",
+      "earned": "مكتسبة",
+      "pending": "معلقة",
+      "expiring": "تنتهي قريباً",
+      "nextSession": "الجلسة القادمة",
+      "noUpcomingSessions": "لا توجد جلسات قادمة",
+      "joinNow": "انضم الآن",
+      "join": "انضم",
+      "days": "ي ",
+      "hours": "س ",
+      "minutes": "د"
+    },
     "recentCourses": {
       "title": "الدورات الأخيرة",
       "noCoursesTitle": "لا توجد دورات بعد",
@@ -1320,7 +1380,23 @@
       "viewCourse": "عرض الدورة",
       "inProgress": "قيد التقدم",
       "completed": "مكتملة",
-      "notStarted": "لم تبدأ"
+      "notStarted": "لم تبدأ",
+      "joinZoom": "انضم لزوم",
+      "takeQuiz": "أداء الاختبار",
+      "resumeLesson": "استئناف الدرس",
+      "startCourse": "بدء الدورة",
+      "overdue": "متأخر",
+      "dueSoon": "قريباً",
+      "missingTasks": "{count} مهام مفقودة"
+    },
+    "activity": {
+      "title": "النشاط الأخير",
+      "noActivityTitle": "لا يوجد نشاط حديث",
+      "noActivityDescription": "سيظهر نشاطك الأخير هنا مع تقدمك في الدورات.",
+      "assessmentSubmitted": "تم تقديم التقييم",
+      "sessionAttended": "تم حضور الجلسة",
+      "courseEnrolled": "تم التسجيل في الدورة",
+      "certificateEarned": "تم الحصول على الشهادة"
     },
     "notifications": {
       "title": "الإشعارات",
@@ -1335,8 +1411,10 @@
       "noEventsTitle": "لا توجد أحداث قادمة",
       "noEventsDescription": "أنت على اطلاع. ستظهر الأحداث الجديدة هنا.",
       "zoom": "زوم",
+      "joinNow": "انضم الآن",
       "today": "اليوم",
-      "mins": "دقيقة"
+      "mins": "دقيقة",
+      "addToCalendar": "إضافة للتقويم"
     },
     "mockData": {
       "courseTitleACLS": "دعم الحياة القلبي الوعائي المتقدم",
@@ -1458,7 +1536,55 @@
       "genders": {
         "male": "ذكر",
         "female": "أنثى"
-      }
+      },
+      "saved": "تم الحفظ!"
+    },
+    "courseDetail": {
+      "backToCourses": "العودة إلى دوراتي",
+      "notFound": "الدورة غير موجودة أو لست مسجلاً فيها.",
+      "progress": "التقدم",
+      "modules": "الوحدات",
+      "sessions": "الجلسات",
+      "status": "الحالة",
+      "courseModules": "وحدات الدورة",
+      "noModules": "لا توجد وحدات متاحة لهذه الدورة بعد.",
+      "upcomingSessions": "الجلسات القادمة",
+      "joinSession": "انضم للجلسة",
+      "assessments": "التقييمات",
+      "marks": "درجات",
+      "takeAssessment": "ابدأ التقييم",
+      "startLearning": "ابدأ التعلم",
+      "continueLearning": "أكمل التعلم",
+      "complete": "مكتمل"
+    },
+    "learning": {
+      "courseContent": "محتوى الدورة",
+      "module": "الوحدة",
+      "moduleContent": "محتوى الوحدة",
+      "moduleContentDescription": "ستظهر مواد التعلم الخاصة بهذه الوحدة هنا. أكمل الوحدة عندما تكون جاهزاً.",
+      "markComplete": "وضع علامة مكتمل",
+      "noModules": "لا توجد وحدات متاحة."
+    },
+    "assessment": {
+      "question": "السؤال",
+      "mark": "درجة",
+      "marks": "درجات",
+      "typeAnswer": "اكتب إجابتك هنا...",
+      "previous": "السابق",
+      "next": "التالي",
+      "submit": "إرسال",
+      "passed": "تهانينا!",
+      "failed": "لم تنجح",
+      "resultMessage": "إليك نتائج التقييم:",
+      "score": "الدرجة",
+      "percentage": "النسبة المئوية",
+      "backToCourse": "العودة إلى الدورة"
+    },
+    "enrollment": {
+      "enrollNow": "سجل الآن",
+      "enrolled": "مسجل",
+      "success": "تم التسجيل بنجاح! تحقق من لوحة التحكم.",
+      "error": "فشل التسجيل. يرجى المحاولة مرة أخرى."
     }
   },
   "instructorDashboard": {

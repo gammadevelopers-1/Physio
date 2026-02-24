@@ -1,0 +1,184 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { StudentService } from './student.service';
+import { JwtAuthGuard, RolesGuard } from '../auth/guards';
+import { CurrentUser, Roles } from '../auth/decorators';
+import { UserRole } from '../../database/schema';
+import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { UpdateProgressDto } from './dto/update-progress.dto';
+
+@Controller('student')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('STUDENT' as UserRole)
+export class StudentController {
+  constructor(private readonly studentService: StudentService) {}
+
+  // ─── Dashboard ──────────────────────────────────────────
+
+  /**
+   * GET /student/dashboard — KPI stats for the student
+   */
+  @Get('dashboard')
+  async getDashboard(@CurrentUser() user: AuthenticatedUser) {
+    return this.studentService.getDashboardStats(user.id);
+  }
+
+  // ─── Enrolled Courses ───────────────────────────────────
+
+  /**
+   * GET /student/courses — Student's enrolled courses
+   */
+  @Get('courses')
+  async getMyCourses(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.studentService.getEnrolledCourses(user.id, {
+      status,
+      search,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  /**
+   * GET /student/courses/:id — Single enrolled course detail
+   */
+  @Get('courses/:id')
+  async getCourseDetail(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getEnrolledCourseDetail(user.id, courseId);
+  }
+
+  /**
+   * GET /student/courses/:id/progress — Detailed progress for a course
+   */
+  @Get('courses/:id/progress')
+  async getCourseProgress(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getCourseProgress(user.id, courseId);
+  }
+
+  /**
+   * POST /student/courses/:id/progress — Update lesson/module completion
+   */
+  @Post('courses/:id/progress')
+  @HttpCode(HttpStatus.OK)
+  async updateProgress(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdateProgressDto,
+  ) {
+    return this.studentService.updateProgress(user.id, courseId, dto);
+  }
+
+  // ─── Self-Enrollment ────────────────────────────────────
+
+  /**
+   * POST /student/enroll/:id — Student self-enrolls in a course
+   */
+  @Post('enroll/:id')
+  @HttpCode(HttpStatus.CREATED)
+  async selfEnroll(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.selfEnroll(user.id, courseId, user);
+  }
+
+  // ─── Assessments ──────────────────────────────────────
+
+  /**
+   * GET /student/assessments/:id — Get assessment with questions (for taking)
+   */
+  @Get('assessments/:id')
+  async getAssessment(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getAssessmentForStudent(user.id, assessmentId);
+  }
+
+  /**
+   * POST /student/assessments/:id/submit — Submit assessment answers
+   */
+  @Post('assessments/:id/submit')
+  @HttpCode(HttpStatus.OK)
+  async submitAssessment(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { answers: { questionId: string; answer: string }[] },
+  ) {
+    return this.studentService.submitAssessment(
+      user.id,
+      assessmentId,
+      body.answers,
+    );
+  }
+
+  // ─── Certificates ──────────────────────────────────────
+
+  /**
+   * GET /student/certificates — Student's earned certificates
+   */
+  @Get('certificates')
+  async getCertificates(@CurrentUser() user: AuthenticatedUser) {
+    return this.studentService.getCertificates(user.id);
+  }
+
+  // ─── Calendar ──────────────────────────────────────────
+
+  /**
+   * GET /student/calendar — Upcoming sessions, deadlines
+   */
+  @Get('calendar')
+  async getCalendar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.studentService.getCalendarEvents(user.id, { from, to });
+  }
+
+  // ─── Recent Activity ───────────────────────────────────
+
+  /**
+   * GET /student/recent-activity — Recent activity timeline
+   */
+  @Get('recent-activity')
+  async getRecentActivity(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+  ) {
+    return this.studentService.getRecentActivity(
+      user.id,
+      limit ? parseInt(limit, 10) : 10,
+    );
+  }
+
+  // ─── Transcript ────────────────────────────────────────
+
+  /**
+   * GET /student/transcript — Full academic transcript
+   */
+  @Get('transcript')
+  async getTranscript(@CurrentUser() user: AuthenticatedUser) {
+    return this.studentService.getTranscript(user.id);
+  }
+}

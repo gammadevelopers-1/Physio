@@ -746,15 +746,45 @@
       "onSiteCourses": "On-site Courses",
       "liveOnline": "Live Online",
       "hybrid": "Hybrid",
+      "zoom": "Live Online",
+      "onsite": "On-site",
+      "blended": "Hybrid",
       "bha": "BHA",
       "nha": "NHA",
       "scfhs": "SCFHS",
       "paid": "Paid",
-      "free": "Free"
+      "free": "Free",
+      "all": "All",
+      "deliveryType": "Delivery Type",
+      "certification": "Certification",
+      "pricing": "Pricing",
+      "cmeAccredited": "CME Accredited",
+      "cmeYes": "Yes",
+      "cmeNo": "No",
+      "availability": "Availability",
+      "avail_open": "Open",
+      "avail_starting_soon": "Starting Soon",
+      "avail_full": "Full",
+      "language": "Language",
+      "lang_en": "English",
+      "lang_ar": "Arabic",
+      "lang_both": "Both",
+      "sortBy": "Sort By",
+      "sort_newest": "Newest",
+      "sort_starting_soon": "Starting Soon",
+      "sort_popular": "Most Popular",
+      "sort_rating": "Highest Rated"
     },
     "card": {
       "viewDetails": "View Details",
-      "liveOnline": "Live Online"
+      "liveOnline": "Live Online",
+      "hoursUnit": "Hours",
+      "tbd": "TBD",
+      "noHours": "—",
+      "free": "Free",
+      "sessions": "Sessions",
+      "courseFull": "Course Full",
+      "seatsLeft": "{count} seats left"
     },
     "pagination": {
       "previous": "Previous",
@@ -834,6 +864,19 @@
       "title": "Courses",
       "subtitle": "Explore similar programs",
       "viewAllButton": "View All Programs"
+    },
+    "courseDetails": {
+      "hours": "Hours"
+    },
+    "enrollment": {
+      "enrollNow": "Enroll Now",
+      "enrolled": "Enrolled",
+      "success": "Successfully enrolled! Check your dashboard.",
+      "error": "Failed to enroll. Please try again.",
+      "joinWaitlist": "Join Waitlist",
+      "waitlistMessage": "You'll be notified when a seat becomes available.",
+      "contactEnroll": "Contact for Enrollment",
+      "contactMessage": "Please contact us for enrollment in paid courses."
     }
   },
   "checkoutPage": {
@@ -1100,6 +1143,23 @@
       "myCertificates": "My Certificates",
       "courseCompleted": "Course Completed"
     },
+    "kpi": {
+      "overallProgress": "Overall Progress",
+      "activeCourses": "{count} active courses",
+      "attendanceRate": "Attendance Rate",
+      "sessionsCount": "{attended} of {total} sessions",
+      "certificates": "Certificates",
+      "earned": "Earned",
+      "pending": "Pending",
+      "expiring": "Expiring",
+      "nextSession": "Next Session",
+      "noUpcomingSessions": "No upcoming sessions",
+      "joinNow": "Join Now",
+      "join": "Join",
+      "days": "d ",
+      "hours": "h ",
+      "minutes": "m"
+    },
     "recentCourses": {
       "title": "Recent Courses",
       "noCoursesTitle": "No courses yet",
@@ -1108,7 +1168,23 @@
       "viewCourse": "View course",
       "inProgress": "In progress.",
       "completed": "Completed",
-      "notStarted": "Not started"
+      "notStarted": "Not started",
+      "joinZoom": "Join Zoom",
+      "takeQuiz": "Take Quiz",
+      "resumeLesson": "Resume Lesson",
+      "startCourse": "Start Course",
+      "overdue": "Overdue",
+      "dueSoon": "Due Soon",
+      "missingTasks": "{count} missing tasks"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "noActivityTitle": "No Recent Activity",
+      "noActivityDescription": "Your recent activities will appear here as you progress through courses.",
+      "assessmentSubmitted": "Assessment Submitted",
+      "sessionAttended": "Session Attended",
+      "courseEnrolled": "Course Enrolled",
+      "certificateEarned": "Certificate Earned"
     },
     "notifications": {
       "title": "Notifications",
@@ -1123,8 +1199,10 @@
       "noEventsTitle": "No Upcoming Event",
       "noEventsDescription": "You're all caught up. New events will appear here.",
       "zoom": "Zoom",
+      "joinNow": "Join Now",
       "today": "Today",
-      "mins": "mins"
+      "mins": "mins",
+      "addToCalendar": "Add to Calendar"
     },
     "mockData": {
       "courseTitleACLS": "Advanced Cardiovascular Life Support",
@@ -1246,7 +1324,55 @@
       "genders": {
         "male": "Male",
         "female": "Female"
-      }
+      },
+      "saved": "Saved!"
+    },
+    "courseDetail": {
+      "backToCourses": "Back to My Courses",
+      "notFound": "Course not found or you are not enrolled.",
+      "progress": "Progress",
+      "modules": "Modules",
+      "sessions": "Sessions",
+      "status": "Status",
+      "courseModules": "Course Modules",
+      "noModules": "No modules available for this course yet.",
+      "upcomingSessions": "Upcoming Sessions",
+      "joinSession": "Join Session",
+      "assessments": "Assessments",
+      "marks": "marks",
+      "takeAssessment": "Take Assessment",
+      "startLearning": "Start Learning",
+      "continueLearning": "Continue Learning",
+      "complete": "complete"
+    },
+    "learning": {
+      "courseContent": "Course Content",
+      "module": "Module",
+      "moduleContent": "Module Content",
+      "moduleContentDescription": "This module's learning materials will appear here. Complete the module when you're ready.",
+      "markComplete": "Mark as Complete",
+      "noModules": "No modules available."
+    },
+    "assessment": {
+      "question": "Question",
+      "mark": "mark",
+      "marks": "marks",
+      "typeAnswer": "Type your answer here...",
+      "previous": "Previous",
+      "next": "Next",
+      "submit": "Submit",
+      "passed": "Congratulations!",
+      "failed": "Not Passed",
+      "resultMessage": "Here are your assessment results:",
+      "score": "Score",
+      "percentage": "Percentage",
+      "backToCourse": "Back to Course"
+    },
+    "enrollment": {
+      "enrollNow": "Enroll Now",
+      "enrolled": "Enrolled",
+      "success": "Successfully enrolled! Check your dashboard.",
+      "error": "Failed to enroll. Please try again."
     }
   },
   "instructorDashboard": {

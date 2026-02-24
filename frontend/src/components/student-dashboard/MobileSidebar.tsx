@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   BookOpen,
@@ -20,17 +21,12 @@ import {
   PlusCircle,
   ClipboardList,
 } from "lucide-react";
-
-interface UserProfile {
-  name: string;
-  email: string;
-  points: number;
-  profileCompletion: number;
-  avatar?: string;
-}
+import { useAuth } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
+import type { StudentProfile } from "@/hooks/useStudentProfile";
 
 interface MobileSidebarProps {
-  user: UserProfile;
+  user: StudentProfile;
 }
 
 const MobileSidebar = ({ user }: MobileSidebarProps) => {
@@ -39,6 +35,21 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
   const pathname = usePathname();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const { refreshUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+    } catch {
+      toast.error(t("settings.avatarUploadError"));
+    }
+    e.target.value = "";
+  };
 
   const navItems = [
     {
@@ -132,10 +143,20 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                     width={80}
                     height={80}
                     className="object-cover w-full h-full"
+                    unoptimized={!!user.avatar}
                   />
                 </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
                 <button
+                  onClick={() => avatarInputRef.current?.click()}
                   className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white`}
+                  aria-label={t("sidebar.editProfile")}
                 >
                   <Pencil className="w-3.5 h-3.5 text-white" />
                 </button>
@@ -174,24 +195,33 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
 
             {/* Info Links */}
             <div className="mt-4 space-y-2">
-              <button className="flex items-center gap-2 text-[#D4A520]">
+              <Link
+                href={`/${locale}/dashboard/student/settings`}
+                className="flex items-center gap-2 text-[#D4A520] hover:text-[#B8920E] transition-colors"
+              >
                 <PlusCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">
                   {t("sidebar.personalInformation")}
                 </span>
-              </button>
-              <button className="flex items-center gap-2 text-[#D4A520]">
+              </Link>
+              <Link
+                href={`/${locale}/dashboard/student/settings`}
+                className="flex items-center gap-2 text-[#D4A520] hover:text-[#B8920E] transition-colors"
+              >
                 <PlusCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">
                   {t("sidebar.contactInformation")}
                 </span>
-              </button>
+              </Link>
             </div>
 
             {/* View Profile Button */}
-            <button className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937]">
+            <Link
+              href={`/${locale}/dashboard/student/settings`}
+              className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+            >
               {t("sidebar.viewProfile")}
-            </button>
+            </Link>
           </div>
 
           {/* Navigation Card */}

@@ -18,7 +18,7 @@ import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
-import { CurrentUser, Roles } from '../auth/decorators';
+import { CurrentUser, Roles, Public } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
@@ -40,6 +40,49 @@ export class CoursesController {
     @Body() dto: CreateCourseDto,
   ) {
     return this.coursesService.create(user, dto);
+  }
+
+  /**
+   * GET /courses/public — List active courses (no auth required)
+   */
+  @Public()
+  @Get('public')
+  async findAllPublic(
+    @Query('search') search?: string,
+    @Query('delivery') delivery?: string,
+    @Query('pricing') pricing?: string,
+    @Query('cmeAccredited') cmeAccredited?: string,
+    @Query('language') language?: string,
+    @Query('availability') availability?: string,
+    @Query('sort') sort?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.coursesService.findAllPublic({
+      search,
+      delivery,
+      pricing,
+      cmeAccredited:
+        cmeAccredited === 'true'
+          ? true
+          : cmeAccredited === 'false'
+            ? false
+            : undefined,
+      language,
+      availability,
+      sort,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  /**
+   * GET /courses/public/:id — Get a single public course detail
+   */
+  @Public()
+  @Get('public/:id')
+  async findOnePublic(@Param('id') id: string) {
+    return this.coursesService.findOnePublic(id);
   }
 
   /**

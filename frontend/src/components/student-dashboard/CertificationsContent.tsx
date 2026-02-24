@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,50 +7,16 @@ import { Award, Download, Loader2 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
-import { useAuth } from "@/contexts/AuthContext";
-import { instructorApi } from "@/lib/api";
-
-interface StudentCertificate {
-  id: string;
-  courseId: string;
-  status: string;
-  certificateUrl: string | null;
-  createdAt: string;
-  reviewedAt: string | null;
-  courseName: string;
-  courseThumbnail: string | null;
-}
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useStudentCertificates } from "@/hooks/useStudentCertificates";
 
 const CertificationsContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
-  const { user } = useAuth();
+  const userData = useStudentProfile();
 
-  const [certificates, setCertificates] = useState<StudentCertificate[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const userData = {
-    name: user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email : "",
-    email: user?.email || "",
-    points: 0,
-    profileCompletion: 90,
-    avatar: user?.avatar || "/images/instructor-1.png",
-  };
-
-  useEffect(() => {
-    const fetchCertificates = async () => {
-      try {
-        const data = await instructorApi.getMyCertificates();
-        setCertificates(data);
-      } catch {
-        // Silently fail — show empty state
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCertificates();
-  }, []);
+  const { data: certificates, loading } = useStudentCertificates();
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";
@@ -125,7 +90,7 @@ const CertificationsContent = () => {
                           <h3
                             className={`text-sm sm:text-base font-semibold text-[#1F2937] mb-1 sm:mb-2 ${isRTL ? "text-right" : ""}`}
                           >
-                            {certificate.courseName}
+                            {certificate.courseTitle}
                           </h3>
 
                           {/* Issued Date */}
@@ -137,17 +102,7 @@ const CertificationsContent = () => {
 
                           {/* Certificate Thumbnail */}
                           <div className="w-full h-[140px] sm:h-[180px] bg-gray-50 rounded-lg overflow-hidden mb-3 sm:mb-4 flex items-center justify-center">
-                            {certificate.courseThumbnail ? (
-                              <Image
-                                src={certificate.courseThumbnail}
-                                alt={certificate.courseName}
-                                width={400}
-                                height={180}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <Award className="w-16 h-16 text-[#D4A520] opacity-30" />
-                            )}
+                            <Award className="w-16 h-16 text-[#D4A520] opacity-30" />
                           </div>
 
                           {/* Accredited By Section */}

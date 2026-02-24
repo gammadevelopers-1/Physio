@@ -123,6 +123,7 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
                       width={80}
                       height={80}
                       className="object-cover w-full h-full"
+                      unoptimized
                     />
                   ) : (
                     <span className="text-2xl font-bold text-white">

@@ -8,6 +8,8 @@ import {
   timestamp,
   index,
   check,
+  boolean,
+  numeric,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
@@ -27,6 +29,11 @@ export const courses = pgTable(
     status: varchar('status', { length: 20 }).notNull().default('draft'),
     thumbnail: varchar('thumbnail', { length: 500 }),
     maxEnrollment: integer('max_enrollment'),
+    price: numeric('price', { precision: 10, scale: 2 }).default('0'),
+    cmeHours: integer('cme_hours').default(0),
+    enrollmentDeadline: timestamp('enrollment_deadline'),
+    isCmeAccredited: boolean('is_cme_accredited').default(false),
+    language: varchar('language', { length: 10 }).default('en'),
     startDate: date('start_date'),
     endDate: date('end_date'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

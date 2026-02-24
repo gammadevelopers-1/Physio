@@ -3,6 +3,8 @@ import {
   IsOptional,
   IsInt,
   IsIn,
+  IsBoolean,
+  IsNumber,
   MaxLength,
   Min,
   IsDateString,
@@ -59,6 +61,29 @@ export class UpdateCourseDto {
   @IsInt()
   @Min(1)
   maxEnrollment?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  price?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  cmeHours?: number;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'Enrollment deadline must be a valid date string' })
+  enrollmentDeadline?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isCmeAccredited?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['en', 'ar', 'both'])
+  language?: string;
 
   @IsOptional()
   @IsDateString({}, { message: 'Start date must be a valid date string (YYYY-MM-DD)' })

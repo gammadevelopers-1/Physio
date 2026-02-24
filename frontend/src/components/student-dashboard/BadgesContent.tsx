@@ -6,15 +6,7 @@ import { Award } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
-
-// Static mock user data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 
 // Mock badges data - empty for now to show empty state
 const mockBadgesData: never[] = [];
@@ -23,11 +15,12 @@ const BadgesContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const userData = useStudentProfile();
 
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -35,11 +28,11 @@ const BadgesContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

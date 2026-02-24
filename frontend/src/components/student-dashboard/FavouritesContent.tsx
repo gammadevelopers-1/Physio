@@ -8,21 +8,14 @@ import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useFavourites } from "@/contexts/FavouritesContext";
-
-// Static mock user data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 
 const FavouritesContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const { favourites, removeFavourite } = useFavourites();
+  const userData = useStudentProfile();
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -49,7 +42,7 @@ const FavouritesContent = () => {
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -57,11 +50,11 @@ const FavouritesContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

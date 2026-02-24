@@ -7,21 +7,13 @@ import { Copy, MoreVertical, Check } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 
 interface Invite {
   id: string;
   email: string;
   status: "sent" | "accepted" | "pending";
 }
-
-// Static mock user data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
 
 // Mock invites data
 const mockInvitesData: Invite[] = [
@@ -49,6 +41,7 @@ const InviteFriendsContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const userData = useStudentProfile();
   const [email, setEmail] = useState("");
   const [copied, setCopied] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -102,7 +95,7 @@ const InviteFriendsContent = () => {
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -110,11 +103,11 @@ const InviteFriendsContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

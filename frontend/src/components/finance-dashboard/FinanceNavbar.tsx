@@ -36,7 +36,6 @@ interface FinanceNavbarProps {
 }
 
 const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
-  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -122,42 +121,12 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
               {t("home")}
             </Link>
 
-            {/* Courses Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsCoursesOpen(!isCoursesOpen)}
-                className="flex items-center gap-1 cursor-pointer group"
-              >
-                <span className="text-[var(--on-surface-variant)] text-base leading-6 group-hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">
-                  {t("courses")}
-                </span>
-                <ChevronDown
-                  className={`w-6 h-6 text-[var(--on-surface-variant)] transition-transform duration-200 ${isCoursesOpen ? "rotate-180" : ""}`}
-                  strokeWidth={1.67}
-                />
-              </button>
-
-              {isCoursesOpen && (
-                <div
-                  className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "right-0" : "left-0"}`}
-                >
-                  <Link
-                    href={`/${locale}/courses`}
-                    className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsCoursesOpen(false)}
-                  >
-                    {t("accreditedCourses")}
-                  </Link>
-                  <Link
-                    href={`/${locale}/archived`}
-                    className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsCoursesOpen(false)}
-                  >
-                    {t("archivedCourses")}
-                  </Link>
-                </div>
-              )}
-            </div>
+            <Link
+              href={`/${locale}/courses`}
+              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
+            >
+              {t("courses")}
+            </Link>
 
             <Link
               href={`/${locale}/become-trainer`}
@@ -241,6 +210,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
+                    unoptimized
                   />
                 ) : (
                   <span className="text-sm font-bold text-white">
@@ -316,6 +286,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
+                    unoptimized
                   />
                 ) : (
                   <span className="text-sm font-bold text-white">

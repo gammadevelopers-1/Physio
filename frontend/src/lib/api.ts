@@ -649,6 +649,7 @@ import type {
   CreateInterventionPayload,
   InterventionResponse,
   InterventionRecord,
+  PublicCoursesResponse,
 } from '@/types/instructor-dashboard';
 
 export const instructorApi = {
@@ -1681,6 +1682,116 @@ export const nelcComplianceApi = {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  },
+};
+
+// ===========================================
+// Student API
+// ===========================================
+
+import type {
+  StudentDashboardStats,
+  StudentEnrolledCoursesResponse,
+  StudentCourseDetail,
+  CourseProgress,
+  StudentCertificate,
+  CalendarEvent,
+  StudentTranscript,
+  EnrollmentResponse,
+  StudentAssessment,
+  AssessmentResult,
+  RecentActivityItem,
+} from '@/types/student-dashboard';
+
+export const studentApi = {
+  getDashboard: () =>
+    api.get<StudentDashboardStats>('/student/dashboard'),
+
+  getCourses: (params?: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<StudentEnrolledCoursesResponse>(
+      `/student/courses${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getCourseDetail: (courseId: string) =>
+    api.get<StudentCourseDetail>(`/student/courses/${courseId}`),
+
+  getCourseProgress: (courseId: string) =>
+    api.get<CourseProgress>(`/student/courses/${courseId}/progress`),
+
+  updateProgress: (courseId: string, data: { moduleId: string; status?: string }) =>
+    api.post<EnrollmentResponse>(`/student/courses/${courseId}/progress`, data),
+
+  selfEnroll: (courseId: string) =>
+    api.post<EnrollmentResponse>(`/student/enroll/${courseId}`, {}),
+
+  getCertificates: () =>
+    api.get<StudentCertificate[]>('/student/certificates'),
+
+  getCalendar: (params?: { from?: string; to?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.from) sp.set('from', params.from);
+    if (params?.to) sp.set('to', params.to);
+    const qs = sp.toString();
+    return api.get<CalendarEvent[]>(`/student/calendar${qs ? `?${qs}` : ''}`);
+  },
+
+  getRecentActivity: (params?: { limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<RecentActivityItem[]>(
+      `/student/recent-activity${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getTranscript: () =>
+    api.get<StudentTranscript>('/student/transcript'),
+
+  getAssessment: (assessmentId: string) =>
+    api.get<StudentAssessment>(`/student/assessments/${assessmentId}`),
+
+  submitAssessment: (
+    assessmentId: string,
+    answers: { questionId: string; answer: string }[]
+  ) =>
+    api.post<AssessmentResult>(`/student/assessments/${assessmentId}/submit`, {
+      answers,
+    }),
+};
+
+// ===========================================
+// Public API (no auth)
+// ===========================================
+
+export const publicApi = {
+  getCourses: (params?: {
+    search?: string;
+    delivery?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.set('search', params.search);
+    if (params?.delivery) qs.set('delivery', params.delivery);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const queryString = qs.toString();
+    return api.get<PublicCoursesResponse>(
+      `/courses/public${queryString ? `?${queryString}` : ''}`,
+      { skipAuth: true },
+    );
   },
 };
 

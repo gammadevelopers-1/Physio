@@ -6,6 +6,7 @@ import { FileText, MoreVertical } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 
 interface Invoice {
   id: string;
@@ -14,15 +15,6 @@ interface Invoice {
   date: string;
   status: "paid" | "pending" | "cancelled";
 }
-
-// Static mock user data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
 
 // Mock invoices data
 const mockInvoicesData: Invoice[] = [
@@ -53,6 +45,7 @@ const InvoicesContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const userData = useStudentProfile();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Use mockInvoicesData to show the table, or empty array [] to show empty state
@@ -91,7 +84,7 @@ const InvoicesContent = () => {
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -99,11 +92,11 @@ const InvoicesContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

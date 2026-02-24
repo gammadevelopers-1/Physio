@@ -1,33 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ClipboardList, Heart } from "lucide-react";
+import { ClipboardList, Heart, Loader2 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useFavourites } from "@/contexts/FavouritesContext";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { useStudentCourses } from "@/hooks/useStudentCourses";
 
-interface Course {
-  id: string;
-  title: string;
-  thumbnail: string;
-  progress: number;
-  status: "in_progress" | "completed" | "not_started";
-}
-
-// Static mock user data
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
-
-type TabFilter = "all" | "in_progress" | "completed";
+type TabFilter = "all" | "active" | "completed";
 
 const MyCoursesContent = () => {
   const locale = useLocale();
@@ -35,41 +19,15 @@ const MyCoursesContent = () => {
   const isRTL = locale === "ar";
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const { isFavourite, toggleFavourite } = useFavourites();
+  const userData = useStudentProfile();
 
-  // Mock courses data with translations
-  const allCourses: Course[] = [
-    {
-      id: "acls-1",
-      title: t("mockData.courseTitleACLS"),
-      thumbnail: "/student_dashboard/courses/image 473.svg",
-      progress: 24,
-      status: "in_progress",
-    },
-    {
-      id: "acls-2",
-      title: t("mockData.courseTitleACLS"),
-      thumbnail: "/student_dashboard/courses/image 491.svg",
-      progress: 24,
-      status: "in_progress",
-    },
-    {
-      id: "acls-3",
-      title: t("mockData.courseTitleACLS"),
-      thumbnail: "/student_dashboard/courses/image 473.svg",
-      progress: 24,
-      status: "in_progress",
-    },
-  ];
-
-  // Filter courses based on active tab
-  const filteredCourses = allCourses.filter((course) => {
-    if (activeTab === "all") return true;
-    return course.status === activeTab;
+  const { data: courses, loading } = useStudentCourses({
+    status: activeTab === "all" ? undefined : activeTab,
   });
 
-  const getStatusLabel = (status: Course["status"]) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
-      case "in_progress":
+      case "active":
         return t("myCourses.inProgress");
       case "completed":
         return t("myCourses.completed");
@@ -78,9 +36,9 @@ const MyCoursesContent = () => {
     }
   };
 
-  const getStatusColor = (status: Course["status"]) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "in_progress":
+      case "active":
         return "text-[#D4A520]";
       case "completed":
         return "text-[#16A34A]";
@@ -91,14 +49,14 @@ const MyCoursesContent = () => {
 
   const tabs: { key: TabFilter; label: string }[] = [
     { key: "all", label: t("myCourses.tabs.all") },
-    { key: "in_progress", label: t("myCourses.tabs.inProgress") },
+    { key: "active", label: t("myCourses.tabs.inProgress") },
     { key: "completed", label: t("myCourses.tabs.completed") },
   ];
 
   return (
     <>
       {/* Dashboard Navbar */}
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
 
       {/* Main Container */}
       <div className="bg-[#F9FAFB] min-h-screen">
@@ -106,11 +64,11 @@ const MyCoursesContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <DashboardSidebar user={mockUser} />
+              <DashboardSidebar user={userData} />
             </div>
 
             {/* Mobile Sidebar */}
-            <MobileSidebar user={mockUser} />
+            <MobileSidebar user={userData} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
@@ -143,8 +101,12 @@ const MyCoursesContent = () => {
                   ))}
                 </div>
 
-                {/* Courses Grid or Empty State */}
-                {filteredCourses.length === 0 ? (
+                {/* Loading State */}
+                {loading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+                  </div>
+                ) : courses.length === 0 ? (
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
@@ -166,14 +128,27 @@ const MyCoursesContent = () => {
                 ) : (
                   // Courses Grid
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {filteredCourses.map((course) => (
+                    {courses.map((course) => (
                       <div
                         key={course.id}
                         className="border border-[#E5E7EB] rounded-xl overflow-hidden relative"
                       >
                         {/* Favourite Button */}
                         <button
-                          onClick={() => toggleFavourite(course)}
+                          onClick={() =>
+                            toggleFavourite({
+                              id: course.id,
+                              title: course.title,
+                              thumbnail:
+                                course.thumbnail ||
+                                "/student_dashboard/courses/image 473.svg",
+                              progress: course.progress,
+                              status:
+                                course.enrollmentStatus === "completed"
+                                  ? "completed"
+                                  : "in_progress",
+                            })
+                          }
                           className={`absolute top-2 ${isRTL ? "left-2" : "right-2"} z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors`}
                           aria-label={
                             isFavourite(course.id)
@@ -188,11 +163,13 @@ const MyCoursesContent = () => {
 
                         {/* Course Thumbnail */}
                         <div className="w-full h-[120px] sm:h-[140px] bg-gray-100">
-                          <Image
-                            src={course.thumbnail}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={
+                              course.thumbnail ||
+                              "/student_dashboard/courses/image 473.svg"
+                            }
                             alt={course.title}
-                            width={400}
-                            height={140}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -204,9 +181,13 @@ const MyCoursesContent = () => {
                           </h3>
 
                           {/* Status and Progress */}
-                          <div className={`flex items-center justify-between mb-2 sm:mb-3 ${isRTL ? "flex-row-reverse" : ""}`}>
-                            <span className={`text-[10px] sm:text-xs ${getStatusColor(course.status)}`}>
-                              {getStatusLabel(course.status)}
+                          <div
+                            className={`flex items-center justify-between mb-2 sm:mb-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <span
+                              className={`text-[10px] sm:text-xs ${getStatusColor(course.enrollmentStatus)}`}
+                            >
+                              {getStatusLabel(course.enrollmentStatus)}
                             </span>
                             <span className="text-[10px] sm:text-xs text-[#6B7280]">
                               {course.progress}%

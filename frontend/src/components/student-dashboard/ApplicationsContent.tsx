@@ -17,15 +17,8 @@ import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useAuth } from "@/contexts";
+import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { roleRequestsApi, type RoleRequest } from "@/lib/api";
-
-const mockUser = {
-  name: "Ibrahim",
-  email: "ibrahim@gmail.com",
-  points: 0,
-  profileCompletion: 90,
-  avatar: "/images/instructor-1.png",
-};
 
 const statusConfig = {
   PENDING: {
@@ -67,6 +60,7 @@ const ApplicationsContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const { switchRole } = useAuth();
+  const userData = useStudentProfile();
   const [applications, setApplications] = useState<RoleRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,12 +90,12 @@ const ApplicationsContent = () => {
 
   return (
     <>
-      <DashboardNavbar user={mockUser} />
+      <DashboardNavbar user={userData} />
       <div className="flex flex-1">
         <div className="hidden lg:block">
-          <DashboardSidebar user={mockUser} />
+          <DashboardSidebar user={userData} />
         </div>
-        <MobileSidebar user={mockUser} />
+        <MobileSidebar user={userData} />
 
         <div className="flex-1 p-4 lg:p-8" dir={isRTL ? "rtl" : "ltr"}>
           {/* Header */}

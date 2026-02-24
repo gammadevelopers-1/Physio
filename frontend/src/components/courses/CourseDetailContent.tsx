@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -19,10 +19,15 @@ import {
   Heart,
   ShoppingCart,
   Video,
+  Award,
 } from "lucide-react";
 import { CourseCard, MobileCourseCard } from "@/components/courses";
-import { courseDetails, courses } from "@/data/courses";
+import { courseDetails } from "@/data/courses";
+import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
+import { studentApi } from "@/lib/api";
+import { Loader2 } from "lucide-react";
 
 const CourseDetailContent = () => {
   const t = useTranslations("courseDetailPage");
@@ -43,8 +48,63 @@ const CourseDetailContent = () => {
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
 
-  // Get related courses (excluding current)
-  const relatedCourses = courses.filter((c) => c.slug !== slug).slice(0, 4);
+  // Fetch real course data from API
+  const [apiCourse, setApiCourse] = useState<PublicCourse | null>(null);
+  useEffect(() => {
+    if (!slug) return;
+    fetch(`/api/public-courses/${slug}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.id) setApiCourse(data);
+      })
+      .catch(() => {});
+  }, [slug]);
+
+  // Auth + enrollment state
+  const { user, isAuthenticated } = useAuth();
+  const isStudent = isAuthenticated && user?.activeRole === "STUDENT";
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollResult, setEnrollResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+
+  // Derive pricing/capacity from API data
+  const apiPrice = apiCourse?.price ?? 0;
+  const apiIsFree = apiPrice === 0;
+  const apiIsFull = apiCourse?.isFull ?? false;
+  const apiRemainingSeats = apiCourse?.remainingSeats ?? null;
+  const apiCmeAccredited = apiCourse?.isCmeAccredited ?? false;
+  const apiCmeHours = apiCourse?.cmeHours ?? 0;
+  const apiSessionCount = apiCourse?.sessionCount ?? 0;
+
+  const handleEnroll = async () => {
+    if (!slug) return;
+    setEnrolling(true);
+    setEnrollResult(null);
+    try {
+      await studentApi.selfEnroll(slug);
+      setEnrollResult({ success: true, message: t("enrollment.success") });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : t("enrollment.error");
+      setEnrollResult({ success: false, message });
+    } finally {
+      setEnrolling(false);
+    }
+  };
+
+  // Fetch related courses from API
+  const [relatedCourses, setRelatedCourses] = useState<PublicCourse[]>([]);
+  useEffect(() => {
+    fetch("/api/public-courses?limit=5")
+      .then((res) => res.json())
+      .then((json) => {
+        const data = Array.isArray(json.data) ? json.data : [];
+        setRelatedCourses(data.filter((c: PublicCourse) => c.id !== slug).slice(0, 4));
+      })
+      .catch(() => setRelatedCourses([]));
+  }, [slug]);
 
   // Get dates for selected city
   const citySchedule = course.schedules.find((s) => s.city === selectedCity);
@@ -197,6 +257,35 @@ const CourseDetailContent = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* CME + Seats + Sessions Info Bar */}
+                {(apiCmeAccredited || apiSessionCount > 0 || apiRemainingSeats !== null) && (
+                  <div className={`flex flex-wrap items-center gap-3 mb-6 ${isRTL ? "justify-start" : ""}`}>
+                    {apiCmeAccredited && (
+                      <div className="flex items-center gap-1.5 bg-[#FEF3C7] text-[#92400E] px-3 py-1.5 rounded-full text-sm font-medium">
+                        <Award className="w-4 h-4" />
+                        {apiCmeHours} CME {t("courseDetails.hours")}
+                      </div>
+                    )}
+                    {apiSessionCount > 0 && (
+                      <div className="flex items-center gap-1.5 bg-[#F3F4F6] text-[#4a4c4f] px-3 py-1.5 rounded-full text-sm">
+                        <Video className="w-4 h-4" />
+                        {apiSessionCount} {tCourses("card.sessions")}
+                      </div>
+                    )}
+                    {apiIsFull ? (
+                      <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-sm font-semibold">
+                        <Users className="w-4 h-4" />
+                        {tCourses("card.courseFull")}
+                      </div>
+                    ) : apiRemainingSeats !== null && apiRemainingSeats <= 10 ? (
+                      <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-full text-sm font-medium">
+                        <Users className="w-4 h-4" />
+                        {tCourses("card.seatsLeft", { count: apiRemainingSeats })}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
 
                 {/* Select City and Month */}
                 <div className="relative bg-white shadow-sm rounded-xl overflow-hidden mb-6">
@@ -370,10 +459,57 @@ const CourseDetailContent = () => {
                     <button className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3">
                       {t("pricingCard.buyNow")}
                     </button>
-                    <button className="w-full h-12 bg-[#0b0f17] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-5">
+                    <button className="w-full h-12 bg-[#0b0f17] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3">
                       {t("pricingCard.addToCart")}
                       <ShoppingCart className="w-4 h-4" />
                     </button>
+
+                    {/* Smart Enroll Button — visible to authenticated students */}
+                    {isStudent && (
+                      <div className="mb-5">
+                        {apiIsFull ? (
+                          <button
+                            onClick={() => alert(t("enrollment.waitlistMessage"))}
+                            className="w-full h-12 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors"
+                          >
+                            {t("enrollment.joinWaitlist")}
+                          </button>
+                        ) : !apiIsFree ? (
+                          <button
+                            onClick={() => alert(t("enrollment.contactMessage"))}
+                            className="w-full h-12 border-2 border-[#2D8CFF] rounded-xl text-[#2D8CFF] font-medium flex items-center justify-center gap-2 hover:bg-[#EFF6FF] transition-colors"
+                          >
+                            {t("enrollment.contactEnroll")}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleEnroll}
+                            disabled={enrolling || enrollResult?.success}
+                            className="w-full h-12 border-2 border-[#16A34A] rounded-xl text-[#16A34A] font-medium flex items-center justify-center gap-2 hover:bg-[#F0FDF4] transition-colors disabled:opacity-60"
+                          >
+                            {enrolling ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : enrollResult?.success ? (
+                              <Check className="w-4 h-4" />
+                            ) : null}
+                            {enrollResult?.success
+                              ? t("enrollment.enrolled")
+                              : t("enrollment.enrollNow")}
+                          </button>
+                        )}
+                        {enrollResult && (
+                          <p
+                            className={`text-xs mt-1.5 text-center ${
+                              enrollResult.success
+                                ? "text-[#16A34A]"
+                                : "text-[#DC2626]"
+                            }`}
+                          >
+                            {enrollResult.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Payment Methods */}
                     <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -614,11 +750,85 @@ const CourseDetailContent = () => {
             <button className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2">
               {t("pricingCard.buyNow")}
             </button>
-            <button className="w-full h-10 bg-[#0b0f17] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2">
+            <button className="w-full h-10 bg-[#0b0f17] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2">
               {t("pricingCard.addToCart")}
               <ShoppingCart className="w-4 h-4" />
             </button>
+
+            {/* Smart Enroll Button — mobile */}
+            {isStudent && (
+              <div>
+                {apiIsFull ? (
+                  <button
+                    onClick={() => alert(t("enrollment.waitlistMessage"))}
+                    className="w-full h-10 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors"
+                  >
+                    {t("enrollment.joinWaitlist")}
+                  </button>
+                ) : !apiIsFree ? (
+                  <button
+                    onClick={() => alert(t("enrollment.contactMessage"))}
+                    className="w-full h-10 border-2 border-[#2D8CFF] rounded-xl text-[#2D8CFF] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#EFF6FF] transition-colors"
+                  >
+                    {t("enrollment.contactEnroll")}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleEnroll}
+                    disabled={enrolling || enrollResult?.success}
+                    className="w-full h-10 border-2 border-[#16A34A] rounded-xl text-[#16A34A] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#F0FDF4] transition-colors disabled:opacity-60"
+                  >
+                    {enrolling ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : enrollResult?.success ? (
+                      <Check className="w-4 h-4" />
+                    ) : null}
+                    {enrollResult?.success
+                      ? t("enrollment.enrolled")
+                      : t("enrollment.enrollNow")}
+                  </button>
+                )}
+                {enrollResult && (
+                  <p
+                    className={`text-xs mt-1 text-center ${
+                      enrollResult.success
+                        ? "text-[#16A34A]"
+                        : "text-[#DC2626]"
+                    }`}
+                  >
+                    {enrollResult.message}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* CME + Seats Info — mobile */}
+          {(apiCmeAccredited || apiSessionCount > 0 || apiRemainingSeats !== null) && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {apiCmeAccredited && (
+                <div className="flex items-center gap-1 bg-[#FEF3C7] text-[#92400E] px-2.5 py-1 rounded-full text-xs font-medium">
+                  <Award className="w-3.5 h-3.5" />
+                  {apiCmeHours} CME
+                </div>
+              )}
+              {apiSessionCount > 0 && (
+                <div className="flex items-center gap-1 bg-[#F3F4F6] text-[#4a4c4f] px-2.5 py-1 rounded-full text-xs">
+                  <Video className="w-3.5 h-3.5" />
+                  {apiSessionCount} {tCourses("card.sessions")}
+                </div>
+              )}
+              {apiIsFull ? (
+                <div className="flex items-center gap-1 bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-semibold">
+                  {tCourses("card.courseFull")}
+                </div>
+              ) : apiRemainingSeats !== null && apiRemainingSeats <= 10 ? (
+                <div className="flex items-center gap-1 bg-red-50 text-red-600 px-2.5 py-1 rounded-full text-xs font-medium">
+                  {tCourses("card.seatsLeft", { count: apiRemainingSeats })}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           {/* City Selection */}
           <div className="relative bg-white rounded-xl overflow-hidden mb-4">

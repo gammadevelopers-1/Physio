@@ -22,6 +22,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
+import { classifyCourse, getNelcMaxEnrollment } from './nelc-config';
 
 @Injectable()
 export class CoursesService {
@@ -61,6 +62,13 @@ export class CoursesService {
         deliveryType: dto.deliveryType,
         thumbnail: dto.thumbnail,
         maxEnrollment: dto.maxEnrollment,
+        price: dto.price !== undefined ? dto.price.toString() : undefined,
+        cmeHours: dto.cmeHours,
+        enrollmentDeadline: dto.enrollmentDeadline
+          ? new Date(dto.enrollmentDeadline)
+          : undefined,
+        isCmeAccredited: dto.isCmeAccredited,
+        language: dto.language,
         startDate: dto.startDate,
         endDate: dto.endDate,
       })
@@ -185,6 +193,250 @@ export class CoursesService {
   }
 
   /**
+   * List active courses publicly (no auth required).
+   * Returns enriched data: instructor name, enrolled count, total hours, ratings, seats info.
+   */
+  async findAllPublic(params: {
+    search?: string;
+    delivery?: string;
+    pricing?: string;
+    cmeAccredited?: boolean;
+    language?: string;
+    availability?: string;
+    sort?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = params.page || 1;
+    const limit = params.limit || 20;
+    const offset = (page - 1) * limit;
+
+    const conditions: ReturnType<typeof eq>[] = [
+      eq(courses.status, COURSE_STATUS.ACTIVE),
+    ];
+
+    if (params.delivery) {
+      conditions.push(eq(courses.deliveryType, params.delivery));
+    }
+
+    if (params.search) {
+      const searchTerm = `%${params.search}%`;
+      conditions.push(
+        or(
+          ilike(courses.title, searchTerm),
+          ilike(courses.titleAr, searchTerm),
+          ilike(courses.description, searchTerm),
+        ) as any,
+      );
+    }
+
+    if (params.pricing === 'free') {
+      conditions.push(
+        or(
+          sql`${courses.price} = 0`,
+          sql`${courses.price} IS NULL`,
+        ) as any,
+      );
+    } else if (params.pricing === 'paid') {
+      conditions.push(sql`${courses.price} > 0` as any);
+    }
+
+    if (params.cmeAccredited !== undefined) {
+      conditions.push(eq(courses.isCmeAccredited, params.cmeAccredited));
+    }
+
+    if (params.language && params.language !== 'all') {
+      conditions.push(eq(courses.language, params.language));
+    }
+
+    const whereClause = and(...conditions);
+
+    // Determine sort order
+    let orderByClause;
+    switch (params.sort) {
+      case 'starting_soon':
+        orderByClause = asc(courses.startDate);
+        break;
+      case 'popular':
+        orderByClause = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}) DESC`;
+        break;
+      case 'rating':
+        orderByClause = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = ${courses.id}) DESC`;
+        break;
+      default:
+        orderByClause = desc(courses.createdAt);
+    }
+
+    const data = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        description: courses.description,
+        descriptionAr: courses.descriptionAr,
+        deliveryType: courses.deliveryType,
+        thumbnail: courses.thumbnail,
+        maxEnrollment: courses.maxEnrollment,
+        price: courses.price,
+        cmeHours: courses.cmeHours,
+        enrollmentDeadline: courses.enrollmentDeadline,
+        isCmeAccredited: courses.isCmeAccredited,
+        language: courses.language,
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+        enrolledCount: sql<number>`(
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}
+        )`.mapWith(Number),
+        totalHours: sql<number>`(
+          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+        )`.mapWith(Number),
+        sessionCount: sql<number>`(
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id}
+        )`.mapWith(Number),
+        avgRating: sql<number>`(
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+        )`.mapWith(Number),
+        totalRatings: sql<number>`(
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+        )`.mapWith(Number),
+        instructorName: sql<string>`(
+          SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
+          WHERE u.id = ${courses.instructorId}
+        )`,
+      })
+      .from(courses)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .limit(limit)
+      .offset(offset);
+
+    // Enrich with NELC capacity info (no longer hiding full courses)
+    const enriched = data.map((c) => {
+      const classification = classifyCourse(c.startDate, c.endDate);
+      const nelcMax = getNelcMaxEnrollment(classification);
+      const effectiveMax = c.maxEnrollment
+        ? Math.min(c.maxEnrollment, nelcMax)
+        : nelcMax;
+      const remainingSeats = Math.max(0, effectiveMax - c.enrolledCount);
+      const isFull = remainingSeats === 0;
+
+      return {
+        ...c,
+        totalHours: Math.round((c.totalHours / 60) * 10) / 10,
+        avgRating: Number(Number(c.avgRating || 0).toFixed(1)),
+        price: c.price ? Number(c.price) : 0,
+        remainingSeats,
+        isFull,
+      };
+    });
+
+    // Post-query availability filter (depends on computed isFull)
+    let filtered = enriched;
+    if (params.availability === 'open') {
+      filtered = enriched.filter((c) => !c.isFull);
+    } else if (params.availability === 'starting_soon') {
+      const twoWeeksFromNow = new Date();
+      twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+      filtered = enriched.filter(
+        (c) =>
+          !c.isFull &&
+          c.startDate &&
+          new Date(c.startDate) <= twoWeeksFromNow &&
+          new Date(c.startDate) >= new Date(),
+      );
+    } else if (params.availability === 'full') {
+      filtered = enriched.filter((c) => c.isFull);
+    }
+
+    const [countResult] = await db
+      .select({ count: count() })
+      .from(courses)
+      .where(whereClause);
+
+    return {
+      data: filtered,
+      total: filtered.length,
+      page,
+      limit,
+      totalPages: Math.ceil((countResult?.count || 0) / limit),
+    };
+  }
+
+  /**
+   * Get a single public course by ID with enriched data.
+   */
+  async findOnePublic(courseId: string) {
+    const [data] = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        description: courses.description,
+        descriptionAr: courses.descriptionAr,
+        deliveryType: courses.deliveryType,
+        thumbnail: courses.thumbnail,
+        maxEnrollment: courses.maxEnrollment,
+        price: courses.price,
+        cmeHours: courses.cmeHours,
+        enrollmentDeadline: courses.enrollmentDeadline,
+        isCmeAccredited: courses.isCmeAccredited,
+        language: courses.language,
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+        enrolledCount: sql<number>`(
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}
+        )`.mapWith(Number),
+        totalHours: sql<number>`(
+          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+        )`.mapWith(Number),
+        sessionCount: sql<number>`(
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id}
+        )`.mapWith(Number),
+        avgRating: sql<number>`(
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+        )`.mapWith(Number),
+        totalRatings: sql<number>`(
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+        )`.mapWith(Number),
+        instructorName: sql<string>`(
+          SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
+          WHERE u.id = ${courses.instructorId}
+        )`,
+      })
+      .from(courses)
+      .where(
+        and(
+          eq(courses.id, courseId),
+          or(
+            eq(courses.status, COURSE_STATUS.ACTIVE),
+            eq(courses.status, COURSE_STATUS.COMPLETED),
+          ),
+        ),
+      )
+      .limit(1);
+
+    if (!data) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const classification = classifyCourse(data.startDate, data.endDate);
+    const nelcMax = getNelcMaxEnrollment(classification);
+    const effectiveMax = data.maxEnrollment
+      ? Math.min(data.maxEnrollment, nelcMax)
+      : nelcMax;
+    const remainingSeats = Math.max(0, effectiveMax - data.enrolledCount);
+
+    return {
+      ...data,
+      totalHours: Math.round((data.totalHours / 60) * 10) / 10,
+      avgRating: Number(Number(data.avgRating || 0).toFixed(1)),
+      price: data.price ? Number(data.price) : 0,
+      remainingSeats,
+      isFull: remainingSeats === 0,
+    };
+  }
+
+  /**
    * Get course detail with modules.
    * - Instructor: only their own (404 for others).
    * - Admin: any course.
@@ -226,9 +478,21 @@ export class CoursesService {
   ) {
     await this.verifyCourseAccess(courseId, user);
 
+    const { price, enrollmentDeadline, ...restDto } = dto;
+    const updateData: Record<string, any> = {
+      ...restDto,
+      updatedAt: new Date(),
+    };
+    if (price !== undefined) {
+      updateData.price = price.toString();
+    }
+    if (enrollmentDeadline !== undefined) {
+      updateData.enrollmentDeadline = new Date(enrollmentDeadline);
+    }
+
     const [updated] = await db
       .update(courses)
-      .set({ ...dto, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(courses.id, courseId))
       .returning();
 

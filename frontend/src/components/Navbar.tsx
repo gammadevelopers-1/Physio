@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import {
-  ChevronDown,
   Globe,
   Search,
   ShoppingCart,
@@ -25,7 +24,6 @@ interface NavbarProps {
 }
 
 const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
-  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const t = useTranslations("navbar");
   const locale = useLocale();
@@ -72,50 +70,13 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
               {t("home")}
             </Link>
 
-            {/* Courses Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsCoursesOpen(!isCoursesOpen)}
-                className="flex items-center gap-1 cursor-pointer group"
-              >
-                <span className="text-[var(--on-surface-variant)] text-base leading-6 group-hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">
-                  {t("courses")}
-                </span>
-                <ChevronDown
-                  className={`w-6 h-6 text-[var(--on-surface-variant)] transition-transform duration-200 ${isCoursesOpen ? "rotate-180" : ""}`}
-                  strokeWidth={1.67}
-                />
-              </button>
-
-              {/* Dropdown Menu */}
-              {isCoursesOpen && (
-                <div
-                  className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "right-0" : "left-0"}`}
-                >
-                  <Link
-                    href={`/${locale}/courses`}
-                    className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsCoursesOpen(false)}
-                  >
-                    {t("accreditedCourses")}
-                  </Link>
-                  <Link
-                    href={`/${locale}/courses/my-courses`}
-                    className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsCoursesOpen(false)}
-                  >
-                    {t("myCourses")}
-                  </Link>
-                  <Link
-                    href={`/${locale}/archived`}
-                    className="block px-4 py-2 text-[var(--on-surface-variant)] text-base hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsCoursesOpen(false)}
-                  >
-                    {t("archivedCourses")}
-                  </Link>
-                </div>
-              )}
-            </div>
+            {/* Courses Link */}
+            <Link
+              href={`/${locale}/courses`}
+              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
+            >
+              {t("courses")}
+            </Link>
 
             <Link
               href={`/${locale}/become-trainer`}
@@ -223,44 +184,14 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
               {t("home")}
             </Link>
 
-            {/* Courses with dropdown */}
-            <div className="border-b border-[var(--outline-subtle)]">
-              <button
-                onClick={() => setIsCoursesOpen(!isCoursesOpen)}
-                className="flex items-center justify-between w-full py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors"
-              >
-                <span>{t("courses")}</span>
-                <ChevronDown
-                  className={`w-5 h-5 transition-transform duration-200 ${isCoursesOpen ? "rotate-180" : ""}`}
-                  strokeWidth={1.67}
-                />
-              </button>
-              {isCoursesOpen && (
-                <div className="pb-3 flex flex-col gap-2 ps-4">
-                  <Link
-                    href={`/${locale}/courses`}
-                    className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t("accreditedCourses")}
-                  </Link>
-                  <Link
-                    href={`/${locale}/courses/my-courses`}
-                    className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t("myCourses")}
-                  </Link>
-                  <Link
-                    href={`/${locale}/archived`}
-                    className="py-2 text-[var(--on-surface-variant)] text-sm hover:text-[var(--on-surface-default)] transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {t("archivedCourses")}
-                  </Link>
-                </div>
-              )}
-            </div>
+            {/* Courses Link */}
+            <Link
+              href={`/${locale}/courses`}
+              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {t("courses")}
+            </Link>
 
             <Link
               href={`/${locale}/become-trainer`}

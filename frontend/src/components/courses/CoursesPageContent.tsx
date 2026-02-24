@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   CourseCard,
   MobileCourseCard,
@@ -8,88 +8,134 @@ import {
   CoursePagination,
   CourseCTA,
 } from "@/components/courses";
-import { courses, courseTypes, certifications } from "@/data/courses";
+import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
+import { Loader2 } from "lucide-react";
+
+const DELIVERY_TYPES = ["zoom", "onsite", "blended"];
+const CERTIFICATIONS = ["BHA", "NHA", "SCFHS"];
 
 const CoursesPageContent = () => {
   const t = useTranslations("coursesPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  const [courses, setCourses] = useState<PublicCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
-  const [selectedPricing, setSelectedPricing] = useState<string[]>([]);
+  const [selectedCertifications, setSelectedCertifications] = useState<
+    string[]
+  >([]);
+  const [selectedPricing, setSelectedPricing] = useState("");
+  const [cmeAccredited, setCmeAccredited] = useState("");
+  const [availability, setAvailability] = useState("");
+  const [language, setLanguage] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPageMobile, setCurrentPageMobile] = useState(1);
 
   const postsPerPageDesktop = 6;
   const postsPerPageMobile = 3;
 
-  // Filter courses based on all criteria
+  const fetchCourses = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.set("search", searchQuery);
+      if (selectedPricing) params.set("pricing", selectedPricing);
+      if (cmeAccredited) params.set("cmeAccredited", cmeAccredited);
+      if (availability) params.set("availability", availability);
+      if (language) params.set("language", language);
+      if (sortBy) params.set("sort", sortBy);
+      params.set("limit", "100");
+      const qs = params.toString();
+      const res = await fetch(`/api/public-courses${qs ? `?${qs}` : ""}`);
+      const json = await res.json();
+      setCourses(Array.isArray(json.data) ? json.data : []);
+    } catch (err) {
+      console.error("Failed to fetch courses:", err);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, selectedPricing, cmeAccredited, availability, language, sortBy]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  // Client-side filtering for delivery type (not a backend param)
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
-      // Search filter
-      const matchesSearch =
-        searchQuery === "" ||
-        course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Type filter
       const matchesType =
-        selectedTypes.length === 0 || selectedTypes.includes(course.type);
-
-      // Certification filter
-      const matchesCertification =
-        selectedCertifications.length === 0 ||
-        selectedCertifications.includes(course.certification);
-
-      // Pricing filter
-      const matchesPricing =
-        selectedPricing.length === 0 ||
-        (selectedPricing.includes("Paid") && course.isPaid) ||
-        (selectedPricing.includes("Free") && !course.isPaid);
-
-      return matchesSearch && matchesType && matchesCertification && matchesPricing;
+        selectedTypes.length === 0 ||
+        selectedTypes.includes(course.deliveryType);
+      return matchesType;
     });
-  }, [searchQuery, selectedTypes, selectedCertifications, selectedPricing]);
+  }, [courses, selectedTypes]);
 
   // Desktop pagination
   const totalPages = Math.ceil(filteredCourses.length / postsPerPageDesktop);
   const paginatedCourses = filteredCourses.slice(
     (currentPage - 1) * postsPerPageDesktop,
-    currentPage * postsPerPageDesktop
+    currentPage * postsPerPageDesktop,
   );
 
   // Mobile pagination
-  const totalPagesMobile = Math.ceil(filteredCourses.length / postsPerPageMobile);
+  const totalPagesMobile = Math.ceil(
+    filteredCourses.length / postsPerPageMobile,
+  );
   const paginatedCoursesMobile = filteredCourses.slice(
     (currentPageMobile - 1) * postsPerPageMobile,
-    currentPageMobile * postsPerPageMobile
+    currentPageMobile * postsPerPageMobile,
   );
 
   // Reset pagination when filters change
-  const handleSearchChange = (query: string) => {
-    setSearchQuery(query);
+  const resetPages = () => {
     setCurrentPage(1);
     setCurrentPageMobile(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    resetPages();
   };
 
   const handleTypeChange = (types: string[]) => {
     setSelectedTypes(types);
-    setCurrentPage(1);
-    setCurrentPageMobile(1);
+    resetPages();
   };
 
   const handleCertificationChange = (certs: string[]) => {
     setSelectedCertifications(certs);
-    setCurrentPage(1);
-    setCurrentPageMobile(1);
+    resetPages();
   };
 
-  const handlePricingChange = (pricing: string[]) => {
+  const handlePricingChange = (pricing: string) => {
     setSelectedPricing(pricing);
-    setCurrentPage(1);
-    setCurrentPageMobile(1);
+    resetPages();
+  };
+
+  const handleCmeAccreditedChange = (value: string) => {
+    setCmeAccredited(value);
+    resetPages();
+  };
+
+  const handleAvailabilityChange = (value: string) => {
+    setAvailability(value);
+    resetPages();
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    resetPages();
+  };
+
+  const handleSortByChange = (value: string) => {
+    setSortBy(value);
+    resetPages();
   };
 
   const handlePageChange = (page: number) => {
@@ -100,6 +146,28 @@ const CoursesPageContent = () => {
   const handlePageChangeMobile = (page: number) => {
     setCurrentPageMobile(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const filterProps = {
+    searchQuery,
+    onSearchChange: handleSearchChange,
+    selectedTypes,
+    onTypeChange: handleTypeChange,
+    selectedCertifications,
+    onCertificationChange: handleCertificationChange,
+    selectedPricing,
+    onPricingChange: handlePricingChange,
+    cmeAccredited,
+    onCmeAccreditedChange: handleCmeAccreditedChange,
+    availability,
+    onAvailabilityChange: handleAvailabilityChange,
+    language,
+    onLanguageChange: handleLanguageChange,
+    sortBy,
+    onSortByChange: handleSortByChange,
+    courseTypes: DELIVERY_TYPES,
+    certifications: CERTIFICATIONS,
+    isRTL,
   };
 
   return (
@@ -121,30 +189,26 @@ const CoursesPageContent = () => {
               </p>
             </div>
 
-            {/* Main Content - dir=rtl automatically puts sidebar on right */}
+            {/* Main Content */}
             <div className="flex gap-8">
               {/* Sidebar Filters */}
-              <CourseFilters
-                searchQuery={searchQuery}
-                onSearchChange={handleSearchChange}
-                selectedTypes={selectedTypes}
-                onTypeChange={handleTypeChange}
-                selectedCertifications={selectedCertifications}
-                onCertificationChange={handleCertificationChange}
-                selectedPricing={selectedPricing}
-                onPricingChange={handlePricingChange}
-                courseTypes={courseTypes}
-                certifications={certifications}
-                isRTL={isRTL}
-              />
+              <CourseFilters {...filterProps} />
 
               {/* Course Grid */}
               <div className="flex-1">
-                {paginatedCourses.length > 0 ? (
+                {loading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+                  </div>
+                ) : paginatedCourses.length > 0 ? (
                   <>
                     <div className="grid grid-cols-3 gap-8">
                       {paginatedCourses.map((course) => (
-                        <CourseCard key={course.id} course={course} isRTL={isRTL} />
+                        <CourseCard
+                          key={course.id}
+                          course={course}
+                          isRTL={isRTL}
+                        />
                       ))}
                     </div>
 
@@ -171,7 +235,10 @@ const CoursesPageContent = () => {
       </div>
 
       {/* Mobile Layout */}
-      <div className="lg:hidden pb-24 overflow-x-hidden" dir={isRTL ? "rtl" : "ltr"}>
+      <div
+        className="lg:hidden pb-24 overflow-x-hidden"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
         <section className="px-4 py-6 max-w-full">
           {/* Header */}
           <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
@@ -185,27 +252,22 @@ const CoursesPageContent = () => {
           </div>
 
           {/* Filters */}
-          <CourseFilters
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            selectedTypes={selectedTypes}
-            onTypeChange={handleTypeChange}
-            selectedCertifications={selectedCertifications}
-            onCertificationChange={handleCertificationChange}
-            selectedPricing={selectedPricing}
-            onPricingChange={handlePricingChange}
-            courseTypes={courseTypes}
-            certifications={certifications}
-            variant="mobile"
-            isRTL={isRTL}
-          />
+          <CourseFilters {...filterProps} variant="mobile" />
 
           {/* Course Cards */}
-          {paginatedCoursesMobile.length > 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
+            </div>
+          ) : paginatedCoursesMobile.length > 0 ? (
             <>
               <div className="flex flex-col gap-6">
                 {paginatedCoursesMobile.map((course) => (
-                  <MobileCourseCard key={course.id} course={course} isRTL={isRTL} />
+                  <MobileCourseCard
+                    key={course.id}
+                    course={course}
+                    isRTL={isRTL}
+                  />
                 ))}
               </div>
 

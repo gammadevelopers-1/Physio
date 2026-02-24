@@ -1464,6 +1464,9 @@ export const courseManagerApi = {
   reviewMaterial: (id: string, data: { decision: 'approved' | 'rejected' | 'changes_requested'; comment?: string }) =>
     api.patch(`/materials/${id}/review`, data),
 
+  bulkReviewMaterials: (materialIds: string[], decision: string, comment?: string) =>
+    api.post<{ succeeded: number; failed: number; total: number }>('/materials/bulk-review', { materialIds, decision, comment }),
+
   getComplianceChecklist: (materialId: string) =>
     api.get<{
       materialId: string;
@@ -1571,6 +1574,15 @@ export const nelcAuditApi = {
     return api.get<Array<{ eventType: string; count: number }>>(
       `/nelc-audit/summary${qs ? `?${qs}` : ''}`,
     );
+  },
+
+  exportCsv: async () => {
+    const token = getAccessToken();
+    const res = await globalThis.fetch(`/api/nelc-audit/export`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error('Export failed');
+    return res.blob();
   },
 };
 

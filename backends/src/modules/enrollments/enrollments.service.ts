@@ -12,6 +12,7 @@ import {
   sessions,
   courses,
   users,
+  waitlists,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -83,7 +84,7 @@ export class EnrollmentsService {
       );
     const currentCount = Number(countResult?.count || 0);
 
-    // 4. Enforce NELC limit
+    // 4. Enforce NELC limit — offer waitlist if course is full
     if (currentCount >= effectiveMax) {
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.ENROLLMENT_LIMIT_ENFORCED,
@@ -98,8 +99,55 @@ export class EnrollmentsService {
         },
       });
 
+      // Check if student is already on the waitlist
+      const [existingWaitlist] = await db
+        .select()
+        .from(waitlists)
+        .where(
+          and(
+            eq(waitlists.courseId, courseId),
+            eq(waitlists.studentId, studentId),
+            eq(waitlists.status, 'waiting'),
+          ),
+        )
+        .limit(1);
+
+      if (existingWaitlist) {
+        throw new BadRequestException(
+          `You are already on the waitlist at position ${existingWaitlist.position}`,
+        );
+      }
+
+      // Get current waitlist size to determine position
+      const [waitlistCount] = await db
+        .select({ count: count() })
+        .from(waitlists)
+        .where(
+          and(
+            eq(waitlists.courseId, courseId),
+            eq(waitlists.status, 'waiting'),
+          ),
+        );
+      const position = Number(waitlistCount?.count || 0) + 1;
+
+      // Add to waitlist
+      const [entry] = await db
+        .insert(waitlists)
+        .values({
+          courseId,
+          studentId,
+          position,
+          status: 'waiting',
+        })
+        .returning();
+
       throw new BadRequestException(
-        `NELC limit reached: ${currentCount}/${effectiveMax} for ${classification} course`,
+        JSON.stringify({
+          code: 'WAITLISTED',
+          message: `Course is full (${currentCount}/${effectiveMax}). You have been added to the waitlist at position ${position}.`,
+          waitlistPosition: position,
+          waitlistId: entry.id,
+        }),
       );
     }
 
@@ -524,5 +572,51 @@ export class EnrollmentsService {
     }
 
     return record;
+  }
+
+  // ─── Waitlist Management ────────────────────────────────
+
+  /**
+   * GET /courses/:id/waitlist — Get waitlist for a course (manager/admin)
+   */
+  async getWaitlist(courseId: string) {
+    const entries = await db
+      .select({
+        id: waitlists.id,
+        studentId: waitlists.studentId,
+        position: waitlists.position,
+        status: waitlists.status,
+        joinedAt: waitlists.joinedAt,
+        studentName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        studentEmail: users.email,
+      })
+      .from(waitlists)
+      .innerJoin(users, eq(waitlists.studentId, users.id))
+      .where(
+        and(
+          eq(waitlists.courseId, courseId),
+          eq(waitlists.status, 'waiting'),
+        ),
+      )
+      .orderBy(waitlists.position);
+
+    return entries;
+  }
+
+  /**
+   * DELETE /courses/:id/waitlist/:entryId — Remove from waitlist
+   */
+  async removeFromWaitlist(courseId: string, entryId: string) {
+    await db
+      .update(waitlists)
+      .set({ status: 'cancelled' })
+      .where(
+        and(
+          eq(waitlists.id, entryId),
+          eq(waitlists.courseId, courseId),
+        ),
+      );
+
+    return { success: true };
   }
 }

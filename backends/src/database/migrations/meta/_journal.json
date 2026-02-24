@@ -29,6 +29,13 @@
       "when": 1771892924326,
       "tag": "0003_crazy_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772092800000,
+      "tag": "0004_add_waitlists",
+      "breakpoints": true
     }
   ]
 }

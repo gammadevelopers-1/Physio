@@ -162,6 +162,28 @@ export class MaterialsController {
   }
 
   /**
+   * POST /materials/bulk-review — Approve or reject multiple materials at once
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post('materials/bulk-review')
+  @HttpCode(HttpStatus.OK)
+  async bulkReviewMaterials(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { materialIds: string[]; decision: 'approved' | 'rejected' | 'changes_requested'; comment?: string },
+  ) {
+    const results = await Promise.allSettled(
+      body.materialIds.map((id) =>
+        this.materialsService.reviewMaterial(id, user, body.decision, body.comment),
+      ),
+    );
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled').length;
+    const failed = results.filter((r) => r.status === 'rejected').length;
+
+    return { succeeded, failed, total: body.materialIds.length };
+  }
+
+  /**
    * GET /materials/:id/compliance-checklist — 5-check compliance checklist
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)

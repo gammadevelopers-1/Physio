@@ -524,12 +524,23 @@ export class InstructorService {
       totalStudents = Number(studentCount?.count ?? 0);
     }
 
+    // ─── Average Course Rating across instructor's courses ──
+    let avgCourseRating = 0;
+    if (courseIds.length > 0) {
+      const [ratingResult] = await db
+        .select({ avg: sql<number>`ROUND(AVG(${courseRatings.rating})::numeric, 1)`.as('avg') })
+        .from(courseRatings)
+        .where(inArray(courseRatings.courseId, courseIds));
+      avgCourseRating = Number(ratingResult?.avg ?? 0);
+    }
+
     return {
       kpis: {
         activeCourses: coursesResult.total || 0,
         totalStudents,
         todaysSessions: todaySessions.length,
         atRiskLearners: atRiskLearners.length,
+        avgCourseRating,
       },
       todaySessions: enrichedTodaySessions,
       upcomingSessions: enrichedUpcomingSessions,

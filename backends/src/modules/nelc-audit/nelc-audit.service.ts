@@ -98,6 +98,60 @@ export class NelcAuditService {
   }
 
   /**
+   * Export audit logs as CSV buffer (no pagination, up to 10 000 rows).
+   */
+  async exportCsv(filters: {
+    eventType?: string;
+    entityType?: string;
+    entityId?: string;
+    userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+    const conditions: ReturnType<typeof eq>[] = [];
+    if (filters.eventType) conditions.push(eq(nelcAuditLogs.eventType, filters.eventType));
+    if (filters.entityType) conditions.push(eq(nelcAuditLogs.entityType, filters.entityType));
+    if (filters.entityId) conditions.push(eq(nelcAuditLogs.entityId, filters.entityId));
+    if (filters.userId) conditions.push(eq(nelcAuditLogs.userId, filters.userId));
+    if (filters.startDate) conditions.push(gte(nelcAuditLogs.createdAt, filters.startDate));
+    if (filters.endDate) conditions.push(lte(nelcAuditLogs.createdAt, filters.endDate));
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select()
+      .from(nelcAuditLogs)
+      .where(whereClause)
+      .orderBy(desc(nelcAuditLogs.createdAt))
+      .limit(10_000);
+
+    const headers = ['ID', 'Event Type', 'Entity Type', 'Entity ID', 'User ID', 'IP Address', 'Metadata', 'Created At'];
+    const csvRows = rows.map((r) => [
+      r.id,
+      r.eventType,
+      r.entityType ?? '',
+      r.entityId ?? '',
+      r.userId ?? '',
+      r.ipAddress ?? '',
+      r.metadata ? JSON.stringify(r.metadata) : '',
+      r.createdAt ? new Date(r.createdAt).toISOString() : '',
+    ]);
+
+    const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv = [
+      headers.map(escape).join(','),
+      ...csvRows.map((row) => row.map(escape).join(',')),
+    ].join('\n');
+
+    const ts = new Date().toISOString().slice(0, 10);
+    return {
+      buffer: Buffer.from(csv, 'utf-8'),
+      filename: `nelc-audit-logs-${ts}.csv`,
+      contentType: 'text/csv',
+    };
+  }
+
+  /**
    * Get aggregated counts by event type for a date range.
    */
   async getSummary(startDate: Date, endDate: Date) {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -11,6 +13,7 @@ import CalendarGrid from "./CalendarGrid";
 import EventDetailPanel from "./EventDetailPanel";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCalendar } from "@/hooks/useStudentCalendar";
+import { getAccessToken } from "@/lib/api";
 
 function toLocalDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -78,6 +81,26 @@ const CalendarContent = () => {
     setSelectedDate(now);
   };
 
+  const handleExportIcs = useCallback(async () => {
+    try {
+      const token = getAccessToken();
+      const res = await fetch("/api/student/calendar/export", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "my-sessions.ics";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("calendarPage.exportSuccess"));
+    } catch {
+      toast.error(t("calendarPage.exportError"));
+    }
+  }, [t]);
+
   return (
     <>
       <DashboardNavbar user={userData} />
@@ -92,9 +115,18 @@ const CalendarContent = () => {
             <MobileSidebar user={userData} />
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937] mb-4 sm:mb-6">
-                {t("calendarPage.title")}
-              </h1>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
+                  {t("calendarPage.title")}
+                </h1>
+                <button
+                  onClick={handleExportIcs}
+                  className="flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#4B5563] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {t("calendarPage.exportIcs")}
+                </button>
+              </div>
 
               <OfflineBanner />
 

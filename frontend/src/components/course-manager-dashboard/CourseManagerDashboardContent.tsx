@@ -46,6 +46,7 @@ const CourseManagerDashboardContent = () => {
         : 0,
     activeInstructors: instructors.length,
     nelcScore,
+    totalRevenue: Math.round(courses.reduce((sum, c) => sum + ((c.price || 0) * c.enrolledCount), 0)),
   };
 
   // Derive course stats from real data

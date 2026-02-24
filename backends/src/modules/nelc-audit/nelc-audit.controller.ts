@@ -3,7 +3,10 @@ import {
   Get,
   Query,
   UseGuards,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { NelcAuditService } from './nelc-audit.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
@@ -57,5 +60,36 @@ export class NelcAuditController {
     const end = endDate ? new Date(endDate) : now;
 
     return this.auditService.getSummary(start, end);
+  }
+
+  /**
+   * GET /nelc-audit/export — Export audit logs as CSV download (ADMIN only)
+   */
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('export')
+  async exportLogs(
+    @Query('eventType') eventType?: string,
+    @Query('entityType') entityType?: string,
+    @Query('entityId') entityId?: string,
+    @Query('userId') userId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.auditService.exportCsv({
+      eventType,
+      entityType,
+      entityId,
+      userId,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    });
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
   }
 }

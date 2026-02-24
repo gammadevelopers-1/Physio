@@ -125,6 +125,28 @@ export function useContentReview() {
     }));
   }, []);
 
+  const bulkApprove = useCallback(async (ids: string[]) => {
+    const result = await courseManagerApi.bulkReviewMaterials(ids, "approved");
+    setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setStats((prev) => ({
+      ...prev,
+      pending: Math.max(0, prev.pending - result.succeeded),
+      approved: prev.approved + result.succeeded,
+    }));
+    return result;
+  }, []);
+
+  const bulkReject = useCallback(async (ids: string[], comment: string) => {
+    const result = await courseManagerApi.bulkReviewMaterials(ids, "rejected", comment);
+    setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setStats((prev) => ({
+      ...prev,
+      pending: Math.max(0, prev.pending - result.succeeded),
+      rejected: prev.rejected + result.succeeded,
+    }));
+    return result;
+  }, []);
+
   useEffect(() => {
     fetchReviews();
     return () => abortRef.current?.abort();
@@ -142,5 +164,7 @@ export function useContentReview() {
     approve,
     reject,
     requestChanges,
+    bulkApprove,
+    bulkReject,
   };
 }

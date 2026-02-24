@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { toast } from "sonner";
 import AdminSidebar from "./AdminSidebar";
 import AdminMobileSidebar from "./AdminMobileSidebar";
 import AdminNavbar from "./AdminNavbar";
@@ -9,7 +10,7 @@ import {
   ClipboardList,
   Search,
   Download,
-  Filter,
+  Loader2,
   User,
   Settings,
   BookOpen,
@@ -17,13 +18,9 @@ import {
   Shield,
   FileText,
   LogIn,
-  LogOut,
-  Edit,
-  Trash2,
-  Plus,
-  Eye,
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
+import { nelcAuditApi } from "@/lib/api";
 
 const LogsContent = () => {
   const t = useTranslations("adminDashboard");
@@ -118,6 +115,25 @@ const LogsContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
   const [resourceFilter, setResourceFilter] = useState("all");
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await nelcAuditApi.exportCsv();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t("logsPage.exportSuccess"));
+    } catch {
+      toast.error(t("logsPage.exportError"));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const getActionIcon = (type: string) => {
     switch (type) {
@@ -201,8 +217,12 @@ const LogsContent = () => {
                     {t("logsPage.subtitle")}
                   </p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
-                  <Download className="w-4 h-4" />
+                <button
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                >
+                  {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   {t("logsPage.exportLogs")}
                 </button>
               </div>

@@ -58,6 +58,9 @@ export * from './scheduled-reports';
 // Course Ratings schemas
 export * from './course-ratings';
 
+// Waitlist schemas
+export * from './waitlists';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

@@ -1451,7 +1451,10 @@
       "legendAssignment": "واجب",
       "legendCompleted": "مكتمل",
       "startAssessment": "بدء التقييم",
-      "uploadAssignment": "رفع الواجب"
+      "uploadAssignment": "رفع الواجب",
+      "exportIcs": "تصدير .ics",
+      "exportSuccess": "تم تصدير التقويم بنجاح",
+      "exportError": "فشل تصدير التقويم"
     },
     "transcriptPage": {
       "title": "السجل الأكاديمي",
@@ -3188,7 +3191,8 @@
       "avgCompletion": "متوسط الإكمال",
       "pendingReviews": "مراجعات معلقة",
       "urgentItems": "عناصر عاجلة",
-      "avgRating": "متوسط التقييم"
+      "avgRating": "متوسط التقييم",
+      "totalRevenue": "إجمالي الإيرادات"
     },
     "catalog": {
       "title": "نظرة عامة على الكتالوج",
@@ -3644,7 +3648,13 @@
         "changesRequested": "طلب تعديلات",
         "approved": "معتمد",
         "rejected": "مرفوض"
-      }
+      },
+      "bulkSelected": "{count} عنصر(عناصر) محددة",
+      "bulkApprove": "اعتماد الكل",
+      "bulkReject": "رفض الكل",
+      "clearSelection": "مسح",
+      "bulkApproveSuccess": "تم اعتماد {count} عنصر(عناصر) بنجاح",
+      "bulkRejectSuccess": "تم رفض {count} عنصر(عناصر) بنجاح"
     },
     "assessmentsPage": {
       "title": "التقييمات",
@@ -4536,6 +4546,8 @@
       "title": "سجلات المراجعة",
       "subtitle": "عرض نشاط المنصة وسجل المراجعة",
       "exportLogs": "تصدير السجلات",
+      "exportSuccess": "تم تصدير سجلات المراجعة بنجاح",
+      "exportError": "فشل تصدير سجلات المراجعة",
       "searchPlaceholder": "البحث في السجلات...",
       "noLogs": "لم يتم العثور على سجلات",
       "showing": "عرض {count} سجل",

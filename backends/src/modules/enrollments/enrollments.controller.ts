@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -108,5 +109,29 @@ export class EnrollmentsController {
     @Body() dto: UpdateAttendanceDto,
   ) {
     return this.enrollmentsService.updateAttendance(attendanceId, user, dto);
+  }
+
+  // ─── Waitlist Endpoints ─────────────────────────────────────
+
+  /**
+   * GET /courses/:id/waitlist — List waitlisted students for a course
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('courses/:id/waitlist')
+  async getWaitlist(@Param('id') courseId: string) {
+    return this.enrollmentsService.getWaitlist(courseId);
+  }
+
+  /**
+   * DELETE /courses/:id/waitlist/:entryId — Remove a student from the waitlist
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Delete('courses/:id/waitlist/:entryId')
+  @HttpCode(HttpStatus.OK)
+  async removeFromWaitlist(
+    @Param('id') courseId: string,
+    @Param('entryId') entryId: string,
+  ) {
+    return this.enrollmentsService.removeFromWaitlist(courseId, entryId);
   }
 }

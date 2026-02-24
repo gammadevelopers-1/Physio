@@ -8,7 +8,10 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { StudentService } from './student.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
@@ -216,6 +219,26 @@ export class StudentController {
     return this.studentService.getCalendarEvents(user.id, { from, to });
   }
 
+  /**
+   * GET /student/calendar/export — Export calendar as .ics file
+   */
+  @Get('calendar/export')
+  async exportCalendar(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.studentService.exportCalendarIcs(user.id, { from, to });
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
   // ─── Recent Activity ───────────────────────────────────
 
   /**
@@ -240,6 +263,24 @@ export class StudentController {
   @Get('transcript')
   async getTranscript(@CurrentUser() user: AuthenticatedUser) {
     return this.studentService.getTranscript(user.id);
+  }
+
+  // ─── FAQ & Tutorials ──────────────────────────────────
+
+  /**
+   * GET /student/faqs — Get FAQ categories and items
+   */
+  @Get('faqs')
+  async getFaqs() {
+    return this.studentService.getFaqs();
+  }
+
+  /**
+   * GET /student/tutorials — Get video tutorials
+   */
+  @Get('tutorials')
+  async getTutorials() {
+    return this.studentService.getVideoTutorials();
   }
 
   // ─── Support Tickets ────────────────────────────────────

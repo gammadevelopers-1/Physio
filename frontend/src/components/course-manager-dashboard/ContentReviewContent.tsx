@@ -55,6 +55,8 @@ const ContentReviewContent = () => {
     approve,
     reject,
     requestChanges,
+    bulkApprove,
+    bulkReject,
     checklists,
     checklistLoading,
     fetchChecklist,
@@ -67,6 +69,8 @@ const ContentReviewContent = () => {
   const [commentId, setCommentId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [commentAction, setCommentAction] = useState<"reject" | "changes_requested">("changes_requested");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -126,6 +130,51 @@ const ContentReviewContent = () => {
       toast.error(err instanceof Error ? err.message : "Action failed");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map((i) => i.id)));
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    const ids = Array.from(selectedIds);
+    setBulkLoading(true);
+    try {
+      const result = await bulkApprove(ids);
+      toast.success(t("contentReviewPage.bulkApproveSuccess", { count: result.succeeded }));
+      setSelectedIds(new Set());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bulk approve failed");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    const ids = Array.from(selectedIds);
+    setBulkLoading(true);
+    try {
+      const result = await bulkReject(ids, "Bulk rejected by course manager");
+      toast.success(t("contentReviewPage.bulkRejectSuccess", { count: result.succeeded }));
+      setSelectedIds(new Set());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bulk reject failed");
+    } finally {
+      setBulkLoading(false);
     }
   };
 
@@ -339,6 +388,37 @@ const ContentReviewContent = () => {
                 </div>
               )}
 
+              {/* Bulk Action Bar */}
+              {selectedIds.size > 0 && (
+                <div className="flex items-center gap-3 mb-4 p-3 bg-[#F0F7FF] border border-[#BFDBFE] rounded-lg">
+                  <span className="text-sm font-medium text-[#1E40AF]">
+                    {t("contentReviewPage.bulkSelected", { count: selectedIds.size })}
+                  </span>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      onClick={handleBulkApprove}
+                      disabled={bulkLoading}
+                      className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-md hover:bg-[#16A34A] transition-colors disabled:opacity-50"
+                    >
+                      {bulkLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : t("contentReviewPage.bulkApprove")}
+                    </button>
+                    <button
+                      onClick={handleBulkReject}
+                      disabled={bulkLoading}
+                      className="px-3 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50"
+                    >
+                      {t("contentReviewPage.bulkReject")}
+                    </button>
+                    <button
+                      onClick={() => setSelectedIds(new Set())}
+                      className="px-3 py-1.5 text-[#6B7280] text-xs font-medium hover:text-[#1F2937] transition-colors"
+                    >
+                      {t("contentReviewPage.clearSelection")}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Table */}
               {filtered.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
@@ -362,6 +442,14 @@ const ContentReviewContent = () => {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                          <th className="px-4 py-3 w-8">
+                            <input
+                              type="checkbox"
+                              checked={filtered.length > 0 && selectedIds.size === filtered.length}
+                              onChange={toggleSelectAll}
+                              className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                            />
+                          </th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase w-8"></th>
                           <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">
                             Content
@@ -397,6 +485,14 @@ const ContentReviewContent = () => {
                                 className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                                 onClick={() => toggleExpand(item.id)}
                               >
+                                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedIds.has(item.id)}
+                                    onChange={() => toggleSelect(item.id)}
+                                    className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                                  />
+                                </td>
                                 <td className="px-4 py-3">
                                   {isExpanded ? (
                                     <ChevronDown className="w-4 h-4 text-[#6B7280]" />
@@ -474,7 +570,7 @@ const ContentReviewContent = () => {
                               {/* Expandable Compliance Checklist Row */}
                               {isExpanded && (
                                 <tr>
-                                  <td colSpan={6} className="bg-[#F9FAFB] px-4 py-4">
+                                  <td colSpan={7} className="bg-[#F9FAFB] px-4 py-4">
                                     {/* Previous review note */}
                                     {item.reviewNote && (
                                       <div className="mb-4 p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">

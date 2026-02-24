@@ -280,6 +280,7 @@ export interface InstructorCourse {
   endDate: string | null;
   createdAt: string;
   updatedAt: string;
+  price: number;
   enrolledCount: number;
   completionRate: number;
   totalSessions: number;

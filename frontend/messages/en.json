@@ -1239,7 +1239,10 @@
       "legendAssignment": "Assignment",
       "legendCompleted": "Completed",
       "startAssessment": "Start Assessment",
-      "uploadAssignment": "Upload Assignment"
+      "uploadAssignment": "Upload Assignment",
+      "exportIcs": "Export .ics",
+      "exportSuccess": "Calendar exported successfully",
+      "exportError": "Failed to export calendar"
     },
     "transcriptPage": {
       "title": "Academic Transcript",
@@ -3007,7 +3010,8 @@
       "avgCompletion": "Avg Completion",
       "pendingReviews": "Pending Reviews",
       "urgentItems": "urgent items",
-      "avgRating": "Avg Rating"
+      "avgRating": "Avg Rating",
+      "totalRevenue": "Total Revenue"
     },
     "catalog": {
       "title": "Catalog Overview",
@@ -3438,7 +3442,13 @@
         "changesRequested": "Changes Requested",
         "approved": "Approved",
         "rejected": "Rejected"
-      }
+      },
+      "bulkSelected": "{count} item(s) selected",
+      "bulkApprove": "Approve All",
+      "bulkReject": "Reject All",
+      "clearSelection": "Clear",
+      "bulkApproveSuccess": "{count} item(s) approved successfully",
+      "bulkRejectSuccess": "{count} item(s) rejected successfully"
     },
     "assessmentsPage": {
       "title": "Assessments",
@@ -4321,6 +4331,8 @@
       "title": "Audit Logs",
       "subtitle": "View platform activity and audit trail",
       "exportLogs": "Export Logs",
+      "exportSuccess": "Audit logs exported successfully",
+      "exportError": "Failed to export audit logs",
       "searchPlaceholder": "Search logs...",
       "noLogs": "No logs found",
       "showing": "Showing {count} logs",

@@ -1612,6 +1612,60 @@ export class StudentService {
     return events;
   }
 
+  /**
+   * Export student calendar events as .ics (iCalendar) format.
+   */
+  async exportCalendarIcs(
+    studentId: string,
+    params: { from?: string; to?: string },
+  ): Promise<{ buffer: Buffer; filename: string; contentType: string }> {
+    const events = await this.getCalendarEvents(studentId, params);
+
+    const formatIcsDate = (d: Date): string => {
+      return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    };
+
+    const icsLines: string[] = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//PhysioGuidance//Calendar//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+    ];
+
+    for (const event of events) {
+      if (!event.date) continue;
+      const start = new Date(event.date);
+      const duration = event.durationMinutes || 60;
+      const end = new Date(start.getTime() + duration * 60 * 1000);
+
+      const description = event.courseTitle
+        ? `Course: ${event.courseTitle}`
+        : '';
+      const location = event.zoomLink || event.roomName || event.venueAddress || '';
+
+      icsLines.push(
+        'BEGIN:VEVENT',
+        `UID:${event.id}@physioguidance.com`,
+        `DTSTART:${formatIcsDate(start)}`,
+        `DTEND:${formatIcsDate(end)}`,
+        `SUMMARY:${(event.title || '').replace(/[,;\\]/g, ' ')}`,
+        `DESCRIPTION:${description.replace(/[,;\\]/g, ' ')}`,
+        `LOCATION:${location.replace(/[,;\\]/g, ' ')}`,
+        `STATUS:CONFIRMED`,
+        'END:VEVENT',
+      );
+    }
+
+    icsLines.push('END:VCALENDAR');
+
+    return {
+      buffer: Buffer.from(icsLines.join('\r\n'), 'utf-8'),
+      filename: 'physioguidance-calendar.ics',
+      contentType: 'text/calendar',
+    };
+  }
+
   // ─── Recent Activity ───────────────────────────────────
 
   async getRecentActivity(studentId: string, limit = 10) {
@@ -2114,5 +2168,152 @@ export class StudentService {
       .where(eq(tickets.id, ticketId));
 
     return { success: true };
+  }
+
+  // ─── FAQ ──────────────────────────────────────────────────
+
+  async getFaqs(): Promise<{
+    categories: { id: string; title: string; titleAr: string; items: { question: string; questionAr: string; answer: string; answerAr: string }[] }[];
+  }> {
+    return {
+      categories: [
+        {
+          id: 'enrollment',
+          title: 'Enrollment & Registration',
+          titleAr: 'التسجيل والقبول',
+          items: [
+            {
+              question: 'How do I enroll in a course?',
+              questionAr: 'كيف أسجل في دورة؟',
+              answer: 'Browse the Course Catalog, select a course, and click "Enroll Now". You will receive a confirmation email once enrolled.',
+              answerAr: 'تصفح كتالوج الدورات، اختر الدورة، وانقر على "سجل الآن". ستتلقى بريدًا إلكترونيًا للتأكيد بمجرد التسجيل.',
+            },
+            {
+              question: 'What are the enrollment limits?',
+              questionAr: 'ما هي حدود التسجيل؟',
+              answer: 'Per NELC guidelines, long courses (>5 days) are limited to 40 learners, and short courses (≤5 days) are limited to 50 learners.',
+              answerAr: 'وفقًا لإرشادات المركز الوطني للتعليم الإلكتروني، الدورات الطويلة (أكثر من 5 أيام) محدودة بـ 40 متعلمًا، والدورات القصيرة (5 أيام أو أقل) محدودة بـ 50 متعلمًا.',
+            },
+          ],
+        },
+        {
+          id: 'certificates',
+          title: 'Certificates',
+          titleAr: 'الشهادات',
+          items: [
+            {
+              question: 'How do I get my certificate?',
+              questionAr: 'كيف أحصل على شهادتي؟',
+              answer: 'Certificates are automatically requested when you complete a course. Requirements: ≥70% attendance, all assessments passed, and course 100% complete. A reviewer will approve your certificate.',
+              answerAr: 'يتم طلب الشهادات تلقائيًا عند إكمال الدورة. المتطلبات: حضور ≥70%، اجتياز جميع التقييمات، وإكمال الدورة بنسبة 100%. سيقوم المراجع بالموافقة على شهادتك.',
+            },
+            {
+              question: 'How do I verify a certificate?',
+              questionAr: 'كيف أتحقق من صحة الشهادة؟',
+              answer: 'Each certificate has a QR code. Scan it or visit the verification link to confirm its authenticity.',
+              answerAr: 'كل شهادة تحتوي على رمز QR. امسحه ضوئيًا أو زر رابط التحقق للتأكد من صحتها.',
+            },
+          ],
+        },
+        {
+          id: 'technical',
+          title: 'Technical Support',
+          titleAr: 'الدعم الفني',
+          items: [
+            {
+              question: 'How do I join a Zoom session?',
+              questionAr: 'كيف أنضم إلى جلسة زوم؟',
+              answer: 'Go to your Calendar or Dashboard, find the upcoming session, and click "Join" when the session is about to start (available 15 minutes before).',
+              answerAr: 'انتقل إلى التقويم أو لوحة التحكم، ابحث عن الجلسة القادمة، وانقر على "انضم" عندما توشك الجلسة على البدء (متاح قبل 15 دقيقة).',
+            },
+            {
+              question: 'My video is not playing. What should I do?',
+              questionAr: 'الفيديو لا يعمل. ماذا أفعل؟',
+              answer: 'Try refreshing the page, clearing your browser cache, or switching to a different browser. If the problem persists, submit a support ticket.',
+              answerAr: 'حاول تحديث الصفحة، مسح ذاكرة التخزين المؤقت للمتصفح، أو التبديل إلى متصفح مختلف. إذا استمرت المشكلة، أرسل تذكرة دعم.',
+            },
+          ],
+        },
+        {
+          id: 'assessments',
+          title: 'Assessments & Grades',
+          titleAr: 'التقييمات والدرجات',
+          items: [
+            {
+              question: 'Can I retake an assessment?',
+              questionAr: 'هل يمكنني إعادة التقييم؟',
+              answer: 'Retakes depend on the course settings. If allowed, there is a cooling period between attempts. Check the assessment page for details.',
+              answerAr: 'تعتمد إعادة التقييم على إعدادات الدورة. إذا كان مسموحًا، هناك فترة انتظار بين المحاولات. تحقق من صفحة التقييم للتفاصيل.',
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  // ─── Video Tutorials ──────────────────────────────────────
+
+  async getVideoTutorials(): Promise<{
+    tutorials: { id: string; title: string; titleAr: string; description: string; descriptionAr: string; videoUrl: string; thumbnailUrl: string; durationMinutes: number; category: string }[];
+  }> {
+    return {
+      tutorials: [
+        {
+          id: 'tut-1',
+          title: 'Getting Started with PhysioGuidance',
+          titleAr: 'البدء مع PhysioGuidance',
+          description: 'Learn how to navigate the platform, enroll in courses, and access your dashboard.',
+          descriptionAr: 'تعلم كيفية التنقل في المنصة والتسجيل في الدورات والوصول إلى لوحة التحكم.',
+          videoUrl: '/tutorials/getting-started.mp4',
+          thumbnailUrl: '/tutorials/thumbnails/getting-started.jpg',
+          durationMinutes: 5,
+          category: 'getting-started',
+        },
+        {
+          id: 'tut-2',
+          title: 'How to Take an Assessment',
+          titleAr: 'كيفية إجراء التقييم',
+          description: 'Step-by-step guide on taking quizzes, exams, and submitting assignments.',
+          descriptionAr: 'دليل خطوة بخطوة لإجراء الاختبارات والامتحانات وتقديم المهام.',
+          videoUrl: '/tutorials/taking-assessment.mp4',
+          thumbnailUrl: '/tutorials/thumbnails/taking-assessment.jpg',
+          durationMinutes: 7,
+          category: 'assessments',
+        },
+        {
+          id: 'tut-3',
+          title: 'Using the Calendar & Joining Sessions',
+          titleAr: 'استخدام التقويم والانضمام إلى الجلسات',
+          description: 'Learn how to view your schedule, set reminders, and join Zoom sessions.',
+          descriptionAr: 'تعلم كيفية عرض جدولك وتعيين التذكيرات والانضمام إلى جلسات زوم.',
+          videoUrl: '/tutorials/calendar-sessions.mp4',
+          thumbnailUrl: '/tutorials/thumbnails/calendar-sessions.jpg',
+          durationMinutes: 4,
+          category: 'sessions',
+        },
+        {
+          id: 'tut-4',
+          title: 'Understanding Certificates & Transcripts',
+          titleAr: 'فهم الشهادات والنصوص الأكاديمية',
+          description: 'How to earn certificates, download them, and access your academic transcript.',
+          descriptionAr: 'كيفية الحصول على الشهادات وتنزيلها والوصول إلى النص الأكاديمي.',
+          videoUrl: '/tutorials/certificates-transcripts.mp4',
+          thumbnailUrl: '/tutorials/thumbnails/certificates-transcripts.jpg',
+          durationMinutes: 6,
+          category: 'certificates',
+        },
+        {
+          id: 'tut-5',
+          title: 'Accessibility Features',
+          titleAr: 'ميزات إمكانية الوصول',
+          description: 'Learn about language switching, font size controls, high contrast mode, and captions.',
+          descriptionAr: 'تعرف على تبديل اللغة وأدوات حجم الخط ووضع التباين العالي والترجمة.',
+          videoUrl: '/tutorials/accessibility.mp4',
+          thumbnailUrl: '/tutorials/thumbnails/accessibility.jpg',
+          durationMinutes: 3,
+          category: 'accessibility',
+        },
+      ],
+    };
   }
 }

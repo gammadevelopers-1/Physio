@@ -19,7 +19,7 @@ import {
   Bell,
   Settings,
   Plug,
-  Camera,
+  Pencil,
   Mail,
   Phone,
   MapPin,
@@ -362,9 +362,9 @@ const SettingsContent = () => {
                           <div ref={avatarMenuRef}>
                             <button
                               onClick={() => setAvatarMenuOpen((v) => !v)}
-                              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-8 h-8 bg-[#3B82F6] text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-[#2563EB] transition-colors`}
+                              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
                             >
-                              <Camera className="w-4 h-4" />
+                              <Pencil className="w-3.5 h-3.5 text-white" />
                             </button>
                             {avatarMenuOpen && (
                               <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}>

@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import StudentDashboardError from "./StudentDashboardError";
+import OfflineBanner from "./OfflineBanner";
 import CalendarGrid from "./CalendarGrid";
 import EventDetailPanel from "./EventDetailPanel";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
@@ -45,7 +46,7 @@ const CalendarContent = () => {
     };
   }, [currentMonth]);
 
-  const { data: events, loading } = useStudentCalendar(calendarParams);
+  const { data: events, loading, error, refetch } = useStudentCalendar(calendarParams);
 
   // Filter events for selected date
   const selectedDayEvents = useMemo(() => {
@@ -95,11 +96,23 @@ const CalendarContent = () => {
                 {t("calendarPage.title")}
               </h1>
 
+              <OfflineBanner />
+
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
                 {loading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+                  <div className="space-y-4 py-4">
+                    <div className="flex justify-between items-center">
+                      <div className="bg-[#E5E7EB] rounded animate-pulse h-6 w-32" />
+                      <div className="bg-[#E5E7EB] rounded animate-pulse h-8 w-20" />
+                    </div>
+                    <div className="grid grid-cols-7 gap-2">
+                      {Array.from({ length: 35 }).map((_, i) => (
+                        <div key={i} className="bg-[#E5E7EB] rounded animate-pulse h-12" />
+                      ))}
+                    </div>
                   </div>
+                ) : error ? (
+                  <StudentDashboardError message={error} onRetry={refetch} />
                 ) : (
                   <>
                     <CalendarGrid

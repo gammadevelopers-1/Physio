@@ -221,3 +221,22 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ============================================
+   Accessibility: High Contrast
+   ============================================ */
+[data-high-contrast="true"] {
+  filter: contrast(1.2);
+}
+
+/* ============================================
+   Accessibility: Reduced Motion
+   ============================================ */
+[data-reduce-motion="true"] *,
+[data-reduce-motion="true"] *::before,
+[data-reduce-motion="true"] *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+}

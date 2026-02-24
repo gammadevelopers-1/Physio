@@ -35,10 +35,23 @@ export const userPreferences = pgTable('user_preferences', {
   compactMode: boolean('compact_mode').default(false),
   showTips: boolean('show_tips').default(true),
 
+  // Language preferences
+  contentLanguage: varchar('content_language', { length: 10 }).default('en'),
+  calendarFormat: varchar('calendar_format', { length: 15 }).default('gregorian'),
+
   // Accessibility preferences
   highContrast: boolean('high_contrast').default(false),
   fontSize: varchar('font_size', { length: 10 }).default('medium'),
   reduceMotion: boolean('reduce_motion').default(false),
+  captionsDefault: boolean('captions_default').default(false),
+  subtitlesLanguage: varchar('subtitles_language', { length: 10 }).default('en'),
+
+  // Notification timing
+  reminderMinutes: integer('reminder_minutes').default(30),
+
+  // Privacy preferences
+  profileVisibility: varchar('profile_visibility', { length: 20 }).default('full'),
+  dataSharing: boolean('data_sharing').default(true),
 
   // Default policy preferences (Course Manager)
   policyEnrollmentLimit: integer('policy_enrollment_limit').default(30),

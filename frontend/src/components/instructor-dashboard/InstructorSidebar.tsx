@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,7 @@ import {
   Settings,
   Pencil,
   Star,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
@@ -41,6 +42,21 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
   const isRTL = locale === "ar";
   const { refreshUser } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+
+  const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [avatarMenuOpen, closeAvatarMenu]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -53,6 +69,15 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
       toast.error(t("settings.avatarUploadError"));
     }
     e.target.value = "";
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await profileApi.update({ avatar: null });
+      await refreshUser();
+    } catch {
+      toast.error(t("settings.avatarUploadError"));
+    }
   };
 
   const navItems = [
@@ -132,13 +157,35 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
               className="hidden"
               onChange={handleAvatarUpload}
             />
-            <button
-              onClick={() => avatarInputRef.current?.click()}
-              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white`}
-              aria-label={t("sidebar.editProfile")}
-            >
-              <Pencil className="w-3.5 h-3.5 text-white" />
-            </button>
+            <div ref={avatarMenuRef}>
+              <button
+                onClick={() => setAvatarMenuOpen((v) => !v)}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
+                aria-label={t("sidebar.editProfile")}
+              >
+                <Pencil className="w-3.5 h-3.5 text-white" />
+              </button>
+              {avatarMenuOpen && (
+                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}>
+                  <button
+                    onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4 text-[#4B5563]" />
+                    {t("sidebar.uploadPhoto")}
+                  </button>
+                  {instructor.avatar && (
+                    <button
+                      onClick={() => { handleRemoveAvatar(); setAvatarMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t("sidebar.removePhoto")}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Name and Email */}

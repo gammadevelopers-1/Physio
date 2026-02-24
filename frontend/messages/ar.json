@@ -784,7 +784,8 @@
       "free": "مجاني",
       "sessions": "جلسات",
       "courseFull": "الدورة مكتملة",
-      "seatsLeft": "{count} مقاعد متبقية"
+      "seatsLeft": "{count} مقاعد متبقية",
+      "enrollBy": "التسجيل قبل"
     },
     "pagination": {
       "previous": "السابق",
@@ -1388,6 +1389,8 @@
       "takeQuiz": "أداء الاختبار",
       "resumeLesson": "استئناف الدرس",
       "startCourse": "بدء الدورة",
+      "uploadAssignment": "رفع الواجب",
+      "viewResults": "عرض النتائج",
       "overdue": "متأخر",
       "dueSoon": "قريباً",
       "missingTasks": "{count} مهام مفقودة"
@@ -1442,7 +1445,15 @@
       "getDirections": "احصل على الاتجاهات",
       "addToCalendar": "إضافة للتقويم",
       "mins": "دقيقة",
-      "eventsCount": "{count} حدث(أحداث)"
+      "eventsCount": "{count} حدث(أحداث)",
+      "legendZoom": "زوم",
+      "legendOnsite": "حضوري",
+      "legendHybrid": "مدمج",
+      "legendAssessment": "تقييم",
+      "legendAssignment": "واجب",
+      "legendCompleted": "مكتمل",
+      "startAssessment": "بدء التقييم",
+      "uploadAssignment": "رفع الواجب"
     },
     "transcriptPage": {
       "title": "السجل الأكاديمي",
@@ -1549,11 +1560,28 @@
       "rejectionReason": "السبب",
       "holdNote": "ملاحظة",
       "requestedOn": "تم الطلب في {date}",
+      "certificateId": "رقم الشهادة: {id}",
       "mockData": {
         "courseTitle": "دعم الحياة القلبي الوعائي المتقدم",
         "courseDescription": "تهدف الدورة إلى تعزيز مهارات مقدمي الرعاية الصحية في تحفيز المرضى وتحسين الالتزام بالعلاج...",
         "accreditedByName": "الهيئة السعودية للتخصصات الصحية"
       }
+    },
+    "verify": {
+      "verifying": "جارٍ التحقق من الشهادة...",
+      "notFoundTitle": "الشهادة غير موجودة",
+      "notFoundDescription": "لم يتم العثور على رقم الشهادة المُدخل في نظامنا. يرجى التحقق من الرقم والمحاولة مرة أخرى.",
+      "backToHome": "العودة للرئيسية",
+      "verifiedTitle": "تم التحقق",
+      "verifiedDescription": "تم التحقق من هذه الشهادة وهي أصلية.",
+      "pendingTitle": "في انتظار التحقق",
+      "pendingDescription": "هذه الشهادة في انتظار الموافقة ولم يتم إصدارها بعد.",
+      "studentName": "اسم الطالب",
+      "courseName": "الدورة",
+      "issuedDate": "تاريخ الإصدار",
+      "totalHours": "إجمالي الساعات",
+      "hours": "ساعة",
+      "issuedBy": "صادرة من PhysioGuidance"
     },
     "supportPage": {
       "title": "الدعم",
@@ -1592,7 +1620,16 @@
       "replyPlaceholder": "اكتب ردك...",
       "createdOn": "تم الإنشاء في {date}",
       "rateExperience": "كيف كانت تجربتك؟",
-      "thankYou": "شكراً لملاحظاتك!"
+      "thankYou": "شكراً لملاحظاتك!",
+      "expectedResponse": "الرد المتوقع خلال {hours} ساعة",
+      "slaOverdue": "تأخر الرد",
+      "selectCourse": "اختر الدورة المتعلقة (اختياري)",
+      "relatedCourse": "الدورة المتعلقة",
+      "attachment": "مرفق",
+      "attachFile": "إرفاق ملف (PDF, JPG, PNG, حد أقصى 5 ميجا)",
+      "removeFile": "إزالة الملف",
+      "fileTooLarge": "حجم الملف يتجاوز الحد الأقصى 5 ميجابايت",
+      "invalidFileType": "يُسمح فقط بملفات PDF و JPG و PNG و WebP"
     },
     "badges": {
       "title": "الشارات",
@@ -1663,7 +1700,70 @@
         "male": "ذكر",
         "female": "أنثى"
       },
-      "saved": "تم الحفظ!"
+      "saved": "تم الحفظ!",
+      "avatarUploadError": "فشل رفع الصورة الشخصية",
+      "uploadPhoto": "رفع صورة",
+      "removePhoto": "إزالة الصورة",
+      "tabPreferences": "التفضيلات",
+      "tabNotifications": "الإشعارات",
+      "languageSettings": "إعدادات اللغة",
+      "interfaceLanguage": "لغة الواجهة",
+      "contentLanguage": "لغة المحتوى",
+      "calendarFormat": "تنسيق التقويم",
+      "english": "English",
+      "arabic": "العربية",
+      "both": "كلاهما",
+      "gregorian": "ميلادي",
+      "hijri": "هجري",
+      "accessibilityControls": "أدوات إمكانية الوصول",
+      "fontSize": "حجم الخط",
+      "fontSmall": "صغير",
+      "fontMedium": "متوسط",
+      "fontLarge": "كبير",
+      "fontExtraLarge": "كبير جداً",
+      "highContrast": "تباين عالي",
+      "highContrastDesc": "زيادة نسبة التباين إلى 4.5:1 كحد أدنى",
+      "captionsDefault": "الترجمة التوضيحية الافتراضية",
+      "captionsDefaultDesc": "إظهار الترجمة التوضيحية لجميع محتوى الفيديو",
+      "subtitlesLanguage": "لغة الترجمة",
+      "reducedMotion": "تقليل الحركة",
+      "reducedMotionDesc": "تعطيل الرسوم المتحركة في المنصة",
+      "keyboardNavigation": "التنقل بلوحة المفاتيح",
+      "screenReader": "دعم قارئ الشاشة",
+      "alwaysEnabled": "مفعّل دائماً",
+      "privacyControls": "إعدادات الخصوصية",
+      "profileVisibility": "ظهور الملف الشخصي",
+      "profileVisibilityDesc": "اختر ما يراه المتعلمون الآخرون",
+      "nameOnly": "الاسم فقط",
+      "namePhoto": "الاسم + الصورة",
+      "fullProfile": "الملف الكامل",
+      "dataSharing": "مشاركة البيانات",
+      "dataSharingDesc": "المشاركة في تحليلات التعلم المجهولة",
+      "exportData": "تصدير بياناتي",
+      "deleteAccount": "حذف حسابي",
+      "comingSoon": "قريباً",
+      "notificationPreferences": "تفضيلات الإشعارات",
+      "emailNotifications": "البريد الإلكتروني",
+      "sessionReminder": "تذكير الجلسة",
+      "assessmentDue": "موعد التقييم",
+      "certificateReady": "الشهادة جاهزة",
+      "gradeAvailable": "الدرجة متاحة",
+      "courseUpdate": "تحديث الدورة",
+      "promotional": "ترويجي",
+      "reminderTiming": "توقيت التذكير",
+      "reminderTimingDesc": "كم من الوقت قبل الجلسة لإرسال التذكير",
+      "minutes": "دقيقة",
+      "hour": "ساعة واحدة",
+      "smsWhatsapp": "SMS / واتساب",
+      "inApp": "داخل التطبيق"
+    },
+    "error": {
+      "title": "حدث خطأ ما",
+      "message": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+      "retry": "حاول مرة أخرى"
+    },
+    "offline": {
+      "message": "يبدو أنك غير متصل بالإنترنت. سيتم مزامنة تقدمك عند الاتصال."
     },
     "courseDetail": {
       "backToCourses": "العودة إلى دوراتي",
@@ -1690,7 +1790,8 @@
       "completed": "مكتملة",
       "graded": "تم التصحيح",
       "pendingGrading": "في انتظار التصحيح",
-      "review": "مراجعة"
+      "review": "مراجعة",
+      "aboutCourse": "عن هذه الدورة"
     },
     "learning": {
       "courseContent": "محتوى الدورة",
@@ -1706,13 +1807,22 @@
       "downloadPdf": "تحميل PDF",
       "viewFullSize": "عرض بالحجم الكامل",
       "takeAssessment": "ابدأ التقييم",
-      "completed": "مكتملة"
+      "completed": "مكتملة",
+      "toggleCaptions": "تبديل الترجمة (C)",
+      "keyboardShortcuts": "مسافة: تشغيل/إيقاف | ←→: تقديم 10 ثوانٍ | C: ترجمة",
+      "locked": "مقفل"
     },
     "assessment": {
       "question": "السؤال",
       "mark": "درجة",
       "marks": "درجات",
       "typeAnswer": "اكتب إجابتك هنا...",
+      "uploadFile": "انقر لرفع ملف",
+      "fileUploaded": "تم رفع الملف بنجاح",
+      "bold": "غامق",
+      "italic": "مائل",
+      "underline": "تحته خط",
+      "bulletList": "قائمة نقطية",
       "previous": "السابق",
       "next": "التالي",
       "submit": "إرسال",
@@ -1731,6 +1841,7 @@
       "attemptsUsed": "المحاولات المستخدمة",
       "unlimited": "غير محدودة",
       "startAssessment": "ابدأ التقييم",
+      "instructions": "التعليمات",
       "timerWarning": "بمجرد البدء، لا يمكن إيقاف المؤقت مؤقتاً. تأكد من أن لديك وقتاً كافياً لإكمال التقييم.",
       "savedProgressNotice": "لديك {count} إجابة(إجابات) محفوظة من محاولة سابقة.",
       "minutes": "دقيقة",
@@ -1838,6 +1949,8 @@
       "courseCompletion": "إكمال الدورة",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
+      "uploadPhoto": "رفع صورة",
+      "removePhoto": "إزالة الصورة",
       "logout": "تسجيل الخروج"
     },
     "kpi": {
@@ -2908,6 +3021,8 @@
       "disconnect": "قطع الاتصال",
       "profileSaved": "تم تحديث الملف الشخصي بنجاح",
       "avatarUploadError": "فشل في رفع الصورة. يرجى المحاولة مرة أخرى.",
+      "uploadPhoto": "رفع صورة",
+      "removePhoto": "إزالة الصورة",
       "passwordChanged": "تم تغيير كلمة المرور بنجاح",
       "passwordChangedLogout": "تم تغيير كلمة المرور بنجاح. جارٍ تسجيل الخروج من جميع الجلسات للأمان...",
       "passwordChangeFailed": "فشل في تغيير كلمة المرور"
@@ -2985,6 +3100,8 @@
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
       "avatarUploadError": "فشل رفع الصورة الشخصية. يرجى المحاولة مرة أخرى.",
+      "uploadPhoto": "رفع صورة",
+      "removePhoto": "إزالة الصورة",
       "logout": "تسجيل الخروج"
     },
     "kpi": {
@@ -3635,6 +3752,8 @@
       "saveChanges": "حفظ التغييرات",
       "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
       "profileError": "فشل في تحديث الملف الشخصي",
+      "uploadPhoto": "رفع صورة",
+      "removePhoto": "إزالة الصورة",
       "tabs": {
         "profile": "الملف الشخصي",
         "notifications": "الإشعارات",

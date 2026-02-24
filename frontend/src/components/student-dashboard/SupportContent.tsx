@@ -10,6 +10,7 @@ import {
   HelpCircle,
   Loader2,
   MessageSquarePlus,
+  Paperclip,
   Plus,
   Send,
   Tag,
@@ -18,8 +19,11 @@ import {
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import StudentDashboardError from "./StudentDashboardError";
+import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTickets } from "@/hooks/useStudentTickets";
+import { useStudentCourses } from "@/hooks/useStudentCourses";
 import { studentApi } from "@/lib/api";
 import type {
   SupportTicket,
@@ -28,6 +32,7 @@ import type {
   TicketPriority,
 } from "@/types/student-dashboard";
 import TicketDetailView from "./TicketDetailView";
+import EmptyStateIllustration from "./EmptyStateIllustration";
 
 const STATUS_TABS: { key: string; label: string }[] = [
   { key: "all", label: "supportPage.filterAll" },
@@ -101,6 +106,39 @@ function PriorityBadge({
   );
 }
 
+function getSlaHours(priority: string): number {
+  switch (priority) {
+    case "high": return 2;
+    case "medium": return 4;
+    case "low": return 8;
+    default: return 4;
+  }
+}
+
+function SlaBadge({ ticket, t }: { ticket: SupportTicket; t: ReturnType<typeof useTranslations> }) {
+  if (ticket.status === "resolved" || ticket.status === "closed") return null;
+  const slaHours = getSlaHours(ticket.priority);
+  const slaDeadline = new Date(ticket.createdAt).getTime() + slaHours * 3600000;
+  const remaining = slaDeadline - Date.now();
+  const hoursLeft = remaining / 3600000;
+
+  if (remaining <= 0) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full bg-red-100 text-red-700">
+        <Clock className="w-2.5 h-2.5" />
+        {t("supportPage.slaOverdue")}
+      </span>
+    );
+  }
+  const color = hoursLeft > 2 ? "bg-green-100 text-green-700" : hoursLeft > 1 ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700";
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium rounded-full ${color}`}>
+      <Clock className="w-2.5 h-2.5" />
+      {t("supportPage.expectedResponse", { hours: Math.ceil(hoursLeft) })}
+    </span>
+  );
+}
+
 function TicketRow({
   ticket,
   t,
@@ -140,12 +178,15 @@ function TicketRow({
             {courseTitle}
           </p>
         )}
-        <p className="text-[10px] text-[#9CA3AF] mt-1">
-          {new Date(ticket.createdAt).toLocaleDateString(
-            isRTL ? "ar-SA" : "en-US",
-            { year: "numeric", month: "short", day: "numeric" },
-          )}
-        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <p className="text-[10px] text-[#9CA3AF]">
+            {new Date(ticket.createdAt).toLocaleDateString(
+              isRTL ? "ar-SA" : "en-US",
+              { year: "numeric", month: "short", day: "numeric" },
+            )}
+          </p>
+          <SlaBadge ticket={ticket} t={t} />
+        </div>
       </div>
       <ChevronRight
         className={`w-4 h-4 text-[#9CA3AF] flex-shrink-0 ${isRTL ? "rotate-180" : ""}`}
@@ -153,6 +194,15 @@ function TicketRow({
     </button>
   );
 }
+
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_ATTACHMENT_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+];
 
 function CreateTicketForm({
   t,
@@ -170,8 +220,27 @@ function CreateTicketForm({
   const [priority, setPriority] = useState<TicketPriority>("medium");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const { data: enrolledCourses } = useStudentCourses({ limit: 100 });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setFormError(t("supportPage.fileTooLarge"));
+      return;
+    }
+    if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type)) {
+      setFormError(t("supportPage.invalidFileType"));
+      return;
+    }
+    setFormError(null);
+    setAttachmentFile(file);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,11 +249,21 @@ function CreateTicketForm({
     setSubmitting(true);
     setFormError(null);
     try {
+      let attachmentUrl: string | undefined;
+
+      // Upload attachment first if present
+      if (attachmentFile) {
+        const uploadResult = await studentApi.uploadFile(attachmentFile);
+        attachmentUrl = uploadResult.url;
+      }
+
       await studentApi.createTicket({
         category,
         priority,
         subject: subject.trim(),
         description: description.trim(),
+        ...(courseId && { courseId }),
+        ...(attachmentUrl && { attachmentUrl }),
       });
       onCreated();
     } catch (err) {
@@ -235,6 +314,27 @@ function CreateTicketForm({
             ))}
           </select>
         </div>
+
+        {/* Related Course */}
+        {enrolledCourses.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              {t("supportPage.relatedCourse")}
+            </label>
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            >
+              <option value="">{t("supportPage.selectCourse")}</option>
+              {enrolledCourses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {isRTL && c.titleAr ? c.titleAr : c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Priority */}
         <div>
@@ -294,6 +394,47 @@ function CreateTicketForm({
           </p>
         </div>
 
+        {/* File Attachment */}
+        <div>
+          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            {t("supportPage.attachment")}
+          </label>
+          {attachmentFile ? (
+            <div className="flex items-center gap-2 p-2.5 border border-[#D1D5DB] rounded-lg bg-[#F9FAFB]">
+              <Paperclip className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
+              <span className="text-sm text-[#374151] truncate flex-1">
+                {attachmentFile.name}
+              </span>
+              <span className="text-xs text-[#9CA3AF] flex-shrink-0">
+                {(attachmentFile.size / 1024).toFixed(0)} KB
+              </span>
+              <button
+                type="button"
+                onClick={() => setAttachmentFile(null)}
+                className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0"
+              >
+                <X className="w-3.5 h-3.5 text-[#6B7280]" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
+              <Paperclip className="w-4 h-4 text-[#9CA3AF]" />
+              <span className="text-sm text-[#9CA3AF]">
+                {t("supportPage.attachFile")}
+              </span>
+              <span className="text-xs text-[#D1D5DB] ml-auto">
+                PDF, JPG, PNG (max 5MB)
+              </span>
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
         {/* Submit */}
         <button
           type="submit"
@@ -325,6 +466,7 @@ const SupportContent = () => {
   const {
     data: ticketsList,
     loading,
+    error,
     refetch,
   } = useStudentTickets({
     status: statusFilter === "all" ? undefined : statusFilter,
@@ -378,6 +520,8 @@ const SupportContent = () => {
                 )}
               </div>
 
+              <OfflineBanner />
+
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
                 {showForm ? (
                   <CreateTicketForm
@@ -407,14 +551,16 @@ const SupportContent = () => {
 
                     {/* Ticket list */}
                     {loading ? (
-                      <div className="flex items-center justify-center py-16">
-                        <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+                      <div className="space-y-3 py-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="bg-[#F3F4F6] rounded-lg h-16 animate-pulse" />
+                        ))}
                       </div>
+                    ) : error ? (
+                      <StudentDashboardError message={error} onRetry={refetch} />
                     ) : ticketsList.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-10 sm:py-16">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                          <MessageSquarePlus className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
-                        </div>
+                        <EmptyStateIllustration variant="tickets" className="mb-2" />
                         <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
                           {t("supportPage.noTicketsTitle")}
                         </h3>

@@ -6,12 +6,14 @@ import {
   CheckCircle2,
   Clock,
   GraduationCap,
-  Loader2,
   Printer,
 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import StudentTranscriptSkeleton from "./StudentTranscriptSkeleton";
+import StudentDashboardError from "./StudentDashboardError";
+import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTranscript } from "@/hooks/useStudentTranscript";
 import type { TranscriptCourse } from "@/types/student-dashboard";
@@ -250,7 +252,7 @@ const TranscriptContent = () => {
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
 
-  const { data: transcript, loading } = useStudentTranscript();
+  const { data: transcript, loading, error, refetch } = useStudentTranscript();
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";
@@ -301,12 +303,12 @@ const TranscriptContent = () => {
                 </button>
               </div>
 
+              <OfflineBanner />
+
               {loading ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
-                  </div>
-                </div>
+                <StudentTranscriptSkeleton />
+              ) : error ? (
+                <StudentDashboardError message={error} onRetry={refetch} />
               ) : !transcript || transcript.courses.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">

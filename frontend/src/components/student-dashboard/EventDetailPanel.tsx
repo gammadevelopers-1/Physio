@@ -1,17 +1,21 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Calendar,
+  ClipboardCheck,
   Clock,
   Download,
   ExternalLink,
+  FileText,
   MapPin,
   User,
   Video,
 } from "lucide-react";
 import type { CalendarEvent } from "@/types/student-dashboard";
+import EmptyStateIllustration from "./EmptyStateIllustration";
 import {
   getDeliveryIcon,
   isJoinable,
@@ -70,7 +74,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
 
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
-          <Calendar className="w-8 h-8 text-[#D1D5DB] mb-2" />
+          <EmptyStateIllustration variant="calendar" className="mb-2" />
           <p className="text-sm text-[#6B7280]">
             {t("calendarPage.noEventsForDay")}
           </p>
@@ -217,6 +221,28 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                       <ExternalLink className="w-3.5 h-3.5" />
                       {t("calendarPage.getDirections")}
                     </a>
+                  )}
+
+                  {/* Assessment action */}
+                  {event.eventType === "assessment" && (
+                    <Link
+                      href={`/${locale}/dashboard/student/courses/${event.courseId}/assessment/${event.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                    >
+                      <ClipboardCheck className="w-3.5 h-3.5" />
+                      {t("calendarPage.startAssessment")}
+                    </Link>
+                  )}
+
+                  {/* Assignment action */}
+                  {event.eventType === "assignment" && (
+                    <Link
+                      href={`/${locale}/dashboard/student/courses/${event.courseId}/assessment/${event.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      {t("calendarPage.uploadAssignment")}
+                    </Link>
                   )}
 
                   {/* Add to Calendar */}

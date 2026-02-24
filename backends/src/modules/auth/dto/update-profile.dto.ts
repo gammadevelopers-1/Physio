@@ -3,6 +3,7 @@ import {
   MinLength,
   MaxLength,
   IsOptional,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpdateProfileDto {
@@ -24,9 +25,10 @@ export class UpdateProfileDto {
   phone?: string;
 
   @IsOptional()
+  @ValidateIf((o) => o.avatar !== null)
   @IsString()
   @MaxLength(500)
-  avatar?: string;
+  avatar?: string | null;
 
   @IsOptional()
   @IsString()
@@ -57,4 +59,29 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(100)
   department?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  scfhsNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  nationalId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  nationality?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  gender?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  dateOfBirth?: string;
 }

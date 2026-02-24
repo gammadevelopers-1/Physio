@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { FavouritesProvider } from "@/contexts/FavouritesContext";
+import PreferencesProvider from "@/components/student-dashboard/PreferencesProvider";
 
 export default async function StudentDashboardLayout({
   children,
@@ -11,5 +12,9 @@ export default async function StudentDashboardLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <FavouritesProvider>{children}</FavouritesProvider>;
+  return (
+    <FavouritesProvider>
+      <PreferencesProvider>{children}</PreferencesProvider>
+    </FavouritesProvider>
+  );
 }

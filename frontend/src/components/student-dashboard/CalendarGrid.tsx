@@ -30,6 +30,22 @@ function isSameDay(a: Date, b: Date): boolean {
   );
 }
 
+function getEventDotColor(event: CalendarEvent): string {
+  if (event.status === "completed") return "bg-emerald-400";
+  if (event.eventType === "assessment") return "bg-red-500";
+  if (event.eventType === "assignment") return "bg-orange-500";
+  switch (event.sessionType) {
+    case "zoom":
+      return "bg-blue-500";
+    case "onsite":
+      return "bg-green-500";
+    case "hybrid":
+      return "bg-purple-500";
+    default:
+      return "bg-blue-500";
+  }
+}
+
 const CalendarGrid = ({
   currentMonth,
   events,
@@ -156,7 +172,7 @@ const CalendarGrid = ({
             <button
               key={i}
               onClick={() => onSelectDate(day)}
-              className={`relative flex flex-col items-center justify-center py-2 sm:py-3 transition-colors ${
+              className={`relative flex flex-col items-center justify-center py-2 sm:py-3 min-h-[44px] transition-colors ${
                 isCurrentMonth ? "" : "opacity-40"
               } ${isSelected ? "" : "hover:bg-[#F9FAFB]"}`}
             >
@@ -177,25 +193,45 @@ const CalendarGrid = ({
               {/* Event dots */}
               {hasEvents && (
                 <div className="flex gap-0.5 mt-0.5">
-                  {dayEvents.length <= 3 ? (
-                    dayEvents.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className="w-1.5 h-1.5 rounded-full bg-blue-500"
-                      />
-                    ))
-                  ) : (
-                    <>
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                    </>
-                  )}
+                  {(dayEvents.length <= 3 ? dayEvents : dayEvents.slice(0, 3)).map((evt, idx) => (
+                    <div
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full ${getEventDotColor(evt)}`}
+                    />
+                  ))}
                 </div>
               )}
             </button>
           );
         })}
+      </div>
+
+      {/* Color Legend */}
+      <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[#F3F4F6]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-blue-500" />
+          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendZoom")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendOnsite")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-purple-500" />
+          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendHybrid")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-red-500" />
+          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendAssessment")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-orange-500" />
+          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendAssignment")}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span className="text-[10px] text-[#6B7280]">{t("calendarPage.legendCompleted")}</span>
+        </div>
       </div>
     </div>
   );

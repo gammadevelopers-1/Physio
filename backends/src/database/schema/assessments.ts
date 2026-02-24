@@ -30,6 +30,8 @@ export const assessments = pgTable(
     durationMinutes: integer('duration_minutes'),
     attemptsAllowed: integer('attempts_allowed').notNull().default(1),
     status: varchar('status', { length: 20 }).notNull().default('draft'),
+    instructions: varchar('instructions', { length: 5000 }),
+    dueDate: timestamp('due_date'),
     // Proctoring
     proctoringEnabled: boolean('proctoring_enabled').notNull().default(false),
     proctoringRules: jsonb('proctoring_rules').$type<{

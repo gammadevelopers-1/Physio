@@ -125,6 +125,7 @@ export interface StudentCourseDetail {
     instructorName: string;
     isCmeAccredited: boolean;
     cmeHours: number;
+    isSequential?: boolean;
   };
   enrollment: {
     id: string;
@@ -191,7 +192,7 @@ export interface CalendarEvent {
   title: string;
   date: string;
   durationMinutes: number;
-  eventType: 'session';
+  eventType: 'session' | 'assessment' | 'assignment';
   sessionType: string;
   status: string;
   courseId: string;
@@ -296,7 +297,7 @@ export interface ModuleMaterialsResponse {
 
 export interface AssessmentQuestion {
   id: string;
-  type: 'mcq' | 'true_false' | 'short_answer' | 'essay';
+  type: 'mcq' | 'true_false' | 'short_answer' | 'essay' | 'file_upload';
   questionText: string;
   questionTextAr: string | null;
   options: { text: string; textAr?: string }[];
@@ -315,6 +316,7 @@ export interface StudentAssessment {
   attemptsTaken: number;
   canRetake?: boolean;
   retakeAvailableAt?: string | null;
+  instructions?: string | null;
   questions: AssessmentQuestion[];
 }
 

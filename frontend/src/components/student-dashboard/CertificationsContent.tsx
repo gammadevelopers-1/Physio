@@ -8,16 +8,19 @@ import {
   CheckCircle2,
   Clock,
   Download,
-  Loader2,
   PauseCircle,
   XCircle,
 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import StudentCoursesGridSkeleton from "./StudentCoursesGridSkeleton";
+import StudentDashboardError from "./StudentDashboardError";
+import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCertificates } from "@/hooks/useStudentCertificates";
 import type { StudentCertificate } from "@/types/student-dashboard";
+import EmptyStateIllustration from "./EmptyStateIllustration";
 
 const statusOrder: Record<string, number> = {
   approved: 0,
@@ -131,6 +134,10 @@ function EligibilityChecklist({
   );
 }
 
+function formatCertId(id: string): string {
+  return `PG-${id.slice(0, 8).toUpperCase()}`;
+}
+
 function CertificateCard({
   certificate,
   t,
@@ -178,6 +185,13 @@ function CertificateCard({
                 date: formatDate(certificate.createdAt),
               })}
         </p>
+
+        {/* Certificate ID (for approved) */}
+        {isApproved && (
+          <p className={`text-xs font-mono text-[#002D87] bg-[#F0F7FF] px-2 py-1 rounded mb-3 inline-block ${isRTL ? "text-right" : ""}`}>
+            {t("certifications.certificateId", { id: formatCertId(certificate.id) })}
+          </p>
+        )}
 
         {/* Approved: Certificate thumbnail + accreditation + download */}
         {isApproved && (
@@ -289,7 +303,7 @@ const CertificationsContent = () => {
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
 
-  const { data: certificates, loading } = useStudentCertificates();
+  const { data: certificates, loading, error, refetch } = useStudentCertificates();
 
   // Sort: approved first, then pending, held, rejected
   const sortedCertificates = [...certificates].sort(
@@ -326,16 +340,16 @@ const CertificationsContent = () => {
                 {t("certifications.title")}
               </h1>
 
+              <OfflineBanner />
+
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
                 {loading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
-                  </div>
+                  <StudentCoursesGridSkeleton count={4} />
+                ) : error ? (
+                  <StudentDashboardError message={error} onRetry={refetch} />
                 ) : certificates.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <Award className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
-                    </div>
+                    <EmptyStateIllustration variant="certificates" className="mb-2" />
                     <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
                       {t("certifications.noCertificatesTitle")}
                     </h3>

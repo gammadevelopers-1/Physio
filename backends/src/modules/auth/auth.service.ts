@@ -478,6 +478,12 @@ export class AuthService {
         avatar: users.avatar,
         activeRole: users.activeRole,
         department: users.department,
+        bio: users.bio,
+        scfhsNumber: users.scfhsNumber,
+        nationalId: users.nationalId,
+        nationality: users.nationality,
+        gender: users.gender,
+        dateOfBirth: users.dateOfBirth,
         isActive: users.isActive,
         isVerified: users.isVerified,
         lastLoginAt: users.lastLoginAt,
@@ -670,6 +676,11 @@ export class AuthService {
     if (dto.location !== undefined) updateData.location = dto.location;
     if (dto.language !== undefined) updateData.language = dto.language;
     if (dto.department !== undefined) updateData.department = dto.department;
+    if (dto.scfhsNumber !== undefined) updateData.scfhsNumber = dto.scfhsNumber;
+    if (dto.nationalId !== undefined) updateData.nationalId = dto.nationalId;
+    if (dto.nationality !== undefined) updateData.nationality = dto.nationality;
+    if (dto.gender !== undefined) updateData.gender = dto.gender;
+    if (dto.dateOfBirth !== undefined) updateData.dateOfBirth = dto.dateOfBirth;
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 

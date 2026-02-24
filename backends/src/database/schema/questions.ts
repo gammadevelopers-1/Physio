@@ -45,7 +45,7 @@ export const questions = pgTable(
     index('questions_difficulty_level_idx').on(table.difficultyLevel),
     check(
       'questions_type_check',
-      sql`${table.type} IN ('mcq', 'true_false', 'short_answer', 'essay')`,
+      sql`${table.type} IN ('mcq', 'true_false', 'short_answer', 'essay', 'file_upload')`,
     ),
     check(
       'questions_difficulty_check',

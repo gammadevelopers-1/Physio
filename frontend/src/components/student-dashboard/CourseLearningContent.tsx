@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,8 +17,10 @@ import {
   FileText,
   Layers,
   Loader2,
+  Lock,
   Maximize2,
   Play,
+  Subtitles,
   Video,
 } from "lucide-react";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
@@ -49,11 +51,26 @@ function getModuleIcon(type: string, isCompleted?: boolean) {
 
 // ─── Content Viewer Components ──────────────────────────────
 
-function VideoViewer({ material }: { material: ModuleMaterial }) {
+const PLAYBACK_SPEEDS = [0.5, 1, 1.5, 2];
+
+function VideoViewer({
+  material,
+  courseId,
+  moduleId,
+}: {
+  material: ModuleMaterial;
+  courseId?: string;
+  moduleId?: string;
+}) {
   const t = useTranslations("studentDashboard");
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [transcript, setTranscript] = useState<string | null>(null);
   const [loadingTranscript, setLoadingTranscript] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [captionsOn, setCaptionsOn] = useState(false);
+  const [markedComplete, setMarkedComplete] = useState(false);
 
   // Use highest resolution variant or fallback to fileUrl
   const videoSrc =
@@ -62,6 +79,91 @@ function VideoViewer({ material }: { material: ModuleMaterial }) {
           (a, b) => (b.width || 0) - (a.width || 0)
         )[0].fileUrl
       : material.fileUrl;
+
+  // Speed control
+  const cycleSpeed = useCallback(() => {
+    setSpeed((prev) => {
+      const idx = PLAYBACK_SPEEDS.indexOf(prev);
+      const next = PLAYBACK_SPEEDS[(idx + 1) % PLAYBACK_SPEEDS.length];
+      if (videoRef.current) videoRef.current.playbackRate = next;
+      return next;
+    });
+  }, []);
+
+  // Toggle captions
+  const toggleCaptions = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    for (let i = 0; i < video.textTracks.length; i++) {
+      const track = video.textTracks[i];
+      track.mode = captionsOn ? "hidden" : "showing";
+    }
+    setCaptionsOn(!captionsOn);
+  }, [captionsOn]);
+
+  // Auto-save progress every 10 seconds
+  useEffect(() => {
+    if (!courseId || !moduleId) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    const interval = setInterval(() => {
+      if (!video.paused && video.duration > 0) {
+        studentApi
+          .updateProgress(courseId, {
+            moduleId,
+            materialId: material.id,
+            watchedSeconds: Math.floor(video.currentTime),
+            totalSeconds: Math.floor(video.duration),
+          })
+          .catch(() => {});
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [courseId, moduleId, material.id]);
+
+  // 90% completion tracking
+  const handleTimeUpdate = useCallback(() => {
+    if (!courseId || !moduleId || markedComplete) return;
+    const video = videoRef.current;
+    if (!video || video.duration === 0) return;
+    if (video.currentTime / video.duration >= 0.9) {
+      setMarkedComplete(true);
+      studentApi
+        .updateProgress(courseId, { moduleId, status: "completed" })
+        .catch(() => {});
+    }
+  }, [courseId, moduleId, markedComplete]);
+
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      switch (e.key) {
+        case " ":
+          e.preventDefault();
+          video.paused ? video.play() : video.pause();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - 10);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + 10);
+          break;
+        case "c":
+        case "C":
+          e.preventDefault();
+          toggleCaptions();
+          break;
+      }
+    },
+    [toggleCaptions]
+  );
 
   const handleToggleTranscript = useCallback(async () => {
     if (showTranscript) {
@@ -88,12 +190,19 @@ function VideoViewer({ material }: { material: ModuleMaterial }) {
   }, [showTranscript, transcript, material.transcriptUrl]);
 
   return (
-    <div>
+    <div
+      ref={containerRef}
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="outline-none"
+    >
       <video
+        ref={videoRef}
         controls
         className="w-full rounded-lg bg-black"
         style={{ maxHeight: "500px" }}
         preload="metadata"
+        onTimeUpdate={handleTimeUpdate}
       >
         {videoSrc && (
           <source src={videoSrc} type={material.mimeType || "video/mp4"} />
@@ -103,10 +212,40 @@ function VideoViewer({ material }: { material: ModuleMaterial }) {
             kind="captions"
             src={material.captionsUrl}
             label="Captions"
-            default
+            default={captionsOn}
           />
         )}
       </video>
+
+      {/* Video Controls Bar */}
+      <div className="flex items-center gap-3 mt-2 flex-wrap">
+        {/* Speed control */}
+        <button
+          onClick={cycleSpeed}
+          className="px-3 py-1.5 text-xs font-medium bg-[#F3F4F6] rounded-lg hover:bg-[#E5E7EB] transition-colors"
+        >
+          {speed}x
+        </button>
+
+        {/* Caption toggle */}
+        {material.captionsUrl && (
+          <button
+            onClick={toggleCaptions}
+            className={`p-1.5 rounded-lg transition-colors ${
+              captionsOn
+                ? "bg-[#002D87] text-white"
+                : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#E5E7EB]"
+            }`}
+            title={t("learning.toggleCaptions")}
+          >
+            <Subtitles className="w-4 h-4" />
+          </button>
+        )}
+
+        <span className="text-[10px] text-[#9CA3AF] ml-auto">
+          {t("learning.keyboardShortcuts")}
+        </span>
+      </div>
 
       {material.transcriptUrl && (
         <div className="mt-3">
@@ -201,10 +340,24 @@ function ImageViewer({ material }: { material: ModuleMaterial }) {
   );
 }
 
-function MaterialRenderer({ material }: { material: ModuleMaterial }) {
+function MaterialRenderer({
+  material,
+  courseId,
+  moduleId,
+}: {
+  material: ModuleMaterial;
+  courseId?: string;
+  moduleId?: string;
+}) {
   switch (material.type) {
     case "video":
-      return <VideoViewer material={material} />;
+      return (
+        <VideoViewer
+          material={material}
+          courseId={courseId}
+          moduleId={moduleId}
+        />
+      );
     case "pdf":
     case "document":
       return <PdfViewer material={material} />;
@@ -358,6 +511,12 @@ const CourseLearningContent = () => {
             <div className="space-y-1">
               {sortedModules.map((module, index) => {
                 const isActive = module.id === currentModule?.id;
+                // Module is locked if previous module is not completed (sequential)
+                const isLocked =
+                  index > 0 &&
+                  !sortedModules[index - 1].isCompleted &&
+                  !module.isCompleted &&
+                  data?.course?.isSequential !== false;
                 const { Icon: ModuleIcon, color: iconColor } = getModuleIcon(
                   module.type,
                   module.isCompleted
@@ -367,32 +526,42 @@ const CourseLearningContent = () => {
                   <button
                     key={module.id}
                     onClick={() => {
+                      if (isLocked) return;
                       setActiveModuleId(module.id);
                       setSidebarOpen(false);
                     }}
+                    disabled={isLocked}
                     className={`w-full flex items-start gap-3 p-3 rounded-lg text-start transition-colors ${
-                      isActive
-                        ? "bg-[#F0F7FF] border border-[#002D87]/20"
-                        : "hover:bg-[#F9FAFB]"
+                      isLocked
+                        ? "opacity-50 cursor-not-allowed"
+                        : isActive
+                          ? "bg-[#F0F7FF] border border-[#002D87]/20"
+                          : "hover:bg-[#F9FAFB]"
                     }`}
                   >
                     <div className="flex-shrink-0 mt-0.5">
-                      <ModuleIcon
-                        className={`w-4 h-4 ${
-                          isActive && !module.isCompleted
-                            ? "text-[#002D87]"
-                            : iconColor
-                        }`}
-                      />
+                      {isLocked ? (
+                        <Lock className="w-4 h-4 text-[#9CA3AF]" />
+                      ) : (
+                        <ModuleIcon
+                          className={`w-4 h-4 ${
+                            isActive && !module.isCompleted
+                              ? "text-[#002D87]"
+                              : iconColor
+                          }`}
+                        />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
                         className={`text-sm ${
-                          isActive
-                            ? "font-medium text-[#002D87]"
-                            : module.isCompleted
-                              ? "text-[#6B7280]"
-                              : "text-[#4B5563]"
+                          isLocked
+                            ? "text-[#9CA3AF]"
+                            : isActive
+                              ? "font-medium text-[#002D87]"
+                              : module.isCompleted
+                                ? "text-[#6B7280]"
+                                : "text-[#4B5563]"
                         } line-clamp-2`}
                       >
                         {index + 1}.{" "}
@@ -410,11 +579,15 @@ const CourseLearningContent = () => {
                             {module.durationMinutes}m
                           </span>
                         )}
-                        {module.isCompleted && (
+                        {isLocked ? (
+                          <span className="text-[10px]">
+                            {t("learning.locked")}
+                          </span>
+                        ) : module.isCompleted ? (
                           <span className="text-[#16A34A] text-[10px]">
                             {t("courseDetail.completed")}
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </button>
@@ -484,7 +657,11 @@ const CourseLearningContent = () => {
                             {material.title}
                           </h4>
                         )}
-                        <MaterialRenderer material={material} />
+                        <MaterialRenderer
+                          material={material}
+                          courseId={courseId}
+                          moduleId={currentModule?.id}
+                        />
                       </div>
                     ))}
                   </div>

@@ -46,4 +46,32 @@ export class UpdateUiPrefsDto {
   @IsOptional()
   @IsBoolean()
   reduceMotion?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  contentLanguage?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(15)
+  calendarFormat?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  captionsDefault?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  subtitlesLanguage?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  profileVisibility?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  dataSharing?: boolean;
 }

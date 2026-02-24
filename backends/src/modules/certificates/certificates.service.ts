@@ -181,6 +181,51 @@ export class CertificatesService {
       .orderBy(desc(certificateRequests.reviewedAt));
   }
 
+  // ─── Public Certificate Verification ───────────────────────
+
+  /**
+   * GET /certificates/verify/:id — Public verification.
+   * Returns limited public info about an approved certificate.
+   */
+  async verifyCertificate(certId: string) {
+    const [cert] = await db
+      .select({
+        id: certificateRequests.id,
+        status: certificateRequests.status,
+        createdAt: certificateRequests.createdAt,
+        reviewedAt: certificateRequests.reviewedAt,
+        attendancePercent: certificateRequests.attendancePercent,
+        courseName: courses.title,
+        courseNameAr: courses.titleAr,
+        totalHours: courses.cmeHours,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+      })
+      .from(certificateRequests)
+      .innerJoin(courses, eq(certificateRequests.courseId, courses.id))
+      .innerJoin(users, eq(certificateRequests.studentId, users.id))
+      .where(eq(certificateRequests.id, certId))
+      .limit(1);
+
+    if (!cert) {
+      throw new NotFoundException('Certificate not found');
+    }
+
+    const isVerified = cert.status === CERTIFICATE_STATUS.APPROVED;
+
+    return {
+      id: cert.id,
+      verified: isVerified,
+      status: cert.status,
+      studentName: `${cert.studentFirstName || ''} ${cert.studentLastName || ''}`.trim(),
+      courseName: cert.courseName,
+      courseNameAr: cert.courseNameAr,
+      totalHours: cert.totalHours,
+      issuedDate: cert.reviewedAt || cert.createdAt,
+      certificateId: `PG-${cert.id.slice(0, 8).toUpperCase()}`,
+    };
+  }
+
   // ─── Create Certificate Request ─────────────────────────────
 
   /**

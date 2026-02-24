@@ -165,6 +165,20 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         {description}
       </p>
 
+      {/* Enrollment deadline */}
+      {course.enrollmentDeadline && (
+        <div className="flex items-center gap-1 text-xs text-[#6B7280]">
+          <Clock className="w-3.5 h-3.5" />
+          <span>
+            {t("card.enrollBy")}{" "}
+            {new Date(course.enrollmentDeadline).toLocaleDateString(
+              locale === "ar" ? "ar-SA" : "en-US",
+              { day: "numeric", month: "short", year: "numeric" },
+            )}
+          </span>
+        </div>
+      )}
+
       {/* Seats remaining urgency */}
       {course.isFull ? (
         <p className="text-xs font-semibold text-red-600">

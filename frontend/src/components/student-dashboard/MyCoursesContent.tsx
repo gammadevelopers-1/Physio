@@ -6,7 +6,6 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   ClipboardList,
   Heart,
-  Loader2,
   Clock,
   AlertTriangle,
   Video,
@@ -19,10 +18,14 @@ import {
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
+import StudentCoursesGridSkeleton from "./StudentCoursesGridSkeleton";
+import StudentDashboardError from "./StudentDashboardError";
+import OfflineBanner from "./OfflineBanner";
 import { useFavourites } from "@/contexts/FavouritesContext";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
 import type { StudentEnrolledCourse } from "@/types/student-dashboard";
+import EmptyStateIllustration from "./EmptyStateIllustration";
 
 type TabFilter = "all" | "active" | "completed" | "upcoming";
 
@@ -90,7 +93,7 @@ const MyCoursesContent = () => {
   const { isFavourite, toggleFavourite } = useFavourites();
   const userData = useStudentProfile();
 
-  const { data: courses, loading } = useStudentCourses({
+  const { data: courses, loading, error, refetch } = useStudentCourses({
     status: getStatusForTab(activeTab),
     sort: getSortForTab(activeTab),
     limit: 50,
@@ -174,6 +177,8 @@ const MyCoursesContent = () => {
                 {t("myCourses.title")}
               </h1>
 
+              <OfflineBanner />
+
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                   {t("myCourses.recentCourses")}
@@ -196,16 +201,14 @@ const MyCoursesContent = () => {
                   ))}
                 </div>
 
-                {/* Loading */}
+                {/* Loading / Error / Content */}
                 {loading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
-                  </div>
+                  <StudentCoursesGridSkeleton />
+                ) : error ? (
+                  <StudentDashboardError message={error} onRetry={refetch} />
                 ) : filteredCourses.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
-                      <ClipboardList className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
-                    </div>
+                    <EmptyStateIllustration variant="courses" className="mb-2" />
                     <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
                       {t("myCourses.noCoursesTitle")}
                     </h3>

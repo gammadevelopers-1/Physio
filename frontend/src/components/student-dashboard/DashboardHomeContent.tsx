@@ -13,15 +13,26 @@ import { useStudentDashboard } from "@/hooks/useStudentDashboard";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
 import { useStudentCalendar } from "@/hooks/useStudentCalendar";
 import { useStudentRecentActivity } from "@/hooks/useStudentRecentActivity";
-import { Loader2 } from "lucide-react";
+import StudentDashboardHomeSkeleton from "./StudentDashboardHomeSkeleton";
+import StudentDashboardError from "./StudentDashboardError";
+import OfflineBanner from "./OfflineBanner";
 
 const DashboardHomeContent = () => {
   const t = useTranslations("studentDashboard");
   const userData = useStudentProfile();
 
-  const { data: dashboardStats, loading: statsLoading } =
-    useStudentDashboard();
-  const { data: recentCourses, loading: coursesLoading } = useStudentCourses({
+  const {
+    data: dashboardStats,
+    loading: statsLoading,
+    error: statsError,
+    refetch: refetchStats,
+  } = useStudentDashboard();
+  const {
+    data: recentCourses,
+    loading: coursesLoading,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useStudentCourses({
     status: "active",
     limit: 6,
   });
@@ -48,6 +59,11 @@ const DashboardHomeContent = () => {
   }));
 
   const isLoading = statsLoading || coursesLoading;
+  const error = statsError || coursesError;
+  const handleRetry = () => {
+    refetchStats();
+    refetchCourses();
+  };
 
   return (
     <>
@@ -73,10 +89,12 @@ const DashboardHomeContent = () => {
                 {t("title")}
               </h1>
 
+              <OfflineBanner />
+
               {isLoading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
-                </div>
+                <StudentDashboardHomeSkeleton />
+              ) : error ? (
+                <StudentDashboardError message={error} onRetry={handleRetry} />
               ) : (
                 <>
                   {/* Stats Cards */}

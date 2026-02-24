@@ -1,4 +1,4 @@
-import { IsOptional, IsBoolean } from 'class-validator';
+import { IsOptional, IsBoolean, IsInt, IsIn } from 'class-validator';
 
 export class UpdateNotificationPrefsDto {
   @IsOptional()
@@ -36,4 +36,9 @@ export class UpdateNotificationPrefsDto {
   @IsOptional()
   @IsBoolean()
   digestMonthly?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @IsIn([15, 30, 60])
+  reminderMinutes?: number;
 }

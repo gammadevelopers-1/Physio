@@ -17,6 +17,7 @@ import { HoldCertificateDto } from './dto/hold-certificate.dto';
 import { BatchCertificateDto } from './dto/batch-certificate.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
+import { Public } from '../auth/decorators/public.decorator';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
@@ -71,6 +72,16 @@ export class CertificatesController {
   @Get('certificates/my-certificates')
   async getMyCertificates(@CurrentUser() user: AuthenticatedUser) {
     return this.certificatesService.getStudentCertificates(user.id);
+  }
+
+  /**
+   * GET /certificates/verify/:id — Public certificate verification endpoint.
+   * No authentication required.
+   */
+  @Public()
+  @Get('certificates/verify/:id')
+  async verifyCertificate(@Param('id') id: string) {
+    return this.certificatesService.verifyCertificate(id);
   }
 
   /**

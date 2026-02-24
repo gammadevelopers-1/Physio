@@ -178,6 +178,20 @@ const StudentCourseDetailContent = () => {
                     </div>
                   </div>
 
+                  {/* Course Description / Learning Objectives */}
+                  {(data.course.description || data.course.descriptionAr) && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                      <h3 className="text-sm font-semibold text-[#1F2937] mb-3">
+                        {t("courseDetail.aboutCourse")}
+                      </h3>
+                      <p className="text-sm text-[#4B5563] whitespace-pre-wrap leading-relaxed">
+                        {isRTL && data.course.descriptionAr
+                          ? data.course.descriptionAr
+                          : data.course.description}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Course Info Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     {/* Modules */}

@@ -50,6 +50,7 @@ export class PreferencesService {
     if (dto.pushSystemUpdates !== undefined) updateData.pushSystemUpdates = dto.pushSystemUpdates;
     if (dto.digestWeekly !== undefined) updateData.digestWeekly = dto.digestWeekly;
     if (dto.digestMonthly !== undefined) updateData.digestMonthly = dto.digestMonthly;
+    if (dto.reminderMinutes !== undefined) updateData.reminderMinutes = dto.reminderMinutes;
 
     const [updated] = await db
       .update(userPreferences)
@@ -78,6 +79,12 @@ export class PreferencesService {
     if (dto.highContrast !== undefined) updateData.highContrast = dto.highContrast;
     if (dto.fontSize !== undefined) updateData.fontSize = dto.fontSize;
     if (dto.reduceMotion !== undefined) updateData.reduceMotion = dto.reduceMotion;
+    if (dto.contentLanguage !== undefined) updateData.contentLanguage = dto.contentLanguage;
+    if (dto.calendarFormat !== undefined) updateData.calendarFormat = dto.calendarFormat;
+    if (dto.captionsDefault !== undefined) updateData.captionsDefault = dto.captionsDefault;
+    if (dto.subtitlesLanguage !== undefined) updateData.subtitlesLanguage = dto.subtitlesLanguage;
+    if (dto.profileVisibility !== undefined) updateData.profileVisibility = dto.profileVisibility;
+    if (dto.dataSharing !== undefined) updateData.dataSharing = dto.dataSharing;
 
     const [updated] = await db
       .update(userPreferences)

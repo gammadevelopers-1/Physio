@@ -28,6 +28,13 @@ export const users = pgTable('users', {
   location: varchar('location', { length: 200 }),
   language: varchar('language', { length: 10 }).default('en'),
 
+  // Learner profile fields
+  scfhsNumber: varchar('scfhs_number', { length: 50 }),
+  nationalId: varchar('national_id', { length: 50 }),
+  nationality: varchar('nationality', { length: 100 }),
+  gender: varchar('gender', { length: 20 }),
+  dateOfBirth: varchar('date_of_birth', { length: 10 }),
+
   // Instructor-specific fields
   department: varchar('department', { length: 100 }),
   specialty: varchar('specialty', { length: 100 }),

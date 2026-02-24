@@ -9,6 +9,8 @@ import {
   PlayCircle,
   Video,
   ClipboardCheck,
+  Upload,
+  Eye,
   User,
 } from "lucide-react";
 import { useFavourites } from "@/contexts/FavouritesContext";
@@ -50,6 +52,18 @@ function getActionConfig(action: string) {
         color:
           "bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F9FAFB]",
         key: "resumeLesson" as const,
+      };
+    case "upload_assignment":
+      return {
+        icon: Upload,
+        color: "bg-[#8B5CF6] text-white hover:bg-[#7C3AED]",
+        key: "uploadAssignment" as const,
+      };
+    case "view_results":
+      return {
+        icon: Eye,
+        color: "bg-[#10B981] text-white hover:bg-[#059669]",
+        key: "viewResults" as const,
       };
     default:
       return {

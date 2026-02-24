@@ -1518,7 +1518,7 @@ export class StudentService {
       )
       .orderBy(asc(sessions.scheduledAt));
 
-    const events = sessionEvents.map((s) => ({
+    const sessionMapped = sessionEvents.map((s) => ({
       id: s.id,
       title: s.title,
       date: s.date,
@@ -1534,6 +1534,61 @@ export class StudentService {
       venueAddress: s.venueAddress,
       instructorName: s.instructorName,
     }));
+
+    // Also fetch assessments with due dates from enrolled courses
+    const assessmentConditions: ReturnType<typeof eq>[] = [];
+    if (params.from) {
+      assessmentConditions.push(gte(assessments.dueDate, new Date(params.from)));
+    }
+    if (params.to) {
+      assessmentConditions.push(lte(assessments.dueDate, new Date(params.to)));
+    }
+
+    const assessmentEvents = await db
+      .select({
+        id: assessments.id,
+        title: assessments.title,
+        date: assessments.dueDate,
+        durationMinutes: assessments.durationMinutes,
+        type: assessments.type,
+        courseId: assessments.courseId,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+      })
+      .from(assessments)
+      .innerJoin(courses, eq(assessments.courseId, courses.id))
+      .innerJoin(enrollments, eq(assessments.courseId, enrollments.courseId))
+      .where(
+        and(
+          ...conditions,
+          eq(assessments.status, 'published'),
+          sql`${assessments.dueDate} IS NOT NULL`,
+          ...assessmentConditions,
+        ),
+      )
+      .orderBy(asc(assessments.dueDate));
+
+    const assessmentMapped = assessmentEvents.map((a) => ({
+      id: a.id,
+      title: a.title,
+      date: a.date,
+      durationMinutes: a.durationMinutes,
+      eventType: a.type === 'assignment' ? ('assignment' as const) : ('assessment' as const),
+      sessionType: a.type,
+      status: 'scheduled',
+      courseId: a.courseId,
+      courseTitle: a.courseTitle,
+      courseTitleAr: a.courseTitleAr,
+      zoomLink: null,
+      roomName: null,
+      venueAddress: null,
+      instructorName: '',
+    }));
+
+    // Merge and sort by date
+    const events = [...sessionMapped, ...assessmentMapped].sort(
+      (a, b) => new Date(a.date!).getTime() - new Date(b.date!).getTime(),
+    );
 
     return events;
   }

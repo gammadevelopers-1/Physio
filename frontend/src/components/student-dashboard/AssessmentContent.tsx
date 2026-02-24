@@ -19,6 +19,13 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Upload,
+  Paperclip,
+  X,
+  Bold,
+  Italic,
+  Underline,
+  List,
 } from "lucide-react";
 import { studentApi } from "@/lib/api";
 import type {
@@ -769,6 +776,18 @@ const AssessmentContent = () => {
             </p>
           </div>
 
+          {/* Instructions */}
+          {assessment.instructions && (
+            <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-lg p-4 mb-6">
+              <h3 className="font-medium text-sm text-[#0C4A6E] mb-2">
+                {t("assessment.instructions")}
+              </h3>
+              <p className="text-sm text-[#4B5563] whitespace-pre-wrap leading-relaxed">
+                {assessment.instructions}
+              </p>
+            </div>
+          )}
+
           {/* Timer warning */}
           {assessment.durationMinutes && (
             <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-6">
@@ -1143,25 +1162,117 @@ const AssessmentContent = () => {
               </div>
             )}
 
-            {/* Essay */}
+            {/* Essay with formatting toolbar */}
             {question.type === "essay" && (
-              <div>
-                <textarea
-                  value={answers[question.id] || ""}
-                  onChange={(e) =>
+              <div className="border border-[#E5E7EB] rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#002D87] focus-within:border-transparent">
+                {/* Toolbar */}
+                <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                  <button
+                    type="button"
+                    onClick={() => document.execCommand("bold")}
+                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    title={t("assessment.bold")}
+                  >
+                    <Bold className="w-4 h-4 text-[#4B5563]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => document.execCommand("italic")}
+                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    title={t("assessment.italic")}
+                  >
+                    <Italic className="w-4 h-4 text-[#4B5563]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => document.execCommand("underline")}
+                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    title={t("assessment.underline")}
+                  >
+                    <Underline className="w-4 h-4 text-[#4B5563]" />
+                  </button>
+                  <div className="w-px h-5 bg-[#E5E7EB] mx-1" />
+                  <button
+                    type="button"
+                    onClick={() => document.execCommand("insertUnorderedList")}
+                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    title={t("assessment.bulletList")}
+                  >
+                    <List className="w-4 h-4 text-[#4B5563]" />
+                  </button>
+                </div>
+                {/* Editable area */}
+                <div
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="px-4 py-3 min-h-[180px] text-sm text-[#1F2937] focus:outline-none"
+                  dangerouslySetInnerHTML={{
+                    __html: answers[question.id] || "",
+                  }}
+                  onInput={(e) => {
+                    const html = (e.target as HTMLDivElement).innerHTML;
                     setAnswers((prev) => ({
                       ...prev,
-                      [question.id]: e.target.value,
-                    }))
-                  }
-                  maxLength={5000}
-                  placeholder={t("assessment.typeAnswer")}
-                  rows={6}
-                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+                      [question.id]: html,
+                    }));
+                  }}
                 />
-                <p className="text-xs text-[#9CA3AF] mt-1 text-end">
-                  {(answers[question.id] || "").length}/5000
-                </p>
+              </div>
+            )}
+
+            {/* File Upload */}
+            {question.type === "file_upload" && (
+              <div>
+                {answers[question.id] ? (
+                  <div className="flex items-center gap-3 p-4 border border-[#E5E7EB] rounded-lg bg-[#F9FAFB]">
+                    <Paperclip className="w-5 h-5 text-[#6B7280] flex-shrink-0" />
+                    <span className="text-sm text-[#374151] truncate flex-1">
+                      {t("assessment.fileUploaded")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAnswers((prev) => {
+                          const updated = { ...prev };
+                          delete updated[question.id];
+                          return updated;
+                        })
+                      }
+                      className="p-1 hover:bg-gray-200 rounded flex-shrink-0"
+                    >
+                      <X className="w-4 h-4 text-[#6B7280]" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] hover:border-[#002D87] transition-colors">
+                    <Upload className="w-10 h-10 text-[#9CA3AF]" />
+                    <span className="text-sm text-[#6B7280]">
+                      {t("assessment.uploadFile")}
+                    </span>
+                    <span className="text-xs text-[#D1D5DB]">
+                      PDF, DOCX, JPG, PNG
+                    </span>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 10 * 1024 * 1024) return;
+                        try {
+                          const result = await studentApi.uploadFile(file);
+                          setAnswers((prev) => ({
+                            ...prev,
+                            [question.id]: result.url,
+                          }));
+                        } catch {
+                          // Upload failed silently
+                        }
+                      }}
+                    />
+                  </label>
+                )}
               </div>
             )}
           </div>

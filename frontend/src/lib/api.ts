@@ -274,6 +274,12 @@ export interface User {
   avatar?: string | null;
   activeRole: string;
   department?: string | null;
+  bio?: string | null;
+  scfhsNumber?: string | null;
+  nationalId?: string | null;
+  nationality?: string | null;
+  gender?: string | null;
+  dateOfBirth?: string | null;
   roles: string[];
   isActive: boolean;
   isVerified: boolean;
@@ -879,7 +885,7 @@ export const instructorApi = {
 // Profile API (self-service)
 // ===========================================
 export const profileApi = {
-  update: (data: { firstName?: string; lastName?: string; firstNameAr?: string; lastNameAr?: string; phone?: string; avatar?: string; bio?: string; location?: string; language?: string; department?: string }) =>
+  update: (data: { firstName?: string; lastName?: string; firstNameAr?: string; lastNameAr?: string; phone?: string; avatar?: string | null; bio?: string; location?: string; language?: string; department?: string; scfhsNumber?: string; nationalId?: string; nationality?: string; gender?: string; dateOfBirth?: string }) =>
     api.patch<User>('/auth/profile', data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
@@ -1736,7 +1742,7 @@ export const studentApi = {
   getCourseProgress: (courseId: string) =>
     api.get<CourseProgress>(`/student/courses/${courseId}/progress`),
 
-  updateProgress: (courseId: string, data: { moduleId: string; status?: string }) =>
+  updateProgress: (courseId: string, data: { moduleId: string; status?: string; materialId?: string; watchedSeconds?: number; totalSeconds?: number }) =>
     api.post<EnrollmentResponse>(`/student/courses/${courseId}/progress`, data),
 
   getModuleMaterials: (courseId: string, moduleId: string) =>
@@ -1818,10 +1824,17 @@ export const studentApi = {
     subject: string;
     description: string;
     courseId?: string;
+    attachmentUrl?: string;
   }) => api.post<{ id: string }>('/student/tickets', data),
 
   replyToTicket: (ticketId: string, message: string) =>
     api.post<{ id: string }>(`/student/tickets/${ticketId}/reply`, { message }),
+
+  uploadFile: (file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<{ url: string; filename: string }>('/storage/upload', fd);
+  },
 
   rateTicket: (ticketId: string, rating: number) =>
     api.post<{ success: boolean }>(`/student/tickets/${ticketId}/rate`, { rating }),

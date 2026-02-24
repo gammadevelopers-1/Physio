@@ -17,3 +17,10 @@ export { default as InvoicesContent } from "./InvoicesContent";
 export { default as InviteFriendsContent } from "./InviteFriendsContent";
 export { default as SettingsContent } from "./SettingsContent";
 export { default as SupportContent } from "./SupportContent";
+
+// Shared UI components
+export { default as StudentDashboardError } from "./StudentDashboardError";
+export { default as OfflineBanner } from "./OfflineBanner";
+export { default as StudentDashboardHomeSkeleton } from "./StudentDashboardHomeSkeleton";
+export { default as StudentCoursesGridSkeleton } from "./StudentCoursesGridSkeleton";
+export { default as StudentTranscriptSkeleton } from "./StudentTranscriptSkeleton";

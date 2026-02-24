@@ -784,7 +784,8 @@
       "free": "Free",
       "sessions": "Sessions",
       "courseFull": "Course Full",
-      "seatsLeft": "{count} seats left"
+      "seatsLeft": "{count} seats left",
+      "enrollBy": "Enroll by"
     },
     "pagination": {
       "previous": "Previous",
@@ -1176,6 +1177,8 @@
       "takeQuiz": "Take Quiz",
       "resumeLesson": "Resume Lesson",
       "startCourse": "Start Course",
+      "uploadAssignment": "Upload Assignment",
+      "viewResults": "View Results",
       "overdue": "Overdue",
       "dueSoon": "Due Soon",
       "missingTasks": "{count} missing tasks"
@@ -1230,7 +1233,15 @@
       "getDirections": "Get Directions",
       "addToCalendar": "Add to Calendar",
       "mins": "min",
-      "eventsCount": "{count} event(s)"
+      "eventsCount": "{count} event(s)",
+      "legendZoom": "Zoom",
+      "legendOnsite": "On-site",
+      "legendHybrid": "Hybrid",
+      "legendAssessment": "Assessment",
+      "legendAssignment": "Assignment",
+      "legendCompleted": "Completed",
+      "startAssessment": "Start Assessment",
+      "uploadAssignment": "Upload Assignment"
     },
     "transcriptPage": {
       "title": "Academic Transcript",
@@ -1337,11 +1348,28 @@
       "rejectionReason": "Reason",
       "holdNote": "Note",
       "requestedOn": "Requested on {date}",
+      "certificateId": "Certificate ID: {id}",
       "mockData": {
         "courseTitle": "Advanced Cardiovascular Life Support",
         "courseDescription": "The course aims to enhance healthcare providers' skills in motivating patients and improving treatment adherence. It f...",
         "accreditedByName": "Saudi Commission for Health Specialties (SCFHS)"
       }
+    },
+    "verify": {
+      "verifying": "Verifying certificate...",
+      "notFoundTitle": "Certificate Not Found",
+      "notFoundDescription": "The certificate ID you provided could not be found in our system. Please check the ID and try again.",
+      "backToHome": "Back to Home",
+      "verifiedTitle": "VERIFIED",
+      "verifiedDescription": "This certificate has been verified and is authentic.",
+      "pendingTitle": "Pending Verification",
+      "pendingDescription": "This certificate is awaiting approval and has not been issued yet.",
+      "studentName": "Student Name",
+      "courseName": "Course",
+      "issuedDate": "Date Issued",
+      "totalHours": "Total Hours",
+      "hours": "hours",
+      "issuedBy": "Issued by PhysioGuidance"
     },
     "supportPage": {
       "title": "Support",
@@ -1380,7 +1408,16 @@
       "replyPlaceholder": "Type your reply...",
       "createdOn": "Created on {date}",
       "rateExperience": "How was your experience?",
-      "thankYou": "Thank you for your feedback!"
+      "thankYou": "Thank you for your feedback!",
+      "expectedResponse": "Expected response within {hours}h",
+      "slaOverdue": "Response overdue",
+      "selectCourse": "Select related course (optional)",
+      "relatedCourse": "Related Course",
+      "attachment": "Attachment",
+      "attachFile": "Attach file (PDF, JPG, PNG, max 5MB)",
+      "removeFile": "Remove file",
+      "fileTooLarge": "File size exceeds 5MB limit",
+      "invalidFileType": "Only PDF, JPG, PNG, and WebP files are allowed"
     },
     "badges": {
       "title": "Badges",
@@ -1451,7 +1488,70 @@
         "male": "Male",
         "female": "Female"
       },
-      "saved": "Saved!"
+      "saved": "Saved!",
+      "avatarUploadError": "Failed to upload avatar",
+      "uploadPhoto": "Upload photo",
+      "removePhoto": "Remove photo",
+      "tabPreferences": "Preferences",
+      "tabNotifications": "Notifications",
+      "languageSettings": "Language Settings",
+      "interfaceLanguage": "Interface Language",
+      "contentLanguage": "Content Language",
+      "calendarFormat": "Calendar Format",
+      "english": "English",
+      "arabic": "العربية",
+      "both": "Both",
+      "gregorian": "Gregorian",
+      "hijri": "Hijri",
+      "accessibilityControls": "Accessibility Controls",
+      "fontSize": "Font Size",
+      "fontSmall": "Small",
+      "fontMedium": "Medium",
+      "fontLarge": "Large",
+      "fontExtraLarge": "Extra Large",
+      "highContrast": "High Contrast",
+      "highContrastDesc": "Increase contrast ratio to 4.5:1 minimum",
+      "captionsDefault": "Captions Default",
+      "captionsDefaultDesc": "Show captions for all video content",
+      "subtitlesLanguage": "Subtitles Language",
+      "reducedMotion": "Reduced Motion",
+      "reducedMotionDesc": "Disable animations throughout the platform",
+      "keyboardNavigation": "Keyboard Navigation",
+      "screenReader": "Screen Reader Support",
+      "alwaysEnabled": "Always Enabled",
+      "privacyControls": "Privacy Controls",
+      "profileVisibility": "Profile Visibility",
+      "profileVisibilityDesc": "Choose what other learners can see",
+      "nameOnly": "Name Only",
+      "namePhoto": "Name + Photo",
+      "fullProfile": "Full Profile",
+      "dataSharing": "Data Sharing",
+      "dataSharingDesc": "Opt in to anonymized learning analytics",
+      "exportData": "Export My Data",
+      "deleteAccount": "Delete My Account",
+      "comingSoon": "Coming Soon",
+      "notificationPreferences": "Notification Preferences",
+      "emailNotifications": "Email",
+      "sessionReminder": "Session Reminder",
+      "assessmentDue": "Assessment Due",
+      "certificateReady": "Certificate Ready",
+      "gradeAvailable": "Grade Available",
+      "courseUpdate": "Course Update",
+      "promotional": "Promotional",
+      "reminderTiming": "Reminder Timing",
+      "reminderTimingDesc": "How far before a session to send reminders",
+      "minutes": "min",
+      "hour": "1 hour",
+      "smsWhatsapp": "SMS / WhatsApp",
+      "inApp": "In-App"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "message": "Something went wrong. Please try again.",
+      "retry": "Try Again"
+    },
+    "offline": {
+      "message": "You appear to be offline. Your progress will sync when connected."
     },
     "courseDetail": {
       "backToCourses": "Back to My Courses",
@@ -1478,7 +1578,8 @@
       "completed": "Completed",
       "graded": "Graded",
       "pendingGrading": "Pending Grading",
-      "review": "Review"
+      "review": "Review",
+      "aboutCourse": "About This Course"
     },
     "learning": {
       "courseContent": "Course Content",
@@ -1494,13 +1595,22 @@
       "downloadPdf": "Download PDF",
       "viewFullSize": "View Full Size",
       "takeAssessment": "Take Assessment",
-      "completed": "Completed"
+      "completed": "Completed",
+      "toggleCaptions": "Toggle captions (C)",
+      "keyboardShortcuts": "Space: play/pause | ←→: seek 10s | C: captions",
+      "locked": "Locked"
     },
     "assessment": {
       "question": "Question",
       "mark": "mark",
       "marks": "marks",
       "typeAnswer": "Type your answer here...",
+      "uploadFile": "Click to upload a file",
+      "fileUploaded": "File uploaded successfully",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "bulletList": "Bullet List",
       "previous": "Previous",
       "next": "Next",
       "submit": "Submit",
@@ -1519,6 +1629,7 @@
       "attemptsUsed": "Attempts Used",
       "unlimited": "Unlimited",
       "startAssessment": "Start Assessment",
+      "instructions": "Instructions",
       "timerWarning": "Once started, the timer cannot be paused. Make sure you have enough time to complete the assessment.",
       "savedProgressNotice": "You have {count} saved answer(s) from a previous attempt.",
       "minutes": "min",
@@ -1626,6 +1737,8 @@
       "courseCompletion": "Course Completion",
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
+      "uploadPhoto": "Upload photo",
+      "removePhoto": "Remove photo",
       "logout": "Logout"
     },
     "kpi": {
@@ -2727,6 +2840,8 @@
       "disconnect": "Disconnect",
       "profileSaved": "Profile updated successfully",
       "avatarUploadError": "Failed to upload avatar. Please try again.",
+      "uploadPhoto": "Upload photo",
+      "removePhoto": "Remove photo",
       "passwordChanged": "Password changed successfully",
       "passwordChangedLogout": "Password changed successfully. Logging out all sessions for security...",
       "passwordChangeFailed": "Failed to change password"
@@ -2804,6 +2919,8 @@
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
       "avatarUploadError": "Failed to upload avatar. Please try again.",
+      "uploadPhoto": "Upload photo",
+      "removePhoto": "Remove photo",
       "logout": "Logout"
     },
     "kpi": {
@@ -3423,6 +3540,8 @@
       "saveChanges": "Save Changes",
       "profileUpdated": "Profile updated successfully",
       "profileError": "Failed to update profile",
+      "uploadPhoto": "Upload photo",
+      "removePhoto": "Remove photo",
       "tabs": {
         "profile": "Profile",
         "notifications": "Notifications",

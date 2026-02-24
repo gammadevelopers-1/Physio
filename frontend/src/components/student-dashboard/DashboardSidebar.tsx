@@ -7,10 +7,12 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
+  Calendar as CalendarIcon,
   LayoutDashboard,
   BookOpen,
   Heart,
   Award,
+  ScrollText,
   BadgeCheck,
   FileText,
   Users,
@@ -19,6 +21,7 @@ import {
   Pencil,
   Coins,
   ClipboardList,
+  HelpCircle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi } from "@/lib/api";
@@ -56,6 +59,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       icon: LayoutDashboard,
     },
     {
+      label: t("sidebar.calendar"),
+      href: `/${locale}/dashboard/student/calendar`,
+      icon: CalendarIcon,
+    },
+    {
       label: t("sidebar.courses"),
       href: `/${locale}/dashboard/student/courses`,
       icon: BookOpen,
@@ -71,6 +79,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       icon: Award,
     },
     {
+      label: t("sidebar.transcript"),
+      href: `/${locale}/dashboard/student/transcript`,
+      icon: ScrollText,
+    },
+    {
       label: t("sidebar.badges"),
       href: `/${locale}/dashboard/student/badges`,
       icon: BadgeCheck,
@@ -84,6 +97,11 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
       label: t("sidebar.applications"),
       href: `/${locale}/dashboard/student/applications`,
       icon: ClipboardList,
+    },
+    {
+      label: t("sidebar.support"),
+      href: `/${locale}/dashboard/student/support`,
+      icon: HelpCircle,
     },
     {
       label: t("sidebar.inviteFriends"),

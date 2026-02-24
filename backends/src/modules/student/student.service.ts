@@ -19,6 +19,8 @@ import {
   questions,
   courseMaterials,
   materialVariants,
+  tickets,
+  ticketReplies,
   COURSE_STATUS,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
@@ -30,6 +32,9 @@ import {
   getNelcMaxEnrollment,
 } from '../courses/nelc-config';
 import { UpdateProgressDto } from './dto/update-progress.dto';
+import { CreateTicketDto } from './dto/create-ticket.dto';
+import { ReplyTicketDto } from './dto/reply-ticket.dto';
+import { RateTicketDto } from './dto/rate-ticket.dto';
 
 @Injectable()
 export class StudentService {
@@ -1032,8 +1037,56 @@ export class StudentService {
       );
 
     const attemptCount = Number(existingSubmissions[0]?.count || 0);
-    if (assessment.attemptsAllowed && attemptCount >= assessment.attemptsAllowed) {
+
+    // Also count 'submitted' (pending grading) attempts
+    const allSubmissionsResult = await db
+      .select({ count: count() })
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          sql`${submissions.status} IN ('graded', 'submitted')`,
+        ),
+      );
+    const totalAttempts = Number(allSubmissionsResult[0]?.count || 0);
+
+    if (assessment.attemptsAllowed && totalAttempts >= assessment.attemptsAllowed) {
       throw new BadRequestException('Maximum attempts reached for this assessment');
+    }
+
+    // Retake info — compute canRetake and retakeAvailableAt
+    let canRetake = false;
+    let retakeAvailableAt: string | null = null;
+
+    if (totalAttempts > 0) {
+      const [latestSub] = await db
+        .select({ submittedAt: submissions.submittedAt })
+        .from(submissions)
+        .where(
+          and(
+            eq(submissions.assessmentId, assessmentId),
+            eq(submissions.studentId, studentId),
+            sql`${submissions.status} IN ('graded', 'submitted')`,
+          ),
+        )
+        .orderBy(desc(submissions.submittedAt))
+        .limit(1);
+
+      const lastSubmittedAt = latestSub?.submittedAt;
+      const attemptsRemaining = assessment.attemptsAllowed
+        ? assessment.attemptsAllowed - totalAttempts
+        : Infinity;
+
+      if (attemptsRemaining > 0 && lastSubmittedAt) {
+        const coolingMs =
+          (assessment.retakeCoolingHours || 0) * 60 * 60 * 1000;
+        const availAt = new Date(lastSubmittedAt.getTime() + coolingMs);
+        retakeAvailableAt = availAt.toISOString();
+        canRetake = new Date() >= availAt;
+      } else if (attemptsRemaining > 0 && !lastSubmittedAt) {
+        canRetake = true;
+      }
     }
 
     // Get questions — omit correctAnswer for student view
@@ -1050,14 +1103,20 @@ export class StudentService {
       .where(eq(questions.assessmentId, assessmentId))
       .orderBy(asc(questions.createdAt));
 
-    // Strip isCorrect from options for the student
-    const sanitizedQuestions = assessmentQuestions.map((q) => ({
-      ...q,
-      options: (q.options || []).map((opt: any) => ({
-        text: opt.text,
-        textAr: opt.textAr,
-      })),
-    }));
+    // Strip isCorrect from options; detect multi-select MCQ
+    const sanitizedQuestions = assessmentQuestions.map((q) => {
+      const correctCount = (q.options || []).filter(
+        (opt: any) => opt.isCorrect,
+      ).length;
+      return {
+        ...q,
+        isMultiSelect: q.type === 'mcq' && correctCount > 1,
+        options: (q.options || []).map((opt: any) => ({
+          text: opt.text,
+          textAr: opt.textAr,
+        })),
+      };
+    });
 
     return {
       id: assessment.id,
@@ -1067,7 +1126,9 @@ export class StudentService {
       passingMarks: assessment.passingMarks,
       durationMinutes: assessment.durationMinutes,
       attemptsAllowed: assessment.attemptsAllowed,
-      attemptsTaken: attemptCount,
+      attemptsTaken: totalAttempts,
+      canRetake,
+      retakeAvailableAt,
       questions: sanitizedQuestions,
     };
   }
@@ -1131,13 +1192,30 @@ export class StudentService {
       totalPossibleMarks += question.marks;
 
       if (question.type === 'mcq' || question.type === 'true_false') {
-        // For MCQ: check if the selected option is the correct one
         let isCorrect = false;
         if (question.options && Array.isArray(question.options)) {
-          const selectedOption = question.options.find(
-            (opt: any) => opt.text === a.answer,
+          const correctOptions = question.options.filter(
+            (opt: any) => opt.isCorrect,
           );
-          isCorrect = selectedOption?.isCorrect === true;
+
+          if (question.type === 'mcq' && correctOptions.length > 1) {
+            // Multi-select MCQ: answer is JSON array of selected texts
+            try {
+              const selected: string[] = JSON.parse(a.answer);
+              const correctTexts = correctOptions.map((o: any) => o.text);
+              isCorrect =
+                selected.length === correctTexts.length &&
+                selected.every((s) => correctTexts.includes(s));
+            } catch {
+              isCorrect = false;
+            }
+          } else {
+            // Single-select MCQ or True/False
+            const selectedOption = question.options.find(
+              (opt: any) => opt.text === a.answer,
+            );
+            isCorrect = selectedOption?.isCorrect === true;
+          }
         } else if (question.correctAnswer) {
           isCorrect =
             a.answer.toLowerCase().trim() ===
@@ -1169,20 +1247,63 @@ export class StudentService {
         ? ((totalScore / totalPossibleMarks) * 100).toFixed(2)
         : '0';
 
-    const [submission] = await db
-      .insert(submissions)
-      .values({
-        assessmentId,
-        studentId,
-        answers: gradedAnswers,
-        score: totalScore,
-        totalMarks: totalPossibleMarks,
-        percentage,
-        startedAt: new Date(),
-        submittedAt: new Date(),
-        status: hasManualGrading ? 'submitted' : 'graded',
-      })
-      .returning();
+    // Check for existing in_progress submission to update instead of insert
+    const [existingDraft] = await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          eq(submissions.status, 'in_progress'),
+        ),
+      )
+      .limit(1);
+
+    let submission;
+    if (existingDraft) {
+      // Update draft to final submission
+      const [updated] = await db
+        .update(submissions)
+        .set({
+          answers: gradedAnswers,
+          score: totalScore,
+          totalMarks: totalPossibleMarks,
+          percentage,
+          submittedAt: new Date(),
+          status: hasManualGrading ? 'submitted' : 'graded',
+        })
+        .where(eq(submissions.id, existingDraft.id))
+        .returning();
+      submission = updated;
+    } else {
+      const [inserted] = await db
+        .insert(submissions)
+        .values({
+          assessmentId,
+          studentId,
+          answers: gradedAnswers,
+          score: totalScore,
+          totalMarks: totalPossibleMarks,
+          percentage,
+          startedAt: new Date(),
+          submittedAt: new Date(),
+          status: hasManualGrading ? 'submitted' : 'graded',
+        })
+        .returning();
+      submission = inserted;
+    }
+
+    // Enrich graded answers with question details for per-question breakdown
+    const enrichedAnswers = gradedAnswers.map((a) => {
+      const q = questionMap.get(a.questionId);
+      return {
+        ...a,
+        questionText: q?.questionText || '',
+        questionType: q?.type || '',
+        questionMarks: q?.marks || 0,
+      };
+    });
 
     return {
       submissionId: submission.id,
@@ -1193,6 +1314,125 @@ export class StudentService {
       passed:
         !hasManualGrading &&
         totalScore >= (assessment.passingMarks || 0),
+      hasManualGrading,
+      gradedAnswers: enrichedAnswers,
+    };
+  }
+
+  // ─── Assessment Auto-Save ──────────────────────────────
+
+  async saveAssessmentProgress(
+    studentId: string,
+    assessmentId: string,
+    answersData: { questionId: string; answer: string }[],
+  ) {
+    const draftAnswers: SubmissionAnswer[] = answersData.map((a) => ({
+      questionId: a.questionId,
+      answer: a.answer,
+      isCorrect: null,
+      marksAwarded: null,
+    }));
+
+    const [existing] = await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          eq(submissions.status, 'in_progress'),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(submissions)
+        .set({ answers: draftAnswers })
+        .where(eq(submissions.id, existing.id));
+      return { submissionId: existing.id, saved: true };
+    }
+
+    const [draft] = await db
+      .insert(submissions)
+      .values({
+        assessmentId,
+        studentId,
+        answers: draftAnswers,
+        startedAt: new Date(),
+        status: 'in_progress',
+      })
+      .returning();
+
+    return { submissionId: draft.id, saved: true };
+  }
+
+  async getAssessmentProgress(studentId: string, assessmentId: string) {
+    const [draft] = await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          eq(submissions.status, 'in_progress'),
+        ),
+      )
+      .limit(1);
+
+    if (!draft) return null;
+    return {
+      answers: (draft.answers || []).map((a: any) => ({
+        questionId: a.questionId,
+        answer: a.answer,
+      })),
+      startedAt: draft.startedAt?.toISOString() || null,
+    };
+  }
+
+  // ─── Submission Review ────────────────────────────────
+
+  async getSubmissionReview(studentId: string, submissionId: string) {
+    const [submission] = await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.id, submissionId),
+          eq(submissions.studentId, studentId),
+          eq(submissions.status, 'graded'),
+        ),
+      )
+      .limit(1);
+
+    if (!submission) {
+      throw new NotFoundException('Graded submission not found');
+    }
+
+    const assessmentQuestions = await db
+      .select()
+      .from(questions)
+      .where(eq(questions.assessmentId, submission.assessmentId))
+      .orderBy(asc(questions.createdAt));
+
+    const reviewQuestions = assessmentQuestions.map((q) => ({
+      id: q.id,
+      type: q.type,
+      questionText: q.questionText,
+      questionTextAr: q.questionTextAr,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      marks: q.marks,
+    }));
+
+    return {
+      submissionId: submission.id,
+      assessmentId: submission.assessmentId,
+      score: submission.score,
+      totalMarks: submission.totalMarks,
+      percentage: Number(submission.percentage),
+      answers: submission.answers,
+      questions: reviewQuestions,
     };
   }
 
@@ -1208,6 +1448,7 @@ export class StudentService {
         assessmentPassed: certificateRequests.assessmentPassed,
         courseCompleted: certificateRequests.courseCompleted,
         certificateUrl: certificateRequests.certificateUrl,
+        reviewNote: certificateRequests.reviewNote,
         createdAt: certificateRequests.createdAt,
         reviewedAt: certificateRequests.reviewedAt,
         courseTitle: courses.title,
@@ -1597,5 +1838,207 @@ export class StudentService {
         variants: variantsMap[m.id] || [],
       })),
     };
+  }
+
+  // ─── Support Tickets ────────────────────────────────────
+
+  /**
+   * Create a new support ticket
+   */
+  async createTicket(studentId: string, dto: CreateTicketDto) {
+    const [ticket] = await db
+      .insert(tickets)
+      .values({
+        studentId,
+        category: dto.category,
+        priority: dto.priority ?? 'medium',
+        subject: dto.subject,
+        description: dto.description,
+        courseId: dto.courseId ?? null,
+        attachmentUrl: dto.attachmentUrl ?? null,
+      })
+      .returning();
+
+    return ticket;
+  }
+
+  /**
+   * List student's tickets with optional status filter
+   */
+  async getTickets(
+    studentId: string,
+    params?: { status?: string; page?: number; limit?: number },
+  ) {
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 20;
+    const offset = (page - 1) * limit;
+
+    const conditions = [eq(tickets.studentId, studentId)];
+
+    if (
+      params?.status &&
+      ['new', 'in_progress', 'resolved', 'closed'].includes(params.status)
+    ) {
+      conditions.push(eq(tickets.status, params.status));
+    }
+
+    const whereClause = and(...conditions);
+
+    const [ticketRows, totalResult] = await Promise.all([
+      db
+        .select({
+          id: tickets.id,
+          category: tickets.category,
+          priority: tickets.priority,
+          subject: tickets.subject,
+          status: tickets.status,
+          courseTitle: courses.title,
+          courseTitleAr: courses.titleAr,
+          createdAt: tickets.createdAt,
+          updatedAt: tickets.updatedAt,
+          resolvedAt: tickets.resolvedAt,
+        })
+        .from(tickets)
+        .leftJoin(courses, eq(tickets.courseId, courses.id))
+        .where(whereClause)
+        .orderBy(desc(tickets.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(tickets)
+        .where(whereClause),
+    ]);
+
+    return {
+      tickets: ticketRows,
+      total: totalResult[0]?.count ?? 0,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Get a single ticket with its replies
+   */
+  async getTicketDetail(studentId: string, ticketId: string) {
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        category: tickets.category,
+        priority: tickets.priority,
+        subject: tickets.subject,
+        description: tickets.description,
+        attachmentUrl: tickets.attachmentUrl,
+        status: tickets.status,
+        satisfactionRating: tickets.satisfactionRating,
+        courseTitle: courses.title,
+        courseTitleAr: courses.titleAr,
+        createdAt: tickets.createdAt,
+        updatedAt: tickets.updatedAt,
+        resolvedAt: tickets.resolvedAt,
+        closedAt: tickets.closedAt,
+      })
+      .from(tickets)
+      .leftJoin(courses, eq(tickets.courseId, courses.id))
+      .where(and(eq(tickets.id, ticketId), eq(tickets.studentId, studentId)));
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    // Fetch replies with user info
+    const replies = await db
+      .select({
+        id: ticketReplies.id,
+        message: ticketReplies.message,
+        isStaffReply: ticketReplies.isStaffReply,
+        createdAt: ticketReplies.createdAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+      })
+      .from(ticketReplies)
+      .leftJoin(users, eq(ticketReplies.userId, users.id))
+      .where(eq(ticketReplies.ticketId, ticketId))
+      .orderBy(asc(ticketReplies.createdAt));
+
+    return {
+      ...ticket,
+      replies: replies.map((r) => ({
+        id: r.id,
+        message: r.message,
+        isStaffReply: r.isStaffReply,
+        createdAt: r.createdAt,
+        userName: [r.userFirstName, r.userLastName].filter(Boolean).join(' ') || 'Unknown',
+      })),
+    };
+  }
+
+  /**
+   * Add a reply to a ticket
+   */
+  async replyToTicket(
+    studentId: string,
+    ticketId: string,
+    dto: ReplyTicketDto,
+  ) {
+    // Verify the ticket belongs to this student and is not closed
+    const [ticket] = await db
+      .select({ id: tickets.id, status: tickets.status })
+      .from(tickets)
+      .where(and(eq(tickets.id, ticketId), eq(tickets.studentId, studentId)));
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    if (ticket.status === 'closed') {
+      throw new BadRequestException('Cannot reply to a closed ticket');
+    }
+
+    const [reply] = await db
+      .insert(ticketReplies)
+      .values({
+        ticketId,
+        userId: studentId,
+        message: dto.message,
+        isStaffReply: false,
+      })
+      .returning();
+
+    // Update ticket's updatedAt
+    await db
+      .update(tickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(tickets.id, ticketId));
+
+    return reply;
+  }
+
+  /**
+   * Rate a resolved ticket (satisfaction 1-5)
+   */
+  async rateTicket(studentId: string, ticketId: string, dto: RateTicketDto) {
+    const [ticket] = await db
+      .select({ id: tickets.id, status: tickets.status })
+      .from(tickets)
+      .where(and(eq(tickets.id, ticketId), eq(tickets.studentId, studentId)));
+
+    if (!ticket) {
+      throw new NotFoundException('Ticket not found');
+    }
+
+    if (ticket.status !== 'resolved' && ticket.status !== 'closed') {
+      throw new BadRequestException(
+        'Can only rate resolved or closed tickets',
+      );
+    }
+
+    await db
+      .update(tickets)
+      .set({ satisfactionRating: dto.rating })
+      .where(eq(tickets.id, ticketId));
+
+    return { success: true };
   }
 }

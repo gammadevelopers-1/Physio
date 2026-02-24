@@ -428,6 +428,9 @@ const StudentCourseDetailContent = () => {
                           >
                             {assessment.submission?.status === "graded" ? (
                               <CheckCircle2 className="w-5 h-5 text-[#16A34A] flex-shrink-0" />
+                            ) : assessment.submission?.status ===
+                              "submitted" ? (
+                              <Clock className="w-5 h-5 text-[#D4A520] flex-shrink-0" />
                             ) : (
                               <Circle className="w-5 h-5 text-[#9CA3AF] flex-shrink-0" />
                             )}
@@ -452,24 +455,37 @@ const StudentCourseDetailContent = () => {
                               </div>
                             </div>
                             {assessment.submission ? (
-                              <div className="text-right flex-shrink-0">
-                                <p className="text-sm font-semibold text-[#1F2937]">
-                                  {assessment.submission.score}/
-                                  {assessment.submission.totalMarks}
-                                </p>
-                                <p
-                                  className={`text-xs ${
-                                    assessment.submission.status === "graded"
-                                      ? "text-[#16A34A]"
-                                      : "text-[#D4A520]"
-                                  }`}
-                                >
-                                  {assessment.submission.status}
-                                </p>
+                              <div className="flex items-center gap-3 flex-shrink-0">
+                                <div className="text-right">
+                                  <p className="text-sm font-semibold text-[#1F2937]">
+                                    {assessment.submission.score != null
+                                      ? `${assessment.submission.score}/${assessment.submission.totalMarks}`
+                                      : "—"}
+                                  </p>
+                                  <p
+                                    className={`text-xs ${
+                                      assessment.submission.status === "graded"
+                                        ? "text-[#16A34A]"
+                                        : "text-[#D4A520]"
+                                    }`}
+                                  >
+                                    {assessment.submission.status === "graded"
+                                      ? t("courseDetail.graded")
+                                      : t("courseDetail.pendingGrading")}
+                                  </p>
+                                </div>
+                                {assessment.submission.status === "graded" && (
+                                  <Link
+                                    href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
+                                    className="text-xs text-[#002D87] hover:underline"
+                                  >
+                                    {t("courseDetail.review")}
+                                  </Link>
+                                )}
                               </div>
                             ) : (
                               <Link
-                                href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
+                                href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
                                 className="text-xs text-[#002D87] hover:underline flex-shrink-0"
                               >
                                 {t("courseDetail.takeAssessment")}

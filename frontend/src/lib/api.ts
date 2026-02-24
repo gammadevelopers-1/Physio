@@ -1702,6 +1702,9 @@ import type {
   AssessmentResult,
   RecentActivityItem,
   ModuleMaterialsResponse,
+  SubmissionReview,
+  TicketsResponse,
+  TicketDetail,
 } from '@/types/student-dashboard';
 
 export const studentApi = {
@@ -1777,6 +1780,51 @@ export const studentApi = {
     api.post<AssessmentResult>(`/student/assessments/${assessmentId}/submit`, {
       answers,
     }),
+
+  saveAssessmentProgress: (
+    assessmentId: string,
+    answers: { questionId: string; answer: string }[]
+  ) =>
+    api.post<{ submissionId: string; saved: boolean }>(
+      `/student/assessments/${assessmentId}/save-progress`,
+      { answers }
+    ),
+
+  getAssessmentProgress: (assessmentId: string) =>
+    api.get<{
+      answers: { questionId: string; answer: string }[];
+      startedAt: string | null;
+    } | null>(`/student/assessments/${assessmentId}/progress`),
+
+  getSubmissionReview: (submissionId: string) =>
+    api.get<SubmissionReview>(`/student/submissions/${submissionId}/review`),
+
+  // ── Tickets ──
+  getTickets: (params?: { status?: string; page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<TicketsResponse>(`/student/tickets${qs ? `?${qs}` : ''}`);
+  },
+
+  getTicketDetail: (ticketId: string) =>
+    api.get<TicketDetail>(`/student/tickets/${ticketId}`),
+
+  createTicket: (data: {
+    category: string;
+    priority?: string;
+    subject: string;
+    description: string;
+    courseId?: string;
+  }) => api.post<{ id: string }>('/student/tickets', data),
+
+  replyToTicket: (ticketId: string, message: string) =>
+    api.post<{ id: string }>(`/student/tickets/${ticketId}/reply`, { message }),
+
+  rateTicket: (ticketId: string, rating: number) =>
+    api.post<{ success: boolean }>(`/student/tickets/${ticketId}/rate`, { rating }),
 };
 
 // ===========================================

@@ -14,7 +14,12 @@ import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { UpdateProgressDto } from './dto/update-progress.dto';
+import {
+  UpdateProgressDto,
+  CreateTicketDto,
+  ReplyTicketDto,
+  RateTicketDto,
+} from './dto';
 
 @Controller('student')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -148,6 +153,45 @@ export class StudentController {
     );
   }
 
+  /**
+   * POST /student/assessments/:id/save-progress — Auto-save assessment progress
+   */
+  @Post('assessments/:id/save-progress')
+  @HttpCode(HttpStatus.OK)
+  async saveProgress(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { answers: { questionId: string; answer: string }[] },
+  ) {
+    return this.studentService.saveAssessmentProgress(
+      user.id,
+      assessmentId,
+      body.answers,
+    );
+  }
+
+  /**
+   * GET /student/assessments/:id/progress — Get saved assessment progress
+   */
+  @Get('assessments/:id/progress')
+  async getProgress(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getAssessmentProgress(user.id, assessmentId);
+  }
+
+  /**
+   * GET /student/submissions/:id/review — Get graded submission for review
+   */
+  @Get('submissions/:id/review')
+  async getSubmissionReview(
+    @Param('id') submissionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getSubmissionReview(user.id, submissionId);
+  }
+
   // ─── Certificates ──────────────────────────────────────
 
   /**
@@ -196,5 +240,73 @@ export class StudentController {
   @Get('transcript')
   async getTranscript(@CurrentUser() user: AuthenticatedUser) {
     return this.studentService.getTranscript(user.id);
+  }
+
+  // ─── Support Tickets ────────────────────────────────────
+
+  /**
+   * POST /student/tickets — Create a new support ticket
+   */
+  @Post('tickets')
+  @HttpCode(HttpStatus.CREATED)
+  async createTicket(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateTicketDto,
+  ) {
+    return this.studentService.createTicket(user.id, dto);
+  }
+
+  /**
+   * GET /student/tickets — List student's tickets
+   */
+  @Get('tickets')
+  async getTickets(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.studentService.getTickets(user.id, {
+      status,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
+  }
+
+  /**
+   * GET /student/tickets/:id — Get ticket detail with replies
+   */
+  @Get('tickets/:id')
+  async getTicketDetail(
+    @Param('id') ticketId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getTicketDetail(user.id, ticketId);
+  }
+
+  /**
+   * POST /student/tickets/:id/reply — Reply to a ticket
+   */
+  @Post('tickets/:id/reply')
+  @HttpCode(HttpStatus.CREATED)
+  async replyToTicket(
+    @Param('id') ticketId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ReplyTicketDto,
+  ) {
+    return this.studentService.replyToTicket(user.id, ticketId, dto);
+  }
+
+  /**
+   * POST /student/tickets/:id/rate — Rate a resolved ticket
+   */
+  @Post('tickets/:id/rate')
+  @HttpCode(HttpStatus.OK)
+  async rateTicket(
+    @Param('id') ticketId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RateTicketDto,
+  ) {
+    return this.studentService.rateTicket(user.id, ticketId, dto);
   }
 }

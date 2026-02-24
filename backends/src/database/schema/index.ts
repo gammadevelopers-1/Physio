@@ -46,6 +46,9 @@ export * from './nelc-audit-logs';
 export * from './session-assistants';
 export * from './attendance-logs';
 
+// Support Tickets schemas
+export * from './tickets';
+
 // Audit Logs schemas
 export * from './audit-logs';
 

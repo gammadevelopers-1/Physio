@@ -178,6 +178,7 @@ export interface StudentCertificate {
   assessmentPassed: boolean | null;
   courseCompleted: boolean | null;
   certificateUrl: string | null;
+  reviewNote: string | null;
   createdAt: string;
   reviewedAt: string | null;
   courseTitle: string;
@@ -300,6 +301,7 @@ export interface AssessmentQuestion {
   questionTextAr: string | null;
   options: { text: string; textAr?: string }[];
   marks: number;
+  isMultiSelect?: boolean;
 }
 
 export interface StudentAssessment {
@@ -311,7 +313,19 @@ export interface StudentAssessment {
   durationMinutes: number | null;
   attemptsAllowed: number | null;
   attemptsTaken: number;
+  canRetake?: boolean;
+  retakeAvailableAt?: string | null;
   questions: AssessmentQuestion[];
+}
+
+export interface GradedAnswer {
+  questionId: string;
+  answer: string;
+  isCorrect: boolean | null;
+  marksAwarded: number | null;
+  questionText: string;
+  questionType: string;
+  questionMarks: number;
 }
 
 export interface AssessmentResult {
@@ -321,4 +335,81 @@ export interface AssessmentResult {
   percentage: number;
   status: string;
   passed: boolean;
+  hasManualGrading?: boolean;
+  gradedAnswers?: GradedAnswer[];
+}
+
+// ─── Support Ticket Types ──────────────────────────────
+
+export type TicketStatus = 'new' | 'in_progress' | 'resolved' | 'closed';
+export type TicketCategory = 'billing' | 'login' | 'content' | 'certificate' | 'technical' | 'other';
+export type TicketPriority = 'high' | 'medium' | 'low';
+
+export interface SupportTicket {
+  id: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  subject: string;
+  status: TicketStatus;
+  courseTitle: string | null;
+  courseTitleAr: string | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+}
+
+export interface TicketReply {
+  id: string;
+  message: string;
+  isStaffReply: boolean;
+  createdAt: string;
+  userName: string;
+}
+
+export interface TicketDetail {
+  id: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  subject: string;
+  description: string;
+  attachmentUrl: string | null;
+  status: TicketStatus;
+  satisfactionRating: number | null;
+  courseTitle: string | null;
+  courseTitleAr: string | null;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  replies: TicketReply[];
+}
+
+export interface TicketsResponse {
+  tickets: SupportTicket[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface SubmissionReview {
+  submissionId: string;
+  assessmentId: string;
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  answers: Array<{
+    questionId: string;
+    answer: string;
+    isCorrect: boolean | null;
+    marksAwarded: number | null;
+  }>;
+  questions: Array<{
+    id: string;
+    type: string;
+    questionText: string;
+    questionTextAr: string | null;
+    options: Array<{ text: string; textAr?: string; isCorrect: boolean }>;
+    correctAnswer: string | null;
+    marks: number;
+  }>;
 }

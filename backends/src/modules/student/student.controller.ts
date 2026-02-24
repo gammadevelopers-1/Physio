@@ -44,12 +44,14 @@ export class StudentController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('sort') sort?: string,
   ) {
     return this.studentService.getEnrolledCourses(user.id, {
       status,
       search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
+      sort,
     });
   }
 
@@ -100,6 +102,20 @@ export class StudentController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.studentService.selfEnroll(user.id, courseId, user);
+  }
+
+  // ─── Module Materials ──────────────────────────────────
+
+  /**
+   * GET /student/courses/:courseId/modules/:moduleId/materials — Get materials for a module
+   */
+  @Get('courses/:courseId/modules/:moduleId/materials')
+  async getModuleMaterials(
+    @Param('courseId') courseId: string,
+    @Param('moduleId') moduleId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getModuleMaterials(user.id, courseId, moduleId);
   }
 
   // ─── Assessments ──────────────────────────────────────

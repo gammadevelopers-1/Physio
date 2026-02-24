@@ -12,6 +12,7 @@ interface UseStudentCoursesParams {
   search?: string;
   page?: number;
   limit?: number;
+  sort?: string;
 }
 
 export function useStudentCourses(params?: UseStudentCoursesParams) {
@@ -36,7 +37,7 @@ export function useStudentCourses(params?: UseStudentCoursesParams) {
     } finally {
       setLoading(false);
     }
-  }, [params?.status, params?.search, params?.page, params?.limit]);
+  }, [params?.status, params?.search, params?.page, params?.limit, params?.sort]);
 
   useEffect(() => {
     fetchCourses();

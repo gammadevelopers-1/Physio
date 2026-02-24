@@ -6,11 +6,14 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowLeft,
   ArrowRight,
+  Award,
   BookOpen,
   Calendar,
   Clock,
+  ClipboardCheck,
   Loader2,
   Play,
+  UserCheck,
   Users,
   Video,
   MapPin,
@@ -129,6 +132,14 @@ const StudentCourseDetailContent = () => {
                               {formatDate(data.course.startDate)}
                             </span>
                           )}
+                          {data.course.isCmeAccredited && (
+                            <span className="flex items-center gap-1 text-[#D4A520]">
+                              <Award className="w-3.5 h-3.5" />
+                              {t("courseDetail.cmeHours", {
+                                hours: data.course.cmeHours ?? 0,
+                              })}
+                            </span>
+                          )}
                         </div>
 
                         {/* Progress */}
@@ -168,7 +179,8 @@ const StudentCourseDetailContent = () => {
                   </div>
 
                   {/* Course Info Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    {/* Modules */}
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0F7FF] rounded-lg flex items-center justify-center">
@@ -179,28 +191,88 @@ const StudentCourseDetailContent = () => {
                             {t("courseDetail.modules")}
                           </p>
                           <p className="text-lg font-semibold text-[#1F2937]">
+                            {data.modules.filter((m) => m.isCompleted).length}/
                             {data.modules.length}
                           </p>
                         </div>
                       </div>
                     </div>
 
+                    {/* Attendance */}
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
-                          <Calendar className="w-5 h-5 text-[#D4A520]" />
+                        <div
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            data.attendanceSummary &&
+                            data.attendanceSummary.percentage >= 70
+                              ? "bg-[#F0FDF4]"
+                              : "bg-[#FEF2F2]"
+                          }`}
+                        >
+                          <UserCheck
+                            className={`w-5 h-5 ${
+                              data.attendanceSummary &&
+                              data.attendanceSummary.percentage >= 70
+                                ? "text-[#16A34A]"
+                                : "text-[#DC2626]"
+                            }`}
+                          />
                         </div>
                         <div>
                           <p className="text-xs text-[#6B7280]">
-                            {t("courseDetail.sessions")}
+                            {t("courseDetail.attendance")}
                           </p>
                           <p className="text-lg font-semibold text-[#1F2937]">
-                            {data.sessions.length}
+                            {data.attendanceSummary
+                              ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total}`
+                              : "0/0"}
                           </p>
+                          {data.attendanceSummary &&
+                            data.attendanceSummary.total > 0 && (
+                              <p
+                                className={`text-xs ${
+                                  data.attendanceSummary.percentage >= 70
+                                    ? "text-[#16A34A]"
+                                    : "text-[#DC2626]"
+                                }`}
+                              >
+                                {data.attendanceSummary.percentage}%
+                              </p>
+                            )}
                         </div>
                       </div>
                     </div>
 
+                    {/* Assessments */}
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
+                          <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-[#6B7280]">
+                            {t("courseDetail.assessments")}
+                          </p>
+                          <p className="text-lg font-semibold text-[#1F2937]">
+                            {data.assessmentSummary
+                              ? `${data.assessmentSummary.completed}/${data.assessmentSummary.total}`
+                              : `${data.assessments.length}`}
+                          </p>
+                          {data.assessmentSummary &&
+                            data.assessmentSummary.completed > 0 && (
+                              <p className="text-xs text-[#6B7280]">
+                                {t("courseDetail.averageScore", {
+                                  score: Math.round(
+                                    data.assessmentSummary.averageScore
+                                  ),
+                                })}
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status */}
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0FDF4] rounded-lg flex items-center justify-center">
@@ -241,11 +313,17 @@ const StudentCourseDetailContent = () => {
                               key={module.id}
                               className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
                             >
-                              <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
-                                <span className="text-xs font-medium text-[#4B5563]">
-                                  {index + 1}
-                                </span>
-                              </div>
+                              {module.isCompleted ? (
+                                <div className="w-8 h-8 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
+                                  <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
+                                </div>
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
+                                  <span className="text-xs font-medium text-[#4B5563]">
+                                    {index + 1}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-[#1F2937] truncate">
                                   {isRTL && module.titleAr

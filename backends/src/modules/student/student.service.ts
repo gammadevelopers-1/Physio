@@ -17,6 +17,8 @@ import {
   attendance,
   users,
   questions,
+  courseMaterials,
+  materialVariants,
   COURSE_STATUS,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
@@ -260,6 +262,7 @@ export class StudentService {
       search?: string;
       page?: number;
       limit?: number;
+      sort?: string;
     },
   ) {
     const page = params.page || 1;
@@ -330,7 +333,15 @@ export class StudentService {
       .from(enrollments)
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
       .where(whereClause)
-      .orderBy(desc(enrollments.enrolledAt))
+      .orderBy(
+        params.sort === 'recent'
+          ? desc(enrollments.lastAccessedAt)
+          : params.sort === 'completed_date'
+            ? desc(enrollments.completedAt)
+            : params.sort === 'start_date'
+              ? asc(courses.startDate)
+              : desc(enrollments.enrolledAt),
+      )
       .limit(limit)
       .offset(offset);
 
@@ -339,6 +350,7 @@ export class StudentService {
 
     let missingTasksMap: Record<string, number> = {};
     let nextSessionsMap: Record<string, { scheduledAt: Date; sessionType: string; zoomLink: string | null }> = {};
+    let attendanceMap: Record<string, { total: number; attended: number }> = {};
 
     if (courseIds.length > 0) {
       // Count unsubmitted published assessments per course
@@ -389,12 +401,33 @@ export class StudentService {
           zoomLink: row.zoomLink,
         };
       }
+
+      // Per-course attendance stats
+      const attendanceStats = await db.execute(sql`
+        SELECT s.course_id AS "courseId",
+          COUNT(*) AS "total",
+          COUNT(CASE WHEN a.status IN ('present', 'late') THEN 1 END) AS "attended"
+        FROM sessions s
+        LEFT JOIN attendance a ON a.session_id = s.id AND a.student_id = ${studentId}
+        WHERE s.course_id IN (${sql.join(courseIds.map((id) => sql`${id}`), sql`, `)})
+          AND s.status IN ('completed', 'live')
+        GROUP BY s.course_id
+      `);
+
+      for (const row of attendanceStats.rows as any[]) {
+        attendanceMap[row.courseId] = {
+          total: Number(row.total),
+          attended: Number(row.attended),
+        };
+      }
     }
 
     const enriched = data.map((c) => {
       const missingTasksCount = missingTasksMap[c.id] || 0;
       const nextSess = nextSessionsMap[c.id];
       const nextDeadline = nextSess ? nextSess.scheduledAt.toISOString() : null;
+      const att = attendanceMap[c.id] || { total: 0, attended: 0 };
+      const attendanceRate = att.total > 0 ? Math.round((att.attended / att.total) * 100) : 0;
 
       // Compute next action
       let nextAction = 'start_course';
@@ -419,6 +452,9 @@ export class StudentService {
         missingTasksCount,
         nextDeadline,
         nextAction,
+        sessionsAttended: att.attended,
+        totalSessions: att.total,
+        attendanceRate,
       };
     });
 
@@ -472,6 +508,8 @@ export class StudentService {
         thumbnail: courses.thumbnail,
         startDate: courses.startDate,
         endDate: courses.endDate,
+        isCmeAccredited: courses.isCmeAccredited,
+        cmeHours: courses.cmeHours,
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = ${courses.instructorId}
@@ -573,6 +611,69 @@ export class StudentService {
       submission: submissionMap.get(a.id) || null,
     }));
 
+    // Attendance summary for this course
+    const [attSummary] = await db
+      .select({
+        totalSessions: sql<number>`(
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
+          AND s.status IN ('completed', 'live', 'scheduled')
+        )`.mapWith(Number),
+        attendedSessions: sql<number>`(
+          SELECT COUNT(*) FROM attendance a
+          INNER JOIN sessions s ON a.session_id = s.id
+          WHERE a.student_id = ${studentId}
+          AND s.course_id = ${courseId}
+          AND a.status IN ('present', 'late')
+        )`.mapWith(Number),
+      })
+      .from(sql`(SELECT 1) AS dummy`);
+
+    const attendanceSummary = {
+      total: attSummary?.totalSessions || 0,
+      attended: attSummary?.attendedSessions || 0,
+      percentage:
+        attSummary?.totalSessions > 0
+          ? Math.round(
+              (attSummary.attendedSessions / attSummary.totalSessions) * 100,
+            )
+          : 0,
+    };
+
+    // Assessment summary
+    const completedAssessments = assessmentsWithStatus.filter(
+      (a) => a.submission !== null,
+    ).length;
+    const gradedSubmissions = studentSubmissions.filter(
+      (s) => s.status === 'graded' && s.percentage !== null,
+    );
+    const avgScore =
+      gradedSubmissions.length > 0
+        ? Math.round(
+            gradedSubmissions.reduce(
+              (sum: number, s: any) => sum + Number(s.percentage),
+              0,
+            ) / gradedSubmissions.length,
+          )
+        : 0;
+
+    const assessmentSummary = {
+      total: courseAssessments.length,
+      completed: completedAssessments,
+      averageScore: avgScore,
+    };
+
+    // Add module completion flags (based on progress %)
+    const totalModules = modules.length;
+    const completedModulesCount =
+      totalModules > 0
+        ? Math.floor((enrollment.progress / 100) * totalModules)
+        : 0;
+
+    const modulesWithCompletion = modules.map((m, index) => ({
+      ...m,
+      isCompleted: index < completedModulesCount,
+    }));
+
     // Update lastAccessedAt
     await db
       .update(enrollments)
@@ -588,9 +689,11 @@ export class StudentService {
         enrolledAt: enrollment.enrolledAt,
         completedAt: enrollment.completedAt,
       },
-      modules,
+      modules: modulesWithCompletion,
       sessions: upcomingSessions,
       assessments: assessmentsWithStatus,
+      attendanceSummary,
+      assessmentSummary,
     };
   }
 
@@ -1376,6 +1479,123 @@ export class StudentService {
       totalHours: enriched
         .filter((c) => c.status === 'completed')
         .reduce((sum, c) => sum + c.totalHours, 0),
+    };
+  }
+
+  // ─── Module Materials ────────────────────────────────────
+
+  async getModuleMaterials(
+    studentId: string,
+    courseId: string,
+    moduleId: string,
+  ) {
+    // Verify enrollment
+    const [enrollment] = await db
+      .select()
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.courseId, courseId),
+          or(
+            eq(enrollments.status, 'active'),
+            eq(enrollments.status, 'completed'),
+          ),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new NotFoundException('You are not enrolled in this course');
+    }
+
+    // Verify module belongs to course
+    const [module] = await db
+      .select()
+      .from(courseModules)
+      .where(
+        and(
+          eq(courseModules.id, moduleId),
+          eq(courseModules.courseId, courseId),
+        ),
+      )
+      .limit(1);
+
+    if (!module) {
+      throw new NotFoundException('Module not found in this course');
+    }
+
+    // Get live materials for this module
+    const materials = await db
+      .select({
+        id: courseMaterials.id,
+        title: courseMaterials.title,
+        type: courseMaterials.type,
+        fileUrl: courseMaterials.fileUrl,
+        fileSize: courseMaterials.fileSize,
+        mimeType: courseMaterials.mimeType,
+        captionsUrl: courseMaterials.captionsUrl,
+        transcriptUrl: courseMaterials.transcriptUrl,
+        orderIndex: courseMaterials.orderIndex,
+      })
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.moduleId, moduleId),
+          eq(courseMaterials.status, 'live'),
+        ),
+      )
+      .orderBy(asc(courseMaterials.orderIndex));
+
+    // Batch fetch variants for video materials
+    const videoMaterialIds = materials
+      .filter((m) => m.type === 'video')
+      .map((m) => m.id);
+
+    let variantsMap: Record<string, any[]> = {};
+    if (videoMaterialIds.length > 0) {
+      const variants = await db
+        .select({
+          id: materialVariants.id,
+          materialId: materialVariants.materialId,
+          resolution: materialVariants.resolution,
+          fileUrl: materialVariants.fileUrl,
+          fileSize: materialVariants.fileSize,
+          width: materialVariants.width,
+          height: materialVariants.height,
+          bitrate: materialVariants.bitrate,
+          mimeType: materialVariants.mimeType,
+        })
+        .from(materialVariants)
+        .where(
+          sql`${materialVariants.materialId} IN (${sql.join(
+            videoMaterialIds.map((id) => sql`${id}`),
+            sql`, `,
+          )})`,
+        );
+
+      for (const v of variants) {
+        if (!variantsMap[v.materialId]) {
+          variantsMap[v.materialId] = [];
+        }
+        variantsMap[v.materialId].push({
+          id: v.id,
+          resolution: v.resolution,
+          fileUrl: v.fileUrl,
+          fileSize: v.fileSize,
+          width: v.width,
+          height: v.height,
+          bitrate: v.bitrate,
+          mimeType: v.mimeType,
+        });
+      }
+    }
+
+    return {
+      materials: materials.map((m) => ({
+        ...m,
+        variants: variantsMap[m.id] || [],
+      })),
     };
   }
 }

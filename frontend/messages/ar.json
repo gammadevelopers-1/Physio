@@ -1429,7 +1429,8 @@
       "tabs": {
         "all": "الكل",
         "inProgress": "قيد التقدم",
-        "completed": "مكتملة"
+        "completed": "مكتملة",
+        "upcoming": "القادمة"
       },
       "noCoursesTitle": "لا توجد دورات بعد",
       "noCoursesDescription": "ستظهر دوراتك هنا.",
@@ -1437,7 +1438,18 @@
       "viewCourse": "عرض الدورة",
       "inProgress": "قيد التقدم",
       "completed": "مكتملة",
-      "notStarted": "لم تبدأ"
+      "notStarted": "لم تبدأ",
+      "modulesCompleted": "{completed} من {total} وحدات",
+      "lastAccessed": "آخر وصول {time}",
+      "dueIn": "مستحق خلال {time}",
+      "overdue": "متأخر",
+      "missingItems": "{count} مهام مفقودة",
+      "joinSession": "انضم للجلسة",
+      "takeAssessment": "ابدأ التقييم",
+      "continueLearning": "تابع التعلم",
+      "startCourse": "ابدأ الدورة",
+      "viewCertificate": "عرض الشهادة",
+      "attendanceRate": "الحضور"
     },
     "favourites": {
       "title": "المفضلة",
@@ -1555,7 +1567,13 @@
       "takeAssessment": "ابدأ التقييم",
       "startLearning": "ابدأ التعلم",
       "continueLearning": "أكمل التعلم",
-      "complete": "مكتمل"
+      "complete": "مكتمل",
+      "cmeHours": "{hours} ساعات تعليم مستمر",
+      "attendance": "الحضور",
+      "attendanceSummary": "{attended} من {total} جلسة ({percentage}%)",
+      "assessmentSummary": "{completed} من {total} مكتملة",
+      "averageScore": "المعدل {score}%",
+      "completed": "مكتملة"
     },
     "learning": {
       "courseContent": "محتوى الدورة",
@@ -1563,7 +1581,15 @@
       "moduleContent": "محتوى الوحدة",
       "moduleContentDescription": "ستظهر مواد التعلم الخاصة بهذه الوحدة هنا. أكمل الوحدة عندما تكون جاهزاً.",
       "markComplete": "وضع علامة مكتمل",
-      "noModules": "لا توجد وحدات متاحة."
+      "noModules": "لا توجد وحدات متاحة.",
+      "transcript": "النص",
+      "showTranscript": "عرض النص",
+      "hideTranscript": "إخفاء النص",
+      "noMaterials": "لا يوجد محتوى متاح لهذه الوحدة",
+      "downloadPdf": "تحميل PDF",
+      "viewFullSize": "عرض بالحجم الكامل",
+      "takeAssessment": "ابدأ التقييم",
+      "completed": "مكتملة"
     },
     "assessment": {
       "question": "السؤال",

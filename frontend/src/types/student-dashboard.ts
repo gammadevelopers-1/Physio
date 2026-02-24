@@ -54,6 +54,9 @@ export interface StudentEnrolledCourse {
   nextAction: string;
   nextDeadline: string | null;
   missingTasksCount: number;
+  sessionsAttended: number;
+  totalSessions: number;
+  attendanceRate: number;
 }
 
 export interface StudentEnrolledCoursesResponse {
@@ -74,6 +77,7 @@ export interface CourseModule {
   durationMinutes: number | null;
   createdAt: string;
   updatedAt: string;
+  isCompleted?: boolean;
 }
 
 export interface CourseSession {
@@ -119,6 +123,8 @@ export interface StudentCourseDetail {
     startDate: string | null;
     endDate: string | null;
     instructorName: string;
+    isCmeAccredited: boolean;
+    cmeHours: number;
   };
   enrollment: {
     id: string;
@@ -130,6 +136,16 @@ export interface StudentCourseDetail {
   modules: CourseModule[];
   sessions: CourseSession[];
   assessments: CourseAssessmentWithSubmission[];
+  attendanceSummary: {
+    total: number;
+    attended: number;
+    percentage: number;
+  };
+  assessmentSummary: {
+    total: number;
+    completed: number;
+    averageScore: number;
+  };
 }
 
 export interface AttendanceRecord {
@@ -243,6 +259,36 @@ export interface EnrollmentResponse {
   enrolledAt: string;
   completedAt: string | null;
   lastAccessedAt: string | null;
+}
+
+// ─── Module Material Types ──────────────────────────────
+
+export interface MaterialVariant {
+  id: string;
+  resolution: string;
+  fileUrl: string;
+  fileSize: number | null;
+  width: number | null;
+  height: number | null;
+  bitrate: string | null;
+  mimeType: string;
+}
+
+export interface ModuleMaterial {
+  id: string;
+  title: string;
+  type: 'video' | 'pdf' | 'document' | 'image';
+  fileUrl: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  captionsUrl: string | null;
+  transcriptUrl: string | null;
+  orderIndex: number;
+  variants: MaterialVariant[];
+}
+
+export interface ModuleMaterialsResponse {
+  materials: ModuleMaterial[];
 }
 
 // ─── Assessment Types ──────────────────────────────────

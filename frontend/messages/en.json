@@ -1217,7 +1217,8 @@
       "tabs": {
         "all": "All",
         "inProgress": "In progress",
-        "completed": "Completed"
+        "completed": "Completed",
+        "upcoming": "Upcoming"
       },
       "noCoursesTitle": "No courses yet",
       "noCoursesDescription": "Your courses will appear here.",
@@ -1225,7 +1226,18 @@
       "viewCourse": "View course",
       "inProgress": "In progress.",
       "completed": "Completed",
-      "notStarted": "Not started"
+      "notStarted": "Not started",
+      "modulesCompleted": "{completed} of {total} modules",
+      "lastAccessed": "Last accessed {time}",
+      "dueIn": "Due in {time}",
+      "overdue": "Overdue",
+      "missingItems": "{count} missing tasks",
+      "joinSession": "Join Session",
+      "takeAssessment": "Take Assessment",
+      "continueLearning": "Continue Learning",
+      "startCourse": "Start Course",
+      "viewCertificate": "View Certificate",
+      "attendanceRate": "Attendance"
     },
     "favourites": {
       "title": "Favorites",
@@ -1343,7 +1355,13 @@
       "takeAssessment": "Take Assessment",
       "startLearning": "Start Learning",
       "continueLearning": "Continue Learning",
-      "complete": "complete"
+      "complete": "complete",
+      "cmeHours": "{hours} CME Hours",
+      "attendance": "Attendance",
+      "attendanceSummary": "{attended} of {total} sessions ({percentage}%)",
+      "assessmentSummary": "{completed} of {total} completed",
+      "averageScore": "Avg. {score}%",
+      "completed": "Completed"
     },
     "learning": {
       "courseContent": "Course Content",
@@ -1351,7 +1369,15 @@
       "moduleContent": "Module Content",
       "moduleContentDescription": "This module's learning materials will appear here. Complete the module when you're ready.",
       "markComplete": "Mark as Complete",
-      "noModules": "No modules available."
+      "noModules": "No modules available.",
+      "transcript": "Transcript",
+      "showTranscript": "Show Transcript",
+      "hideTranscript": "Hide Transcript",
+      "noMaterials": "No content available for this module",
+      "downloadPdf": "Download PDF",
+      "viewFullSize": "View Full Size",
+      "takeAssessment": "Take Assessment",
+      "completed": "Completed"
     },
     "assessment": {
       "question": "Question",

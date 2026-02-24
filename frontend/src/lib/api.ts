@@ -1701,6 +1701,7 @@ import type {
   StudentAssessment,
   AssessmentResult,
   RecentActivityItem,
+  ModuleMaterialsResponse,
 } from '@/types/student-dashboard';
 
 export const studentApi = {
@@ -1712,12 +1713,14 @@ export const studentApi = {
     search?: string;
     page?: number;
     limit?: number;
+    sort?: string;
   }) => {
     const sp = new URLSearchParams();
     if (params?.status && params.status !== 'all') sp.set('status', params.status);
     if (params?.search) sp.set('search', params.search);
     if (params?.page) sp.set('page', String(params.page));
     if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.sort) sp.set('sort', params.sort);
     const qs = sp.toString();
     return api.get<StudentEnrolledCoursesResponse>(
       `/student/courses${qs ? `?${qs}` : ''}`,
@@ -1732,6 +1735,11 @@ export const studentApi = {
 
   updateProgress: (courseId: string, data: { moduleId: string; status?: string }) =>
     api.post<EnrollmentResponse>(`/student/courses/${courseId}/progress`, data),
+
+  getModuleMaterials: (courseId: string, moduleId: string) =>
+    api.get<ModuleMaterialsResponse>(
+      `/student/courses/${courseId}/modules/${moduleId}/materials`,
+    ),
 
   selfEnroll: (courseId: string) =>
     api.post<EnrollmentResponse>(`/student/enroll/${courseId}`, {}),

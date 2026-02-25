@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Param,
+  Req,
   Res,
   UseGuards,
   UseInterceptors,
@@ -11,11 +12,42 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/guards';
 import { Public } from '../auth/decorators';
 import { randomUUID } from 'crypto';
+
+/** Content-type mapping for serving local files */
+const CONTENT_TYPE_MAP: Record<string, string> = {
+  // Documents
+  pdf: 'application/pdf',
+  // Images
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+  // Video
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mpeg: 'video/mpeg',
+  mpg: 'video/mpeg',
+  mov: 'video/quicktime',
+  avi: 'video/x-msvideo',
+  // Audio
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  ogg: 'audio/ogg',
+  m4a: 'audio/mp4',
+  // Captions & Transcripts
+  vtt: 'text/vtt',
+  srt: 'application/x-subrip',
+  txt: 'text/plain',
+};
 
 @Controller('storage')
 export class StorageController {
@@ -133,6 +165,7 @@ export class StorageController {
 
   /**
    * Serve local files in development (STORAGE_DRIVER=local)
+   * Supports HTTP Range requests for video seeking/streaming.
    * GET /api/storage/files/:bucket/:path
    */
   @Public()
@@ -140,6 +173,7 @@ export class StorageController {
   async serveFile(
     @Param('bucket') bucket: string,
     @Param('0') filePath: string,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
     if (!this.storageService.isLocal) {
@@ -156,19 +190,40 @@ export class StorageController {
       throw new NotFoundException('File not found');
     }
 
-    // Determine content type from extension
+    const absolutePath = path.resolve(localPath);
+    const stat = fs.statSync(absolutePath);
+    const fileSize = stat.size;
     const ext = filePath.split('.').pop()?.toLowerCase();
-    const contentTypeMap: Record<string, string> = {
-      pdf: 'application/pdf',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      png: 'image/png',
-      webp: 'image/webp',
-    };
+    const contentType = CONTENT_TYPE_MAP[ext || ''] || 'application/octet-stream';
+    const filename = filePath.split('/').pop() || 'file';
 
-    res.setHeader('Content-Type', contentTypeMap[ext || ''] || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `inline; filename="${filePath.split('/').pop()}"`);
-    const absolutePath = require('path').resolve(localPath);
-    res.sendFile(absolutePath);
+    const range = req.headers.range;
+
+    if (range) {
+      // HTTP Range request — required for video seeking
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunkSize = end - start + 1;
+
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunkSize,
+        'Content-Type': contentType,
+      });
+
+      fs.createReadStream(absolutePath, { start, end }).pipe(res);
+    } else {
+      // Full file response with Accept-Ranges so browser knows it can request ranges
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type': contentType,
+        'Accept-Ranges': 'bytes',
+        'Content-Disposition': `inline; filename="${filename}"`,
+      });
+
+      fs.createReadStream(absolutePath).pipe(res);
+    }
   }
 }

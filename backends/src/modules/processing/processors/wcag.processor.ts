@@ -35,9 +35,15 @@ export class WcagProcessor extends WorkerHost {
       this.logger.log(`WCAG result for ${materialId}: ${result.status} — ${result.details.join(', ')}`);
 
       // 2. Update wcagStatus in DB
+      // Map wcag service statuses to schema values: pass/warning → compliant, fail → fail
+      const wcagStatusMap: Record<string, string> = {
+        pass: 'compliant',
+        warning: 'warning',
+        fail: 'fail',
+      };
       await db
         .update(courseMaterials)
-        .set({ wcagStatus: result.status, updatedAt: new Date() })
+        .set({ wcagStatus: wcagStatusMap[result.status] || 'pending', updatedAt: new Date() })
         .where(eq(courseMaterials.id, materialId));
 
       // 3. Mark material as live (processing complete)

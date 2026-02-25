@@ -18,7 +18,6 @@ import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerDashboard } from "@/hooks/useCourseManagerDashboard";
 import { courseManagerApi, ApiError } from "@/lib/api";
 import { useContentReview } from "@/hooks/useContentReview";
-import { useNELCCompliance } from "@/hooks/useNELCCompliance";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
@@ -27,7 +26,6 @@ const CourseManagerDashboardContent = () => {
     useCourseManagerDashboard();
   const { items: reviewItems, stats: reviewStats, approve: approveReview, reject: rejectReview } =
     useContentReview();
-  const { overallPercentage: nelcScore } = useNELCCompliance();
   const [ratingsMap, setRatingsMap] = useState<Record<string, { avgRating: number; totalRatings: number }>>({});
 
   useEffect(() => {
@@ -45,7 +43,6 @@ const CourseManagerDashboardContent = () => {
         ? Math.round(activeCoursesList.reduce((sum, c) => sum + c.completionRate, 0) / activeCoursesList.length)
         : 0,
     activeInstructors: instructors.length,
-    nelcScore,
     totalRevenue: Math.round(courses.reduce((sum, c) => sum + ((c.price || 0) * c.enrolledCount), 0)),
   };
 
@@ -122,22 +119,44 @@ const CourseManagerDashboardContent = () => {
     };
   });
 
-  // Map instructors to widget format
+  // Map instructors to widget format with real data from courses
   const widgetInstructors = instructors.map((inst) => {
     const name =
       [inst.firstName, inst.lastName].filter(Boolean).join(" ") || inst.email;
     const initials = inst.firstName && inst.lastName
       ? `${inst.firstName[0]}${inst.lastName[0]}`.toUpperCase()
       : name.substring(0, 2).toUpperCase();
+
+    // Derive stats from courses assigned to this instructor
+    const assignedCoursesList = courses.filter((c) => c.instructorId === inst.id);
+    const assignedCourses = assignedCoursesList.length;
+    const totalSessionMinutes = assignedCoursesList.reduce(
+      (sum, c) => sum + (c.totalSessions * 60), 0
+    );
+    const hoursPerWeek = Math.round((totalSessionMinutes / 60) * 10) / 10;
+
+    // Average rating across all courses for this instructor
+    const instructorRatings = assignedCoursesList
+      .map((c) => ratingsMap[c.id]?.avgRating)
+      .filter((r): r is number => r !== undefined && r > 0);
+    const rating = instructorRatings.length > 0
+      ? Math.round((instructorRatings.reduce((s, r) => s + r, 0) / instructorRatings.length) * 10) / 10
+      : 0;
+
+    // Load: percentage of max capacity (assume 20 hrs/week as max)
+    const loadPercentage = Math.min(100, Math.round((hoursPerWeek / 20) * 100));
+    const status: "available" | "busy" | "overloaded" =
+      loadPercentage >= 80 ? "overloaded" : loadPercentage >= 50 ? "busy" : "available";
+
     return {
       id: inst.id,
       name,
       initials,
-      assignedCourses: 0,
-      hoursPerWeek: 0,
-      loadPercentage: 0,
-      rating: 0,
-      status: "available" as const,
+      assignedCourses,
+      hoursPerWeek,
+      loadPercentage,
+      rating,
+      status,
     };
   });
 

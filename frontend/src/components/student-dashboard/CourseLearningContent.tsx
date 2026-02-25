@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -9,8 +9,6 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Clock,
   ClipboardList,
   Download,
@@ -20,12 +18,12 @@ import {
   Lock,
   Maximize2,
   Play,
-  Subtitles,
   Video,
 } from "lucide-react";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
 import { useModuleMaterials } from "@/hooks/useModuleMaterials";
 import { studentApi } from "@/lib/api";
+import VideoPlayer from "./VideoPlayer";
 import type { ModuleMaterial } from "@/types/student-dashboard";
 
 // ─── Module Type Icon ───────────────────────────────────────
@@ -50,233 +48,6 @@ function getModuleIcon(type: string, isCompleted?: boolean) {
 }
 
 // ─── Content Viewer Components ──────────────────────────────
-
-const PLAYBACK_SPEEDS = [0.5, 1, 1.5, 2];
-
-function VideoViewer({
-  material,
-  courseId,
-  moduleId,
-}: {
-  material: ModuleMaterial;
-  courseId?: string;
-  moduleId?: string;
-}) {
-  const t = useTranslations("studentDashboard");
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [showTranscript, setShowTranscript] = useState(false);
-  const [transcript, setTranscript] = useState<string | null>(null);
-  const [loadingTranscript, setLoadingTranscript] = useState(false);
-  const [speed, setSpeed] = useState(1);
-  const [captionsOn, setCaptionsOn] = useState(false);
-  const [markedComplete, setMarkedComplete] = useState(false);
-
-  // Use highest resolution variant or fallback to fileUrl
-  const videoSrc =
-    material.variants.length > 0
-      ? material.variants.sort(
-          (a, b) => (b.width || 0) - (a.width || 0)
-        )[0].fileUrl
-      : material.fileUrl;
-
-  // Speed control
-  const cycleSpeed = useCallback(() => {
-    setSpeed((prev) => {
-      const idx = PLAYBACK_SPEEDS.indexOf(prev);
-      const next = PLAYBACK_SPEEDS[(idx + 1) % PLAYBACK_SPEEDS.length];
-      if (videoRef.current) videoRef.current.playbackRate = next;
-      return next;
-    });
-  }, []);
-
-  // Toggle captions
-  const toggleCaptions = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    for (let i = 0; i < video.textTracks.length; i++) {
-      const track = video.textTracks[i];
-      track.mode = captionsOn ? "hidden" : "showing";
-    }
-    setCaptionsOn(!captionsOn);
-  }, [captionsOn]);
-
-  // Auto-save progress every 10 seconds
-  useEffect(() => {
-    if (!courseId || !moduleId) return;
-    const video = videoRef.current;
-    if (!video) return;
-
-    const interval = setInterval(() => {
-      if (!video.paused && video.duration > 0) {
-        studentApi
-          .updateProgress(courseId, {
-            moduleId,
-            materialId: material.id,
-            watchedSeconds: Math.floor(video.currentTime),
-            totalSeconds: Math.floor(video.duration),
-          })
-          .catch(() => {});
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [courseId, moduleId, material.id]);
-
-  // 90% completion tracking
-  const handleTimeUpdate = useCallback(() => {
-    if (!courseId || !moduleId || markedComplete) return;
-    const video = videoRef.current;
-    if (!video || video.duration === 0) return;
-    if (video.currentTime / video.duration >= 0.9) {
-      setMarkedComplete(true);
-      studentApi
-        .updateProgress(courseId, { moduleId, status: "completed" })
-        .catch(() => {});
-    }
-  }, [courseId, moduleId, markedComplete]);
-
-  // Keyboard shortcuts
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      switch (e.key) {
-        case " ":
-          e.preventDefault();
-          video.paused ? video.play() : video.pause();
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          video.currentTime = Math.max(0, video.currentTime - 10);
-          break;
-        case "ArrowRight":
-          e.preventDefault();
-          video.currentTime = Math.min(video.duration, video.currentTime + 10);
-          break;
-        case "c":
-        case "C":
-          e.preventDefault();
-          toggleCaptions();
-          break;
-      }
-    },
-    [toggleCaptions]
-  );
-
-  const handleToggleTranscript = useCallback(async () => {
-    if (showTranscript) {
-      setShowTranscript(false);
-      return;
-    }
-    if (transcript !== null) {
-      setShowTranscript(true);
-      return;
-    }
-    if (!material.transcriptUrl) return;
-    setLoadingTranscript(true);
-    try {
-      const res = await fetch(material.transcriptUrl);
-      const text = await res.text();
-      setTranscript(text);
-      setShowTranscript(true);
-    } catch {
-      setTranscript("Failed to load transcript.");
-      setShowTranscript(true);
-    } finally {
-      setLoadingTranscript(false);
-    }
-  }, [showTranscript, transcript, material.transcriptUrl]);
-
-  return (
-    <div
-      ref={containerRef}
-      tabIndex={0}
-      onKeyDown={handleKeyDown}
-      className="outline-none"
-    >
-      <video
-        ref={videoRef}
-        controls
-        className="w-full rounded-lg bg-black"
-        style={{ maxHeight: "500px" }}
-        preload="metadata"
-        onTimeUpdate={handleTimeUpdate}
-      >
-        {videoSrc && (
-          <source src={videoSrc} type={material.mimeType || "video/mp4"} />
-        )}
-        {material.captionsUrl && (
-          <track
-            kind="captions"
-            src={material.captionsUrl}
-            label="Captions"
-            default={captionsOn}
-          />
-        )}
-      </video>
-
-      {/* Video Controls Bar */}
-      <div className="flex items-center gap-3 mt-2 flex-wrap">
-        {/* Speed control */}
-        <button
-          onClick={cycleSpeed}
-          className="px-3 py-1.5 text-xs font-medium bg-[#F3F4F6] rounded-lg hover:bg-[#E5E7EB] transition-colors"
-        >
-          {speed}x
-        </button>
-
-        {/* Caption toggle */}
-        {material.captionsUrl && (
-          <button
-            onClick={toggleCaptions}
-            className={`p-1.5 rounded-lg transition-colors ${
-              captionsOn
-                ? "bg-[#002D87] text-white"
-                : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#E5E7EB]"
-            }`}
-            title={t("learning.toggleCaptions")}
-          >
-            <Subtitles className="w-4 h-4" />
-          </button>
-        )}
-
-        <span className="text-[10px] text-[#9CA3AF] ml-auto">
-          {t("learning.keyboardShortcuts")}
-        </span>
-      </div>
-
-      {material.transcriptUrl && (
-        <div className="mt-3">
-          <button
-            onClick={handleToggleTranscript}
-            className="inline-flex items-center gap-1.5 text-sm text-[#002D87] hover:underline"
-          >
-            {loadingTranscript ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : showTranscript ? (
-              <ChevronUp className="w-3.5 h-3.5" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5" />
-            )}
-            {showTranscript
-              ? t("learning.hideTranscript")
-              : t("learning.showTranscript")}
-          </button>
-
-          {showTranscript && transcript && (
-            <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] max-h-[300px] overflow-y-auto">
-              <pre className="text-sm text-[#4B5563] whitespace-pre-wrap font-sans">
-                {transcript}
-              </pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function PdfViewer({ material }: { material: ModuleMaterial }) {
   const t = useTranslations("studentDashboard");
@@ -344,18 +115,30 @@ function MaterialRenderer({
   material,
   courseId,
   moduleId,
+  locale,
+  onComplete,
+  nextMaterialTitle,
+  onNextMaterial,
 }: {
   material: ModuleMaterial;
   courseId?: string;
   moduleId?: string;
+  locale?: string;
+  onComplete?: () => void;
+  nextMaterialTitle?: string;
+  onNextMaterial?: () => void;
 }) {
   switch (material.type) {
     case "video":
       return (
-        <VideoViewer
+        <VideoPlayer
           material={material}
           courseId={courseId}
           moduleId={moduleId}
+          locale={locale}
+          onComplete={onComplete}
+          nextMaterialTitle={nextMaterialTitle}
+          onNextMaterial={onNextMaterial}
         />
       );
     case "pdf":
@@ -535,8 +318,8 @@ const CourseLearningContent = () => {
                       isLocked
                         ? "opacity-50 cursor-not-allowed"
                         : isActive
-                          ? "bg-[#F0F7FF] border border-[#002D87]/20"
-                          : "hover:bg-[#F9FAFB]"
+                          ? "bg-[#F0F7FF] border border-[#002D87]/20 cursor-pointer"
+                          : "hover:bg-[#F9FAFB] cursor-pointer"
                     }`}
                   >
                     <div className="flex-shrink-0 mt-0.5">
@@ -650,20 +433,41 @@ const CourseLearningContent = () => {
                   )
                 ) : (
                   <div className="space-y-6">
-                    {materials.map((material) => (
-                      <div key={material.id}>
-                        {materials.length > 1 && (
-                          <h4 className="text-sm font-medium text-[#1F2937] mb-3">
-                            {material.title}
-                          </h4>
-                        )}
-                        <MaterialRenderer
-                          material={material}
-                          courseId={courseId}
-                          moduleId={currentModule?.id}
-                        />
-                      </div>
-                    ))}
+                    {materials.map((material, matIdx) => {
+                      const nextMat = materials[matIdx + 1];
+                      const nextModuleTitle =
+                        !nextMat && currentIndex < sortedModules.length - 1
+                          ? (isRTL && sortedModules[currentIndex + 1].titleAr
+                              ? sortedModules[currentIndex + 1].titleAr
+                              : sortedModules[currentIndex + 1].title) || undefined
+                          : undefined;
+                      return (
+                        <div key={material.id}>
+                          {materials.length > 1 && (
+                            <h4 className="text-sm font-medium text-[#1F2937] mb-3">
+                              {material.title}
+                            </h4>
+                          )}
+                          <MaterialRenderer
+                            material={material}
+                            courseId={courseId}
+                            moduleId={currentModule?.id}
+                            locale={locale}
+                            onComplete={() => handleMarkComplete(currentModule!.id)}
+                            nextMaterialTitle={
+                              nextMat?.title || nextModuleTitle
+                            }
+                            onNextMaterial={() => {
+                              if (nextMat) {
+                                // Scroll to next material (handled by key change)
+                              } else {
+                                goToNextModule();
+                              }
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

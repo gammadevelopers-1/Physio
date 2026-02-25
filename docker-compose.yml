@@ -78,6 +78,8 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       # FFmpeg (video transcoding)
       - FFMPEG_ENABLED=true
+      # Auto-approve materials after processing (skip manager review in dev)
+      - AUTO_APPROVE_MATERIALS=true
     volumes:
       - ./backends/src:/app/src:delegated
       - backend_node_modules:/app/node_modules

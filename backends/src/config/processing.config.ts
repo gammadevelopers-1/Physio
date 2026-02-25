@@ -17,6 +17,7 @@ export default registerAs('processing', () => ({
       { label: '1080p', width: 1920, height: 1080, videoBitrate: '5000k', audioBitrate: '192k' },
     ],
   },
+  autoApprove: process.env.AUTO_APPROVE_MATERIALS === 'true',
   tempDir: process.env.PROCESSING_TEMP_DIR || '/tmp/physio-processing',
   retries: {
     transcoding: parseInt(process.env.TRANSCODING_RETRIES || '2', 10),

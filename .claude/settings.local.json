@@ -130,7 +130,10 @@
       "Bash(ffmpeg:*)",
       "Bash(DATABASE_HOST=localhost npx drizzle-kit push:*)",
       "Bash(netstat:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(kill -9 91880)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npx drizzle-kit generate)",
+      "Bash(break)"
     ]
   }
 }

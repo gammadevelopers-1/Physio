@@ -21,6 +21,7 @@ import {
   classifyCourse,
   getNelcMaxEnrollment,
 } from '../courses/nelc-config';
+import { ConfigService } from '@nestjs/config';
 import { StorageService } from '../storage/storage.service';
 import { ProcessingService } from '../processing/processing.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -65,6 +66,7 @@ export class MaterialsService {
     private storageService: StorageService,
     private processingService: ProcessingService,
     private auditLogService: AuditLogService,
+    private configService: ConfigService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -162,13 +164,14 @@ export class MaterialsService {
         );
       } catch (dispatchError) {
         this.logger.warn(
-          `Processing dispatch failed for ${material.id}; marking as live with skipped processing`,
+          `Processing dispatch failed for ${material.id}; marking with skipped processing`,
           dispatchError,
         );
+        const autoApprove = this.configService.get<boolean>('processing.autoApprove');
         await db
           .update(courseMaterials)
           .set({
-            status: MATERIAL_STATUS.PENDING_REVIEW,
+            status: autoApprove ? MATERIAL_STATUS.LIVE : MATERIAL_STATUS.PENDING_REVIEW,
             wcagStatus: 'skipped',
             processingError: 'Processing pipeline unavailable — uploaded without processing',
             updatedAt: new Date(),
@@ -375,13 +378,14 @@ export class MaterialsService {
         );
       } catch (dispatchError) {
         this.logger.warn(
-          `Processing dispatch failed for ${material.id}; marking as live with skipped processing`,
+          `Processing dispatch failed for ${material.id}; marking with skipped processing`,
           dispatchError,
         );
+        const autoApprove = this.configService.get<boolean>('processing.autoApprove');
         await db
           .update(courseMaterials)
           .set({
-            status: MATERIAL_STATUS.PENDING_REVIEW,
+            status: autoApprove ? MATERIAL_STATUS.LIVE : MATERIAL_STATUS.PENDING_REVIEW,
             wcagStatus: 'skipped',
             processingError: 'Processing pipeline unavailable — uploaded without processing',
             updatedAt: new Date(),

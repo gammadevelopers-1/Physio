@@ -276,6 +276,13 @@ export interface MaterialVariant {
   mimeType: string;
 }
 
+export interface MaterialProgressData {
+  watchedSeconds: number;
+  totalSeconds: number;
+  furthestWatchedSecond: number;
+  isCompleted: boolean;
+}
+
 export interface ModuleMaterial {
   id: string;
   title: string;
@@ -287,6 +294,7 @@ export interface ModuleMaterial {
   transcriptUrl: string | null;
   orderIndex: number;
   variants: MaterialVariant[];
+  progress: MaterialProgressData | null;
 }
 
 export interface ModuleMaterialsResponse {

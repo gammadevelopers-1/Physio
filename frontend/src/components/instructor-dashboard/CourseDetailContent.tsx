@@ -249,6 +249,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const [showDeleteCourse, setShowDeleteCourse] = useState(false);
   const [statusChanging, setStatusChanging] = useState(false);
   const [courseDeleting, setCourseDeleting] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null);
 
   // Initialize settings form from course data
   useEffect(() => {
@@ -1021,6 +1022,15 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                               {mat.status}
                                             </span>
                                             <div className="flex items-center gap-0.5">
+                                              {mat.type === "video" && mat.fileUrl && (
+                                                <button
+                                                  onClick={() => setPreviewVideo({ url: mat.fileUrl!, title: mat.title })}
+                                                  className="p-1 hover:bg-[#DBEAFE] rounded"
+                                                  title={t("courseDetail.previewVideo") || "Preview video"}
+                                                >
+                                                  <Play className="w-3.5 h-3.5 text-[#3B82F6]" />
+                                                </button>
+                                              )}
                                               {mat.fileUrl && (
                                                 <a
                                                   href={mat.fileUrl}
@@ -1852,6 +1862,38 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
             </div>
           </div>
         </ModalOverlay>
+      )}
+
+      {/* ═══ VIDEO PREVIEW MODAL ═══ */}
+      {previewVideo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setPreviewVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewVideo(null)}
+              className="absolute -top-10 right-0 p-1 text-white hover:text-[#D1D5DB] transition-colors"
+              title="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <p className="text-white text-sm font-medium mb-2 truncate">
+              {previewVideo.title}
+            </p>
+            <video
+              controls
+              autoPlay
+              className="w-full rounded-lg bg-black"
+              src={previewVideo.url}
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
       )}
     </>
   );

@@ -223,17 +223,35 @@ const MyCoursesContent = () => {
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <EmptyStateIllustration variant="courses" className="mb-2" />
                     <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
-                      {t("myCourses.noCoursesTitle")}
+                      {activeTab === "completed"
+                        ? t("myCourses.noCompletedTitle")
+                        : activeTab === "upcoming"
+                          ? t("myCourses.noUpcomingTitle")
+                          : activeTab === "dropped"
+                            ? t("myCourses.noDroppedTitle")
+                            : activeTab === "active"
+                              ? t("myCourses.noInProgressTitle")
+                              : t("myCourses.noCoursesTitle")}
                     </h3>
                     <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
-                      {t("myCourses.noCoursesDescription")}
+                      {activeTab === "completed"
+                        ? t("myCourses.noCompletedDescription")
+                        : activeTab === "upcoming"
+                          ? t("myCourses.noUpcomingDescription")
+                          : activeTab === "dropped"
+                            ? t("myCourses.noDroppedDescription")
+                            : activeTab === "active"
+                              ? t("myCourses.noInProgressDescription")
+                              : t("myCourses.noCoursesDescription")}
                     </p>
-                    <Link
-                      href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 btn-gold text-white text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
-                    >
-                      {t("myCourses.viewCourses")}
-                    </Link>
+                    {activeTab === "all" && (
+                      <Link
+                        href={`/${locale}/courses`}
+                        className="px-5 py-2 sm:px-6 sm:py-2.5 btn-gold text-white text-xs sm:text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                      >
+                        {t("myCourses.viewCourses")}
+                      </Link>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -345,8 +363,7 @@ const MyCoursesContent = () => {
                                 className={`flex items-center justify-between text-[10px] sm:text-xs mb-1 ${isRTL ? "flex-row-reverse" : ""}`}
                               >
                                 <span className="text-[#6B7280]">
-                                  {completedModules} / {course.totalModules}{" "}
-                                  {t("myCourses.modulesCompleted")}
+                                  {t("myCourses.modulesCompleted", { completed: completedModules, total: course.totalModules })}
                                 </span>
                                 <span className="font-medium text-[#1F2937]">
                                   {course.progress}%

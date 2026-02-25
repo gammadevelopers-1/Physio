@@ -132,12 +132,13 @@ export class ProcessingService {
       .where(eq(courseMaterials.id, materialId));
   }
 
-  /** Mark material as pending review (all processing complete, awaiting manager approval) */
+  /** Mark material as live (auto-approve) or pending review (manual approval) */
   async markLive(materialId: string): Promise<void> {
+    const autoApprove = this.configService.get<boolean>('processing.autoApprove');
     await db
       .update(courseMaterials)
       .set({
-        status: MATERIAL_STATUS.PENDING_REVIEW,
+        status: autoApprove ? MATERIAL_STATUS.LIVE : MATERIAL_STATUS.PENDING_REVIEW,
         processingStep: PROCESSING_STEPS.COMPLETE,
         updatedAt: new Date(),
       })

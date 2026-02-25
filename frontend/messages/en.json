@@ -836,6 +836,7 @@
     "pricingCard": {
       "buyNow": "Buy Now",
       "addToCart": "Add to cart",
+      "free": "Free",
       "asLowAs": "As low as",
       "perMonth": "/month",
       "interestFree": "or 4 interest-free payments.",
@@ -875,7 +876,8 @@
       "joinWaitlist": "Join Waitlist",
       "waitlistMessage": "You'll be notified when a seat becomes available.",
       "contactEnroll": "Contact for Enrollment",
-      "contactMessage": "Please contact us for enrollment in paid courses."
+      "contactMessage": "Please contact us for enrollment in paid courses.",
+      "courseFull": "Course Full — Join Waitlist"
     }
   },
   "checkoutPage": {
@@ -1294,6 +1296,14 @@
       },
       "noCoursesTitle": "No courses yet",
       "noCoursesDescription": "Your courses will appear here.",
+      "noCompletedTitle": "No completed courses",
+      "noCompletedDescription": "Courses you finish will appear here.",
+      "noUpcomingTitle": "No upcoming courses",
+      "noUpcomingDescription": "Enrolled courses that haven't started will appear here.",
+      "noDroppedTitle": "No dropped courses",
+      "noDroppedDescription": "Courses you drop will appear here.",
+      "noInProgressTitle": "No courses in progress",
+      "noInProgressDescription": "Active courses you're enrolled in will appear here.",
       "viewCourses": "View Courses",
       "viewCourse": "View course",
       "inProgress": "In progress.",
@@ -1662,8 +1672,25 @@
       "takeAssessment": "Take Assessment",
       "completed": "Completed",
       "toggleCaptions": "Toggle captions (C)",
-      "keyboardShortcuts": "Space: play/pause | ←→: seek 10s | C: captions",
-      "locked": "Locked"
+      "keyboardShortcuts": "Space: play/pause | ←→: seek 10s | C: captions | F: fullscreen | M: mute",
+      "locked": "Locked",
+      "quality": "Quality",
+      "quality360p": "360p",
+      "quality720p": "720p (HD)",
+      "quality1080p": "1080p (Full HD)",
+      "playbackSpeed": "Speed",
+      "fullscreen": "Fullscreen",
+      "exitFullscreen": "Exit Fullscreen",
+      "pictureInPicture": "Picture-in-Picture",
+      "resumeFrom": "Resuming from {time}",
+      "skipPrevented": "You cannot skip ahead beyond what you have watched",
+      "nextUp": "Next: {title}",
+      "autoAdvanceIn": "Auto-advancing in {seconds}s",
+      "cancel": "Cancel",
+      "volume": "Volume",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "minimumWatchRequired": "You must watch at least {percent}% of all videos to complete this module"
     },
     "assessment": {
       "question": "Question",

@@ -736,9 +736,9 @@ export class MaterialsService {
     const videoMaterials = allMaterials.filter((m) => m.type === 'video');
     const videosWithCaptions = videoMaterials.filter((m) => m.captionsUrl).length;
     const wcagCompliant = allMaterials.filter(
-      (m) => m.wcagStatus === 'compliant',
+      (m) => m.wcagStatus === 'pass' || m.wcagStatus === 'compliant',
     ).length;
-    const currentMaterialWcag = material.wcagStatus === 'compliant';
+    const currentMaterialWcag = material.wcagStatus === 'pass' || material.wcagStatus === 'compliant';
     const allWcagOk =
       allMaterials.length > 0 &&
       wcagCompliant === allMaterials.length &&

@@ -367,7 +367,7 @@ export class NelcComplianceService {
     // ─── 2. Accessibility ───
     const accessChecks: ComplianceCheck[] = [];
     const videoMaterials = materials.filter((m) => m.type === 'video');
-    const wcagCompliant = materials.filter((m) => m.wcagStatus === 'compliant').length;
+    const wcagCompliant = materials.filter((m) => m.wcagStatus === 'pass' || m.wcagStatus === 'compliant').length;
     accessChecks.push({
       rule: 'wcag_status',
       status: materials.length === 0 || wcagCompliant === materials.length ? 'passed' : 'failed',
@@ -727,12 +727,12 @@ export class NelcComplianceService {
       courseId,
       generatedAt: new Date().toISOString(),
       totalMaterials: allMaterials.length,
-      wcagCompliant: allMaterials.filter((m) => m.wcagStatus === 'compliant').length,
-      wcagNonCompliant: allMaterials.filter((m) => m.wcagStatus === 'non_compliant').length,
-      wcagPending: allMaterials.filter((m) => m.wcagStatus === 'pending' || m.wcagStatus === 'not_applicable').length,
+      wcagCompliant: allMaterials.filter((m) => m.wcagStatus === 'pass' || m.wcagStatus === 'compliant').length,
+      wcagNonCompliant: allMaterials.filter((m) => m.wcagStatus === 'fail' || m.wcagStatus === 'non_compliant').length,
+      wcagPending: allMaterials.filter((m) => m.wcagStatus === 'pending' || m.wcagStatus === 'warning' || m.wcagStatus === 'not_applicable').length,
       totalVideos: videoMaterials.length,
       complianceRate: allMaterials.length > 0
-        ? Math.round((allMaterials.filter((m) => m.wcagStatus === 'compliant').length / allMaterials.length) * 100)
+        ? Math.round((allMaterials.filter((m) => m.wcagStatus === 'pass' || m.wcagStatus === 'compliant').length / allMaterials.length) * 100)
         : 100,
     };
 

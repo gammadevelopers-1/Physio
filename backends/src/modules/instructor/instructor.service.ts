@@ -402,9 +402,9 @@ export class InstructorService {
         version: `v${m.version}`,
         status: m.status === 'failed' ? 'draft' : m.status,
         wcagCompliant:
-          m.wcagStatus === 'compliant'
+          m.wcagStatus === 'pass' || m.wcagStatus === 'compliant'
             ? true
-            : m.wcagStatus === 'pending'
+            : m.wcagStatus === 'pending' || m.wcagStatus === 'warning'
               ? ('warning' as const)
               : false,
         size: m.fileSize

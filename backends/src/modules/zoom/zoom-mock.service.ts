@@ -6,8 +6,8 @@ import {
   UpdateZoomMeetingParams,
   ZoomMeetingDetails,
   ZoomParticipantReport,
+  ZoomRecordingFile,
 } from './zoom.interface';
-import { randomUUID } from 'crypto';
 
 /**
  * Mock Zoom service for local development.
@@ -103,6 +103,11 @@ export class ZoomMockService implements IZoomService {
       `[MOCK] Participant report for ${meetingId}: ${reports.length} participants`,
     );
     return reports;
+  }
+
+  async getRecordings(meetingId: string): Promise<ZoomRecordingFile[]> {
+    this.logger.log(`[MOCK] Get recordings for ${meetingId}: returning empty`);
+    return [];
   }
 
   /**

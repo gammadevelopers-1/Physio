@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
-  users,
   attendance,
   attendanceLogs,
   ATTENDANCE_LOG_EVENT,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { matchParticipantToUser } from './zoom.helpers';
 
 @Injectable()
 export class ZoomWebhookService {
@@ -20,7 +20,7 @@ export class ZoomWebhookService {
   /**
    * Handle participant joined event from Zoom webhook.
    * 1. Find session by meetingId
-   * 2. Match participant email → system user (email → zoomEmail chain)
+   * 2. Match participant email -> system user (case-insensitive via shared helper)
    * 3. Insert 'join' record in attendance_logs
    * 4. Upsert attendance record (status='present', joinedAt)
    * 5. Audit log
@@ -48,8 +48,8 @@ export class ZoomWebhookService {
       return;
     }
 
-    // 2. Match participant to system user
-    const matchedUser = await this.matchParticipantToUser(participantEmail);
+    // 2. Match participant to system user (item #5, #9: shared, case-insensitive)
+    const matchedUser = await matchParticipantToUser(participantEmail);
 
     // 3. Insert join log
     await db.insert(attendanceLogs).values({
@@ -130,7 +130,7 @@ export class ZoomWebhookService {
       return;
     }
 
-    const matchedUser = await this.matchParticipantToUser(participantEmail);
+    const matchedUser = await matchParticipantToUser(participantEmail);
 
     // 1. Insert leave log
     await db.insert(attendanceLogs).values({
@@ -180,36 +180,10 @@ export class ZoomWebhookService {
   }
 
   /**
-   * Match a Zoom participant email to a system user.
-   * Matching chain: user.email → user.zoomEmail
-   */
-  private async matchParticipantToUser(
-    email: string,
-  ): Promise<{ id: string } | null> {
-    if (!email) return null;
-
-    // Try primary email first
-    const [byEmail] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (byEmail) return byEmail;
-
-    // Try zoomEmail
-    const [byZoomEmail] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.zoomEmail, email))
-      .limit(1);
-
-    return byZoomEmail || null;
-  }
-
-  /**
    * Calculate total attendance duration from join/leave log pairs.
-   * Groups consecutive join→leave pairs and sums durations.
+   * Groups consecutive join->leave pairs and sums durations.
+   * Item #4: if a JOIN arrives when lastJoinTime is already set,
+   * we close the existing interval first before starting a new one.
    */
   async calculateTotalDuration(
     sessionId: string,
@@ -234,6 +208,11 @@ export class ZoomWebhookService {
 
     for (const log of logs) {
       if (log.eventType === ATTENDANCE_LOG_EVENT.JOIN) {
+        // Item #4: if already joined (duplicate JOIN without LEAVE),
+        // close the existing interval first
+        if (lastJoinTime) {
+          totalMs += log.timestamp.getTime() - lastJoinTime.getTime();
+        }
         lastJoinTime = log.timestamp;
       } else if (
         log.eventType === ATTENDANCE_LOG_EVENT.LEAVE &&

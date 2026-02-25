@@ -40,6 +40,20 @@ export interface UpdateZoomMeetingParams {
   durationMinutes?: number;
 }
 
+export interface ZoomRecordingFile {
+  id: string;
+  meetingId: string;
+  recordingType: string;
+  downloadUrl: string;
+  playUrl: string;
+  fileSize: number;
+  fileType: string;
+  recordingStart: string;
+  recordingEnd: string;
+  status: string;
+  password?: string;
+}
+
 export interface IZoomService {
   createMeeting(params: CreateZoomMeetingParams): Promise<CreateZoomMeetingResult>;
   getMeeting(meetingId: string): Promise<ZoomMeetingDetails>;
@@ -48,4 +62,5 @@ export interface IZoomService {
   endMeeting(meetingId: string): Promise<{ ended: boolean; error?: string }>;
   getWebhookSecretToken(): string;
   getParticipantReport(meetingId: string): Promise<ZoomParticipantReport[]>;
+  getRecordings(meetingId: string): Promise<ZoomRecordingFile[]>;
 }

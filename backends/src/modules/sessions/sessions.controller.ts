@@ -260,4 +260,13 @@ export class SessionsController {
   async getAttendanceLogs(@Param('id') id: string) {
     return this.sessionsService.getAttendanceLogs(id);
   }
+
+  /**
+   * GET /sessions/:id/recordings — Get session recordings (item #22)
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole, 'STUDENT' as UserRole)
+  @Get(':id/recordings')
+  async getRecordings(@Param('id') id: string) {
+    return this.sessionsService.getRecordings(id);
+  }
 }

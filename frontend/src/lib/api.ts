@@ -1614,6 +1614,23 @@ export const zoomAttendanceApi = {
       `/sessions/${sessionId}/sync-zoom`,
       {},
     ),
+
+  /** Get session recordings */
+  getRecordings: (sessionId: string) =>
+    api.get<Array<{
+      id: string;
+      sessionId: string;
+      meetingId: string;
+      recordingType: string;
+      downloadUrl: string | null;
+      playUrl: string | null;
+      fileSize: number | null;
+      fileType: string | null;
+      recordingStart: string | null;
+      recordingEnd: string | null;
+      status: string;
+      password: string | null;
+    }>>(`/sessions/${sessionId}/recordings`),
 };
 
 // ===========================================

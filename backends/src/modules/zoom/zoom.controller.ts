@@ -11,12 +11,34 @@ import {
 } from '@nestjs/common';
 import { eq, and, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '../../database';
-import { sessions, attendance, SESSION_STATUS, NELC_EVENT_TYPE } from '../../database/schema';
+import {
+  sessions,
+  attendance,
+  sessionRecordings,
+  SESSION_STATUS,
+  NELC_EVENT_TYPE,
+} from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { ZoomWebhookService } from './zoom-webhook.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { Public } from '../auth/decorators';
 import * as crypto from 'crypto';
+
+/** Deduplication: track processed webhook event IDs with TTL (item #15) */
+const PROCESSED_EVENTS = new Map<string, number>();
+const DEDUP_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+function cleanupProcessedEvents() {
+  const now = Date.now();
+  for (const [key, ts] of PROCESSED_EVENTS) {
+    if (now - ts > DEDUP_TTL_MS) {
+      PROCESSED_EVENTS.delete(key);
+    }
+  }
+}
+
+// Cleanup every 5 minutes
+setInterval(cleanupProcessedEvents, 5 * 60 * 1000).unref();
 
 @Controller('zoom')
 export class ZoomController {
@@ -56,7 +78,7 @@ export class ZoomController {
       };
     }
 
-    // ─── Signature Verification ────────────────────────────
+    // ─── Signature Verification (item #1: timing-safe compare) ──
     const secretToken = this.zoomService.getWebhookSecretToken();
     if (secretToken && secretToken !== 'mock-webhook-secret' && timestamp && signature) {
       const message = `v0:${timestamp}:${JSON.stringify(body)}`;
@@ -67,7 +89,13 @@ export class ZoomController {
           .update(message)
           .digest('hex');
 
-      if (signature !== expectedSig) {
+      // Timing-safe comparison to prevent timing attacks
+      const sigBuffer = Buffer.from(signature, 'utf8');
+      const expectedBuffer = Buffer.from(expectedSig, 'utf8');
+      if (
+        sigBuffer.length !== expectedBuffer.length ||
+        !crypto.timingSafeEqual(sigBuffer, expectedBuffer)
+      ) {
         this.logger.warn('Zoom webhook signature verification failed');
         throw new BadRequestException('Invalid webhook signature');
       }
@@ -84,18 +112,45 @@ export class ZoomController {
       }
     }
 
-    // ─── Handle Events ─────────────────────────────────────
+    // ─── Event Deduplication (item #15) ──────────────────────
+    const eventId =
+      body.event_ts?.toString() || body.payload?.object?.uuid || '';
+    if (eventId) {
+      if (PROCESSED_EVENTS.has(eventId)) {
+        this.logger.debug(`Duplicate webhook event skipped: ${eventId}`);
+        return { status: 'ok', duplicate: true };
+      }
+      PROCESSED_EVENTS.set(eventId, Date.now());
+    }
+
+    // ─── Handle Events (item #2: error isolation per handler) ──
     const event = body.event;
     this.logger.log(`Zoom webhook event received: ${event}`);
 
-    if (event === 'meeting.started') {
-      await this.handleMeetingStarted(body.payload?.object);
-    } else if (event === 'meeting.ended') {
-      await this.handleMeetingEnded(body.payload?.object);
-    } else if (event === 'meeting.participant_joined') {
-      await this.webhookService.handleParticipantJoined(body.payload?.object);
-    } else if (event === 'meeting.participant_left') {
-      await this.webhookService.handleParticipantLeft(body.payload?.object);
+    try {
+      if (event === 'meeting.started') {
+        await this.handleMeetingStarted(body.payload?.object);
+      } else if (event === 'meeting.ended') {
+        await this.handleMeetingEnded(body.payload?.object);
+      } else if (event === 'meeting.participant_joined') {
+        await this.webhookService.handleParticipantJoined(body.payload?.object);
+      } else if (event === 'meeting.participant_left') {
+        await this.webhookService.handleParticipantLeft(body.payload?.object);
+      } else if (event === 'meeting.updated') {
+        await this.handleMeetingUpdated(body.payload?.object);
+      } else if (event === 'meeting.deleted') {
+        await this.handleMeetingDeleted(body.payload?.object);
+      } else if (event === 'recording.completed') {
+        await this.handleRecordingCompleted(body.payload?.object);
+      } else {
+        this.logger.debug(`Unhandled Zoom event: ${event}`);
+      }
+    } catch (error) {
+      // Log but never fail the webhook — Zoom requires 200 OK (item #2)
+      this.logger.error(
+        `Error handling Zoom event ${event}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
     }
 
     return { status: 'ok' };
@@ -126,6 +181,8 @@ export class ZoomController {
       await this.webhookService.handleParticipantLeft(body.payload?.object);
     } else if (event === 'meeting.ended') {
       await this.handleMeetingEnded(body.payload?.object);
+    } else if (event === 'recording.completed') {
+      await this.handleRecordingCompleted(body.payload?.object);
     } else {
       return { status: 'unknown_event', event };
     }
@@ -136,7 +193,6 @@ export class ZoomController {
   /**
    * When a Zoom meeting starts, find the session by meetingId
    * and update its status to live (if still scheduled).
-   * Covers the case where instructor starts Zoom from the Zoom app directly.
    */
   private async handleMeetingStarted(meeting: any) {
     if (!meeting?.id) {
@@ -160,7 +216,6 @@ export class ZoomController {
       return;
     }
 
-    // Only transition from scheduled → live (idempotent if already live)
     if (session.status === SESSION_STATUS.LIVE) {
       this.logger.log(`Session ${session.id} already live, skipping`);
       return;
@@ -237,7 +292,7 @@ export class ZoomController {
 
     const endedAt = new Date();
 
-    // Close out open attendance records (students who joined but never triggered a leave event)
+    // Close out open attendance records
     const openRecords = await db
       .select({ id: attendance.id, studentId: attendance.studentId })
       .from(attendance)
@@ -289,5 +344,122 @@ export class ZoomController {
     this.logger.log(
       `Session ${session.id} marked as completed via Zoom webhook`,
     );
+  }
+
+  /**
+   * Handle meeting.updated event from Zoom (item #16).
+   * Logs the change — we do NOT overwrite our session data since our DB is the source of truth.
+   */
+  private async handleMeetingUpdated(meeting: any) {
+    if (!meeting?.id) return;
+    const meetingId = String(meeting.id);
+
+    const [session] = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(eq(sessions.meetingId, meetingId))
+      .limit(1);
+
+    if (session) {
+      this.logger.log(
+        `Zoom meeting ${meetingId} updated externally (session ${session.id}). ` +
+          'Our DB remains source of truth — no changes applied.',
+      );
+    }
+  }
+
+  /**
+   * Handle meeting.deleted event from Zoom (item #16).
+   * If someone deletes the meeting on Zoom side, log a warning.
+   */
+  private async handleMeetingDeleted(meeting: any) {
+    if (!meeting?.id) return;
+    const meetingId = String(meeting.id);
+
+    const [session] = await db
+      .select({ id: sessions.id, status: sessions.status })
+      .from(sessions)
+      .where(eq(sessions.meetingId, meetingId))
+      .limit(1);
+
+    if (session && session.status !== SESSION_STATUS.CANCELLED) {
+      this.logger.warn(
+        `Zoom meeting ${meetingId} deleted externally but session ${session.id} is still ${session.status}. ` +
+          'Instructor may need to recreate the Zoom meeting.',
+      );
+    }
+  }
+
+  /**
+   * Handle recording.completed event from Zoom (item #22).
+   * Stores recording files in session_recordings table.
+   */
+  private async handleRecordingCompleted(payload: any) {
+    const meetingId = String(payload?.id || '');
+    if (!meetingId) {
+      this.logger.warn('recording.completed: no meeting id in payload');
+      return;
+    }
+
+    const [session] = await db
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(eq(sessions.meetingId, meetingId))
+      .limit(1);
+
+    if (!session) {
+      this.logger.warn(
+        `No session found for recording meetingId: ${meetingId}`,
+      );
+      return;
+    }
+
+    const recordingFiles = payload?.recording_files || [];
+    let inserted = 0;
+
+    for (const file of recordingFiles) {
+      try {
+        await db.insert(sessionRecordings).values({
+          sessionId: session.id,
+          meetingId,
+          recordingType: file.recording_type || 'unknown',
+          downloadUrl: file.download_url || null,
+          playUrl: file.play_url || null,
+          fileSize: file.file_size || null,
+          fileType: file.file_type || null,
+          recordingStart: file.recording_start
+            ? new Date(file.recording_start)
+            : null,
+          recordingEnd: file.recording_end
+            ? new Date(file.recording_end)
+            : null,
+          status: file.status || 'completed',
+          password: payload.password || null,
+        });
+        inserted++;
+      } catch (error) {
+        this.logger.error(
+          `Failed to save recording file for session ${session.id}: ${(error as Error).message}`,
+        );
+      }
+    }
+
+    if (inserted > 0) {
+      this.logger.log(
+        `Saved ${inserted} recording files for session ${session.id} (meeting ${meetingId})`,
+      );
+
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.SESSION_STARTED, // reuse closest event type
+        entityType: 'recording',
+        entityId: session.id,
+        metadata: {
+          sessionId: session.id,
+          meetingId,
+          recordingCount: inserted,
+          source: 'zoom_webhook',
+        },
+      });
+    }
   }
 }

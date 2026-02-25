@@ -20,6 +20,7 @@ import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -29,7 +30,10 @@ import {
 export class EnrollmentsService {
   private readonly logger = new Logger(EnrollmentsService.name);
 
-  constructor(private readonly auditService: NelcAuditService) {}
+  constructor(
+    private readonly auditService: NelcAuditService,
+    private readonly assistantsService: SessionAssistantsService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -188,6 +192,9 @@ export class EnrollmentsService {
         },
       });
 
+      // Item #13: TA re-allocation on enrollment change
+      await this.triggerTaReallocation(courseId);
+
       return reactivated;
     }
 
@@ -214,6 +221,9 @@ export class EnrollmentsService {
         classification,
       },
     });
+
+    // Item #13: TA re-allocation on enrollment change
+    await this.triggerTaReallocation(courseId);
 
     return enrollment;
   }
@@ -472,7 +482,54 @@ export class EnrollmentsService {
       .where(eq(attendance.id, attendanceId))
       .returning();
 
+    // Item #12: Audit log on attendance PATCH
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.ATTENDANCE_MARKED_MANUAL,
+      entityType: 'attendance',
+      entityId: attendanceId,
+      userId: user.id,
+      metadata: {
+        sessionId: existing.sessionId,
+        studentId: existing.studentId,
+        previousStatus: existing.status,
+        newStatus: dto.status || existing.status,
+        markedBy: user.id,
+      },
+    });
+
     return updated;
+  }
+
+  /**
+   * Item #13: Trigger TA re-allocation for all upcoming sessions of a course
+   * when enrollment count changes.
+   */
+  private async triggerTaReallocation(courseId: string): Promise<void> {
+    try {
+      const upcomingSessions = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            eq(sessions.status, 'scheduled'),
+          ),
+        );
+
+      for (const session of upcomingSessions) {
+        await this.assistantsService.checkAndAllocate(session.id);
+      }
+
+      if (upcomingSessions.length > 0) {
+        this.logger.log(
+          `TA re-allocation triggered for ${upcomingSessions.length} sessions in course ${courseId}`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `TA re-allocation failed for course ${courseId}: ${(error as Error).message}`,
+      );
+    }
   }
 
   // ─── Helpers ──────────────────────────────────────────────
@@ -544,6 +601,8 @@ export class EnrollmentsService {
       .select({
         id: attendance.id,
         sessionId: attendance.sessionId,
+        studentId: attendance.studentId,
+        status: attendance.status,
       })
       .from(attendance)
       .where(eq(attendance.id, attendanceId))

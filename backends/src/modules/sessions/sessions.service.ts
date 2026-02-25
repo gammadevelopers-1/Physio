@@ -13,6 +13,7 @@ import {
   users,
   enrollments,
   attendanceLogs,
+  sessionRecordings,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -431,6 +432,8 @@ export class SessionsService {
     });
 
     // Sync Zoom meeting if time/duration/title changed on a Zoom/hybrid session
+    // Item #14: surface Zoom update failures to user instead of silently swallowing
+    let zoomSyncError: string | null = null;
     if (
       updated.meetingId &&
       (updated.type === SESSION_TYPE.ZOOM || updated.type === SESSION_TYPE.HYBRID) &&
@@ -444,11 +447,13 @@ export class SessionsService {
         });
         this.logger.log(`Zoom meeting ${updated.meetingId} synced with session update`);
       } catch (error) {
-        this.logger.warn(`Failed to sync Zoom meeting ${updated.meetingId} on session update`, error);
+        const msg = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Failed to sync Zoom meeting ${updated.meetingId} on session update: ${msg}`);
+        zoomSyncError = `Session updated but Zoom meeting sync failed: ${msg}`;
       }
     }
 
-    return updated;
+    return { ...updated, zoomSyncError };
   }
 
   // ─── Session Lifecycle ──────────────────────────────────────
@@ -781,6 +786,7 @@ export class SessionsService {
       .returning();
 
     // Sync Zoom meeting with new schedule
+    let zoomSyncError: string | null = null;
     if (
       session.meetingId &&
       (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
@@ -792,7 +798,9 @@ export class SessionsService {
         });
         this.logger.log(`Zoom meeting ${session.meetingId} rescheduled`);
       } catch (error) {
-        this.logger.warn(`Failed to reschedule Zoom meeting ${session.meetingId}`, error);
+        const msg = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Failed to reschedule Zoom meeting ${session.meetingId}: ${msg}`);
+        zoomSyncError = `Session rescheduled but Zoom meeting sync failed: ${msg}`;
       }
     }
 
@@ -804,7 +812,7 @@ export class SessionsService {
       metadata: { newDate, newDuration, oldDate: session.scheduledAt },
     }).catch(() => {});
 
-    return updated;
+    return { ...updated, zoomSyncError };
   }
 
   /**
@@ -1050,5 +1058,16 @@ export class SessionsService {
       .orderBy(asc(attendanceLogs.timestamp));
 
     return logs;
+  }
+
+  /** Get session recordings (item #22) */
+  async getRecordings(sessionId: string) {
+    const recordings = await db
+      .select()
+      .from(sessionRecordings)
+      .where(eq(sessionRecordings.sessionId, sessionId))
+      .orderBy(asc(sessionRecordings.recordingStart));
+
+    return recordings;
   }
 }

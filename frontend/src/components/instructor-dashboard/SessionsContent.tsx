@@ -116,6 +116,8 @@ function AttendanceModal({
   const [unmatchedParticipants, setUnmatchedParticipants] = useState<
     Array<{ zoomUserEmail: string; eventType: string; timestamp: string }>
   >([]);
+  const [manualAssignments, setManualAssignments] = useState<Record<string, string>>({});
+  const [assigningEmail, setAssigningEmail] = useState<string | null>(null);
 
   const isZoomSession = session.type === "zoom" || session.type === "hybrid";
 
@@ -194,6 +196,29 @@ function AttendanceModal({
       setSyncing(false);
     }
   };
+
+  /** Item #17: Manual assign an unmatched Zoom participant to an enrolled student */
+  const handleManualAssign = async (zoomEmail: string) => {
+    const studentId = manualAssignments[zoomEmail];
+    if (!studentId) return;
+
+    setAssigningEmail(zoomEmail);
+    try {
+      await instructorApi.markAttendance(session.id, { studentId, status: "present" });
+      toast.success(`Assigned ${zoomEmail} to student`);
+      setUnmatchedParticipants((prev) => prev.filter((p) => p.zoomUserEmail !== zoomEmail));
+      setManualAssignments((prev) => { const next = { ...prev }; delete next[zoomEmail]; return next; });
+      setLoading(true);
+      await loadData();
+    } catch {
+      toast.error("Failed to assign participant");
+    } finally {
+      setAssigningEmail(null);
+    }
+  };
+
+  /** Students already marked present who shouldn't appear in the assign dropdown */
+  const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
 
@@ -448,6 +473,7 @@ function AttendanceModal({
           </div>
 
           {/* Unmatched Zoom participants */}
+          {/* Item #17: Unmatched Zoom participants with manual assign */}
           {isZoomSession && unmatchedParticipants.length > 0 && (
             <div className="border-t border-[#E5E7EB]">
               <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FEF3C7]">
@@ -456,21 +482,47 @@ function AttendanceModal({
                   {unmatchedParticipants.length} unmatched Zoom participant{unmatchedParticipants.length !== 1 ? "s" : ""}
                 </span>
               </div>
-              <div className="max-h-[150px] overflow-y-auto divide-y divide-[#E5E7EB]">
+              <div className="max-h-[200px] overflow-y-auto divide-y divide-[#E5E7EB]">
                 {unmatchedParticipants.map((p, i) => (
-                  <div key={i} className="flex items-center justify-between px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-[#FEF3C7] flex items-center justify-center">
-                        <Users className="w-3 h-3 text-[#D97706]" />
-                      </div>
-                      <span className="text-xs text-[#6B7280]">{p.zoomUserEmail}</span>
+                  <div key={i} className="flex items-center gap-2 px-4 py-2">
+                    <div className="w-6 h-6 shrink-0 rounded-full bg-[#FEF3C7] flex items-center justify-center">
+                      <Users className="w-3 h-3 text-[#D97706]" />
                     </div>
-                    <span className="text-[10px] text-[#9CA3AF]">
-                      {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs text-[#6B7280] truncate block">{p.zoomUserEmail}</span>
+                      <span className="text-[10px] text-[#9CA3AF]">
+                        {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <select
+                      value={manualAssignments[p.zoomUserEmail] || ""}
+                      onChange={(e) =>
+                        setManualAssignments((prev) => ({
+                          ...prev,
+                          [p.zoomUserEmail]: e.target.value,
+                        }))
+                      }
+                      className="px-1.5 py-1 text-[10px] border border-[#E5E7EB] rounded bg-white text-[#374151] max-w-[140px] truncate"
+                    >
+                      <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
+                      {enrollments
+                        .filter((e) => !markedStudentIds.has(e.studentId))
+                        .map((e) => (
+                          <option key={e.studentId} value={e.studentId}>
+                            {e.studentFirstName} {e.studentLastName}
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      onClick={() => handleManualAssign(p.zoomUserEmail)}
+                      disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail}
+                      className="px-2 py-1 text-[10px] font-medium bg-[#3B82F6] text-white rounded disabled:opacity-40 hover:bg-[#2563EB] transition-colors shrink-0"
+                    >
+                      {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1530,20 +1582,23 @@ const SessionsContent = () => {
   useEffect(() => {
     if (!hasLiveSessions) return;
 
+    // Item #19: Only poll live session IDs instead of all 200 sessions
+    const liveSessionIds = sessions.filter((s) => s.status === "live").map((s) => s.id);
     const interval = setInterval(async () => {
       try {
-        const res = await instructorApi.getSessions({ limit: 200 });
-        const fresh = res.data;
-        // Check if any previously-live session has ended
-        const ended = sessions.filter(
-          (old) =>
-            old.status === "live" &&
-            fresh.find((n) => n.id === old.id && n.status === "completed"),
+        const res = await instructorApi.getSessions({ status: "live", limit: 50 });
+        const freshLive = res.data;
+        // Check if any previously-live session is no longer live (ended)
+        const ended = liveSessionIds.filter(
+          (id) => !freshLive.find((n) => n.id === id),
         );
         if (ended.length > 0) {
-          setSessions(fresh);
-          for (const s of ended) {
-            toast.success(t("sessionsPage.lifecycle.sessionEnded", { title: s.title }));
+          // Full refresh to get updated statuses
+          const fullRes = await instructorApi.getSessions({ limit: 200 });
+          setSessions(fullRes.data);
+          for (const id of ended) {
+            const s = sessions.find((s) => s.id === id);
+            if (s) toast.success(t("sessionsPage.lifecycle.sessionEnded", { title: s.title }));
           }
         }
       } catch {

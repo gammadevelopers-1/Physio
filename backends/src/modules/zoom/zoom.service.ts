@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   IZoomService,
@@ -7,6 +7,7 @@ import {
   UpdateZoomMeetingParams,
   ZoomMeetingDetails,
   ZoomParticipantReport,
+  ZoomRecordingFile,
 } from './zoom.interface';
 
 interface ZoomTokenResponse {
@@ -28,8 +29,11 @@ interface ZoomMeetingResponse {
   start_time: string;
 }
 
+const REQUEST_TIMEOUT_MS = 15_000; // 15 seconds
+const MAX_RATE_LIMIT_RETRIES = 3;
+
 @Injectable()
-export class ZoomService implements IZoomService {
+export class ZoomService implements IZoomService, OnModuleInit {
   private readonly logger = new Logger(ZoomService.name);
   private cachedToken: string | null = null;
   private tokenExpiresAt = 0;
@@ -47,6 +51,21 @@ export class ZoomService implements IZoomService {
       'zoom.webhookSecretToken',
       '',
     );
+  }
+
+  /** Validate Zoom config on startup (item #18) */
+  onModuleInit() {
+    if (!this.accountId || !this.clientId || !this.clientSecret) {
+      this.logger.error(
+        'Zoom credentials are missing! Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET env vars. ' +
+          'Zoom API calls will fail until credentials are provided.',
+      );
+    }
+    if (!this.webhookSecretToken) {
+      this.logger.warn(
+        'ZOOM_WEBHOOK_SECRET_TOKEN is not set. Webhook signature verification will be skipped.',
+      );
+    }
   }
 
   private async getAccessToken(): Promise<string> {
@@ -71,10 +90,14 @@ export class ZoomService implements IZoomService {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      // Clear cached token on failure (item #3)
+      this.cachedToken = null;
+      this.tokenExpiresAt = 0;
       this.logger.error(`Zoom OAuth token request failed: ${errorText}`);
       throw new Error(`Failed to get Zoom access token: ${response.status}`);
     }
@@ -85,6 +108,50 @@ export class ZoomService implements IZoomService {
 
     this.logger.log('Zoom OAuth token obtained successfully');
     return this.cachedToken;
+  }
+
+  /**
+   * Wrapper for Zoom API calls with timeout + rate limit handling (items #6, #7).
+   * Retries on 429 with Retry-After header, exponential backoff fallback.
+   */
+  private async zoomFetch(
+    url: string,
+    options: RequestInit,
+    attempt = 1,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      // Handle rate limiting (429)
+      if (response.status === 429 && attempt <= MAX_RATE_LIMIT_RETRIES) {
+        const retryAfter = response.headers.get('Retry-After');
+        const waitMs = retryAfter
+          ? parseInt(retryAfter, 10) * 1000
+          : Math.min(1000 * Math.pow(2, attempt), 10000); // exponential backoff
+
+        this.logger.warn(
+          `Zoom API rate limited (429). Retry ${attempt}/${MAX_RATE_LIMIT_RETRIES} after ${waitMs}ms`,
+        );
+        await new Promise((r) => setTimeout(r, waitMs));
+
+        // Re-fetch token in case it expired during wait
+        const token = await this.getAccessToken();
+        const newHeaders = new Headers(options.headers);
+        newHeaders.set('Authorization', `Bearer ${token}`);
+
+        return this.zoomFetch(url, { ...options, headers: newHeaders }, attempt + 1);
+      }
+
+      return response;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async createMeeting(
@@ -102,18 +169,21 @@ export class ZoomService implements IZoomService {
         join_before_host: true,
         waiting_room: false,
         mute_upon_entry: true,
-        auto_recording: 'none',
+        auto_recording: 'cloud', // item #22: enable cloud recording
       },
     };
 
-    const response = await fetch('https://api.zoom.us/v2/users/me/meetings', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const response = await this.zoomFetch(
+      'https://api.zoom.us/v2/users/me/meetings',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -135,7 +205,7 @@ export class ZoomService implements IZoomService {
   async getMeeting(meetingId: string): Promise<ZoomMeetingDetails> {
     const token = await this.getAccessToken();
 
-    const response = await fetch(
+    const response = await this.zoomFetch(
       `https://api.zoom.us/v2/meetings/${meetingId}`,
       {
         method: 'GET',
@@ -170,7 +240,7 @@ export class ZoomService implements IZoomService {
     if (params.durationMinutes) body.duration = params.durationMinutes;
     if (params.startTime || params.durationMinutes) body.timezone = 'UTC';
 
-    const response = await fetch(
+    const response = await this.zoomFetch(
       `https://api.zoom.us/v2/meetings/${meetingId}`,
       {
         method: 'PATCH',
@@ -199,7 +269,7 @@ export class ZoomService implements IZoomService {
     try {
       const token = await this.getAccessToken();
 
-      const response = await fetch(
+      const response = await this.zoomFetch(
         `https://api.zoom.us/v2/meetings/${meetingId}`,
         {
           method: 'DELETE',
@@ -243,7 +313,7 @@ export class ZoomService implements IZoomService {
       try {
         const token = await this.getAccessToken();
 
-        const response = await fetch(
+        const response = await this.zoomFetch(
           `https://api.zoom.us/v2/meetings/${meetingId}/status`,
           {
             method: 'PUT',
@@ -262,7 +332,6 @@ export class ZoomService implements IZoomService {
 
         const errorText = await response.text();
 
-        // 404 = meeting not found (already ended or deleted)
         if (response.status === 404) {
           this.logger.warn(
             `Zoom meeting ${meetingId} not found (already ended?)`,
@@ -270,7 +339,6 @@ export class ZoomService implements IZoomService {
           return { ended: true };
         }
 
-        // 400 with code 3001 = "Meeting does not exist"
         if (response.status === 400) {
           try {
             const parsed = JSON.parse(errorText);
@@ -285,13 +353,11 @@ export class ZoomService implements IZoomService {
           }
         }
 
-        // Retry on other errors
         if (attempt < maxAttempts) {
           this.logger.warn(
             `Zoom endMeeting attempt ${attempt} failed (${response.status}), retrying in 1s...`,
           );
           await new Promise((r) => setTimeout(r, 1000));
-          // Force token refresh on retry (in case token was stale)
           this.cachedToken = null;
           continue;
         }
@@ -326,43 +392,108 @@ export class ZoomService implements IZoomService {
     return this.webhookSecretToken;
   }
 
+  /**
+   * Fetch participant report with pagination (item #8).
+   * Loops through all pages using next_page_token for >300 participants.
+   */
   async getParticipantReport(
     meetingId: string,
   ): Promise<ZoomParticipantReport[]> {
     const token = await this.getAccessToken();
+    const allParticipants: ZoomParticipantReport[] = [];
+    let nextPageToken = '';
 
-    const response = await fetch(
-      `https://api.zoom.us/v2/report/meetings/${meetingId}/participants?page_size=300`,
+    do {
+      const url = new URL(
+        `https://api.zoom.us/v2/report/meetings/${meetingId}/participants`,
+      );
+      url.searchParams.set('page_size', '300');
+      if (nextPageToken) {
+        url.searchParams.set('next_page_token', nextPageToken);
+      }
+
+      const response = await this.zoomFetch(url.toString(), {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        this.logger.error(`Zoom participant report failed: ${errorText}`);
+        throw new Error(
+          `Failed to get participant report: ${response.status}`,
+        );
+      }
+
+      const data = await response.json();
+      const participants: ZoomParticipantReport[] = (
+        data.participants || []
+      ).map((p: any) => ({
+        id: p.id || p.participant_uuid || '',
+        name: p.name || '',
+        userEmail: p.user_email || '',
+        joinTime: p.join_time || '',
+        leaveTime: p.leave_time || '',
+        duration: p.duration || 0,
+      }));
+
+      allParticipants.push(...participants);
+      nextPageToken = data.next_page_token || '';
+    } while (nextPageToken);
+
+    this.logger.log(
+      `Zoom participant report for ${meetingId}: ${allParticipants.length} participants`,
+    );
+
+    return allParticipants;
+  }
+
+  /**
+   * Fetch cloud recordings for a meeting (item #22).
+   */
+  async getRecordings(meetingId: string): Promise<ZoomRecordingFile[]> {
+    const token = await this.getAccessToken();
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
       {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
       },
     );
 
+    // 404 = no recordings yet
+    if (response.status === 404) {
+      return [];
+    }
+
     if (!response.ok) {
       const errorText = await response.text();
-      this.logger.error(`Zoom participant report failed: ${errorText}`);
-      throw new Error(
-        `Failed to get participant report: ${response.status}`,
-      );
+      this.logger.error(`Zoom get recordings failed: ${errorText}`);
+      throw new Error(`Failed to get recordings: ${response.status}`);
     }
 
     const data = await response.json();
-    const participants: ZoomParticipantReport[] = (
-      data.participants || []
-    ).map((p: any) => ({
-      id: p.id || p.participant_uuid || '',
-      name: p.name || '',
-      userEmail: p.user_email || '',
-      joinTime: p.join_time || '',
-      leaveTime: p.leave_time || '',
-      duration: p.duration || 0,
+    const recordings: ZoomRecordingFile[] = (
+      data.recording_files || []
+    ).map((r: any) => ({
+      id: r.id || '',
+      meetingId: String(data.id || meetingId),
+      recordingType: r.recording_type || '',
+      downloadUrl: r.download_url || '',
+      playUrl: r.play_url || '',
+      fileSize: r.file_size || 0,
+      fileType: r.file_type || '',
+      recordingStart: r.recording_start || '',
+      recordingEnd: r.recording_end || '',
+      status: r.status || 'completed',
+      password: data.password || undefined,
     }));
 
     this.logger.log(
-      `Zoom participant report for ${meetingId}: ${participants.length} participants`,
+      `Zoom recordings for ${meetingId}: ${recordings.length} files`,
     );
 
-    return participants;
+    return recordings;
   }
 }

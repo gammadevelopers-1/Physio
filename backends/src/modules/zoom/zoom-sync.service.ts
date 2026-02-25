@@ -1,12 +1,11 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { eq, and, isNull, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
   attendance,
   attendanceLogs,
-  users,
   SESSION_STATUS,
   SESSION_TYPE,
   ATTENDANCE_LOG_EVENT,
@@ -14,10 +13,14 @@ import {
 } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { matchParticipantToUser } from './zoom.helpers';
 
 @Injectable()
 export class ZoomSyncService {
   private readonly logger = new Logger(ZoomSyncService.name);
+
+  /** Concurrency guard: prevent overlapping cron runs (item #10) */
+  private isSyncing = false;
 
   constructor(
     @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
@@ -27,39 +30,51 @@ export class ZoomSyncService {
   /**
    * Cron job: every 10 minutes, sync recently ended Zoom sessions.
    * Finds completed sessions with a meetingId that haven't been synced yet.
+   * Item #11: extended sync window to 7 days for sessions that failed sync.
    */
   @Cron('*/10 * * * *')
   async syncRecentlyEndedSessions(): Promise<void> {
-    this.logger.log('Running Zoom attendance sync cron...');
-
-    const unsyncedSessions = await db
-      .select()
-      .from(sessions)
-      .where(
-        and(
-          eq(sessions.status, SESSION_STATUS.COMPLETED),
-          isNotNull(sessions.meetingId),
-          isNull(sessions.zoomSyncedAt),
-          // Only sync sessions that ended in the last 24 hours
-          sql`${sessions.actualEndedAt} > NOW() - INTERVAL '24 hours'`,
-        ),
-      )
-      .limit(10);
-
-    for (const session of unsyncedSessions) {
-      try {
-        await this.syncSession(session.id);
-      } catch (error) {
-        this.logger.error(
-          `Failed to sync session ${session.id}: ${(error as Error).message}`,
-        );
-      }
+    // Item #10: concurrency guard
+    if (this.isSyncing) {
+      this.logger.debug('Zoom sync already in progress, skipping this run');
+      return;
     }
 
-    if (unsyncedSessions.length > 0) {
-      this.logger.log(
-        `Zoom sync cron completed: processed ${unsyncedSessions.length} sessions`,
-      );
+    this.isSyncing = true;
+    try {
+      this.logger.log('Running Zoom attendance sync cron...');
+
+      const unsyncedSessions = await db
+        .select()
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.status, SESSION_STATUS.COMPLETED),
+            isNotNull(sessions.meetingId),
+            isNull(sessions.zoomSyncedAt),
+            // Item #11: extended window to 7 days (covers weekends, failures)
+            sql`${sessions.actualEndedAt} > NOW() - INTERVAL '7 days'`,
+          ),
+        )
+        .limit(10);
+
+      for (const session of unsyncedSessions) {
+        try {
+          await this.syncSession(session.id);
+        } catch (error) {
+          this.logger.error(
+            `Failed to sync session ${session.id}: ${(error as Error).message}`,
+          );
+        }
+      }
+
+      if (unsyncedSessions.length > 0) {
+        this.logger.log(
+          `Zoom sync cron completed: processed ${unsyncedSessions.length} sessions`,
+        );
+      }
+    } finally {
+      this.isSyncing = false;
     }
   }
 
@@ -103,8 +118,8 @@ export class ZoomSyncService {
     let skipped = 0;
 
     for (const participant of participants) {
-      // Match participant email → system user
-      const matchedUser = await this.matchParticipantToUser(
+      // Item #5, #9: shared case-insensitive email matching
+      const matchedUser = await matchParticipantToUser(
         participant.userEmail,
       );
 
@@ -225,31 +240,5 @@ export class ZoomSyncService {
     );
 
     return { synced, skipped };
-  }
-
-  /**
-   * Match a Zoom participant email to a system user.
-   * Matching chain: user.email → user.zoomEmail
-   */
-  private async matchParticipantToUser(
-    email: string,
-  ): Promise<{ id: string } | null> {
-    if (!email) return null;
-
-    const [byEmail] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (byEmail) return byEmail;
-
-    const [byZoomEmail] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.zoomEmail, email))
-      .limit(1);
-
-    return byZoomEmail || null;
   }
 }

@@ -129,7 +129,8 @@
       "WebFetch(domain:labs.inqscribe.com)",
       "Bash(ffmpeg:*)",
       "Bash(DATABASE_HOST=localhost npx drizzle-kit push:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(docker compose:*)"
     ]
   }
 }

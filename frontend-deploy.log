@@ -1,0 +1,9 @@
+Deploying container to Cloud Run service [physioguidance-web] in project [nelc-elearning-platform-479319] region [us-central1]
+Deploying...
+Setting IAM Policy.............................................................warning
+Creating Revision..................................................................done
+Routing traffic.....done
+Completed with warnings:
+  Setting IAM policy failed, try "gcloud beta run services add-iam-policy-binding --region=us-central1 --member=allUsers --role=roles/run.invoker physioguidance-web"
+Service [physioguidance-web] revision [physioguidance-web-00008-v8m] has been deployed and is serving 100 percent of traffic.
+Service URL: https://physioguidance-web-59901490054.us-central1.run.app

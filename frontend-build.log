@@ -1,0 +1,331 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 30B 0.0s
+#1 transferring dockerfile: 1.49kB 0.0s done
+#1 DONE 0.2s
+
+#2 [internal] load metadata for docker.io/library/node:20-alpine
+#2 DONE 2.5s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 432B 0.0s done
+#3 DONE 0.0s
+
+#4 [builder 1/6] FROM docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8
+#4 resolve docker.io/library/node:20-alpine@sha256:09e2b3d9726018aecf269bd35325f46bf75046a643a66d28360ec71132750ec8 0.1s done
+#4 DONE 0.1s
+
+#5 [internal] load build context
+#5 transferring context: 57.24kB 0.3s done
+#5 DONE 0.3s
+
+#6 [builder 2/6] WORKDIR /app
+#6 CACHED
+
+#7 [builder 3/6] COPY package.json package-lock.json ./
+#7 CACHED
+
+#8 [builder 4/6] RUN npm ci
+#8 CACHED
+
+#9 [builder 5/6] COPY . .
+#9 DONE 1.8s
+
+#10 [builder 6/6] RUN npm run build
+#10 7.946 
+#10 7.946 > physio@0.1.0 build
+#10 7.946 > next build
+#10 7.946 
+#10 12.28 Attention: Next.js now collects completely anonymous telemetry regarding usage.
+#10 12.28 This information is used to shape Next.js' roadmap and prioritize features.
+#10 12.28 You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+#10 12.28 https://nextjs.org/telemetry
+#10 12.28 
+#10 12.33 ▲ Next.js 16.1.4 (Turbopack)
+#10 12.33 
+#10 12.55 ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+#10 12.73   Creating an optimized production build ...
+#10 71.36 ✓ Compiled successfully in 56s
+#10 71.59   Running TypeScript ...
+#10 135.8   Collecting page data using 3 workers ...
+#10 139.6   Generating static pages using 3 workers (0/150) ...
+#10 145.0   Generating static pages using 3 workers (37/150) 
+#10 147.5   Generating static pages using 3 workers (74/150) 
+#10 150.0   Generating static pages using 3 workers (112/150) 
+#10 153.8 ✓ Generating static pages using 3 workers (150/150) in 14.2s
+#10 153.8   Finalizing page optimization ...
+#10 157.0 
+#10 157.0 Route (app)                                              Revalidate  Expire
+#10 157.0 ┌ ○ /
+#10 157.0 ├ ○ /_not-found
+#10 157.0 ├ ● /[locale]                                                    1m      1y
+#10 157.0 │ ├ /en                                                          1m      1y
+#10 157.0 │ └ /ar                                                          1m      1y
+#10 157.0 ├ ● /[locale]/about                                              1m      1y
+#10 157.0 │ ├ /en/about                                                    1m      1y
+#10 157.0 │ └ /ar/about                                                    1m      1y
+#10 157.0 ├ ● /[locale]/archived
+#10 157.0 │ ├ /en/archived
+#10 157.0 │ └ /ar/archived
+#10 157.0 ├ ● /[locale]/become-trainer                                     1m      1y
+#10 157.0 │ ├ /en/become-trainer                                           1m      1y
+#10 157.0 │ └ /ar/become-trainer                                           1m      1y
+#10 157.0 ├ ● /[locale]/blogs                                              1m      1y
+#10 157.0 │ ├ /en/blogs                                                    1m      1y
+#10 157.0 │ └ /ar/blogs                                                    1m      1y
+#10 157.0 ├ ƒ /[locale]/blogs/[slug]
+#10 157.0 ├ ● /[locale]/certifications                                     1m      1y
+#10 157.0 │ ├ /en/certifications                                           1m      1y
+#10 157.0 │ └ /ar/certifications                                           1m      1y
+#10 157.0 ├ ● /[locale]/checkout
+#10 157.0 │ ├ /en/checkout
+#10 157.0 │ └ /ar/checkout
+#10 157.0 ├ ● /[locale]/contact                                            1m      1y
+#10 157.0 │ ├ /en/contact                                                  1m      1y
+#10 157.0 │ └ /ar/contact                                                  1m      1y
+#10 157.0 ├ ● /[locale]/courses
+#10 157.0 │ ├ /en/courses
+#10 157.0 │ └ /ar/courses
+#10 157.0 ├ ƒ /[locale]/courses/[slug]
+#10 157.0 ├ ● /[locale]/dashboard/admin
+#10 157.0 │ ├ /en/dashboard/admin
+#10 157.0 │ └ /ar/dashboard/admin
+#10 157.0 ├ ● /[locale]/dashboard/admin/compliance
+#10 157.0 │ ├ /en/dashboard/admin/compliance
+#10 157.0 │ └ /ar/dashboard/admin/compliance
+#10 157.0 ├ ● /[locale]/dashboard/admin/courses
+#10 157.0 │ ├ /en/dashboard/admin/courses
+#10 157.0 │ └ /ar/dashboard/admin/courses
+#10 157.0 ├ ● /[locale]/dashboard/admin/finance
+#10 157.0 │ ├ /en/dashboard/admin/finance
+#10 157.0 │ └ /ar/dashboard/admin/finance
+#10 157.0 ├ ● /[locale]/dashboard/admin/logs
+#10 157.0 │ ├ /en/dashboard/admin/logs
+#10 157.0 │ └ /ar/dashboard/admin/logs
+#10 157.0 ├ ● /[locale]/dashboard/admin/reports
+#10 157.0 │ ├ /en/dashboard/admin/reports
+#10 157.0 │ └ /ar/dashboard/admin/reports
+#10 157.0 ├ ● /[locale]/dashboard/admin/role-requests
+#10 157.0 │ ├ /en/dashboard/admin/role-requests
+#10 157.0 │ └ /ar/dashboard/admin/role-requests
+#10 157.0 ├ ƒ /[locale]/dashboard/admin/role-requests/[id]
+#10 157.0 ├ ● /[locale]/dashboard/admin/roles
+#10 157.0 │ ├ /en/dashboard/admin/roles
+#10 157.0 │ └ /ar/dashboard/admin/roles
+#10 157.0 ├ ● /[locale]/dashboard/admin/security
+#10 157.0 │ ├ /en/dashboard/admin/security
+#10 157.0 │ └ /ar/dashboard/admin/security
+#10 157.0 ├ ● /[locale]/dashboard/admin/settings
+#10 157.0 │ ├ /en/dashboard/admin/settings
+#10 157.0 │ └ /ar/dashboard/admin/settings
+#10 157.0 ├ ● /[locale]/dashboard/admin/users
+#10 157.0 │ ├ /en/dashboard/admin/users
+#10 157.0 │ └ /ar/dashboard/admin/users
+#10 157.0 ├ ● /[locale]/dashboard/finance
+#10 157.0 │ ├ /en/dashboard/finance
+#10 157.0 │ └ /ar/dashboard/finance
+#10 157.0 ├ ● /[locale]/dashboard/finance/discounts
+#10 157.0 │ ├ /en/dashboard/finance/discounts
+#10 157.0 │ └ /ar/dashboard/finance/discounts
+#10 157.0 ├ ● /[locale]/dashboard/finance/invoices
+#10 157.0 │ ├ /en/dashboard/finance/invoices
+#10 157.0 │ └ /ar/dashboard/finance/invoices
+#10 157.0 ├ ● /[locale]/dashboard/finance/payments
+#10 157.0 │ ├ /en/dashboard/finance/payments
+#10 157.0 │ └ /ar/dashboard/finance/payments
+#10 157.0 ├ ● /[locale]/dashboard/finance/refunds
+#10 157.0 │ ├ /en/dashboard/finance/refunds
+#10 157.0 │ └ /ar/dashboard/finance/refunds
+#10 157.0 ├ ● /[locale]/dashboard/finance/reports
+#10 157.0 │ ├ /en/dashboard/finance/reports
+#10 157.0 │ └ /ar/dashboard/finance/reports
+#10 157.0 ├ ● /[locale]/dashboard/finance/settings
+#10 157.0 │ ├ /en/dashboard/finance/settings
+#10 157.0 │ └ /ar/dashboard/finance/settings
+#10 157.0 ├ ● /[locale]/dashboard/instructor
+#10 157.0 │ ├ /en/dashboard/instructor
+#10 157.0 │ └ /ar/dashboard/instructor
+#10 157.0 ├ ● /[locale]/dashboard/instructor/assessments
+#10 157.0 │ ├ /en/dashboard/instructor/assessments
+#10 157.0 │ └ /ar/dashboard/instructor/assessments
+#10 157.0 ├ ● /[locale]/dashboard/instructor/certificates
+#10 157.0 │ ├ /en/dashboard/instructor/certificates
+#10 157.0 │ └ /ar/dashboard/instructor/certificates
+#10 157.0 ├ ● /[locale]/dashboard/instructor/content
+#10 157.0 │ ├ /en/dashboard/instructor/content
+#10 157.0 │ └ /ar/dashboard/instructor/content
+#10 157.0 ├ ● /[locale]/dashboard/instructor/courses
+#10 157.0 │ ├ /en/dashboard/instructor/courses
+#10 157.0 │ └ /ar/dashboard/instructor/courses
+#10 157.0 ├ ƒ /[locale]/dashboard/instructor/courses/[courseId]
+#10 157.0 ├ ● /[locale]/dashboard/instructor/reports
+#10 157.0 │ ├ /en/dashboard/instructor/reports
+#10 157.0 │ └ /ar/dashboard/instructor/reports
+#10 157.0 ├ ● /[locale]/dashboard/instructor/sessions
+#10 157.0 │ ├ /en/dashboard/instructor/sessions
+#10 157.0 │ └ /ar/dashboard/instructor/sessions
+#10 157.0 ├ ● /[locale]/dashboard/instructor/settings
+#10 157.0 │ ├ /en/dashboard/instructor/settings
+#10 157.0 │ └ /ar/dashboard/instructor/settings
+#10 157.0 ├ ● /[locale]/dashboard/instructor/students
+#10 157.0 │ ├ /en/dashboard/instructor/students
+#10 157.0 │ └ /ar/dashboard/instructor/students
+#10 157.0 ├ ƒ /[locale]/dashboard/instructor/students/[studentId]
+#10 157.0 ├ ● /[locale]/dashboard/manager
+#10 157.0 │ ├ /en/dashboard/manager
+#10 157.0 │ └ /ar/dashboard/manager
+#10 157.0 ├ ● /[locale]/dashboard/manager/assessments
+#10 157.0 │ ├ /en/dashboard/manager/assessments
+#10 157.0 │ └ /ar/dashboard/manager/assessments
+#10 157.0 ├ ● /[locale]/dashboard/manager/content-review
+#10 157.0 │ ├ /en/dashboard/manager/content-review
+#10 157.0 │ └ /ar/dashboard/manager/content-review
+#10 157.0 ├ ● /[locale]/dashboard/manager/courses
+#10 157.0 │ ├ /en/dashboard/manager/courses
+#10 157.0 │ └ /ar/dashboard/manager/courses
+#10 157.0 ├ ● /[locale]/dashboard/manager/instructors
+#10 157.0 │ ├ /en/dashboard/manager/instructors
+#10 157.0 │ └ /ar/dashboard/manager/instructors
+#10 157.0 ├ ● /[locale]/dashboard/manager/reports
+#10 157.0 │ ├ /en/dashboard/manager/reports
+#10 157.0 │ └ /ar/dashboard/manager/reports
+#10 157.0 ├ ● /[locale]/dashboard/manager/sessions
+#10 157.0 │ ├ /en/dashboard/manager/sessions
+#10 157.0 │ └ /ar/dashboard/manager/sessions
+#10 157.0 ├ ● /[locale]/dashboard/manager/settings
+#10 157.0 │ ├ /en/dashboard/manager/settings
+#10 157.0 │ └ /ar/dashboard/manager/settings
+#10 157.0 ├ ● /[locale]/dashboard/settings/security
+#10 157.0 │ ├ /en/dashboard/settings/security
+#10 157.0 │ └ /ar/dashboard/settings/security
+#10 157.0 ├ ● /[locale]/dashboard/student
+#10 157.0 │ ├ /en/dashboard/student
+#10 157.0 │ └ /ar/dashboard/student
+#10 157.0 ├ ● /[locale]/dashboard/student/applications
+#10 157.0 │ ├ /en/dashboard/student/applications
+#10 157.0 │ └ /ar/dashboard/student/applications
+#10 157.0 ├ ● /[locale]/dashboard/student/badges
+#10 157.0 │ ├ /en/dashboard/student/badges
+#10 157.0 │ └ /ar/dashboard/student/badges
+#10 157.0 ├ ● /[locale]/dashboard/student/certifications
+#10 157.0 │ ├ /en/dashboard/student/certifications
+#10 157.0 │ └ /ar/dashboard/student/certifications
+#10 157.0 ├ ● /[locale]/dashboard/student/courses
+#10 157.0 │ ├ /en/dashboard/student/courses
+#10 157.0 │ └ /ar/dashboard/student/courses
+#10 157.0 ├ ● /[locale]/dashboard/student/favourites
+#10 157.0 │ ├ /en/dashboard/student/favourites
+#10 157.0 │ └ /ar/dashboard/student/favourites
+#10 157.0 ├ ● /[locale]/dashboard/student/invite-friends
+#10 157.0 │ ├ /en/dashboard/student/invite-friends
+#10 157.0 │ └ /ar/dashboard/student/invite-friends
+#10 157.0 ├ ● /[locale]/dashboard/student/invoices
+#10 157.0 │ ├ /en/dashboard/student/invoices
+#10 157.0 │ └ /ar/dashboard/student/invoices
+#10 157.0 ├ ● /[locale]/dashboard/student/settings
+#10 157.0 │ ├ /en/dashboard/student/settings
+#10 157.0 │ └ /ar/dashboard/student/settings
+#10 157.0 ├ ● /[locale]/dashboard/support
+#10 157.0 │ ├ /en/dashboard/support
+#10 157.0 │ └ /ar/dashboard/support
+#10 157.0 ├ ● /[locale]/dashboard/support/kb
+#10 157.0 │ ├ /en/dashboard/support/kb
+#10 157.0 │ └ /ar/dashboard/support/kb
+#10 157.0 ├ ● /[locale]/dashboard/support/my-tickets
+#10 157.0 │ ├ /en/dashboard/support/my-tickets
+#10 157.0 │ └ /ar/dashboard/support/my-tickets
+#10 157.0 ├ ● /[locale]/dashboard/support/reports
+#10 157.0 │ ├ /en/dashboard/support/reports
+#10 157.0 │ └ /ar/dashboard/support/reports
+#10 157.0 ├ ● /[locale]/dashboard/support/settings
+#10 157.0 │ ├ /en/dashboard/support/settings
+#10 157.0 │ └ /ar/dashboard/support/settings
+#10 157.0 ├ ● /[locale]/dashboard/support/team
+#10 157.0 │ ├ /en/dashboard/support/team
+#10 157.0 │ └ /ar/dashboard/support/team
+#10 157.0 ├ ● /[locale]/dashboard/support/tickets
+#10 157.0 │ ├ /en/dashboard/support/tickets
+#10 157.0 │ └ /ar/dashboard/support/tickets
+#10 157.0 ├ ● /[locale]/faq                                                1m      1y
+#10 157.0 │ ├ /en/faq                                                      1m      1y
+#10 157.0 │ └ /ar/faq                                                      1m      1y
+#10 157.0 ├ ● /[locale]/feedback                                           1m      1y
+#10 157.0 │ ├ /en/feedback                                                 1m      1y
+#10 157.0 │ └ /ar/feedback                                                 1m      1y
+#10 157.0 ├ ● /[locale]/instructors                                        1m      1y
+#10 157.0 │ ├ /en/instructors                                              1m      1y
+#10 157.0 │ └ /ar/instructors                                              1m      1y
+#10 157.0 ├ ● /[locale]/nelc                                               1m      1y
+#10 157.0 │ ├ /en/nelc                                                     1m      1y
+#10 157.0 │ └ /ar/nelc                                                     1m      1y
+#10 157.0 ├ ● /[locale]/partners                                           1m      1y
+#10 157.0 │ ├ /en/partners                                                 1m      1y
+#10 157.0 │ └ /ar/partners                                                 1m      1y
+#10 157.0 ├ ● /[locale]/policies                                           1m      1y
+#10 157.0 │ ├ /en/policies                                                 1m      1y
+#10 157.0 │ └ /ar/policies                                                 1m      1y
+#10 157.0 ├ ● /[locale]/privacy                                            1m      1y
+#10 157.0 │ ├ /en/privacy                                                  1m      1y
+#10 157.0 │ └ /ar/privacy                                                  1m      1y
+#10 157.0 ├ ● /[locale]/search
+#10 157.0 │ ├ /en/search
+#10 157.0 │ └ /ar/search
+#10 157.0 ├ ● /[locale]/signin
+#10 157.0 │ ├ /en/signin
+#10 157.0 │ └ /ar/signin
+#10 157.0 ├ ● /[locale]/signin/verify
+#10 157.0 │ ├ /en/signin/verify
+#10 157.0 │ └ /ar/signin/verify
+#10 157.0 ├ ● /[locale]/signup
+#10 157.0 │ ├ /en/signup
+#10 157.0 │ └ /ar/signup
+#10 157.0 └ ● /[locale]/terms                                              1m      1y
+#10 157.0   ├ /en/terms                                                    1m      1y
+#10 157.0   └ /ar/terms                                                    1m      1y
+#10 157.0 
+#10 157.0 
+#10 157.0 ƒ Proxy (Middleware)
+#10 157.0 
+#10 157.1 ○  (Static)   prerendered as static content
+#10 157.1 ●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+#10 157.1 ƒ  (Dynamic)  server-rendered on demand
+#10 157.1 
+#10 DONE 158.0s
+
+#11 [runner 3/8] RUN addgroup --system --gid 1001 nodejs
+#11 CACHED
+
+#12 [runner 4/8] RUN adduser --system --uid 1001 nextjs
+#12 CACHED
+
+#13 [runner 5/8] COPY --from=builder /app/public ./public
+#13 CACHED
+
+#14 [runner 6/8] COPY --from=builder /app/.next/standalone ./
+#14 DONE 3.2s
+
+#15 [runner 7/8] COPY --from=builder /app/.next/static ./.next/static
+#15 DONE 0.2s
+
+#16 [runner 8/8] RUN chown -R nextjs:nodejs /app
+#16 DONE 74.9s
+
+#17 exporting to image
+#17 exporting layers
+#17 exporting layers 32.5s done
+#17 exporting manifest sha256:bbf54d51b4bf8108ed12054b0b678d55771ca7c718767177432b89ac7ceb9d49 0.1s done
+#17 exporting config sha256:f1ae77f05c67c14378143d604411177d3b457b0fe37ac2adc7cb91b380a19987
+#17 exporting config sha256:f1ae77f05c67c14378143d604411177d3b457b0fe37ac2adc7cb91b380a19987 0.1s done
+#17 exporting attestation manifest sha256:187a9fdaaebea71502f93c52a4c35c70ed7ed67fb1471739c1e0f6efca3ff374
+#17 exporting attestation manifest sha256:187a9fdaaebea71502f93c52a4c35c70ed7ed67fb1471739c1e0f6efca3ff374 0.3s done
+#17 exporting manifest list sha256:d5cb171b685ecfab365612fb8060f482a8502eb9c8e2757581eb135c08d4bf47
+#17 exporting manifest list sha256:d5cb171b685ecfab365612fb8060f482a8502eb9c8e2757581eb135c08d4bf47 0.3s done
+#17 naming to us-central1-docker.pkg.dev/nelc-elearning-platform-479319/physioguidance/physioguidance-web:fix-review 0.1s done
+#17 unpacking to us-central1-docker.pkg.dev/nelc-elearning-platform-479319/physioguidance/physioguidance-web:fix-review
+#17 unpacking to us-central1-docker.pkg.dev/nelc-elearning-platform-479319/physioguidance/physioguidance-web:fix-review 29.8s done
+#17 naming to us-central1-docker.pkg.dev/nelc-elearning-platform-479319/physioguidance/physioguidance-web:latest 0.0s done
+#17 unpacking to us-central1-docker.pkg.dev/nelc-elearning-platform-479319/physioguidance/physioguidance-web:latest 0.1s done
+#17 DONE 63.9s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/356w2px4gju4efktzt8lk0zm8

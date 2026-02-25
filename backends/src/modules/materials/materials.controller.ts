@@ -46,7 +46,7 @@ export class MaterialsController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB hard cap
+      limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB hard cap
       fileFilter: (_req, file, cb) => {
         const allAllowed = [
           // video
@@ -243,7 +243,7 @@ export class MaterialsController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 100 * 1024 * 1024 },
+      limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB hard cap
       fileFilter: (_req, file, cb) => {
         const allAllowed = [
           'video/mp4',

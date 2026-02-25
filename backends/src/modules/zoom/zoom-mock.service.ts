@@ -3,6 +3,7 @@ import {
   IZoomService,
   CreateZoomMeetingParams,
   CreateZoomMeetingResult,
+  UpdateZoomMeetingParams,
   ZoomMeetingDetails,
   ZoomParticipantReport,
 } from './zoom.interface';
@@ -56,6 +57,27 @@ export class ZoomMockService implements IZoomService {
       joinUrl: `https://zoom.us/j/${meetingId}?mock=true`,
       status: meeting?.status || 'waiting',
     };
+  }
+
+  async updateMeeting(
+    meetingId: string,
+    params: UpdateZoomMeetingParams,
+  ): Promise<void> {
+    const meeting = this.meetings.get(meetingId);
+    if (meeting) {
+      if (params.topic) meeting.topic = params.topic;
+      if (params.startTime) meeting.startTime = params.startTime;
+    }
+    this.logger.log(`[MOCK] Zoom meeting updated: ${meetingId}`);
+  }
+
+  async deleteMeeting(
+    meetingId: string,
+  ): Promise<{ deleted: boolean; error?: string }> {
+    this.meetings.delete(meetingId);
+    this.participantReports.delete(meetingId);
+    this.logger.log(`[MOCK] Zoom meeting deleted: ${meetingId}`);
+    return { deleted: true };
   }
 
   async endMeeting(

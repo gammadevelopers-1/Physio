@@ -38,6 +38,10 @@ import {
   getCertificateHeldHtml,
   getCertificateHeldText,
 } from './templates/certificate-held.template';
+import {
+  getTaAssignmentHtml,
+  getTaAssignmentText,
+} from './templates/ta-assignment.template';
 
 @Injectable()
 export class EmailService {
@@ -392,6 +396,44 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send certificate held email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send TA assignment notification email
+   */
+  async sendTaAssignment(
+    to: string,
+    params: {
+      recipientName: string;
+      sessionTitle: string;
+      courseName: string;
+      scheduledAt: string;
+      durationMinutes: number;
+      instructorName: string;
+      isAutoAssigned: boolean;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `TA Assignment: ${params.sessionTitle}`,
+        html: getTaAssignmentHtml(params),
+        text: getTaAssignmentText(params),
+      });
+      this.logger.log(
+        `TA assignment email sent to ${to} for "${params.sessionTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send TA assignment email to ${to}`,
         error,
       );
     }

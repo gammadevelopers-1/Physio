@@ -211,7 +211,7 @@ export class ZoomWebhookService {
    * Calculate total attendance duration from join/leave log pairs.
    * Groups consecutive join→leave pairs and sums durations.
    */
-  private async calculateTotalDuration(
+  async calculateTotalDuration(
     sessionId: string,
     studentId: string,
   ): Promise<number> {

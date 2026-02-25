@@ -34,9 +34,17 @@ export interface ZoomParticipantReport {
   duration: number; // seconds
 }
 
+export interface UpdateZoomMeetingParams {
+  topic?: string;
+  startTime?: Date;
+  durationMinutes?: number;
+}
+
 export interface IZoomService {
   createMeeting(params: CreateZoomMeetingParams): Promise<CreateZoomMeetingResult>;
   getMeeting(meetingId: string): Promise<ZoomMeetingDetails>;
+  updateMeeting(meetingId: string, params: UpdateZoomMeetingParams): Promise<void>;
+  deleteMeeting(meetingId: string): Promise<{ deleted: boolean; error?: string }>;
   endMeeting(meetingId: string): Promise<{ ended: boolean; error?: string }>;
   getWebhookSecretToken(): string;
   getParticipantReport(meetingId: string): Promise<ZoomParticipantReport[]>;

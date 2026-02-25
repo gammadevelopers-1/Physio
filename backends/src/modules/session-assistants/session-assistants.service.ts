@@ -9,11 +9,13 @@ import { db } from '../../database';
 import {
   sessionAssistants,
   sessions,
+  courses,
   enrollments,
   users,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { EmailService } from '../email/email.service';
 
 // NELC allocation rules
 const ASSISTANT_THRESHOLDS = {
@@ -26,7 +28,10 @@ const ASSISTANT_THRESHOLDS = {
 export class SessionAssistantsService {
   private readonly logger = new Logger(SessionAssistantsService.name);
 
-  constructor(private readonly auditService: NelcAuditService) {}
+  constructor(
+    private readonly auditService: NelcAuditService,
+    private readonly emailService: EmailService,
+  ) {}
 
   /**
    * Calculate how many assistants are required based on NELC rules.
@@ -41,15 +46,22 @@ export class SessionAssistantsService {
    * Check and auto-allocate assistants for a session based on enrollment count.
    */
   async checkAndAllocate(sessionId: string): Promise<void> {
-    // 1. Get session and its course
+    // 1. Get session with course and instructor details
     const [session] = await db
       .select({
         id: sessions.id,
+        title: sessions.title,
         courseId: sessions.courseId,
         instructorId: sessions.instructorId,
         scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        courseName: courses.title,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
       })
       .from(sessions)
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .innerJoin(users, eq(sessions.instructorId, users.id))
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
@@ -93,7 +105,12 @@ export class SessionAssistantsService {
     ];
 
     const availableInstructors = await db
-      .select({ id: users.id })
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
       .from(users)
       .where(
         and(
@@ -105,6 +122,8 @@ export class SessionAssistantsService {
         ),
       )
       .limit(deficit);
+
+    const instructorName = `${session.instructorFirstName} ${session.instructorLastName}`;
 
     // 6. Auto-assign available instructors
     for (const instructor of availableInstructors) {
@@ -128,6 +147,22 @@ export class SessionAssistantsService {
           required,
         },
       });
+
+      // Send TA assignment email notification
+      const taName = `${instructor.firstName} ${instructor.lastName}`;
+      this.emailService
+        .sendTaAssignment(instructor.email, {
+          recipientName: taName,
+          sessionTitle: session.title,
+          courseName: session.courseName,
+          scheduledAt: session.scheduledAt.toISOString(),
+          durationMinutes: session.durationMinutes,
+          instructorName,
+          isAutoAssigned: true,
+        })
+        .catch((err) =>
+          this.logger.warn(`Failed to send TA email to ${instructor.email}`, err),
+        );
 
       this.logger.log(
         `Auto-assigned instructor ${instructor.id} to session ${sessionId}`,
@@ -195,6 +230,48 @@ export class SessionAssistantsService {
         assignedBy,
       },
     });
+
+    // Send TA assignment email
+    try {
+      const [sessionData] = await db
+        .select({
+          title: sessions.title,
+          scheduledAt: sessions.scheduledAt,
+          durationMinutes: sessions.durationMinutes,
+          courseName: courses.title,
+          instructorFirstName: users.firstName,
+          instructorLastName: users.lastName,
+        })
+        .from(sessions)
+        .innerJoin(courses, eq(sessions.courseId, courses.id))
+        .innerJoin(users, eq(sessions.instructorId, users.id))
+        .where(eq(sessions.id, sessionId))
+        .limit(1);
+
+      const [taUser] = await db
+        .select({ email: users.email, firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      if (sessionData && taUser) {
+        this.emailService
+          .sendTaAssignment(taUser.email, {
+            recipientName: `${taUser.firstName} ${taUser.lastName}`,
+            sessionTitle: sessionData.title,
+            courseName: sessionData.courseName,
+            scheduledAt: sessionData.scheduledAt.toISOString(),
+            durationMinutes: sessionData.durationMinutes,
+            instructorName: `${sessionData.instructorFirstName} ${sessionData.instructorLastName}`,
+            isAutoAssigned: false,
+          })
+          .catch((err) =>
+            this.logger.warn(`Failed to send TA email to ${taUser.email}`, err),
+          );
+      }
+    } catch (err) {
+      this.logger.warn('Failed to send TA assignment email', err);
+    }
 
     return assistant;
   }

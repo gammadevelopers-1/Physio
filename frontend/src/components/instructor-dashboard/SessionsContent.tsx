@@ -7,7 +7,7 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
-import { instructorApi, reportsApi } from "@/lib/api";
+import { instructorApi, reportsApi, zoomAttendanceApi } from "@/lib/api";
 import type {
   CourseSession,
   InstructorCourse,
@@ -110,36 +110,90 @@ function AttendanceModal({
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [localStatuses, setLocalStatuses] = useState<Record<string, AttendanceStatus>>({});
   const [localNotes, setLocalNotes] = useState<Record<string, string>>({});
+  const [unmatchedParticipants, setUnmatchedParticipants] = useState<
+    Array<{ zoomUserEmail: string; eventType: string; timestamp: string }>
+  >([]);
+
+  const isZoomSession = session.type === "zoom" || session.type === "hybrid";
+
+  const loadData = useCallback(async () => {
+    try {
+      const promises: Promise<unknown>[] = [
+        instructorApi.getSessionAttendance(session.id),
+        instructorApi.getCourseEnrollments(session.courseId),
+      ];
+      if (isZoomSession) {
+        promises.push(zoomAttendanceApi.getAttendanceLogs(session.id));
+      }
+      const results = await Promise.all(promises);
+      const att = results[0] as AttendanceRecord[];
+      const enr = results[1] as CourseEnrollment[];
+      setEnrollments(enr);
+      setAttendanceRecords(att);
+
+      // Initialize local statuses and notes from existing attendance records
+      const existing: Record<string, AttendanceStatus> = {};
+      const existingNotes: Record<string, string> = {};
+      for (const a of att) {
+        existing[a.studentId] = a.status;
+        if (a.note) existingNotes[a.studentId] = a.note;
+      }
+      setLocalStatuses(existing);
+      setLocalNotes(existingNotes);
+
+      // Extract unmatched participants from attendance logs
+      if (isZoomSession && results[2]) {
+        const logs = results[2] as Array<{
+          studentId: string | null;
+          zoomUserEmail: string | null;
+          eventType: string;
+          timestamp: string;
+        }>;
+        const unmatched = logs.filter(
+          (l) => !l.studentId && l.zoomUserEmail && l.eventType === "join"
+        );
+        // Deduplicate by email
+        const seen = new Set<string>();
+        const unique = unmatched.filter((l) => {
+          if (seen.has(l.zoomUserEmail!)) return false;
+          seen.add(l.zoomUserEmail!);
+          return true;
+        });
+        setUnmatchedParticipants(
+          unique.map((l) => ({
+            zoomUserEmail: l.zoomUserEmail!,
+            eventType: l.eventType,
+            timestamp: l.timestamp,
+          }))
+        );
+      }
+    } catch {
+      toast.error(t("sessionsPage.attendance.loadError"));
+    } finally {
+      setLoading(false);
+    }
+  }, [session.id, session.courseId, isZoomSession, t]);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [att, enr] = await Promise.all([
-          instructorApi.getSessionAttendance(session.id),
-          instructorApi.getCourseEnrollments(session.courseId),
-        ]);
-        setEnrollments(enr);
-        setAttendanceRecords(att);
+    loadData();
+  }, [loadData]);
 
-        // Initialize local statuses and notes from existing attendance records
-        const existing: Record<string, AttendanceStatus> = {};
-        const existingNotes: Record<string, string> = {};
-        for (const a of att) {
-          existing[a.studentId] = a.status;
-          if (a.note) existingNotes[a.studentId] = a.note;
-        }
-        setLocalStatuses(existing);
-        setLocalNotes(existingNotes);
-      } catch {
-        toast.error(t("sessionsPage.attendance.loadError"));
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [session.id, session.courseId, t]);
+  const handleSyncZoom = async () => {
+    setSyncing(true);
+    try {
+      const result = await zoomAttendanceApi.syncZoomAttendance(session.id);
+      toast.success(`Synced ${result.synced} attendance records from Zoom`);
+      setLoading(true);
+      await loadData();
+    } catch {
+      toast.error("Failed to sync Zoom attendance");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
 
@@ -211,11 +265,13 @@ function AttendanceModal({
     }
   };
 
+  const [exportFormat, setExportFormat] = useState<"csv" | "pdf" | "xlsx">("csv");
+
   const handleExport = async () => {
     try {
       await reportsApi.download("attendance", {
         courseId: session.courseId,
-        format: "csv",
+        format: exportFormat,
       });
     } catch {
       toast.error(t("sessionsPage.attendance.exportError"));
@@ -249,6 +305,28 @@ function AttendanceModal({
         </div>
       ) : (
         <>
+          {/* Zoom sync bar */}
+          {isZoomSession && session.status === "completed" && (
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E5E7EB] bg-[#EFF6FF]">
+              <div className="flex items-center gap-2 text-xs text-[#3B82F6]">
+                <Video className="w-3.5 h-3.5" />
+                <span>Zoom Session</span>
+              </div>
+              <button
+                onClick={handleSyncZoom}
+                disabled={syncing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors disabled:opacity-50"
+              >
+                {syncing ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5" />
+                )}
+                {syncing ? "Syncing..." : "Sync from Zoom"}
+              </button>
+            </div>
+          )}
+
           {/* Summary */}
           <div className="flex items-center gap-4 px-4 py-3 border-b border-[#E5E7EB] bg-[#F9FAFB] flex-wrap">
             <span className="text-xs font-medium text-[#6B7280]">
@@ -323,22 +401,43 @@ function AttendanceModal({
                           className="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded text-xs text-[#374151] placeholder:text-[#9CA3AF] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
                         />
                       )}
-                      {/* Zoom sync timing data */}
+                      {/* Zoom sync timing data + timeline bar */}
                       {rec?.joinedAt && (
-                        <div className="flex items-center gap-3 text-[10px] text-[#9CA3AF]">
-                          <span>
-                            {t("sessionsPage.attendance.joinedAt")}:{" "}
-                            {new Date(rec.joinedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
-                          </span>
-                          {rec.leftAt && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-3 text-[10px] text-[#9CA3AF]">
                             <span>
-                              {t("sessionsPage.attendance.leftAt")}:{" "}
-                              {new Date(rec.leftAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
+                              {t("sessionsPage.attendance.joinedAt")}:{" "}
+                              {new Date(rec.joinedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
                             </span>
-                          )}
-                          {rec.durationMinutes != null && (
-                            <span>{rec.durationMinutes} {t("sessionsPage.form.minutes")}</span>
-                          )}
+                            {rec.leftAt && (
+                              <span>
+                                {t("sessionsPage.attendance.leftAt")}:{" "}
+                                {new Date(rec.leftAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                            )}
+                            {rec.durationMinutes != null && (
+                              <span>{rec.durationMinutes} {t("sessionsPage.form.minutes")}</span>
+                            )}
+                          </div>
+                          {/* Timeline bar */}
+                          {session.durationMinutes > 0 && (() => {
+                            const sessionStart = new Date(session.scheduledAt).getTime();
+                            const sessionEnd = sessionStart + session.durationMinutes * 60000;
+                            const joinMs = new Date(rec.joinedAt).getTime();
+                            const leaveMs = rec.leftAt ? new Date(rec.leftAt).getTime() : sessionEnd;
+                            const totalRange = sessionEnd - sessionStart;
+                            if (totalRange <= 0) return null;
+                            const leftPct = Math.max(0, Math.min(100, ((joinMs - sessionStart) / totalRange) * 100));
+                            const widthPct = Math.max(2, Math.min(100 - leftPct, ((leaveMs - joinMs) / totalRange) * 100));
+                            return (
+                              <div className="relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden" title={`${Math.round(leftPct)}% – ${Math.round(leftPct + widthPct)}% of session`}>
+                                <div
+                                  className="absolute top-0 h-full rounded-full bg-[#16A34A]"
+                                  style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                                />
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
@@ -348,15 +447,56 @@ function AttendanceModal({
             )}
           </div>
 
+          {/* Unmatched Zoom participants */}
+          {isZoomSession && unmatchedParticipants.length > 0 && (
+            <div className="border-t border-[#E5E7EB]">
+              <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FEF3C7]">
+                <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />
+                <span className="text-xs font-medium text-[#92400E]">
+                  {unmatchedParticipants.length} unmatched Zoom participant{unmatchedParticipants.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="max-h-[150px] overflow-y-auto divide-y divide-[#E5E7EB]">
+                {unmatchedParticipants.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-[#FEF3C7] flex items-center justify-center">
+                        <Users className="w-3 h-3 text-[#D97706]" />
+                      </div>
+                      <span className="text-xs text-[#6B7280]">{p.zoomUserEmail}</span>
+                    </div>
+                    <span className="text-[10px] text-[#9CA3AF]">
+                      {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Footer */}
           <div className="flex items-center justify-between p-4 border-t border-[#E5E7EB]">
-            <button
-              onClick={handleExport}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              {t("sessionsPage.attendance.exportAttendance")}
-            </button>
+            <div className="flex items-center gap-2">
+              <select
+                value={exportFormat}
+                onChange={(e) => setExportFormat(e.target.value as "csv" | "pdf" | "xlsx")}
+                className="px-2 py-2 text-xs border border-[#E5E7EB] rounded-lg text-[#6B7280] bg-white focus:ring-1 focus:ring-[#3B82F6] outline-none"
+              >
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+                <option value="xlsx">Excel</option>
+              </select>
+              <button
+                onClick={handleExport}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                {t("sessionsPage.attendance.exportAttendance")}
+              </button>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
@@ -948,6 +1088,25 @@ function SessionCard({
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5" />
                   {session.roomName}
+                </span>
+              )}
+              {/* Capacity indicator */}
+              {session.nelcLimit != null && session.nelcLimit > 0 && (
+                <span className={`flex items-center gap-1 font-medium ${
+                  (session.capacityPercent || 0) >= 95
+                    ? "text-[#EF4444]"
+                    : (session.capacityPercent || 0) >= 80
+                    ? "text-[#D97706]"
+                    : "text-[#6B7280]"
+                }`}>
+                  <Users className="w-3.5 h-3.5" />
+                  {session.enrolledCount || 0}/{session.nelcLimit}
+                  {(session.capacityPercent || 0) >= 80 && (session.capacityPercent || 0) < 95 && (
+                    <AlertTriangle className="w-3 h-3 text-[#D97706]" />
+                  )}
+                  {(session.capacityPercent || 0) >= 95 && (
+                    <AlertTriangle className="w-3 h-3 text-[#EF4444]" />
+                  )}
                 </span>
               )}
             </div>

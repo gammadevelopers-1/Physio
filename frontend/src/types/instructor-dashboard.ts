@@ -356,6 +356,10 @@ export interface CourseSession {
   cancelReason: string | null;
   createdAt: string;
   updatedAt: string;
+  // Capacity fields (from enriched backend response)
+  enrolledCount?: number;
+  nelcLimit?: number;
+  capacityPercent?: number;
 }
 
 export interface CourseSessionsResponse {

@@ -51,10 +51,10 @@ const ALLOWED_MIMES: Record<string, string[]> = {
 
 /** File size limits per material type (bytes) */
 const SIZE_LIMITS: Record<string, number> = {
-  video: 100 * 1024 * 1024, // 100 MB
-  pdf: 10 * 1024 * 1024, // 10 MB
-  document: 10 * 1024 * 1024, // 10 MB
-  image: 10 * 1024 * 1024, // 10 MB
+  video: 500 * 1024 * 1024, // 500 MB
+  pdf: 50 * 1024 * 1024, // 50 MB
+  document: 50 * 1024 * 1024, // 50 MB
+  image: 20 * 1024 * 1024, // 20 MB
 };
 
 @Injectable()

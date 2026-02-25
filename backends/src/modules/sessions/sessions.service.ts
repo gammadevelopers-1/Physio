@@ -12,6 +12,7 @@ import {
   courses,
   users,
   enrollments,
+  attendanceLogs,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -416,6 +417,37 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
+    // Audit log the update
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.updated',
+      performedBy: user.id,
+      metadata: {
+        changes: dto,
+        previousScheduledAt: session.scheduledAt,
+        previousDuration: session.durationMinutes,
+      },
+    });
+
+    // Sync Zoom meeting if time/duration/title changed on a Zoom/hybrid session
+    if (
+      updated.meetingId &&
+      (updated.type === SESSION_TYPE.ZOOM || updated.type === SESSION_TYPE.HYBRID) &&
+      (dto.scheduledAt || dto.durationMinutes || dto.title)
+    ) {
+      try {
+        await this.zoomService.updateMeeting(updated.meetingId, {
+          topic: dto.title || undefined,
+          startTime: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
+          durationMinutes: dto.durationMinutes || undefined,
+        });
+        this.logger.log(`Zoom meeting ${updated.meetingId} synced with session update`);
+      } catch (error) {
+        this.logger.warn(`Failed to sync Zoom meeting ${updated.meetingId} on session update`, error);
+      }
+    }
+
     return updated;
   }
 
@@ -591,6 +623,21 @@ export class SessionsService {
       );
     }
 
+    // Delete Zoom meeting if this is a Zoom/hybrid session
+    if (
+      session.meetingId &&
+      (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
+    ) {
+      try {
+        const result = await this.zoomService.deleteMeeting(session.meetingId);
+        if (!result.deleted) {
+          this.logger.warn(`Failed to delete Zoom meeting ${session.meetingId}: ${result.error}`);
+        }
+      } catch (error) {
+        this.logger.warn(`Error deleting Zoom meeting ${session.meetingId} on cancel`, error);
+      }
+    }
+
     const [updated] = await db
       .update(sessions)
       .set({
@@ -662,6 +709,18 @@ export class SessionsService {
       throw new BadRequestException(`Cannot cancel a ${session.status} session`);
     }
 
+    // Delete Zoom meeting
+    if (
+      session.meetingId &&
+      (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
+    ) {
+      try {
+        await this.zoomService.deleteMeeting(session.meetingId);
+      } catch (error) {
+        this.logger.warn(`Failed to delete Zoom meeting ${session.meetingId} on manager cancel`, error);
+      }
+    }
+
     const [updated] = await db
       .update(sessions)
       .set({
@@ -720,6 +779,22 @@ export class SessionsService {
       .set(updateData)
       .where(eq(sessions.id, sessionId))
       .returning();
+
+    // Sync Zoom meeting with new schedule
+    if (
+      session.meetingId &&
+      (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
+    ) {
+      try {
+        await this.zoomService.updateMeeting(session.meetingId, {
+          startTime: new Date(newDate),
+          durationMinutes: newDuration || undefined,
+        });
+        this.logger.log(`Zoom meeting ${session.meetingId} rescheduled`);
+      } catch (error) {
+        this.logger.warn(`Failed to reschedule Zoom meeting ${session.meetingId}`, error);
+      }
+    }
 
     await this.auditLogService.log({
       entityType: 'session',
@@ -949,5 +1024,31 @@ export class SessionsService {
     }
 
     return session;
+  }
+
+  /**
+   * Get granular join/leave attendance logs for a session.
+   * Includes unmatched Zoom participants (studentId IS NULL).
+   */
+  async getAttendanceLogs(sessionId: string) {
+    const logs = await db
+      .select({
+        id: attendanceLogs.id,
+        sessionId: attendanceLogs.sessionId,
+        studentId: attendanceLogs.studentId,
+        eventType: attendanceLogs.eventType,
+        timestamp: attendanceLogs.timestamp,
+        zoomParticipantId: attendanceLogs.zoomParticipantId,
+        zoomUserEmail: attendanceLogs.zoomUserEmail,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+        studentEmail: users.email,
+      })
+      .from(attendanceLogs)
+      .leftJoin(users, eq(attendanceLogs.studentId, users.id))
+      .where(eq(attendanceLogs.sessionId, sessionId))
+      .orderBy(asc(attendanceLogs.timestamp));
+
+    return logs;
   }
 }

@@ -33,7 +33,6 @@ import {
   Play,
   LayoutGrid,
   List,
-  Plus,
   Star,
 } from "lucide-react";
 
@@ -197,13 +196,6 @@ const MyCoursesContent = () => {
                     {t("courses.subtitle")}
                   </p>
                 </div>
-                <Link
-                  href={`/${locale}/dashboard/instructor/courses/create`}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t("courses.createCourse")}
-                </Link>
               </div>
 
               {/* Filters */}
@@ -325,16 +317,9 @@ const MyCoursesContent = () => {
                   <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
                     {t("courses.noCoursesTitle")}
                   </h3>
-                  <p className="text-sm text-[#6B7280] mb-4">
+                  <p className="text-sm text-[#6B7280]">
                     {t("courses.noCoursesAssigned")}
                   </p>
-                  <Link
-                    href={`/${locale}/dashboard/instructor/courses/create`}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    {t("courses.createCourse")}
-                  </Link>
                 </div>
               ) : (
                 <>

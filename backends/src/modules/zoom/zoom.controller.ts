@@ -9,11 +9,12 @@ import {
   BadRequestException,
   Inject,
 } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNotNull, isNull } from 'drizzle-orm';
 import { db } from '../../database';
-import { sessions, SESSION_STATUS } from '../../database/schema';
+import { sessions, attendance, SESSION_STATUS, NELC_EVENT_TYPE } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { ZoomWebhookService } from './zoom-webhook.service';
+import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { Public } from '../auth/decorators';
 import * as crypto from 'crypto';
 
@@ -24,6 +25,7 @@ export class ZoomController {
   constructor(
     @Inject(ZOOM_SERVICE) private zoomService: IZoomService,
     private webhookService: ZoomWebhookService,
+    private auditService: NelcAuditService,
   ) {}
 
   /**
@@ -69,13 +71,26 @@ export class ZoomController {
         this.logger.warn('Zoom webhook signature verification failed');
         throw new BadRequestException('Invalid webhook signature');
       }
+
+      // ─── Timestamp Replay Protection ────────────────────
+      const tsMs = Number(timestamp) * 1000;
+      const ageMs = Math.abs(Date.now() - tsMs);
+      const MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
+      if (Number.isNaN(tsMs) || ageMs > MAX_AGE_MS) {
+        this.logger.warn(
+          `Zoom webhook rejected: timestamp too old or invalid (age=${Math.round(ageMs / 1000)}s)`,
+        );
+        throw new BadRequestException('Webhook timestamp expired');
+      }
     }
 
     // ─── Handle Events ─────────────────────────────────────
     const event = body.event;
     this.logger.log(`Zoom webhook event received: ${event}`);
 
-    if (event === 'meeting.ended') {
+    if (event === 'meeting.started') {
+      await this.handleMeetingStarted(body.payload?.object);
+    } else if (event === 'meeting.ended') {
       await this.handleMeetingEnded(body.payload?.object);
     } else if (event === 'meeting.participant_joined') {
       await this.webhookService.handleParticipantJoined(body.payload?.object);
@@ -103,7 +118,9 @@ export class ZoomController {
 
     const event = body.event;
 
-    if (event === 'meeting.participant_joined') {
+    if (event === 'meeting.started') {
+      await this.handleMeetingStarted(body.payload?.object);
+    } else if (event === 'meeting.participant_joined') {
       await this.webhookService.handleParticipantJoined(body.payload?.object);
     } else if (event === 'meeting.participant_left') {
       await this.webhookService.handleParticipantLeft(body.payload?.object);
@@ -117,8 +134,74 @@ export class ZoomController {
   }
 
   /**
-   * When a Zoom meeting ends, find the session by meetingId
-   * and update its status to completed.
+   * When a Zoom meeting starts, find the session by meetingId
+   * and update its status to live (if still scheduled).
+   * Covers the case where instructor starts Zoom from the Zoom app directly.
+   */
+  private async handleMeetingStarted(meeting: any) {
+    if (!meeting?.id) {
+      this.logger.warn('meeting.started event received without meeting id');
+      return;
+    }
+
+    const meetingId = String(meeting.id);
+    this.logger.log(`Meeting started: ${meetingId}`);
+
+    const [session] = await db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.meetingId, meetingId))
+      .limit(1);
+
+    if (!session) {
+      this.logger.warn(
+        `No session found for Zoom meetingId: ${meetingId}`,
+      );
+      return;
+    }
+
+    // Only transition from scheduled → live (idempotent if already live)
+    if (session.status === SESSION_STATUS.LIVE) {
+      this.logger.log(`Session ${session.id} already live, skipping`);
+      return;
+    }
+
+    if (session.status !== SESSION_STATUS.SCHEDULED) {
+      this.logger.log(
+        `Session ${session.id} is ${session.status}, cannot start`,
+      );
+      return;
+    }
+
+    await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.LIVE,
+        actualStartedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, session.id));
+
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.SESSION_STARTED,
+      entityType: 'session',
+      entityId: session.id,
+      metadata: {
+        sessionId: session.id,
+        courseId: session.courseId,
+        instructorId: session.instructorId,
+        method: 'zoom_webhook',
+      },
+    });
+
+    this.logger.log(
+      `Session ${session.id} marked as live via Zoom meeting.started webhook`,
+    );
+  }
+
+  /**
+   * When a Zoom meeting ends, find the session by meetingId,
+   * close open attendance records, and update status to completed.
    */
   private async handleMeetingEnded(meeting: any) {
     if (!meeting?.id) {
@@ -152,12 +235,54 @@ export class ZoomController {
       return;
     }
 
+    const endedAt = new Date();
+
+    // Close out open attendance records (students who joined but never triggered a leave event)
+    const openRecords = await db
+      .select({ id: attendance.id, studentId: attendance.studentId })
+      .from(attendance)
+      .where(
+        and(
+          eq(attendance.sessionId, session.id),
+          isNotNull(attendance.joinedAt),
+          isNull(attendance.leftAt),
+        ),
+      );
+
+    for (const record of openRecords) {
+      try {
+        const totalMinutes =
+          await this.webhookService.calculateTotalDuration(
+            session.id,
+            record.studentId,
+          );
+        await db
+          .update(attendance)
+          .set({
+            leftAt: endedAt,
+            durationMinutes: totalMinutes,
+          })
+          .where(eq(attendance.id, record.id));
+      } catch (error) {
+        this.logger.warn(
+          `Failed to close attendance for student ${record.studentId}`,
+          error,
+        );
+      }
+    }
+
+    if (openRecords.length > 0) {
+      this.logger.log(
+        `Closed ${openRecords.length} open attendance records for session ${session.id}`,
+      );
+    }
+
     await db
       .update(sessions)
       .set({
         status: SESSION_STATUS.COMPLETED,
-        actualEndedAt: new Date(),
-        updatedAt: new Date(),
+        actualEndedAt: endedAt,
+        updatedAt: endedAt,
       })
       .where(eq(sessions.id, session.id));
 

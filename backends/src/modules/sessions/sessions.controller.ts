@@ -250,4 +250,14 @@ export class SessionsController {
     const result = await this.zoomSyncService.syncSession(id);
     return { message: 'Zoom attendance synced', ...result };
   }
+
+  /**
+   * GET /sessions/:id/attendance-logs — Get granular join/leave logs for a session
+   * Includes unmatched Zoom participants (studentId IS NULL)
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get(':id/attendance-logs')
+  async getAttendanceLogs(@Param('id') id: string) {
+    return this.sessionsService.getAttendanceLogs(id);
+  }
 }

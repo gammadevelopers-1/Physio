@@ -4,6 +4,7 @@ import {
   IZoomService,
   CreateZoomMeetingParams,
   CreateZoomMeetingResult,
+  UpdateZoomMeetingParams,
   ZoomMeetingDetails,
   ZoomParticipantReport,
 } from './zoom.interface';
@@ -155,6 +156,82 @@ export class ZoomService implements IZoomService {
       joinUrl: meeting.join_url,
       status: (meeting as any).status || 'waiting',
     };
+  }
+
+  async updateMeeting(
+    meetingId: string,
+    params: UpdateZoomMeetingParams,
+  ): Promise<void> {
+    const token = await this.getAccessToken();
+
+    const body: Record<string, unknown> = {};
+    if (params.topic) body.topic = params.topic;
+    if (params.startTime) body.start_time = params.startTime.toISOString();
+    if (params.durationMinutes) body.duration = params.durationMinutes;
+    if (params.startTime || params.durationMinutes) body.timezone = 'UTC';
+
+    const response = await fetch(
+      `https://api.zoom.us/v2/meetings/${meetingId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      },
+    );
+
+    if (!response.ok && response.status !== 204) {
+      const errorText = await response.text();
+      this.logger.error(
+        `Zoom update meeting ${meetingId} failed: ${response.status} - ${errorText}`,
+      );
+      throw new Error(`Failed to update Zoom meeting: ${response.status}`);
+    }
+
+    this.logger.log(`Zoom meeting ${meetingId} updated successfully`);
+  }
+
+  async deleteMeeting(
+    meetingId: string,
+  ): Promise<{ deleted: boolean; error?: string }> {
+    try {
+      const token = await this.getAccessToken();
+
+      const response = await fetch(
+        `https://api.zoom.us/v2/meetings/${meetingId}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      if (response.ok || response.status === 204) {
+        this.logger.log(`Zoom meeting ${meetingId} deleted successfully`);
+        return { deleted: true };
+      }
+
+      if (response.status === 404) {
+        this.logger.warn(
+          `Zoom meeting ${meetingId} not found (already deleted?)`,
+        );
+        return { deleted: true };
+      }
+
+      const errorText = await response.text();
+      this.logger.error(
+        `Zoom delete meeting ${meetingId} failed: ${response.status} - ${errorText}`,
+      );
+      return {
+        deleted: false,
+        error: `Zoom API ${response.status}: ${errorText.slice(0, 200)}`,
+      };
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Zoom delete meeting ${meetingId} threw: ${msg}`);
+      return { deleted: false, error: msg };
+    }
   }
 
   async endMeeting(

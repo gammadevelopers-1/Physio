@@ -468,7 +468,12 @@ const AddQuestionModal = ({
         ];
       }
 
-      await instructorApi.addQuestion(assessmentId, data);
+      if (assessmentId.startsWith("course:")) {
+        const courseId = assessmentId.replace("course:", "");
+        await instructorApi.addCourseBankQuestion(courseId, data);
+      } else {
+        await instructorApi.addQuestion(assessmentId, data);
+      }
       toast.success(t("assessments.questionAdded"));
       onAdded();
       onClose();
@@ -1160,11 +1165,17 @@ const AssessmentsContent = () => {
 
   const handleDeleteQuestion = async (questionId: string) => {
     try {
-      await instructorApi.deleteQuestion(selectedAssessmentForQ || '', questionId);
+      const isCourseBank = selectedAssessmentForQ?.startsWith("course:");
+      const actualId = isCourseBank
+        ? selectedAssessmentForQ.replace("course:", "")
+        : selectedAssessmentForQ || '';
+      await instructorApi.deleteQuestion(actualId, questionId);
       toast.success(t("assessments.questionDeleted"));
       // Refresh questions
       if (selectedAssessmentForQ) {
-        const data = await instructorApi.getAssessmentQuestions(selectedAssessmentForQ);
+        const data = isCourseBank
+          ? await instructorApi.getCourseBankQuestions(actualId)
+          : await instructorApi.getAssessmentQuestions(selectedAssessmentForQ);
         setQuestions(data);
       }
     } catch {
@@ -2056,7 +2067,9 @@ const AssessmentsContent = () => {
           t={t}
           onClose={() => setShowAddQuestionModal(false)}
           onAdded={async () => {
-            const data = await instructorApi.getAssessmentQuestions(selectedAssessmentForQ);
+            const data = selectedAssessmentForQ.startsWith("course:")
+              ? await instructorApi.getCourseBankQuestions(selectedAssessmentForQ.replace("course:", ""))
+              : await instructorApi.getAssessmentQuestions(selectedAssessmentForQ);
             setQuestions(data);
           }}
         />

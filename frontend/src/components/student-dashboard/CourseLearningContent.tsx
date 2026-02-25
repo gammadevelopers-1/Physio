@@ -262,6 +262,9 @@ const CourseLearningContent = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <span className="hidden sm:inline text-xs font-medium text-[#4B5563]">
+              {data.enrollment.progress}%
+            </span>
             <div className="hidden sm:block w-32 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#16A34A] rounded-full transition-all"

@@ -48,7 +48,12 @@ export class TranscriptProcessor extends WorkerHost {
       // 3. Chain to WCAG check
       // Get the material to check current state
       const [material] = await db
-        .select({ fileUrl: courseMaterials.fileUrl, type: courseMaterials.type, captionsUrl: courseMaterials.captionsUrl })
+        .select({
+          fileUrl: courseMaterials.fileUrl,
+          type: courseMaterials.type,
+          captionsUrl: courseMaterials.captionsUrl,
+          mimeType: courseMaterials.mimeType,
+        })
         .from(courseMaterials)
         .where(eq(courseMaterials.id, materialId))
         .limit(1);
@@ -64,6 +69,7 @@ export class TranscriptProcessor extends WorkerHost {
           hasCaptions: !!material?.captionsUrl,
           hasTranscript: true,
           fileUrl: material?.fileUrl || null,
+          mimeType: material?.mimeType || undefined,
         } as WcagJobData,
         {
           attempts: 2,

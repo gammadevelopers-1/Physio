@@ -70,6 +70,7 @@ const CoursesContent = () => {
   const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("courseManagerDashboard");
+  const tA = useTranslations("accessibility");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
@@ -387,6 +388,9 @@ const CoursesContent = () => {
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
                               disabled={statusLoading === course.id}
                               className="p-1.5 bg-white/90 rounded-lg text-[#6B7280] hover:bg-white transition-colors disabled:opacity-50"
+                              aria-label={tA("openActions")}
+                              aria-haspopup="true"
+                              aria-expanded={openDropdown === course.id}
                             >
                               {statusLoading === course.id ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -396,7 +400,7 @@ const CoursesContent = () => {
                             </button>
 
                             {openDropdown === course.id && (
-                              <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20">
+                              <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20" role="menu">
                                 <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
                                   {t("coursesPage.changeStatus")}
                                 </p>
@@ -405,6 +409,7 @@ const CoursesContent = () => {
                                     key={status}
                                     onClick={() => handleStatusChange(course.id, status, course.status)}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                    role="menuitem"
                                   >
                                     {statusIcons[status]}
                                     {t(`coursesPage.status.${status}`)}
@@ -472,14 +477,14 @@ const CoursesContent = () => {
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
                               className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                              title={t("coursesPage.viewAnalytics")}
+                              aria-label={tA("viewAnalytics")}
                             >
                               <BarChart3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
                               className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                              title={t("coursesPage.courseSettings")}
+                              aria-label={tA("courseSettings")}
                             >
                               <Settings className="w-4 h-4" />
                             </button>

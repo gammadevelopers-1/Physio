@@ -14,5 +14,9 @@ export default async function StudentBadgesPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <BadgesContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <BadgesContent />
+    </main>
+  );
 }

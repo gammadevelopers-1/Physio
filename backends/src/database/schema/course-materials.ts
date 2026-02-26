@@ -33,6 +33,7 @@ export const courseMaterials = pgTable(
     orderIndex: integer('order_index').notNull().default(0),
     status: varchar('status', { length: 20 }).notNull().default('processing'),
     wcagStatus: varchar('wcag_status', { length: 20 }).notNull().default('pending'),
+    wcagDetails: varchar('wcag_details', { length: 2000 }),
     captionsUrl: varchar('captions_url', { length: 500 }),
     transcriptUrl: varchar('transcript_url', { length: 500 }),
     processingStep: varchar('processing_step', { length: 30 }),

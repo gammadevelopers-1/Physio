@@ -21,7 +21,7 @@ export default async function InstructorsPage({
   } = await getInstructorsPageData(locale);
 
   return (
-    <main className="min-h-screen bg-white pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-white pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
 
       <InstructorsContent instructors={instructors} strapiData={instructorsPage} />

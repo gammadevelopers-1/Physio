@@ -14,5 +14,9 @@ export default async function StudentSettingsPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <SettingsContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <SettingsContent />
+    </main>
+  );
 }

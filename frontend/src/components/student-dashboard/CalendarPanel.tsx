@@ -124,7 +124,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
                     <button
                       onClick={() => downloadIcs(event)}
                       className="flex items-center gap-1 px-2 py-1.5 text-xs text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F3F4F6] rounded-lg transition-colors ml-auto"
-                      title={t("calendar.addToCalendar")}
+                      aria-label={t("calendar.addToCalendar")}
                     >
                       <Download className="w-3 h-3" />
                       <span className="hidden sm:inline">

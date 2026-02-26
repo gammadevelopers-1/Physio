@@ -21,6 +21,7 @@ const InstructorNotificationsWidget = ({
   onRefresh,
 }: InstructorNotificationsWidgetProps) => {
   const t = useTranslations("instructorDashboard");
+  const tA = useTranslations("accessibility");
 
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
@@ -42,6 +43,7 @@ const InstructorNotificationsWidget = ({
           <button
             onClick={onRefresh}
             className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+            aria-label={tA("refresh")}
           >
             {t("notifications.refresh")}
           </button>

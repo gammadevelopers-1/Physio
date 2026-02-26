@@ -130,7 +130,10 @@ const NELCComplianceWidget = ({
             return (
               <div
                 key={report.id}
-                className="bg-[#F9FAFB] rounded-xl p-4 sm:p-5 text-center border border-[#E5E7EB] hover:border-[var(--blue-brand-blue)] hover:shadow-md transition-all cursor-pointer"
+                className="bg-[#F9FAFB] rounded-xl p-4 sm:p-5 text-center border border-[#E5E7EB] hover:border-[var(--blue-brand-blue)] hover:shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#002D87]"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}
               >
                 <div
                   className={`w-10 h-10 sm:w-11 sm:h-11 ${config.bg} rounded-xl flex items-center justify-center mx-auto mb-3`}

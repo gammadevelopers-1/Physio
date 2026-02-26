@@ -120,7 +120,7 @@ const CalendarGrid = ({
           <button
             onClick={onPrevMonth}
             className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
-            title={t("calendarPage.previousMonth")}
+            aria-label={t("calendarPage.previousMonth")}
           >
             <PrevIcon className="w-5 h-5 text-[#4B5563]" />
           </button>
@@ -130,7 +130,7 @@ const CalendarGrid = ({
           <button
             onClick={onNextMonth}
             className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
-            title={t("calendarPage.nextMonth")}
+            aria-label={t("calendarPage.nextMonth")}
           >
             <NextIcon className="w-5 h-5 text-[#4B5563]" />
           </button>

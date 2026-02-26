@@ -59,7 +59,7 @@ export default async function AboutPage({
     : "/images/learning_exp_m3.png";
 
   return (
-    <main className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
 
       {/* About Hero Section */}

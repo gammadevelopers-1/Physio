@@ -290,7 +290,7 @@ const CertificateQueue = ({
                   <button
                     onClick={() => handlePreview(cert.id)}
                     className="p-1.5 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
-                    title={t("certificates.preview")}
+                    aria-label={t("certificates.preview")}
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
@@ -302,7 +302,7 @@ const CertificateQueue = ({
                         ? "text-[#22C55E] hover:bg-[#DCFCE7]"
                         : "text-[#D1D5DB] cursor-not-allowed"
                     }`}
-                    title={t("certificates.approve")}
+                    aria-label={t("certificates.approve")}
                   >
                     {loadingId === cert.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                   </button>
@@ -310,7 +310,7 @@ const CertificateQueue = ({
                     onClick={() => handleHold(cert.id)}
                     disabled={loadingId === cert.id}
                     className="p-1.5 text-[#F97316] hover:bg-[#FFEDD5] rounded transition-colors disabled:opacity-50"
-                    title={t("certificates.hold")}
+                    aria-label={t("certificates.hold")}
                   >
                     <PauseCircle className="w-3.5 h-3.5" />
                   </button>

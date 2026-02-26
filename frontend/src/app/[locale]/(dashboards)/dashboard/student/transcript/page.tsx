@@ -14,5 +14,9 @@ export default async function StudentTranscriptPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <TranscriptContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <TranscriptContent />
+    </main>
+  );
 }

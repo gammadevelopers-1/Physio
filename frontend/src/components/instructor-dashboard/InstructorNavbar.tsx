@@ -43,6 +43,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const t = useTranslations("navbar");
   const tDashboard = useTranslations("instructorDashboard");
+  const tA = useTranslations("accessibility");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -189,6 +190,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           <button
             onClick={() => setIsSearchOpen(true)}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            aria-label={tA("search")}
           >
             <Search className="w-5 h-5" strokeWidth={1.67} />
           </button>
@@ -197,6 +199,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           <Link
             href={`/${locale}/checkout`}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            aria-label={tA("cart")}
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
           </Link>
@@ -206,6 +209,9 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
             <button
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 cursor-pointer"
+              aria-label={tA("userMenu")}
+              aria-haspopup="true"
+              aria-expanded={isUserMenuOpen}
             >
               <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB]">
                 <Image
@@ -226,11 +232,13 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
             {isUserMenuOpen && (
               <div
                 className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`}
+                role="menu"
               >
                 <Link
                   href={`/${locale}/dashboard/instructor`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
+                  role="menuitem"
                 >
                   <User className="w-4 h-4" />
                   {tDashboard("sidebar.dashboard")}
@@ -239,13 +247,14 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                   href={`/${locale}/dashboard/instructor/settings`}
                   className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors"
                   onClick={() => setIsUserMenuOpen(false)}
+                  role="menuitem"
                 >
                   <Settings className="w-4 h-4" />
                   {tDashboard("sidebar.settings")}
                 </Link>
                 <RoleSwitcherDropdownItems onSwitch={() => setIsUserMenuOpen(false)} />
                 <div className="border-t border-[var(--outline-subtle)] my-1" />
-                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors">
+                <button onClick={logout} className="flex items-center gap-2 px-4 py-2 w-full text-[var(--functional-red-600)] text-sm hover:bg-red-50 transition-colors" role="menuitem">
                   <LogOut className="w-4 h-4" />
                   {tDashboard("sidebar.logout")}
                 </button>
@@ -305,6 +314,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
+                    aria-current={isActive ? "page" : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
                         ? "bg-[#F0F7FF] text-[#002D87]"
@@ -361,6 +371,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
               <button
                 onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+                aria-label={tA("search")}
               >
                 <Search className="w-5 h-5" strokeWidth={1.67} />
               </button>
@@ -368,6 +379,7 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
                 href={`/${locale}/checkout`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
+                aria-label={tA("cart")}
               >
                 <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
               </Link>

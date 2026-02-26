@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import {
   ChevronRight,
   ChevronLeft,
@@ -37,6 +37,8 @@ const CourseDetailContent = () => {
 
   const params = useParams();
   const slug = params.slug as string;
+  const router = useRouter();
+  const pathname = usePathname();
 
   const course = courseDetails.find((c) => c.slug === slug) || courseDetails[0];
   const [selectedCity, setSelectedCity] = useState(course.schedules[0]?.city || "");
@@ -94,6 +96,12 @@ const CourseDetailContent = () => {
     }
   };
 
+  // Guest redirect: sends unauthenticated users to signup with return URL
+  const handleGuestRedirect = () => {
+    const returnUrl = pathname;
+    router.push(`/${locale}/signup?redirect=${encodeURIComponent(returnUrl)}`);
+  };
+
   // Fetch related courses from API
   const [relatedCourses, setRelatedCourses] = useState<PublicCourse[]>([]);
   useEffect(() => {
@@ -114,16 +122,17 @@ const CourseDetailContent = () => {
     ? ["يناير", "فبراير", "مارس", "أبريل"]
     : ["January", "February", "March", "April"];
 
-  // Get translated course data
+  // Get translated course data — prefer real API data over mock
   const getCourseTitle = () => {
     if (isRTL) {
+      if (apiCourse?.titleAr) return apiCourse.titleAr;
       try {
         return tCourses(`courses.${course.slug}.title`);
       } catch {
-        return course.title;
+        return apiCourse?.title || course.title;
       }
     }
-    return course.title;
+    return apiCourse?.title || course.title;
   };
 
   const getCourseDescription = () => {
@@ -393,11 +402,11 @@ const CourseDetailContent = () => {
                   {/* Course Image */}
                   <div className="p-4 pb-0">
                     <div className="relative h-[200px] rounded-xl overflow-hidden">
-                      <Image
-                        src="/blogs/blog-hero.png"
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={apiCourse?.thumbnail || "/blogs/blog-hero.png"}
                         alt={getCourseTitle()}
-                        fill
-                        className="object-cover"
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   </div>
@@ -421,8 +430,14 @@ const CourseDetailContent = () => {
                   <div className="px-4 pb-5">
                     <div className="flex items-center justify-between mb-4">
                       <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                        <Image src="/icons/rayal-icon.svg" alt="SAR" width={22} height={24} />
-                        <span className="text-3xl font-bold text-[#06080b]">{course.price}</span>
+                        {apiIsFree ? (
+                          <span className="text-2xl font-bold text-[#16A34A]">{t("pricingCard.free")}</span>
+                        ) : (
+                          <>
+                            <Image src="/icons/rayal-icon.svg" alt="SAR" width={22} height={24} />
+                            <span className="text-3xl font-bold text-[#06080b]">{apiPrice}</span>
+                          </>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <button className="p-2.5 rounded-full bg-[#F4F4F5] hover:bg-[#E5E7EB] transition-colors">
@@ -434,101 +449,128 @@ const CourseDetailContent = () => {
                       </div>
                     </div>
 
-                    {/* Tabby Payment */}
-                    <div className="border border-[#C8D5E1] rounded-xl p-4 mb-4">
-                      <div className="flex items-start justify-between">
-                        <div className={isRTL ? "text-right" : "text-left"}>
-                          <p className="text-sm text-[#06080b]">
-                            {t("pricingCard.asLowAs")}{" "}
-                            <span className="font-semibold">
-                              <Image src="/icons/rayal-icon.svg" alt="SAR" width={12} height={13} className="inline -mt-0.5" />
-                              {" "}{(course.price / 4).toFixed(2)}{t("pricingCard.perMonth")}
-                            </span>
-                          </p>
-                          <p className="text-sm text-[#06080b]">{t("pricingCard.interestFree")}</p>
-                          <p className="text-sm text-[#06080b]">
-                            {t("pricingCard.shariahCompliant")}{" "}
-                            <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
-                          </p>
+                    {/* Tabby Payment — only for PAID courses */}
+                    {!apiIsFree && (
+                      <div className="border border-[#C8D5E1] rounded-xl p-4 mb-4">
+                        <div className="flex items-start justify-between">
+                          <div className={isRTL ? "text-right" : "text-left"}>
+                            <p className="text-sm text-[#06080b]">
+                              {t("pricingCard.asLowAs")}{" "}
+                              <span className="font-semibold">
+                                <Image src="/icons/rayal-icon.svg" alt="SAR" width={12} height={13} className="inline -mt-0.5" />
+                                {" "}{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}
+                              </span>
+                            </p>
+                            <p className="text-sm text-[#06080b]">{t("pricingCard.interestFree")}</p>
+                            <p className="text-sm text-[#06080b]">
+                              {t("pricingCard.shariahCompliant")}{" "}
+                              <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
+                            </p>
+                          </div>
+                          <Image src="/images/tabby.svg" alt="Tabby" width={70} height={28} className="mt-1" />
                         </div>
-                        <Image src="/images/tabby.svg" alt="Tabby" width={70} height={28} className="mt-1" />
                       </div>
-                    </div>
+                    )}
 
-                    {/* Buttons */}
-                    <button className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3">
-                      {t("pricingCard.buyNow")}
-                    </button>
-                    <button className="w-full h-12 bg-[#0b0f17] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3">
-                      {t("pricingCard.addToCart")}
-                      <ShoppingCart className="w-4 h-4" />
-                    </button>
-
-                    {/* Smart Enroll Button — visible to authenticated students */}
-                    {isStudent && (
-                      <div className="mb-5">
-                        {apiIsFull ? (
-                          <button
-                            onClick={() => alert(t("enrollment.waitlistMessage"))}
-                            className="w-full h-12 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors"
-                          >
-                            {t("enrollment.joinWaitlist")}
-                          </button>
-                        ) : !apiIsFree ? (
-                          <button
-                            onClick={() => alert(t("enrollment.contactMessage"))}
-                            className="w-full h-12 border-2 border-[#2D8CFF] rounded-xl text-[#2D8CFF] font-medium flex items-center justify-center gap-2 hover:bg-[#EFF6FF] transition-colors"
-                          >
-                            {t("enrollment.contactEnroll")}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={handleEnroll}
-                            disabled={enrolling || enrollResult?.success}
-                            className="w-full h-12 border-2 border-[#16A34A] rounded-xl text-[#16A34A] font-medium flex items-center justify-center gap-2 hover:bg-[#F0FDF4] transition-colors disabled:opacity-60"
-                          >
-                            {enrolling ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : enrollResult?.success ? (
-                              <Check className="w-4 h-4" />
-                            ) : null}
-                            {enrollResult?.success
-                              ? t("enrollment.enrolled")
-                              : t("enrollment.enrollNow")}
-                          </button>
-                        )}
+                    {/* Primary Action Button */}
+                    {apiIsFull ? (
+                      /* COURSE FULL — Join Waitlist */
+                      <button
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            handleGuestRedirect();
+                          } else if (isStudent) {
+                            alert(t("enrollment.waitlistMessage"));
+                          }
+                        }}
+                        className="w-full h-12 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors mb-3"
+                      >
+                        {t("enrollment.courseFull")}
+                      </button>
+                    ) : apiIsFree ? (
+                      /* FREE COURSE — Enroll Now */
+                      <div className="mb-3">
+                        <button
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              handleGuestRedirect();
+                            } else if (isStudent) {
+                              handleEnroll();
+                            }
+                          }}
+                          disabled={enrolling || enrollResult?.success}
+                          className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+                        >
+                          {enrolling ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : enrollResult?.success ? (
+                            <Check className="w-4 h-4" />
+                          ) : null}
+                          {enrollResult?.success
+                            ? t("enrollment.enrolled")
+                            : t("enrollment.enrollNow")}
+                        </button>
                         {enrollResult && (
                           <p
                             className={`text-xs mt-1.5 text-center ${
-                              enrollResult.success
-                                ? "text-[#16A34A]"
-                                : "text-[#DC2626]"
+                              enrollResult.success ? "text-[#16A34A]" : "text-[#DC2626]"
                             }`}
                           >
                             {enrollResult.message}
                           </p>
                         )}
                       </div>
+                    ) : (
+                      /* PAID COURSE — Buy Now + Add to Cart */
+                      <>
+                        <button
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              handleGuestRedirect();
+                            } else if (isStudent) {
+                              alert(t("enrollment.contactMessage"));
+                            }
+                          }}
+                          className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3"
+                        >
+                          {t("pricingCard.buyNow")}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              handleGuestRedirect();
+                            } else if (isStudent) {
+                              alert(t("enrollment.contactMessage"));
+                            }
+                          }}
+                          className="w-full h-12 bg-[#0b0f17] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
+                        >
+                          {t("pricingCard.addToCart")}
+                          <ShoppingCart className="w-4 h-4" />
+                        </button>
+                      </>
                     )}
 
-                    {/* Payment Methods */}
-                    <div className="flex items-center justify-center gap-3 flex-wrap">
-                      <span className="text-sm text-[#4a4c4f]">{t("pricingCard.securePayment")}</span>
-                      <div className="flex items-center gap-2">
-                        <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-                          <Image src="/payment icons/Mastercard.svg" alt="Mastercard" fill className="object-contain p-[5px]" />
-                        </div>
-                        <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-                          <Image src="/payment icons/Visa.svg" alt="Visa" fill className="object-contain p-[6px]" />
-                        </div>
-                        <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
-                          <Image src="/payment icons/image 474.svg" alt="Mada" fill className="object-contain p-[5px]" />
-                        </div>
-                        <div className="relative w-[35px] h-[24px]">
-                          <Image src="/payment icons/ApplePay.svg" alt="Apple Pay" fill className="object-contain" />
+                    {/* Payment Methods — only for PAID courses */}
+                    {!apiIsFree && (
+                      <div className="flex items-center justify-center gap-3 flex-wrap">
+                        <span className="text-sm text-[#4a4c4f]">{t("pricingCard.securePayment")}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
+                            <Image src="/payment icons/Mastercard.svg" alt="Mastercard" fill className="object-contain p-[5px]" />
+                          </div>
+                          <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
+                            <Image src="/payment icons/Visa.svg" alt="Visa" fill className="object-contain p-[6px]" />
+                          </div>
+                          <div className="relative w-[35px] h-[24px] bg-white border border-[#d9d9d9] rounded overflow-hidden">
+                            <Image src="/payment icons/image 474.svg" alt="Mada" fill className="object-contain p-[5px]" />
+                          </div>
+                          <div className="relative w-[35px] h-[24px]">
+                            <Image src="/payment icons/ApplePay.svg" alt="Apple Pay" fill className="object-contain" />
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -718,8 +760,14 @@ const CourseDetailContent = () => {
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                <Image src="/icons/rayal-icon.svg" alt="SAR" width={18} height={20} />
-                <span className="text-2xl font-bold text-[#06080b]">{course.price}</span>
+                {apiIsFree ? (
+                  <span className="text-xl font-bold text-[#16A34A]">{t("pricingCard.free")}</span>
+                ) : (
+                  <>
+                    <Image src="/icons/rayal-icon.svg" alt="SAR" width={18} height={20} />
+                    <span className="text-2xl font-bold text-[#06080b]">{apiPrice}</span>
+                  </>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button className="p-2 rounded-full bg-[#F4F4F5]">
@@ -731,75 +779,98 @@ const CourseDetailContent = () => {
               </div>
             </div>
 
-            {/* Tabby Payment */}
-            <div className="border border-[#C8D5E1] rounded-xl p-3 mb-4">
-              <div className="flex items-start justify-between">
-                <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-sm text-[#06080b]">
-                    {t("pricingCard.asLowAs")} <span className="font-semibold">{(course.price / 4).toFixed(2)}{t("pricingCard.perMonth")}</span>
-                  </p>
-                  <p className="text-xs text-[#06080b]">{t("pricingCard.interestFree")}</p>
-                  <p className="text-xs text-[#06080b]">
-                    {t("pricingCard.shariahCompliant")} <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
-                  </p>
+            {/* Tabby Payment — only for PAID courses */}
+            {!apiIsFree && (
+              <div className="border border-[#C8D5E1] rounded-xl p-3 mb-4">
+                <div className="flex items-start justify-between">
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <p className="text-sm text-[#06080b]">
+                      {t("pricingCard.asLowAs")} <span className="font-semibold">{(apiPrice / 4).toFixed(2)}{t("pricingCard.perMonth")}</span>
+                    </p>
+                    <p className="text-xs text-[#06080b]">{t("pricingCard.interestFree")}</p>
+                    <p className="text-xs text-[#06080b]">
+                      {t("pricingCard.shariahCompliant")} <Link href="#" className="font-semibold underline">{t("pricingCard.learnMore")}</Link>
+                    </p>
+                  </div>
+                  <Image src="/images/tabby.svg" alt="Tabby" width={50} height={20} />
                 </div>
-                <Image src="/images/tabby.svg" alt="Tabby" width={50} height={20} />
               </div>
-            </div>
+            )}
 
-            <button className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2">
-              {t("pricingCard.buyNow")}
-            </button>
-            <button className="w-full h-10 bg-[#0b0f17] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2">
-              {t("pricingCard.addToCart")}
-              <ShoppingCart className="w-4 h-4" />
-            </button>
-
-            {/* Smart Enroll Button — mobile */}
-            {isStudent && (
+            {/* Primary Action Button */}
+            {apiIsFull ? (
+              <button
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    handleGuestRedirect();
+                  } else if (isStudent) {
+                    alert(t("enrollment.waitlistMessage"));
+                  }
+                }}
+                className="w-full h-10 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors mb-2"
+              >
+                {t("enrollment.courseFull")}
+              </button>
+            ) : apiIsFree ? (
               <div>
-                {apiIsFull ? (
-                  <button
-                    onClick={() => alert(t("enrollment.waitlistMessage"))}
-                    className="w-full h-10 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors"
-                  >
-                    {t("enrollment.joinWaitlist")}
-                  </button>
-                ) : !apiIsFree ? (
-                  <button
-                    onClick={() => alert(t("enrollment.contactMessage"))}
-                    className="w-full h-10 border-2 border-[#2D8CFF] rounded-xl text-[#2D8CFF] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#EFF6FF] transition-colors"
-                  >
-                    {t("enrollment.contactEnroll")}
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleEnroll}
-                    disabled={enrolling || enrollResult?.success}
-                    className="w-full h-10 border-2 border-[#16A34A] rounded-xl text-[#16A34A] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#F0FDF4] transition-colors disabled:opacity-60"
-                  >
-                    {enrolling ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : enrollResult?.success ? (
-                      <Check className="w-4 h-4" />
-                    ) : null}
-                    {enrollResult?.success
-                      ? t("enrollment.enrolled")
-                      : t("enrollment.enrollNow")}
-                  </button>
-                )}
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      handleGuestRedirect();
+                    } else if (isStudent) {
+                      handleEnroll();
+                    }
+                  }}
+                  disabled={enrolling || enrollResult?.success}
+                  className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60 mb-2"
+                >
+                  {enrolling ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : enrollResult?.success ? (
+                    <Check className="w-4 h-4" />
+                  ) : null}
+                  {enrollResult?.success
+                    ? t("enrollment.enrolled")
+                    : t("enrollment.enrollNow")}
+                </button>
                 {enrollResult && (
                   <p
                     className={`text-xs mt-1 text-center ${
-                      enrollResult.success
-                        ? "text-[#16A34A]"
-                        : "text-[#DC2626]"
+                      enrollResult.success ? "text-[#16A34A]" : "text-[#DC2626]"
                     }`}
                   >
                     {enrollResult.message}
                   </p>
                 )}
               </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      handleGuestRedirect();
+                    } else if (isStudent) {
+                      alert(t("enrollment.contactMessage"));
+                    }
+                  }}
+                  className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2"
+                >
+                  {t("pricingCard.buyNow")}
+                </button>
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      handleGuestRedirect();
+                    } else if (isStudent) {
+                      alert(t("enrollment.contactMessage"));
+                    }
+                  }}
+                  className="w-full h-10 bg-[#0b0f17] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
+                >
+                  {t("pricingCard.addToCart")}
+                  <ShoppingCart className="w-4 h-4" />
+                </button>
+              </>
             )}
           </div>
 

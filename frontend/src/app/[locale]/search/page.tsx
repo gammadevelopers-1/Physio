@@ -19,7 +19,7 @@ function SearchPageFallback() {
 
 export default function SearchPage() {
   return (
-    <main className="min-h-screen bg-white overflow-x-hidden">
+    <main id="main-content" className="min-h-screen bg-white overflow-x-hidden">
       <Navbar />
       <Suspense fallback={<SearchPageFallback />}>
         <SearchPageContent />

@@ -703,6 +703,9 @@ export const instructorApi = {
   getCourseBankQuestions: (courseId: string) =>
     api.get<AssessmentQuestion[]>(`/assessments/course-bank/${courseId}/questions`),
 
+  addCourseBankQuestion: (courseId: string, data: { type: string; questionText: string; questionTextAr?: string; options?: { text: string; textAr?: string; isCorrect: boolean }[]; correctAnswer?: string; marks?: number; difficultyLevel?: string }) =>
+    api.post<AssessmentQuestion>(`/assessments/course-bank/${courseId}/questions`, data),
+
   addQuestion: (assessmentId: string, data: { type: string; questionText: string; questionTextAr?: string; options?: { text: string; textAr?: string; isCorrect: boolean }[]; correctAnswer?: string; marks?: number; difficultyLevel?: string }) =>
     api.post<AssessmentQuestion>(`/assessments/${assessmentId}/questions`, data),
 

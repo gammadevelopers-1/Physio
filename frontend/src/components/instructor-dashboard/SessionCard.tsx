@@ -159,7 +159,7 @@ const SessionCard = ({
             <button
               onClick={onAttendance}
               className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors"
-              title={t("sessions.attendance")}
+              aria-label={t("sessions.attendance")}
             >
               <ClipboardCheck className="w-4 h-4" />
             </button>
@@ -169,7 +169,7 @@ const SessionCard = ({
             <button
               onClick={onShare}
               className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors"
-              title={t("sessions.shareMaterials")}
+              aria-label={t("sessions.shareMaterials")}
             >
               <Upload className="w-4 h-4" />
             </button>

@@ -287,6 +287,34 @@ export class AssessmentsService {
   }
 
   /**
+   * Add a question to the course-level bank (no assessment).
+   */
+  async addCourseBankQuestion(
+    courseId: string,
+    user: AuthenticatedUser,
+    dto: CreateQuestionDto,
+  ) {
+    await this.verifyCourseAccess(courseId, user);
+
+    const [question] = await db
+      .insert(questions)
+      .values({
+        assessmentId: null,
+        courseId,
+        type: dto.type,
+        questionText: dto.questionText,
+        questionTextAr: dto.questionTextAr,
+        options: dto.options,
+        correctAnswer: dto.correctAnswer,
+        marks: dto.marks,
+        difficultyLevel: dto.difficultyLevel,
+      })
+      .returning();
+
+    return question;
+  }
+
+  /**
    * List course-level bank questions (assessmentId IS NULL).
    */
   async getCourseBankQuestions(courseId: string, user: AuthenticatedUser) {

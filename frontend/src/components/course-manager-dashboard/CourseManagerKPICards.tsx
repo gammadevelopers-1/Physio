@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { BookOpen, Users, FileText, TrendingUp, UserCheck, ShieldCheck, DollarSign } from "lucide-react";
+import { BookOpen, Users, FileText, TrendingUp, UserCheck, DollarSign } from "lucide-react";
 
 interface KPIData {
   totalCourses: number;
@@ -9,7 +9,6 @@ interface KPIData {
   pendingReviews: number;
   avgCompletionRate?: number;
   activeInstructors?: number;
-  nelcScore?: number;
   totalRevenue?: number;
 }
 
@@ -67,15 +66,6 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
       iconColor: "text-[#3B82F6]",
     },
     {
-      id: "nelcScore",
-      label: "NELC Compliance",
-      value: data.nelcScore ?? 0,
-      suffix: "%",
-      icon: ShieldCheck,
-      iconBg: "bg-[#F3E8FF]",
-      iconColor: "text-[#9333EA]",
-    },
-    {
       id: "totalRevenue",
       label: t("kpi.totalRevenue"),
       value: data.totalRevenue ?? 0,
@@ -87,7 +77,7 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
         return (

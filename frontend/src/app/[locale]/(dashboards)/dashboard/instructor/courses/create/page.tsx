@@ -4,8 +4,8 @@ import CreateCourseWizard from "@/components/instructor-dashboard/create-course-
 
 export default function CreateCoursePage() {
   return (
-    <div className="bg-[#F9FAFB] min-h-screen">
+    <main id="main-content" className="bg-[#F9FAFB] min-h-screen">
       <CreateCourseWizard />
-    </div>
+    </main>
   );
 }

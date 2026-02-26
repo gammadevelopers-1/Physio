@@ -33,7 +33,7 @@ export default async function Home({
   } = await getHomePageData(locale);
 
   return (
-    <main className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <Hero data={homePage} />
       <Partners partners={partners} sectionTitle={homePage?.partnersSectionTitle} />

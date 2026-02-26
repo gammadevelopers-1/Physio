@@ -130,7 +130,19 @@
       "Bash(ffmpeg:*)",
       "Bash(DATABASE_HOST=localhost npx drizzle-kit push:*)",
       "Bash(netstat:*)",
-      "Bash(docker compose:*)"
+      "Bash(docker compose:*)",
+      "Bash(kill -9 91880)",
+      "Bash(DATABASE_HOST=localhost DATABASE_PORT=5433 npx drizzle-kit generate)",
+      "Bash(break)",
+      "Bash(for dir in frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/student/*/)",
+      "Bash(do)",
+      "Bash(if [ -f \"$dir/page.tsx\" ])",
+      "Bash(then)",
+      "Bash(if ! grep -q '<main' \"$dir/page.tsx\")",
+      "Bash(while read f)",
+      "Bash(do if ! grep -q '<main' \"$f\")",
+      "Bash(then echo \"$f\" fi done)",
+      "Bash(then echo \"NO MAIN: $f\" fi done)"
     ]
   }
 }

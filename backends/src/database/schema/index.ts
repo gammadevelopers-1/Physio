@@ -31,6 +31,7 @@ export * from './assessment-overrides';
 // Course Material schemas
 export * from './course-materials';
 export * from './material-variants';
+export * from './material-progress';
 
 // Certificate schemas
 export * from './certificate-requests';

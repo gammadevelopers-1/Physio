@@ -36,6 +36,20 @@
       "when": 1772092800000,
       "tag": "0004_add_waitlists",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772034515005,
+      "tag": "0005_clean_darkhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772078705777,
+      "tag": "0006_married_silverclaw",
+      "breakpoints": true
     }
   ]
 }

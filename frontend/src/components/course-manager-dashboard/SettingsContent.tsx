@@ -443,10 +443,11 @@ const SettingsContent = () => {
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-first-name" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.firstName")}
                             </label>
                             <input
+                              id="cm-first-name"
                               type="text"
                               value={profileData.firstName}
                               onChange={(e) =>
@@ -456,10 +457,11 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-last-name" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.lastName")}
                             </label>
                             <input
+                              id="cm-last-name"
                               type="text"
                               value={profileData.lastName}
                               onChange={(e) =>
@@ -469,10 +471,11 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-first-name-ar" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.firstNameAr")}
                             </label>
                             <input
+                              id="cm-first-name-ar"
                               type="text"
                               dir="rtl"
                               value={profileData.firstNameAr}
@@ -483,10 +486,11 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-last-name-ar" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.lastNameAr")}
                             </label>
                             <input
+                              id="cm-last-name-ar"
                               type="text"
                               dir="rtl"
                               value={profileData.lastNameAr}
@@ -497,7 +501,7 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-email" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.email")}
                             </label>
                             <div className="relative">
@@ -505,6 +509,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="cm-email"
                                 type="email"
                                 value={profileData.email}
                                 disabled
@@ -513,7 +518,7 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-phone" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.phone")}
                             </label>
                             <div className="relative">
@@ -521,6 +526,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="cm-phone"
                                 type="tel"
                                 value={profileData.phone}
                                 onChange={(e) =>
@@ -531,10 +537,11 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-department" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.profile.department")}
                             </label>
                             <input
+                              id="cm-department"
                               type="text"
                               value={profileData.department}
                               onChange={(e) =>
@@ -574,7 +581,7 @@ const SettingsContent = () => {
                         </h4>
                         <div className="space-y-4 max-w-md">
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-current-password" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.security.currentPassword")}
                             </label>
                             <div className="relative">
@@ -582,6 +589,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="cm-current-password"
                                 type={showCurrentPassword ? "text" : "password"}
                                 placeholder="••••••••"
                                 className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
@@ -600,7 +608,7 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="cm-new-password" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settingsPage.security.newPassword")}
                             </label>
                             <div className="relative">
@@ -608,6 +616,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="cm-new-password"
                                 type={showNewPassword ? "text" : "password"}
                                 placeholder="••••••••"
                                 className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
@@ -820,10 +829,11 @@ const SettingsContent = () => {
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="cm-pref-theme" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settingsPage.preferences.theme")}
                           </label>
                           <select
+                            id="cm-pref-theme"
                             value={preferences.theme}
                             onChange={(e) =>
                               setPreferences({ ...preferences, theme: e.target.value })
@@ -836,10 +846,11 @@ const SettingsContent = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="cm-pref-date-format" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settingsPage.preferences.dateFormat")}
                           </label>
                           <select
+                            id="cm-pref-date-format"
                             value={preferences.dateFormat}
                             onChange={(e) =>
                               setPreferences({ ...preferences, dateFormat: e.target.value })
@@ -852,10 +863,11 @@ const SettingsContent = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="cm-pref-time-format" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settingsPage.preferences.timeFormat")}
                           </label>
                           <select
+                            id="cm-pref-time-format"
                             value={preferences.timeFormat}
                             onChange={(e) =>
                               setPreferences({ ...preferences, timeFormat: e.target.value })
@@ -867,10 +879,11 @@ const SettingsContent = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="cm-pref-timezone" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settingsPage.preferences.timezone")}
                           </label>
                           <select
+                            id="cm-pref-timezone"
                             value={preferences.timezone}
                             onChange={(e) =>
                               setPreferences({ ...preferences, timezone: e.target.value })
@@ -996,6 +1009,8 @@ const SettingsContent = () => {
                               </p>
                             </div>
                             <select
+                              id="cm-pref-font-size"
+                              aria-label={t("settingsPage.preferences.fontSize")}
                               value={preferences.fontSize}
                               onChange={(e) =>
                                 setPreferences({ ...preferences, fontSize: e.target.value })
@@ -1074,13 +1089,14 @@ const SettingsContent = () => {
                           {/* Numeric Policies */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                              <label htmlFor="cm-enrollment-limit" className="block text-sm font-medium text-[#374151] mb-1.5">
                                 {t("settingsPage.policies.enrollmentLimit")}
                               </label>
                               <p className="text-xs text-[#6B7280] mb-2">
                                 {t("settingsPage.policies.enrollmentLimitDesc")}
                               </p>
                               <input
+                                id="cm-enrollment-limit"
                                 type="number"
                                 min={1}
                                 max={500}
@@ -1092,13 +1108,14 @@ const SettingsContent = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                              <label htmlFor="cm-cancellation-notice" className="block text-sm font-medium text-[#374151] mb-1.5">
                                 {t("settingsPage.policies.cancellationNotice")}
                               </label>
                               <p className="text-xs text-[#6B7280] mb-2">
                                 {t("settingsPage.policies.cancellationNoticeDesc")}
                               </p>
                               <input
+                                id="cm-cancellation-notice"
                                 type="number"
                                 min={1}
                                 max={168}
@@ -1110,13 +1127,14 @@ const SettingsContent = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                              <label htmlFor="cm-max-instructor-hours" className="block text-sm font-medium text-[#374151] mb-1.5">
                                 {t("settingsPage.policies.maxInstructorHours")}
                               </label>
                               <p className="text-xs text-[#6B7280] mb-2">
                                 {t("settingsPage.policies.maxInstructorHoursDesc")}
                               </p>
                               <input
+                                id="cm-max-instructor-hours"
                                 type="number"
                                 min={1}
                                 max={60}

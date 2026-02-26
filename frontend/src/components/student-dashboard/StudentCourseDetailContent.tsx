@@ -323,9 +323,10 @@ const StudentCourseDetailContent = () => {
                         {data.modules
                           .sort((a, b) => a.orderIndex - b.orderIndex)
                           .map((module, index) => (
-                            <div
+                            <Link
                               key={module.id}
-                              className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+                              href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
+                              className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                             >
                               {module.isCompleted ? (
                                 <div className="w-8 h-8 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
@@ -359,7 +360,7 @@ const StudentCourseDetailContent = () => {
                                   )}
                                 </div>
                               </div>
-                            </div>
+                            </Link>
                           ))}
                       </div>
                     )}

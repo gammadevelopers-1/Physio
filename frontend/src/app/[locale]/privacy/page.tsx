@@ -86,7 +86,7 @@ export default async function PrivacyPolicy({
   const pageLastUpdated = policyPage?.lastUpdated || t("lastUpdated");
 
   return (
-    <main className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <PolicyPageLayout
         title={pageTitle}

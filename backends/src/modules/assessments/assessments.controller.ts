@@ -78,6 +78,20 @@ export class AssessmentsController {
   }
 
   /**
+   * POST /assessments/course-bank/:courseId/questions — Add question to course-level bank
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post('course-bank/:courseId/questions')
+  @HttpCode(HttpStatus.CREATED)
+  async addCourseBankQuestion(
+    @Param('courseId') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateQuestionDto,
+  ) {
+    return this.assessmentsService.addCourseBankQuestion(courseId, user, dto);
+  }
+
+  /**
    * GET /assessments/:id — Assessment detail with questions
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

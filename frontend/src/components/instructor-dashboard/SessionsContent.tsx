@@ -1180,7 +1180,7 @@ function SessionCard({
                 onClick={onStart}
                 disabled={actionLoading}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] disabled:opacity-50 transition-colors"
-                title={t("sessionsPage.start")}
+                aria-label={t("sessionsPage.start")}
               >
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
@@ -1188,21 +1188,21 @@ function SessionCard({
               <button
                 onClick={onAttendance}
                 className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                title={t("sessionsPage.attendance.title")}
+                aria-label={t("sessionsPage.attendance.title")}
               >
                 <ClipboardCheck className="w-4 h-4" />
               </button>
               <button
                 onClick={onEdit}
                 className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                title={t("sessionsPage.edit")}
+                aria-label={t("sessionsPage.edit")}
               >
                 <Edit className="w-4 h-4" />
               </button>
               <button
                 onClick={onCancel}
                 className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
-                title={t("sessionsPage.cancel")}
+                aria-label={t("sessionsPage.cancel")}
               >
                 <Ban className="w-4 h-4" />
               </button>
@@ -1222,7 +1222,7 @@ function SessionCard({
               <button
                 onClick={onAttendance}
                 className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                title={t("sessionsPage.attendance.title")}
+                aria-label={t("sessionsPage.attendance.title")}
               >
                 <ClipboardCheck className="w-4 h-4" />
               </button>
@@ -1234,14 +1234,14 @@ function SessionCard({
               <button
                 onClick={onAttendance}
                 className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                title={t("sessionsPage.attendance.title")}
+                aria-label={t("sessionsPage.attendance.title")}
               >
                 <ClipboardCheck className="w-4 h-4" />
               </button>
               <button
                 onClick={onDelete}
                 className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
-                title={t("sessionsPage.deleteSession")}
+                aria-label={t("sessionsPage.deleteSession")}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -1252,7 +1252,7 @@ function SessionCard({
             <button
               onClick={onDelete}
               className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
-              title={t("sessionsPage.deleteSession")}
+              aria-label={t("sessionsPage.deleteSession")}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -1890,14 +1890,14 @@ const SessionsContent = () => {
                   value={filterDateFrom}
                   onChange={(e) => setFilterDateFrom(e.target.value)}
                   className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
-                  title={t("sessionsPage.dateFrom")}
+                  aria-label={t("sessionsPage.dateFrom")}
                 />
                 <input
                   type="date"
                   value={filterDateTo}
                   onChange={(e) => setFilterDateTo(e.target.value)}
                   className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
-                  title={t("sessionsPage.dateTo")}
+                  aria-label={t("sessionsPage.dateTo")}
                 />
                 {(filterDateFrom || filterDateTo) && (
                   <button

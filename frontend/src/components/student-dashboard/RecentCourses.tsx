@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -165,11 +164,9 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
 
                 {/* Thumbnail */}
                 <div className="w-full h-[130px] bg-gray-100">
-                  <Image
+                  <img
                     src={course.thumbnail}
                     alt={course.title}
-                    width={320}
-                    height={130}
                     className="w-full h-full object-cover"
                   />
                 </div>

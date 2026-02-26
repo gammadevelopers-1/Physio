@@ -22,7 +22,7 @@ export default async function AcademicPartnersPage({
   } = await getPartnersPageData(locale);
 
   return (
-    <main className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
 
       <PartnersContent partners={partners} strapiData={partnersPage} />

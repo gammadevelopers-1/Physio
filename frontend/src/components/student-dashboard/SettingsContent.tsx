@@ -663,11 +663,13 @@ const SettingsContent = () => {
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label
+                          htmlFor="student-first-name"
                           className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                         >
                           {t("settings.firstName")}
                         </label>
                         <input
+                          id="student-first-name"
                           type="text"
                           name="firstName"
                           value={formData.firstName}
@@ -678,11 +680,13 @@ const SettingsContent = () => {
                       </div>
                       <div>
                         <label
+                          htmlFor="student-last-name"
                           className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                         >
                           {t("settings.lastName")}
                         </label>
                         <input
+                          id="student-last-name"
                           type="text"
                           name="lastName"
                           value={formData.lastName}
@@ -697,11 +701,13 @@ const SettingsContent = () => {
                   {/* Email */}
                   <div className="mb-4">
                     <label
+                      htmlFor="student-email"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.email")}
                     </label>
                     <input
+                      id="student-email"
                       type="email"
                       name="email"
                       value={formData.email}
@@ -714,11 +720,13 @@ const SettingsContent = () => {
                   {/* SCFHS */}
                   <div className="mb-4">
                     <label
+                      htmlFor="student-scfhs-number"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.scfhsNumber")}
                     </label>
                     <input
+                      id="student-scfhs-number"
                       type="text"
                       name="scfhsNumber"
                       value={formData.scfhsNumber}
@@ -731,11 +739,13 @@ const SettingsContent = () => {
                   {/* National ID */}
                   <div className="mb-4">
                     <label
+                      htmlFor="student-national-id"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.nationalId")}
                     </label>
                     <input
+                      id="student-national-id"
                       type="text"
                       name="nationalId"
                       value={formData.nationalId}
@@ -748,12 +758,14 @@ const SettingsContent = () => {
                   {/* Nationality */}
                   <div className="mb-4">
                     <label
+                      htmlFor="student-nationality"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.nationality")}
                     </label>
                     <div className="relative">
                       <button
+                        id="student-nationality"
                         type="button"
                         onClick={() => setNationalityOpen(!nationalityOpen)}
                         aria-label={t("settings.nationality")}
@@ -798,12 +810,14 @@ const SettingsContent = () => {
                   {/* Gender */}
                   <div className="mb-4">
                     <label
+                      htmlFor="student-gender"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.gender")}
                     </label>
                     <div className="relative">
                       <button
+                        id="student-gender"
                         type="button"
                         onClick={() => setGenderOpen(!genderOpen)}
                         aria-label={t("settings.gender")}
@@ -844,12 +858,14 @@ const SettingsContent = () => {
                   {/* DOB */}
                   <div className="mb-4">
                     <label
+                      htmlFor="student-dob"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.dob")}
                     </label>
                     <div className="relative">
                       <input
+                        id="student-dob"
                         type="text"
                         name="dob"
                         value={formData.dob}
@@ -867,11 +883,13 @@ const SettingsContent = () => {
                   {/* Biography */}
                   <div className="mb-6">
                     <label
+                      htmlFor="student-biography"
                       className={`block text-sm font-medium text-[#1F2937] mb-2 ${isRTL ? "text-right" : ""}`}
                     >
                       {t("settings.biography")}
                     </label>
                     <textarea
+                      id="student-biography"
                       name="biography"
                       value={formData.biography}
                       onChange={handleInputChange}

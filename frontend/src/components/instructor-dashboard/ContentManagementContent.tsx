@@ -89,8 +89,8 @@ const ALLOWED_MIMES = [
 
 // ─── Modal Overlay ─────────────────────────────────────────
 
-const ModalOverlay = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+const ModalOverlay = ({ children, onClose, ariaLabelledBy }: { children: React.ReactNode; onClose: () => void; ariaLabelledBy?: string }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} role="dialog" aria-modal="true" aria-labelledby={ariaLabelledBy}>
     {children}
   </div>
 );
@@ -188,12 +188,12 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
   };
 
   return (
-    <ModalOverlay onClose={onClose}>
+    <ModalOverlay onClose={onClose} ariaLabelledBy="upload-modal-title">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.uploadTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+            <h3 id="upload-modal-title" className="text-lg font-semibold text-[#1F2937]">{t("content.uploadTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -379,12 +379,12 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
   };
 
   return (
-    <ModalOverlay onClose={onClose}>
+    <ModalOverlay onClose={onClose} ariaLabelledBy="replace-modal-title">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.replaceTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+            <h3 id="replace-modal-title" className="text-lg font-semibold text-[#1F2937]">{t("content.replaceTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -506,12 +506,12 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
   };
 
   return (
-    <ModalOverlay onClose={onClose}>
+    <ModalOverlay onClose={onClose} ariaLabelledBy="edit-modal-title">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-[#1F2937]">{t("content.editTitle")}</h3>
-            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
+            <h3 id="edit-modal-title" className="text-lg font-semibold text-[#1F2937]">{t("content.editTitle")}</h3>
+            <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors" aria-label={t("content.cancel")}>
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -545,6 +545,31 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                material.wcagStatus === "fail" ? t("content.wcagFail") :
                t("content.wcagPending")}
             </span>
+            {/* WCAG Check Details */}
+            {material.wcagDetails && (() => {
+              try {
+                const checks = JSON.parse(material.wcagDetails) as { rule: string; label: string; passed: boolean; detail: string }[];
+                return (
+                  <ul className="mt-2 space-y-1">
+                    {checks.filter((c) => c.rule !== "INFO").map((check, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-[#374151]">
+                        {check.passed ? (
+                          <Check className="w-3.5 h-3.5 text-[#22C55E] shrink-0 mt-0.5" />
+                        ) : (
+                          <X className="w-3.5 h-3.5 text-[#EF4444] shrink-0 mt-0.5" />
+                        )}
+                        <span>
+                          <span className="font-medium">{check.label}</span>
+                          <span className="text-[#6B7280]"> — {check.detail}</span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              } catch {
+                return null;
+              }
+            })()}
           </div>
 
           {/* Auto-generated captions/transcript download links */}
@@ -658,13 +683,13 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
   };
 
   return (
-    <ModalOverlay onClose={onClose}>
+    <ModalOverlay onClose={onClose} ariaLabelledBy="delete-modal-title">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         <div className="p-6 text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[#FEE2E2] flex items-center justify-center">
             <Trash2 className="w-6 h-6 text-[#EF4444]" />
           </div>
-          <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.deleteConfirmTitle")}</h3>
+          <h3 id="delete-modal-title" className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.deleteConfirmTitle")}</h3>
           <p className="text-sm text-[#6B7280] mb-1">{t("content.deleteConfirmDesc")}</p>
           <p className="text-sm font-medium text-[#1F2937] mb-6">&ldquo;{material.title}&rdquo;</p>
 
@@ -962,7 +987,7 @@ const ContentManagementContent = () => {
                   <button
                     onClick={refetch}
                     className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                    title={t("content.refresh")}
+                    aria-label={t("content.refresh")}
                   >
                     <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                   </button>
@@ -1265,7 +1290,7 @@ const ContentManagementContent = () => {
                                       <button
                                         onClick={() => handlePreview(m)}
                                         className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                        title={t("content.preview")}
+                                        aria-label={t("content.preview")}
                                       >
                                         <Eye className="w-4 h-4" />
                                       </button>
@@ -1274,7 +1299,7 @@ const ContentManagementContent = () => {
                                       <button
                                         onClick={() => handleDownload(m)}
                                         className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                        title={t("content.download")}
+                                        aria-label={t("content.download")}
                                       >
                                         <Download className="w-4 h-4" />
                                       </button>
@@ -1282,21 +1307,21 @@ const ContentManagementContent = () => {
                                     <button
                                       onClick={() => setEditingMaterial(m)}
                                       className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                      title={t("content.edit")}
+                                      aria-label={t("content.edit")}
                                     >
                                       <Edit3 className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={() => setReplacingMaterial(m)}
                                       className="p-2 text-[#6B7280] hover:text-[#F97316] hover:bg-[#FFF7ED] rounded-lg transition-colors"
-                                      title={t("content.replace")}
+                                      aria-label={t("content.replace")}
                                     >
                                       <Replace className="w-4 h-4" />
                                     </button>
                                     <button
                                       onClick={() => setDeletingMaterial(m)}
                                       className="p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
-                                      title={t("content.delete")}
+                                      aria-label={t("content.delete")}
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>
@@ -1386,7 +1411,7 @@ const ContentManagementContent = () => {
                                   <button
                                     onClick={() => handlePreview(m)}
                                     className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center"
-                                    title={t("content.preview")}
+                                    aria-label={t("content.preview")}
                                   >
                                     <Eye className="w-4 h-4" />
                                   </button>
@@ -1394,21 +1419,21 @@ const ContentManagementContent = () => {
                                 <button
                                   onClick={() => setEditingMaterial(m)}
                                   className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center"
-                                  title={t("content.edit")}
+                                  aria-label={t("content.edit")}
                                 >
                                   <Edit3 className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setReplacingMaterial(m)}
                                   className="flex-1 p-2 text-[#6B7280] hover:text-[#F97316] hover:bg-[#FFF7ED] rounded-lg transition-colors flex items-center justify-center"
-                                  title={t("content.replace")}
+                                  aria-label={t("content.replace")}
                                 >
                                   <Replace className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setDeletingMaterial(m)}
                                   className="flex-1 p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center justify-center"
-                                  title={t("content.delete")}
+                                  aria-label={t("content.delete")}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </button>

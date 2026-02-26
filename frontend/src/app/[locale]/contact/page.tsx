@@ -21,7 +21,7 @@ export default async function ContactPage({
   } = await getContactPageData(locale);
 
   return (
-    <main className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <ContactForm strapiData={contactPage} />
       <div className="hidden lg:block">

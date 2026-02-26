@@ -35,6 +35,7 @@ const AtRiskLearners = ({
   visibleCount = 5,
 }: AtRiskLearnersProps) => {
   const t = useTranslations("instructorDashboard");
+  const tA = useTranslations("accessibility");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -186,6 +187,9 @@ const AtRiskLearners = ({
                   onClick={() => setOpenDropdown(openDropdown === learner.id ? null : learner.id)}
                   disabled={actionLoading === learner.id}
                   className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors disabled:opacity-50"
+                  aria-label={tA("openActions")}
+                  aria-haspopup="true"
+                  aria-expanded={openDropdown === learner.id}
                 >
                   {actionLoading === learner.id ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -196,12 +200,13 @@ const AtRiskLearners = ({
 
                 {/* Dropdown Menu */}
                 {openDropdown === learner.id && (
-                  <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                  <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
                     <div className="py-1">
                       <button
                         onClick={() => handleSendReminder(learner)}
                         disabled={actionLoading === learner.id}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        role="menuitem"
                       >
                         <Mail className="w-4 h-4 text-[#6B7280]" />
                         {t("atRisk.sendReminder")}
@@ -210,6 +215,7 @@ const AtRiskLearners = ({
                         onClick={() => handleScheduleMakeup(learner)}
                         disabled={actionLoading === learner.id}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        role="menuitem"
                       >
                         <Calendar className="w-4 h-4 text-[#6B7280]" />
                         {t("atRisk.scheduleMakeup")}
@@ -218,6 +224,7 @@ const AtRiskLearners = ({
                         onClick={() => handleOpenTicket(learner)}
                         disabled={actionLoading === learner.id}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        role="menuitem"
                       >
                         <Ticket className="w-4 h-4 text-[#6B7280]" />
                         {t("atRisk.openTicket")}

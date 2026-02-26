@@ -5,7 +5,8 @@ const SkeletonBlock = ({ className }: { className?: string }) => (
 );
 
 const StudentTranscriptSkeleton = () => (
-  <>
+  <div role="status" aria-busy="true">
+    <span className="sr-only">Loading...</span>
     {/* Student Info */}
     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
       <div className="flex items-center gap-3">
@@ -49,7 +50,7 @@ const StudentTranscriptSkeleton = () => (
         ))}
       </div>
     </div>
-  </>
+  </div>
 );
 
 export default StudentTranscriptSkeleton;

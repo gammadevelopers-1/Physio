@@ -249,6 +249,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const [showDeleteCourse, setShowDeleteCourse] = useState(false);
   const [statusChanging, setStatusChanging] = useState(false);
   const [courseDeleting, setCourseDeleting] = useState(false);
+  const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null);
 
   // Initialize settings form from course data
   useEffect(() => {
@@ -813,11 +814,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                 {/* Tabs */}
                 <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                  <div className="flex border-b border-[#E5E7EB] overflow-x-auto">
+                  <div className="flex border-b border-[#E5E7EB] overflow-x-auto" role="tablist">
                     {tabs.map((tab) => (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
+                        role="tab"
+                        aria-selected={activeTab === tab.id}
                         className={`px-5 py-3.5 text-sm font-medium whitespace-nowrap relative transition-colors ${
                           activeTab === tab.id ? "text-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"
                         }`}
@@ -924,7 +927,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     onClick={() => handleReorderModule(mod.id, "up")}
                                     disabled={idx === 0}
                                     className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title={t("courseDetail.moveUp")}
+                                    aria-label={t("courseDetail.moveUp")}
                                   >
                                     <ArrowUp className="w-3.5 h-3.5 text-[#6B7280]" />
                                   </button>
@@ -932,14 +935,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     onClick={() => handleReorderModule(mod.id, "down")}
                                     disabled={idx === course.modules.length - 1}
                                     className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                                    title={t("courseDetail.moveDown")}
+                                    aria-label={t("courseDetail.moveDown")}
                                   >
                                     <ArrowDown className="w-3.5 h-3.5 text-[#6B7280]" />
                                   </button>
                                   <button
                                     onClick={() => openEditModule(mod)}
                                     className="p-1 hover:bg-[#E5E7EB] rounded"
-                                    title={t("courseDetail.editModule")}
+                                    aria-label={t("courseDetail.editModule")}
                                   >
                                     <Edit className="w-3.5 h-3.5 text-[#6B7280]" />
                                   </button>
@@ -947,7 +950,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     onClick={() => handleDeleteModule(mod.id)}
                                     disabled={deletingModuleId === mod.id}
                                     className="p-1 hover:bg-[#FEE2E2] rounded disabled:opacity-50"
-                                    title={t("courseDetail.deleteModule")}
+                                    aria-label={t("courseDetail.deleteModule")}
                                   >
                                     <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" />
                                   </button>
@@ -1021,13 +1024,22 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                               {mat.status}
                                             </span>
                                             <div className="flex items-center gap-0.5">
+                                              {mat.type === "video" && mat.fileUrl && (
+                                                <button
+                                                  onClick={() => setPreviewVideo({ url: mat.fileUrl!, title: mat.title })}
+                                                  className="p-1 hover:bg-[#DBEAFE] rounded"
+                                                  aria-label={t("courseDetail.previewVideo") || "Preview video"}
+                                                >
+                                                  <Play className="w-3.5 h-3.5 text-[#3B82F6]" />
+                                                </button>
+                                              )}
                                               {mat.fileUrl && (
                                                 <a
                                                   href={mat.fileUrl}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   className="p-1 hover:bg-[#E5E7EB] rounded"
-                                                  title={t("courseDetail.download")}
+                                                  aria-label={t("courseDetail.download")}
                                                 >
                                                   <Download className="w-3.5 h-3.5 text-[#6B7280]" />
                                                 </a>
@@ -1035,7 +1047,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                               <button
                                                 onClick={() => handleUnlinkMaterial(mat.id, mod.id)}
                                                 className="p-1 hover:bg-[#FEE2E2] rounded"
-                                                title={t("courseDetail.unlinkMaterial")}
+                                                aria-label={t("courseDetail.unlinkMaterial")}
                                               >
                                                 <Unlink className="w-3.5 h-3.5 text-[#EF4444]" />
                                               </button>
@@ -1228,14 +1240,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => openEditSession(session)}
                                       className="p-1.5 hover:bg-[#F3F4F6] rounded"
-                                      title={t("courseDetail.editSession")}
+                                      aria-label={t("courseDetail.editSession")}
                                     >
                                       <Edit className="w-4 h-4 text-[#6B7280]" />
                                     </button>
                                     <button
                                       onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
                                       className="p-1.5 hover:bg-[#FEE2E2] rounded"
-                                      title={t("courseDetail.cancelSession")}
+                                      aria-label={t("courseDetail.cancelSession")}
                                     >
                                       <X className="w-4 h-4 text-[#EF4444]" />
                                     </button>
@@ -1852,6 +1864,38 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
             </div>
           </div>
         </ModalOverlay>
+      )}
+
+      {/* ═══ VIDEO PREVIEW MODAL ═══ */}
+      {previewVideo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          onClick={() => setPreviewVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewVideo(null)}
+              className="absolute -top-10 right-0 p-1 text-white hover:text-[#D1D5DB] transition-colors"
+              title="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <p className="text-white text-sm font-medium mb-2 truncate">
+              {previewVideo.title}
+            </p>
+            <video
+              controls
+              autoPlay
+              className="w-full rounded-lg bg-black"
+              src={previewVideo.url}
+            >
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
       )}
     </>
   );

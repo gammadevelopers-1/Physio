@@ -87,6 +87,7 @@ const InstructorTabs = ({
   });
   const actionMenuRef = useRef<HTMLTableSectionElement>(null);
   const t = useTranslations("instructorDashboard");
+  const tA = useTranslations("accessibility");
 
   // Helper to determine file type from extension
   const getFileTypeFromName = (fileName: string): ContentFile["type"] => {
@@ -332,11 +333,13 @@ const InstructorTabs = ({
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       {/* Tab Headers */}
       <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex border-b border-[#E5E7EB] min-w-max">
+        <div className="flex border-b border-[#E5E7EB] min-w-max" role="tablist">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
+              role="tab"
+              aria-selected={activeTab === tab.id}
               className={`px-4 sm:px-5 py-3 text-xs sm:text-sm font-medium relative transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "text-[#3B82F6]"
@@ -505,17 +508,21 @@ const InstructorTabs = ({
                             <button
                               onClick={() => setOpenActionMenu(openActionMenu === file.id ? null : file.id)}
                               className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              aria-label={tA("openActions")}
+                              aria-haspopup="true"
+                              aria-expanded={openActionMenu === file.id}
                             >
                               <MoreVertical className="w-4 h-4" />
                             </button>
 
                             {/* Action Menu Dropdown */}
                             {openActionMenu === file.id && (
-                              <div className="absolute end-0 top-full mt-1 w-36 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+                              <div className="absolute end-0 top-full mt-1 w-36 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
                                 <div className="py-1">
                                   <button
                                     onClick={() => handleEdit(file.id)}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                    role="menuitem"
                                   >
                                     <Edit className="w-4 h-4 text-[#6B7280]" />
                                     {t("content.edit")}
@@ -523,6 +530,7 @@ const InstructorTabs = ({
                                   <button
                                     onClick={() => handleReplace(file.id)}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                    role="menuitem"
                                   >
                                     <RefreshCw className="w-4 h-4 text-[#6B7280]" />
                                     {t("content.replace")}
@@ -530,6 +538,7 @@ const InstructorTabs = ({
                                   <button
                                     onClick={() => handleDelete(file.id)}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
+                                    role="menuitem"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                     {t("content.delete")}
@@ -572,11 +581,12 @@ const InstructorTabs = ({
 
                 {/* Date Range Filter */}
                 <div className="mb-4 flex-1">
-                  <label className="text-xs font-medium text-[#4B5563] mb-1.5 block">
+                  <label htmlFor="date-range-attendance" className="text-xs font-medium text-[#4B5563] mb-1.5 block">
                     {t("reportsTab.dateRange")}
                   </label>
                   <div className="relative">
                     <select
+                      id="date-range-attendance"
                       value={dateRanges.attendance}
                       onChange={(e) => setDateRanges((prev) => ({ ...prev, attendance: e.target.value }))}
                       className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#374151] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
@@ -614,6 +624,9 @@ const InstructorTabs = ({
                     <button
                       onClick={() => setOpenExportDropdown(openExportDropdown === "attendance" ? null : "attendance")}
                       className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      aria-label={tA("exportOptions")}
+                      aria-haspopup="true"
+                      aria-expanded={openExportDropdown === "attendance"}
                     >
                       <Download className="w-4 h-4" />
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -621,7 +634,7 @@ const InstructorTabs = ({
                     {openExportDropdown === "attendance" && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
-                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
+                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
                           <div className="py-1">
                             <button
                               onClick={() => {
@@ -629,6 +642,7 @@ const InstructorTabs = ({
                                 handleReportDownload("attendance", "csv");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              role="menuitem"
                             >
                               <FileBarChart className="w-4 h-4 text-[#22C55E]" />
                               {t("reportsTab.exportCSV")}
@@ -639,6 +653,7 @@ const InstructorTabs = ({
                                 handleReportDownload("attendance", "pdf");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              role="menuitem"
                             >
                               <FileText className="w-4 h-4 text-[#EF4444]" />
                               {t("reportsTab.exportPDF")}
@@ -670,11 +685,12 @@ const InstructorTabs = ({
 
                 {/* Date Range Filter */}
                 <div className="mb-4 flex-1">
-                  <label className="text-xs font-medium text-[#4B5563] mb-1.5 block">
+                  <label htmlFor="date-range-gradebook" className="text-xs font-medium text-[#4B5563] mb-1.5 block">
                     {t("reportsTab.dateRange")}
                   </label>
                   <div className="relative">
                     <select
+                      id="date-range-gradebook"
                       value={dateRanges.gradebook}
                       onChange={(e) => setDateRanges((prev) => ({ ...prev, gradebook: e.target.value }))}
                       className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#374151] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
@@ -712,6 +728,9 @@ const InstructorTabs = ({
                     <button
                       onClick={() => setOpenExportDropdown(openExportDropdown === "gradebook" ? null : "gradebook")}
                       className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      aria-label={tA("exportOptions")}
+                      aria-haspopup="true"
+                      aria-expanded={openExportDropdown === "gradebook"}
                     >
                       <Download className="w-4 h-4" />
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -719,7 +738,7 @@ const InstructorTabs = ({
                     {openExportDropdown === "gradebook" && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
-                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
+                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
                           <div className="py-1">
                             <button
                               onClick={() => {
@@ -727,6 +746,7 @@ const InstructorTabs = ({
                                 handleReportDownload("gradebook", "csv");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              role="menuitem"
                             >
                               <FileBarChart className="w-4 h-4 text-[#22C55E]" />
                               {t("reportsTab.exportCSV")}
@@ -737,6 +757,7 @@ const InstructorTabs = ({
                                 handleReportDownload("gradebook", "pdf");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              role="menuitem"
                             >
                               <FileText className="w-4 h-4 text-[#EF4444]" />
                               {t("reportsTab.exportPDF")}
@@ -768,11 +789,12 @@ const InstructorTabs = ({
 
                 {/* Date Range Filter */}
                 <div className="mb-4 flex-1">
-                  <label className="text-xs font-medium text-[#4B5563] mb-1.5 block">
+                  <label htmlFor="date-range-assessment" className="text-xs font-medium text-[#4B5563] mb-1.5 block">
                     {t("reportsTab.dateRange")}
                   </label>
                   <div className="relative">
                     <select
+                      id="date-range-assessment"
                       value={dateRanges.assessment}
                       onChange={(e) => setDateRanges((prev) => ({ ...prev, assessment: e.target.value }))}
                       className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg bg-white text-[#374151] appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
@@ -810,6 +832,9 @@ const InstructorTabs = ({
                     <button
                       onClick={() => setOpenExportDropdown(openExportDropdown === "assessment" ? null : "assessment")}
                       className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      aria-label={tA("exportOptions")}
+                      aria-haspopup="true"
+                      aria-expanded={openExportDropdown === "assessment"}
                     >
                       <Download className="w-4 h-4" />
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -817,7 +842,7 @@ const InstructorTabs = ({
                     {openExportDropdown === "assessment" && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
-                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50">
+                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
                           <div className="py-1">
                             <button
                               onClick={() => {
@@ -825,6 +850,7 @@ const InstructorTabs = ({
                                 handleReportDownload("assessment", "csv");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              role="menuitem"
                             >
                               <FileBarChart className="w-4 h-4 text-[#22C55E]" />
                               {t("reportsTab.exportCSV")}
@@ -835,6 +861,7 @@ const InstructorTabs = ({
                                 handleReportDownload("assessment", "pdf");
                               }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              role="menuitem"
                             >
                               <FileText className="w-4 h-4 text-[#EF4444]" />
                               {t("reportsTab.exportPDF")}

@@ -39,10 +39,11 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-title" className="block text-sm font-medium text-[#374151] mb-1">
               {t("courseTitle")} *
             </label>
             <input
+              id="course-title"
               type="text"
               value={state.title}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "title", value: e.target.value })}
@@ -50,10 +51,11 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
               {t("courseTitleAr")}
             </label>
             <input
+              id="course-title-ar"
               type="text"
               value={state.titleAr}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "titleAr", value: e.target.value })}
@@ -65,10 +67,11 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-description" className="block text-sm font-medium text-[#374151] mb-1">
               {t("description")}
             </label>
             <textarea
+              id="course-description"
               value={state.description}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "description", value: e.target.value })}
               rows={4}
@@ -76,10 +79,11 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="course-description-ar" className="block text-sm font-medium text-[#374151] mb-1">
               {t("descriptionAr")}
             </label>
             <textarea
+              id="course-description-ar"
               value={state.descriptionAr}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "descriptionAr", value: e.target.value })}
               rows={4}
@@ -91,10 +95,11 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
 
         {/* Delivery Type — per spec, this belongs in Step 1 */}
         <div className="mt-4">
-          <label className="block text-sm font-medium text-[#374151] mb-1">
+          <label htmlFor="delivery-type" className="block text-sm font-medium text-[#374151] mb-1">
             {t("deliveryType")} *
           </label>
           <select
+            id="delivery-type"
             value={state.deliveryType}
             onChange={(e) =>
               dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value })

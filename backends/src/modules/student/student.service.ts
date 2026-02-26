@@ -19,6 +19,7 @@ import {
   questions,
   courseMaterials,
   materialVariants,
+  materialProgress,
   tickets,
   ticketReplies,
   COURSE_STATUS,
@@ -326,10 +327,10 @@ export class StudentService {
           SELECT u.avatar FROM users u WHERE u.id = ${courses.instructorId}
         )`,
         totalModules: sql<number>`(
-          SELECT COUNT(*) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+          SELECT COUNT(*) FROM course_modules cm WHERE cm.course_id = "courses"."id"
         )`.mapWith(Number),
         totalHours: sql<number>`(
-          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
         )`.mapWith(Number),
       })
       .from(enrollments)
@@ -830,16 +831,122 @@ export class StudentService {
       throw new NotFoundException('Module not found in this course');
     }
 
-    // Get total modules for this course
+    // Persist video watch progress if materialId + watchedSeconds provided
+    if (dto.materialId && dto.watchedSeconds !== undefined) {
+      const [existing] = await db
+        .select()
+        .from(materialProgress)
+        .where(
+          and(
+            eq(materialProgress.studentId, studentId),
+            eq(materialProgress.materialId, dto.materialId),
+          ),
+        )
+        .limit(1);
+
+      const furthestWatched = Math.max(
+        existing?.furthestWatchedSecond || 0,
+        dto.watchedSeconds,
+      );
+      const totalSec = dto.totalSeconds || existing?.totalSeconds || 0;
+      const isComplete = totalSec > 0 && furthestWatched / totalSec >= 0.9;
+
+      if (existing) {
+        await db
+          .update(materialProgress)
+          .set({
+            watchedSeconds: dto.watchedSeconds,
+            totalSeconds: totalSec,
+            furthestWatchedSecond: furthestWatched,
+            completedAt: isComplete && !existing.completedAt ? new Date() : existing.completedAt,
+            updatedAt: new Date(),
+          })
+          .where(eq(materialProgress.id, existing.id));
+      } else {
+        await db.insert(materialProgress).values({
+          studentId,
+          materialId: dto.materialId,
+          courseId,
+          moduleId: dto.moduleId,
+          watchedSeconds: dto.watchedSeconds,
+          totalSeconds: totalSec,
+          furthestWatchedSecond: furthestWatched,
+          completedAt: isComplete ? new Date() : null,
+        });
+      }
+    }
+
+    // If this is a video auto-save (no status), only update lastAccessedAt
+    // Progress should only increment on explicit module completion
+    if (!dto.status) {
+      const [updated] = await db
+        .update(enrollments)
+        .set({ lastAccessedAt: new Date() })
+        .where(eq(enrollments.id, enrollment.id))
+        .returning();
+      return updated;
+    }
+
+    // NELC: Enforce minimum watch time (80%) for video materials before module completion
+    if (dto.status === 'completed') {
+      const videoMaterials = await db
+        .select({ id: courseMaterials.id })
+        .from(courseMaterials)
+        .where(
+          and(
+            eq(courseMaterials.moduleId, dto.moduleId),
+            eq(courseMaterials.type, 'video'),
+            eq(courseMaterials.status, 'live'),
+          ),
+        );
+
+      if (videoMaterials.length > 0) {
+        const videoIds = videoMaterials.map((v) => v.id);
+        const progressRows = await db
+          .select({
+            materialId: materialProgress.materialId,
+            furthestWatchedSecond: materialProgress.furthestWatchedSecond,
+            totalSeconds: materialProgress.totalSeconds,
+          })
+          .from(materialProgress)
+          .where(
+            and(
+              eq(materialProgress.studentId, studentId),
+              sql`${materialProgress.materialId} IN (${sql.join(
+                videoIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+            ),
+          );
+
+        const progressMap = new Map(
+          progressRows.map((p) => [p.materialId, p]),
+        );
+
+        for (const video of videoMaterials) {
+          const prog = progressMap.get(video.id);
+          if (!prog || prog.totalSeconds === 0) {
+            throw new BadRequestException(
+              'You must watch all video materials before completing this module',
+            );
+          }
+          const watchedPercent = prog.furthestWatchedSecond / prog.totalSeconds;
+          if (watchedPercent < 0.8) {
+            throw new BadRequestException(
+              `You must watch at least 80% of all videos to complete this module (currently ${Math.round(watchedPercent * 100)}%)`,
+            );
+          }
+        }
+      }
+    }
+
+    // Module completion — increment enrollment progress
     const [moduleCount] = await db
       .select({ count: count() })
       .from(courseModules)
       .where(eq(courseModules.courseId, courseId));
 
     const totalModules = Number(moduleCount?.count || 1);
-
-    // Calculate new progress (simple: increment by module weight)
-    // For now, each module is equal weight
     const progressPerModule = Math.round(100 / totalModules);
     const newProgress = Math.min(
       enrollment.progress + progressPerModule,
@@ -871,8 +978,6 @@ export class StudentService {
           `Auto-created certificate request for student ${studentId} in course ${courseId}`,
         );
       } catch (error) {
-        // Don't fail the progress update if certificate creation fails
-        // (e.g. duplicate request already exists)
         this.logger.warn(
           `Auto-certificate request skipped for student ${studentId} in course ${courseId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
         );
@@ -1803,16 +1908,16 @@ export class StudentService {
           WHERE u.id = ${courses.instructorId}
         )`,
         totalHours: sql<number>`(
-          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
         )`.mapWith(Number),
         certificateStatus: sql<string>`(
           SELECT cr.status FROM certificate_requests cr
-          WHERE cr.course_id = ${courses.id} AND cr.student_id = ${studentId}
+          WHERE cr.course_id = "courses"."id" AND cr.student_id = ${studentId}
           LIMIT 1
         )`,
         certificateUrl: sql<string>`(
           SELECT cr.certificate_url FROM certificate_requests cr
-          WHERE cr.course_id = ${courses.id} AND cr.student_id = ${studentId}
+          WHERE cr.course_id = "courses"."id" AND cr.student_id = ${studentId}
           LIMIT 1
         )`,
       })
@@ -1894,6 +1999,62 @@ export class StudentService {
       throw new NotFoundException('Module not found in this course');
     }
 
+    // NELC: Enforce sequential module access
+    // Students must complete previous modules before accessing later ones
+    if (module.orderIndex > 0) {
+      const allModules = await db
+        .select({ id: courseModules.id, orderIndex: courseModules.orderIndex })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId))
+        .orderBy(asc(courseModules.orderIndex));
+
+      const currentIdx = allModules.findIndex((m) => m.id === moduleId);
+      if (currentIdx > 0) {
+        const prevModule = allModules[currentIdx - 1];
+        // Check if previous module's video materials are sufficiently watched
+        const prevVideoMaterials = await db
+          .select({ id: courseMaterials.id })
+          .from(courseMaterials)
+          .where(
+            and(
+              eq(courseMaterials.moduleId, prevModule.id),
+              eq(courseMaterials.type, 'video'),
+              eq(courseMaterials.status, 'live'),
+            ),
+          );
+
+        if (prevVideoMaterials.length > 0) {
+          const prevProgressRows = await db
+            .select({
+              materialId: materialProgress.materialId,
+              furthestWatchedSecond: materialProgress.furthestWatchedSecond,
+              totalSeconds: materialProgress.totalSeconds,
+            })
+            .from(materialProgress)
+            .where(
+              and(
+                eq(materialProgress.studentId, studentId),
+                sql`${materialProgress.materialId} IN (${sql.join(
+                  prevVideoMaterials.map((v) => sql`${v.id}`),
+                  sql`, `,
+                )})`,
+              ),
+            );
+
+          const allPrevWatched = prevVideoMaterials.every((v) => {
+            const prog = prevProgressRows.find((p) => p.materialId === v.id);
+            return prog && prog.totalSeconds > 0 && prog.furthestWatchedSecond / prog.totalSeconds >= 0.8;
+          });
+
+          if (!allPrevWatched) {
+            throw new BadRequestException(
+              'You must complete the previous module before accessing this one',
+            );
+          }
+        }
+      }
+    }
+
     // Get live materials for this module
     const materials = await db
       .select({
@@ -1960,10 +2121,44 @@ export class StudentService {
       }
     }
 
+    // Batch fetch student's progress for these materials
+    const materialIds = materials.map((m) => m.id);
+    let progressMap: Record<string, { watchedSeconds: number; totalSeconds: number; furthestWatchedSecond: number; isCompleted: boolean }> = {};
+    if (materialIds.length > 0) {
+      const progressRows = await db
+        .select({
+          materialId: materialProgress.materialId,
+          watchedSeconds: materialProgress.watchedSeconds,
+          totalSeconds: materialProgress.totalSeconds,
+          furthestWatchedSecond: materialProgress.furthestWatchedSecond,
+          completedAt: materialProgress.completedAt,
+        })
+        .from(materialProgress)
+        .where(
+          and(
+            eq(materialProgress.studentId, studentId),
+            sql`${materialProgress.materialId} IN (${sql.join(
+              materialIds.map((id) => sql`${id}`),
+              sql`, `,
+            )})`,
+          ),
+        );
+
+      for (const p of progressRows) {
+        progressMap[p.materialId] = {
+          watchedSeconds: p.watchedSeconds,
+          totalSeconds: p.totalSeconds,
+          furthestWatchedSecond: p.furthestWatchedSecond,
+          isCompleted: !!p.completedAt,
+        };
+      }
+    }
+
     return {
       materials: materials.map((m) => ({
         ...m,
         variants: variantsMap[m.id] || [],
+        progress: progressMap[m.id] || null,
       })),
     };
   }

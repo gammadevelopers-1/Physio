@@ -14,5 +14,9 @@ export default async function StudentInvoicesPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <InvoicesContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <InvoicesContent />
+    </main>
+  );
 }

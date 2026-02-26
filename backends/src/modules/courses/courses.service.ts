@@ -144,7 +144,7 @@ export class CoursesService {
         orderByExpr = asc(courses.title);
         break;
       case 'students':
-        orderByExpr = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}) DESC`;
+        orderByExpr = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
         break;
       case 'newest':
       default:
@@ -153,28 +153,30 @@ export class CoursesService {
     }
 
     // Enriched query with correlated subqueries for enrollment & session stats
+    // NOTE: We use "courses"."id" (table-qualified) instead of ${courses.id} because
+    // Drizzle generates unqualified "id" which is ambiguous with the subquery table's own "id" column.
     const data = await db
       .select({
         ...getTableColumns(courses),
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
         )`.mapWith(Number),
         completionRate: sql<number>`(
-          SELECT COALESCE(ROUND(AVG(e.progress)), 0) FROM enrollments e WHERE e.course_id = ${courses.id}
+          SELECT COALESCE(ROUND(AVG(e.progress)), 0) FROM enrollments e WHERE e.course_id = "courses"."id"
         )`.mapWith(Number),
         totalSessions: sql<number>`(
-          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id}
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
         )`.mapWith(Number),
         completedSessions: sql<number>`(
-          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id} AND s.status = 'completed'
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id" AND s.status = 'completed'
         )`.mapWith(Number),
         nextSessionAt: sql<string | null>`(
           SELECT MIN(s.scheduled_at) FROM sessions s
-          WHERE s.course_id = ${courses.id} AND s.scheduled_at > NOW() AND s.status = 'scheduled'
+          WHERE s.course_id = "courses"."id" AND s.scheduled_at > NOW() AND s.status = 'scheduled'
         )`,
         instructorName: sql<string | null>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
-          WHERE u.id = ${courses.instructorId}
+          WHERE u.id = "courses"."instructor_id"
         )`,
       })
       .from(courses)
@@ -263,10 +265,10 @@ export class CoursesService {
         orderByClause = asc(courses.startDate);
         break;
       case 'popular':
-        orderByClause = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}) DESC`;
+        orderByClause = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
         break;
       case 'rating':
-        orderByClause = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = ${courses.id}) DESC`;
+        orderByClause = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id") DESC`;
         break;
       default:
         orderByClause = desc(courses.createdAt);
@@ -290,23 +292,23 @@ export class CoursesService {
         startDate: courses.startDate,
         endDate: courses.endDate,
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
         )`.mapWith(Number),
         totalHours: sql<number>`(
-          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
         )`.mapWith(Number),
         sessionCount: sql<number>`(
-          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id}
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
         )`.mapWith(Number),
         avgRating: sql<number>`(
-          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
         )`.mapWith(Number),
         totalRatings: sql<number>`(
-          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
         )`.mapWith(Number),
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
-          WHERE u.id = ${courses.instructorId}
+          WHERE u.id = "courses"."instructor_id"
         )`,
       })
       .from(courses)
@@ -389,23 +391,23 @@ export class CoursesService {
         startDate: courses.startDate,
         endDate: courses.endDate,
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id}
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
         )`.mapWith(Number),
         totalHours: sql<number>`(
-          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = ${courses.id}
+          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
         )`.mapWith(Number),
         sessionCount: sql<number>`(
-          SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courses.id}
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
         )`.mapWith(Number),
         avgRating: sql<number>`(
-          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
         )`.mapWith(Number),
         totalRatings: sql<number>`(
-          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = ${courses.id}
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
         )`.mapWith(Number),
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
-          WHERE u.id = ${courses.instructorId}
+          WHERE u.id = "courses"."instructor_id"
         )`,
       })
       .from(courses)

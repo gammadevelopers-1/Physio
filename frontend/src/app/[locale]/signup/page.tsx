@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthNavbar from "@/components/AuthNavbar";
 import Footer from "@/components/Footer";
 import { useTranslations, useLocale } from "next-intl";
@@ -21,12 +21,14 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function SignUpPage() {
+function SignUpForm() {
   const t = useTranslations("signupPage");
   const locale = useLocale();
   const router = useRouter();
   const isRTL = locale === "ar";
   const { register, isLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect");
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -97,9 +99,12 @@ export default function SignUpPage() {
       });
       setSuccess(true);
       toast.success("Account created successfully! Redirecting to sign in...");
-      // Redirect to signin after 2 seconds
+      // Redirect to signin after 2 seconds, preserving redirect param
       setTimeout(() => {
-        router.push(`/${locale}/signin`);
+        const signinUrl = redirectParam
+          ? `/${locale}/signin?redirect=${encodeURIComponent(redirectParam)}`
+          : `/${locale}/signin`;
+        router.push(signinUrl);
       }, 2000);
     } catch (err) {
       const message = err instanceof ApiError
@@ -118,7 +123,7 @@ export default function SignUpPage() {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
         <AuthNavbar />
-        <main className="flex-1 bg-[#EEF3F7] flex items-center justify-center px-4 py-10">
+        <main id="main-content" className="flex-1 bg-[#EEF3F7] flex items-center justify-center px-4 py-10">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
@@ -140,7 +145,7 @@ export default function SignUpPage() {
       <AuthNavbar />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           {/* Auth Card Container */}
           <div
@@ -403,7 +408,7 @@ export default function SignUpPage() {
                     {t("footer.hasAccount")}{" "}
                   </span>
                   <Link
-                    href={`/${locale}/signin`}
+                    href={redirectParam ? `/${locale}/signin?redirect=${encodeURIComponent(redirectParam)}` : `/${locale}/signin`}
                     className="text-[#171717] underline hover:text-[var(--on-surface-primary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
@@ -431,5 +436,13 @@ export default function SignUpPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
   );
 }

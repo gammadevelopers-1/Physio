@@ -19,10 +19,11 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1">
+          <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
             {t("startDate")}
           </label>
           <input
+            id="start-date"
             type="date"
             value={state.startDate}
             onChange={(e) =>
@@ -32,10 +33,11 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1">
+          <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
             {t("endDate")}
           </label>
           <input
+            id="end-date"
             type="date"
             value={state.endDate}
             onChange={(e) =>
@@ -55,10 +57,11 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-medium text-[#374151] mb-1">
+        <label htmlFor="max-enrollment" className="block text-sm font-medium text-[#374151] mb-1">
           {t("maxEnrollment")}
         </label>
         <input
+          id="max-enrollment"
           type="number"
           value={state.maxEnrollment}
           onChange={(e) =>

@@ -14,5 +14,9 @@ export default async function StudentCertificationsPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <CertificationsContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <CertificationsContent />
+    </main>
+  );
 }

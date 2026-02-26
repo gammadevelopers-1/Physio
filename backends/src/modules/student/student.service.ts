@@ -539,7 +539,7 @@ export class StudentService {
       .where(eq(courseModules.courseId, courseId))
       .orderBy(asc(courseModules.orderIndex));
 
-    // Get upcoming sessions for this course
+    // Get sessions for this course (scheduled, live, and completed)
     const upcomingSessions = await db
       .select({
         id: sessions.id,
@@ -559,6 +559,7 @@ export class StudentService {
           or(
             eq(sessions.status, 'scheduled'),
             eq(sessions.status, 'live'),
+            eq(sessions.status, 'completed'),
           ),
         ),
       )
@@ -683,6 +684,29 @@ export class StudentService {
       isCompleted: index < completedModulesCount,
     }));
 
+    // Per-session attendance records for this student+course
+    const attendanceRecords = await db
+      .select({
+        sessionId: sessions.id,
+        sessionTitle: sessions.title,
+        sessionType: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        sessionStatus: sessions.status,
+        status: attendance.status,
+        joinedAt: attendance.joinedAt,
+        leftAt: attendance.leftAt,
+        durationMinutes: attendance.durationMinutes,
+      })
+      .from(attendance)
+      .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+      .where(
+        and(
+          eq(attendance.studentId, studentId),
+          eq(sessions.courseId, courseId),
+        ),
+      )
+      .orderBy(desc(sessions.scheduledAt));
+
     // Update lastAccessedAt
     await db
       .update(enrollments)
@@ -702,6 +726,7 @@ export class StudentService {
       sessions: upcomingSessions,
       assessments: assessmentsWithStatus,
       attendanceSummary,
+      attendanceRecords,
       assessmentSummary,
     };
   }

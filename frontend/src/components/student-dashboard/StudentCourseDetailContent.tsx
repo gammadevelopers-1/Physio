@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -9,8 +10,12 @@ import {
   Award,
   BookOpen,
   Calendar,
+  ChevronDown,
+  ChevronUp,
   Clock,
   ClipboardCheck,
+  Download,
+  Film,
   Loader2,
   Play,
   UserCheck,
@@ -19,12 +24,14 @@ import {
   MapPin,
   CheckCircle2,
   Circle,
+  X,
 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
+import { zoomAttendanceApi } from "@/lib/api";
 
 const StudentCourseDetailContent = () => {
   const locale = useLocale();
@@ -36,7 +43,69 @@ const StudentCourseDetailContent = () => {
 
   const { data, loading, error } = useStudentCourseDetail(courseId);
 
+  const [showAttendanceHistory, setShowAttendanceHistory] = useState(false);
+  const [recordingsModalSession, setRecordingsModalSession] = useState<string | null>(null);
+  const [recordings, setRecordings] = useState<
+    Array<{
+      id: string;
+      recordingType: string;
+      downloadUrl: string | null;
+      playUrl: string | null;
+      fileSize: number | null;
+      recordingStart: string | null;
+      recordingEnd: string | null;
+    }>
+  >([]);
+  const [recordingsLoading, setRecordingsLoading] = useState(false);
+
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+
+  // Split sessions into upcoming/live and completed
+  const upcomingSessions = useMemo(
+    () => data?.sessions.filter((s) => s.status === "scheduled" || s.status === "live") ?? [],
+    [data?.sessions]
+  );
+  const completedSessions = useMemo(
+    () => data?.sessions.filter((s) => s.status === "completed") ?? [],
+    [data?.sessions]
+  );
+
+  const handleViewRecordings = async (sessionId: string) => {
+    setRecordingsModalSession(sessionId);
+    setRecordingsLoading(true);
+    try {
+      const data = await zoomAttendanceApi.getRecordings(sessionId);
+      setRecordings(data);
+    } catch {
+      setRecordings([]);
+    } finally {
+      setRecordingsLoading(false);
+    }
+  };
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "—";
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const formatRecordingDuration = (start: string | null, end: string | null) => {
+    if (!start || !end) return "—";
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    const mins = Math.round(ms / 60000);
+    if (mins < 60) return `${mins}m`;
+    return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  };
+
+  const getAttendanceStatusBadge = (status: string) => {
+    switch (status) {
+      case "present": return { bg: "bg-[#DCFCE7]", text: "text-[#16A34A]", label: t("courseDetail.statusPresent") };
+      case "absent": return { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("courseDetail.statusAbsent") };
+      case "late": return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("courseDetail.statusLate") };
+      case "excused": return { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("courseDetail.statusExcused") };
+      default: return { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: status };
+    }
+  };
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "";
@@ -366,21 +435,88 @@ const StudentCourseDetailContent = () => {
                     )}
                   </div>
 
+                  {/* Attendance History */}
+                  {data.attendanceRecords && data.attendanceRecords.length > 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] mb-4">
+                      <button
+                        onClick={() => setShowAttendanceHistory(!showAttendanceHistory)}
+                        className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-[#F9FAFB] transition-colors rounded-xl"
+                      >
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+                            {t("courseDetail.attendanceHistory")}
+                          </h2>
+                          <span className="text-xs text-[#6B7280]">
+                            {data.attendanceSummary
+                              ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total} (${data.attendanceSummary.percentage}%)`
+                              : ""}
+                          </span>
+                        </div>
+                        {showAttendanceHistory ? (
+                          <ChevronUp className="w-5 h-5 text-[#6B7280]" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-[#6B7280]" />
+                        )}
+                      </button>
+
+                      {showAttendanceHistory && (
+                        <div className="border-t border-[#E5E7EB] divide-y divide-[#E5E7EB]">
+                          {data.attendanceRecords.map((record) => {
+                            const badge = getAttendanceStatusBadge(record.status);
+                            return (
+                              <div key={record.sessionId} className="px-4 sm:px-6 py-3 flex items-center gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-[#1F2937] truncate">
+                                    {record.sessionTitle}
+                                  </p>
+                                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] mt-1">
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      {formatDate(record.scheduledAt)}
+                                    </span>
+                                    {record.joinedAt && (
+                                      <span>
+                                        {t("courseDetail.joinedAt")}: {formatTime(record.joinedAt)}
+                                      </span>
+                                    )}
+                                    {record.leftAt && (
+                                      <span>
+                                        {t("courseDetail.leftAt")}: {formatTime(record.leftAt)}
+                                      </span>
+                                    )}
+                                    {record.durationMinutes != null && (
+                                      <span>
+                                        {record.durationMinutes} {t("calendar.mins")}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${badge.bg} ${badge.text} flex-shrink-0`}>
+                                  {badge.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Upcoming Sessions */}
-                  {data.sessions.length > 0 && (
+                  {upcomingSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                         {t("courseDetail.upcomingSessions")}
                       </h2>
 
                       <div className="space-y-3">
-                        {data.sessions.map((session) => (
+                        {upcomingSessions.map((session) => (
                           <div
                             key={session.id}
                             className="flex items-start gap-3 p-3 rounded-lg border border-[#E5E7EB]"
                           >
                             <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center flex-shrink-0">
-                              {session.type === "online" ? (
+                              {session.type === "zoom" || session.type === "online" ? (
                                 <Video className="w-5 h-5 text-[#D4A520]" />
                               ) : (
                                 <MapPin className="w-5 h-5 text-[#D4A520]" />
@@ -422,6 +558,54 @@ const StudentCourseDetailContent = () => {
                                 </p>
                               )}
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Past Sessions (Completed) */}
+                  {completedSessions.length > 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                      <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
+                        {t("courseDetail.pastSessions")}
+                      </h2>
+
+                      <div className="space-y-3">
+                        {completedSessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className="flex items-start gap-3 p-3 rounded-lg border border-[#E5E7EB]"
+                          >
+                            <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
+                              <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#6B7280]">
+                                {session.title}
+                              </p>
+                              <div className="flex flex-wrap gap-3 text-xs text-[#9CA3AF] mt-1">
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {formatDate(session.scheduledAt)}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {formatTime(session.scheduledAt)}
+                                </span>
+                                <span>
+                                  {session.durationMinutes}{" "}
+                                  {t("calendar.mins")}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleViewRecordings(session.id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#002D87] border border-[#E5E7EB] rounded-lg hover:bg-[#F0F7FF] transition-colors flex-shrink-0"
+                            >
+                              <Film className="w-3 h-3" />
+                              {t("courseDetail.viewRecording")}
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -517,6 +701,96 @@ const StudentCourseDetailContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Recordings Modal */}
+      {recordingsModalSession && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0"
+            onClick={() => setRecordingsModalSession(null)}
+            aria-hidden="true"
+          />
+          <div className="relative bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+              <h2 className="text-lg font-semibold text-[#1F2937]">
+                {t("courseDetail.viewRecording")}
+              </h2>
+              <button
+                onClick={() => setRecordingsModalSession(null)}
+                className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-[#6B7280]" />
+              </button>
+            </div>
+
+            {recordingsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+              </div>
+            ) : recordings.length === 0 ? (
+              <div className="py-12 text-center">
+                <Film className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                <p className="text-sm text-[#6B7280]">
+                  {t("courseDetail.noRecordings")}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#E5E7EB]">
+                {recordings.map((rec) => (
+                  <div key={rec.id} className="p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[10px] font-medium rounded">
+                        {rec.recordingType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {rec.playUrl && (
+                          <a
+                            href={rec.playUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors"
+                          >
+                            <Play className="w-3 h-3" />
+                            {t("courseDetail.viewRecording")}
+                          </a>
+                        )}
+                        {rec.downloadUrl && (
+                          <a
+                            href={rec.downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                          >
+                            <Download className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+                      <span>
+                        {t("courseDetail.duration")}:{" "}
+                        {formatRecordingDuration(rec.recordingStart, rec.recordingEnd)}
+                      </span>
+                      <span>
+                        {formatFileSize(rec.fileSize)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end p-4 border-t border-[#E5E7EB]">
+              <button
+                onClick={() => setRecordingsModalSession(null)}
+                className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+              >
+                {t("courseDetail.backToCourses").includes("Back") ? "Close" : "إغلاق"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

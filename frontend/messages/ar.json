@@ -1866,7 +1866,19 @@
       "graded": "تم التصحيح",
       "pendingGrading": "في انتظار التصحيح",
       "review": "مراجعة",
-      "aboutCourse": "عن هذه الدورة"
+      "aboutCourse": "عن هذه الدورة",
+      "attendanceHistory": "سجل الحضور",
+      "sessionDate": "التاريخ",
+      "joinedAt": "انضمام",
+      "leftAt": "مغادرة",
+      "duration": "المدة",
+      "statusPresent": "حاضر",
+      "statusAbsent": "غائب",
+      "statusLate": "متأخر",
+      "statusExcused": "بعذر",
+      "viewRecording": "عرض التسجيل",
+      "noRecordings": "لا توجد تسجيلات",
+      "pastSessions": "الجلسات السابقة"
     },
     "learning": {
       "courseContent": "محتوى الدورة",
@@ -2038,7 +2050,8 @@
       "showing": "عرض",
       "of": "من",
       "ongoing": "مستمر",
-      "ratingComingSoon": "التقييم قريباً"
+      "ratingComingSoon": "التقييم قريباً",
+      "noRatingsYet": "لا تقييمات بعد"
     },
     "sidebar": {
       "instructorDashboard": "لوحة تحكم المدرب",
@@ -2110,7 +2123,11 @@
       "thu": "الخميس",
       "fri": "الجمعة",
       "sat": "السبت",
-      "sun": "الأحد"
+      "sun": "الأحد",
+      "passRate": "معدل النجاح",
+      "passed": "ناجح",
+      "failed": "راسب",
+      "ofStudents": "من {total} طالب"
     },
     "atRisk": {
       "title": "المتعلمون المعرضون للخطر",
@@ -2569,6 +2586,15 @@
         "leftAt": "غادر",
         "exportAttendance": "تصدير الحضور",
         "exportError": "فشل في تصدير الحضور"
+      },
+      "recordings": {
+        "title": "التسجيلات",
+        "noRecordings": "لا توجد تسجيلات متاحة لهذه الجلسة",
+        "play": "تشغيل",
+        "download": "تحميل",
+        "duration": "المدة",
+        "size": "الحجم",
+        "type": "النوع"
       }
     },
     "students": {

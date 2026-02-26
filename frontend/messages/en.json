@@ -1654,7 +1654,19 @@
       "graded": "Graded",
       "pendingGrading": "Pending Grading",
       "review": "Review",
-      "aboutCourse": "About This Course"
+      "aboutCourse": "About This Course",
+      "attendanceHistory": "Attendance History",
+      "sessionDate": "Date",
+      "joinedAt": "Joined",
+      "leftAt": "Left",
+      "duration": "Duration",
+      "statusPresent": "Present",
+      "statusAbsent": "Absent",
+      "statusLate": "Late",
+      "statusExcused": "Excused",
+      "viewRecording": "View Recording",
+      "noRecordings": "No recordings available",
+      "pastSessions": "Past Sessions"
     },
     "learning": {
       "courseContent": "Course Content",
@@ -1826,7 +1838,8 @@
       "showing": "Showing",
       "of": "of",
       "ongoing": "Ongoing",
-      "ratingComingSoon": "Rating coming soon"
+      "ratingComingSoon": "Rating coming soon",
+      "noRatingsYet": "No ratings yet"
     },
     "sidebar": {
       "instructorDashboard": "Instructor Dashboard",
@@ -1898,7 +1911,11 @@
       "thu": "Thu",
       "fri": "Fri",
       "sat": "Sat",
-      "sun": "Sun"
+      "sun": "Sun",
+      "passRate": "Pass Rate",
+      "passed": "Passed",
+      "failed": "Failed",
+      "ofStudents": "of {total} students"
     },
     "atRisk": {
       "title": "At-Risk Learners",
@@ -2387,6 +2404,15 @@
         "leftAt": "Left",
         "exportAttendance": "Export Attendance",
         "exportError": "Failed to export attendance"
+      },
+      "recordings": {
+        "title": "Recordings",
+        "noRecordings": "No recordings available for this session",
+        "play": "Play",
+        "download": "Download",
+        "duration": "Duration",
+        "size": "Size",
+        "type": "Type"
       }
     },
     "students": {

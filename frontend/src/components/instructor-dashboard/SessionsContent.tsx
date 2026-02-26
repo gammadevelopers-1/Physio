@@ -39,6 +39,7 @@ import {
   Ban,
   Trash2,
   Download,
+  Film,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -572,6 +573,164 @@ function AttendanceModal({
   );
 }
 
+// ─── Recordings Modal ───────────────────────────────────────
+
+function RecordingsModal({
+  session,
+  onClose,
+  t,
+  locale,
+}: {
+  session: CourseSession;
+  onClose: () => void;
+  t: ReturnType<typeof useTranslations>;
+  locale: string;
+}) {
+  const [recordings, setRecordings] = useState<
+    Array<{
+      id: string;
+      recordingType: string;
+      downloadUrl: string | null;
+      playUrl: string | null;
+      fileSize: number | null;
+      fileType: string | null;
+      recordingStart: string | null;
+      recordingEnd: string | null;
+      status: string;
+      password: string | null;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await zoomAttendanceApi.getRecordings(session.id);
+        setRecordings(data);
+      } catch {
+        // silently handle – empty state will show
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [session.id]);
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "—";
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const formatDuration = (start: string | null, end: string | null) => {
+    if (!start || !end) return "—";
+    const ms = new Date(end).getTime() - new Date(start).getTime();
+    const mins = Math.round(ms / 60000);
+    if (mins < 60) return `${mins}m`;
+    return `${Math.floor(mins / 60)}h ${mins % 60}m`;
+  };
+
+  const formatRecordingType = (type: string) => {
+    return type
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const timeLocale = locale === "ar" ? "ar-SA" : "en-US";
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+        <div>
+          <h2 className="text-lg font-semibold text-[#1F2937]">
+            {t("sessionsPage.recordings.title")}
+          </h2>
+          <p className="text-xs text-[#6B7280] mt-0.5">{session.title}</p>
+        </div>
+        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+          <X className="w-5 h-5 text-[#6B7280]" />
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+        </div>
+      ) : recordings.length === 0 ? (
+        <div className="py-12 text-center">
+          <Film className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+          <p className="text-sm text-[#6B7280]">
+            {t("sessionsPage.recordings.noRecordings")}
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-[#E5E7EB] max-h-[400px] overflow-y-auto">
+          {recordings.map((rec) => (
+            <div key={rec.id} className="p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[10px] font-medium rounded">
+                  {formatRecordingType(rec.recordingType)}
+                </span>
+                <div className="flex items-center gap-2">
+                  {rec.playUrl && (
+                    <a
+                      href={rec.playUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors"
+                    >
+                      <Play className="w-3 h-3" />
+                      {t("sessionsPage.recordings.play")}
+                    </a>
+                  )}
+                  {rec.downloadUrl && (
+                    <a
+                      href={rec.downloadUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    >
+                      <Download className="w-3 h-3" />
+                      {t("sessionsPage.recordings.download")}
+                    </a>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+                <span>
+                  {t("sessionsPage.recordings.duration")}:{" "}
+                  {formatDuration(rec.recordingStart, rec.recordingEnd)}
+                </span>
+                <span>
+                  {t("sessionsPage.recordings.size")}:{" "}
+                  {formatFileSize(rec.fileSize)}
+                </span>
+                {rec.recordingStart && (
+                  <span>
+                    {new Date(rec.recordingStart).toLocaleTimeString(timeLocale, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center justify-end p-4 border-t border-[#E5E7EB]">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
+        >
+          {t("sessionsPage.form.cancel")}
+        </button>
+      </div>
+    </ModalOverlay>
+  );
+}
+
 // ─── Cancel Session Modal ────────────────────────────────────
 
 function CancelSessionModal({
@@ -1056,6 +1215,7 @@ function SessionCard({
   onEnd,
   onCancel,
   onAttendance,
+  onRecordings,
   onEdit,
   onDelete,
   actionLoading,
@@ -1068,6 +1228,7 @@ function SessionCard({
   onEnd: () => void;
   onCancel: () => void;
   onAttendance: () => void;
+  onRecordings: () => void;
   onEdit: () => void;
   onDelete: () => void;
   actionLoading: boolean;
@@ -1237,6 +1398,13 @@ function SessionCard({
                 aria-label={t("sessionsPage.attendance.title")}
               >
                 <ClipboardCheck className="w-4 h-4" />
+              </button>
+              <button
+                onClick={onRecordings}
+                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                aria-label={t("sessionsPage.recordings.title")}
+              >
+                <Film className="w-4 h-4" />
               </button>
               <button
                 onClick={onDelete}
@@ -1549,6 +1717,7 @@ const SessionsContent = () => {
   const [deleteSessionData, setDeleteSessionData] = useState<CourseSession | null>(null);
   const [endSessionData, setEndSessionData] = useState<CourseSession | null>(null);
   const [editSessionData, setEditSessionData] = useState<CourseSession | null>(null);
+  const [recordingsSession, setRecordingsSession] = useState<CourseSession | null>(null);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -1787,6 +1956,7 @@ const SessionsContent = () => {
               onEnd={() => handleEnd(session)}
               onCancel={() => setCancelSessionData(session)}
               onAttendance={() => setAttendanceSession(session)}
+              onRecordings={() => setRecordingsSession(session)}
               onEdit={() => setEditSessionData(session)}
               onDelete={() => handleDelete(session)}
               actionLoading={actionLoadingId === session.id}
@@ -2100,6 +2270,15 @@ const SessionsContent = () => {
           onClose={() => setEditSessionData(null)}
           onSaved={fetchData}
           t={t}
+        />
+      )}
+
+      {recordingsSession && (
+        <RecordingsModal
+          session={recordingsSession}
+          onClose={() => setRecordingsSession(null)}
+          t={t}
+          locale={locale}
         />
       )}
     </>

@@ -111,6 +111,18 @@ export interface CourseAssessmentWithSubmission {
   } | null;
 }
 
+export interface StudentAttendanceRecord {
+  sessionId: string;
+  sessionTitle: string;
+  sessionType: string;
+  scheduledAt: string;
+  sessionStatus: string;
+  status: 'present' | 'absent' | 'late' | 'excused';
+  joinedAt: string | null;
+  leftAt: string | null;
+  durationMinutes: number | null;
+}
+
 export interface StudentCourseDetail {
   course: {
     id: string;
@@ -142,6 +154,7 @@ export interface StudentCourseDetail {
     attended: number;
     percentage: number;
   };
+  attendanceRecords?: StudentAttendanceRecord[];
   assessmentSummary: {
     total: number;
     completed: number;

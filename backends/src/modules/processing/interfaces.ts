@@ -25,4 +25,5 @@ export interface WcagJobData {
   hasCaptions: boolean;
   hasTranscript: boolean;
   fileUrl: string | null;
+  mimeType?: string;
 }

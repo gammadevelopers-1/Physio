@@ -14,5 +14,9 @@ export default async function StudentSupportPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <SupportContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <SupportContent />
+    </main>
+  );
 }

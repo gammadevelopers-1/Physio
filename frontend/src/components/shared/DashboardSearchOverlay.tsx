@@ -272,6 +272,7 @@ export default function DashboardSearchOverlay({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("placeholder")}
+            aria-label={t("placeholder")}
             className="flex-1 h-14 px-3 text-base text-[#1F2937] placeholder:text-[#9CA3AF] outline-none bg-transparent"
           />
           {isSearching && (

@@ -20,7 +20,7 @@ export default async function NELCPage({
   } = await getNELCPageData(locale);
 
   return (
-    <main className="min-h-screen bg-white pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-white pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <NELCContent strapiData={nelcPage} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />

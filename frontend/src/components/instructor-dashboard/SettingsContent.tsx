@@ -415,10 +415,11 @@ const SettingsContent = () => {
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-first-name" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.firstName")}
                             </label>
                             <input
+                              id="instructor-first-name"
                               type="text"
                               value={profileData.firstName}
                               onChange={(e) =>
@@ -428,10 +429,11 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-last-name" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.lastName")}
                             </label>
                             <input
+                              id="instructor-last-name"
                               type="text"
                               value={profileData.lastName}
                               onChange={(e) =>
@@ -441,7 +443,7 @@ const SettingsContent = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-email" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.email")}
                             </label>
                             <div className="relative">
@@ -449,6 +451,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="instructor-email"
                                 type="email"
                                 value={profileData.email}
                                 readOnly
@@ -457,7 +460,7 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-phone" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.phone")}
                             </label>
                             <div className="relative">
@@ -465,6 +468,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="instructor-phone"
                                 type="tel"
                                 value={profileData.phone}
                                 onChange={(e) =>
@@ -475,7 +479,7 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-location" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.location")}
                             </label>
                             <div className="relative">
@@ -483,6 +487,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="instructor-location"
                                 type="text"
                                 value={profileData.location}
                                 onChange={(e) =>
@@ -493,7 +498,7 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-language" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.language")}
                             </label>
                             <div className="relative">
@@ -501,6 +506,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <select
+                                id="instructor-language"
                                 value={profileData.language}
                                 onChange={(e) =>
                                   setProfileData({ ...profileData, language: e.target.value })
@@ -517,10 +523,11 @@ const SettingsContent = () => {
 
                       {/* Bio */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                        <label htmlFor="instructor-bio" className="block text-sm font-medium text-[#374151] mb-1.5">
                           {t("settings.bio")}
                         </label>
                         <textarea
+                          id="instructor-bio"
                           value={profileData.bio}
                           onChange={(e) =>
                             setProfileData({ ...profileData, bio: e.target.value })
@@ -558,7 +565,7 @@ const SettingsContent = () => {
                         </h4>
                         <div className="space-y-4 max-w-md">
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-current-password" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.currentPassword")}
                             </label>
                             <div className="relative">
@@ -566,6 +573,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="instructor-current-password"
                                 type={showCurrentPassword ? "text" : "password"}
                                 placeholder="••••••••"
                                 value={currentPassword}
@@ -586,7 +594,7 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            <label htmlFor="instructor-new-password" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.newPassword")}
                             </label>
                             <div className="relative">
@@ -594,6 +602,7 @@ const SettingsContent = () => {
                                 className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
                               />
                               <input
+                                id="instructor-new-password"
                                 type={showNewPassword ? "text" : "password"}
                                 placeholder="••••••••"
                                 value={newPassword}
@@ -814,10 +823,11 @@ const SettingsContent = () => {
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="instructor-pref-theme" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settings.theme")}
                           </label>
                           <select
+                            id="instructor-pref-theme"
                             value={preferences.theme}
                             onChange={(e) =>
                               setPreferences({ ...preferences, theme: e.target.value })
@@ -830,10 +840,11 @@ const SettingsContent = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="instructor-pref-date-format" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settings.dateFormat")}
                           </label>
                           <select
+                            id="instructor-pref-date-format"
                             value={preferences.dateFormat}
                             onChange={(e) =>
                               setPreferences({ ...preferences, dateFormat: e.target.value })
@@ -846,10 +857,11 @@ const SettingsContent = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="instructor-pref-time-format" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settings.timeFormat")}
                           </label>
                           <select
+                            id="instructor-pref-time-format"
                             value={preferences.timeFormat}
                             onChange={(e) =>
                               setPreferences({ ...preferences, timeFormat: e.target.value })
@@ -861,10 +873,11 @@ const SettingsContent = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                          <label htmlFor="instructor-pref-timezone" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settings.timezone")}
                           </label>
                           <select
+                            id="instructor-pref-timezone"
                             value={preferences.timezone}
                             onChange={(e) =>
                               setPreferences({ ...preferences, timezone: e.target.value })

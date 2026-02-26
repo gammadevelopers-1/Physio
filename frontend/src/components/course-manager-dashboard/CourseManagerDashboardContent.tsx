@@ -21,6 +21,7 @@ import { useContentReview } from "@/hooks/useContentReview";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const tA = useTranslations("accessibility");
   const manager = useManagerProfile();
   const { summary, courses, instructors, loading, error, refetch, silentRefetch } =
     useCourseManagerDashboard();
@@ -185,6 +186,7 @@ const CourseManagerDashboardContent = () => {
             <button
               onClick={refetch}
               className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+              aria-label={tA("refresh")}
             >
               <RefreshCw className="w-4 h-4" />
               {t("dashboard.retry")}

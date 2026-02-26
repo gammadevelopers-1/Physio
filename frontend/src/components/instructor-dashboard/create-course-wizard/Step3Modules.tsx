@@ -89,10 +89,11 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
       <div className="border border-[#E5E7EB] rounded-lg p-4 mb-4 bg-[#F9FAFB]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-title" className="block text-sm font-medium text-[#374151] mb-1">
               {t("moduleTitle")} *
             </label>
             <input
+              id="module-title"
               type="text"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -100,10 +101,11 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
               {t("moduleTitleAr")}
             </label>
             <input
+              id="module-title-ar"
               type="text"
               dir="rtl"
               value={form.titleAr}
@@ -112,10 +114,11 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-type" className="block text-sm font-medium text-[#374151] mb-1">
               {t("moduleType")}
             </label>
             <select
+              id="module-type"
               value={form.type}
               onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
               className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
@@ -128,10 +131,11 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#374151] mb-1">
+            <label htmlFor="module-duration" className="block text-sm font-medium text-[#374151] mb-1">
               {t("moduleDuration")}
             </label>
             <input
+              id="module-duration"
               type="number"
               min={0}
               value={form.durationMinutes}

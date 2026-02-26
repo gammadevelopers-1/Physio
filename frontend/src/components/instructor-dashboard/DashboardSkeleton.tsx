@@ -6,7 +6,8 @@ const SkeletonBlock = ({ className }: { className?: string }) => (
 
 const DashboardSkeleton = () => {
   return (
-    <div className="flex-1 min-w-0">
+    <div className="flex-1 min-w-0" role="status" aria-busy="true">
+      <span className="sr-only">Loading...</span>
       {/* Title skeleton */}
       <SkeletonBlock className="h-8 w-48 mb-6" />
 

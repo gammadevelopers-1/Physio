@@ -15,7 +15,7 @@ export default async function CourseManagerSessionsPage({
   setRequestLocale(locale);
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
       <SessionsContent />
     </main>
   );

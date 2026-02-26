@@ -261,10 +261,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-title" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.courseTitle")} *
                       </label>
                       <input
+                        id="edit-course-title"
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -273,10 +274,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.courseTitleAr")}
                       </label>
                       <input
+                        id="edit-course-title-ar"
                         type="text"
                         value={titleAr}
                         onChange={(e) => setTitleAr(e.target.value)}
@@ -285,10 +287,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-description" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.description")}
                       </label>
                       <textarea
+                        id="edit-course-description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={3}
@@ -296,10 +299,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-course-description-ar" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.descriptionAr")}
                       </label>
                       <textarea
+                        id="edit-course-description-ar"
                         value={descriptionAr}
                         onChange={(e) => setDescriptionAr(e.target.value)}
                         rows={3}
@@ -364,10 +368,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     {t("createCourse.instructor")}
                   </h2>
                   <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">
+                    <label htmlFor="edit-instructor-select" className="block text-sm font-medium text-[#374151] mb-1">
                       {t("createCourse.selectInstructor")} *
                     </label>
                     <select
+                      id="edit-instructor-select"
                       value={instructorId}
                       onChange={(e) => setInstructorId(e.target.value)}
                       className="w-full max-w-md px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
@@ -396,10 +401,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-delivery-type" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.deliveryType")}
                       </label>
                       <select
+                        id="edit-delivery-type"
                         value={deliveryType}
                         onChange={(e) =>
                           setDeliveryType(
@@ -420,10 +426,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-max-enrollment" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.maxEnrollment")}
                       </label>
                       <input
+                        id="edit-max-enrollment"
                         type="number"
                         value={maxEnrollment}
                         onChange={(e) => setMaxEnrollment(e.target.value)}
@@ -433,10 +440,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-start-date" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.startDate")}
                       </label>
                       <input
+                        id="edit-start-date"
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
@@ -444,10 +452,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">
+                      <label htmlFor="edit-end-date" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.endDate")}
                       </label>
                       <input
+                        id="edit-end-date"
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}

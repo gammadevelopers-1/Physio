@@ -67,7 +67,7 @@ function SignInForm() {
       <AuthNavbar />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           {/* Auth Card Container */}
           <div

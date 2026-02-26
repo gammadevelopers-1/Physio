@@ -20,7 +20,7 @@ export default async function FAQPage({
   } = await getFAQPageData(locale);
 
   return (
-    <main className="min-h-screen bg-[var(--surface-intense)] pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--surface-intense)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
 
       <FAQContent strapiData={faqPage} />

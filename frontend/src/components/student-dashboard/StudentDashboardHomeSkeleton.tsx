@@ -5,7 +5,8 @@ const SkeletonBlock = ({ className }: { className?: string }) => (
 );
 
 const StudentDashboardHomeSkeleton = () => (
-  <>
+  <div role="status" aria-busy="true">
+    <span className="sr-only">Loading...</span>
     {/* 4 KPI stat cards */}
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
@@ -42,7 +43,7 @@ const StudentDashboardHomeSkeleton = () => (
         ))}
       </div>
     </div>
-  </>
+  </div>
 );
 
 export default StudentDashboardHomeSkeleton;

@@ -14,5 +14,9 @@ export default async function StudentCoursesPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <MyCoursesContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <MyCoursesContent />
+    </main>
+  );
 }

@@ -93,6 +93,7 @@ const CreateCourseContent = () => {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("courseManagerDashboard");
+  const tA = useTranslations("accessibility");
   const isRTL = locale === "ar";
 
   // Wizard step
@@ -294,10 +295,11 @@ const CreateCourseContent = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-title" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.courseTitle")} *
                         </label>
                         <input
+                          id="course-title"
                           type="text"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
@@ -307,10 +309,11 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-title-ar" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.courseTitleAr")}
                         </label>
                         <input
+                          id="course-title-ar"
                           type="text"
                           value={titleAr}
                           onChange={(e) => setTitleAr(e.target.value)}
@@ -322,10 +325,11 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-description" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.description")}
                         </label>
                         <textarea
+                          id="course-description"
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
                           placeholder={t(
@@ -336,10 +340,11 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="course-description-ar" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.descriptionAr")}
                         </label>
                         <textarea
+                          id="course-description-ar"
                           value={descriptionAr}
                           onChange={(e) => setDescriptionAr(e.target.value)}
                           placeholder={t(
@@ -351,10 +356,11 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="delivery-type" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.deliveryType")}
                         </label>
                         <select
+                          id="delivery-type"
                           value={deliveryType}
                           onChange={(e) =>
                             setDeliveryType(
@@ -406,6 +412,7 @@ const CreateCourseContent = () => {
                           type="button"
                           onClick={removeThumbnail}
                           className="absolute top-2 right-2 p-1 bg-white/90 rounded-full text-[#6B7280] hover:bg-white hover:text-red-500 transition-colors"
+                          aria-label={tA("removeImage")}
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -439,10 +446,11 @@ const CreateCourseContent = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.startDate")}
                         </label>
                         <input
+                          id="start-date"
                           type="date"
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
@@ -450,10 +458,11 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.endDate")}
                         </label>
                         <input
+                          id="end-date"
                           type="date"
                           value={endDate}
                           onChange={(e) => setEndDate(e.target.value)}
@@ -461,10 +470,11 @@ const CreateCourseContent = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="max-enrollment" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.maxEnrollment")}
                         </label>
                         <input
+                          id="max-enrollment"
                           type="number"
                           value={maxEnrollment}
                           onChange={(e) => setMaxEnrollment(e.target.value)}
@@ -484,10 +494,11 @@ const CreateCourseContent = () => {
                           )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">
+                        <label htmlFor="minimum-hours" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.minimumHours")}
                         </label>
                         <input
+                          id="minimum-hours"
                           type="number"
                           value={minimumHours}
                           onChange={(e) => setMinimumHours(e.target.value)}
@@ -605,10 +616,11 @@ const CreateCourseContent = () => {
                     {t("createCourse.instructor")}
                   </h2>
                   <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">
+                    <label htmlFor="instructor-select" className="block text-sm font-medium text-[#374151] mb-1">
                       {t("createCourse.selectInstructor")} *
                     </label>
                     <select
+                      id="instructor-select"
                       value={instructorId}
                       onChange={(e) => setInstructorId(e.target.value)}
                       className={`max-w-md ${selectClass}`}

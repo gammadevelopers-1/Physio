@@ -833,6 +833,12 @@ export default function VideoPlayer({
               onClick={handleSeekBarClick}
               onMouseMove={handleSeekBarHover}
               onMouseLeave={handleSeekBarLeave}
+              role="slider"
+              aria-valuenow={Math.round(playedPercent)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={t("seekBar")}
+              tabIndex={0}
             >
               {/* Buffered */}
               <div
@@ -912,7 +918,7 @@ export default function VideoPlayer({
               <button
                 onClick={togglePlayPause}
                 className="p-1.5 text-white hover:text-[#D4A520] transition-colors"
-                title={isPlaying ? "Pause" : "Play"}
+                aria-label={isPlaying ? t("pauseButton") : t("playButton")}
               >
                 {isPlaying ? (
                   <Pause className="w-5 h-5" />
@@ -938,7 +944,7 @@ export default function VideoPlayer({
                 <button
                   onClick={toggleMute}
                   className="p-1.5 text-white hover:text-[#D4A520] transition-colors"
-                  title={isMuted ? t("unmute") : t("mute")}
+                  aria-label={isMuted ? t("unmuteButton") : t("muteButton")}
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="w-5 h-5" />
@@ -957,6 +963,12 @@ export default function VideoPlayer({
                     ref={volumeBarRef}
                     className="relative w-full h-1 bg-white/30 rounded-full cursor-pointer"
                     onClick={handleVolumeChange}
+                    role="slider"
+                    aria-valuenow={Math.round((isMuted ? 0 : volume) * 100)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={t("volumeSlider")}
+                    tabIndex={0}
                   >
                     <div
                       className="absolute top-0 h-full bg-white rounded-full"
@@ -978,7 +990,9 @@ export default function VideoPlayer({
                     setShowQualityMenu(false);
                   }}
                   className="px-2 py-1 text-white text-xs font-medium hover:text-[#D4A520] transition-colors rounded"
-                  title={t("playbackSpeed")}
+                  aria-label={t("speedButton")}
+                  aria-haspopup="true"
+                  aria-expanded={showSpeedMenu}
                 >
                   {speed}x
                 </button>
@@ -989,11 +1003,13 @@ export default function VideoPlayer({
                       isRTL ? "left-0" : "right-0"
                     } bg-black/95 rounded-lg border border-white/10 py-1 min-w-[100px] z-50`}
                     onClick={(e) => e.stopPropagation()}
+                    role="menu"
                   >
                     {PLAYBACK_SPEEDS.map((s) => (
                       <button
                         key={s}
                         onClick={() => selectSpeed(s)}
+                        role="menuitem"
                         className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${
                           s === speed
                             ? "text-[#D4A520] bg-white/10"
@@ -1016,7 +1032,7 @@ export default function VideoPlayer({
                       ? "text-[#002D87] bg-white/90"
                       : "text-white hover:text-[#D4A520]"
                   }`}
-                  title={t("toggleCaptions")}
+                  aria-label={captionsOn ? t("captionsOn") : t("captionsOff")}
                 >
                   <Subtitles className="w-5 h-5" />
                 </button>
@@ -1032,7 +1048,9 @@ export default function VideoPlayer({
                       setShowSpeedMenu(false);
                     }}
                     className="p-1.5 text-white hover:text-[#D4A520] transition-colors flex items-center gap-1"
-                    title={t("quality")}
+                    aria-label={t("qualityButton")}
+                    aria-haspopup="true"
+                    aria-expanded={showQualityMenu}
                   >
                     <Settings className="w-5 h-5" />
                     <span className="text-[10px] hidden sm:inline">
@@ -1046,6 +1064,7 @@ export default function VideoPlayer({
                         isRTL ? "left-0" : "right-0"
                       } bg-black/95 rounded-lg border border-white/10 py-1 min-w-[140px] z-50`}
                       onClick={(e) => e.stopPropagation()}
+                      role="menu"
                     >
                       {[...material.variants]
                         .sort((a, b) => (b.width || 0) - (a.width || 0))
@@ -1053,6 +1072,7 @@ export default function VideoPlayer({
                           <button
                             key={variant.id}
                             onClick={() => switchQuality(variant)}
+                            role="menuitem"
                             className={`w-full text-start px-3 py-1.5 text-sm transition-colors ${
                               selectedVariant?.id === variant.id
                                 ? "text-[#D4A520] bg-white/10"
@@ -1076,7 +1096,7 @@ export default function VideoPlayer({
                       ? "text-[#D4A520]"
                       : "text-white hover:text-[#D4A520]"
                   }`}
-                  title={t("pictureInPicture")}
+                  aria-label={t("pipButton")}
                 >
                   <PictureInPicture2 className="w-5 h-5" />
                 </button>
@@ -1086,7 +1106,7 @@ export default function VideoPlayer({
               <button
                 onClick={toggleFullscreen}
                 className="p-1.5 text-white hover:text-[#D4A520] transition-colors"
-                title={isFullscreen ? t("exitFullscreen") : t("fullscreen")}
+                aria-label={isFullscreen ? t("exitFullscreenButton") : t("fullscreenButton")}
               >
                 {isFullscreen ? (
                   <Minimize2 className="w-5 h-5" />
@@ -1110,6 +1130,7 @@ export default function VideoPlayer({
           <button
             onClick={handleToggleTranscript}
             className="inline-flex items-center gap-1.5 text-sm text-[#002D87] hover:underline"
+            aria-label={t("transcriptToggle")}
           >
             {loadingTranscript ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />

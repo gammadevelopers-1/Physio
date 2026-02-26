@@ -20,6 +20,7 @@ export function ClientProviders({ children }: ClientProvidersProps) {
           duration: 4000,
         }}
       />
+      <div aria-live="polite" aria-atomic="true" className="sr-only" id="aria-live-region" />
     </AuthProvider>
   );
 }

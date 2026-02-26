@@ -14,5 +14,9 @@ export default async function StudentInviteFriendsPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <InviteFriendsContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <InviteFriendsContent />
+    </main>
+  );
 }

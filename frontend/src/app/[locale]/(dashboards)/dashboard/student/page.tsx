@@ -15,7 +15,7 @@ export default async function StudentDashboardHomePage({
   setRequestLocale(locale);
 
   return (
-    <main className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
       <DashboardHomeContent />
     </main>
   );

@@ -49,7 +49,7 @@ export default function CheckoutPage() {
       <Navbar />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"}>
+      <main id="main-content" className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"}>
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm mb-6">
           <Link href="/" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">

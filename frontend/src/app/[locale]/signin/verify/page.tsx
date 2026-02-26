@@ -197,7 +197,7 @@ function VerifyForm() {
     <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
       <AuthNavbar />
 
-      <main className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           <div
             className="bg-white rounded-[24px] overflow-hidden w-full max-w-[520px]"

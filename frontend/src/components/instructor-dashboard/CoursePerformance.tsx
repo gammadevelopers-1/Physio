@@ -21,6 +21,7 @@ const CoursePerformance = ({
   courses,
 }: CoursePerformanceProps) => {
   const t = useTranslations("instructorDashboard");
+  const tA = useTranslations("accessibility");
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.value || "all");
   const exportRef = useRef<HTMLDivElement>(null);
@@ -152,6 +153,9 @@ const CoursePerformance = ({
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              aria-label={tA("exportOptions")}
+              aria-haspopup="true"
+              aria-expanded={showExportDropdown}
             >
               <Download className="w-4 h-4" />
               {t("performance.export")}
@@ -160,11 +164,12 @@ const CoursePerformance = ({
 
             {/* Export Options Dropdown */}
             {showExportDropdown && (
-              <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10">
+              <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
                 <div className="py-1">
                   <button
                     onClick={handleExportCSV}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    role="menuitem"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-[#22C55E]" />
                     {t("performance.exportCSV")}
@@ -172,6 +177,7 @@ const CoursePerformance = ({
                   <button
                     onClick={handleExportPDF}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    role="menuitem"
                   >
                     <FileText className="w-4 h-4 text-[#EF4444]" />
                     {t("performance.exportPDF")}

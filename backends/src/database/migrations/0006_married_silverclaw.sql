@@ -1,0 +1,1 @@
+ALTER TABLE "course_materials" ADD COLUMN "wcag_details" varchar(2000);

@@ -156,6 +156,7 @@ function MaterialRenderer({
 const CourseLearningContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
+  const tA = useTranslations("accessibility");
   const isRTL = locale === "ar";
   const params = useParams();
   const courseId = params.id as string;
@@ -246,6 +247,7 @@ const CourseLearningContent = () => {
             <Link
               href={`/${locale}/dashboard/student/courses/${courseId}`}
               className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              aria-label={tA("back")}
             >
               <BackIcon className="w-5 h-5 text-[#4B5563]" />
             </Link>
@@ -274,6 +276,7 @@ const CourseLearningContent = () => {
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors lg:hidden"
+              aria-label={tA("toggleModules")}
             >
               <BookOpen className="w-5 h-5 text-[#4B5563]" />
             </button>
@@ -385,6 +388,7 @@ const CourseLearningContent = () => {
 
         {/* Main Content Area */}
         <main
+          id="main-content"
           className={`flex-1 ${sidebarOpen ? "hidden lg:block" : "block"}`}
           style={{ minHeight: "calc(100vh - 57px)" }}
         >
@@ -502,6 +506,7 @@ const CourseLearningContent = () => {
                     onClick={goToPrevModule}
                     disabled={currentIndex === 0}
                     className="p-2.5 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+                    aria-label={tA("previousModule")}
                   >
                     {isRTL ? (
                       <ArrowRight className="w-4 h-4 text-[#4B5563]" />
@@ -513,6 +518,7 @@ const CourseLearningContent = () => {
                     onClick={goToNextModule}
                     disabled={currentIndex === sortedModules.length - 1}
                     className="p-2.5 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+                    aria-label={tA("nextModule")}
                   >
                     {isRTL ? (
                       <ArrowLeft className="w-4 h-4 text-[#4B5563]" />

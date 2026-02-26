@@ -495,6 +495,7 @@ export interface CourseMaterialResponse {
   previousVersionId: string | null;
   status: MaterialStatus;
   wcagStatus: string;
+  wcagDetails: string | null;
   captionsUrl: string | null;
   transcriptUrl: string | null;
   processingStep: string | null;

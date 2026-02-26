@@ -33,6 +33,7 @@ const ContentReviewQueue = ({
   onPreview,
 }: ContentReviewQueueProps) => {
   const t = useTranslations("courseManagerDashboard");
+  const tA = useTranslations("accessibility");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -119,6 +120,7 @@ const ContentReviewQueue = ({
                 <button
                   onClick={() => onPreview(item.id)}
                   className="py-1.5 px-2 bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium rounded-md hover:bg-[#E5E7EB] transition-colors"
+                  aria-label={tA("preview")}
                 >
                   <Eye className="w-3.5 h-3.5" />
                 </button>

@@ -110,6 +110,7 @@ export class TranscodingProcessor extends WorkerHost {
           hasCaptions: false,
           hasTranscript: false,
           fileUrl,
+          mimeType: job.data.originalMimeType,
         });
       }
     } catch (error) {

@@ -22,7 +22,7 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
   } = await getBlogsPageData(locale);
 
   return (
-    <main className="min-h-screen bg-white">
+    <main id="main-content" className="min-h-screen bg-white">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <BlogsPageContent
         blogPosts={blogPosts}

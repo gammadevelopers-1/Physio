@@ -6,7 +6,7 @@ import { CourseDetailContent } from "@/components/courses";
 
 export default function CourseDetailPage() {
   return (
-    <main className="min-h-screen bg-white">
+    <main id="main-content" className="min-h-screen bg-white">
       <Navbar />
       <CourseDetailContent />
       <Footer />

@@ -14,5 +14,9 @@ export default async function StudentCalendarPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <CalendarContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <CalendarContent />
+    </main>
+  );
 }

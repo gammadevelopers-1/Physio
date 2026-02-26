@@ -21,7 +21,7 @@ export default async function BecomeTrainerPage({
   } = await getBecomeTrainerPageData(locale);
 
   return (
-    <main className="min-h-screen bg-[#EEF3F7]">
+    <main id="main-content" className="min-h-screen bg-[#EEF3F7]">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <BecomeTrainerForm
         pageTitle={data?.pageTitle}

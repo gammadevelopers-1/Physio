@@ -198,11 +198,13 @@ const MyCoursesContent = () => {
                 </h2>
 
                 {/* Tabs */}
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap gap-2 mb-6" role="tablist">
                   {tabs.map((tab) => (
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key)}
+                      role="tab"
+                      aria-selected={activeTab === tab.key}
                       className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                         activeTab === tab.key
                           ? "bg-[#1F2937] text-white"

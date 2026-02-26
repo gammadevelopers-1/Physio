@@ -36,7 +36,7 @@ export class ProcessingService {
       await this.dispatchVideoProcessing(materialId, fileUrl, courseId, mimeType);
     } else {
       // Non-video: skip directly to WCAG check
-      await this.dispatchWcagOnly(materialId, materialType, fileUrl, courseId);
+      await this.dispatchWcagOnly(materialId, materialType, fileUrl, courseId, mimeType);
     }
   }
 
@@ -80,7 +80,7 @@ export class ProcessingService {
     } else {
       // No processing tools available — go straight to WCAG check
       this.logger.warn('Neither FFmpeg nor OpenAI configured; skipping to WCAG check');
-      await this.dispatchWcagOnly(materialId, 'video', fileUrl, courseId);
+      await this.dispatchWcagOnly(materialId, 'video', fileUrl, courseId, mimeType);
     }
   }
 
@@ -89,6 +89,7 @@ export class ProcessingService {
     materialType: string,
     fileUrl: string | null,
     courseId: string,
+    mimeType?: string,
   ): Promise<void> {
     await this.updateProcessingStep(materialId, PROCESSING_STEPS.WCAG_CHECK);
     await this.wcagQueue.add(
@@ -101,6 +102,7 @@ export class ProcessingService {
         hasCaptions: false,
         hasTranscript: false,
         fileUrl,
+        mimeType,
       } as WcagJobData,
       {
         attempts: this.configService.get<number>('processing.retries.wcag') || 2,

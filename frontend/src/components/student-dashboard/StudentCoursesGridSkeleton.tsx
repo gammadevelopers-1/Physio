@@ -5,7 +5,8 @@ const SkeletonBlock = ({ className }: { className?: string }) => (
 );
 
 const StudentCoursesGridSkeleton = ({ count = 4 }: { count?: number }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" role="status" aria-busy="true">
+    <span className="sr-only">Loading...</span>
     {Array.from({ length: count }).map((_, i) => (
       <div
         key={i}

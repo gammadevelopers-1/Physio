@@ -123,7 +123,7 @@ function SignUpForm() {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
         <AuthNavbar />
-        <main className="flex-1 bg-[#EEF3F7] flex items-center justify-center px-4 py-10">
+        <main id="main-content" className="flex-1 bg-[#EEF3F7] flex items-center justify-center px-4 py-10">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-gray-900 mb-2">
@@ -145,7 +145,7 @@ function SignUpForm() {
       <AuthNavbar />
 
       {/* Main Content */}
-      <main className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
+      <main id="main-content" className="flex-1 bg-[#EEF3F7] px-4 py-10 md:px-16 md:py-20">
         <div className="flex items-center justify-center w-full">
           {/* Auth Card Container */}
           <div

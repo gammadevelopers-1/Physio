@@ -14,5 +14,9 @@ export default async function StudentFavouritesPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return <FavouritesContent />;
+  return (
+    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+      <FavouritesContent />
+    </main>
+  );
 }

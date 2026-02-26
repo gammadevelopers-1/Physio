@@ -70,4 +70,4 @@ export const users = pgTable('users', {
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'MANAGER' | 'ADMIN' | 'FINANCE' | 'SUPPORT' | 'SUPER_ADMIN';
+export type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'TEACHING_ASSISTANT' | 'MANAGER' | 'ADMIN' | 'FINANCE' | 'SUPPORT' | 'SUPER_ADMIN';

@@ -6,6 +6,7 @@ import {
   IsIn,
   IsUUID,
   IsDateString,
+  IsBoolean,
   MaxLength,
   Min,
   ValidatorConstraint,
@@ -74,4 +75,8 @@ export class CreateSessionDto {
   @IsOptional()
   @IsString()
   venueAddress?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  recordingEnabled?: boolean;
 }

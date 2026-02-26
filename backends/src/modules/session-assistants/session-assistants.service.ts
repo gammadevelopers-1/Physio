@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, count, ne, notInArray } from 'drizzle-orm';
+import { eq, and, count, notInArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessionAssistants,
@@ -12,12 +12,14 @@ import {
   courses,
   enrollments,
   users,
+  userRoles,
+  roles,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
 
-// NELC allocation rules
+// NELC allocation rules (for reference — auto-allocation is disabled per client request)
 const ASSISTANT_THRESHOLDS = {
   LOW: 25,   // ≤25: no assistant needed
   MID: 35,   // 26-35: 1 assistant
@@ -43,31 +45,23 @@ export class SessionAssistantsService {
   }
 
   /**
-   * Check and auto-allocate assistants for a session based on enrollment count.
+   * Check TA requirements for a session based on enrollment count.
+   * Auto-allocation is disabled per client request.
+   * Returns the deficit so the UI can display a warning.
    */
   async checkAndAllocate(sessionId: string): Promise<void> {
-    // 1. Get session with course and instructor details
     const [session] = await db
       .select({
         id: sessions.id,
-        title: sessions.title,
         courseId: sessions.courseId,
-        instructorId: sessions.instructorId,
-        scheduledAt: sessions.scheduledAt,
-        durationMinutes: sessions.durationMinutes,
-        courseName: courses.title,
-        instructorFirstName: users.firstName,
-        instructorLastName: users.lastName,
       })
       .from(sessions)
-      .innerJoin(courses, eq(sessions.courseId, courses.id))
-      .innerJoin(users, eq(sessions.instructorId, users.id))
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
     if (!session) return;
 
-    // 2. Count active enrollments for the course
+    // Count active enrollments for the course
     const [enrollmentCount] = await db
       .select({ count: count() })
       .from(enrollments)
@@ -78,100 +72,29 @@ export class SessionAssistantsService {
         ),
       );
     const enrolledCount = Number(enrollmentCount?.count || 0);
-
-    // 3. Calculate required assistants
     const required = this.calculateRequiredAssistants(enrolledCount);
+
     if (required === 0) return;
 
-    // 4. Count current assistants for this session
+    // Count current assistants for this session
     const [currentCount] = await db
       .select({ count: count() })
       .from(sessionAssistants)
       .where(eq(sessionAssistants.sessionId, sessionId));
     const currentAssistants = Number(currentCount?.count || 0);
-
     const deficit = required - currentAssistants;
-    if (deficit <= 0) return;
 
-    // 5. Find available instructors (not the session's main instructor, not already assigned)
-    const assignedUserIds = await db
-      .select({ userId: sessionAssistants.userId })
-      .from(sessionAssistants)
-      .where(eq(sessionAssistants.sessionId, sessionId));
-
-    const excludeIds = [
-      session.instructorId,
-      ...assignedUserIds.map((a) => a.userId),
-    ];
-
-    const availableInstructors = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        firstName: users.firstName,
-        lastName: users.lastName,
-      })
-      .from(users)
-      .where(
-        and(
-          eq(users.activeRole, 'INSTRUCTOR'),
-          eq(users.isActive, true),
-          excludeIds.length > 0
-            ? notInArray(users.id, excludeIds)
-            : undefined,
-        ),
-      )
-      .limit(deficit);
-
-    const instructorName = `${session.instructorFirstName} ${session.instructorLastName}`;
-
-    // 6. Auto-assign available instructors
-    for (const instructor of availableInstructors) {
-      await db.insert(sessionAssistants).values({
-        sessionId,
-        userId: instructor.id,
-        role: 'assistant',
-        isAutoAssigned: true,
-      });
-
-      await this.auditService.log({
-        eventType: NELC_EVENT_TYPE.ASSISTANT_ALLOCATED,
-        entityType: 'session',
-        entityId: sessionId,
-        userId: instructor.id,
-        metadata: {
-          assistantId: instructor.id,
-          sessionId,
-          reason: 'auto',
-          enrolledCount,
-          required,
-        },
-      });
-
-      // Send TA assignment email notification
-      const taName = `${instructor.firstName} ${instructor.lastName}`;
-      this.emailService
-        .sendTaAssignment(instructor.email, {
-          recipientName: taName,
-          sessionTitle: session.title,
-          courseName: session.courseName,
-          scheduledAt: session.scheduledAt.toISOString(),
-          durationMinutes: session.durationMinutes,
-          instructorName,
-          isAutoAssigned: true,
-        })
-        .catch((err) =>
-          this.logger.warn(`Failed to send TA email to ${instructor.email}`, err),
-        );
-
-      this.logger.log(
-        `Auto-assigned instructor ${instructor.id} to session ${sessionId}`,
+    if (deficit > 0) {
+      this.logger.warn(
+        `Session ${sessionId} needs ${deficit} more TA(s) (${enrolledCount} enrolled, ${required} required, ${currentAssistants} assigned). ` +
+          'Auto-allocation is disabled — please assign TAs manually.',
       );
     }
   }
 
   /**
-   * Manually assign an assistant to a session.
+   * Manually assign a Teaching Assistant to a session.
+   * Only users with the TEACHING_ASSISTANT role can be assigned.
    */
   async manualAssign(
     sessionId: string,
@@ -181,13 +104,39 @@ export class SessionAssistantsService {
   ) {
     // Verify session exists
     const [session] = await db
-      .select({ id: sessions.id })
+      .select({
+        id: sessions.id,
+        title: sessions.title,
+        courseId: sessions.courseId,
+        instructorId: sessions.instructorId,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+      })
       .from(sessions)
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
     if (!session) {
       throw new NotFoundException('Session not found');
+    }
+
+    // Verify user has TEACHING_ASSISTANT role
+    const [taRole] = await db
+      .select({ roleId: roles.id })
+      .from(userRoles)
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(
+        and(
+          eq(userRoles.userId, userId),
+          eq(roles.name, 'TEACHING_ASSISTANT'),
+        ),
+      )
+      .limit(1);
+
+    if (!taRole) {
+      throw new BadRequestException(
+        'User does not have the Teaching Assistant role. Only users with the TEACHING_ASSISTANT role can be assigned as TAs.',
+      );
     }
 
     // Check not already assigned
@@ -233,19 +182,16 @@ export class SessionAssistantsService {
 
     // Send TA assignment email
     try {
-      const [sessionData] = await db
-        .select({
-          title: sessions.title,
-          scheduledAt: sessions.scheduledAt,
-          durationMinutes: sessions.durationMinutes,
-          courseName: courses.title,
-          instructorFirstName: users.firstName,
-          instructorLastName: users.lastName,
-        })
-        .from(sessions)
-        .innerJoin(courses, eq(sessions.courseId, courses.id))
-        .innerJoin(users, eq(sessions.instructorId, users.id))
-        .where(eq(sessions.id, sessionId))
+      const [courseData] = await db
+        .select({ courseName: courses.title })
+        .from(courses)
+        .where(eq(courses.id, session.courseId))
+        .limit(1);
+
+      const [instructorData] = await db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, session.instructorId))
         .limit(1);
 
       const [taUser] = await db
@@ -254,15 +200,15 @@ export class SessionAssistantsService {
         .where(eq(users.id, userId))
         .limit(1);
 
-      if (sessionData && taUser) {
+      if (courseData && instructorData && taUser) {
         this.emailService
           .sendTaAssignment(taUser.email, {
             recipientName: `${taUser.firstName} ${taUser.lastName}`,
-            sessionTitle: sessionData.title,
-            courseName: sessionData.courseName,
-            scheduledAt: sessionData.scheduledAt.toISOString(),
-            durationMinutes: sessionData.durationMinutes,
-            instructorName: `${sessionData.instructorFirstName} ${sessionData.instructorLastName}`,
+            sessionTitle: session.title,
+            courseName: courseData.courseName,
+            scheduledAt: session.scheduledAt.toISOString(),
+            durationMinutes: session.durationMinutes,
+            instructorName: `${instructorData.firstName} ${instructorData.lastName}`,
             isAutoAssigned: false,
           })
           .catch((err) =>
@@ -326,5 +272,29 @@ export class SessionAssistantsService {
       .where(eq(sessionAssistants.sessionId, sessionId));
 
     return data;
+  }
+
+  /**
+   * List all users with the TEACHING_ASSISTANT role (for assignment dropdown).
+   */
+  async listAvailableTAs() {
+    const tas = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(
+        and(
+          eq(roles.name, 'TEACHING_ASSISTANT'),
+          eq(users.isActive, true),
+        ),
+      );
+
+    return tas;
   }
 }

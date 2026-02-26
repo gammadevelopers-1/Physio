@@ -70,6 +70,7 @@ export class SessionsService {
           topic: dto.title,
           startTime: new Date(dto.scheduledAt),
           durationMinutes: dto.durationMinutes || 60,
+          recordingEnabled: dto.recordingEnabled !== false,
         });
         zoomLink = zoomMeeting.joinUrl;
         meetingId = zoomMeeting.meetingId;
@@ -111,6 +112,7 @@ export class SessionsService {
           meetingId,
           roomName: dto.roomName,
           venueAddress: dto.venueAddress,
+          recordingEnabled: dto.recordingEnabled !== false,
         })
         .returning();
 
@@ -160,6 +162,7 @@ export class SessionsService {
         meetingId,
         roomName: dto.roomName,
         venueAddress: dto.venueAddress,
+        recordingEnabled: dto.recordingEnabled !== false,
       })
       .returning();
 

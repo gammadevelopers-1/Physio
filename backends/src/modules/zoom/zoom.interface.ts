@@ -10,6 +10,7 @@ export interface CreateZoomMeetingParams {
   topic: string;
   startTime: Date;
   durationMinutes: number;
+  recordingEnabled?: boolean;
 }
 
 export interface CreateZoomMeetingResult {

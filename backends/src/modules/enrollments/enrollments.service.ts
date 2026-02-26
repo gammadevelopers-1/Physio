@@ -465,6 +465,19 @@ export class EnrollmentsService {
   ) {
     const existing = await this.verifyAttendanceAccess(attendanceId, user);
 
+    // Attendance locking: reject updates once session is completed or cancelled
+    const [session] = await db
+      .select({ status: sessions.status })
+      .from(sessions)
+      .where(eq(sessions.id, existing.sessionId))
+      .limit(1);
+
+    if (session && (session.status === 'completed' || session.status === 'cancelled')) {
+      throw new BadRequestException(
+        'Attendance is locked. Cannot modify attendance after the session is completed or cancelled.',
+      );
+    }
+
     const updateData: Record<string, unknown> = {};
     if (dto.status !== undefined) updateData.status = dto.status;
     if (dto.joinedAt !== undefined) updateData.joinedAt = new Date(dto.joinedAt);

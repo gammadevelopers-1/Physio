@@ -47,7 +47,7 @@ export class SessionsController {
   /**
    * GET /sessions — List sessions with filters
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
@@ -125,7 +125,7 @@ export class SessionsController {
   /**
    * GET /sessions/:id — Session detail
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id')
   async findOne(
     @Param('id') id: string,
@@ -255,7 +255,7 @@ export class SessionsController {
    * GET /sessions/:id/attendance-logs — Get granular join/leave logs for a session
    * Includes unmatched Zoom participants (studentId IS NULL)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get(':id/attendance-logs')
   async getAttendanceLogs(@Param('id') id: string) {
     return this.sessionsService.getAttendanceLogs(id);
@@ -264,7 +264,7 @@ export class SessionsController {
   /**
    * GET /sessions/:id/recordings — Get session recordings (item #22)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole, 'STUDENT' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole, 'STUDENT' as UserRole)
   @Get(':id/recordings')
   async getRecordings(@Param('id') id: string) {
     return this.sessionsService.getRecordings(id);

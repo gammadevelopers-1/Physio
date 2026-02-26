@@ -24,16 +24,17 @@ export class SessionAssistantsController {
   /**
    * GET /sessions/:sessionId/assistants — List assigned assistants
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get()
   async getAssistants(@Param('sessionId') sessionId: string) {
     return this.assistantsService.getAssistants(sessionId);
   }
 
   /**
-   * POST /sessions/:sessionId/assistants — Manually assign an assistant
+   * POST /sessions/:sessionId/assistants — Manually assign a TA
+   * Only users with the TEACHING_ASSISTANT role can be assigned.
    */
-  @Roles('ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async assignAssistant(
@@ -52,12 +53,21 @@ export class SessionAssistantsController {
   /**
    * DELETE /sessions/:sessionId/assistants/:userId — Remove an assistant
    */
-  @Roles('ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Delete(':userId')
   async removeAssistant(
     @Param('sessionId') sessionId: string,
     @Param('userId') userId: string,
   ) {
     return this.assistantsService.remove(sessionId, userId);
+  }
+
+  /**
+   * GET /sessions/:sessionId/assistants/available — List users with TEACHING_ASSISTANT role
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('available')
+  async listAvailableTAs() {
+    return this.assistantsService.listAvailableTAs();
   }
 }

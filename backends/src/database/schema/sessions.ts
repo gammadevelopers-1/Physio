@@ -5,6 +5,7 @@ import {
   text,
   integer,
   timestamp,
+  boolean,
   index,
   check,
 } from 'drizzle-orm/pg-core';
@@ -35,6 +36,7 @@ export const sessions = pgTable(
     actualEndedAt: timestamp('actual_ended_at'),
     cancelReason: text('cancel_reason'),
     reminderSentAt: timestamp('reminder_sent_at'),
+    recordingEnabled: boolean('recording_enabled').notNull().default(true),
     zoomSyncedAt: timestamp('zoom_synced_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

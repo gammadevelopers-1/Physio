@@ -169,7 +169,7 @@ export class ZoomService implements IZoomService, OnModuleInit {
         join_before_host: true,
         waiting_room: false,
         mute_upon_entry: true,
-        auto_recording: 'cloud', // item #22: enable cloud recording
+        auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
       },
     };
 

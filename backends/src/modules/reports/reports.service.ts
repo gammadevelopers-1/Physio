@@ -133,7 +133,11 @@ export class ReportsService {
       'Session Date',
       'Session',
       'Status',
+      'Join Time',
+      'Leave Time',
+      'Total Minutes',
       'Total Attendance %',
+      'Completion Status',
     ];
 
     if (courseIds.length === 0) {
@@ -166,6 +170,9 @@ export class ReportsService {
         sessionDate: sessions.scheduledAt,
         sessionTitle: sessions.title,
         status: attendance.status,
+        joinedAt: attendance.joinedAt,
+        leftAt: attendance.leftAt,
+        durationMinutes: attendance.durationMinutes,
       })
       .from(attendance)
       .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
@@ -211,15 +218,28 @@ export class ReportsService {
       attendancePctMap.set(`${ac.studentId}:${ac.courseId}`, `${pct}%`);
     }
 
-    // Build rows
-    const rows = data.map((row) => [
-      `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
-      row.studentEmail || '',
-      this.formatDate(row.sessionDate),
-      row.sessionTitle || '',
-      row.status || '',
-      attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%',
-    ]);
+    // Build rows with enhanced attendance data
+    const rows = data.map((row) => {
+      const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
+      const pctNum = parseFloat(pct);
+      const completionStatus =
+        row.status === 'present' || row.status === 'late'
+          ? pctNum >= 75 ? 'Completed' : 'In Progress'
+          : 'Incomplete';
+
+      return [
+        `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
+        row.studentEmail || '',
+        this.formatDate(row.sessionDate),
+        row.sessionTitle || '',
+        row.status || '',
+        row.joinedAt ? this.formatDateTime(row.joinedAt) : '',
+        row.leftAt ? this.formatDateTime(row.leftAt) : '',
+        row.durationMinutes != null ? String(row.durationMinutes) : '',
+        pct,
+        completionStatus,
+      ];
+    });
 
     return this.formatReport('Attendance Report', headers, rows, format, metadata);
   }
@@ -1667,6 +1687,12 @@ export class ReportsService {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
     return `${d.toISOString().split('T')[0]} ${d.toTimeString().split(' ')[0].slice(0, 5)}`;
+  }
+
+  private formatDateTime(date: Date | string | null | undefined): string {
+    if (!date) return '';
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toISOString().replace('T', ' ').slice(0, 19);
   }
 
   private formatTimestamp(date: Date): string {

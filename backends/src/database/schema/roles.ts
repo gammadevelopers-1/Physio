@@ -76,6 +76,7 @@ export type NewUserRoleAssignment = typeof userRoles.$inferInsert;
 export const ROLE_NAMES = {
   STUDENT: 'STUDENT',
   INSTRUCTOR: 'INSTRUCTOR',
+  TEACHING_ASSISTANT: 'TEACHING_ASSISTANT',
   MANAGER: 'MANAGER',
   ADMIN: 'ADMIN',
   FINANCE: 'FINANCE',

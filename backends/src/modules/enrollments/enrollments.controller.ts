@@ -44,7 +44,7 @@ export class EnrollmentsController {
   /**
    * GET /courses/:id/enrollments — List students enrolled in a course
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('courses/:id/enrollments')
   async getCourseEnrollments(
     @Param('id') courseId: string,
@@ -58,7 +58,7 @@ export class EnrollmentsController {
   /**
    * GET /sessions/:id/attendance — List attendance for a session
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get('sessions/:id/attendance')
   async getSessionAttendance(
     @Param('id') sessionId: string,

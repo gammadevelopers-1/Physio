@@ -268,7 +268,7 @@ export class WcagService {
         let slideCount = 0;
         try {
           const entries = zip.getEntries();
-          slideCount = entries.filter(e => e.entryName.match(/^ppt\/slides\/slide\d+\.xml$/)).length;
+          slideCount = entries.filter((e: { entryName: string }) => e.entryName.match(/^ppt\/slides\/slide\d+\.xml$/)).length;
         } catch {
           // slide count check failed
         }

@@ -1,0 +1,47 @@
+{
+  "collectionName": "components_blocks_featured_courses_grids",
+  "info": {
+    "displayName": "Featured Courses Grid",
+    "icon": "book",
+    "description": "Grid display of featured courses from collection"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "viewAllLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "viewAllLink": {
+      "type": "string",
+      "default": "/courses"
+    },
+    "maxItems": {
+      "type": "integer",
+      "default": 4
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

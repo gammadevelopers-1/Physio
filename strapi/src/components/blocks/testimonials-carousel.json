@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_blocks_testimonials_carousels",
+  "info": {
+    "displayName": "Testimonials Carousel",
+    "icon": "quote",
+    "description": "Carousel of customer testimonials from collection"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

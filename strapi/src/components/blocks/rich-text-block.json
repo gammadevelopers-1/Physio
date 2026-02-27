@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_blocks_rich_text_blocks",
+  "info": {
+    "displayName": "Rich Text Block",
+    "icon": "file-text",
+    "description": "Free-form rich text content section"
+  },
+  "attributes": {
+    "content": {
+      "type": "richtext",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "maxWidth": {
+      "type": "enumeration",
+      "enum": ["narrow", "medium", "full"],
+      "default": "medium"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

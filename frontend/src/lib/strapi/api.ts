@@ -28,6 +28,30 @@ import type {
 // Re-export media URL helper
 export { getStrapiMediaUrl };
 
+/** Common populate params for dynamic zone blocks on all pages */
+const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
+  'populate[blocks][on][blocks.hero-banner][populate]': '*',
+  'populate[blocks][on][blocks.partners-strip][populate]': '*',
+  'populate[blocks][on][blocks.featured-courses-grid][populate]': '*',
+  'populate[blocks][on][blocks.cta-banner][populate][buttons]': 'true',
+  'populate[blocks][on][blocks.cta-banner][populate][image]': 'true',
+  'populate[blocks][on][blocks.cta-banner][populate][backgroundImage]': 'true',
+  'populate[blocks][on][blocks.instructors-grid][populate]': '*',
+  'populate[blocks][on][blocks.testimonials-carousel][populate]': '*',
+  'populate[blocks][on][blocks.rich-text-block][populate]': '*',
+  'populate[blocks][on][blocks.stats-numbers-block][populate][items]': 'true',
+  'populate[blocks][on][blocks.cards-grid][populate][cards][populate]': '*',
+  'populate[blocks][on][blocks.video-embed][populate][videoFile]': 'true',
+  'populate[blocks][on][blocks.logo-strip][populate][logos]': 'true',
+  'populate[blocks][on][blocks.faq-accordion][populate][items]': 'true',
+  'populate[blocks][on][blocks.policy-sections-block][populate][sections]': 'true',
+  'populate[blocks][on][blocks.contact-form-block][populate]': '*',
+  'populate[blocks][on][blocks.feedback-form-block][populate]': '*',
+  'populate[blocks][on][blocks.trainer-form-block][populate]': '*',
+  'populate[blocks][on][blocks.certification-cards-block][populate]': '*',
+  'populate[ogImage]': 'true',
+};
+
 /**
  * Fetch home page content
  */
@@ -37,6 +61,7 @@ export async function getHomePage(locale: string = 'en'): Promise<HomePage | nul
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[heroVideo]': 'true',
         'populate[becomeTrainerImage]': 'true',
         'populate[ctaBackgroundImage]': 'true',
@@ -210,6 +235,7 @@ export async function getAboutPage(locale: string = 'en'): Promise<AboutPage | n
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[heroImage]': 'true',
         'populate[heroImageMobile]': 'true',
         'populate[learningCard1Image]': 'true',
@@ -257,6 +283,7 @@ export async function getBecomeTrainerPage(locale: string = 'en'): Promise<Becom
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -296,6 +323,7 @@ export async function getPrivacyPolicyPage(locale: string = 'en'): Promise<Polic
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[sections]': 'true',
       },
     }
@@ -312,6 +340,7 @@ export async function getTermsPage(locale: string = 'en'): Promise<PolicyPage | 
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[sections]': 'true',
       },
     }
@@ -328,6 +357,7 @@ export async function getLearningPoliciesPage(locale: string = 'en'): Promise<Po
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[sections]': 'true',
       },
     }
@@ -452,6 +482,7 @@ export async function getContactPage(locale: string = 'en'): Promise<ContactPage
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -491,6 +522,7 @@ export async function getFeedbackPage(locale: string = 'en'): Promise<FeedbackPa
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -530,6 +562,7 @@ export async function getCertificationsPage(locale: string = 'en'): Promise<Cert
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[nelcLogo]': 'true',
         'populate[scfhsLogo]': 'true',
         'populate[certificateImage]': 'true',
@@ -572,6 +605,7 @@ export async function getNELCPage(locale: string = 'en'): Promise<NELCPage | nul
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[nelcLogo]': 'true',
         'populate[governanceImage]': 'true',
         'populate[technologyImage]': 'true',
@@ -788,6 +822,7 @@ export async function getPartnersPage(locale: string = 'en'): Promise<PartnersPa
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -830,6 +865,7 @@ export async function getInstructorsPage(locale: string = 'en'): Promise<Instruc
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -872,6 +908,7 @@ export async function getFAQPage(locale: string = 'en'): Promise<FAQPage | null>
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[items]': 'true',
       },
     }

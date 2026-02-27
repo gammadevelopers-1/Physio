@@ -16,6 +16,55 @@
     }
   },
   "attributes": {
+    "blocks": {
+      "type": "dynamiczone",
+      "components": [
+        "blocks.hero-banner",
+        "blocks.partners-strip",
+        "blocks.featured-courses-grid",
+        "blocks.cta-banner",
+        "blocks.instructors-grid",
+        "blocks.testimonials-carousel",
+        "blocks.rich-text-block",
+        "blocks.stats-numbers-block",
+        "blocks.cards-grid",
+        "blocks.video-embed",
+        "blocks.logo-strip",
+        "blocks.faq-accordion",
+        "blocks.policy-sections-block",
+        "blocks.contact-form-block",
+        "blocks.feedback-form-block",
+        "blocks.trainer-form-block",
+        "blocks.certification-cards-block"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "metaTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "metaDescription": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "ogImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
     "heroTitle": {
       "type": "string",
       "required": true,

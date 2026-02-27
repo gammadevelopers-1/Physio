@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_blocks_policy_sections_blocks",
+  "info": {
+    "displayName": "Policy Sections Block",
+    "icon": "file-text",
+    "description": "Policy page with sidebar navigation and rich text sections"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "lastUpdated": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "sections": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.policy-section"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

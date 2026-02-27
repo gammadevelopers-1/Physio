@@ -56,6 +56,10 @@ export interface StrapiSingleResponse<T> {
 export interface HomePage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   heroTitle: string;
   heroTitleLine2: string | null;
   heroTitleMobile: string | null;
@@ -91,6 +95,10 @@ export interface HomePage {
 export interface AboutPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   heroTitle: string;
   heroDescription: string;
   heroExploreButtonLabel: string | null;
@@ -225,6 +233,10 @@ export interface Testimonial {
 export interface BecomeTrainerPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   pageTitle: string;
   profileSectionTitle: string | null;
   profilePhotoLabel: string | null;
@@ -280,6 +292,10 @@ export interface PolicySection {
 export interface PolicyPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   title: string;
   lastUpdated: string | null;
   sections: PolicySection[];
@@ -292,6 +308,10 @@ export interface PolicyPage {
 export interface ContactPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   title: string;
   subtitle: string | null;
   formFullNameLabel: string | null;
@@ -327,6 +347,10 @@ export interface ContactPage {
 export interface FeedbackPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   title: string;
   description: string | null;
   formFullNameLabel: string | null;
@@ -345,6 +369,10 @@ export interface FeedbackPage {
 export interface CertificationsPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   breadcrumb: string | null;
   heroTitle: string;
   heroDescription: string | null;
@@ -380,6 +408,10 @@ export interface CertificationsPage {
 export interface NELCPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   heroTitle: string;
   heroDescription: string | null;
   licenseNumberLabel: string | null;
@@ -457,6 +489,10 @@ export interface NavigationLink {
 export interface PartnersPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   title: string;
   locale: string;
   createdAt: string;
@@ -467,6 +503,10 @@ export interface PartnersPage {
 export interface InstructorsPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   meetExpertsTitle: string | null;
   mindsBehindTitle: string | null;
   locale: string;
@@ -484,6 +524,10 @@ export interface FAQItem {
 export interface FAQPage {
   id: number;
   documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
   title: string;
   subtitle: string | null;
   getInTouchLabel: string | null;
@@ -492,5 +536,293 @@ export interface FAQPage {
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
+}
+
+// ============================================
+// Dynamic Zone Block Types
+// ============================================
+
+export type BlockVisibility = 'all' | 'desktop-only' | 'mobile-only';
+
+/** Base interface for all dynamic zone blocks */
+export interface BaseBlock {
+  id: number;
+  __component: string;
+  visibility: BlockVisibility;
+}
+
+// --- Element (sub-component) types ---
+
+export interface ButtonLink {
+  id: number;
+  label: string;
+  url: string;
+  variant: 'primary' | 'secondary' | 'outline';
+  openInNewTab: boolean;
+}
+
+export interface StatItem {
+  id: number;
+  value: string;
+  label: string;
+  suffix: string | null;
+}
+
+export interface CardItem {
+  id: number;
+  title: string;
+  description: string | null;
+  image: StrapiMedia | null;
+  linkUrl: string | null;
+  linkLabel: string | null;
+}
+
+// --- Generic block types ---
+
+export interface HeroBannerBlockData extends BaseBlock {
+  __component: 'blocks.hero-banner';
+  title: string;
+  titleLine2: string | null;
+  titleMobile: string | null;
+  description: string;
+  backgroundVideo: StrapiMedia | null;
+  backgroundImage: StrapiMedia | null;
+  buttons: ButtonLink[];
+  partnerLogos: StrapiMedia[] | null;
+}
+
+export interface PartnersStripBlockData extends BaseBlock {
+  __component: 'blocks.partners-strip';
+  title: string | null;
+}
+
+export interface FeaturedCoursesGridBlockData extends BaseBlock {
+  __component: 'blocks.featured-courses-grid';
+  title: string | null;
+  description: string | null;
+  viewAllLabel: string | null;
+  viewAllLink: string | null;
+  maxItems: number;
+}
+
+export interface CTABannerBlockData extends BaseBlock {
+  __component: 'blocks.cta-banner';
+  title: string;
+  description: string | null;
+  variant: 'centered' | 'image-left' | 'image-right';
+  image: StrapiMedia | null;
+  backgroundImage: StrapiMedia | null;
+  buttons: ButtonLink[];
+}
+
+export interface InstructorsGridBlockData extends BaseBlock {
+  __component: 'blocks.instructors-grid';
+  title: string | null;
+  description: string | null;
+  filterSection: 'all' | 'expert' | 'minds';
+  showHomepageOnly: boolean;
+}
+
+export interface TestimonialsCarouselBlockData extends BaseBlock {
+  __component: 'blocks.testimonials-carousel';
+  title: string | null;
+  description: string | null;
+}
+
+export interface RichTextBlockData extends BaseBlock {
+  __component: 'blocks.rich-text-block';
+  content: string;
+  maxWidth: 'narrow' | 'medium' | 'full';
+}
+
+export interface StatsNumbersBlockData extends BaseBlock {
+  __component: 'blocks.stats-numbers-block';
+  title: string | null;
+  description: string | null;
+  items: StatItem[];
+}
+
+export interface CardsGridBlockData extends BaseBlock {
+  __component: 'blocks.cards-grid';
+  title: string | null;
+  description: string | null;
+  columns: '2' | '3' | '4';
+  cards: CardItem[];
+}
+
+export interface VideoEmbedBlockData extends BaseBlock {
+  __component: 'blocks.video-embed';
+  title: string | null;
+  description: string | null;
+  videoFile: StrapiMedia | null;
+  videoUrl: string | null;
+  autoplay: boolean;
+}
+
+export interface LogoStripBlockData extends BaseBlock {
+  __component: 'blocks.logo-strip';
+  title: string | null;
+  logos: StrapiMedia[] | null;
+  enableMarquee: boolean;
+}
+
+export interface FAQAccordionBlockData extends BaseBlock {
+  __component: 'blocks.faq-accordion';
+  title: string | null;
+  subtitle: string | null;
+  items: FAQItem[];
+}
+
+// --- Page-specific block types ---
+
+export interface PolicySectionsBlockData extends BaseBlock {
+  __component: 'blocks.policy-sections-block';
+  title: string;
+  lastUpdated: string | null;
+  sections: PolicySection[];
+}
+
+export interface ContactFormBlockData extends BaseBlock {
+  __component: 'blocks.contact-form-block';
+  title: string;
+  subtitle: string | null;
+  formFullNameLabel: string | null;
+  formEmailLabel: string | null;
+  formIssueTypeLabel: string | null;
+  formSelectOptionLabel: string | null;
+  formPhoneLabel: string | null;
+  formSubjectLabel: string | null;
+  formDescriptionLabel: string | null;
+  formCharactersLeftLabel: string | null;
+  formSubmitLabel: string | null;
+  issueTypeTechnicalSupport: string | null;
+  issueTypeBillingIssue: string | null;
+  issueTypeCourseInquiry: string | null;
+  issueTypePartnership: string | null;
+  issueTypeOther: string | null;
+  generalInquiryLabel: string | null;
+  generalInquiryEmail: string | null;
+  technicalSupportLabel: string | null;
+  technicalSupportPhone: string | null;
+  address: string | null;
+  getDirectionsLabel: string | null;
+  loadingMapText: string | null;
+  mapLatitude: number | null;
+  mapLongitude: number | null;
+  mapPopupText: string | null;
+}
+
+export interface FeedbackFormBlockData extends BaseBlock {
+  __component: 'blocks.feedback-form-block';
+  title: string;
+  description: string | null;
+  formFullNameLabel: string | null;
+  formEmailLabel: string | null;
+  formSubjectLabel: string | null;
+  formDescriptionLabel: string | null;
+  formCharactersLeftPrefix: string | null;
+  formCharactersLeftSuffix: string | null;
+  formSubmitLabel: string | null;
+}
+
+export interface TrainerFormBlockData extends BaseBlock {
+  __component: 'blocks.trainer-form-block';
+  pageTitle: string;
+  profileSectionTitle: string | null;
+  profilePhotoLabel: string | null;
+  profileAttachCVLabel: string | null;
+  profileFullNameLabel: string | null;
+  profileFullNameArabicPlaceholder: string | null;
+  profileFullNameEnglishPlaceholder: string | null;
+  profileEmailLabel: string | null;
+  profileMobileLabel: string | null;
+  profileGenderLabel: string | null;
+  profileNationalityLabel: string | null;
+  profileNationalIdLabel: string | null;
+  profileProfessionLabel: string | null;
+  profileSpecialityLabel: string | null;
+  profileQualificationLabel: string | null;
+  profileRankLabel: string | null;
+  profileScfhsQuestion: string | null;
+  profileTwitterLabel: string | null;
+  profileLinkedInLabel: string | null;
+  resumeSectionTitle: string | null;
+  resumeDescription: string | null;
+  resumeUploadLabel: string | null;
+  resumeCreateLabel: string | null;
+  resumeEducationLabel: string | null;
+  resumeProfessionalSkillsLabel: string | null;
+  resumeScientificResearchesLabel: string | null;
+  resumeTrainingExperienceLabel: string | null;
+  resumeClickToUploadLabel: string | null;
+  resumeOrDragDropLabel: string | null;
+  resumePdfMaxSizeLabel: string | null;
+  bankAccountSectionTitle: string | null;
+  bankAccountHolderLabel: string | null;
+  bankNameLabel: string | null;
+  bankIbanLabel: string | null;
+  cancelButtonLabel: string | null;
+  saveButtonLabel: string | null;
+  yesButtonLabel: string | null;
+  noButtonLabel: string | null;
+}
+
+export interface CertificationCardsBlockData extends BaseBlock {
+  __component: 'blocks.certification-cards-block';
+  breadcrumb: string | null;
+  heroTitle: string;
+  heroDescription: string | null;
+  heroButtonLabel: string | null;
+  nelcTitle: string | null;
+  nelcDescription: string | null;
+  nelcLicenseLabel: string | null;
+  nelcLicenseNumber: string | null;
+  scfhsTitle: string | null;
+  scfhsDescription: string | null;
+  scfhsAccreditationLabel: string | null;
+  scfhsAccreditationNumber: string | null;
+  verificationTitle: string | null;
+  verificationSubtitle: string | null;
+  verificationPlaceholder: string | null;
+  verificationButtonLabel: string | null;
+  claimCMETitle: string | null;
+  step1Title: string | null;
+  step1Description: string | null;
+  step2Title: string | null;
+  step2Description: string | null;
+  step3Title: string | null;
+  step3Description: string | null;
+  nelcLogo: StrapiMedia | null;
+  scfhsLogo: StrapiMedia | null;
+  certificateImage: StrapiMedia | null;
+}
+
+// --- Union type of all blocks ---
+
+export type DynamicZoneBlock =
+  | HeroBannerBlockData
+  | PartnersStripBlockData
+  | FeaturedCoursesGridBlockData
+  | CTABannerBlockData
+  | InstructorsGridBlockData
+  | TestimonialsCarouselBlockData
+  | RichTextBlockData
+  | StatsNumbersBlockData
+  | CardsGridBlockData
+  | VideoEmbedBlockData
+  | LogoStripBlockData
+  | FAQAccordionBlockData
+  | PolicySectionsBlockData
+  | ContactFormBlockData
+  | FeedbackFormBlockData
+  | TrainerFormBlockData
+  | CertificationCardsBlockData;
+
+/** Side-loaded collection data passed to block wrappers */
+export interface SideLoadedData {
+  partners: Partner[];
+  featuredCourses: FeaturedCourse[];
+  instructors: Instructor[];
+  testimonials: Testimonial[];
 }
 

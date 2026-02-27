@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { BarChart3, ChevronRight, TrendingUp } from "lucide-react";
 
 interface AssessmentScore {
@@ -27,6 +29,8 @@ const AssessmentAnalysisWidget = ({
   questions,
 }: AssessmentAnalysisWidgetProps) => {
   const t = useTranslations("instructorDashboard");
+  const router = useRouter();
+  const locale = useLocale();
 
   const getDifficultyStyle = (difficulty: string) => {
     switch (difficulty) {
@@ -187,7 +191,10 @@ const AssessmentAnalysisWidget = ({
 
         {/* View Item Analysis Link */}
         <div className="mt-6 pt-4 border-t border-[#E5E7EB]">
-          <button className="w-full flex items-center justify-center gap-1 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/instructor/assessments`)}
+            className="w-full flex items-center justify-center gap-1 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
+          >
             {t("assessmentAnalysis.viewItemAnalysis")}
             <ChevronRight className="w-4 h-4" />
           </button>

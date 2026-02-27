@@ -10,6 +10,7 @@ export * from './two-factor';
 export * from './role-requests';
 export * from './blocked-national-ids';
 export * from './admin-notifications';
+export * from './user-notifications';
 
 // Course schemas
 export * from './courses';

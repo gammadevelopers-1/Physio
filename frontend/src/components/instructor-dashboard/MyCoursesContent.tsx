@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -128,6 +128,34 @@ const MyCoursesContent = () => {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
   });
+
+  // ─── Course rating stats ────────────────────────────────
+  const [ratingsMap, setRatingsMap] = useState<Record<string, { avgRating: number; totalRatings: number }>>({});
+  const courseIdsKey = useMemo(() => courses.map((c) => c.id).join(","), [courses]);
+
+  useEffect(() => {
+    if (!courseIdsKey) return;
+    const ids = courseIdsKey.split(",").filter(Boolean);
+    let cancelled = false;
+
+    Promise.all(
+      ids.map((id) =>
+        instructorApi.getCourseRatingStats(id).then(
+          (stats) => ({ id, stats }),
+          () => ({ id, stats: { avgRating: 0, totalRatings: 0 } })
+        )
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      const map: Record<string, { avgRating: number; totalRatings: number }> = {};
+      for (const { id, stats } of results) {
+        map[id] = stats;
+      }
+      setRatingsMap(map);
+    });
+
+    return () => { cancelled = true; };
+  }, [courseIdsKey]);
 
   const handleStatusChange = useCallback(
     async (courseId: string, newStatus: string) => {
@@ -412,8 +440,10 @@ const MyCoursesContent = () => {
                                   {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
                                 </span>
                                 <span className="flex items-center gap-1 text-[#9CA3AF]">
-                                  <Star className="w-3.5 h-3.5" />
-                                  {t("courses.ratingComingSoon")}
+                                  <Star className={`w-3.5 h-3.5 ${ratingsMap[course.id]?.totalRatings ? "text-[#F59E0B] fill-[#F59E0B]" : ""}`} />
+                                  {ratingsMap[course.id]?.totalRatings
+                                    ? `${ratingsMap[course.id].avgRating} (${ratingsMap[course.id].totalRatings})`
+                                    : t("courses.noRatingsYet")}
                                 </span>
                               </div>
                               <div className="mb-3">

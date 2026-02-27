@@ -109,6 +109,30 @@ export interface DashboardPendingSubmission {
   assessmentId: string;
 }
 
+export interface DashboardFeedbackItem {
+  id: string;
+  learnerName: string;
+  learnerInitials: string;
+  courseName: string;
+  rating: number;
+  comment: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  date: string;
+}
+
+export interface DashboardRecentFeedback {
+  overallRating: number;
+  totalReviews: number;
+  feedbackItems: DashboardFeedbackItem[];
+}
+
+export interface DashboardPassFailStats {
+  totalStudents: number;
+  passed: number;
+  failed: number;
+  passRate: number;
+}
+
 export interface DashboardSummaryResponse {
   kpis: DashboardKPIs;
   todaySessions: DashboardSession[];
@@ -123,6 +147,8 @@ export interface DashboardSummaryResponse {
   materials: DashboardMaterial[];
   tabAssessments: DashboardTabAssessment[];
   pendingSubmissions: DashboardPendingSubmission[];
+  recentFeedback?: DashboardRecentFeedback;
+  passFailStats?: DashboardPassFailStats;
 }
 
 // ─── Course Enrollments API Response ────────────────────────
@@ -356,6 +382,9 @@ export interface CourseSession {
   cancelReason: string | null;
   createdAt: string;
   updatedAt: string;
+  // Makeup session fields
+  isMakeup?: boolean;
+  parentSessionId?: string | null;
   // Capacity fields (from enriched backend response)
   enrolledCount?: number;
   nelcLimit?: number;
@@ -480,7 +509,7 @@ export interface CreateCourseData {
 // ─── Course Materials ──────────────────────────────────────
 
 export type MaterialType = 'video' | 'pdf' | 'document' | 'image';
-export type MaterialStatus = 'processing' | 'live' | 'failed';
+export type MaterialStatus = 'processing' | 'pending_review' | 'live' | 'failed' | 'archived' | 'changes_requested';
 
 export interface CourseMaterialResponse {
   id: string;
@@ -501,6 +530,8 @@ export interface CourseMaterialResponse {
   processingStep: string | null;
   processingError: string | null;
   uploadedBy: string;
+  reviewedBy: string | null;
+  reviewNote: string | null;
   createdAt: string;
   updatedAt: string;
 }

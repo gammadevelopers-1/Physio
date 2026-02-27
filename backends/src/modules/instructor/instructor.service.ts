@@ -20,6 +20,7 @@ import {
   userRoles,
   roles,
   courseRatings,
+  materialProgress,
   ATTENDANCE_STATUS,
   INTERVENTION_TYPE,
 } from '../../database/schema';
@@ -188,11 +189,10 @@ export class InstructorService {
       }
     }
 
-    // ─── Module Progress (first active course or all) ──────
+    // ─── Module Progress (first active course, real materialProgress data) ──
     let moduleProgress: { name: string; percentage: number }[] = [];
 
     if (courseIds.length > 0) {
-      // Get the first active course's modules
       const firstCourseId = courseIds[0];
       const modules = await db
         .select({
@@ -205,36 +205,78 @@ export class InstructorService {
         .orderBy(asc(courseModules.orderIndex));
 
       if (modules.length > 0) {
-        // Get total enrolled students for this course
         const [enrollCount] = await db
           .select({ count: count() })
           .from(enrollments)
           .where(eq(enrollments.courseId, firstCourseId));
-        const totalStudents = enrollCount?.count || 0;
+        const totalEnrolledStudents = enrollCount?.count || 0;
 
-        // Approximate module completion from overall enrollment progress
-        // Each module's completion = students whose progress >= (moduleIndex+1)/totalModules * 100
-        const totalModules = modules.length;
-        const studentProgresses = totalStudents > 0
-          ? await db
-              .select({ progress: enrollments.progress })
-              .from(enrollments)
-              .where(eq(enrollments.courseId, firstCourseId))
-          : [];
+        moduleProgress = await Promise.all(
+          modules.map(async (mod) => {
+            // Count materials in this module
+            const moduleMaterials = await db
+              .select({ id: courseMaterials.id })
+              .from(courseMaterials)
+              .where(eq(courseMaterials.moduleId, mod.id));
 
-        moduleProgress = modules.map((mod, idx) => {
-          const threshold = ((idx + 1) / totalModules) * 100;
-          const completed = studentProgresses.filter(
-            (s) => (s.progress ?? 0) >= threshold,
-          ).length;
-          const percentage =
-            totalStudents > 0
-              ? Math.round((completed / totalStudents) * 100)
-              : 0;
-          return { name: mod.title, percentage };
-        });
+            const totalMaterials = moduleMaterials.length;
+
+            if (totalMaterials === 0 || totalEnrolledStudents === 0) {
+              return { name: mod.title, percentage: 0 };
+            }
+
+            const materialIds = moduleMaterials.map((m) => m.id);
+
+            // Count students who completed ALL materials in this module
+            const completionRows = await db
+              .select({
+                studentId: materialProgress.studentId,
+                completedCount: count(),
+              })
+              .from(materialProgress)
+              .where(
+                and(
+                  inArray(materialProgress.materialId, materialIds),
+                  sql`${materialProgress.completedAt} IS NOT NULL`,
+                ),
+              )
+              .groupBy(materialProgress.studentId);
+
+            const studentsCompletedAll = completionRows.filter(
+              (r) => Number(r.completedCount) >= totalMaterials,
+            ).length;
+
+            const percentage = Math.round(
+              (studentsCompletedAll / totalEnrolledStudents) * 100,
+            );
+
+            return { name: mod.title, percentage };
+          }),
+        );
       }
     }
+
+    // ─── Published Assessments (shared by analysis + pass/fail) ─
+    const courseAssessments = courseIds.length > 0
+      ? await db
+          .select({
+            id: assessments.id,
+            title: assessments.title,
+            courseId: assessments.courseId,
+            type: assessments.type,
+            totalMarks: assessments.totalMarks,
+            passingMarks: assessments.passingMarks,
+            createdAt: assessments.createdAt,
+          })
+          .from(assessments)
+          .where(
+            and(
+              inArray(assessments.courseId, courseIds),
+              eq(assessments.status, 'published'),
+            ),
+          )
+          .orderBy(asc(assessments.createdAt))
+      : [];
 
     // ─── Assessment Analysis (pre/post comparison) ─────────
     let assessmentScores: {
@@ -250,122 +292,102 @@ export class InstructorService {
       correctRate: number;
     }[] = [];
 
-    if (courseIds.length > 0) {
-      // Get all published assessments across instructor's courses
-      const courseAssessments = await db
-        .select({
-          id: assessments.id,
-          title: assessments.title,
-          courseId: assessments.courseId,
-          type: assessments.type,
-          createdAt: assessments.createdAt,
-        })
-        .from(assessments)
-        .where(
-          and(
-            inArray(assessments.courseId, courseIds),
-            eq(assessments.status, 'published'),
-          ),
-        )
-        .orderBy(asc(assessments.createdAt));
-
-      if (courseAssessments.length > 0) {
-        // Build pre/post comparison: first assessment is "pre", rest are "post" progression
-        const comparisons = [];
-        for (const ca of courseAssessments) {
-          const [avgResult] = await db
-            .select({
-              avgPercentage:
-                sql<number>`COALESCE(ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)), 2), 0)`.as(
-                  'avg_pct',
-                ),
-              totalSubs: count(),
-            })
-            .from(submissions)
-            .where(
-              and(
-                eq(submissions.assessmentId, ca.id),
-                eq(submissions.status, 'graded'),
-              ),
-            );
-
-          comparisons.push({
-            id: ca.id,
-            title: ca.title,
-            avgPercentage: Number(avgResult?.avgPercentage ?? 0),
-            totalSubmissions: Number(avgResult?.totalSubs ?? 0),
-          });
-        }
-
-        // Create pre/post pairs: for each assessment, preScore = first assessment avg, postScore = this assessment avg
-        const firstAvg = comparisons[0]?.avgPercentage ?? 0;
-        assessmentScores = comparisons.map((c) => ({
-          id: c.id,
-          name: c.title,
-          preScore: Math.round(firstAvg),
-          postScore: Math.round(c.avgPercentage),
-        }));
-
-        // Get question analysis for the most recent assessment
-        const latestAssessment =
-          courseAssessments[courseAssessments.length - 1];
-        const assessmentQuestions = await db
+    if (courseAssessments.length > 0) {
+      // Build pre/post comparison: first assessment is "pre", rest are "post" progression
+      const comparisons = [];
+      for (const ca of courseAssessments) {
+        const [avgResult] = await db
           .select({
-            id: questions.id,
-            questionText: questions.questionText,
-            difficultyLevel: questions.difficultyLevel,
-          })
-          .from(questions)
-          .where(eq(questions.assessmentId, latestAssessment.id));
-
-        if (assessmentQuestions.length > 0) {
-          // Get graded submissions for this assessment
-          const gradedSubs = await db
-            .select({ answers: submissions.answers })
-            .from(submissions)
-            .where(
-              and(
-                eq(submissions.assessmentId, latestAssessment.id),
-                eq(submissions.status, 'graded'),
+            avgPercentage:
+              sql<number>`COALESCE(ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)), 2), 0)`.as(
+                'avg_pct',
               ),
-            );
+            totalSubs: count(),
+          })
+          .from(submissions)
+          .where(
+            and(
+              eq(submissions.assessmentId, ca.id),
+              eq(submissions.status, 'graded'),
+            ),
+          );
 
-          questionAnalysis = assessmentQuestions.map((q) => {
-            let totalAttempts = 0;
-            let correctAnswers = 0;
+        comparisons.push({
+          id: ca.id,
+          title: ca.title,
+          avgPercentage: Number(avgResult?.avgPercentage ?? 0),
+          totalSubmissions: Number(avgResult?.totalSubs ?? 0),
+        });
+      }
 
-            for (const sub of gradedSubs) {
-              const answers = (sub.answers as { questionId: string; isCorrect: boolean | null }[]) || [];
-              const answer = answers.find((a) => a.questionId === q.id);
-              if (answer && answer.isCorrect !== null) {
-                totalAttempts++;
-                if (answer.isCorrect) correctAnswers++;
-              }
+      // Create pre/post pairs: for each assessment, preScore = first assessment avg, postScore = this assessment avg
+      const firstAvg = comparisons[0]?.avgPercentage ?? 0;
+      assessmentScores = comparisons.map((c) => ({
+        id: c.id,
+        name: c.title,
+        preScore: Math.round(firstAvg),
+        postScore: Math.round(c.avgPercentage),
+      }));
+
+      // Get question analysis for the most recent assessment
+      const latestAssessment =
+        courseAssessments[courseAssessments.length - 1];
+      const assessmentQuestions = await db
+        .select({
+          id: questions.id,
+          questionText: questions.questionText,
+          difficultyLevel: questions.difficultyLevel,
+        })
+        .from(questions)
+        .where(eq(questions.assessmentId, latestAssessment.id));
+
+      if (assessmentQuestions.length > 0) {
+        // Get graded submissions for this assessment
+        const gradedSubs = await db
+          .select({ answers: submissions.answers })
+          .from(submissions)
+          .where(
+            and(
+              eq(submissions.assessmentId, latestAssessment.id),
+              eq(submissions.status, 'graded'),
+            ),
+          );
+
+        questionAnalysis = assessmentQuestions.map((q) => {
+          let totalAttempts = 0;
+          let correctAnswers = 0;
+
+          for (const sub of gradedSubs) {
+            const answers = (sub.answers as { questionId: string; isCorrect: boolean | null }[]) || [];
+            const answer = answers.find((a) => a.questionId === q.id);
+            if (answer && answer.isCorrect !== null) {
+              totalAttempts++;
+              if (answer.isCorrect) correctAnswers++;
             }
+          }
 
-            const correctRate =
-              totalAttempts > 0
-                ? Math.round((correctAnswers / totalAttempts) * 100)
-                : 0;
+          const correctRate =
+            totalAttempts > 0
+              ? Math.round((correctAnswers / totalAttempts) * 100)
+              : 0;
 
-            // Map difficulty level
-            let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
-            if (q.difficultyLevel === 'easy') difficulty = 'easy';
-            else if (q.difficultyLevel === 'hard') difficulty = 'hard';
-            else if (!q.difficultyLevel) {
-              // Auto-detect from correct rate
-              if (correctRate >= 70) difficulty = 'easy';
-              else if (correctRate < 40) difficulty = 'hard';
-            }
+          // Map difficulty level
+          let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
+          if (q.difficultyLevel === 'easy') difficulty = 'easy';
+          else if (q.difficultyLevel === 'hard') difficulty = 'hard';
+          else if (!q.difficultyLevel) {
+            // Auto-detect from correct rate
+            if (correctRate >= 70) difficulty = 'easy';
+            else if (correctRate < 40) difficulty = 'hard';
+          }
 
-            return {
-              id: q.id,
-              question: q.questionText,
-              difficulty,
-              correctRate,
-            };
-          });
-        }
+          return {
+            id: q.id,
+            question: q.questionText,
+            difficulty,
+            correctRate,
+          };
+        });
       }
     }
 
@@ -534,6 +556,151 @@ export class InstructorService {
       avgCourseRating = Number(ratingResult?.avg ?? 0);
     }
 
+    // ─── Recent Feedback (course ratings) ────────────────────
+    let recentFeedback: {
+      overallRating: number;
+      totalReviews: number;
+      feedbackItems: {
+        id: string;
+        learnerName: string;
+        learnerInitials: string;
+        courseName: string;
+        rating: number;
+        comment: string;
+        sentiment: 'positive' | 'neutral' | 'negative';
+        date: string;
+      }[];
+    } = { overallRating: 0, totalReviews: 0, feedbackItems: [] };
+
+    if (courseIds.length > 0) {
+      // Overall stats
+      const [overallStats] = await db
+        .select({
+          avgRating: sql<number>`COALESCE(ROUND(AVG(${courseRatings.rating})::numeric, 1), 0)`.as('avg_rating'),
+          totalReviews: count(),
+        })
+        .from(courseRatings)
+        .where(inArray(courseRatings.courseId, courseIds));
+
+      // 5 most recent ratings with student + course names
+      const recentRatings = await db
+        .select({
+          id: courseRatings.id,
+          rating: courseRatings.rating,
+          reviewText: courseRatings.reviewText,
+          createdAt: courseRatings.createdAt,
+          studentFirstName: users.firstName,
+          studentLastName: users.lastName,
+          courseTitle: courses.title,
+        })
+        .from(courseRatings)
+        .innerJoin(users, eq(courseRatings.studentId, users.id))
+        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+        .where(inArray(courseRatings.courseId, courseIds))
+        .orderBy(desc(courseRatings.createdAt))
+        .limit(5);
+
+      recentFeedback = {
+        overallRating: Number(overallStats?.avgRating ?? 0),
+        totalReviews: Number(overallStats?.totalReviews ?? 0),
+        feedbackItems: recentRatings.map((r) => {
+          const firstName = r.studentFirstName || '';
+          const lastName = r.studentLastName || '';
+          const learnerName = `${firstName} ${lastName}`.trim() || 'Anonymous';
+          const learnerInitials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'A';
+          const sentiment: 'positive' | 'neutral' | 'negative' =
+            r.rating >= 4 ? 'positive' : r.rating === 3 ? 'neutral' : 'negative';
+          return {
+            id: r.id,
+            learnerName,
+            learnerInitials,
+            courseName: r.courseTitle,
+            rating: r.rating,
+            comment: r.reviewText || '',
+            sentiment,
+            date: r.createdAt?.toISOString() || new Date().toISOString(),
+          };
+        }),
+      };
+    }
+
+    // ─── Pass/Fail Stats ────────────────────────────────────
+    let passFailStats: {
+      totalStudents: number;
+      passed: number;
+      failed: number;
+      passRate: number;
+    } | null = null;
+
+    if (courseAssessments.length > 0 && courseIds.length > 0) {
+      // Get all enrolled students across instructor's courses
+      const allEnrolled = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(inArray(enrollments.courseId, courseIds));
+
+      const uniqueStudentIds = [
+        ...new Set(allEnrolled.map((e) => e.studentId)),
+      ];
+
+      if (uniqueStudentIds.length > 0) {
+        // Get all graded submissions for the instructor's published assessments
+        const assessmentIds = courseAssessments.map((a) => a.id);
+        const allSubs = await db
+          .select({
+            studentId: submissions.studentId,
+            assessmentId: submissions.assessmentId,
+            score: submissions.score,
+          })
+          .from(submissions)
+          .where(
+            and(
+              inArray(submissions.assessmentId, assessmentIds),
+              eq(submissions.status, 'graded'),
+            ),
+          );
+
+        // Best score per student per assessment
+        const scoreMap = new Map<string, Map<string, number>>();
+        for (const sub of allSubs) {
+          if (!scoreMap.has(sub.studentId)) {
+            scoreMap.set(sub.studentId, new Map());
+          }
+          const studentScores = scoreMap.get(sub.studentId)!;
+          const existing = studentScores.get(sub.assessmentId) ?? -1;
+          if ((sub.score ?? 0) > existing) {
+            studentScores.set(sub.assessmentId, sub.score ?? 0);
+          }
+        }
+
+        const totalPassingMarks = courseAssessments.reduce(
+          (sum, a) => sum + (a.passingMarks ?? 0),
+          0,
+        );
+
+        let passed = 0;
+        for (const studentId of uniqueStudentIds) {
+          const studentScores = scoreMap.get(studentId);
+          if (!studentScores) continue;
+          let totalScore = 0;
+          for (const a of courseAssessments) {
+            totalScore += studentScores.get(a.id) ?? 0;
+          }
+          if (totalScore >= totalPassingMarks) {
+            passed++;
+          }
+        }
+
+        const pfTotal = uniqueStudentIds.length;
+        passFailStats = {
+          totalStudents: pfTotal,
+          passed,
+          failed: pfTotal - passed,
+          passRate: pfTotal > 0 ? Math.round((passed / pfTotal) * 100) : 0,
+        };
+      }
+    }
+
     return {
       kpis: {
         activeCourses: coursesResult.total || 0,
@@ -559,6 +726,8 @@ export class InstructorService {
       materials,
       tabAssessments,
       pendingSubmissions,
+      recentFeedback,
+      passFailStats,
     };
   }
 

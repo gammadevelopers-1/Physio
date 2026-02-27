@@ -25,6 +25,7 @@ import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { SessionNotificationService } from './session-notification.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 
@@ -37,6 +38,7 @@ export class SessionsService {
     private readonly auditService: NelcAuditService,
     private readonly assistantsService: SessionAssistantsService,
     private readonly auditLogService: AuditLogService,
+    private readonly sessionNotificationService: SessionNotificationService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -113,6 +115,8 @@ export class SessionsService {
           roomName: dto.roomName,
           venueAddress: dto.venueAddress,
           recordingEnabled: dto.recordingEnabled !== false,
+          isMakeup: dto.isMakeup || false,
+          parentSessionId: dto.parentSessionId || null,
         })
         .returning();
 
@@ -163,6 +167,8 @@ export class SessionsService {
         roomName: dto.roomName,
         venueAddress: dto.venueAddress,
         recordingEnabled: dto.recordingEnabled !== false,
+        isMakeup: dto.isMakeup || false,
+        parentSessionId: dto.parentSessionId || null,
       })
       .returning();
 
@@ -531,6 +537,11 @@ export class SessionsService {
       metadata: { courseId: updated.courseId },
     }).catch(() => {});
 
+    // Notify enrolled students
+    this.sessionNotificationService
+      .notifySessionEvent(updated, 'session_started')
+      .catch(() => {});
+
     return { ...updated, zoomStartUrl };
   }
 
@@ -609,6 +620,11 @@ export class SessionsService {
       metadata: { courseId: updated.courseId },
     }).catch(() => {});
 
+    // Notify enrolled students
+    this.sessionNotificationService
+      .notifySessionEvent(updated, 'session_ended')
+      .catch(() => {});
+
     return { ...updated, zoomEndedSuccessfully, zoomErrorMessage };
   }
 
@@ -675,6 +691,13 @@ export class SessionsService {
       performedBy: user.id,
       metadata: { courseId: updated.courseId, reason: dto.cancelReason },
     }).catch(() => {});
+
+    // Notify enrolled students
+    this.sessionNotificationService
+      .notifySessionEvent(updated, 'session_cancelled', {
+        cancelReason: dto.cancelReason,
+      })
+      .catch(() => {});
 
     return updated;
   }
@@ -755,6 +778,13 @@ export class SessionsService {
       metadata: { courseId: updated.courseId, reason, cancelledBy: 'manager' },
     }).catch(() => {});
 
+    // Notify enrolled students
+    this.sessionNotificationService
+      .notifySessionEvent(updated, 'session_cancelled', {
+        cancelReason: reason,
+      })
+      .catch(() => {});
+
     return updated;
   }
 
@@ -814,6 +844,11 @@ export class SessionsService {
       performedBy: user.id,
       metadata: { newDate, newDuration, oldDate: session.scheduledAt },
     }).catch(() => {});
+
+    // Notify enrolled students
+    this.sessionNotificationService
+      .notifySessionEvent(updated, 'session_rescheduled')
+      .catch(() => {});
 
     return { ...updated, zoomSyncError };
   }

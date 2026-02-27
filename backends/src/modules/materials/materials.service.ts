@@ -27,6 +27,8 @@ import { ProcessingService } from '../processing/processing.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { EmailService } from '../email/email.service';
 
 /** Allowed MIME types per material type */
 const ALLOWED_MIMES: Record<string, string[]> = {
@@ -67,6 +69,8 @@ export class MaterialsService {
     private processingService: ProcessingService,
     private auditLogService: AuditLogService,
     private configService: ConfigService,
+    private userNotificationsService: UserNotificationsService,
+    private emailService: EmailService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -637,7 +641,65 @@ export class MaterialsService {
       metadata: { courseId: material.courseId, decision, comment },
     }).catch(() => {});
 
+    // Notify the uploader (instructor) about the review decision
+    this.notifyContentReview(material, decision, comment).catch((err) => {
+      this.logger.warn('Failed to send content review notification', err);
+    });
+
     return updated;
+  }
+
+  /**
+   * Send in-app + email notification to the material uploader about review decision.
+   */
+  private async notifyContentReview(
+    material: { id: string; uploadedBy: string; courseId: string; title: string },
+    decision: 'approved' | 'rejected' | 'changes_requested',
+    comment?: string | null,
+  ) {
+    // Fetch uploader info
+    const [uploader] = await db
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .from(users)
+      .where(eq(users.id, material.uploadedBy))
+      .limit(1);
+    if (!uploader) return;
+
+    // Fetch course name
+    const [course] = await db
+      .select({ title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, material.courseId))
+      .limit(1);
+    const courseName = course?.title || 'Unknown Course';
+
+    const decisionLabels: Record<string, string> = {
+      approved: 'Content Approved',
+      rejected: 'Content Rejected',
+      changes_requested: 'Changes Requested',
+    };
+    const label = decisionLabels[decision];
+    const recipientName = `${uploader.firstName || ''} ${uploader.lastName || ''}`.trim() || 'Instructor';
+
+    // In-app notification
+    await this.userNotificationsService.create({
+      recipientId: uploader.id,
+      type: 'content_review',
+      title: label,
+      message: `"${material.title}" in ${courseName} — ${label.toLowerCase()}${comment ? `: ${comment}` : ''}`,
+      link: '/dashboard/instructor/content',
+      entityType: 'material',
+      entityId: material.id,
+    });
+
+    // Email (fire-and-forget)
+    this.emailService.sendContentReview(uploader.email, {
+      recipientName,
+      materialTitle: material.title,
+      courseName,
+      decision,
+      comment: comment || null,
+    }).catch(() => {});
   }
 
   // ─── Compliance Checklist ─────────────────────────────────

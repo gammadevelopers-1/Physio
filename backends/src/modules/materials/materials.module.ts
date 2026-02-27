@@ -4,9 +4,10 @@ import { MaterialsService } from './materials.service';
 import { AuthModule } from '../auth/auth.module';
 import { StorageModule } from '../storage/storage.module';
 import { ProcessingModule } from '../processing/processing.module';
+import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 
 @Module({
-  imports: [AuthModule, StorageModule, ProcessingModule],
+  imports: [AuthModule, StorageModule, ProcessingModule, UserNotificationsModule],
   controllers: [MaterialsController],
   providers: [MaterialsService],
   exports: [MaterialsService],

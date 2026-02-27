@@ -9,16 +9,25 @@ interface ModuleProgress {
   percentage: number;
 }
 
+interface PassFailStats {
+  totalStudents: number;
+  passed: number;
+  failed: number;
+  passRate: number;
+}
+
 interface CoursePerformanceProps {
   attendanceData: number[];
   modules: ModuleProgress[];
   courses: { value: string; label: string }[];
+  passFailStats?: PassFailStats | null;
 }
 
 const CoursePerformance = ({
   attendanceData,
   modules,
   courses,
+  passFailStats,
 }: CoursePerformanceProps) => {
   const t = useTranslations("instructorDashboard");
   const tA = useTranslations("accessibility");
@@ -95,6 +104,12 @@ const CoursePerformance = ({
     csv += rows.map((r) => r.join(",")).join("\n");
     csv += "\n\nModule Completion\nModule,Completion %\n";
     csv += moduleRows.map((r) => r.join(",")).join("\n");
+    if (passFailStats) {
+      csv += `\n\n${t("performance.passRate")}\n`;
+      csv += `${t("performance.passed")},${passFailStats.passed}\n`;
+      csv += `${t("performance.failed")},${passFailStats.failed}\n`;
+      csv += `${t("performance.passRate")},${passFailStats.passRate}%\n`;
+    }
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -119,7 +134,12 @@ const CoursePerformance = ({
     html += `</table>`;
     html += `<h2>Module Completion</h2><table><tr><th>Module</th><th>Completion %</th></tr>`;
     modules.forEach((m) => { html += `<tr><td>${m.name}</td><td>${m.percentage}%</td></tr>`; });
-    html += `</table></body></html>`;
+    html += `</table>`;
+    if (passFailStats) {
+      html += `<h2>${t("performance.passRate")}</h2><table><tr><th>${t("performance.passed")}</th><th>${t("performance.failed")}</th><th>${t("performance.passRate")}</th></tr>`;
+      html += `<tr><td>${passFailStats.passed}</td><td>${passFailStats.failed}</td><td>${passFailStats.passRate}%</td></tr></table>`;
+    }
+    html += `</body></html>`;
 
     printWindow.document.write(html);
     printWindow.document.close();
@@ -302,6 +322,44 @@ const CoursePerformance = ({
             </div>
           </div>
         </div>
+
+        {/* Pass/Fail Rate */}
+        {passFailStats && passFailStats.totalStudents > 0 && (
+          <div className="col-span-1 lg:col-span-2 pt-4 border-t border-[#E5E7EB]">
+            <h4 className="text-sm text-[#4B5563] mb-3">
+              {t("performance.passRate")}
+            </h4>
+            <div className="flex items-center gap-4">
+              {/* Stacked bar */}
+              <div className="flex-1 h-6 bg-[#E5E7EB] rounded-full overflow-hidden flex">
+                <div
+                  className="h-full bg-[#22C55E] transition-all duration-300"
+                  style={{ width: `${passFailStats.passRate}%` }}
+                />
+                <div
+                  className="h-full bg-[#EF4444] transition-all duration-300"
+                  style={{ width: `${100 - passFailStats.passRate}%` }}
+                />
+              </div>
+              {/* Labels */}
+              <div className="flex items-center gap-3 text-sm flex-shrink-0">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
+                  <span className="text-[#374151] font-medium">{passFailStats.passed}</span>
+                  <span className="text-[#6B7280]">{t("performance.passed")}</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                  <span className="text-[#374151] font-medium">{passFailStats.failed}</span>
+                  <span className="text-[#6B7280]">{t("performance.failed")}</span>
+                </span>
+                <span className="text-[#6B7280] text-xs">
+                  ({passFailStats.passRate}% {t("performance.ofStudents", { total: passFailStats.totalStudents })})
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

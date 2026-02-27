@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
+import NotificationBell from "@/components/shared/NotificationBell";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
 
 interface InstructorProfile {
@@ -194,6 +195,9 @@ const InstructorNavbar = ({ instructor }: InstructorNavbarProps) => {
           >
             <Search className="w-5 h-5" strokeWidth={1.67} />
           </button>
+
+          {/* Notification Bell - Hidden on mobile */}
+          <NotificationBell />
 
           {/* Cart Icon - Hidden on mobile */}
           <Link

@@ -8,6 +8,7 @@ import {
   boolean,
   index,
   check,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { courses } from './courses';
@@ -38,6 +39,8 @@ export const sessions = pgTable(
     reminderSentAt: timestamp('reminder_sent_at'),
     recordingEnabled: boolean('recording_enabled').notNull().default(true),
     zoomSyncedAt: timestamp('zoom_synced_at'),
+    isMakeup: boolean('is_makeup').notNull().default(false),
+    parentSessionId: uuid('parent_session_id').references((): AnyPgColumn => sessions.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -46,6 +49,7 @@ export const sessions = pgTable(
     index('sessions_instructor_id_idx').on(table.instructorId),
     index('sessions_scheduled_at_idx').on(table.scheduledAt),
     index('sessions_status_idx').on(table.status),
+    index('sessions_parent_session_id_idx').on(table.parentSessionId),
     check(
       'sessions_type_check',
       sql`${table.type} IN ('zoom', 'onsite', 'hybrid')`,

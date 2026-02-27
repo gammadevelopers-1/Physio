@@ -854,6 +854,10 @@ export const instructorApi = {
   getStudentInterventions: (studentId: string) =>
     api.get<InterventionRecord[]>(`/instructor/students/${studentId}/interventions`),
 
+  // Course Rating Stats
+  getCourseRatingStats: (courseId: string) =>
+    api.get<{ avgRating: number; totalRatings: number }>(`/courses/${courseId}/ratings/stats`),
+
   // Certificates
   getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {
     const sp = new URLSearchParams();
@@ -1732,6 +1736,43 @@ export const nelcComplianceApi = {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   },
+};
+
+// ===========================================
+// User Notifications API
+// ===========================================
+export interface UserNotification {
+  id: string;
+  recipientId: string;
+  type: string;
+  title: string;
+  message: string;
+  link: string | null;
+  isRead: boolean;
+  entityType: string | null;
+  entityId: string | null;
+  createdAt: string;
+}
+
+export const userNotificationsApi = {
+  getAll: (params?: { limit?: number; unreadOnly?: boolean }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.unreadOnly) sp.set('unreadOnly', 'true');
+    const qs = sp.toString();
+    return api.get<{ data: UserNotification[]; unreadCount: number }>(
+      `/user-notifications${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  getUnreadCount: () =>
+    api.get<{ unreadCount: number }>('/user-notifications/unread-count'),
+
+  markAsRead: (id: string) =>
+    api.patch<UserNotification>(`/user-notifications/${id}/read`),
+
+  markAllAsRead: () =>
+    api.patch<{ message: string }>('/user-notifications/read-all'),
 };
 
 // ===========================================

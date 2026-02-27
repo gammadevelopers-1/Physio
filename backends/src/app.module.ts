@@ -27,6 +27,7 @@ import { ProcessingModule } from './modules/processing/processing.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { AuditLogModule } from './modules/audit-logs/audit-logs.module';
 import { StudentModule } from './modules/student/student.module';
+import { UserNotificationsModule } from './modules/user-notifications/user-notifications.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
@@ -87,6 +88,7 @@ import processingConfig from './config/processing.config';
     PreferencesModule,
     AuditLogModule,
     StudentModule,
+    UserNotificationsModule,
   ],
   controllers: [AppController],
   providers: [

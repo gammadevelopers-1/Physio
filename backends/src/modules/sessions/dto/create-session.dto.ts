@@ -79,4 +79,12 @@ export class CreateSessionDto {
   @IsOptional()
   @IsBoolean()
   recordingEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isMakeup?: boolean;
+
+  @IsOptional()
+  @IsUUID('4')
+  parentSessionId?: string;
 }

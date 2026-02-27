@@ -232,6 +232,7 @@ const InstructorDashboardContent = () => {
                   attendanceData={attendanceData}
                   modules={moduleProgress}
                   courses={courseOptions}
+                  passFailStats={dashboard?.passFailStats}
                 />
 
                 {/* Assessment & Item Analysis */}
@@ -240,12 +241,12 @@ const InstructorDashboardContent = () => {
                   questions={questionAnalysis}
                 />
 
-                {/* Recent Feedback — no backend endpoint yet, shows empty state */}
+                {/* Recent Feedback */}
                 <div className="mb-6">
                   <RecentFeedbackWidget
-                    overallRating={0}
-                    totalReviews={0}
-                    feedbackItems={[]}
+                    overallRating={dashboard?.recentFeedback?.overallRating ?? 0}
+                    totalReviews={dashboard?.recentFeedback?.totalReviews ?? 0}
+                    feedbackItems={dashboard?.recentFeedback?.feedbackItems ?? []}
                   />
                 </div>
 

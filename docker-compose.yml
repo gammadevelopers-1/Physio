@@ -66,11 +66,12 @@ services:
       # Storage (local filesystem for dev; set to 'gcp' in production)
       - STORAGE_DRIVER=local
       - STORAGE_LOCAL_DIR=./uploads
-      # Zoom Integration
-      - ZOOM_ACCOUNT_ID=dBhO51fLSgyBJw3IoWMm6g
-      - ZOOM_CLIENT_ID=woI4gaHnTZWbz3ABlmgh6g
-      - ZOOM_CLIENT_SECRET=lkw0uNsH7IScl2cUdkAD3fVx8Atc65VO
-      - ZOOM_WEBHOOK_SECRET_TOKEN=
+      # Zoom Integration (Real — Server-to-Server OAuth)
+      - ZOOM_MOCK=false
+      - ZOOM_ACCOUNT_ID=AnvI4ci3RqK2Ad6XqJN2WQ
+      - ZOOM_CLIENT_ID=XglZqRdoTkam5Ho_uWtAQA
+      - ZOOM_CLIENT_SECRET=qMTHzrLm9rtiram6HSnspPYu5RsMWLSv
+      - ZOOM_WEBHOOK_SECRET_TOKEN=QKLdAWRmQw-GxTtn2oGPuA
       # Redis (BullMQ job queue)
       - REDIS_HOST=redis
       - REDIS_PORT=6379

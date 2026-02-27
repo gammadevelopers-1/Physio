@@ -12,6 +12,8 @@ import {
   Ticket,
   Loader2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { instructorApi, ApiError } from "@/lib/api";
 
 interface AtRiskLearner {
@@ -36,6 +38,8 @@ const AtRiskLearners = ({
 }: AtRiskLearnersProps) => {
   const t = useTranslations("instructorDashboard");
   const tA = useTranslations("accessibility");
+  const router = useRouter();
+  const locale = useLocale();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -97,24 +101,13 @@ const AtRiskLearners = ({
     }
   }, [t]);
 
-  const handleScheduleMakeup = useCallback(async (learner: AtRiskLearner) => {
+  const handleScheduleMakeup = useCallback((learner: AtRiskLearner) => {
     setOpenDropdown(null);
-    setActionLoading(learner.id);
-    try {
-      await instructorApi.createIntervention({
-        type: "makeup_session",
-        studentId: learner.id,
-        courseId: learner.enrolledCourseIds?.[0],
-      });
-      toast.info(t("atRisk.makeupSessionInfo"));
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : t("atRisk.actionFailed")
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  }, [t]);
+    const courseId = learner.enrolledCourseIds?.[0] || "";
+    router.push(
+      `/${locale}/dashboard/instructor/sessions?openSchedule=true&courseId=${courseId}&isMakeup=true&studentId=${learner.id}`
+    );
+  }, [router, locale]);
 
   const handleOpenTicket = useCallback(async (learner: AtRiskLearner) => {
     setOpenDropdown(null);

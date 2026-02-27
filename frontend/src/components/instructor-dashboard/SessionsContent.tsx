@@ -920,14 +920,27 @@ function ScheduleSessionModal({
   onClose,
   onScheduled,
   t,
+  prefillCourseId,
+  isMakeup,
+  makeupStudentId,
 }: {
   courses: InstructorCourse[];
   onClose: () => void;
   onScheduled: () => void;
   t: ReturnType<typeof useTranslations>;
+  prefillCourseId?: string;
+  isMakeup?: boolean;
+  makeupStudentId?: string;
 }) {
-  const [courseId, setCourseId] = useState("");
-  const [title, setTitle] = useState("");
+  const prefillCourse = prefillCourseId
+    ? courses.find((c) => c.id === prefillCourseId)
+    : undefined;
+  const [courseId, setCourseId] = useState(prefillCourseId || "");
+  const [title, setTitle] = useState(
+    isMakeup && prefillCourse
+      ? t("sessionsPage.makeupTitle", { course: prefillCourse.title })
+      : ""
+  );
   const [type, setType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -994,8 +1007,23 @@ function ScheduleSessionModal({
       if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
         data.zoomLink = zoomLink.trim();
       }
+      if (isMakeup) {
+        data.isMakeup = true;
+      }
       await instructorApi.createSession(data);
-      toast.success(t("sessionsPage.schedule.success"));
+      // Log intervention record for makeup sessions
+      if (isMakeup && makeupStudentId && courseId) {
+        instructorApi.createIntervention({
+          type: "makeup_session",
+          studentId: makeupStudentId,
+          courseId,
+        }).catch(() => {});
+      }
+      toast.success(
+        isMakeup
+          ? t("sessionsPage.makeupCreated")
+          : t("sessionsPage.schedule.success")
+      );
       onScheduled();
       onClose();
     } catch {
@@ -1719,6 +1747,18 @@ const SessionsContent = () => {
   const [editSessionData, setEditSessionData] = useState<CourseSession | null>(null);
   const [recordingsSession, setRecordingsSession] = useState<CourseSession | null>(null);
 
+  // Makeup session pre-fill from query params
+  const makeupCourseId = searchParams.get("courseId") || undefined;
+  const isMakeupParam = searchParams.get("isMakeup") === "true";
+  const makeupStudentId = searchParams.get("studentId") || undefined;
+
+  // Auto-open schedule modal when navigating from AtRiskLearners
+  useEffect(() => {
+    if (searchParams.get("openSchedule") === "true") {
+      setShowScheduleModal(true);
+    }
+  }, [searchParams]);
+
   // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -2222,6 +2262,9 @@ const SessionsContent = () => {
           onClose={() => setShowScheduleModal(false)}
           onScheduled={fetchData}
           t={t}
+          prefillCourseId={makeupCourseId}
+          isMakeup={isMakeupParam}
+          makeupStudentId={makeupStudentId}
         />
       )}
 

@@ -887,6 +887,8 @@ const ContentManagementContent = () => {
       case "live": return "bg-[#DCFCE7] text-[#22C55E]";
       case "processing": return "bg-[#FEF9C3] text-[#EAB308]";
       case "failed": return "bg-[#FEE2E2] text-[#EF4444]";
+      case "pending_review": return "bg-[#DBEAFE] text-[#3B82F6]";
+      case "changes_requested": return "bg-[#FEF3C7] text-[#D97706]";
       default: return "bg-[#F3F4F6] text-[#6B7280]";
     }
   };
@@ -896,6 +898,8 @@ const ContentManagementContent = () => {
       case "live": return <Check className="w-3 h-3" />;
       case "processing": return <Clock className="w-3 h-3 animate-spin" />;
       case "failed": return <X className="w-3 h-3" />;
+      case "pending_review": return <Clock className="w-3 h-3" />;
+      case "changes_requested": return <AlertTriangle className="w-3 h-3" />;
       default: return null;
     }
   };
@@ -961,6 +965,8 @@ const ContentManagementContent = () => {
     { id: "all", name: t("content.allStatuses") },
     { id: "live", name: t("content.statusLive") },
     { id: "processing", name: t("content.statusProcessing") },
+    { id: "pending_review", name: t("content.statusPending_review") },
+    { id: "changes_requested", name: t("content.statusChanges_requested") },
     { id: "failed", name: t("content.statusFailed") },
   ];
 
@@ -1273,6 +1279,26 @@ const ContentManagementContent = () => {
                                         {m.processingError}
                                       </span>
                                     )}
+                                    {m.status === "pending_review" && (
+                                      <span className="text-[10px] text-[#3B82F6]">
+                                        {t("content.awaitingReview")}
+                                      </span>
+                                    )}
+                                    {m.status === "changes_requested" && m.reviewNote && (
+                                      <div className="mt-1 p-2 bg-[#FEF3C7] border border-[#FCD34D] rounded text-[10px]">
+                                        <span className="font-semibold text-[#92400E]">{t("content.reviewFeedback")}: </span>
+                                        <span className="text-[#78350F]">{m.reviewNote}</span>
+                                      </div>
+                                    )}
+                                    {m.status === "changes_requested" && (
+                                      <button
+                                        onClick={() => setReplacingMaterial(m)}
+                                        className="mt-1 inline-flex items-center gap-1 px-2 py-1 bg-[#D97706] text-white text-[10px] font-medium rounded hover:bg-[#B45309] transition-colors"
+                                      >
+                                        <Replace className="w-3 h-3" />
+                                        {t("content.resubmit")}
+                                      </button>
+                                    )}
                                   </div>
                                 </td>
                                 <td className="px-4 py-4">
@@ -1400,6 +1426,25 @@ const ContentManagementContent = () => {
                                   WCAG
                                 </span>
                               </div>
+
+                              {m.status === "pending_review" && (
+                                <p className="text-[10px] text-[#3B82F6] mb-2">{t("content.awaitingReview")}</p>
+                              )}
+                              {m.status === "changes_requested" && m.reviewNote && (
+                                <div className="mb-2 p-2 bg-[#FEF3C7] border border-[#FCD34D] rounded text-[10px]">
+                                  <span className="font-semibold text-[#92400E]">{t("content.reviewFeedback")}: </span>
+                                  <span className="text-[#78350F]">{m.reviewNote}</span>
+                                </div>
+                              )}
+                              {m.status === "changes_requested" && (
+                                <button
+                                  onClick={() => setReplacingMaterial(m)}
+                                  className="w-full mb-2 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-[#D97706] text-white text-xs font-medium rounded hover:bg-[#B45309] transition-colors"
+                                >
+                                  <Replace className="w-3 h-3" />
+                                  {t("content.resubmit")}
+                                </button>
+                              )}
 
                               <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
                                 <span>{formatFileSize(m.fileSize)}</span>

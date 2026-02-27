@@ -42,6 +42,22 @@ import {
   getTaAssignmentHtml,
   getTaAssignmentText,
 } from './templates/ta-assignment.template';
+import {
+  getSessionStartedHtml,
+  getSessionStartedText,
+} from './templates/session-started.template';
+import {
+  getSessionEndedHtml,
+  getSessionEndedText,
+} from './templates/session-ended.template';
+import {
+  getSessionCancelledHtml,
+  getSessionCancelledText,
+} from './templates/session-cancelled.template';
+import {
+  getContentReviewHtml,
+  getContentReviewText,
+} from './templates/content-review.template';
 
 @Injectable()
 export class EmailService {
@@ -402,6 +418,110 @@ export class EmailService {
   }
 
   /**
+   * Send session started notification email to student
+   */
+  async sendSessionStarted(
+    to: string,
+    params: {
+      recipientName: string;
+      sessionTitle: string;
+      courseName: string;
+      zoomLink: string | null;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Session Live: ${params.sessionTitle}`,
+        html: getSessionStartedHtml(params),
+        text: getSessionStartedText(params),
+      });
+      this.logger.log(
+        `Session started email sent to ${to} for "${params.sessionTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send session started email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send session ended notification email to student
+   */
+  async sendSessionEnded(
+    to: string,
+    params: {
+      recipientName: string;
+      sessionTitle: string;
+      courseName: string;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Session Ended: ${params.sessionTitle}`,
+        html: getSessionEndedHtml(params),
+        text: getSessionEndedText(params),
+      });
+      this.logger.log(
+        `Session ended email sent to ${to} for "${params.sessionTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send session ended email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send session cancelled notification email to student
+   */
+  async sendSessionCancelled(
+    to: string,
+    params: {
+      recipientName: string;
+      sessionTitle: string;
+      courseName: string;
+      cancelReason: string | null;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Session Cancelled: ${params.sessionTitle}`,
+        html: getSessionCancelledHtml(params),
+        text: getSessionCancelledText(params),
+      });
+      this.logger.log(
+        `Session cancelled email sent to ${to} for "${params.sessionTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send session cancelled email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
    * Send TA assignment notification email
    */
   async sendTaAssignment(
@@ -434,6 +554,49 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send TA assignment email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send content review notification email to instructor
+   */
+  async sendContentReview(
+    to: string,
+    params: {
+      recipientName: string;
+      materialTitle: string;
+      courseName: string;
+      decision: 'approved' | 'rejected' | 'changes_requested';
+      comment: string | null;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    const decisionLabels: Record<string, string> = {
+      approved: 'Approved',
+      rejected: 'Rejected',
+      changes_requested: 'Changes Requested',
+    };
+    const decisionLabel = decisionLabels[params.decision] || params.decision;
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Content ${decisionLabel}: ${params.materialTitle}`,
+        html: getContentReviewHtml(params),
+        text: getContentReviewText(params),
+      });
+      this.logger.log(
+        `Content review email sent to ${to} for "${params.materialTitle}" (${params.decision})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send content review email to ${to}`,
         error,
       );
     }

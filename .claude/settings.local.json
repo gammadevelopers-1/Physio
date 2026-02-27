@@ -106,7 +106,14 @@
       "Bash(do file=\"$dir/content-types/$dir/schema.json\")",
       "Bash(if python3 -c \"import json; json.load\\(open\\(''$file''\\)\\)\")",
       "Bash(then echo \"VALID JSON: $file\")",
-      "Bash(else echo \"INVALID JSON: $file\")"
+      "Bash(else echo \"INVALID JSON: $file\")",
+      "Bash(git branch -d haseeb/strapi-2.0)",
+      "Bash(git branch haseeb/strapi-2.0)",
+      "Bash(git branch -d haseeb/dynamic-zones-page-builder)",
+      "Bash(sqlite3 /home/haseeb-raza/Desktop/physioguidance/strapi/.tmp/data.db \".tables\")",
+      "Bash(sqlite3 /home/haseeb-raza/Desktop/physioguidance/strapi/.tmp/data.db \"SELECT name FROM sqlite_master WHERE type=''table'' AND name LIKE ''%locale%'';\")",
+      "Bash(npx strapi build)",
+      "Bash(jq -r '.attributes | to_entries[] | select\\(.value.component\\) | .value.component' /home/haseeb-raza/Desktop/physioguidance/strapi/src/components/blocks/*.json)"
     ]
   }
 }

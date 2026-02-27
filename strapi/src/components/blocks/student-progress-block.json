@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_blocks_student_progress_blocks",
+  "info": {
+    "displayName": "Student Progress Block",
+    "icon": "chart-line",
+    "description": "Visual display of student completion rates and pass rates"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "metrics": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.progress-metric"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["bars", "circles", "numbers"],
+      "default": "bars"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

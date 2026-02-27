@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_blocks_curriculum_outline_blocks",
+  "info": {
+    "displayName": "Curriculum Outline Block",
+    "icon": "sitemap",
+    "description": "Expandable module and lesson structure"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "modules": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.curriculum-module"
+    },
+    "totalDuration": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "totalLessons": {
+      "type": "integer"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

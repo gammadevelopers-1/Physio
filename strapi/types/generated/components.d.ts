@@ -1,5 +1,230 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface BlocksAccordionBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_accordion_blocks';
+  info: {
+    description: 'Generic collapsible sections with rich text content';
+    displayName: 'Accordion Block';
+    icon: 'list';
+  };
+  attributes: {
+    allowMultipleOpen: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    items: Schema.Attribute.Component<'elements.accordion-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksAccreditationBadgesBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_accreditation_badges_blocks';
+  info: {
+    description: 'Row of certification and accreditation logos with links';
+    displayName: 'Accreditation Badges Block';
+    icon: 'shield-alt';
+  };
+  attributes: {
+    badgeLinks: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    badges: Schema.Attribute.Media<'images', true>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['row', 'grid']> &
+      Schema.Attribute.DefaultTo<'row'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksAnchorLinksBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_anchor_links_blocks';
+  info: {
+    description: 'In-page navigation with anchor links';
+    displayName: 'Anchor Links Block';
+    icon: 'anchor';
+  };
+  attributes: {
+    links: Schema.Attribute.Component<'elements.anchor-link-item', true>;
+    sticky: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['horizontal', 'vertical']> &
+      Schema.Attribute.DefaultTo<'horizontal'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksAnnouncementBannerBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_announcement_banner_blocks';
+  info: {
+    description: 'Dismissible announcement or promotion banner';
+    displayName: 'Announcement Banner Block';
+    icon: 'bullhorn';
+  };
+  attributes: {
+    backgroundColor: Schema.Attribute.String;
+    dismissible: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    linkLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    linkUrl: Schema.Attribute.String;
+    message: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    textColor: Schema.Attribute.String;
+    variant: Schema.Attribute.Enumeration<
+      ['info', 'warning', 'success', 'promotion']
+    > &
+      Schema.Attribute.DefaultTo<'info'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksBeforeAfterBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_before_after_blocks';
+  info: {
+    description: 'Before/after image comparison slider';
+    displayName: 'Before After Block';
+    icon: 'arrows-alt-h';
+  };
+  attributes: {
+    afterImage: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    afterLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'After'>;
+    beforeImage: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    beforeLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'Before'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksBlogPostsGridBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_blog_posts_grid_blocks';
+  info: {
+    description: 'Grid of recent blog posts from Blog Post collection';
+    displayName: 'Blog Posts Grid Block';
+    icon: 'newspaper';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['2', '3']> &
+      Schema.Attribute.DefaultTo<'3'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterByCategory: Schema.Attribute.String;
+    maxItems: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<6>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    viewAllLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    viewAllUrl: Schema.Attribute.String & Schema.Attribute.DefaultTo<'/blog'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksBreadcrumbBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_breadcrumb_blocks';
+  info: {
+    description: 'Custom breadcrumb trail navigation';
+    displayName: 'Breadcrumb Block';
+    icon: 'ellipsis-h';
+  };
+  attributes: {
+    items: Schema.Attribute.Component<'elements.button-link', true>;
+    separator: Schema.Attribute.String & Schema.Attribute.DefaultTo<'/'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksCardsGrid extends Struct.ComponentSchema {
   collectionName: 'components_blocks_cards_grids';
   info: {
@@ -187,6 +412,70 @@ export interface BlocksCertificationCardsBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksComparisonTableBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_comparison_table_blocks';
+  info: {
+    description: 'Side-by-side plan, course, or certification comparison';
+    displayName: 'Comparison Table Block';
+    icon: 'columns';
+  };
+  attributes: {
+    columns: Schema.Attribute.Component<'elements.comparison-column', true>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    featureLabels: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksComplianceBadgeBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_compliance_badge_blocks';
+  info: {
+    description: 'NELC/SCFHS/MOH regulatory compliance visual indicators';
+    displayName: 'Compliance Badge Block';
+    icon: 'check-double';
+  };
+  attributes: {
+    badges: Schema.Attribute.Component<'elements.compliance-badge-item', true>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['row', 'grid', 'detailed']> &
+      Schema.Attribute.DefaultTo<'row'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksContactFormBlock extends Struct.ComponentSchema {
   collectionName: 'components_blocks_contact_form_blocks';
   info: {
@@ -359,6 +648,170 @@ export interface BlocksContactFormBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksCountdownTimerBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_countdown_timer_blocks';
+  info: {
+    description: 'Countdown timer for deadlines, events, or offers';
+    displayName: 'Countdown Timer Block';
+    icon: 'hourglass-half';
+  };
+  attributes: {
+    buttons: Schema.Attribute.Component<'elements.button-link', true>;
+    daysLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'Days'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    expiredMessage: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hoursLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'Hours'>;
+    minutesLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'Minutes'>;
+    secondsLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'Seconds'>;
+    targetDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksCoursePreviewBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_course_preview_blocks';
+  info: {
+    description: 'Featured single course preview with video, description, and enroll CTA';
+    displayName: 'Course Preview Block';
+    icon: 'graduation-cap';
+  };
+  attributes: {
+    courseHighlights: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    duration: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    enrollLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    enrollUrl: Schema.Attribute.String;
+    previewImage: Schema.Attribute.Media<'images'>;
+    previewVideo: Schema.Attribute.Media<'videos'>;
+    previewVideoUrl: Schema.Attribute.String;
+    price: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksCpdCalculatorBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_cpd_calculator_blocks';
+  info: {
+    description: 'Interactive CPD/CME points calculator';
+    displayName: 'CPD Calculator Block';
+    icon: 'calculator';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    disclaimerText: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    pointsLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    tiers: Schema.Attribute.Component<'elements.cpd-tier', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    totalLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksCtaBanner extends Struct.ComponentSchema {
   collectionName: 'components_blocks_cta_banners';
   info: {
@@ -387,6 +840,71 @@ export interface BlocksCtaBanner extends Struct.ComponentSchema {
       ['centered', 'image-left', 'image-right']
     > &
       Schema.Attribute.DefaultTo<'centered'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksCurriculumOutlineBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_curriculum_outline_blocks';
+  info: {
+    description: 'Expandable module and lesson structure';
+    displayName: 'Curriculum Outline Block';
+    icon: 'sitemap';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    modules: Schema.Attribute.Component<'elements.curriculum-module', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    totalDuration: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    totalLessons: Schema.Attribute.Integer;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksDownloadResourcesBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_download_resources_blocks';
+  info: {
+    description: 'Grid of downloadable files, guides, and whitepapers';
+    displayName: 'Download Resources Block';
+    icon: 'download';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['2', '3', '4']> &
+      Schema.Attribute.DefaultTo<'3'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    resources: Schema.Attribute.Component<'elements.download-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
     > &
@@ -573,6 +1091,89 @@ export interface BlocksHeroBanner extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksImageGalleryBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_image_gallery_blocks';
+  info: {
+    description: 'Image gallery with grid or carousel layout';
+    displayName: 'Image Gallery Block';
+    icon: 'images';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['2', '3', '4']> &
+      Schema.Attribute.DefaultTo<'3'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    enableLightbox: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    images: Schema.Attribute.Media<'images', true> & Schema.Attribute.Required;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['grid', 'carousel', 'masonry']> &
+      Schema.Attribute.DefaultTo<'grid'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksInstructorSpotlightBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_instructor_spotlight_blocks';
+  info: {
+    description: 'Featured single instructor with bio, credentials, and photo';
+    displayName: 'Instructor Spotlight Block';
+    icon: 'user-tie';
+  };
+  attributes: {
+    bio: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    credentials: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    instructorName: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    instructorRole: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    photo: Schema.Attribute.Media<'images'>;
+    socialLinks: Schema.Attribute.Text;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['side-by-side', 'centered']> &
+      Schema.Attribute.DefaultTo<'side-by-side'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksInstructorsGrid extends Struct.ComponentSchema {
   collectionName: 'components_blocks_instructors_grids';
   info: {
@@ -591,6 +1192,75 @@ export interface BlocksInstructorsGrid extends Struct.ComponentSchema {
       Schema.Attribute.DefaultTo<'all'>;
     showHomepageOnly: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksLearningOutcomesBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_learning_outcomes_blocks';
+  info: {
+    description: 'Checkmark list of what students will learn';
+    displayName: 'Learning Outcomes Block';
+    icon: 'check-circle';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['1', '2']> &
+      Schema.Attribute.DefaultTo<'2'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    icon: Schema.Attribute.Enumeration<
+      ['checkmark', 'star', 'arrow', 'bullet']
+    > &
+      Schema.Attribute.DefaultTo<'checkmark'>;
+    outcomes: Schema.Attribute.Component<
+      'elements.learning-outcome-item',
+      true
+    >;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksLiveCounterBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_live_counter_blocks';
+  info: {
+    description: 'Animated counters for key metrics';
+    displayName: 'Live Counter Block';
+    icon: 'sort-numeric-up';
+  };
+  attributes: {
+    animationDuration: Schema.Attribute.Integer &
+      Schema.Attribute.DefaultTo<2000>;
+    backgroundColor: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'#ffffff'>;
+    counters: Schema.Attribute.Component<'elements.counter-item', true>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -627,6 +1297,60 @@ export interface BlocksLogoStrip extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksNewsletterBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_newsletter_blocks';
+  info: {
+    description: 'Email newsletter signup form with CTA';
+    displayName: 'Newsletter Block';
+    icon: 'envelope-open';
+  };
+  attributes: {
+    backgroundColor: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'#f8f9fa'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    emailPlaceholder: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    privacyNote: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    submitLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    successMessage: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksPartnersStrip extends Struct.ComponentSchema {
   collectionName: 'components_blocks_partners_strips';
   info: {
@@ -635,6 +1359,43 @@ export interface BlocksPartnersStrip extends Struct.ComponentSchema {
     icon: 'handshake';
   };
   attributes: {
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksPdfViewerBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_pdf_viewer_blocks';
+  info: {
+    description: 'Embedded PDF viewer with download option';
+    displayName: 'PDF Viewer Block';
+    icon: 'file-pdf';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    downloadLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    height: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<600>;
+    pdfFile: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    showDownloadButton: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -677,6 +1438,64 @@ export interface BlocksPolicySectionsBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksPricingTableBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_pricing_table_blocks';
+  info: {
+    description: 'Pricing plans comparison table';
+    displayName: 'Pricing Table Block';
+    icon: 'tag';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    plans: Schema.Attribute.Component<'elements.comparison-column', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksRelatedPagesBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_related_pages_blocks';
+  info: {
+    description: 'Curated grid of internal page links with thumbnails';
+    displayName: 'Related Pages Block';
+    icon: 'th-large';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['2', '3', '4']> &
+      Schema.Attribute.DefaultTo<'3'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    pages: Schema.Attribute.Component<'elements.related-page-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksRichTextBlock extends Struct.ComponentSchema {
   collectionName: 'components_blocks_rich_text_blocks';
   info: {
@@ -694,6 +1513,92 @@ export interface BlocksRichTextBlock extends Struct.ComponentSchema {
       }>;
     maxWidth: Schema.Attribute.Enumeration<['narrow', 'medium', 'full']> &
       Schema.Attribute.DefaultTo<'medium'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksSectionHeaderBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_section_header_blocks';
+  info: {
+    description: 'Styled section divider with title and subtitle';
+    displayName: 'Section Header Block';
+    icon: 'heading';
+  };
+  attributes: {
+    alignment: Schema.Attribute.Enumeration<['left', 'center', 'right']> &
+      Schema.Attribute.DefaultTo<'center'>;
+    anchorId: Schema.Attribute.String;
+    headingLevel: Schema.Attribute.Enumeration<['h1', 'h2', 'h3', 'h4']> &
+      Schema.Attribute.DefaultTo<'h2'>;
+    showDivider: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    subtitle: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksSocialFeedBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_social_feed_blocks';
+  info: {
+    description: 'Embedded social media posts feed';
+    displayName: 'Social Feed Block';
+    icon: 'share-alt';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['2', '3', '4']> &
+      Schema.Attribute.DefaultTo<'3'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    posts: Schema.Attribute.Component<'elements.social-link', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksSpacerBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_spacer_blocks';
+  info: {
+    description: 'Visual spacing or divider between blocks';
+    displayName: 'Spacer Block';
+    icon: 'arrows-alt-v';
+  };
+  attributes: {
+    dividerColor: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'#e5e7eb'>;
+    height: Schema.Attribute.Enumeration<
+      ['small', 'medium', 'large', 'extra-large']
+    > &
+      Schema.Attribute.DefaultTo<'medium'>;
+    showDivider: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
     > &
@@ -729,6 +1634,90 @@ export interface BlocksStatsNumbersBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksStudentProgressBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_student_progress_blocks';
+  info: {
+    description: 'Visual display of student completion rates and pass rates';
+    displayName: 'Student Progress Block';
+    icon: 'chart-line';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metrics: Schema.Attribute.Component<'elements.progress-metric', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['bars', 'circles', 'numbers']> &
+      Schema.Attribute.DefaultTo<'bars'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksSuccessStoriesBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_success_stories_blocks';
+  info: {
+    description: 'Student/patient case studies and success stories';
+    displayName: 'Success Stories Block';
+    icon: 'trophy';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    stories: Schema.Attribute.Component<'elements.success-story-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['grid', 'carousel']> &
+      Schema.Attribute.DefaultTo<'grid'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksTabsBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_tabs_blocks';
+  info: {
+    description: 'Tabbed content sections';
+    displayName: 'Tabs Block';
+    icon: 'folder';
+  };
+  attributes: {
+    tabs: Schema.Attribute.Component<'elements.tab-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['horizontal', 'vertical']> &
+      Schema.Attribute.DefaultTo<'horizontal'>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksTestimonialsCarousel extends Struct.ComponentSchema {
   collectionName: 'components_blocks_testimonials_carousels';
   info: {
@@ -749,6 +1738,36 @@ export interface BlocksTestimonialsCarousel extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksTimelineBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_timeline_blocks';
+  info: {
+    description: 'Step-by-step timeline or roadmap visualization';
+    displayName: 'Timeline Block';
+    icon: 'clock';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    steps: Schema.Attribute.Component<'elements.timeline-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['vertical', 'horizontal']> &
+      Schema.Attribute.DefaultTo<'vertical'>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
     > &
@@ -1000,6 +2019,84 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksTreatmentGalleryBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_treatment_gallery_blocks';
+  info: {
+    description: 'Categorized visual reference of physiotherapy techniques';
+    displayName: 'Treatment Gallery Block';
+    icon: 'images';
+  };
+  attributes: {
+    columns: Schema.Attribute.Enumeration<['2', '3', '4']> &
+      Schema.Attribute.DefaultTo<'3'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    filterByCategory: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    techniques: Schema.Attribute.Component<
+      'elements.treatment-technique-item',
+      true
+    >;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface BlocksUpcomingEventsBlock extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_upcoming_events_blocks';
+  info: {
+    description: 'List of upcoming events, webinars, and workshops';
+    displayName: 'Upcoming Events Block';
+    icon: 'calendar-alt';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    emptyMessage: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    events: Schema.Attribute.Component<'elements.event-item', true>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    variant: Schema.Attribute.Enumeration<['list', 'grid', 'calendar']> &
+      Schema.Attribute.DefaultTo<'list'>;
+    viewAllLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    viewAllUrl: Schema.Attribute.String;
+    visibility: Schema.Attribute.Enumeration<
+      ['all', 'desktop-only', 'mobile-only']
+    > &
+      Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
 export interface BlocksVideoEmbed extends Struct.ComponentSchema {
   collectionName: 'components_blocks_video_embeds';
   info: {
@@ -1027,6 +2124,49 @@ export interface BlocksVideoEmbed extends Struct.ComponentSchema {
       ['all', 'desktop-only', 'mobile-only']
     > &
       Schema.Attribute.DefaultTo<'all'>;
+  };
+}
+
+export interface ElementsAccordionItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_accordion_items';
+  info: {
+    description: 'A collapsible content section with title and rich text body';
+    displayName: 'Accordion Item';
+  };
+  attributes: {
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    defaultOpen: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsAnchorLinkItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_anchor_link_items';
+  info: {
+    description: 'An anchor link for in-page navigation';
+    displayName: 'Anchor Link Item';
+  };
+  attributes: {
+    anchorId: Schema.Attribute.String & Schema.Attribute.Required;
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
   };
 }
 
@@ -1082,6 +2222,309 @@ export interface ElementsCardItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ElementsComparisonColumn extends Struct.ComponentSchema {
+  collectionName: 'components_elements_comparison_columns';
+  info: {
+    description: 'A column in a comparison table';
+    displayName: 'Comparison Column';
+  };
+  attributes: {
+    buttonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    buttonUrl: Schema.Attribute.String;
+    features: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heading: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    highlighted: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    price: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsComplianceBadgeItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_compliance_badge_items';
+  info: {
+    description: 'A regulatory compliance badge';
+    displayName: 'Compliance Badge Item';
+  };
+  attributes: {
+    badgeImage: Schema.Attribute.Media<'images'>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    status: Schema.Attribute.Enumeration<['active', 'pending', 'expired']> &
+      Schema.Attribute.DefaultTo<'active'>;
+    verificationUrl: Schema.Attribute.String;
+  };
+}
+
+export interface ElementsCounterItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_counter_items';
+  info: {
+    description: 'An animated counter with value, label, and optional suffix';
+    displayName: 'Counter Item';
+  };
+  attributes: {
+    icon: Schema.Attribute.String;
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    prefix: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    suffix: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    value: Schema.Attribute.Integer & Schema.Attribute.Required;
+  };
+}
+
+export interface ElementsCpdTier extends Struct.ComponentSchema {
+  collectionName: 'components_elements_cpd_tiers';
+  info: {
+    description: 'A CPD points tier/category';
+    displayName: 'CPD Tier';
+  };
+  attributes: {
+    category: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    points: Schema.Attribute.Integer & Schema.Attribute.Required;
+  };
+}
+
+export interface ElementsCurriculumModule extends Struct.ComponentSchema {
+  collectionName: 'components_elements_curriculum_modules';
+  info: {
+    description: 'A module in a curriculum outline with lessons';
+    displayName: 'Curriculum Module';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    duration: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    lessons: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsDownloadItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_download_items';
+  info: {
+    description: 'A downloadable resource file';
+    displayName: 'Download Item';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    file: Schema.Attribute.Media<'files' | 'images'> &
+      Schema.Attribute.Required;
+    icon: Schema.Attribute.String;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsEventItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_event_items';
+  info: {
+    description: 'An upcoming event or webinar entry';
+    displayName: 'Event Item';
+  };
+  attributes: {
+    date: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    endDate: Schema.Attribute.DateTime;
+    image: Schema.Attribute.Media<'images'>;
+    location: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    registrationUrl: Schema.Attribute.String;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsLearningOutcomeItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_learning_outcome_items';
+  info: {
+    description: 'A single learning outcome with checkmark';
+    displayName: 'Learning Outcome Item';
+  };
+  attributes: {
+    icon: Schema.Attribute.String;
+    text: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsProgressMetric extends Struct.ComponentSchema {
+  collectionName: 'components_elements_progress_metrics';
+  info: {
+    description: 'A student progress metric with label and percentage';
+    displayName: 'Progress Metric';
+  };
+  attributes: {
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    maxValue: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<100>;
+    suffix: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<'%'>;
+    value: Schema.Attribute.Integer & Schema.Attribute.Required;
+  };
+}
+
+export interface ElementsRelatedPageItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_related_page_items';
+  info: {
+    description: 'A link to a related page with optional thumbnail';
+    displayName: 'Related Page Item';
+  };
+  attributes: {
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    thumbnail: Schema.Attribute.Media<'images'>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    url: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ElementsSocialLink extends Struct.ComponentSchema {
+  collectionName: 'components_elements_social_links';
+  info: {
+    description: 'A social media embed link';
+    displayName: 'Social Link';
+  };
+  attributes: {
+    caption: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    embedUrl: Schema.Attribute.String & Schema.Attribute.Required;
+    platform: Schema.Attribute.Enumeration<
+      ['instagram', 'twitter', 'linkedin', 'facebook', 'youtube', 'tiktok']
+    > &
+      Schema.Attribute.Required;
+  };
+}
+
 export interface ElementsStatItem extends Struct.ComponentSchema {
   collectionName: 'components_elements_stat_items';
   info: {
@@ -1103,6 +2546,134 @@ export interface ElementsStatItem extends Struct.ComponentSchema {
         };
       }>;
     value: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsSuccessStoryItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_success_story_items';
+  info: {
+    description: 'A case study or success story entry';
+    displayName: 'Success Story Item';
+  };
+  attributes: {
+    image: Schema.Attribute.Media<'images'>;
+    metric: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metricValue: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    role: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    story: Schema.Attribute.Text &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsTabItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_tab_items';
+  info: {
+    description: 'A tab with label and rich text content';
+    displayName: 'Tab Item';
+  };
+  attributes: {
+    content: Schema.Attribute.RichText &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    icon: Schema.Attribute.String;
+    label: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsTimelineItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_timeline_items';
+  info: {
+    description: 'A step in a timeline or roadmap';
+    displayName: 'Timeline Item';
+  };
+  attributes: {
+    date: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    icon: Schema.Attribute.String;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
+export interface ElementsTreatmentTechniqueItem extends Struct.ComponentSchema {
+  collectionName: 'components_elements_treatment_technique_items';
+  info: {
+    description: 'A physiotherapy treatment technique';
+    displayName: 'Treatment Technique Item';
+  };
+  attributes: {
+    category: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    image: Schema.Attribute.Media<'images'>;
+    name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1139,26 +2710,74 @@ export interface SharedPolicySection extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'blocks.accordion-block': BlocksAccordionBlock;
+      'blocks.accreditation-badges-block': BlocksAccreditationBadgesBlock;
+      'blocks.anchor-links-block': BlocksAnchorLinksBlock;
+      'blocks.announcement-banner-block': BlocksAnnouncementBannerBlock;
+      'blocks.before-after-block': BlocksBeforeAfterBlock;
+      'blocks.blog-posts-grid-block': BlocksBlogPostsGridBlock;
+      'blocks.breadcrumb-block': BlocksBreadcrumbBlock;
       'blocks.cards-grid': BlocksCardsGrid;
       'blocks.certification-cards-block': BlocksCertificationCardsBlock;
+      'blocks.comparison-table-block': BlocksComparisonTableBlock;
+      'blocks.compliance-badge-block': BlocksComplianceBadgeBlock;
       'blocks.contact-form-block': BlocksContactFormBlock;
+      'blocks.countdown-timer-block': BlocksCountdownTimerBlock;
+      'blocks.course-preview-block': BlocksCoursePreviewBlock;
+      'blocks.cpd-calculator-block': BlocksCpdCalculatorBlock;
       'blocks.cta-banner': BlocksCtaBanner;
+      'blocks.curriculum-outline-block': BlocksCurriculumOutlineBlock;
+      'blocks.download-resources-block': BlocksDownloadResourcesBlock;
       'blocks.faq-accordion': BlocksFaqAccordion;
       'blocks.featured-courses-grid': BlocksFeaturedCoursesGrid;
       'blocks.feedback-form-block': BlocksFeedbackFormBlock;
       'blocks.hero-banner': BlocksHeroBanner;
+      'blocks.image-gallery-block': BlocksImageGalleryBlock;
+      'blocks.instructor-spotlight-block': BlocksInstructorSpotlightBlock;
       'blocks.instructors-grid': BlocksInstructorsGrid;
+      'blocks.learning-outcomes-block': BlocksLearningOutcomesBlock;
+      'blocks.live-counter-block': BlocksLiveCounterBlock;
       'blocks.logo-strip': BlocksLogoStrip;
+      'blocks.newsletter-block': BlocksNewsletterBlock;
       'blocks.partners-strip': BlocksPartnersStrip;
+      'blocks.pdf-viewer-block': BlocksPdfViewerBlock;
       'blocks.policy-sections-block': BlocksPolicySectionsBlock;
+      'blocks.pricing-table-block': BlocksPricingTableBlock;
+      'blocks.related-pages-block': BlocksRelatedPagesBlock;
       'blocks.rich-text-block': BlocksRichTextBlock;
+      'blocks.section-header-block': BlocksSectionHeaderBlock;
+      'blocks.social-feed-block': BlocksSocialFeedBlock;
+      'blocks.spacer-block': BlocksSpacerBlock;
       'blocks.stats-numbers-block': BlocksStatsNumbersBlock;
+      'blocks.student-progress-block': BlocksStudentProgressBlock;
+      'blocks.success-stories-block': BlocksSuccessStoriesBlock;
+      'blocks.tabs-block': BlocksTabsBlock;
       'blocks.testimonials-carousel': BlocksTestimonialsCarousel;
+      'blocks.timeline-block': BlocksTimelineBlock;
       'blocks.trainer-form-block': BlocksTrainerFormBlock;
+      'blocks.treatment-gallery-block': BlocksTreatmentGalleryBlock;
+      'blocks.upcoming-events-block': BlocksUpcomingEventsBlock;
       'blocks.video-embed': BlocksVideoEmbed;
+      'elements.accordion-item': ElementsAccordionItem;
+      'elements.anchor-link-item': ElementsAnchorLinkItem;
       'elements.button-link': ElementsButtonLink;
       'elements.card-item': ElementsCardItem;
+      'elements.comparison-column': ElementsComparisonColumn;
+      'elements.compliance-badge-item': ElementsComplianceBadgeItem;
+      'elements.counter-item': ElementsCounterItem;
+      'elements.cpd-tier': ElementsCpdTier;
+      'elements.curriculum-module': ElementsCurriculumModule;
+      'elements.download-item': ElementsDownloadItem;
+      'elements.event-item': ElementsEventItem;
+      'elements.learning-outcome-item': ElementsLearningOutcomeItem;
+      'elements.progress-metric': ElementsProgressMetric;
+      'elements.related-page-item': ElementsRelatedPageItem;
+      'elements.social-link': ElementsSocialLink;
       'elements.stat-item': ElementsStatItem;
+      'elements.success-story-item': ElementsSuccessStoryItem;
+      'elements.tab-item': ElementsTabItem;
+      'elements.timeline-item': ElementsTimelineItem;
+      'elements.treatment-technique-item': ElementsTreatmentTechniqueItem;
       'shared.faq-item': SharedFaqItem;
       'shared.policy-section': SharedPolicySection;
     }

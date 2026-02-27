@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_elements_treatment_technique_items",
+  "info": {
+    "displayName": "Treatment Technique Item",
+    "description": "A physiotherapy treatment technique"
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "category": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

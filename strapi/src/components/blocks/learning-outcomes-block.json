@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_blocks_learning_outcomes_blocks",
+  "info": {
+    "displayName": "Learning Outcomes Block",
+    "icon": "check-circle",
+    "description": "Checkmark list of what students will learn"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "outcomes": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.learning-outcome-item"
+    },
+    "columns": {
+      "type": "enumeration",
+      "enum": ["1", "2"],
+      "default": "2"
+    },
+    "icon": {
+      "type": "enumeration",
+      "enum": ["checkmark", "star", "arrow", "bullet"],
+      "default": "checkmark"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

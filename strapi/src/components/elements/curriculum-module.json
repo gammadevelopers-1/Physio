@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_elements_curriculum_modules",
+  "info": {
+    "displayName": "Curriculum Module",
+    "description": "A module in a curriculum outline with lessons"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "lessons": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "duration": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

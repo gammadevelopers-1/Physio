@@ -1,0 +1,56 @@
+{
+  "collectionName": "components_blocks_countdown_timer_blocks",
+  "info": {
+    "displayName": "Countdown Timer Block",
+    "icon": "hourglass-half",
+    "description": "Countdown timer for deadlines, events, or offers"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "targetDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "expiredMessage": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "daysLabel": {
+      "type": "string",
+      "default": "Days",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "hoursLabel": {
+      "type": "string",
+      "default": "Hours",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "minutesLabel": {
+      "type": "string",
+      "default": "Minutes",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "secondsLabel": {
+      "type": "string",
+      "default": "Seconds",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "buttons": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.button-link"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "collectionName": "components_blocks_upcoming_events_blocks",
+  "info": {
+    "displayName": "Upcoming Events Block",
+    "icon": "calendar-alt",
+    "description": "List of upcoming events, webinars, and workshops"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "events": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.event-item"
+    },
+    "viewAllLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "viewAllUrl": {
+      "type": "string"
+    },
+    "emptyMessage": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["list", "grid", "calendar"],
+      "default": "list"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_elements_timeline_items",
+  "info": {
+    "displayName": "Timeline Item",
+    "description": "A step in a timeline or roadmap"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "date": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "collectionName": "components_blocks_announcement_banner_blocks",
+  "info": {
+    "displayName": "Announcement Banner Block",
+    "icon": "bullhorn",
+    "description": "Dismissible announcement or promotion banner"
+  },
+  "attributes": {
+    "message": {
+      "type": "text",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "linkLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "linkUrl": {
+      "type": "string"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["info", "warning", "success", "promotion"],
+      "default": "info"
+    },
+    "dismissible": {
+      "type": "boolean",
+      "default": true
+    },
+    "backgroundColor": {
+      "type": "string"
+    },
+    "textColor": {
+      "type": "string"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

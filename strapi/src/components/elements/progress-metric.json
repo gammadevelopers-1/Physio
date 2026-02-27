@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_elements_progress_metrics",
+  "info": {
+    "displayName": "Progress Metric",
+    "description": "A student progress metric with label and percentage"
+  },
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "value": {
+      "type": "integer",
+      "required": true
+    },
+    "maxValue": {
+      "type": "integer",
+      "default": 100
+    },
+    "suffix": {
+      "type": "string",
+      "default": "%",
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

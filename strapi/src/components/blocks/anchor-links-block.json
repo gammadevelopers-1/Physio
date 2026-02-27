@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_blocks_anchor_links_blocks",
+  "info": {
+    "displayName": "Anchor Links Block",
+    "icon": "anchor",
+    "description": "In-page navigation with anchor links"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "links": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.anchor-link-item"
+    },
+    "sticky": {
+      "type": "boolean",
+      "default": false
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["horizontal", "vertical"],
+      "default": "horizontal"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

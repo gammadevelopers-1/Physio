@@ -1,0 +1,40 @@
+{
+  "collectionName": "components_blocks_cpd_calculator_blocks",
+  "info": {
+    "displayName": "CPD Calculator Block",
+    "icon": "calculator",
+    "description": "Interactive CPD/CME points calculator"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "tiers": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.cpd-tier"
+    },
+    "totalLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "pointsLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "disclaimerText": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

@@ -75,11 +75,18 @@ log_success "Image pushed"
 # Step 5: Resolve production URLs for CORS
 log_step "Resolving production URLs..."
 FRONTEND_URL="${PRODUCTION_FRONTEND_URL:-$(get_service_url ${FRONTEND_SERVICE_NAME})}"
+CLOUD_RUN_FRONTEND_URL="$(get_service_url ${FRONTEND_SERVICE_NAME})"
+# GCP has two Cloud Run URL formats - get both
+GCP_PROJECT_NUMBER=$(gcloud projects describe ${GCP_PROJECT_ID} --format='value(projectNumber)' 2>/dev/null || echo "")
+CLOUD_RUN_FRONTEND_URL_NEW=""
+if [ -n "$GCP_PROJECT_NUMBER" ]; then
+    CLOUD_RUN_FRONTEND_URL_NEW="https://${FRONTEND_SERVICE_NAME}-${GCP_PROJECT_NUMBER}.${GCP_REGION}.run.app"
+fi
 if [ -z "$FRONTEND_URL" ]; then
     FRONTEND_URL="https://physioguidance-web-*.run.app"
     log_warning "Frontend URL not found, using wildcard. Update CORS_ORIGIN after first frontend deploy."
 fi
-log_info "CORS_ORIGIN will be set to: ${FRONTEND_URL}"
+log_info "CORS_ORIGIN will include: ${FRONTEND_URL}"
 
 # Step 6: Deploy to Cloud Run
 log_step "Deploying to Cloud Run..."
@@ -90,27 +97,39 @@ CONNECTION_NAME="${GCP_PROJECT_ID}:${GCP_REGION}:${DB_INSTANCE_NAME}"
 
 # Common env vars for all backend deployments
 # NOTE: PORT is reserved by Cloud Run (set via --port flag), do not include it here
-ENV_VARS="NODE_ENV=production"
-ENV_VARS="${ENV_VARS},CORS_ORIGIN=${FRONTEND_URL}"
-ENV_VARS="${ENV_VARS},API_PREFIX=api"
-ENV_VARS="${ENV_VARS},LOG_LEVEL=warn"
+# Use ^||^ delimiter because CORS_ORIGIN contains commas
+# Include custom domains + both Cloud Run URL formats for direct access
+CORS_VALUE="${FRONTEND_URL},https://www.physioguidance.org"
+if [ -n "$CLOUD_RUN_FRONTEND_URL" ] && [ "$CLOUD_RUN_FRONTEND_URL" != "$FRONTEND_URL" ]; then
+    CORS_VALUE="${CORS_VALUE},${CLOUD_RUN_FRONTEND_URL}"
+fi
+if [ -n "$CLOUD_RUN_FRONTEND_URL_NEW" ] && [ "$CLOUD_RUN_FRONTEND_URL_NEW" != "$FRONTEND_URL" ] && [ "$CLOUD_RUN_FRONTEND_URL_NEW" != "$CLOUD_RUN_FRONTEND_URL" ]; then
+    CORS_VALUE="${CORS_VALUE},${CLOUD_RUN_FRONTEND_URL_NEW}"
+fi
+ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LOG_LEVEL=warn||STORAGE_LOCAL_DIR=/tmp/uploads||APP_URL=https://api.physioguidance.org/api"
 
 # Secrets from GCP Secret Manager (required)
 SECRETS="DATABASE_URL=DATABASE_URL:latest"
 SECRETS="${SECRETS},JWT_SECRET=JWT_SECRET:latest"
 SECRETS="${SECRETS},JWT_REFRESH_SECRET=JWT_REFRESH_SECRET:latest"
 
-# Optional SMTP secrets (for 2FA emails) - add if they exist
-if gcloud secrets describe SMTP_HOST &>/dev/null 2>&1; then
-    SECRETS="${SECRETS},SMTP_HOST=SMTP_HOST:latest"
-    SECRETS="${SECRETS},SMTP_PORT=SMTP_PORT:latest"
-    SECRETS="${SECRETS},SMTP_USER=SMTP_USER:latest"
-    SECRETS="${SECRETS},SMTP_PASS=SMTP_PASS:latest"
-    SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
-    log_info "SMTP secrets found - email will be configured"
+# Email (Resend API)
+if gcloud secrets describe RESEND_API_KEY &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},RESEND_API_KEY=RESEND_API_KEY:latest"
+    log_info "Resend API key found - email will be configured"
 else
-    log_warning "SMTP secrets not found - email/2FA will not work"
-    log_warning "Create them with: make secrets-set SECRET=SMTP_HOST"
+    log_warning "RESEND_API_KEY secret not found - email/2FA will not work"
+fi
+
+# Mail from address
+if gcloud secrets describe MAIL_FROM &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},MAIL_FROM=MAIL_FROM:latest"
+fi
+
+# Mail reply-to address
+if gcloud secrets describe MAIL_REPLY_TO &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},MAIL_REPLY_TO=MAIL_REPLY_TO:latest"
+    log_info "Reply-to address configured"
 fi
 
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then

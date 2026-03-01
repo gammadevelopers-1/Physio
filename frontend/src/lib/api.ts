@@ -331,6 +331,7 @@ export interface TrustedDevice {
   ipAddress: string | null;
   lastUsedAt: string;
   createdAt: string;
+  isCurrentDevice?: boolean;
 }
 
 // ===========================================

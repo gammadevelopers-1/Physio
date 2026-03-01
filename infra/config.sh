@@ -41,13 +41,13 @@ export DB_TIER="db-f1-micro"
 export DB_VERSION="POSTGRES_15"
 
 # ===========================================
-# Production URLs (Cloud Run service URLs)
+# Production URLs (custom domain via GCP Load Balancer)
 # ===========================================
-# These are resolved dynamically after first deploy.
-# Override with env vars if you have custom domains.
-export PRODUCTION_FRONTEND_URL="${PRODUCTION_FRONTEND_URL:-}"
-export PRODUCTION_BACKEND_URL="${PRODUCTION_BACKEND_URL:-}"
-export PRODUCTION_STRAPI_URL="${PRODUCTION_STRAPI_URL:-}"
+# SSL is active for api/cms/www subdomains.
+# Override with env vars if needed.
+export PRODUCTION_FRONTEND_URL="${PRODUCTION_FRONTEND_URL:-https://physioguidance.org}"
+export PRODUCTION_BACKEND_URL="${PRODUCTION_BACKEND_URL:-https://api.physioguidance.org}"
+export PRODUCTION_STRAPI_URL="${PRODUCTION_STRAPI_URL:-https://cms.physioguidance.org}"
 
 # Derived values (don't modify)
 export DOCKER_REGISTRY="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_ARTIFACT_REPO}"

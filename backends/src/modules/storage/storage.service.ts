@@ -24,7 +24,8 @@ export class StorageService {
 
     const port = this.configService.get<number>('PORT', 8080);
     const apiPrefix = this.configService.get<string>('API_PREFIX', 'api');
-    this.baseUrl = `http://localhost:${port}/${apiPrefix}`;
+    const appUrl = this.configService.get<string>('APP_URL');
+    this.baseUrl = appUrl || `http://localhost:${port}/${apiPrefix}`;
     this.localDir = this.configService.get<string>('storage.localDir') || './uploads';
 
     if (this.useLocal) {

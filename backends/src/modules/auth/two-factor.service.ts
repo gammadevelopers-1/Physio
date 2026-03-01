@@ -154,12 +154,14 @@ export class TwoFactorService {
   }
 
   /**
-   * Get all trusted devices for a user
+   * Get all trusted devices for a user.
+   * If currentFingerprint is provided, marks the matching device as current.
    */
-  async getUserTrustedDevices(userId: string) {
-    return db
+  async getUserTrustedDevices(userId: string, currentFingerprint?: string) {
+    const rows = await db
       .select({
         id: trustedDevices.id,
+        fingerprint: trustedDevices.fingerprint,
         deviceName: trustedDevices.deviceName,
         ipAddress: trustedDevices.ipAddress,
         lastUsedAt: trustedDevices.lastUsedAt,
@@ -168,6 +170,13 @@ export class TwoFactorService {
       .from(trustedDevices)
       .where(eq(trustedDevices.userId, userId))
       .orderBy(desc(trustedDevices.lastUsedAt));
+
+    return rows.map(({ fingerprint, ...device }) => ({
+      ...device,
+      isCurrentDevice: currentFingerprint
+        ? fingerprint === currentFingerprint
+        : false,
+    }));
   }
 
   /**

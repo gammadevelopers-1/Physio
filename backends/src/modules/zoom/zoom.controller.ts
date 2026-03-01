@@ -415,6 +415,7 @@ export class ZoomController {
     }
 
     const recordingFiles = payload?.recording_files || [];
+    const shareUrl = payload?.share_url || null;
     let inserted = 0;
 
     for (const file of recordingFiles) {
@@ -425,6 +426,7 @@ export class ZoomController {
           recordingType: file.recording_type || 'unknown',
           downloadUrl: file.download_url || null,
           playUrl: file.play_url || null,
+          shareUrl,
           fileSize: file.file_size || null,
           fileType: file.file_type || null,
           recordingStart: file.recording_start
@@ -448,6 +450,13 @@ export class ZoomController {
       this.logger.log(
         `Saved ${inserted} recording files for session ${session.id} (meeting ${meetingId})`,
       );
+
+      // Remove passcode so students can view without authentication
+      this.zoomService
+        .removeRecordingPasscode(meetingId)
+        .catch((err) =>
+          this.logger.warn(`Failed to remove recording passcode: ${err}`),
+        );
 
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.SESSION_STARTED, // reuse closest event type

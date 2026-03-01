@@ -58,6 +58,14 @@ import {
   getContentReviewHtml,
   getContentReviewText,
 } from './templates/content-review.template';
+import {
+  getContentPendingReviewHtml,
+  getContentPendingReviewText,
+} from './templates/content-pending-review.template';
+import {
+  getSessionScheduledHtml,
+  getSessionScheduledText,
+} from './templates/session-scheduled.template';
 
 @Injectable()
 export class EmailService {
@@ -418,6 +426,43 @@ export class EmailService {
   }
 
   /**
+   * Send session scheduled notification email to student
+   */
+  async sendSessionScheduled(
+    to: string,
+    params: {
+      recipientName: string;
+      sessionTitle: string;
+      courseName: string;
+      scheduledDate: string;
+      sessionType: string;
+      zoomLink: string | null;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `New Session Scheduled: ${params.sessionTitle}`,
+        html: getSessionScheduledHtml(params),
+        text: getSessionScheduledText(params),
+      });
+      this.logger.log(
+        `Session scheduled email sent to ${to} for "${params.sessionTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send session scheduled email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
    * Send session started notification email to student
    */
   async sendSessionStarted(
@@ -597,6 +642,43 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send content review email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send pending review notification email to course manager
+   */
+  async sendContentPendingReview(
+    to: string,
+    params: {
+      recipientName: string;
+      materialTitle: string;
+      courseName: string;
+      instructorName: string;
+      wcagStatus: string;
+      wcagSummary: string;
+    },
+  ): Promise<void> {
+    const from =
+      this.configService.get<string>('MAIL_FROM') ||
+      'noreply@physioguidance.org';
+
+    try {
+      await this.transporter.sendMail({
+        from: `"PhysioGuidance" <${from}>`,
+        to,
+        subject: `Content Pending Review: ${params.materialTitle}`,
+        html: getContentPendingReviewHtml(params),
+        text: getContentPendingReviewText(params),
+      });
+      this.logger.log(
+        `Content pending review email sent to ${to} for "${params.materialTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send content pending review email to ${to}`,
         error,
       );
     }

@@ -14,6 +14,7 @@ interface PendingReviewItem {
   fileSize: number | null;
   mimeType: string | null;
   wcagStatus: string;
+  wcagDetails: string | null;
   reviewNote: string | null;
   createdAt: string;
   courseTitle: string;

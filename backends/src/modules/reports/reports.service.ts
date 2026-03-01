@@ -103,6 +103,7 @@ export class ReportsService {
     user: AuthenticatedUser,
     params: {
       courseId?: string;
+      sessionId?: string;
       format?: string;
       dateFrom?: string;
       dateTo?: string;
@@ -144,10 +145,13 @@ export class ReportsService {
       return this.formatReport('Attendance Report', headers, [], format, metadata);
     }
 
-    // Build session filter conditions (with optional date range)
+    // Build session filter conditions (with optional date range and sessionId)
     const sessionConditions: any[] = [
       inArray(sessions.courseId, courseIds),
     ];
+    if (params.sessionId) {
+      sessionConditions.push(eq(sessions.id, params.sessionId));
+    }
     if (params.dateFrom) {
       sessionConditions.push(
         gte(sessions.scheduledAt, new Date(params.dateFrom)),

@@ -41,6 +41,7 @@ import {
   RefreshCw,
   Replace,
   Loader2,
+  MoreVertical,
 } from "lucide-react";
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -86,6 +87,58 @@ const ALLOWED_MIMES = [
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "image/jpeg", "image/png", "image/webp", "image/gif",
 ];
+
+// ─── Actions Dropdown ─────────────────────────────────────
+
+interface ActionItem {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  danger?: boolean;
+}
+
+const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+        aria-label="Actions"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 z-30 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px]">
+          {actions.map((a, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setOpen(false); a.onClick(); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                a.danger
+                  ? "text-[#EF4444] hover:bg-[#FEF2F2]"
+                  : "text-[#374151] hover:bg-[#F3F4F6]"
+              }`}
+            >
+              {a.icon}
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ─── Modal Overlay ─────────────────────────────────────────
 
@@ -917,24 +970,37 @@ const ContentManagementContent = () => {
   };
 
   const getWcagStyle = (wcag: string) => {
-    if (wcag === "pass") return "bg-[#DCFCE7] text-[#22C55E]";
+    if (wcag === "pass" || wcag === "compliant") return "bg-[#DCFCE7] text-[#22C55E]";
     if (wcag === "warning") return "bg-[#FEF9C3] text-[#EAB308]";
     if (wcag === "fail") return "bg-[#FEE2E2] text-[#EF4444]";
     return "bg-[#F3F4F6] text-[#6B7280]"; // pending (gray)
   };
 
   const getWcagIcon = (wcag: string) => {
-    if (wcag === "pass") return <Check className="w-3 h-3" />;
+    if (wcag === "pass" || wcag === "compliant") return <Check className="w-3 h-3" />;
     if (wcag === "warning") return <AlertTriangle className="w-3 h-3" />;
     if (wcag === "fail") return <X className="w-3 h-3" />;
     return <Clock className="w-3 h-3" />; // pending
   };
 
   const getWcagLabel = (wcag: string) => {
-    if (wcag === "pass") return t("content.wcagPass");
+    if (wcag === "pass" || wcag === "compliant") return t("content.wcagPass");
     if (wcag === "warning") return t("content.wcagWarning");
     if (wcag === "fail") return t("content.wcagFail");
     return t("content.wcagPending"); // pending
+  };
+
+  /** Parse wcagDetails JSON and build tooltip text showing each check result */
+  const getWcagTooltip = (m: CourseMaterialResponse): string => {
+    if (!m.wcagDetails) return t("content.wcagCompliance");
+    try {
+      const details = JSON.parse(m.wcagDetails) as { rule: string; label: string; passed: boolean; detail: string }[];
+      return details
+        .map((d) => `${d.passed ? "\u2713" : "\u2717"} ${d.label}: ${d.detail}`)
+        .join("\n");
+    } catch {
+      return t("content.wcagCompliance");
+    }
   };
 
   const handlePreview = (m: CourseMaterialResponse) => {
@@ -1267,91 +1333,56 @@ const ContentManagementContent = () => {
                                   <span className="text-sm text-[#6B7280]">{formatFileSize(m.fileSize)}</span>
                                 </td>
                                 <td className="px-4 py-4">
-                                  <div className="flex flex-col gap-1">
-                                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(m.status)}`}>
-                                      {getStatusIcon(m.status)}
-                                      {m.status === "processing"
-                                        ? getProcessingStepLabel(m.processingStep)
-                                        : t(`content.status${m.status.charAt(0).toUpperCase() + m.status.slice(1)}`)}
-                                    </span>
-                                    {m.status === "failed" && m.processingError && (
-                                      <span className="text-[10px] text-[#EF4444] truncate max-w-[200px]" title={m.processingError}>
-                                        {m.processingError}
-                                      </span>
-                                    )}
-                                    {m.status === "pending_review" && (
-                                      <span className="text-[10px] text-[#3B82F6]">
-                                        {t("content.awaitingReview")}
-                                      </span>
-                                    )}
-                                    {m.status === "changes_requested" && m.reviewNote && (
-                                      <div className="mt-1 p-2 bg-[#FEF3C7] border border-[#FCD34D] rounded text-[10px]">
-                                        <span className="font-semibold text-[#92400E]">{t("content.reviewFeedback")}: </span>
-                                        <span className="text-[#78350F]">{m.reviewNote}</span>
-                                      </div>
-                                    )}
-                                    {m.status === "changes_requested" && (
-                                      <button
-                                        onClick={() => setReplacingMaterial(m)}
-                                        className="mt-1 inline-flex items-center gap-1 px-2 py-1 bg-[#D97706] text-white text-[10px] font-medium rounded hover:bg-[#B45309] transition-colors"
-                                      >
-                                        <Replace className="w-3 h-3" />
-                                        {t("content.resubmit")}
-                                      </button>
-                                    )}
-                                  </div>
+                                  <span
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(m.status)}`}
+                                    title={m.status === "changes_requested" && m.reviewNote ? `${t("content.reviewFeedback")}: ${m.reviewNote}` : m.status === "failed" && m.processingError ? m.processingError : ""}
+                                  >
+                                    {getStatusIcon(m.status)}
+                                    {m.status === "processing"
+                                      ? getProcessingStepLabel(m.processingStep)
+                                      : t(`content.status${m.status.charAt(0).toUpperCase() + m.status.slice(1)}`)}
+                                  </span>
                                 </td>
                                 <td className="px-4 py-4">
                                   <span
-                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getWcagStyle(m.wcagStatus)}`}
-                                    title={t("content.wcagCompliance")}
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium cursor-help ${getWcagStyle(m.wcagStatus)}`}
+                                    title={getWcagTooltip(m)}
                                   >
                                     {getWcagIcon(m.wcagStatus)}
                                     {getWcagLabel(m.wcagStatus)}
                                   </span>
                                 </td>
                                 <td className="px-4 py-4">
-                                  <div className="flex items-center gap-1">
-                                    {m.fileUrl && (
-                                      <button
-                                        onClick={() => handlePreview(m)}
-                                        className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                        aria-label={t("content.preview")}
-                                      >
-                                        <Eye className="w-4 h-4" />
-                                      </button>
-                                    )}
-                                    {m.fileUrl && (
-                                      <button
-                                        onClick={() => handleDownload(m)}
-                                        className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                        aria-label={t("content.download")}
-                                      >
-                                        <Download className="w-4 h-4" />
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => setEditingMaterial(m)}
-                                      className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors"
-                                      aria-label={t("content.edit")}
-                                    >
-                                      <Edit3 className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setReplacingMaterial(m)}
-                                      className="p-2 text-[#6B7280] hover:text-[#F97316] hover:bg-[#FFF7ED] rounded-lg transition-colors"
-                                      aria-label={t("content.replace")}
-                                    >
-                                      <Replace className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setDeletingMaterial(m)}
-                                      className="p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors"
-                                      aria-label={t("content.delete")}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
+                                  <ActionsDropdown
+                                    actions={[
+                                      ...(m.fileUrl ? [{
+                                        label: t("content.preview"),
+                                        icon: <Eye className="w-4 h-4" />,
+                                        onClick: () => handlePreview(m),
+                                      }] : []),
+                                      ...(m.fileUrl ? [{
+                                        label: t("content.download"),
+                                        icon: <Download className="w-4 h-4" />,
+                                        onClick: () => handleDownload(m),
+                                      }] : []),
+                                      {
+                                        label: t("content.edit"),
+                                        icon: <Edit3 className="w-4 h-4" />,
+                                        onClick: () => setEditingMaterial(m),
+                                      },
+                                      {
+                                        label: t("content.replace"),
+                                        icon: <Replace className="w-4 h-4" />,
+                                        onClick: () => setReplacingMaterial(m),
+                                      },
+                                      {
+                                        label: t("content.delete"),
+                                        icon: <Trash2 className="w-4 h-4" />,
+                                        onClick: () => setDeletingMaterial(m),
+                                        danger: true,
+                                      },
+                                    ]}
+                                  />
                                 </td>
                               </tr>
                             ))}
@@ -1421,67 +1452,46 @@ const ContentManagementContent = () => {
                                     ? getProcessingStepLabel(m.processingStep)
                                     : t(`content.status${m.status.charAt(0).toUpperCase() + m.status.slice(1)}`)}
                                 </span>
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getWcagStyle(m.wcagStatus)}`}>
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium cursor-help ${getWcagStyle(m.wcagStatus)}`}
+                                  title={getWcagTooltip(m)}
+                                >
                                   {getWcagIcon(m.wcagStatus)}
                                   WCAG
                                 </span>
                               </div>
-
-                              {m.status === "pending_review" && (
-                                <p className="text-[10px] text-[#3B82F6] mb-2">{t("content.awaitingReview")}</p>
-                              )}
-                              {m.status === "changes_requested" && m.reviewNote && (
-                                <div className="mb-2 p-2 bg-[#FEF3C7] border border-[#FCD34D] rounded text-[10px]">
-                                  <span className="font-semibold text-[#92400E]">{t("content.reviewFeedback")}: </span>
-                                  <span className="text-[#78350F]">{m.reviewNote}</span>
-                                </div>
-                              )}
-                              {m.status === "changes_requested" && (
-                                <button
-                                  onClick={() => setReplacingMaterial(m)}
-                                  className="w-full mb-2 inline-flex items-center justify-center gap-1 px-2 py-1.5 bg-[#D97706] text-white text-xs font-medium rounded hover:bg-[#B45309] transition-colors"
-                                >
-                                  <Replace className="w-3 h-3" />
-                                  {t("content.resubmit")}
-                                </button>
-                              )}
 
                               <div className="flex items-center justify-between text-xs text-[#9CA3AF]">
                                 <span>{formatFileSize(m.fileSize)}</span>
                                 <span>v{m.version}</span>
                               </div>
 
-                              <div className="flex items-center gap-1 mt-3 pt-3 border-t border-[#E5E7EB]">
-                                {m.fileUrl && (
-                                  <button
-                                    onClick={() => handlePreview(m)}
-                                    className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center"
-                                    aria-label={t("content.preview")}
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => setEditingMaterial(m)}
-                                  className="flex-1 p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors flex items-center justify-center"
-                                  aria-label={t("content.edit")}
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setReplacingMaterial(m)}
-                                  className="flex-1 p-2 text-[#6B7280] hover:text-[#F97316] hover:bg-[#FFF7ED] rounded-lg transition-colors flex items-center justify-center"
-                                  aria-label={t("content.replace")}
-                                >
-                                  <Replace className="w-4 h-4" />
-                                </button>
-                                <button
-                                  onClick={() => setDeletingMaterial(m)}
-                                  className="flex-1 p-2 text-[#6B7280] hover:text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors flex items-center justify-center"
-                                  aria-label={t("content.delete")}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                              <div className="flex items-center justify-end mt-3 pt-3 border-t border-[#E5E7EB]">
+                                <ActionsDropdown
+                                  actions={[
+                                    ...(m.fileUrl ? [{
+                                      label: t("content.preview"),
+                                      icon: <Eye className="w-4 h-4" />,
+                                      onClick: () => handlePreview(m),
+                                    }] : []),
+                                    {
+                                      label: t("content.edit"),
+                                      icon: <Edit3 className="w-4 h-4" />,
+                                      onClick: () => setEditingMaterial(m),
+                                    },
+                                    {
+                                      label: t("content.replace"),
+                                      icon: <Replace className="w-4 h-4" />,
+                                      onClick: () => setReplacingMaterial(m),
+                                    },
+                                    {
+                                      label: t("content.delete"),
+                                      icon: <Trash2 className="w-4 h-4" />,
+                                      onClick: () => setDeletingMaterial(m),
+                                      danger: true,
+                                    },
+                                  ]}
+                                />
                               </div>
                             </div>
                           </div>

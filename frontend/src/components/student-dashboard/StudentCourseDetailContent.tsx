@@ -25,6 +25,8 @@ import {
   CheckCircle2,
   Circle,
   X,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
@@ -75,7 +77,7 @@ const StudentCourseDetailContent = () => {
     setRecordingsLoading(true);
     try {
       const data = await zoomAttendanceApi.getRecordings(sessionId);
-      setRecordings(data);
+      setRecordings(data.filter((r) => r.recordingType !== 'timeline'));
     } catch {
       setRecordings([]);
     } finally {
@@ -391,46 +393,76 @@ const StudentCourseDetailContent = () => {
                       <div className="space-y-3">
                         {data.modules
                           .sort((a, b) => a.orderIndex - b.orderIndex)
-                          .map((module, index) => (
-                            <Link
-                              key={module.id}
-                              href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
-                              className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
-                            >
-                              {module.isCompleted ? (
-                                <div className="w-8 h-8 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
-                                  <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
-                                </div>
-                              ) : (
-                                <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
-                                  <span className="text-xs font-medium text-[#4B5563]">
-                                    {index + 1}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[#1F2937] truncate">
-                                  {isRTL && module.titleAr
-                                    ? module.titleAr
-                                    : module.title}
-                                </p>
-                                <div className="flex items-center gap-3 text-xs text-[#6B7280]">
-                                  {module.type && (
-                                    <span className="capitalize">
-                                      {module.type}
-                                    </span>
+                          .map((module, index) => {
+                            const moduleAssessments = data.assessments.filter((a) => a.moduleId === module.id);
+                            return (
+                              <div key={module.id} className="rounded-lg border border-[#E5E7EB]">
+                                <Link
+                                  href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
+                                  className="flex items-center gap-3 p-3 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                                >
+                                  {module.isCompleted ? (
+                                    <div className="w-8 h-8 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
+                                      <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center flex-shrink-0">
+                                      <span className="text-xs font-medium text-[#4B5563]">
+                                        {index + 1}
+                                      </span>
+                                    </div>
                                   )}
-                                  {module.durationMinutes && (
-                                    <span className="flex items-center gap-1">
-                                      <Clock className="w-3 h-3" />
-                                      {module.durationMinutes}{" "}
-                                      {t("calendar.mins")}
-                                    </span>
-                                  )}
-                                </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-[#1F2937] truncate">
+                                      {isRTL && module.titleAr
+                                        ? module.titleAr
+                                        : module.title}
+                                    </p>
+                                    <div className="flex items-center gap-3 text-xs text-[#6B7280]">
+                                      {module.type && (
+                                        <span className="capitalize">
+                                          {module.type}
+                                        </span>
+                                      )}
+                                      {module.durationMinutes && (
+                                        <span className="flex items-center gap-1">
+                                          <Clock className="w-3 h-3" />
+                                          {module.durationMinutes}{" "}
+                                          {t("calendar.mins")}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </Link>
+                                {moduleAssessments.length > 0 && (
+                                  <div className="border-t border-[#E5E7EB] px-3 py-2 space-y-1.5">
+                                    {moduleAssessments.map((ma) => (
+                                      <Link
+                                        key={ma.id}
+                                        href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${ma.id}`}
+                                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#F9FAFB] transition-colors"
+                                      >
+                                        <ClipboardCheck className="w-3.5 h-3.5 text-[#6B7280] flex-shrink-0" />
+                                        <span className="text-xs text-[#374151] flex-1 truncate">{ma.title}</span>
+                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                          ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
+                                        }`}>
+                                          {ma.type}
+                                        </span>
+                                        {ma.submission?.status === "graded" ? (
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0" />
+                                        ) : ma.submission?.status === "submitted" ? (
+                                          <Clock className="w-3.5 h-3.5 text-[#D4A520] flex-shrink-0" />
+                                        ) : (
+                                          <Circle className="w-3.5 h-3.5 text-[#D1D5DB] flex-shrink-0" />
+                                        )}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
-                            </Link>
-                          ))}
+                            );
+                          })}
                       </div>
                     )}
                   </div>
@@ -620,21 +652,34 @@ const StudentCourseDetailContent = () => {
                       </h2>
 
                       <div className="space-y-3">
-                        {data.assessments.map((assessment) => (
+                        {data.assessments.map((assessment) => {
+                          const isGraded = assessment.submission?.status === "graded";
+                          const isPending = assessment.submission?.status === "submitted";
+                          const isFailed = isGraded && assessment.submission?.score != null && assessment.submission.totalMarks != null &&
+                            (assessment.submission.score / (assessment.submission.totalMarks || 1)) * 100 < ((assessment.passingMarks / assessment.totalMarks) * 100);
+                          const isPassed = isGraded && !isFailed;
+                          const isExpiredAssignment = !assessment.submission && assessment.type === "assignment" && assessment.dueDate && new Date() > new Date(assessment.dueDate);
+
+                          return (
                           <div
                             key={assessment.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-[#E5E7EB]"
+                            className={`flex items-center gap-3 p-3 rounded-lg border ${
+                              isFailed ? "border-red-200 bg-red-50/50" : isExpiredAssignment ? "border-orange-200 bg-orange-50/30" : "border-[#E5E7EB]"
+                            }`}
                           >
-                            {assessment.submission?.status === "graded" ? (
+                            {isPassed ? (
                               <CheckCircle2 className="w-5 h-5 text-[#16A34A] flex-shrink-0" />
-                            ) : assessment.submission?.status ===
-                              "submitted" ? (
+                            ) : isFailed ? (
+                              <XCircle className="w-5 h-5 text-[#DC2626] flex-shrink-0" />
+                            ) : isPending ? (
                               <Clock className="w-5 h-5 text-[#D4A520] flex-shrink-0" />
+                            ) : isExpiredAssignment ? (
+                              <AlertTriangle className="w-5 h-5 text-[#EA580C] flex-shrink-0" />
                             ) : (
                               <Circle className="w-5 h-5 text-[#9CA3AF] flex-shrink-0" />
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[#1F2937]">
+                              <p className={`text-sm font-medium ${isFailed ? "text-[#DC2626]" : "text-[#1F2937]"}`}>
                                 {assessment.title}
                               </p>
                               <div className="flex items-center gap-3 text-xs text-[#6B7280] mt-0.5">
@@ -651,29 +696,38 @@ const StudentCourseDetailContent = () => {
                                     {t("calendar.mins")}
                                   </span>
                                 )}
+                                {assessment.dueDate && (
+                                  <span className={isExpiredAssignment ? "text-[#DC2626]" : ""}>
+                                    {new Date(assessment.dueDate).toLocaleDateString("en-SA", { timeZone: "Asia/Riyadh" })}
+                                  </span>
+                                )}
                               </div>
                             </div>
                             {assessment.submission ? (
                               <div className="flex items-center gap-3 flex-shrink-0">
                                 <div className="text-right">
-                                  <p className="text-sm font-semibold text-[#1F2937]">
+                                  <p className={`text-sm font-semibold ${isFailed ? "text-[#DC2626]" : "text-[#1F2937]"}`}>
                                     {assessment.submission.score != null
                                       ? `${assessment.submission.score}/${assessment.submission.totalMarks}`
                                       : "—"}
                                   </p>
                                   <p
                                     className={`text-xs ${
-                                      assessment.submission.status === "graded"
+                                      isPassed
                                         ? "text-[#16A34A]"
-                                        : "text-[#D4A520]"
+                                        : isFailed
+                                          ? "text-[#DC2626]"
+                                          : "text-[#D4A520]"
                                     }`}
                                   >
-                                    {assessment.submission.status === "graded"
-                                      ? t("courseDetail.graded")
-                                      : t("courseDetail.pendingGrading")}
+                                    {isPassed
+                                      ? t("courseDetail.passed")
+                                      : isFailed
+                                        ? t("courseDetail.failed")
+                                        : t("courseDetail.pendingGrading")}
                                   </p>
                                 </div>
-                                {assessment.submission.status === "graded" && (
+                                {isGraded && (
                                   <Link
                                     href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
                                     className="text-xs text-[#002D87] hover:underline"
@@ -682,6 +736,10 @@ const StudentCourseDetailContent = () => {
                                   </Link>
                                 )}
                               </div>
+                            ) : isExpiredAssignment ? (
+                              <span className="text-xs font-medium text-[#EA580C] px-2 py-1 bg-orange-100 rounded flex-shrink-0">
+                                {t("courseDetail.missed")}
+                              </span>
                             ) : (
                               <Link
                                 href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
@@ -691,7 +749,8 @@ const StudentCourseDetailContent = () => {
                               </Link>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   )}

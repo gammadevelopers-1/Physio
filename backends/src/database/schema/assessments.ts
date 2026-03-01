@@ -32,6 +32,7 @@ export const assessments = pgTable(
     status: varchar('status', { length: 20 }).notNull().default('draft'),
     instructions: varchar('instructions', { length: 5000 }),
     dueDate: timestamp('due_date'),
+    assignmentFiles: jsonb('assignment_files').$type<AssessmentFile[]>(),
     // Proctoring
     proctoringEnabled: boolean('proctoring_enabled').notNull().default(false),
     proctoringRules: jsonb('proctoring_rules').$type<{
@@ -82,6 +83,15 @@ export const assessmentsRelations = relations(assessments, ({ one }) => ({
     references: [courseModules.id],
   }),
 }));
+
+export interface AssessmentFile {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+}
 
 export type Assessment = typeof assessments.$inferSelect;
 export type NewAssessment = typeof assessments.$inferInsert;

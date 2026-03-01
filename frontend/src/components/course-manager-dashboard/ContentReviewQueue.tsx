@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Video, FileText, HelpCircle, Eye, ChevronRight, ClipboardList } from "lucide-react";
+import { Video, FileText, File, Image as ImageIcon, HelpCircle, Eye, ChevronRight, ClipboardList } from "lucide-react";
 import Link from "next/link";
 
 interface ChecklistItem {
@@ -12,7 +12,7 @@ interface ChecklistItem {
 
 interface ContentReviewItem {
   id: string;
-  type: "video" | "pdf" | "quiz";
+  type: string;
   title: string;
   courseName: string;
   submittedBy: string;
@@ -37,11 +37,14 @@ const ContentReviewQueue = ({
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const typeIcons = {
+  const typeIcons: Record<string, { icon: typeof Video; bg: string; color: string }> = {
     video: { icon: Video, bg: "bg-[#DBEAFE]", color: "text-[#3B82F6]" },
     pdf: { icon: FileText, bg: "bg-[#FEE2E2]", color: "text-[#EF4444]" },
+    document: { icon: File, bg: "bg-[#FEF3C7]", color: "text-[#F59E0B]" },
+    image: { icon: ImageIcon, bg: "bg-[#D1FAE5]", color: "text-[#10B981]" },
     quiz: { icon: HelpCircle, bg: "bg-[#FFEDD5]", color: "text-[#F97316]" },
   };
+  const defaultTypeIcon = { icon: File, bg: "bg-[#F3F4F6]", color: "text-[#6B7280]" };
 
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
@@ -61,7 +64,7 @@ const ContentReviewQueue = ({
       {/* Items */}
       <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
         {items.map((item) => {
-          const typeConfig = typeIcons[item.type];
+          const typeConfig = typeIcons[item.type] || defaultTypeIcon;
           const allPassed = item.checklist.every((c) => c.passed);
 
           return (

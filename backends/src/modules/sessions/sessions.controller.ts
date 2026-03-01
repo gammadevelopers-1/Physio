@@ -11,8 +11,13 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { ZoomSyncService } from '../zoom/zoom-sync.service';
+import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
+import { db } from '../../database';
+import { sessionRecordings } from '../../database/schema';
+import { eq } from 'drizzle-orm';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
@@ -24,9 +29,12 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 @Controller('sessions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SessionsController {
+  private readonly logger = new Logger(SessionsController.name);
+
   constructor(
     private sessionsService: SessionsService,
     private zoomSyncService: ZoomSyncService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
   ) {}
 
   // ─── Session Endpoints ──────────────────────────────────────
@@ -263,10 +271,48 @@ export class SessionsController {
 
   /**
    * GET /sessions/:id/recordings — Get session recordings (item #22)
+   * Students: use Zoom share URL for passcode-free playback, hide timeline files.
+   * Instructors/admins: get full data including all recording types.
    */
   @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole, 'STUDENT' as UserRole)
   @Get(':id/recordings')
-  async getRecordings(@Param('id') id: string) {
-    return this.sessionsService.getRecordings(id);
+  async getRecordings(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    let recordings = await this.sessionsService.getRecordings(id);
+
+    if (user.roles.includes('STUDENT' as UserRole)) {
+      // If recordings still have a passcode, remove it via Zoom API (one-time fix)
+      const hasPasscode = recordings.some((r) => r.password);
+      if (hasPasscode && recordings.length > 0) {
+        const meetingId = recordings[0].meetingId;
+        try {
+          const removed = await this.zoomService.removeRecordingPasscode(meetingId);
+          if (removed) {
+            // Clear password in DB so we don't call API again
+            await db
+              .update(sessionRecordings)
+              .set({ password: null })
+              .where(eq(sessionRecordings.meetingId, meetingId));
+            recordings = recordings.map((r) => ({ ...r, password: null }));
+          }
+        } catch (error) {
+          this.logger.warn(`Failed to remove recording passcode: ${(error as Error).message}`);
+        }
+      }
+
+      return recordings
+        .filter((r) => r.recordingType !== 'timeline')
+        .map(({ password, shareUrl, ...rest }) => ({
+          ...rest,
+          // Use play_url (passcode is now removed from Zoom side)
+          playUrl: rest.playUrl,
+          downloadUrl: null,
+        }));
+    }
+
+    // Instructors: filter timeline but return full data
+    return recordings.filter((r) => r.recordingType !== 'timeline');
   }
 }

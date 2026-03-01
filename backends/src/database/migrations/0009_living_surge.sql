@@ -1,0 +1,1 @@
+ALTER TABLE "session_recordings" ADD COLUMN "share_url" text;

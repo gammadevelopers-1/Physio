@@ -224,12 +224,12 @@ const CourseManagerDashboardContent = () => {
                 <ContentReviewQueue
                   items={reviewItems.slice(0, 3).map((item) => ({
                     id: item.id,
-                    type: item.type as "video" | "pdf" | "quiz",
+                    type: item.type,
                     title: item.title,
                     courseName: item.courseTitle,
                     submittedBy: `${item.instructorFirstName || ""} ${item.instructorLastName || ""}`.trim() || item.instructorEmail,
                     checklist: [
-                      { id: "wcag", label: "WCAG", passed: item.wcagStatus === "pass" || item.wcagStatus === "skipped" },
+                      { id: "wcag", label: "WCAG", passed: item.wcagStatus === "pass" || item.wcagStatus === "compliant" || item.wcagStatus === "skipped" },
                     ],
                   }))}
                   onApprove={async (id) => {

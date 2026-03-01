@@ -28,13 +28,14 @@ export class ReportsController {
 
   /**
    * GET /instructor/reports/attendance
-   * Query: ?courseId, ?format=csv|pdf|xlsx, ?dateFrom, ?dateTo
+   * Query: ?courseId, ?sessionId, ?format=csv|pdf|xlsx, ?dateFrom, ?dateTo
    * Returns binary file download.
    */
   @Get('attendance')
   async getAttendanceReport(
     @CurrentUser() user: AuthenticatedUser,
     @Query('courseId') courseId?: string,
+    @Query('sessionId') sessionId?: string,
     @Query('format') format?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
@@ -42,7 +43,7 @@ export class ReportsController {
   ): Promise<StreamableFile> {
     const result = await this.reportsService.generateAttendanceReport(
       user,
-      { courseId, format, dateFrom, dateTo },
+      { courseId, sessionId, format, dateFrom, dateTo },
     );
 
     res!.set({

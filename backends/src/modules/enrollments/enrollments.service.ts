@@ -331,7 +331,7 @@ export class EnrollmentsService {
 
     if (session.status !== 'live') {
       throw new BadRequestException(
-        `Cannot mark attendance for a ${session.status} session. Only live sessions accept attendance.`,
+        `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live session.`,
       );
     }
 
@@ -395,7 +395,7 @@ export class EnrollmentsService {
 
     if (session.status !== 'live') {
       throw new BadRequestException(
-        `Cannot mark attendance for a ${session.status} session. Only live sessions accept attendance.`,
+        `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live session.`,
       );
     }
 
@@ -589,7 +589,7 @@ export class EnrollmentsService {
     }
 
     const [session] = await db
-      .select({ id: sessions.id, status: sessions.status })
+      .select({ id: sessions.id, status: sessions.status, actualEndedAt: sessions.actualEndedAt })
       .from(sessions)
       .where(and(...conditions))
       .limit(1);

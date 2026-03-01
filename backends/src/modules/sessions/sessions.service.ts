@@ -134,6 +134,11 @@ export class SessionsService {
         metadata: { courseId: dto.courseId, scheduledAt: dto.scheduledAt },
       }).catch(() => {});
 
+      // Notify enrolled students
+      this.sessionNotificationService
+        .notifySessionEvent(session, 'session_scheduled')
+        .catch(() => {});
+
       return session;
     }
 
@@ -185,6 +190,11 @@ export class SessionsService {
       performedBy: user.id,
       metadata: { courseId: dto.courseId, scheduledAt: dto.scheduledAt },
     }).catch(() => {});
+
+    // Notify enrolled students
+    this.sessionNotificationService
+      .notifySessionEvent(session, 'session_scheduled')
+      .catch(() => {});
 
     return session;
   }
@@ -483,6 +493,17 @@ export class SessionsService {
     if (session.status !== SESSION_STATUS.SCHEDULED) {
       throw new BadRequestException(
         'Only scheduled sessions can be started',
+      );
+    }
+
+    // Block starting more than 15 minutes before scheduled time
+    const now = new Date();
+    const scheduledAt = new Date(session.scheduledAt);
+    const fifteenMinBefore = new Date(scheduledAt.getTime() - 15 * 60 * 1000);
+    if (now < fifteenMinBefore) {
+      const diffMin = Math.ceil((fifteenMinBefore.getTime() - now.getTime()) / 60000);
+      throw new BadRequestException(
+        `Cannot start session yet. You can start it ${diffMin} minute(s) before the scheduled time.`,
       );
     }
 

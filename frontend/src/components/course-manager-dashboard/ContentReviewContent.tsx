@@ -519,9 +519,31 @@ const ContentReviewContent = () => {
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-xs text-[#9CA3AF]">
-                                        {item.type.toUpperCase()} {formatSize(item.fileSize) && `• ${formatSize(item.fileSize)}`}
-                                      </p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <p className="text-xs text-[#9CA3AF]">
+                                          {item.type.toUpperCase()} {formatSize(item.fileSize) && `• ${formatSize(item.fileSize)}`}
+                                        </p>
+                                        {item.wcagStatus && item.wcagStatus !== "pending" && (
+                                          <span
+                                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium cursor-help ${
+                                              item.wcagStatus === "compliant" || item.wcagStatus === "pass"
+                                                ? "bg-[#DCFCE7] text-[#22C55E]"
+                                                : item.wcagStatus === "warning"
+                                                  ? "bg-[#FEF9C3] text-[#EAB308]"
+                                                  : "bg-[#FEE2E2] text-[#EF4444]"
+                                            }`}
+                                            title={(() => {
+                                              if (!item.wcagDetails) return "WCAG " + item.wcagStatus;
+                                              try {
+                                                const d = JSON.parse(item.wcagDetails) as { label: string; passed: boolean; detail: string }[];
+                                                return d.map((c) => `${c.passed ? "\u2713" : "\u2717"} ${c.label}: ${c.detail}`).join("\n");
+                                              } catch { return "WCAG " + item.wcagStatus; }
+                                            })()}
+                                          >
+                                            WCAG {item.wcagStatus === "compliant" || item.wcagStatus === "pass" ? "Pass" : item.wcagStatus === "warning" ? "Warning" : "Fail"}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </td>
@@ -580,6 +602,34 @@ const ContentReviewContent = () => {
                                         <p className="text-sm text-[#92400E]">{item.reviewNote}</p>
                                       </div>
                                     )}
+
+                                    {/* WCAG Details */}
+                                    {item.wcagDetails && (() => {
+                                      try {
+                                        const details = JSON.parse(item.wcagDetails) as { rule: string; label: string; passed: boolean; detail: string }[];
+                                        if (details.length === 0) return null;
+                                        return (
+                                          <div className="mb-4">
+                                            <h4 className="text-sm font-semibold text-[#1F2937] mb-2">WCAG Accessibility Checks</h4>
+                                            <div className="space-y-1.5">
+                                              {details.map((d, i) => (
+                                                <div key={i} className="flex items-start gap-2 text-xs">
+                                                  {d.passed ? (
+                                                    <CheckCircle2 className="w-4 h-4 text-[#22C55E] flex-shrink-0 mt-0.5" />
+                                                  ) : (
+                                                    <XCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0 mt-0.5" />
+                                                  )}
+                                                  <div>
+                                                    <span className="font-medium text-[#374151]">{d.label}</span>
+                                                    <span className="text-[#6B7280]"> — {d.detail}</span>
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        );
+                                      } catch { return null; }
+                                    })()}
 
                                     <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
                                       {t("contentReviewPage.complianceChecklist")}

@@ -167,6 +167,17 @@ export interface CourseEnrollment {
   studentEmail: string;
 }
 
+// ─── Assessment Files ────────────────────────────────────────
+
+export interface AssessmentFile {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+}
+
 // ─── Assessments API Response ───────────────────────────────
 
 export interface AssessmentResponse {
@@ -201,6 +212,10 @@ export interface AssessmentResponse {
   createdAt: string;
   updatedAt: string;
   submissionCount?: number;
+  // Assignment-specific
+  assignmentFiles?: AssessmentFile[];
+  instructions?: string | null;
+  dueDate?: string | null;
 }
 
 export interface AssessmentsListResponse {
@@ -260,6 +275,10 @@ export interface AssessmentSubmission {
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
+  // Assignment & grading comment fields
+  submissionFiles?: AssessmentFile[];
+  instructorComment?: string | null;
+  questionComments?: Record<string, string>;
 }
 
 // ─── Item Analysis ──────────────────────────────────────────

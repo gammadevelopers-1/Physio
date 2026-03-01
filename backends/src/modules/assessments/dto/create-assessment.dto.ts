@@ -52,4 +52,13 @@ export class CreateAssessmentDto {
   @IsInt()
   @Min(1)
   attemptsAllowed?: number;
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  instructions?: string;
 }

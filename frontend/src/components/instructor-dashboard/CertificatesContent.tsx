@@ -90,8 +90,9 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
       }
       onAction();
       onClose();
-    } catch {
-      toast.error(t("certificates.actionError"));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("certificates.actionError");
+      toast.error(msg);
     } finally {
       setProcessing(false);
       setActiveAction(null);
@@ -437,8 +438,9 @@ const CertificatesContent = () => {
       }
       setSelectedIds(new Set());
       refetch();
-    } catch {
-      toast.error(t("certificates.actionError"));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("certificates.actionError");
+      toast.error(msg);
     } finally {
       setBatchProcessing(false);
       setBatchNoteModal(null);
@@ -460,8 +462,9 @@ const CertificatesContent = () => {
       setSelectedIds(new Set());
       setBatchNote("");
       refetch();
-    } catch {
-      toast.error(t("certificates.actionError"));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("certificates.actionError");
+      toast.error(msg);
     } finally {
       setBatchProcessing(false);
       setBatchNoteModal(null);
@@ -474,8 +477,9 @@ const CertificatesContent = () => {
       await instructorApi.approveCertificate(cert.id);
       toast.success(t("certificates.approveSuccess"));
       refetch();
-    } catch {
-      toast.error(t("certificates.actionError"));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("certificates.actionError");
+      toast.error(msg);
     }
   };
 
@@ -492,8 +496,9 @@ const CertificatesContent = () => {
       setRevokingCert(null);
       setRevokeReason("");
       refetch();
-    } catch {
-      toast.error(t("certificates.actionError"));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("certificates.actionError");
+      toast.error(msg);
     } finally {
       setRevokeProcessing(false);
     }

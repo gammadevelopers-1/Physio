@@ -8,9 +8,13 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AssessmentsService } from './assessments.service';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
@@ -53,6 +57,7 @@ export class AssessmentsController {
     @Query('courseId') courseId?: string,
     @Query('type') type?: string,
     @Query('status') status?: string,
+    @Query('moduleId') moduleId?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -60,6 +65,7 @@ export class AssessmentsController {
       courseId,
       type,
       status,
+      moduleId,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -224,6 +230,78 @@ export class AssessmentsController {
     @Body() dto: GradeSubmissionDto,
   ) {
     return this.assessmentsService.gradeSubmission(submissionId, user, dto);
+  }
+
+  // ─── Assignment File Endpoints ──────────────────────────────
+
+  /**
+   * POST /assessments/:id/files — Upload an assignment file
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post(':id/files')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB
+      fileFilter: (_req, file, cb) => {
+        const allowed = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.ms-powerpoint',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+        ];
+        if (allowed.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException(`File type '${file.mimetype}' is not allowed`), false);
+        }
+      },
+    }),
+  )
+  async uploadAssignmentFile(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+    return this.assessmentsService.uploadAssignmentFile(assessmentId, user, file);
+  }
+
+  /**
+   * DELETE /assessments/:id/files/:fileId — Remove an assignment file
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Delete(':id/files/:fileId')
+  async removeAssignmentFile(
+    @Param('id') assessmentId: string,
+    @Param('fileId') fileId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.assessmentsService.removeAssignmentFile(assessmentId, fileId, user);
+  }
+
+  // ─── Assignment Grading ────────────────────────────────────
+
+  /**
+   * PATCH /assessments/:id/submissions/:submissionId/grade-assignment — Grade an assignment
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Patch(':id/submissions/:submissionId/grade-assignment')
+  async gradeAssignment(
+    @Param('submissionId') submissionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { score: number; comment?: string },
+  ) {
+    return this.assessmentsService.gradeAssignment(submissionId, user, body);
   }
 
   // ─── Item Analysis ────────────────────────────────────────

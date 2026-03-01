@@ -10,6 +10,7 @@ import { UserNotificationsService } from '../user-notifications/user-notificatio
 import { EmailService } from '../email/email.service';
 
 type SessionEventType =
+  | 'session_scheduled'
   | 'session_started'
   | 'session_ended'
   | 'session_cancelled'
@@ -20,15 +21,24 @@ interface SessionContext {
   title: string;
   courseId: string;
   zoomLink: string | null;
+  scheduledAt?: Date | string | null;
+  type?: string | null;
 }
 
 const EVENT_CONFIG: Record<
   SessionEventType,
   {
     title: string;
-    messageFn: (sessionTitle: string) => string;
+    messageFn: (sessionTitle: string, extra?: string) => string;
   }
 > = {
+  session_scheduled: {
+    title: 'New Session Scheduled',
+    messageFn: (t, extra) =>
+      extra
+        ? `A new session "${t}" has been scheduled for ${extra}.`
+        : `A new session "${t}" has been scheduled.`,
+  },
   session_started: {
     title: 'Session Started',
     messageFn: (t) => `"${t}" is now live. Join now!`,
@@ -102,11 +112,19 @@ export class SessionNotificationService {
       const config = EVENT_CONFIG[eventType];
       const studentIds = enrolledStudents.map((s) => s.studentId);
 
+      // Format scheduled date for messages
+      const scheduledDateStr = session.scheduledAt
+        ? new Date(session.scheduledAt).toLocaleString('en-US', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+          })
+        : '';
+
       // 3. In-app notifications (bulk insert — always)
       await this.userNotificationsService.createBulk(studentIds, {
         type: eventType,
         title: config.title,
-        message: config.messageFn(session.title),
+        message: config.messageFn(session.title, scheduledDateStr),
         link: `/dashboard/student/courses/${session.courseId}`,
         entityType: 'session',
         entityId: session.id,
@@ -125,6 +143,16 @@ export class SessionNotificationService {
         };
 
         switch (eventType) {
+          case 'session_scheduled':
+            this.emailService
+              .sendSessionScheduled(student.email, {
+                ...emailParams,
+                scheduledDate: scheduledDateStr,
+                sessionType: session.type || 'zoom',
+                zoomLink: session.zoomLink,
+              })
+              .catch(() => {});
+            break;
           case 'session_started':
             this.emailService
               .sendSessionStarted(student.email, {

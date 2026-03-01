@@ -7,11 +7,18 @@ import { Bell } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const TYPE_COLORS: Record<string, string> = {
+  session_scheduled: "bg-teal-500",
   session_started: "bg-green-500",
   session_ended: "bg-blue-500",
   session_cancelled: "bg-red-500",
   session_rescheduled: "bg-yellow-500",
   system: "bg-gray-500",
+  intervention_email: "bg-yellow-500",
+  intervention_makeup: "bg-purple-500",
+  content_pending_review: "bg-blue-500",
+  content_review: "bg-green-500",
+  assessment_published: "bg-amber-500",
+  assessment_submitted: "bg-orange-500",
 };
 
 function getRelativeTime(

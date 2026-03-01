@@ -167,7 +167,22 @@ async function fetchApi<T>(
   const contentType = response.headers.get('content-type');
   if (!contentType?.includes('application/json')) {
     if (!response.ok) {
-      throw new ApiError(response.status, 'An error occurred');
+      // Try to read response text for a more descriptive error
+      try {
+        const text = await response.text();
+        // NestJS sometimes returns JSON without proper content-type header
+        try {
+          const parsed = JSON.parse(text);
+          const msg = Array.isArray(parsed.message) ? parsed.message[0] : parsed.message;
+          if (msg) throw new ApiError(response.status, msg);
+        } catch (parseErr) {
+          if (parseErr instanceof ApiError) throw parseErr;
+        }
+        if (text) throw new ApiError(response.status, text.slice(0, 200));
+      } catch (readErr) {
+        if (readErr instanceof ApiError) throw readErr;
+      }
+      throw new ApiError(response.status, `Request failed with status ${response.status}`);
     }
     return {} as T;
   }
@@ -684,7 +699,7 @@ export const instructorApi = {
   },
 
   // Assessment CRUD
-  createAssessment: (data: { courseId: string; title: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number }) =>
+  createAssessment: (data: { courseId: string; title: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number; dueDate?: string; instructions?: string; moduleId?: string }) =>
     api.post<AssessmentResponse>('/assessments', data),
 
   getAssessmentDetail: (assessmentId: string) =>
@@ -719,8 +734,41 @@ export const instructorApi = {
   getSubmissions: (assessmentId: string) =>
     api.get<AssessmentSubmission[]>(`/assessments/${assessmentId}/submissions`),
 
-  gradeSubmission: (assessmentId: string, submissionId: string, grades: { questionId: string; marksAwarded: number }[]) =>
-    api.patch<AssessmentSubmission>(`/assessments/${assessmentId}/submissions/${submissionId}/grade`, { grades }),
+  gradeSubmission: (assessmentId: string, submissionId: string, grades: { questionId: string; marksAwarded: number; comment?: string }[], overallComment?: string) =>
+    api.patch<AssessmentSubmission>(`/assessments/${assessmentId}/submissions/${submissionId}/grade`, { grades, overallComment }),
+
+  gradeAssignment: (assessmentId: string, submissionId: string, score: number, comment?: string) =>
+    api.patch<AssessmentSubmission>(`/assessments/${assessmentId}/submissions/${submissionId}/grade-assignment`, { score, comment }),
+
+  // Assignment file management
+  uploadAssignmentFile: async (assessmentId: string, file: File, onProgress?: (pct: number) => void) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return new Promise<{ id: string; fileUrl: string; fileName: string; fileSize: number; mimeType: string; uploadedAt: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `/api/assessments/${assessmentId}/files`);
+      const token = getAccessToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      if (onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error(xhr.responseText || 'Upload failed'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Upload failed'));
+      xhr.send(formData);
+    });
+  },
+
+  removeAssignmentFile: (assessmentId: string, fileId: string) =>
+    api.delete<{ message: string }>(`/assessments/${assessmentId}/files/${fileId}`),
 
   // Item Analysis
   getItemAnalysis: (assessmentId: string) =>
@@ -1076,10 +1124,11 @@ export const reportsApi = {
    */
   download: async (
     type: ReportType,
-    params: { courseId?: string; format?: ReportFormat; dateFrom?: string; dateTo?: string },
+    params: { courseId?: string; sessionId?: string; format?: ReportFormat; dateFrom?: string; dateTo?: string },
   ): Promise<void> => {
     const sp = new URLSearchParams();
     if (params.courseId) sp.set('courseId', params.courseId);
+    if (params.sessionId) sp.set('sessionId', params.sessionId);
     if (params.format) sp.set('format', params.format);
     if (params.dateFrom) sp.set('dateFrom', params.dateFrom);
     if (params.dateTo) sp.set('dateTo', params.dateTo);
@@ -1458,6 +1507,7 @@ export const courseManagerApi = {
         fileSize: number | null;
         mimeType: string | null;
         wcagStatus: string;
+        wcagDetails: string | null;
         reviewNote: string | null;
         createdAt: string;
         courseTitle: string;
@@ -1503,6 +1553,25 @@ export const courseManagerApi = {
 
   getCourseRatingStats: (courseId: string) =>
     api.get<{ avgRating: number; totalRatings: number }>(`/courses/${courseId}/ratings/stats`),
+
+  // Course Materials (manager access)
+  getCourseMaterials: (courseId: string, moduleId?: string) =>
+    api.get<Array<{
+      id: string;
+      title: string;
+      type: string;
+      status: string;
+      fileUrl: string | null;
+      fileSize: number | null;
+      mimeType: string | null;
+      moduleId: string | null;
+      wcagStatus: string | null;
+      createdAt: string;
+      uploadedBy: string;
+    }>>(`/courses/${courseId}/materials${moduleId ? `?moduleId=${moduleId}` : ''}`),
+
+  removeMaterial: (materialId: string, reason?: string) =>
+    api.delete<{ message: string }>(`/materials/${materialId}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
 };
 
 // ===========================================
@@ -1888,6 +1957,32 @@ export const studentApi = {
 
   getSubmissionReview: (submissionId: string) =>
     api.get<SubmissionReview>(`/student/submissions/${submissionId}/review`),
+
+  submitAssignment: async (assessmentId: string, files: File[], onProgress?: (pct: number) => void) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+
+    return new Promise<{ submissionId: string; filesCount: number; status: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `/api/student/assessments/${assessmentId}/submit-assignment`);
+      const token = getAccessToken();
+      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      if (onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+        };
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(JSON.parse(xhr.responseText));
+        } else {
+          reject(new Error(xhr.responseText || 'Upload failed'));
+        }
+      };
+      xhr.onerror = () => reject(new Error('Upload failed'));
+      xhr.send(formData);
+    });
+  },
 
   // ── Tickets ──
   getTickets: (params?: { status?: string; page?: number; limit?: number }) => {

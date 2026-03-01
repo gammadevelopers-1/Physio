@@ -146,4 +146,16 @@ export class ProcessingService {
       })
       .where(eq(courseMaterials.id, materialId));
   }
+
+  /** Mark material as pending review (WCAG fail/warning requires manager approval) */
+  async markPendingReview(materialId: string): Promise<void> {
+    await db
+      .update(courseMaterials)
+      .set({
+        status: MATERIAL_STATUS.PENDING_REVIEW,
+        processingStep: PROCESSING_STEPS.COMPLETE,
+        updatedAt: new Date(),
+      })
+      .where(eq(courseMaterials.id, materialId));
+  }
 }

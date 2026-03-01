@@ -166,8 +166,8 @@ export class ZoomService implements IZoomService, OnModuleInit {
       duration: params.durationMinutes,
       timezone: 'UTC',
       settings: {
-        join_before_host: true,
-        waiting_room: false,
+        join_before_host: false,
+        waiting_room: true,
         mute_upon_entry: true,
         auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
       },
@@ -495,5 +495,60 @@ export class ZoomService implements IZoomService, OnModuleInit {
     );
 
     return recordings;
+  }
+
+  /**
+   * Get the share URL for a meeting's recordings from Zoom API.
+   */
+  async getRecordingShareUrl(meetingId: string): Promise<string | null> {
+    const token = await this.getAccessToken();
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
+      {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return data.share_url || null;
+  }
+
+  /**
+   * Remove passcode from recording so it can be viewed without authentication.
+   * Uses PATCH /meetings/{meetingId}/recordings/settings
+   */
+  async removeRecordingPasscode(meetingId: string): Promise<boolean> {
+    const token = await this.getAccessToken();
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/meetings/${meetingId}/recordings/settings`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          share_recording: 'publicly',
+          viewer_download: false,
+          password: '',
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.warn(
+        `Failed to remove recording passcode for ${meetingId}: ${response.status} ${errorText}`,
+      );
+      return false;
+    }
+
+    this.logger.log(`Removed recording passcode for meeting ${meetingId}`);
+    return true;
   }
 }

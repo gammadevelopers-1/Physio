@@ -40,6 +40,7 @@ import {
   Trash2,
   Download,
   Film,
+  Lock,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -192,7 +193,10 @@ function AttendanceModal({
       setLoading(true);
       await loadData();
     } catch {
-      toast.error("Failed to sync Zoom attendance");
+      toast.error(
+        "Failed to sync Zoom attendance. Zoom reports may take 10-30 minutes to become available after a meeting ends. Please try again later.",
+        { duration: 8000 },
+      );
     } finally {
       setSyncing(false);
     }
@@ -222,6 +226,7 @@ function AttendanceModal({
   const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+  const isReadOnly = session.status !== "live";
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
@@ -297,6 +302,7 @@ function AttendanceModal({
     try {
       await reportsApi.download("attendance", {
         courseId: session.courseId,
+        sessionId: session.id,
         format: exportFormat,
       });
     } catch {
@@ -364,19 +370,28 @@ function AttendanceModal({
             <span className="text-xs text-[#3B82F6]">{excusedCount} {t("sessionsPage.attendance.excused")}</span>
           </div>
 
-          {/* Bulk actions */}
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E7EB]">
-            <span className="text-xs font-medium text-[#6B7280]">{t("sessionsPage.attendance.markAll")}:</span>
-            {statusOptions.map((status) => (
-              <button
-                key={status}
-                onClick={() => handleBulkMark(status)}
-                className={`px-2.5 py-1 rounded text-xs font-medium ${getStatusColor(status)} hover:opacity-80 transition-opacity`}
-              >
-                {t(`sessionsPage.attendance.${status}`)}
-              </button>
-            ))}
-          </div>
+          {/* Bulk actions — only during live sessions */}
+          {isReadOnly ? (
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+              <Lock className="w-3.5 h-3.5 text-[#9CA3AF]" />
+              <span className="text-xs text-[#6B7280]">
+                {t("sessionsPage.attendance.readOnly")}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E7EB]">
+              <span className="text-xs font-medium text-[#6B7280]">{t("sessionsPage.attendance.markAll")}:</span>
+              {statusOptions.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleBulkMark(status)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium ${getStatusColor(status)} hover:opacity-80 transition-opacity`}
+                >
+                  {t(`sessionsPage.attendance.${status}`)}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Student list */}
           <div className="max-h-[400px] overflow-y-auto">
@@ -403,12 +418,13 @@ function AttendanceModal({
                           {statusOptions.map((status) => (
                             <button
                               key={status}
-                              onClick={() => handleStatusChange(e.studentId, status)}
+                              onClick={() => !isReadOnly && handleStatusChange(e.studentId, status)}
+                              disabled={isReadOnly}
                               className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                                 currentStatus === status
                                   ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
                                   : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[#E5E7EB]"
-                              }`}
+                              } ${isReadOnly ? "cursor-default opacity-70" : ""}`}
                             >
                               {t(`sessionsPage.attendance.${status}`)}
                             </button>
@@ -555,16 +571,18 @@ function AttendanceModal({
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
               >
-                {t("sessionsPage.attendance.cancel")}
+                {isReadOnly ? t("sessionsPage.attendance.close") : t("sessionsPage.attendance.cancel")}
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
-              >
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {t("sessionsPage.attendance.save")}
-              </button>
+              {!isReadOnly && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                >
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t("sessionsPage.attendance.save")}
+                </button>
+              )}
             </div>
           </div>
         </>
@@ -606,7 +624,8 @@ function RecordingsModal({
     const load = async () => {
       try {
         const data = await zoomAttendanceApi.getRecordings(session.id);
-        setRecordings(data);
+        // Filter out timeline/metadata files — not useful for viewing
+        setRecordings(data.filter((r) => r.recordingType !== 'timeline'));
       } catch {
         // silently handle – empty state will show
       } finally {
@@ -1011,13 +1030,13 @@ function ScheduleSessionModal({
         data.isMakeup = true;
       }
       await instructorApi.createSession(data);
-      // Log intervention record for makeup sessions
+      // Log intervention record for makeup sessions (also triggers student notification)
       if (isMakeup && makeupStudentId && courseId) {
-        instructorApi.createIntervention({
+        await instructorApi.createIntervention({
           type: "makeup_session",
           studentId: makeupStudentId,
           courseId,
-        }).catch(() => {});
+        });
       }
       toast.success(
         isMakeup

@@ -2,6 +2,7 @@ import {
   pgTable,
   uuid,
   varchar,
+  text,
   integer,
   numeric,
   timestamp,
@@ -10,7 +11,7 @@ import {
   check,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-import { assessments } from './assessments';
+import { assessments, type AssessmentFile } from './assessments';
 import { users } from './users';
 
 export interface SubmissionAnswer {
@@ -37,6 +38,9 @@ export const submissions = pgTable(
     startedAt: timestamp('started_at'),
     submittedAt: timestamp('submitted_at'),
     status: varchar('status', { length: 20 }).notNull().default('in_progress'),
+    submissionFiles: jsonb('submission_files').$type<AssessmentFile[]>(),
+    instructorComment: text('instructor_comment'),
+    questionComments: jsonb('question_comments').$type<Record<string, string>>(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [

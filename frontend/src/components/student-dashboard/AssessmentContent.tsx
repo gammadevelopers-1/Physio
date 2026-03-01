@@ -26,7 +26,11 @@ import {
   Italic,
   Underline,
   List,
+  FileText,
+  Download,
+  MessageSquare,
 } from "lucide-react";
+import { toast } from "sonner";
 import { studentApi } from "@/lib/api";
 import type {
   StudentAssessment,
@@ -71,6 +75,12 @@ const AssessmentContent = () => {
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewData, setReviewData] = useState<SubmissionReview | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
+
+  // Assignment-specific state
+  const [assignmentFiles, setAssignmentFiles] = useState<File[]>([]);
+  const [assignmentUploading, setAssignmentUploading] = useState(false);
+  const [assignmentUploadPct, setAssignmentUploadPct] = useState(0);
+  const [assignmentSubmitted, setAssignmentSubmitted] = useState(false);
 
   // Ref for auto-save interval
   const answersRef = useRef(answers);
@@ -250,6 +260,30 @@ const AssessmentContent = () => {
     }
   };
 
+  const handleAssignmentSubmit = useCallback(async () => {
+    if (!assessment || assignmentUploading || assignmentFiles.length === 0) return;
+    setAssignmentUploading(true);
+    setAssignmentUploadPct(0);
+    try {
+      const res = await studentApi.submitAssignment(assessmentId, assignmentFiles, setAssignmentUploadPct);
+      setResult({
+        submissionId: res.submissionId,
+        score: 0,
+        totalMarks: assessment.totalMarks,
+        percentage: 0,
+        status: res.status || "submitted",
+        passed: false,
+        hasManualGrading: true,
+      });
+      setAssignmentSubmitted(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to submit assignment";
+      toast.error(msg);
+    } finally {
+      setAssignmentUploading(false);
+    }
+  }, [assessment, assignmentUploading, assignmentFiles, assessmentId]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -303,6 +337,425 @@ const AssessmentContent = () => {
 
   if (!assessment) return null;
 
+  // ─── Max Attempts Reached — Show result + review option ───
+  if (assessment.maxAttemptsReached && !result && !reviewMode) {
+    const sub = assessment.latestSubmission;
+    const isGraded = sub?.status === "graded";
+    const score = sub?.score ?? 0;
+    const pct = assessment.totalMarks > 0 ? (score / assessment.totalMarks) * 100 : 0;
+    const passed = pct >= ((assessment.passingMarks / assessment.totalMarks) * 100);
+
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+          {!isGraded ? (
+            <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
+          ) : passed ? (
+            <CheckCircle2 className="w-16 h-16 text-[#16A34A] mx-auto mb-4" />
+          ) : (
+            <XCircle className="w-16 h-16 text-[#DC2626] mx-auto mb-4" />
+          )}
+
+          <h2 className="text-xl font-bold text-[#1F2937] mb-2">
+            {!isGraded
+              ? t("assessment.pendingGrading")
+              : passed
+                ? t("assessment.passed")
+                : t("assessment.failed")}
+          </h2>
+
+          {isGraded && (
+            <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
+                  <p className="text-lg font-bold text-[#1F2937]">{score}/{assessment.totalMarks}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.percentage")}</p>
+                  <p className="text-lg font-bold text-[#1F2937]">{pct.toFixed(1)}%</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isGraded && (
+            <p className="text-sm text-[#6B7280] mb-6">{t("assessment.pendingGradingMessage")}</p>
+          )}
+
+          <div className="flex flex-col gap-3 mt-4">
+            <Link
+              href={`/${locale}/dashboard/student/courses/${courseId}`}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+            >
+              {t("assessment.backToCourse")}
+            </Link>
+            {isGraded && sub?.id && (
+              <button
+                onClick={() => {
+                  setReviewLoading(true);
+                  studentApi.getSubmissionReview(sub.id).then((data) => {
+                    setReviewData(data);
+                    setReviewMode(true);
+                  }).catch(() => {}).finally(() => setReviewLoading(false));
+                }}
+                disabled={reviewLoading}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[#002D87] text-sm font-medium rounded-lg hover:bg-[#F0F7FF] transition-colors disabled:opacity-60"
+              >
+                {reviewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                {t("assessment.reviewAnswers")}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Assignment Flow ──────────────────────────────────────
+
+  if (assessment.type === "assignment") {
+    const badge = getTypeBadge("assignment");
+    const isPastDeadline = assessment.dueDate ? new Date() > new Date(assessment.dueDate) : false;
+    const hasExistingSubmission = assessment.attemptsTaken > 0;
+    const canSubmit = assessment.canSubmit !== false && !isPastDeadline && !hasExistingSubmission;
+
+    // Assignment Review Mode (after grading)
+    if (reviewMode && reviewData) {
+      return (
+        <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+          <div className="bg-white border-b border-[#E5E7EB] px-4 py-3">
+            <div className="max-w-[700px] mx-auto flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => { setReviewMode(false); }}
+                  className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                >
+                  <BackIcon className="w-5 h-5 text-[#4B5563]" />
+                </button>
+                <h1 className="text-sm sm:text-base font-semibold text-[#1F2937]">
+                  {assessment.title} — {t("assessment.reviewAnswers")}
+                </h1>
+              </div>
+              <span className="text-sm font-medium text-[#1F2937]">
+                {reviewData.score}/{reviewData.totalMarks} ({reviewData.percentage.toFixed(1)}%)
+              </span>
+            </div>
+          </div>
+
+          <div className="max-w-[700px] mx-auto px-4 py-6 sm:py-8 space-y-6">
+            {/* Instructor Comment */}
+            {reviewData.instructorComment && (
+              <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <MessageSquare className="w-4 h-4 text-[#0284C7]" />
+                  <h3 className="text-sm font-semibold text-[#0C4A6E]">{t("assessment.instructorComment") || "Instructor Comment"}</h3>
+                </div>
+                <p className="text-sm text-[#374151] whitespace-pre-wrap">{reviewData.instructorComment}</p>
+              </div>
+            )}
+
+            {/* Score */}
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
+                  <p className="text-lg font-bold text-[#1F2937]">{reviewData.score}/{reviewData.totalMarks}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.percentage")}</p>
+                  <p className="text-lg font-bold text-[#1F2937]">{reviewData.percentage.toFixed(1)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#6B7280] mb-1">{t("assessment.status")}</p>
+                  <p className={`text-lg font-bold ${reviewData.percentage >= ((assessment.passingMarks / assessment.totalMarks) * 100) ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
+                    {reviewData.percentage >= ((assessment.passingMarks / assessment.totalMarks) * 100) ? t("assessment.passed") : t("assessment.failed")}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submitted Files */}
+            {reviewData.submissionFiles && reviewData.submissionFiles.length > 0 && (
+              <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.studentFiles") || "Your Submitted Files"}</h3>
+                <div className="space-y-2">
+                  {reviewData.submissionFiles.map((f) => (
+                    <div key={f.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
+                        <span className="text-sm text-[#374151] truncate">{f.fileName}</span>
+                        <span className="text-xs text-[#9CA3AF] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
+                      </div>
+                      <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="p-1.5 text-[#3B82F6] hover:bg-[#EFF6FF] rounded">
+                        <Download className="w-4 h-4" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Link
+              href={`/${locale}/dashboard/student/courses/${courseId}`}
+              className="inline-flex items-center justify-center gap-2 w-full px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+            >
+              {t("assessment.backToCourse")}
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
+    // Assignment Result View
+    if (result) {
+      const isPendingGrading = result.status === "submitted";
+
+      return (
+        <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+            {isPendingGrading ? (
+              <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
+            ) : result.passed ? (
+              <CheckCircle2 className="w-16 h-16 text-[#16A34A] mx-auto mb-4" />
+            ) : (
+              <XCircle className="w-16 h-16 text-[#DC2626] mx-auto mb-4" />
+            )}
+
+            <h2 className="text-xl font-bold text-[#1F2937] mb-2">
+              {isPendingGrading ? (t("assessment.assignmentSubmitted") || "Assignment Submitted") : result.passed ? t("assessment.passed") : t("assessment.failed")}
+            </h2>
+            <p className="text-[#6B7280] mb-6">
+              {isPendingGrading ? (t("assessment.pendingGradingMessage")) : t("assessment.resultMessage")}
+            </p>
+
+            {!isPendingGrading && (
+              <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
+                    <p className="text-lg font-bold text-[#1F2937]">{result.score}/{result.totalMarks}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#6B7280] mb-1">{t("assessment.percentage")}</p>
+                    <p className="text-lg font-bold text-[#1F2937]">{result.percentage.toFixed(1)}%</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <Link
+                href={`/${locale}/dashboard/student/courses/${courseId}`}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+              >
+                {t("assessment.backToCourse")}
+              </Link>
+              {result.status === "graded" && (
+                <button
+                  onClick={handleLoadReview}
+                  disabled={reviewLoading}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#002D87] text-[#002D87] text-sm font-medium rounded-lg hover:bg-[#F0F7FF] transition-colors disabled:opacity-60"
+                >
+                  {reviewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                  {t("assessment.reviewAnswers")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Assignment Start / Submission Screen
+    return (
+      <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="max-w-[700px] mx-auto px-4 py-6 sm:py-8">
+          {/* Back link */}
+          <Link
+            href={`/${locale}/dashboard/student/courses/${courseId}`}
+            className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#1F2937] mb-6 transition-colors"
+          >
+            <BackIcon className="w-4 h-4" />
+            {t("assessment.backToCourse")}
+          </Link>
+
+          {/* Title + Badge */}
+          <div className="mb-6">
+            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium mb-3 ${badge.color}`}>
+              {badge.label}
+            </span>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">{assessment.title}</h1>
+          </div>
+
+          {/* Deadline Banner */}
+          {isPastDeadline && (
+            <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl mb-4">
+              <AlertCircle className="w-5 h-5 text-[#DC2626] flex-shrink-0" />
+              <p className="text-sm font-medium text-[#DC2626]">{t("assessment.deadlinePassed") || "Deadline has passed"}</p>
+            </div>
+          )}
+
+          {/* Already Submitted Banner */}
+          {hasExistingSubmission && !result && (
+            <div className="flex items-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-xl mb-4">
+              <CheckCircle2 className="w-5 h-5 text-[#002D87] flex-shrink-0" />
+              <p className="text-sm font-medium text-[#1E3A8A]">{t("assessment.assignmentSubmitted") || "Assignment already submitted"}</p>
+            </div>
+          )}
+
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+              <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.totalMarks")}</p>
+              <p className="text-base font-semibold text-[#1F2937]">{assessment.totalMarks}</p>
+            </div>
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+              <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.passingMarks")}</p>
+              <p className="text-base font-semibold text-[#1F2937]">{assessment.passingMarks}</p>
+            </div>
+            {assessment.dueDate && (
+              <div className="col-span-2 bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.deadline") || "Deadline"}</p>
+                <p className="text-base font-semibold text-[#1F2937]">
+                  {new Date(assessment.dueDate).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", { timeZone: "Asia/Riyadh" })} (KSA)
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Instructions */}
+          {assessment.instructions && (
+            <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-5 mb-6">
+              <h3 className="font-medium text-sm text-[#0C4A6E] mb-2">{t("assessment.assignmentInstructions") || "Instructions"}</h3>
+              <p className="text-sm text-[#4B5563] whitespace-pre-wrap leading-relaxed">{assessment.instructions}</p>
+            </div>
+          )}
+
+          {/* Assignment Files (instructor-provided) */}
+          {assessment.assignmentFiles && assessment.assignmentFiles.length > 0 && (
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+              <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.assignmentFiles") || "Assignment Files"}</h3>
+              <div className="space-y-2">
+                {assessment.assignmentFiles.map((f) => (
+                  <div key={f.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
+                      <span className="text-sm text-[#374151] truncate">{f.fileName}</span>
+                      <span className="text-xs text-[#9CA3AF] shrink-0">{(f.fileSize / 1024).toFixed(0)} KB</span>
+                    </div>
+                    <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 px-3 py-1.5 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors">
+                      <Download className="w-4 h-4" />
+                      {t("assessment.downloadFile") || "Download"}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Student File Upload */}
+          {canSubmit && (
+            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+              <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.uploadFiles") || "Upload Your Files"}</h3>
+
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#D1D5DB] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors mb-3">
+                <div className="flex flex-col items-center">
+                  <Upload className="w-8 h-8 text-[#9CA3AF] mb-1" />
+                  <p className="text-sm text-[#6B7280]">{t("assessment.dragDropFiles") || "Click to select files"}</p>
+                  <p className="text-xs text-[#9CA3AF] mt-1">PDF, DOC, DOCX, JPG, PNG, GIF, MP4, MOV ({t("assessment.maxFiles") || "Max 10 files, 100 MB each"})</p>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  multiple
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp,.gif,.mp4,.mov"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      const newFiles = Array.from(e.target.files!);
+                      const MAX_SIZE = 100 * 1024 * 1024; // 100 MB
+                      const MAX_FILES = 10;
+                      const oversized = newFiles.filter((f) => f.size > MAX_SIZE);
+                      if (oversized.length > 0) {
+                        toast.error(`${oversized[0].name} exceeds 100 MB limit`);
+                        e.target.value = "";
+                        return;
+                      }
+                      setAssignmentFiles((prev) => {
+                        const combined = [...prev, ...newFiles];
+                        if (combined.length > MAX_FILES) {
+                          toast.error(`Maximum ${MAX_FILES} files allowed`);
+                          return prev;
+                        }
+                        return combined;
+                      });
+                    }
+                    e.target.value = "";
+                  }}
+                  disabled={assignmentUploading}
+                />
+              </label>
+
+              {/* Selected files list */}
+              {assignmentFiles.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {assignmentFiles.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Paperclip className="w-4 h-4 text-[#6B7280] shrink-0" />
+                        <span className="text-sm text-[#374151] truncate">{f.name}</span>
+                        <span className="text-xs text-[#9CA3AF] shrink-0">{(f.size / 1024).toFixed(0)} KB</span>
+                      </div>
+                      <button
+                        onClick={() => setAssignmentFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="p-1 text-[#6B7280] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload progress */}
+              {assignmentUploading && (
+                <div className="w-full bg-[#E5E7EB] rounded-full h-2 mb-4">
+                  <div className="bg-[#3B82F6] h-2 rounded-full transition-all" style={{ width: `${assignmentUploadPct}%` }} />
+                </div>
+              )}
+
+              {/* Submit button */}
+              <button
+                onClick={handleAssignmentSubmit}
+                disabled={assignmentFiles.length === 0 || assignmentUploading}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 btn-gold text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {assignmentUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("assessment.submitting") || "Submitting..."}
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    {t("assessment.submitAssignment") || "Submit Assignment"}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* No files uploaded notice when can't submit */}
+          {!canSubmit && !hasExistingSubmission && (
+            <div className="text-center py-4">
+              <p className="text-sm text-[#6B7280]">{t("assessment.noFilesUploaded") || "Submissions are closed"}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ─── Review Mode ────────────────────────────────────────
 
   if (reviewMode && reviewData) {
@@ -338,6 +791,17 @@ const AssessmentContent = () => {
         </div>
 
         <div className="max-w-[900px] mx-auto px-4 py-6 sm:py-8">
+          {/* Instructor Overall Comment */}
+          {reviewData.instructorComment && currentQuestion === 0 && (
+            <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-5 mb-6">
+              <div className="flex items-center gap-2 mb-2">
+                <MessageSquare className="w-4 h-4 text-[#0284C7]" />
+                <h3 className="text-sm font-semibold text-[#0C4A6E]">{t("assessment.instructorComment") || "Instructor Comment"}</h3>
+              </div>
+              <p className="text-sm text-[#374151] whitespace-pre-wrap">{reviewData.instructorComment}</p>
+            </div>
+          )}
+
           {reviewQuestion && (
             <>
               <div className="mb-6">
@@ -459,6 +923,17 @@ const AssessmentContent = () => {
                   </div>
                 )}
               </div>
+
+              {/* Per-question instructor comment */}
+              {reviewData.questionComments && reviewData.questionComments[reviewQuestion.id] && (
+                <div className="bg-[#FFF7ED] border border-[#FED7AA] rounded-xl p-4 mb-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MessageSquare className="w-3.5 h-3.5 text-[#EA580C]" />
+                    <span className="text-xs font-semibold text-[#9A3412]">{t("assessment.questionComment") || "Instructor Feedback"}</span>
+                  </div>
+                  <p className="text-sm text-[#374151] whitespace-pre-wrap">{reviewData.questionComments[reviewQuestion.id]}</p>
+                </div>
+              )}
 
               {/* Navigation */}
               <div className="flex items-center justify-between">

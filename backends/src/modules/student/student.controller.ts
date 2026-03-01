@@ -6,11 +6,15 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
   HttpCode,
   HttpStatus,
   Res,
   StreamableFile,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { StudentService } from './student.service';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
@@ -154,6 +158,47 @@ export class StudentController {
       assessmentId,
       body.answers,
     );
+  }
+
+  /**
+   * POST /student/assessments/:id/submit-assignment — Submit assignment files
+   */
+  @Post('assessments/:id/submit-assignment')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB per file
+      fileFilter: (_req, file, cb) => {
+        const allowed = [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+          'video/mp4',
+          'video/quicktime',
+          'video/mpeg',
+          'video/webm',
+        ];
+        if (allowed.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException(`File type '${file.mimetype}' is not allowed`), false);
+        }
+      },
+    }),
+  )
+  async submitAssignmentFiles(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('At least one file is required');
+    }
+    return this.studentService.submitAssignmentFiles(user.id, assessmentId, files);
   }
 
   /**

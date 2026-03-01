@@ -36,6 +36,10 @@ import {
   CheckCircle,
   Archive,
   FileText,
+  Image as ImageIcon,
+  File,
+  X,
+  Eye,
 } from "lucide-react";
 
 interface CourseManagerCourseDetailContentProps {
@@ -87,6 +91,25 @@ const CourseManagerCourseDetailContent = ({
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Module materials
+  interface MaterialItem {
+    id: string;
+    title: string;
+    type: string;
+    status: string;
+    fileUrl: string | null;
+    fileSize: number | null;
+    wcagStatus: string | null;
+    createdAt: string;
+  }
+  const [moduleMaterials, setModuleMaterials] = useState<Record<string, MaterialItem[]>>({});
+  const [loadingMaterials, setLoadingMaterials] = useState<Set<string>>(new Set());
+
+  // Remove material modal
+  const [removingMaterial, setRemovingMaterial] = useState<MaterialItem | null>(null);
+  const [removeReason, setRemoveReason] = useState("");
+  const [removeLoading, setRemoveLoading] = useState(false);
 
   const fetchCourse = useCallback(async () => {
     setLoading(true);
@@ -145,10 +168,73 @@ const CourseManagerCourseDetailContent = ({
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) => {
       const next = new Set(prev);
-      if (next.has(moduleId)) next.delete(moduleId);
-      else next.add(moduleId);
+      if (next.has(moduleId)) {
+        next.delete(moduleId);
+      } else {
+        next.add(moduleId);
+        // Fetch materials for this module if not already loaded
+        if (!moduleMaterials[moduleId] && course) {
+          fetchModuleMaterials(moduleId);
+        }
+      }
       return next;
     });
+  };
+
+  const fetchModuleMaterials = async (moduleId: string) => {
+    if (!course) return;
+    setLoadingMaterials((prev) => new Set(prev).add(moduleId));
+    try {
+      const materials = await courseManagerApi.getCourseMaterials(course.id, moduleId);
+      setModuleMaterials((prev) => ({ ...prev, [moduleId]: materials }));
+    } catch {
+      // Silently fail — module just won't show materials
+    } finally {
+      setLoadingMaterials((prev) => {
+        const next = new Set(prev);
+        next.delete(moduleId);
+        return next;
+      });
+    }
+  };
+
+  const handleRemoveMaterial = async () => {
+    if (!removingMaterial) return;
+    setRemoveLoading(true);
+    try {
+      await courseManagerApi.removeMaterial(removingMaterial.id, removeReason || undefined);
+      toast.success(t("courseDetail.materialRemoved"));
+      // Remove from local state
+      setModuleMaterials((prev) => {
+        const updated = { ...prev };
+        for (const key of Object.keys(updated)) {
+          updated[key] = updated[key].filter((m) => m.id !== removingMaterial.id);
+        }
+        return updated;
+      });
+      setRemovingMaterial(null);
+      setRemoveReason("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("courseDetail.materialRemoveError"));
+    } finally {
+      setRemoveLoading(false);
+    }
+  };
+
+  const getMaterialIcon = (type: string) => {
+    switch (type) {
+      case "video": return <Video className="w-4 h-4 text-[#3B82F6]" />;
+      case "pdf": return <FileText className="w-4 h-4 text-[#EF4444]" />;
+      case "image": return <ImageIcon className="w-4 h-4 text-[#10B981]" />;
+      default: return <File className="w-4 h-4 text-[#F59E0B]" />;
+    }
+  };
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "—";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -452,7 +538,7 @@ const CourseManagerCourseDetailContent = ({
                             </button>
                             {expandedModules.has(mod.id) && (
                               <div className="px-4 pb-4 bg-[#F9FAFB]">
-                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                                   <div>
                                     <span className="text-[#6B7280]">{t("courseDetail.moduleType")}:</span>{" "}
                                     <span className="text-[#1F2937] capitalize">{mod.type}</span>
@@ -463,6 +549,73 @@ const CourseManagerCourseDetailContent = ({
                                       {mod.durationMinutes ? `${mod.durationMinutes} ${t("courseDetail.minutes")}` : "—"}
                                     </span>
                                   </div>
+                                </div>
+
+                                {/* Materials in this module */}
+                                <div className="border-t border-[#E5E7EB] pt-3">
+                                  <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
+                                    {t("courseDetail.materials")}
+                                  </p>
+                                  {loadingMaterials.has(mod.id) ? (
+                                    <div className="flex items-center gap-2 py-2">
+                                      <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
+                                      <span className="text-xs text-[#6B7280]">{t("dashboard.loading")}</span>
+                                    </div>
+                                  ) : (moduleMaterials[mod.id] && moduleMaterials[mod.id].length > 0) ? (
+                                    <div className="space-y-2">
+                                      {moduleMaterials[mod.id].map((mat) => (
+                                        <div
+                                          key={mat.id}
+                                          className="flex items-center gap-3 bg-white rounded-lg border border-[#E5E7EB] px-3 py-2"
+                                        >
+                                          {getMaterialIcon(mat.type)}
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-[#1F2937] truncate">{mat.title}</p>
+                                            <p className="text-xs text-[#6B7280]">
+                                              {mat.type} • {formatFileSize(mat.fileSize)}
+                                              {mat.wcagStatus && (
+                                                <span className={`ml-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[#6B7280]"}`}>
+                                                  WCAG: {mat.wcagStatus}
+                                                </span>
+                                              )}
+                                            </p>
+                                          </div>
+                                          <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+                                            mat.status === "live" ? "bg-[#DCFCE7] text-[#16A34A]" :
+                                            mat.status === "pending_review" ? "bg-[#DBEAFE] text-[#1D4ED8]" :
+                                            mat.status === "processing" ? "bg-[#FEF3C7] text-[#D97706]" :
+                                            mat.status === "failed" ? "bg-[#FEE2E2] text-[#DC2626]" :
+                                            "bg-[#F3F4F6] text-[#6B7280]"
+                                          }`}>
+                                            {mat.status.replace("_", " ")}
+                                          </span>
+                                          {mat.fileUrl && (
+                                            <a
+                                              href={mat.fileUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="p-1 text-[#9CA3AF] hover:text-[#3B82F6] transition-colors"
+                                              title={t("courseDetail.viewContent")}
+                                            >
+                                              <Eye className="w-3.5 h-3.5" />
+                                            </a>
+                                          )}
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setRemovingMaterial(mat); }}
+                                            className="p-1 text-[#9CA3AF] hover:text-[#DC2626] transition-colors"
+                                            title={t("courseDetail.removeMaterial")}
+                                          >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-[#9CA3AF] italic py-1">
+                                      {t("courseDetail.noMaterials")}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             )}
@@ -508,6 +661,59 @@ const CourseManagerCourseDetailContent = ({
           </div>
         </div>
       </div>
+
+      {/* Remove Material Modal */}
+      {removingMaterial && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#FEE2E2] flex items-center justify-center">
+                  <Trash2 className="w-5 h-5 text-[#DC2626]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("courseDetail.removeMaterialTitle")}
+                </h3>
+              </div>
+              <button onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }} className="text-[#6B7280] hover:text-[#1F2937]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-sm text-[#6B7280] mb-2">
+              {t("courseDetail.removeMaterialDesc")}
+            </p>
+            <p className="text-sm font-medium text-[#1F2937] mb-4">
+              &ldquo;{removingMaterial.title}&rdquo;
+            </p>
+            <label className="block text-sm font-medium text-[#374151] mb-1">
+              {t("courseDetail.removeReason")}
+            </label>
+            <textarea
+              value={removeReason}
+              onChange={(e) => setRemoveReason(e.target.value)}
+              placeholder={t("courseDetail.removeReasonPlaceholder")}
+              className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm text-[#1F2937] resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              rows={3}
+            />
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }}
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+              >
+                {t("courseDetail.cancel")}
+              </button>
+              <button
+                onClick={handleRemoveMaterial}
+                disabled={removeLoading}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {removeLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("courseDetail.removeMaterialBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (

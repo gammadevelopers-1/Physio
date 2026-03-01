@@ -64,4 +64,6 @@ export interface IZoomService {
   getWebhookSecretToken(): string;
   getParticipantReport(meetingId: string): Promise<ZoomParticipantReport[]>;
   getRecordings(meetingId: string): Promise<ZoomRecordingFile[]>;
+  getRecordingShareUrl(meetingId: string): Promise<string | null>;
+  removeRecordingPasscode(meetingId: string): Promise<boolean>;
 }

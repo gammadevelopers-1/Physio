@@ -871,7 +871,7 @@ export class MaterialsService {
    * DELETE /materials/:id
    * Remove a material record and delete the file from storage.
    */
-  async remove(materialId: string, user: AuthenticatedUser) {
+  async remove(materialId: string, user: AuthenticatedUser, reason?: string) {
     const existing = await this.verifyMaterialAccess(materialId, user);
 
     if (existing.status === MATERIAL_STATUS.PROCESSING) {
@@ -879,6 +879,10 @@ export class MaterialsService {
         'Cannot delete a material that is currently being processed. Wait for processing to complete or fail.',
       );
     }
+
+    // If removed by manager, notify the instructor
+    const isManagerRemoval = user.roles.includes('MANAGER') && existing.uploadedBy !== user.id;
+    const materialInfo = { id: existing.id, uploadedBy: existing.uploadedBy, courseId: existing.courseId, title: existing.title };
 
     // Delete variant files from storage (before cascade deletes the rows)
     const variants = await db
@@ -937,6 +941,11 @@ export class MaterialsService {
     await db
       .delete(courseMaterials)
       .where(eq(courseMaterials.id, materialId));
+
+    // Notify instructor if removed by manager
+    if (isManagerRemoval) {
+      this.notifyContentReview(materialInfo, 'rejected', reason ? `Content removed by manager: ${reason}` : 'Content removed by course manager').catch(() => {});
+    }
 
     return { message: 'Material deleted successfully' };
   }

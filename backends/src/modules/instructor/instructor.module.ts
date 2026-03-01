@@ -5,9 +5,10 @@ import { AuthModule } from '../auth/auth.module';
 import { CoursesModule } from '../courses/courses.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { CertificatesModule } from '../certificates/certificates.module';
+import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 
 @Module({
-  imports: [AuthModule, CoursesModule, SessionsModule, CertificatesModule],
+  imports: [AuthModule, CoursesModule, SessionsModule, CertificatesModule, UserNotificationsModule],
   controllers: [InstructorController],
   providers: [InstructorService],
   exports: [InstructorService],

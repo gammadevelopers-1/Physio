@@ -5,6 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { eq, and, desc, asc, count, sql, isNull, inArray, aliasedTable } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
   assessments,
@@ -13,11 +14,13 @@ import {
   courses,
   users,
   assessmentOverrides,
+  enrollments,
   ASSESSMENT_STATUS,
   QUESTION_TYPE,
   QuestionOption,
   SubmissionAnswer,
 } from '../../database/schema';
+import type { AssessmentFile } from '../../database/schema/assessments';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
@@ -25,10 +28,31 @@ import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { SubmitAssessmentDto } from './dto/submit-assessment.dto';
 import { GradeSubmissionDto } from './dto/grade-submission.dto';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { StorageService } from '../storage/storage.service';
+
+const ASSIGNMENT_ALLOWED_MIMES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+];
 
 @Injectable()
 export class AssessmentsService {
   private readonly logger = new Logger(AssessmentsService.name);
+
+  constructor(
+    private readonly userNotificationsService: UserNotificationsService,
+    private readonly storageService: StorageService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -50,6 +74,12 @@ export class AssessmentsService {
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto) {
     await this.verifyCourseAccess(dto.courseId, user);
 
+    // Enforce 1 attempt for quiz/exam
+    const attemptsAllowed =
+      dto.type === 'quiz' || dto.type === 'exam'
+        ? 1
+        : dto.attemptsAllowed ?? 1;
+
     const [assessment] = await db
       .insert(assessments)
       .values({
@@ -60,7 +90,9 @@ export class AssessmentsService {
         totalMarks: dto.totalMarks,
         passingMarks: dto.passingMarks,
         durationMinutes: dto.durationMinutes,
-        attemptsAllowed: dto.attemptsAllowed,
+        attemptsAllowed,
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+        instructions: dto.instructions,
       })
       .returning();
 
@@ -78,6 +110,7 @@ export class AssessmentsService {
       courseId?: string;
       type?: string;
       status?: string;
+      moduleId?: string;
       page?: number;
       limit?: number;
     },
@@ -118,6 +151,10 @@ export class AssessmentsService {
       Object.values(ASSESSMENT_STATUS).includes(params.status as any)
     ) {
       conditions.push(eq(assessments.status, params.status));
+    }
+
+    if (params.moduleId) {
+      conditions.push(eq(assessments.moduleId, params.moduleId));
     }
 
     const whereClause =
@@ -195,27 +232,90 @@ export class AssessmentsService {
     user: AuthenticatedUser,
     dto: UpdateAssessmentDto,
   ) {
-    await this.verifyAssessmentAccess(assessmentId, user);
+    const existing = await this.verifyAssessmentAccess(assessmentId, user);
 
-    // If publishing, verify at least one question exists
+    const effectiveType = dto.type || existing.type;
+
+    // Strip attemptsAllowed for quiz/exam
+    if (effectiveType === 'quiz' || effectiveType === 'exam') {
+      delete dto.attemptsAllowed;
+    }
+
+    // If publishing, validate based on type
     if (dto.status === ASSESSMENT_STATUS.PUBLISHED) {
-      const [questionCount] = await db
-        .select({ count: count() })
-        .from(questions)
-        .where(eq(questions.assessmentId, assessmentId));
+      if (effectiveType === 'assignment') {
+        // Assignments need ≥1 file + dueDate
+        const files = existing.assignmentFiles as AssessmentFile[] | null;
+        if (!files || files.length === 0) {
+          throw new BadRequestException(
+            'Cannot publish an assignment with no files. Upload at least one file first.',
+          );
+        }
+        const effectiveDueDate = dto.dueDate ? new Date(dto.dueDate) : existing.dueDate;
+        if (!effectiveDueDate) {
+          throw new BadRequestException(
+            'Cannot publish an assignment without a deadline. Set a due date first.',
+          );
+        }
+      } else {
+        // Quiz/exam need ≥1 question
+        const [questionCount] = await db
+          .select({ count: count() })
+          .from(questions)
+          .where(eq(questions.assessmentId, assessmentId));
 
-      if (!questionCount || Number(questionCount.count) === 0) {
-        throw new BadRequestException(
-          'Cannot publish an assessment with no questions. Add at least one question first.',
-        );
+        if (!questionCount || Number(questionCount.count) === 0) {
+          throw new BadRequestException(
+            'Cannot publish an assessment with no questions. Add at least one question first.',
+          );
+        }
       }
+    }
+
+    // Build update payload
+    const updateData: Record<string, unknown> = { ...dto, updatedAt: new Date() };
+    if (dto.dueDate) {
+      updateData.dueDate = new Date(dto.dueDate);
     }
 
     const [updated] = await db
       .update(assessments)
-      .set({ ...dto, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(assessments.id, assessmentId))
       .returning();
+
+    // Notify enrolled students when assessment is published
+    if (dto.status === ASSESSMENT_STATUS.PUBLISHED && updated) {
+      try {
+        const enrolledStudents = await db
+          .select({ studentId: enrollments.studentId })
+          .from(enrollments)
+          .where(eq(enrollments.courseId, updated.courseId));
+
+        const studentIds = enrolledStudents.map((e) => e.studentId);
+
+        if (studentIds.length > 0) {
+          const [course] = await db
+            .select({ title: courses.title })
+            .from(courses)
+            .where(eq(courses.id, updated.courseId))
+            .limit(1);
+
+          const courseName = course?.title || 'your course';
+
+          await this.userNotificationsService.createBulk(studentIds, {
+            type: 'assessment_published',
+            title: 'New Assessment Published',
+            message: `A new ${updated.type} "${updated.title}" has been published for ${courseName}.`,
+            link: `/dashboard/student/courses/${updated.courseId}`,
+            entityType: 'assessment',
+            entityId: updated.id,
+          });
+        }
+      } catch (err) {
+        this.logger.error('Failed to notify students about published assessment', err);
+      }
+    }
 
     return updated;
   }
@@ -529,6 +629,8 @@ export class AssessmentsService {
         submittedAt: submissions.submittedAt,
         status: submissions.status,
         answers: submissions.answers,
+        submissionFiles: submissions.submissionFiles,
+        instructorComment: submissions.instructorComment,
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
@@ -566,6 +668,9 @@ export class AssessmentsService {
     // Get current answers
     const currentAnswers = (submission.answers as SubmissionAnswer[]) || [];
 
+    // Build question comments from grade items
+    const questionComments: Record<string, string> = (submission.questionComments as Record<string, string>) || {};
+
     // Apply grades
     for (const grade of dto.grades) {
       const answer = currentAnswers.find(
@@ -574,6 +679,9 @@ export class AssessmentsService {
       if (answer) {
         answer.marksAwarded = grade.marksAwarded;
         answer.isCorrect = grade.marksAwarded > 0;
+      }
+      if (grade.comment) {
+        questionComments[grade.questionId] = grade.comment;
       }
     }
 
@@ -601,11 +709,154 @@ export class AssessmentsService {
         score,
         percentage,
         status: newStatus,
+        questionComments,
+        instructorComment: dto.overallComment ?? submission.instructorComment,
       })
       .where(eq(submissions.id, submissionId))
       .returning();
 
     return updated;
+  }
+
+  // ─── Assignment File Management ────────────────────────────
+
+  async uploadAssignmentFile(
+    assessmentId: string,
+    user: AuthenticatedUser,
+    file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
+  ) {
+    const assessment = await this.verifyAssessmentAccess(assessmentId, user);
+
+    if (assessment.type !== 'assignment') {
+      throw new BadRequestException('File upload is only available for assignments');
+    }
+
+    if (!ASSIGNMENT_ALLOWED_MIMES.includes(file.mimetype)) {
+      throw new BadRequestException(`File type '${file.mimetype}' is not allowed for assignments`);
+    }
+
+    const ext = file.originalname.split('.').pop() || 'bin';
+    const storagePath = `assignments/${assessment.courseId}/${assessmentId}/${randomUUID()}.${ext}`;
+
+    const fileUrl = await this.storageService.uploadPublic(
+      file.buffer,
+      storagePath,
+      file.mimetype,
+    );
+
+    const newFile: AssessmentFile = {
+      id: randomUUID(),
+      fileUrl,
+      fileName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    const currentFiles = (assessment.assignmentFiles as AssessmentFile[]) || [];
+    const updatedFiles = [...currentFiles, newFile];
+
+    await db
+      .update(assessments)
+      .set({ assignmentFiles: updatedFiles, updatedAt: new Date() })
+      .where(eq(assessments.id, assessmentId));
+
+    return newFile;
+  }
+
+  async removeAssignmentFile(
+    assessmentId: string,
+    fileId: string,
+    user: AuthenticatedUser,
+  ) {
+    const assessment = await this.verifyAssessmentAccess(assessmentId, user);
+
+    if (assessment.type !== 'assignment') {
+      throw new BadRequestException('File operations are only available for assignments');
+    }
+
+    const currentFiles = (assessment.assignmentFiles as AssessmentFile[]) || [];
+    const fileToRemove = currentFiles.find((f) => f.id === fileId);
+
+    if (!fileToRemove) {
+      throw new NotFoundException('File not found');
+    }
+
+    // Delete from storage
+    try {
+      const storagePath = this.extractStoragePath(fileToRemove.fileUrl);
+      if (storagePath) {
+        await this.storageService.deleteFile('public', storagePath);
+      }
+    } catch (err) {
+      this.logger.warn(`Failed to delete assignment file from storage: ${fileToRemove.fileUrl}`, err);
+    }
+
+    const updatedFiles = currentFiles.filter((f) => f.id !== fileId);
+
+    await db
+      .update(assessments)
+      .set({ assignmentFiles: updatedFiles, updatedAt: new Date() })
+      .where(eq(assessments.id, assessmentId));
+
+    return { message: 'File removed successfully' };
+  }
+
+  // ─── Assignment Grading ────────────────────────────────────
+
+  async gradeAssignment(
+    submissionId: string,
+    user: AuthenticatedUser,
+    data: { score: number; comment?: string },
+  ) {
+    const [submission] = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .limit(1);
+
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    const assessment = await this.verifyAssessmentAccess(submission.assessmentId, user);
+
+    if (assessment.type !== 'assignment') {
+      throw new BadRequestException('This endpoint is only for assignment grading');
+    }
+
+    const totalMarks = assessment.totalMarks;
+    if (data.score > totalMarks) {
+      throw new BadRequestException(`Score cannot exceed total marks (${totalMarks})`);
+    }
+
+    const percentage = totalMarks > 0
+      ? ((data.score / totalMarks) * 100).toFixed(2)
+      : '0.00';
+
+    const [updated] = await db
+      .update(submissions)
+      .set({
+        score: data.score,
+        totalMarks,
+        percentage,
+        status: 'graded',
+        instructorComment: data.comment || null,
+      })
+      .where(eq(submissions.id, submissionId))
+      .returning();
+
+    return updated;
+  }
+
+  private extractStoragePath(url: string): string | null {
+    try {
+      const parsed = new URL(url);
+      // Remove leading slash from pathname
+      return parsed.pathname.replace(/^\//, '');
+    } catch {
+      return url;
+    }
   }
 
   // ─── Item Analysis ────────────────────────────────────────

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter, usePathname } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import InstructorNavbar from "./InstructorNavbar";
@@ -18,7 +19,6 @@ import {
   Shield,
   Bell,
   Settings,
-  Plug,
   Pencil,
   Mail,
   Phone,
@@ -27,10 +27,6 @@ import {
   Key,
   Eye,
   EyeOff,
-  Check,
-  Video,
-  Calendar,
-  Cloud,
   Save,
   Loader2,
   Upload,
@@ -42,6 +38,8 @@ const SettingsContent = () => {
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const router = useRouter();
+  const pathname = usePathname();
   const { refreshUser, logout } = useAuth();
   const user = useUser();
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +60,7 @@ const SettingsContent = () => {
   }, [avatarMenuOpen, closeAvatarMenu]);
 
   const [activeTab, setActiveTab] = useState<
-    "profile" | "security" | "notifications" | "preferences" | "integrations"
+    "profile" | "security" | "notifications" | "preferences"
   >("profile");
 
   // Profile State — initialized from authenticated user
@@ -74,8 +72,6 @@ const SettingsContent = () => {
     location: "",
     language: "en",
     bio: "",
-    title: "",
-    specializations: [] as string[],
   });
   const [saving, setSaving] = useState(false);
 
@@ -129,16 +125,23 @@ const SettingsContent = () => {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
+      const newLang = profileData.language;
       await profileApi.update({
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         phone: profileData.phone,
         bio: profileData.bio,
         location: profileData.location,
-        language: profileData.language,
+        language: newLang,
       });
       await refreshUser();
       toast.success(t("settings.profileSaved"));
+
+      // If language changed, redirect to the new locale
+      if (newLang !== locale) {
+        const pathWithoutLocale = pathname.replace(/^\/(en|ar)/, "");
+        router.push(`/${newLang}${pathWithoutLocale}`);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to save";
       toast.error(message);
@@ -196,13 +199,9 @@ const SettingsContent = () => {
 
   // Preferences State
   const [preferences, setPreferences] = useState({
-    theme: "light",
-    dateFormat: "MM/DD/YYYY",
+    dateFormat: "DD/MM/YYYY",
     timeFormat: "12h",
-    timezone: "America/New_York",
-    defaultView: "dashboard",
-    compactMode: false,
-    showTips: true,
+    timezone: "Asia/Riyadh",
   });
   const [savingPreferences, setSavingPreferences] = useState(false);
 
@@ -226,13 +225,9 @@ const SettingsContent = () => {
           }));
           setPreferences((prev) => ({
             ...prev,
-            theme: (prefs as any).theme ?? prev.theme,
             dateFormat: (prefs as any).dateFormat ?? prev.dateFormat,
             timeFormat: (prefs as any).timeFormat ?? prev.timeFormat,
             timezone: (prefs as any).timezone ?? prev.timezone,
-            defaultView: (prefs as any).defaultView ?? prev.defaultView,
-            compactMode: (prefs as any).compactMode ?? prev.compactMode,
-            showTips: (prefs as any).showTips ?? prev.showTips,
           }));
         }
       } catch {
@@ -266,22 +261,11 @@ const SettingsContent = () => {
     }
   };
 
-  // Integrations State
-  const [integrations, setIntegrations] = useState({
-    zoom: { connected: true, email: "sarah@zoom.us" },
-    googleCalendar: { connected: true, email: "sarah.j@gmail.com" },
-    microsoftTeams: { connected: false, email: "" },
-    slack: { connected: false, email: "" },
-    googleDrive: { connected: true, email: "sarah.j@gmail.com" },
-    dropbox: { connected: false, email: "" },
-  });
-
   const tabs = [
     { id: "profile" as const, label: t("settings.tabProfile"), icon: UserIcon },
     { id: "security" as const, label: t("settings.tabSecurity"), icon: Shield },
     { id: "notifications" as const, label: t("settings.tabNotifications"), icon: Bell },
     { id: "preferences" as const, label: t("settings.tabPreferences"), icon: Settings },
-    { id: "integrations" as const, label: t("settings.tabIntegrations"), icon: Plug },
   ];
 
   return (
@@ -392,19 +376,7 @@ const SettingsContent = () => {
                           <h3 className="text-lg font-semibold text-[#1F2937]">
                             {profileData.firstName} {profileData.lastName}
                           </h3>
-                          <p className="text-sm text-[#6B7280]">{profileData.title}</p>
-                          {profileData.specializations.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {profileData.specializations.map((spec, index) => (
-                                <span
-                                  key={index}
-                                  className="px-2 py-1 bg-[#EFF6FF] text-[#3B82F6] rounded-full text-xs font-medium"
-                                >
-                                  {spec}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          <p className="text-sm text-[#6B7280]">{profileData.email}</p>
                         </div>
                       </div>
 
@@ -821,24 +793,7 @@ const SettingsContent = () => {
                   {/* Preferences Tab */}
                   {activeTab === "preferences" && (
                     <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label htmlFor="instructor-pref-theme" className="block text-sm font-medium text-[#374151] mb-1.5">
-                            {t("settings.theme")}
-                          </label>
-                          <select
-                            id="instructor-pref-theme"
-                            value={preferences.theme}
-                            onChange={(e) =>
-                              setPreferences({ ...preferences, theme: e.target.value })
-                            }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                          >
-                            <option value="light">{t("settings.themeLight")}</option>
-                            <option value="dark">{t("settings.themeDark")}</option>
-                            <option value="system">{t("settings.themeSystem")}</option>
-                          </select>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                           <label htmlFor="instructor-pref-date-format" className="block text-sm font-medium text-[#374151] mb-1.5">
                             {t("settings.dateFormat")}
@@ -851,8 +806,8 @@ const SettingsContent = () => {
                             }
                             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           >
-                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                             <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                           </select>
                         </div>
@@ -884,81 +839,17 @@ const SettingsContent = () => {
                             }
                             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           >
-                            <option value="America/New_York">Eastern Time (ET)</option>
-                            <option value="America/Chicago">Central Time (CT)</option>
-                            <option value="America/Denver">Mountain Time (MT)</option>
-                            <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                            <option value="Asia/Riyadh">Saudi Arabia (UTC+3)</option>
+                            <option value="Asia/Dubai">UAE / Gulf (UTC+4)</option>
+                            <option value="Asia/Kuwait">Kuwait (UTC+3)</option>
+                            <option value="Africa/Cairo">Egypt (UTC+2)</option>
+                            <option value="Asia/Amman">Jordan (UTC+3)</option>
+                            <option value="Asia/Beirut">Lebanon (UTC+2)</option>
+                            <option value="Europe/London">UK (GMT/BST)</option>
+                            <option value="Europe/Paris">Central Europe (CET)</option>
+                            <option value="America/New_York">Eastern US (ET)</option>
                             <option value="UTC">UTC</option>
                           </select>
-                        </div>
-                      </div>
-
-                      <div className="pt-6 border-t border-[#E5E7EB] space-y-3">
-                        <div className="flex items-center justify-between py-2">
-                          <div>
-                            <span className="text-sm font-medium text-[#374151]">
-                              {t("settings.compactMode")}
-                            </span>
-                            <p className="text-xs text-[#6B7280]">
-                              {t("settings.compactModeDesc")}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() =>
-                              setPreferences({
-                                ...preferences,
-                                compactMode: !preferences.compactMode,
-                              })
-                            }
-                            className={`relative w-10 h-5 rounded-full transition-colors ${
-                              preferences.compactMode ? "bg-[#3B82F6]" : "bg-[#E5E7EB]"
-                            }`}
-                          >
-                            <span
-                              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-                                preferences.compactMode
-                                  ? isRTL
-                                    ? "left-0.5"
-                                    : "right-0.5"
-                                  : isRTL
-                                    ? "right-0.5"
-                                    : "left-0.5"
-                              }`}
-                            />
-                          </button>
-                        </div>
-                        <div className="flex items-center justify-between py-2">
-                          <div>
-                            <span className="text-sm font-medium text-[#374151]">
-                              {t("settings.showTips")}
-                            </span>
-                            <p className="text-xs text-[#6B7280]">
-                              {t("settings.showTipsDesc")}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() =>
-                              setPreferences({
-                                ...preferences,
-                                showTips: !preferences.showTips,
-                              })
-                            }
-                            className={`relative w-10 h-5 rounded-full transition-colors ${
-                              preferences.showTips ? "bg-[#3B82F6]" : "bg-[#E5E7EB]"
-                            }`}
-                          >
-                            <span
-                              className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-                                preferences.showTips
-                                  ? isRTL
-                                    ? "left-0.5"
-                                    : "right-0.5"
-                                  : isRTL
-                                    ? "right-0.5"
-                                    : "left-0.5"
-                              }`}
-                            />
-                          </button>
                         </div>
                       </div>
 
@@ -978,198 +869,6 @@ const SettingsContent = () => {
                     </div>
                   )}
 
-                  {/* Integrations Tab */}
-                  {activeTab === "integrations" && (
-                    <div className="space-y-6">
-                      {/* Video Conferencing */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.videoConferencing")}
-                        </h4>
-                        <div className="space-y-3">
-                          {[
-                            {
-                              key: "zoom",
-                              name: "Zoom",
-                              icon: Video,
-                              iconBg: "bg-[#DBEAFE]",
-                              iconColor: "text-[#2D8CFF]",
-                            },
-                            {
-                              key: "microsoftTeams",
-                              name: "Microsoft Teams",
-                              icon: Video,
-                              iconBg: "bg-[#E0E7FF]",
-                              iconColor: "text-[#6264A7]",
-                            },
-                          ].map((integration) => (
-                            <div
-                              key={integration.key}
-                              className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-xl"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-10 h-10 rounded-lg ${integration.iconBg} flex items-center justify-center`}
-                                >
-                                  <integration.icon
-                                    className={`w-5 h-5 ${integration.iconColor}`}
-                                  />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-[#1F2937]">
-                                    {integration.name}
-                                  </p>
-                                  {integrations[integration.key as keyof typeof integrations]
-                                    .connected ? (
-                                    <p className="text-xs text-[#22C55E] flex items-center gap-1">
-                                      <Check className="w-3 h-3" />
-                                      {t("settings.connected")} •{" "}
-                                      {
-                                        integrations[integration.key as keyof typeof integrations]
-                                          .email
-                                      }
-                                    </p>
-                                  ) : (
-                                    <p className="text-xs text-[#6B7280]">
-                                      {t("settings.notConnected")}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                  integrations[integration.key as keyof typeof integrations]
-                                    .connected
-                                    ? "border border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]"
-                                    : "btn-gold text-white"
-                                }`}
-                              >
-                                {integrations[integration.key as keyof typeof integrations]
-                                  .connected
-                                  ? t("settings.disconnect")
-                                  : t("settings.connect")}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Calendar */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.calendar")}
-                        </h4>
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-xl">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-[#FEE2E2] flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-[#EA4335]" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-[#1F2937]">
-                                  Google Calendar
-                                </p>
-                                {integrations.googleCalendar.connected ? (
-                                  <p className="text-xs text-[#22C55E] flex items-center gap-1">
-                                    <Check className="w-3 h-3" />
-                                    {t("settings.connected")} • {integrations.googleCalendar.email}
-                                  </p>
-                                ) : (
-                                  <p className="text-xs text-[#6B7280]">
-                                    {t("settings.notConnected")}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                integrations.googleCalendar.connected
-                                  ? "border border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]"
-                                  : "btn-gold text-white"
-                              }`}
-                            >
-                              {integrations.googleCalendar.connected
-                                ? t("settings.disconnect")
-                                : t("settings.connect")}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cloud Storage */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.cloudStorage")}
-                        </h4>
-                        <div className="space-y-3">
-                          {[
-                            {
-                              key: "googleDrive",
-                              name: "Google Drive",
-                              icon: Cloud,
-                              iconBg: "bg-[#FEF9C3]",
-                              iconColor: "text-[#FBBC04]",
-                            },
-                            {
-                              key: "dropbox",
-                              name: "Dropbox",
-                              icon: Cloud,
-                              iconBg: "bg-[#DBEAFE]",
-                              iconColor: "text-[#0061FF]",
-                            },
-                          ].map((integration) => (
-                            <div
-                              key={integration.key}
-                              className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-xl"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-10 h-10 rounded-lg ${integration.iconBg} flex items-center justify-center`}
-                                >
-                                  <integration.icon
-                                    className={`w-5 h-5 ${integration.iconColor}`}
-                                  />
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-[#1F2937]">
-                                    {integration.name}
-                                  </p>
-                                  {integrations[integration.key as keyof typeof integrations]
-                                    .connected ? (
-                                    <p className="text-xs text-[#22C55E] flex items-center gap-1">
-                                      <Check className="w-3 h-3" />
-                                      {t("settings.connected")} •{" "}
-                                      {
-                                        integrations[integration.key as keyof typeof integrations]
-                                          .email
-                                      }
-                                    </p>
-                                  ) : (
-                                    <p className="text-xs text-[#6B7280]">
-                                      {t("settings.notConnected")}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                  integrations[integration.key as keyof typeof integrations]
-                                    .connected
-                                    ? "border border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB]"
-                                    : "btn-gold text-white"
-                                }`}
-                              >
-                                {integrations[integration.key as keyof typeof integrations]
-                                  .connected
-                                  ? t("settings.disconnect")
-                                  : t("settings.connect")}
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,8 @@
 import {
   IsUUID,
   IsInt,
+  IsString,
+  IsOptional,
   IsArray,
   ValidateNested,
   ArrayMinSize,
@@ -15,6 +17,10 @@ export class GradeItemDto {
   @IsInt()
   @Min(0)
   marksAwarded: number;
+
+  @IsOptional()
+  @IsString()
+  comment?: string;
 }
 
 export class GradeSubmissionDto {
@@ -23,4 +29,8 @@ export class GradeSubmissionDto {
   @ValidateNested({ each: true })
   @Type(() => GradeItemDto)
   grades: GradeItemDto[];
+
+  @IsOptional()
+  @IsString()
+  overallComment?: string;
 }

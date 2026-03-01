@@ -21,6 +21,7 @@ export const sessionRecordings = pgTable(
     recordingType: varchar('recording_type', { length: 50 }).notNull(),
     downloadUrl: text('download_url'),
     playUrl: text('play_url'),
+    shareUrl: text('share_url'),
     fileSize: integer('file_size'),
     fileType: varchar('file_type', { length: 20 }),
     recordingStart: timestamp('recording_start'),

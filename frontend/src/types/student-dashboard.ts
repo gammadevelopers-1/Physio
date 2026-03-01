@@ -100,6 +100,8 @@ export interface CourseAssessmentWithSubmission {
   passingMarks: number;
   durationMinutes: number | null;
   attemptsAllowed: number;
+  moduleId?: string | null;
+  dueDate?: string | null;
   submission: {
     id: string;
     assessmentId: string;
@@ -326,6 +328,15 @@ export interface AssessmentQuestion {
   isMultiSelect?: boolean;
 }
 
+export interface StudentAssessmentFile {
+  id: string;
+  fileUrl: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+}
+
 export interface StudentAssessment {
   id: string;
   title: string;
@@ -337,8 +348,18 @@ export interface StudentAssessment {
   attemptsTaken: number;
   canRetake?: boolean;
   retakeAvailableAt?: string | null;
+  maxAttemptsReached?: boolean;
+  latestSubmission?: {
+    id: string;
+    status: string;
+    score: number | null;
+  } | null;
   instructions?: string | null;
   questions: AssessmentQuestion[];
+  // Assignment-specific
+  dueDate?: string | null;
+  assignmentFiles?: StudentAssessmentFile[];
+  canSubmit?: boolean;
 }
 
 export interface GradedAnswer {
@@ -435,4 +456,8 @@ export interface SubmissionReview {
     correctAnswer: string | null;
     marks: number;
   }>;
+  // Assignment & grading comment fields
+  submissionFiles?: StudentAssessmentFile[];
+  instructorComment?: string | null;
+  questionComments?: Record<string, string>;
 }

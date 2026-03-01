@@ -100,4 +100,13 @@ export class UpdateAssessmentDto {
   @IsString()
   @IsIn(['full', 'failed_sections'], { message: 'Retake scope must be full or failed_sections' })
   retakeScope?: string;
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
+  instructions?: string;
 }

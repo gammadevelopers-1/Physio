@@ -296,13 +296,15 @@ export class MaterialsController {
 
   /**
    * DELETE /materials/:id — Remove a material
+   * Managers can pass a reason in the query string (?reason=...)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Delete('materials/:id')
   async remove(
     @Param('id') materialId: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Query('reason') reason?: string,
   ) {
-    return this.materialsService.remove(materialId, user);
+    return this.materialsService.remove(materialId, user, reason);
   }
 }

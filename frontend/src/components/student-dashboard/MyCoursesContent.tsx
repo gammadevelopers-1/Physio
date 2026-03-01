@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  ClipboardList,
   Heart,
   Clock,
   AlertTriangle,
-  Video,
   BookOpen,
   ClipboardCheck,
-  Play,
+  CheckCircle,
   Award,
   UserCheck,
   Upload,
@@ -28,7 +26,7 @@ import { useStudentCourses } from "@/hooks/useStudentCourses";
 import type { StudentEnrolledCourse } from "@/types/student-dashboard";
 import EmptyStateIllustration from "./EmptyStateIllustration";
 
-type TabFilter = "all" | "active" | "completed" | "upcoming" | "dropped";
+type TabFilter = "all" | "active" | "completed" | "dropped";
 
 function relativeTime(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -66,8 +64,6 @@ const getSortForTab = (tab: TabFilter): string | undefined => {
       return "recent";
     case "completed":
       return "completed_date";
-    case "upcoming":
-      return "start_date";
     case "dropped":
       return "recent";
     default:
@@ -81,8 +77,6 @@ const getStatusForTab = (tab: TabFilter): string | undefined => {
       return "active";
     case "completed":
       return "completed";
-    case "upcoming":
-      return "active";
     case "dropped":
       return "dropped";
     default:
@@ -104,72 +98,54 @@ const MyCoursesContent = () => {
     limit: 50,
   });
 
-  // For "upcoming" tab, client-side filter: progress === 0 and future start date
-  const filteredCourses = useMemo(() => {
-    if (activeTab !== "upcoming") return courses;
-    return courses.filter(
-      (c) =>
-        c.progress === 0 &&
-        c.startDate &&
-        new Date(c.startDate) > new Date()
-    );
-  }, [courses, activeTab]);
+  const filteredCourses = courses;
 
   const tabs: { key: TabFilter; label: string }[] = [
     { key: "all", label: t("myCourses.tabs.all") },
     { key: "active", label: t("myCourses.tabs.inProgress") },
     { key: "completed", label: t("myCourses.tabs.completed") },
-    { key: "upcoming", label: t("myCourses.tabs.upcoming") },
     { key: "dropped", label: t("myCourses.tabs.dropped") },
   ];
 
-  const getActionButton = (course: StudentEnrolledCourse) => {
-    if (course.enrollmentStatus === "completed") {
-      return {
-        label: t("myCourses.viewCertificate"),
-        href: `/${locale}/dashboard/student/certificates`,
-        className: "bg-[#8B5CF6] text-white hover:bg-[#7C3AED]",
-        icon: Award,
-      };
-    }
-
+  const getAlertBadge = (course: StudentEnrolledCourse) => {
     switch (course.nextAction) {
       case "join_zoom":
-        return {
-          label: t("myCourses.joinSession"),
-          href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
-          className: "bg-[#002D87] text-white hover:bg-[#001F5C]",
-          icon: Video,
-        };
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+            </span>
+            {t("myCourses.liveNow")}
+          </span>
+        );
       case "take_quiz":
-        return {
-          label: t("myCourses.takeAssessment"),
-          href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
-          className: "btn-gold text-white hover:opacity-90",
-          icon: ClipboardCheck,
-        };
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+            <ClipboardCheck className="w-3 h-3" />
+            {t("myCourses.assessmentDue")}
+          </span>
+        );
       case "upload_assignment":
-        return {
-          label: t("myCourses.uploadAssignment"),
-          href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
-          className: "bg-[#8B5CF6] text-white hover:bg-[#7C3AED]",
-          icon: Upload,
-        };
-      case "resume_lesson":
-        return {
-          label: t("myCourses.continueLearning"),
-          href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
-          className: "bg-[#16A34A] text-white hover:bg-[#15803D]",
-          icon: Play,
-        };
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+            <Upload className="w-3 h-3" />
+            {t("myCourses.assignmentDue")}
+          </span>
+        );
       default:
-        return {
-          label: t("myCourses.startCourse"),
-          href: `/${locale}/dashboard/student/courses/${course.id}/learn`,
-          className: "bg-[#1F2937] text-white hover:bg-[#111827]",
-          icon: BookOpen,
-        };
+        return null;
     }
+  };
+
+  const getActionButton = (course: StudentEnrolledCourse) => {
+    return {
+      label: t("myCourses.viewDetails"),
+      href: `/${locale}/dashboard/student/courses/${course.id}`,
+      className: "bg-[#1F2937] text-white hover:bg-[#111827]",
+      icon: BookOpen,
+      showCertificate: course.enrollmentStatus === "completed",
+    };
   };
 
   return (
@@ -227,24 +203,20 @@ const MyCoursesContent = () => {
                     <h3 className="text-sm sm:text-base font-medium text-[#1F2937] mb-1">
                       {activeTab === "completed"
                         ? t("myCourses.noCompletedTitle")
-                        : activeTab === "upcoming"
-                          ? t("myCourses.noUpcomingTitle")
-                          : activeTab === "dropped"
-                            ? t("myCourses.noDroppedTitle")
-                            : activeTab === "active"
-                              ? t("myCourses.noInProgressTitle")
-                              : t("myCourses.noCoursesTitle")}
+                        : activeTab === "dropped"
+                          ? t("myCourses.noDroppedTitle")
+                          : activeTab === "active"
+                            ? t("myCourses.noInProgressTitle")
+                            : t("myCourses.noCoursesTitle")}
                     </h3>
                     <p className="text-xs sm:text-sm text-[#6B7280] mb-4 sm:mb-6 text-center px-4">
                       {activeTab === "completed"
                         ? t("myCourses.noCompletedDescription")
-                        : activeTab === "upcoming"
-                          ? t("myCourses.noUpcomingDescription")
-                          : activeTab === "dropped"
-                            ? t("myCourses.noDroppedDescription")
-                            : activeTab === "active"
-                              ? t("myCourses.noInProgressDescription")
-                              : t("myCourses.noCoursesDescription")}
+                        : activeTab === "dropped"
+                          ? t("myCourses.noDroppedDescription")
+                          : activeTab === "active"
+                            ? t("myCourses.noInProgressDescription")
+                            : t("myCourses.noCoursesDescription")}
                     </p>
                     {activeTab === "all" && (
                       <Link
@@ -271,7 +243,7 @@ const MyCoursesContent = () => {
                       return (
                         <div
                           key={course.id}
-                          className="border border-[#E5E7EB] rounded-xl overflow-hidden relative"
+                          className="border border-[#E5E7EB] rounded-xl overflow-hidden relative flex flex-col"
                         >
                           {/* Favourite Button */}
                           <button
@@ -311,6 +283,16 @@ const MyCoursesContent = () => {
                             </div>
                           )}
 
+                          {/* Completed Badge */}
+                          {course.enrollmentStatus === "completed" && !deadline && (
+                            <div
+                              className={`absolute top-2 ${isRTL ? "right-2" : "left-2"} z-10 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200`}
+                            >
+                              <CheckCircle className="w-3 h-3" />
+                              {t("myCourses.completedBadge")}
+                            </div>
+                          )}
+
                           {/* Thumbnail */}
                           <div className="w-full h-[120px] sm:h-[140px] bg-gray-100">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -325,7 +307,7 @@ const MyCoursesContent = () => {
                           </div>
 
                           {/* Course Info */}
-                          <div className="p-3 sm:p-4">
+                          <div className="p-3 sm:p-4 flex flex-col flex-1">
                             {/* Title */}
                             <h3 className="text-xs sm:text-sm font-semibold text-[#1F2937] mb-2 line-clamp-2">
                               {isRTL && course.titleAr
@@ -401,8 +383,7 @@ const MyCoursesContent = () => {
                               {course.missingTasksCount > 0 && (
                                 <span className="flex items-center gap-1 text-red-500">
                                   <ClipboardCheck className="w-3 h-3" />
-                                  {course.missingTasksCount}{" "}
-                                  {t("myCourses.missingItems")}
+                                  {t("myCourses.missingItems", { count: course.missingTasksCount })}
                                 </span>
                               )}
 
@@ -415,14 +396,35 @@ const MyCoursesContent = () => {
                               )}
                             </div>
 
-                            {/* Action Button */}
-                            <Link
-                              href={action.href}
-                              className={`flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${action.className}`}
-                            >
-                              <ActionIcon className="w-3.5 h-3.5" />
-                              {action.label}
-                            </Link>
+                            {/* Alert Badge */}
+                            {getAlertBadge(course) && (
+                              <div className="mb-2">
+                                {getAlertBadge(course)}
+                              </div>
+                            )}
+
+                            {/* Spacer to push buttons to bottom */}
+                            <div className="flex-1" />
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col gap-2 mt-2">
+                              <Link
+                                href={action.href}
+                                className={`flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${action.className}`}
+                              >
+                                <ActionIcon className="w-3.5 h-3.5" />
+                                {action.label}
+                              </Link>
+                              {action.showCertificate && (
+                                <Link
+                                  href={`/${locale}/dashboard/student/certifications`}
+                                  className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors bg-[#8B5CF6] text-white hover:bg-[#7C3AED]"
+                                >
+                                  <Award className="w-3.5 h-3.5" />
+                                  {t("myCourses.viewCertificate")}
+                                </Link>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

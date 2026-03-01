@@ -11,10 +11,12 @@ import { WhisperService } from './services/whisper.service';
 import { WcagService } from './services/wcag.service';
 import { ProcessingCleanupService } from './processing-cleanup.service';
 import { StorageModule } from '../storage/storage.module';
+import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 
 @Module({
   imports: [
     StorageModule,
+    UserNotificationsModule,
 
     // Register BullMQ queues
     BullModule.registerQueue(

@@ -29,6 +29,7 @@ import { CoursesService } from '../courses/courses.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { CertificatesService } from '../certificates/certificates.service';
 import { EmailService } from '../email/email.service';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { CreateInterventionDto } from './dto';
 
 @Injectable()
@@ -40,6 +41,7 @@ export class InstructorService {
     private readonly sessionsService: SessionsService,
     private readonly certificatesService: CertificatesService,
     private readonly emailService: EmailService,
+    private readonly userNotificationsService: UserNotificationsService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -1442,6 +1444,43 @@ export class InstructorService {
         metadata,
       })
       .returning();
+
+    // 6. Dispatch in-app notifications
+    switch (dto.type) {
+      case INTERVENTION_TYPE.EMAIL: {
+        await this.userNotificationsService.create({
+          recipientId: dto.studentId,
+          type: 'intervention_email',
+          title: 'Course Progress Reminder',
+          message: `Your instructor sent a reminder about "${courseName}"${dto.message ? `: ${dto.message}` : ''}`,
+          link: `/dashboard/student/courses/${resolvedCourseId}`,
+          entityType: 'intervention',
+          entityId: intervention.id,
+        });
+        break;
+      }
+      case INTERVENTION_TYPE.MAKEUP_SESSION: {
+        const studentName =
+          `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
+          student.email;
+        await this.userNotificationsService.create({
+          recipientId: dto.studentId,
+          type: 'intervention_makeup',
+          title: 'Make-up Session Scheduled',
+          message: `A make-up session has been scheduled for you in "${courseName}"`,
+          link: `/dashboard/student/courses/${resolvedCourseId}`,
+          entityType: 'intervention',
+          entityId: intervention.id,
+        });
+        await this.emailService.sendAtRiskReminder(
+          student.email,
+          studentName,
+          courseName,
+          'A make-up session has been scheduled for you. Please check your dashboard for details.',
+        );
+        break;
+      }
+    }
 
     return intervention;
   }

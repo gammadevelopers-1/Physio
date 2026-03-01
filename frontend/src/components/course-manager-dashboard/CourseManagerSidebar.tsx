@@ -22,7 +22,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { profileApi, courseManagerApi } from "@/lib/api";
 
 interface CourseManagerProfile {
   name: string;
@@ -35,9 +35,10 @@ interface CourseManagerProfile {
 
 interface CourseManagerSidebarProps {
   manager: CourseManagerProfile;
+  pendingReviews?: number;
 }
 
-const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
+const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: CourseManagerSidebarProps) => {
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("courseManagerDashboard");
@@ -46,6 +47,14 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
   const avatarMenuRef = useRef<HTMLDivElement>(null);
+  const [pendingCount, setPendingCount] = useState<number | undefined>(pendingReviewsProp);
+
+  useEffect(() => {
+    if (pendingReviewsProp !== undefined) { setPendingCount(pendingReviewsProp); return; }
+    courseManagerApi.getPendingReviews().then((r) => {
+      setPendingCount(r.stats.pending + r.stats.changesRequested);
+    }).catch(() => {});
+  }, [pendingReviewsProp]);
 
   const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
 
@@ -92,7 +101,6 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
       label: t("sidebar.courses"),
       href: `/${locale}/dashboard/manager/courses`,
       icon: BookOpen,
-      badge: manager.totalCourses,
     },
     {
       label: t("sidebar.sessions"),
@@ -108,6 +116,7 @@ const CourseManagerSidebar = ({ manager }: CourseManagerSidebarProps) => {
       label: t("sidebar.contentReview"),
       href: `/${locale}/dashboard/manager/content-review`,
       icon: FileCheck,
+      badge: pendingCount && pendingCount > 0 ? pendingCount : undefined,
     },
     {
       label: t("sidebar.assessments"),

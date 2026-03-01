@@ -110,6 +110,16 @@ export class ZoomMockService implements IZoomService {
     return [];
   }
 
+  async getRecordingShareUrl(meetingId: string): Promise<string | null> {
+    this.logger.log(`[MOCK] Get recording share URL for ${meetingId}: returning null`);
+    return null;
+  }
+
+  async removeRecordingPasscode(meetingId: string): Promise<boolean> {
+    this.logger.log(`[MOCK] Remove recording passcode for ${meetingId}`);
+    return true;
+  }
+
   /**
    * Seed mock participant data for a meeting (used by mock webhook endpoint).
    */

@@ -26,8 +26,11 @@ import {
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
+import type { AssessmentFile } from '../../database/schema/assessments';
+import { randomUUID } from 'crypto';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { StorageService } from '../storage/storage.service';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -37,6 +40,7 @@ import { CreateTicketDto } from './dto/create-ticket.dto';
 import { ReplyTicketDto } from './dto/reply-ticket.dto';
 import { RateTicketDto } from './dto/rate-ticket.dto';
 import { CertificatesService } from '../certificates/certificates.service';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 
 @Injectable()
 export class StudentService {
@@ -45,6 +49,8 @@ export class StudentService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly certificatesService: CertificatesService,
+    private readonly storageService: StorageService,
+    private readonly userNotificationsService: UserNotificationsService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -575,6 +581,8 @@ export class StudentService {
         passingMarks: assessments.passingMarks,
         durationMinutes: assessments.durationMinutes,
         attemptsAllowed: assessments.attemptsAllowed,
+        moduleId: assessments.moduleId,
+        dueDate: assessments.dueDate,
       })
       .from(assessments)
       .where(
@@ -1200,17 +1208,30 @@ export class StudentService {
       );
     const totalAttempts = Number(allSubmissionsResult[0]?.count || 0);
 
-    if (assessment.attemptsAllowed && totalAttempts >= assessment.attemptsAllowed) {
-      throw new BadRequestException('Maximum attempts reached for this assessment');
-    }
+    const maxAttemptsReached =
+      assessment.attemptsAllowed != null &&
+      totalAttempts >= assessment.attemptsAllowed;
 
     // Retake info — compute canRetake and retakeAvailableAt
     let canRetake = false;
     let retakeAvailableAt: string | null = null;
 
+    // Fetch latest submission for review/retake info
+    let latestSubmission: {
+      id: string;
+      status: string;
+      score: number | null;
+      submittedAt: Date | null;
+    } | null = null;
+
     if (totalAttempts > 0) {
       const [latestSub] = await db
-        .select({ submittedAt: submissions.submittedAt })
+        .select({
+          id: submissions.id,
+          status: submissions.status,
+          score: submissions.score,
+          submittedAt: submissions.submittedAt,
+        })
         .from(submissions)
         .where(
           and(
@@ -1222,6 +1243,7 @@ export class StudentService {
         .orderBy(desc(submissions.submittedAt))
         .limit(1);
 
+      latestSubmission = latestSub || null;
       const lastSubmittedAt = latestSub?.submittedAt;
       const attemptsRemaining = assessment.attemptsAllowed
         ? assessment.attemptsAllowed - totalAttempts
@@ -1267,6 +1289,13 @@ export class StudentService {
       };
     });
 
+    // For assignments, compute canSubmit flag
+    const isAssignment = assessment.type === 'assignment';
+    const pastDeadline = isAssignment && assessment.dueDate
+      ? new Date() > new Date(assessment.dueDate)
+      : false;
+    const canSubmit = isAssignment ? !pastDeadline && totalAttempts === 0 : undefined;
+
     return {
       id: assessment.id,
       title: assessment.title,
@@ -1278,7 +1307,22 @@ export class StudentService {
       attemptsTaken: totalAttempts,
       canRetake,
       retakeAvailableAt,
-      questions: sanitizedQuestions,
+      maxAttemptsReached,
+      latestSubmission: latestSubmission
+        ? {
+            id: latestSubmission.id,
+            status: latestSubmission.status,
+            score: latestSubmission.score,
+          }
+        : null,
+      questions: maxAttemptsReached && !isAssignment ? [] : (isAssignment ? [] : sanitizedQuestions),
+      // Assignment-specific fields
+      ...(isAssignment && {
+        assignmentFiles: assessment.assignmentFiles || [],
+        dueDate: assessment.dueDate?.toISOString() || null,
+        instructions: assessment.instructions || null,
+        canSubmit,
+      }),
     };
   }
 
@@ -1454,6 +1498,15 @@ export class StudentService {
       };
     });
 
+    // Notify instructor about submission (fire-and-forget)
+    this.notifyInstructorOfSubmission(
+      assessment.courseId,
+      studentId,
+      assessment.title,
+      assessment.type,
+      assessmentId,
+    ).catch((err) => this.logger.warn(`Failed to notify instructor: ${err.message}`));
+
     return {
       submissionId: submission.id,
       score: totalScore,
@@ -1582,7 +1635,171 @@ export class StudentService {
       percentage: Number(submission.percentage),
       answers: submission.answers,
       questions: reviewQuestions,
+      submissionFiles: submission.submissionFiles || [],
+      instructorComment: submission.instructorComment || null,
+      questionComments: submission.questionComments || {},
     };
+  }
+
+  // ─── Assignment Submission ─────────────────────────────
+
+  async submitAssignmentFiles(
+    studentId: string,
+    assessmentId: string,
+    files: { buffer: Buffer; originalname: string; mimetype: string; size: number }[],
+  ) {
+    // Get the assessment
+    const [assessment] = await db
+      .select()
+      .from(assessments)
+      .where(
+        and(
+          eq(assessments.id, assessmentId),
+          eq(assessments.status, 'published'),
+        ),
+      )
+      .limit(1);
+
+    if (!assessment) {
+      throw new NotFoundException('Assessment not found');
+    }
+
+    if (assessment.type !== 'assignment') {
+      throw new BadRequestException('This endpoint is only for assignment submissions');
+    }
+
+    // Deadline check
+    if (assessment.dueDate && new Date() > new Date(assessment.dueDate)) {
+      throw new BadRequestException('Deadline has passed');
+    }
+
+    // Verify enrollment
+    const [enrollment] = await db
+      .select()
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.courseId, assessment.courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new BadRequestException('You must be enrolled in the course');
+    }
+
+    // Check no existing submitted/graded submission (1 attempt)
+    const [existingSub] = await db
+      .select({ count: count() })
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          sql`${submissions.status} IN ('submitted', 'graded')`,
+        ),
+      );
+
+    if (existingSub && Number(existingSub.count) > 0) {
+      throw new BadRequestException('You have already submitted this assignment');
+    }
+
+    // Upload each file
+    const submissionFiles: AssessmentFile[] = [];
+    for (const file of files) {
+      const ext = file.originalname.split('.').pop() || 'bin';
+      const storagePath = `submissions/${assessment.courseId}/${assessmentId}/${studentId}/${randomUUID()}.${ext}`;
+
+      const fileUrl = await this.storageService.uploadPublic(
+        file.buffer,
+        storagePath,
+        file.mimetype,
+      );
+
+      submissionFiles.push({
+        id: randomUUID(),
+        fileUrl,
+        fileName: file.originalname,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        uploadedAt: new Date().toISOString(),
+      });
+    }
+
+    // Create submission
+    const [submission] = await db
+      .insert(submissions)
+      .values({
+        assessmentId,
+        studentId,
+        answers: [],
+        submissionFiles,
+        score: null,
+        totalMarks: assessment.totalMarks,
+        startedAt: new Date(),
+        submittedAt: new Date(),
+        status: 'submitted',
+      })
+      .returning();
+
+    // Notify instructor about assignment submission (fire-and-forget)
+    this.notifyInstructorOfSubmission(
+      assessment.courseId,
+      studentId,
+      assessment.title,
+      'assignment',
+      assessmentId,
+    ).catch((err) => this.logger.warn(`Failed to notify instructor: ${err.message}`));
+
+    return {
+      submissionId: submission.id,
+      filesCount: submissionFiles.length,
+      status: 'submitted',
+    };
+  }
+
+  // ─── Instructor Notification Helper ────────────────────
+
+  private async notifyInstructorOfSubmission(
+    courseId: string,
+    studentId: string,
+    assessmentTitle: string,
+    assessmentType: string,
+    assessmentId: string,
+  ) {
+    // Get instructor ID from course
+    const [course] = await db
+      .select({ instructorId: courses.instructorId, title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course?.instructorId) return;
+
+    // Get student name
+    const [student] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+
+    const studentName = student
+      ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
+      : 'A student';
+
+    const typeLabel = assessmentType === 'assignment' ? 'assignment' : assessmentType;
+
+    await this.userNotificationsService.create({
+      recipientId: course.instructorId,
+      type: 'assessment_submitted',
+      title: `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} Submitted`,
+      message: `${studentName} submitted "${assessmentTitle}" in ${course.title}`,
+      link: `/dashboard/instructor/assessments`,
+      entityType: 'submission',
+      entityId: assessmentId,
+    });
   }
 
   // ─── Certificates ──────────────────────────────────────

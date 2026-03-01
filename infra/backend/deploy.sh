@@ -106,7 +106,7 @@ fi
 if [ -n "$CLOUD_RUN_FRONTEND_URL_NEW" ] && [ "$CLOUD_RUN_FRONTEND_URL_NEW" != "$FRONTEND_URL" ] && [ "$CLOUD_RUN_FRONTEND_URL_NEW" != "$CLOUD_RUN_FRONTEND_URL" ]; then
     CORS_VALUE="${CORS_VALUE},${CLOUD_RUN_FRONTEND_URL_NEW}"
 fi
-ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LOG_LEVEL=warn||STORAGE_LOCAL_DIR=/tmp/uploads||APP_URL=https://api.physioguidance.org/api"
+ENV_VARS="^||^NODE_ENV=production||CORS_ORIGIN=${CORS_VALUE}||API_PREFIX=api||LOG_LEVEL=warn||STORAGE_LOCAL_DIR=/tmp/uploads||APP_URL=${FRONTEND_URL}"
 
 # Secrets from GCP Secret Manager (required)
 SECRETS="DATABASE_URL=DATABASE_URL:latest"
@@ -130,6 +130,19 @@ fi
 if gcloud secrets describe MAIL_REPLY_TO &>/dev/null 2>&1; then
     SECRETS="${SECRETS},MAIL_REPLY_TO=MAIL_REPLY_TO:latest"
     log_info "Reply-to address configured"
+fi
+
+# Zoom Integration
+if gcloud secrets describe ZOOM_ACCOUNT_ID &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},ZOOM_ACCOUNT_ID=ZOOM_ACCOUNT_ID:latest"
+    SECRETS="${SECRETS},ZOOM_CLIENT_ID=ZOOM_CLIENT_ID:latest"
+    SECRETS="${SECRETS},ZOOM_CLIENT_SECRET=ZOOM_CLIENT_SECRET:latest"
+    SECRETS="${SECRETS},ZOOM_WEBHOOK_SECRET_TOKEN=ZOOM_WEBHOOK_SECRET_TOKEN:latest"
+    ENV_VARS="${ENV_VARS}||ZOOM_MOCK=false"
+    log_info "Zoom credentials found - live Zoom integration enabled"
+else
+    ENV_VARS="${ENV_VARS}||ZOOM_MOCK=true"
+    log_warning "ZOOM_ACCOUNT_ID secret not found - using mock Zoom service"
 fi
 
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then

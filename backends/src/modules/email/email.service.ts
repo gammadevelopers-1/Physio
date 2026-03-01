@@ -117,7 +117,7 @@ export class EmailService {
       });
       if (error) throw new Error(error.message);
     } else if (this.transporter) {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: fromHeader,
         to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
         subject: options.subject,
@@ -215,7 +215,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Course Progress Reminder - ${courseName}`,
@@ -250,7 +250,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Session Starting Soon: ${params.sessionTitle}`,
@@ -279,7 +279,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Certificate Approved - ${courseName}`,
@@ -311,7 +311,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Certificate Request Update - ${courseName}`,
@@ -343,7 +343,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject,
@@ -376,7 +376,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Certificate Request On Hold - ${courseName}`,
@@ -413,7 +413,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `New Session Scheduled: ${params.sessionTitle}`,
@@ -448,7 +448,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Session Live: ${params.sessionTitle}`,
@@ -482,7 +482,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Session Ended: ${params.sessionTitle}`,
@@ -517,7 +517,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Session Cancelled: ${params.sessionTitle}`,
@@ -555,7 +555,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `TA Assignment: ${params.sessionTitle}`,
@@ -598,7 +598,7 @@ export class EmailService {
     const decisionLabel = decisionLabels[params.decision] || params.decision;
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Content ${decisionLabel}: ${params.materialTitle}`,
@@ -635,7 +635,7 @@ export class EmailService {
       'noreply@physioguidance.org';
 
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: `"PhysioGuidance" <${from}>`,
         to,
         subject: `Content Pending Review: ${params.materialTitle}`,

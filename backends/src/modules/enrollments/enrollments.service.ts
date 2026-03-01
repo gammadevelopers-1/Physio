@@ -21,6 +21,8 @@ import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { EmailService } from '../email/email.service';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -33,6 +35,8 @@ export class EnrollmentsService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly assistantsService: SessionAssistantsService,
+    private readonly userNotificationsService: UserNotificationsService,
+    private readonly emailService: EmailService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -195,6 +199,11 @@ export class EnrollmentsService {
       // Item #13: TA re-allocation on enrollment change
       await this.triggerTaReallocation(courseId);
 
+      // Notify student of enrollment
+      this.notifyStudentOfEnrollment(courseId, studentId).catch((err) =>
+        this.logger.error('Failed to send enrollment notification', err),
+      );
+
       return reactivated;
     }
 
@@ -225,6 +234,11 @@ export class EnrollmentsService {
     // Item #13: TA re-allocation on enrollment change
     await this.triggerTaReallocation(courseId);
 
+    // Notify student of enrollment
+    this.notifyStudentOfEnrollment(courseId, studentId).catch((err) =>
+      this.logger.error('Failed to send enrollment notification', err),
+    );
+
     return enrollment;
   }
 
@@ -242,6 +256,85 @@ export class EnrollmentsService {
         ),
       );
     return Number(result?.count || 0);
+  }
+
+  // ─── Enrollment Notification Helper ─────────────────────────
+
+  private async notifyStudentOfEnrollment(
+    courseId: string,
+    studentId: string,
+  ) {
+    const [course] = await db
+      .select({
+        title: courses.title,
+        startDate: courses.startDate,
+        instructorId: courses.instructorId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) return;
+
+    const [student] = await db
+      .select({
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+
+    if (!student) return;
+
+    const studentName =
+      `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
+      'Student';
+
+    // Get instructor name
+    let instructorName = 'Your Instructor';
+    if (course.instructorId) {
+      const [instructor] = await db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, course.instructorId))
+        .limit(1);
+      if (instructor) {
+        instructorName =
+          `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim() ||
+          'Your Instructor';
+      }
+    }
+
+    // In-app notification
+    await this.userNotificationsService.create({
+      recipientId: studentId,
+      type: 'enrollment_confirmed',
+      title: 'Enrollment Confirmed',
+      message: `You have been enrolled in "${course.title}"`,
+      link: `/dashboard/student/courses`,
+      entityType: 'enrollment',
+      entityId: courseId,
+    });
+
+    // Email notification
+    if (student.email) {
+      const formattedDate = course.startDate
+        ? new Date(course.startDate).toLocaleDateString('en-US', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })
+        : null;
+
+      await this.emailService.sendEnrollmentConfirmation(student.email, {
+        studentName,
+        courseName: course.title,
+        startDate: formattedDate,
+        instructorName,
+      });
+    }
   }
 
   // ─── Course Enrollments ───────────────────────────────────

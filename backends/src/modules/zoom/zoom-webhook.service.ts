@@ -9,7 +9,7 @@ import {
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
-import { matchParticipantToUser } from './zoom.helpers';
+import { matchParticipantToUser, getSessionInstructorId } from './zoom.helpers';
 
 @Injectable()
 export class ZoomWebhookService {
@@ -49,7 +49,9 @@ export class ZoomWebhookService {
     }
 
     // 2. Match participant to system user (item #5, #9: shared, case-insensitive)
-    const matchedUser = await matchParticipantToUser(participantEmail);
+    // Exclude the course instructor (Zoom host) from attendance tracking
+    const instructorId = await getSessionInstructorId(session.id);
+    const matchedUser = await matchParticipantToUser(participantEmail, instructorId);
 
     // 3. Insert join log
     await db.insert(attendanceLogs).values({
@@ -130,7 +132,9 @@ export class ZoomWebhookService {
       return;
     }
 
-    const matchedUser = await matchParticipantToUser(participantEmail);
+    // Exclude course instructor (Zoom host) from attendance
+    const instructorId = await getSessionInstructorId(session.id);
+    const matchedUser = await matchParticipantToUser(participantEmail, instructorId);
 
     // 1. Insert leave log
     await db.insert(attendanceLogs).values({

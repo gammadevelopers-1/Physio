@@ -25,7 +25,6 @@ export default async function Home({
     homePage,
     siteSettings,
     partners,
-    featuredCourses,
     instructors,
     testimonials,
     navbarLinks,
@@ -37,7 +36,7 @@ export default async function Home({
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <Hero data={homePage} />
       <Partners partners={partners} sectionTitle={homePage?.partnersSectionTitle} />
-      <FeaturedCourses courses={featuredCourses} sectionData={homePage} />
+      <FeaturedCourses sectionData={homePage} />
       <BecomeTrainer data={homePage} />
       <ExpertInstructors instructors={instructors} sectionData={homePage} />
       <Testimonials testimonials={testimonials} sectionData={homePage} />

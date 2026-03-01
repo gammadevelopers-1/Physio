@@ -13,7 +13,7 @@ import {
 } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
-import { matchParticipantToUser } from './zoom.helpers';
+import { matchParticipantToUser, getSessionInstructorId } from './zoom.helpers';
 
 @Injectable()
 export class ZoomSyncService {
@@ -117,10 +117,15 @@ export class ZoomSyncService {
     let synced = 0;
     let skipped = 0;
 
+    // Get course instructor to exclude from attendance (Zoom host)
+    const instructorId = await getSessionInstructorId(sessionId);
+
     for (const participant of participants) {
       // Item #5, #9: shared case-insensitive email matching
+      // Exclude course instructor (Zoom host) from attendance tracking
       const matchedUser = await matchParticipantToUser(
         participant.userEmail,
+        instructorId,
       );
 
       if (!matchedUser) {

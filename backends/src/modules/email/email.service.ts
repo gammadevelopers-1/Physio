@@ -67,6 +67,14 @@ import {
   getSessionScheduledHtml,
   getSessionScheduledText,
 } from './templates/session-scheduled.template';
+import {
+  getAssessmentSubmittedHtml,
+  getAssessmentSubmittedText,
+} from './templates/assessment-submitted.template';
+import {
+  getEnrollmentConfirmationHtml,
+  getEnrollmentConfirmationText,
+} from './templates/enrollment-confirmation.template';
 
 @Injectable()
 export class EmailService {
@@ -586,6 +594,70 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send content pending review email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send assessment submission notification to instructor
+   */
+  async sendAssessmentSubmitted(
+    to: string,
+    params: {
+      instructorName: string;
+      studentName: string;
+      assessmentTitle: string;
+      assessmentType: string;
+      courseName: string;
+    },
+  ): Promise<void> {
+    try {
+      const typeLabel =
+        params.assessmentType.charAt(0).toUpperCase() +
+        params.assessmentType.slice(1);
+      await this.send({
+        to,
+        subject: `${typeLabel} Submitted: ${params.assessmentTitle}`,
+        html: getAssessmentSubmittedHtml(params),
+        text: getAssessmentSubmittedText(params),
+      });
+      this.logger.log(
+        `Assessment submission email sent to ${to} for "${params.assessmentTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send assessment submission email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send enrollment confirmation email to student
+   */
+  async sendEnrollmentConfirmation(
+    to: string,
+    params: {
+      studentName: string;
+      courseName: string;
+      startDate: string | null;
+      instructorName: string;
+    },
+  ): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `Enrollment Confirmed: ${params.courseName}`,
+        html: getEnrollmentConfirmationHtml(params),
+        text: getEnrollmentConfirmationText(params),
+      });
+      this.logger.log(
+        `Enrollment confirmation email sent to ${to} for "${params.courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send enrollment confirmation email to ${to}`,
         error,
       );
     }

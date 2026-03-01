@@ -41,6 +41,7 @@ import { ReplyTicketDto } from './dto/reply-ticket.dto';
 import { RateTicketDto } from './dto/rate-ticket.dto';
 import { CertificatesService } from '../certificates/certificates.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class StudentService {
@@ -51,6 +52,7 @@ export class StudentService {
     private readonly certificatesService: CertificatesService,
     private readonly storageService: StorageService,
     private readonly userNotificationsService: UserNotificationsService,
+    private readonly emailService: EmailService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -1791,6 +1793,7 @@ export class StudentService {
 
     const typeLabel = assessmentType === 'assignment' ? 'assignment' : assessmentType;
 
+    // In-app notification
     await this.userNotificationsService.create({
       recipientId: course.instructorId,
       type: 'assessment_submitted',
@@ -1800,6 +1803,23 @@ export class StudentService {
       entityType: 'submission',
       entityId: assessmentId,
     });
+
+    // Email notification to instructor
+    const [instructor] = await db
+      .select({ email: users.email, firstName: users.firstName })
+      .from(users)
+      .where(eq(users.id, course.instructorId))
+      .limit(1);
+
+    if (instructor?.email) {
+      await this.emailService.sendAssessmentSubmitted(instructor.email, {
+        instructorName: instructor.firstName || 'Instructor',
+        studentName,
+        assessmentTitle,
+        assessmentType,
+        courseName: course.title,
+      });
+    }
   }
 
   // ─── Certificates ──────────────────────────────────────

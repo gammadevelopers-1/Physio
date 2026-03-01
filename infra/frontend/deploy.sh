@@ -102,7 +102,7 @@ gcloud run deploy ${FRONTEND_SERVICE_NAME} \
     --cpu=${FRONTEND_CPU} \
     --min-instances=${FRONTEND_MIN_INSTANCES} \
     --max-instances=${FRONTEND_MAX_INSTANCES} \
-    --set-env-vars="NODE_ENV=production" \
+    --set-env-vars="NODE_ENV=production,BACKEND_API_URL=${BACKEND_URL}/api" \
     --quiet
 
 # Get service URL

@@ -45,6 +45,21 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "api.physioguidance.org",
+        pathname: "/api/storage/**",
+      },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cms.physioguidance.org",
+        pathname: "/uploads/**",
+      },
     ],
   },
 };

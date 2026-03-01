@@ -13,25 +13,36 @@ import { ProcessingCleanupService } from './processing-cleanup.service';
 import { StorageModule } from '../storage/storage.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 
+const redisEnabled = !!process.env.REDIS_HOST;
+
 @Module({
   imports: [
     StorageModule,
     UserNotificationsModule,
 
-    // Register BullMQ queues
-    BullModule.registerQueue(
-      { name: QUEUE_NAMES.TRANSCODING },
-      { name: QUEUE_NAMES.CAPTIONS },
-      { name: QUEUE_NAMES.TRANSCRIPT },
-      { name: QUEUE_NAMES.WCAG },
-    ),
+    // Register BullMQ queues — only when Redis is available
+    ...(redisEnabled
+      ? [
+          BullModule.registerQueue(
+            { name: QUEUE_NAMES.TRANSCODING },
+            { name: QUEUE_NAMES.CAPTIONS },
+            { name: QUEUE_NAMES.TRANSCRIPT },
+            { name: QUEUE_NAMES.WCAG },
+          ),
+        ]
+      : []),
   ],
   providers: [
     ProcessingService,
-    TranscodingProcessor,
-    CaptionsProcessor,
-    TranscriptProcessor,
-    WcagProcessor,
+    // Only register processors when Redis is available
+    ...(redisEnabled
+      ? [
+          TranscodingProcessor,
+          CaptionsProcessor,
+          TranscriptProcessor,
+          WcagProcessor,
+        ]
+      : []),
     FfmpegService,
     WhisperService,
     WcagService,

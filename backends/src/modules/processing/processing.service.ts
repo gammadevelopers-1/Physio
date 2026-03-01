@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
@@ -11,13 +11,19 @@ import type { TranscodeJobData, CaptionsJobData, WcagJobData } from './interface
 @Injectable()
 export class ProcessingService {
   private readonly logger = new Logger(ProcessingService.name);
+  private readonly redisAvailable: boolean;
 
   constructor(
-    @InjectQueue(QUEUE_NAMES.TRANSCODING) private transcodingQueue: Queue,
-    @InjectQueue(QUEUE_NAMES.CAPTIONS) private captionsQueue: Queue,
-    @InjectQueue(QUEUE_NAMES.WCAG) private wcagQueue: Queue,
+    @Optional() @InjectQueue(QUEUE_NAMES.TRANSCODING) private transcodingQueue: Queue,
+    @Optional() @InjectQueue(QUEUE_NAMES.CAPTIONS) private captionsQueue: Queue,
+    @Optional() @InjectQueue(QUEUE_NAMES.WCAG) private wcagQueue: Queue,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.redisAvailable = !!this.transcodingQueue;
+    if (!this.redisAvailable) {
+      this.logger.warn('Redis not configured — background processing is disabled');
+    }
+  }
 
   /**
    * Called by MaterialsService after successful file upload.
@@ -30,6 +36,12 @@ export class ProcessingService {
     courseId: string,
     mimeType: string,
   ): Promise<void> {
+    if (!this.redisAvailable) {
+      this.logger.warn(`Skipping processing for material ${materialId} — Redis not available`);
+      // Mark as pending review so instructor knows processing was skipped
+      await this.markPendingReview(materialId);
+      return;
+    }
     this.logger.log(`Dispatching processing for material ${materialId} (type: ${materialType})`);
 
     if (materialType === 'video') {

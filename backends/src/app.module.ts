@@ -51,17 +51,21 @@ import processingConfig from './config/processing.config';
     // Task scheduling (cron jobs)
     ScheduleModule.forRoot(),
 
-    // BullMQ job queue (Redis)
-    BullModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get('processing.redis.host', 'localhost'),
-          port: configService.get('processing.redis.port', 6379),
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    // BullMQ job queue (Redis) — only when REDIS_HOST is configured
+    ...(process.env.REDIS_HOST
+      ? [
+          BullModule.forRootAsync({
+            imports: [ConfigModule],
+            useFactory: (configService: ConfigService) => ({
+              connection: {
+                host: configService.get('processing.redis.host', 'localhost'),
+                port: configService.get('processing.redis.port', 6379),
+              },
+            }),
+            inject: [ConfigService],
+          }),
+        ]
+      : []),
 
     // NELC Compliance (global — available to all modules)
     NelcAuditModule,

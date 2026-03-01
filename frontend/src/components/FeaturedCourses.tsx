@@ -83,7 +83,7 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
         {/* Desktop Courses Grid - 4 columns (1280px+) */}
         <div className="hidden xl:flex bg-white flex-col gap-[64px] items-start w-full">
           <div
-            className="flex gap-[32px] items-start w-full"
+            className="grid grid-cols-4 gap-[32px] w-full"
             dir={isRTL ? "rtl" : "ltr"}
           >
             {courses.map((course) => (

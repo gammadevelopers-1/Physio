@@ -65,7 +65,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
   return (
     <Link
       href={`/courses/${course.id}`}
-      className={`flex flex-1 flex-col gap-[16px] min-w-0 group ${isRTL ? "items-end" : "items-start"}`}
+      className={`flex flex-col gap-[16px] min-w-0 w-full group ${isRTL ? "items-end" : "items-start"}`}
     >
       {/* Card Header */}
       <div className="relative bg-[#eef3f7] rounded-[16px] p-[16px] h-[182.84px] flex flex-col justify-between overflow-hidden w-full">

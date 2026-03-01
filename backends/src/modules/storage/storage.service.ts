@@ -187,6 +187,30 @@ export class StorageService {
     return this.useLocal;
   }
 
+  /**
+   * Get the GCS bucket name for a given bucket type
+   */
+  getBucketName(bucket: 'public' | 'private' | 'trainers'): string | null {
+    if (this.useLocal || !this.buckets) return null;
+    return this.buckets[bucket].name;
+  }
+
+  /**
+   * Get a readable stream for a file from GCS (for proxying files through the backend)
+   */
+  async getFileStream(
+    bucket: 'public' | 'private' | 'trainers',
+    filename: string,
+  ): Promise<import('stream').Readable | null> {
+    if (this.useLocal || !this.buckets) return null;
+
+    const file = this.buckets[bucket].file(filename);
+    const [exists] = await file.exists();
+    if (!exists) return null;
+
+    return file.createReadStream();
+  }
+
   // ── Private helpers ──
 
   private async uploadLocal(
@@ -209,29 +233,25 @@ export class StorageService {
     file: Buffer,
     filename: string,
     contentType: string,
-    isPublic: boolean,
+    _isPublic: boolean,
   ): Promise<string> {
     const blob = bucket.file(filename);
 
     await blob.save(file, {
       contentType,
-      public: isPublic,
       metadata: {
         cacheControl: 'public, max-age=31536000',
       },
     });
 
-    if (isPublic) {
-      return `https://storage.googleapis.com/${bucket.name}/${filename}`;
-    }
-
-    return this.getSignedUrl(
-      bucket.name.includes('private')
-        ? 'private'
-        : bucket.name.includes('trainers')
-          ? 'trainers'
-          : 'public',
-      filename,
-    );
+    // Always return a backend-served URL so files are served via our
+    // storage controller (which generates signed URLs for GCS).
+    // This avoids needing public bucket ACLs that org policies may block.
+    const bucketType = bucket.name.includes('private')
+      ? 'private'
+      : bucket.name.includes('trainers')
+        ? 'trainers'
+        : 'public';
+    return `${this.baseUrl}/storage/files/${bucketType}/${filename}`;
   }
 }

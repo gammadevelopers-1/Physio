@@ -176,13 +176,34 @@ export class StorageController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    if (!this.storageService.isLocal) {
-      throw new NotFoundException('Local file serving is only available in dev mode');
+    const validBuckets = ['public', 'private', 'trainers'] as const;
+    if (!validBuckets.includes(bucket as any)) {
+      throw new NotFoundException('Invalid bucket');
     }
 
-    const validBuckets = ['public', 'private', 'trainers'];
-    if (!validBuckets.includes(bucket)) {
-      throw new NotFoundException('Invalid bucket');
+    // For GCP storage, stream file directly from the bucket
+    if (!this.storageService.isLocal) {
+      const stream = await this.storageService.getFileStream(
+        bucket as 'public' | 'private' | 'trainers',
+        filePath,
+      );
+
+      if (!stream) {
+        throw new NotFoundException('File not found');
+      }
+
+      const ext = filePath.split('.').pop()?.toLowerCase();
+      const contentType = CONTENT_TYPE_MAP[ext || ''] || 'application/octet-stream';
+      const filename = filePath.split('/').pop() || 'file';
+
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Disposition': `inline; filename="${filename}"`,
+        'Cache-Control': 'public, max-age=3600',
+      });
+
+      stream.pipe(res);
+      return;
     }
 
     const localPath = this.storageService.getLocalFilePath(bucket, filePath);

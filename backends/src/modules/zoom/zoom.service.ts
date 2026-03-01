@@ -417,6 +417,14 @@ export class ZoomService implements IZoomService, OnModuleInit {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // 404 = report not yet available (can take 10-30 min after meeting ends)
+      if (response.status === 404) {
+        this.logger.warn(
+          `Zoom participant report not yet available for meeting ${meetingId}`,
+        );
+        return [];
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         this.logger.error(`Zoom participant report failed: ${errorText}`);

@@ -149,7 +149,7 @@ fi
 # Content Processing (Redis/Memorystore)
 if gcloud secrets describe REDIS_HOST &>/dev/null 2>&1; then
     SECRETS="${SECRETS},REDIS_HOST=REDIS_HOST:latest"
-    ENV_VARS="${ENV_VARS}||REDIS_PORT=6379||REDIS_TLS=true||FFMPEG_ENABLED=true||AUTO_APPROVE_MATERIALS=false"
+    ENV_VARS="${ENV_VARS}||REDIS_PORT=6378||REDIS_TLS=true||FFMPEG_ENABLED=true||AUTO_APPROVE_MATERIALS=false"
     log_info "Redis/Memorystore configured — content processing enabled"
 else
     ENV_VARS="${ENV_VARS}||FFMPEG_ENABLED=false"

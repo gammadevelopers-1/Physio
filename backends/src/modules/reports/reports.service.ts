@@ -163,7 +163,16 @@ export class ReportsService {
       );
     }
 
-    // Get attendance data (filtered by date range)
+    // Get instructor IDs for these courses so we can exclude them from attendance
+    const courseInstructors = await db
+      .select({ id: courses.id, instructorId: courses.instructorId })
+      .from(courses)
+      .where(inArray(courses.id, courseIds));
+    const instructorIds = new Set(
+      courseInstructors.map((c) => c.instructorId).filter(Boolean),
+    );
+
+    // Get attendance data (filtered by date range), excluding instructor/host
     const data = await db
       .select({
         studentId: attendance.studentId,
@@ -183,6 +192,11 @@ export class ReportsService {
       .innerJoin(users, eq(attendance.studentId, users.id))
       .where(and(...sessionConditions))
       .orderBy(users.lastName, sessions.scheduledAt);
+
+    // Filter out instructor/host from attendance data
+    const filteredData = instructorIds.size > 0
+      ? data.filter((row) => !instructorIds.has(row.studentId))
+      : data;
 
     // Compute total attendance % per student (across ALL sessions, not date-filtered)
     const allCourseSessions = await db
@@ -223,7 +237,7 @@ export class ReportsService {
     }
 
     // Build rows with enhanced attendance data
-    const rows = data.map((row) => {
+    const rows = filteredData.map((row) => {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
       const pctNum = parseFloat(pct);
       const completionStatus =

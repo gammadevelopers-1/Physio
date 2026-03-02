@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -387,6 +387,28 @@ export class EnrollmentsService {
   ) {
     await this.verifySessionAccess(sessionId, user);
 
+    // Look up the course instructor to exclude them from attendance
+    const [session] = await db
+      .select({ courseId: sessions.courseId })
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    let instructorId: string | null = null;
+    if (session?.courseId) {
+      const [course] = await db
+        .select({ instructorId: courses.instructorId })
+        .from(courses)
+        .where(eq(courses.id, session.courseId))
+        .limit(1);
+      instructorId = course?.instructorId || null;
+    }
+
+    const conditions = [eq(attendance.sessionId, sessionId)];
+    if (instructorId) {
+      conditions.push(ne(attendance.studentId, instructorId));
+    }
+
     const data = await db
       .select({
         id: attendance.id,
@@ -404,7 +426,7 @@ export class EnrollmentsService {
       })
       .from(attendance)
       .innerJoin(users, eq(attendance.studentId, users.id))
-      .where(eq(attendance.sessionId, sessionId))
+      .where(and(...conditions))
       .orderBy(users.firstName);
 
     return data;

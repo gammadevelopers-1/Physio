@@ -95,18 +95,26 @@ export class ZoomSyncService {
       .limit(1);
 
     if (!session) {
-      throw new Error(`Session ${sessionId} not found`);
+      throw new Error('Session not found');
     }
 
     if (!session.meetingId) {
-      throw new Error(`Session ${sessionId} has no meetingId`);
+      throw new Error(
+        'This session has no Zoom meeting linked. Please create a Zoom meeting first.',
+      );
     }
 
     if (
       session.type !== SESSION_TYPE.ZOOM &&
       session.type !== SESSION_TYPE.HYBRID
     ) {
-      throw new Error(`Session ${sessionId} is not a Zoom/hybrid session`);
+      throw new Error('This session is not a Zoom or hybrid session');
+    }
+
+    if (session.status !== SESSION_STATUS.COMPLETED) {
+      throw new Error(
+        'Zoom attendance can only be synced after the session is completed. Zoom reports typically become available 10-30 minutes after a meeting ends.',
+      );
     }
 
     // Fetch participant report from Zoom

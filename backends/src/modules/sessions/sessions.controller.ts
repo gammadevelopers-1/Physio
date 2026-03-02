@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { Inject, Logger } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
@@ -255,8 +256,13 @@ export class SessionsController {
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/sync-zoom')
   async syncZoom(@Param('id') id: string) {
-    const result = await this.zoomSyncService.syncSession(id);
-    return { message: 'Zoom attendance synced', ...result };
+    try {
+      const result = await this.zoomSyncService.syncSession(id);
+      return { message: 'Zoom attendance synced', ...result };
+    } catch (error) {
+      const message = (error as Error).message || 'Zoom sync failed';
+      throw new BadRequestException(message);
+    }
   }
 
   /**

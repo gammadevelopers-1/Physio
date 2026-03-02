@@ -24,6 +24,7 @@ export interface ZoomMeetingDetails {
   startUrl: string;
   joinUrl: string;
   status: string;
+  hostEmail?: string;
 }
 
 export interface ZoomParticipantReport {

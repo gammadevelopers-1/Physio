@@ -41,6 +41,8 @@ import {
   Download,
   Film,
   Lock,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -120,6 +122,19 @@ function AttendanceModal({
   >([]);
   const [manualAssignments, setManualAssignments] = useState<Record<string, string>>({});
   const [assigningEmail, setAssigningEmail] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    synced: number;
+    skipped: number;
+    details: Array<{
+      name: string;
+      email: string;
+      joinTime: string | null;
+      leaveTime: string | null;
+      durationMinutes: number;
+      action: 'synced' | 'updated_times' | 'skipped';
+      reason?: string;
+    }>;
+  } | null>(null);
 
   const isZoomSession = session.type === "zoom" || session.type === "hybrid";
 
@@ -187,8 +202,14 @@ function AttendanceModal({
 
   const handleSyncZoom = async () => {
     setSyncing(true);
+    setSyncResult(null);
     try {
       const result = await zoomAttendanceApi.syncZoomAttendance(session.id);
+      setSyncResult({
+        synced: result.synced,
+        skipped: result.skipped,
+        details: result.details || [],
+      });
       toast.success(`Synced ${result.synced} attendance records from Zoom`);
       setLoading(true);
       await loadData();
@@ -356,6 +377,57 @@ function AttendanceModal({
                 )}
                 {syncing ? "Syncing..." : "Sync from Zoom"}
               </button>
+            </div>
+          )}
+
+          {/* Zoom sync result panel */}
+          {syncResult && (
+            <div className="border-b border-[#E5E7EB] bg-[#F0FDF4]">
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-[#16A34A]" />
+                  <span className="text-xs font-medium text-[#15803D]">
+                    Zoom Sync Complete: {syncResult.synced} synced, {syncResult.skipped} skipped
+                  </span>
+                </div>
+                <button
+                  onClick={() => setSyncResult(null)}
+                  className="p-1 hover:bg-[#DCFCE7] rounded transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 text-[#16A34A]" />
+                </button>
+              </div>
+              {syncResult.details.length > 0 && (
+                <div className="px-4 pb-3 space-y-1.5">
+                  {syncResult.details
+                    .filter((d) => d.action !== 'skipped' || d.reason !== 'host')
+                    .map((d, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[10px]">
+                      {d.action === 'skipped' ? (
+                        <XCircle className="w-3 h-3 text-[#9CA3AF] shrink-0" />
+                      ) : (
+                        <CheckCircle className="w-3 h-3 text-[#16A34A] shrink-0" />
+                      )}
+                      <span className={d.action === 'skipped' ? 'text-[#9CA3AF]' : 'text-[#374151]'}>
+                        {d.name || d.email}
+                      </span>
+                      {d.action !== 'skipped' && d.joinTime && (
+                        <span className="text-[#6B7280]">
+                          {new Date(d.joinTime).toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit' })}
+                          {d.leaveTime && ` – ${new Date(d.leaveTime).toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit' })}`}
+                          {d.durationMinutes > 0 && ` (${d.durationMinutes} min)`}
+                        </span>
+                      )}
+                      {d.action === 'skipped' && d.reason === 'no_email' && (
+                        <span className="text-[#DC2626]">not signed in to Zoom</span>
+                      )}
+                      {d.action === 'skipped' && d.reason === 'unmatched' && (
+                        <span className="text-[#D97706]">email not found: {d.email}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

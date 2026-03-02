@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { eq, and } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -9,13 +9,39 @@ import {
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
-import { matchParticipantToUser, getSessionInstructorId } from './zoom.helpers';
+import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
+import { matchParticipantToUser, getSessionInstructorId, isParticipantHost } from './zoom.helpers';
 
 @Injectable()
 export class ZoomWebhookService {
   private readonly logger = new Logger(ZoomWebhookService.name);
 
-  constructor(private readonly auditService: NelcAuditService) {}
+  /** Cache host emails per meeting to avoid repeated Zoom API calls */
+  private hostEmailCache = new Map<string, string>();
+
+  constructor(
+    private readonly auditService: NelcAuditService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
+  ) {}
+
+  /**
+   * Get the host email for a meeting (cached per meetingId).
+   */
+  private async getHostEmail(meetingId: string): Promise<string | null> {
+    if (this.hostEmailCache.has(meetingId)) {
+      return this.hostEmailCache.get(meetingId)!;
+    }
+    try {
+      const details = await this.zoomService.getMeeting(meetingId);
+      if (details.hostEmail) {
+        this.hostEmailCache.set(meetingId, details.hostEmail);
+        return details.hostEmail;
+      }
+    } catch (e) {
+      this.logger.warn(`Could not fetch host email for meeting ${meetingId}: ${(e as Error).message}`);
+    }
+    return null;
+  }
 
   /**
    * Handle participant joined event from Zoom webhook.
@@ -37,8 +63,8 @@ export class ZoomWebhookService {
       return;
     }
 
-    // Skip Zoom host — they are not a student
-    if (participantRole === 'host') {
+    // Skip Zoom host by role field (if available) or by host_id match
+    if (participantRole === 'host' || isParticipantHost(payload?.meeting || payload)) {
       this.logger.debug(`Skipping Zoom host join: ${participantEmail}`);
       return;
     }
@@ -56,9 +82,11 @@ export class ZoomWebhookService {
     }
 
     // 2. Match participant to system user (item #5, #9: shared, case-insensitive)
-    // Exclude the course instructor (Zoom host) from attendance tracking
+    // Exclude the course instructor AND the Zoom meeting host from attendance
     const instructorId = await getSessionInstructorId(session.id);
-    const matchedUser = await matchParticipantToUser(participantEmail, instructorId);
+    const hostEmail = await this.getHostEmail(meetingId);
+    const excludeEmails = hostEmail ? [hostEmail] : [];
+    const matchedUser = await matchParticipantToUser(participantEmail, instructorId, excludeEmails);
 
     // 3. Insert join log
     await db.insert(attendanceLogs).values({
@@ -128,8 +156,8 @@ export class ZoomWebhookService {
       return;
     }
 
-    // Skip Zoom host
-    if (participantRole === 'host') {
+    // Skip Zoom host by role or host_id match
+    if (participantRole === 'host' || isParticipantHost(payload?.meeting || payload)) {
       this.logger.debug(`Skipping Zoom host leave: ${participantEmail}`);
       return;
     }
@@ -146,9 +174,11 @@ export class ZoomWebhookService {
       return;
     }
 
-    // Exclude course instructor (Zoom host) from attendance
+    // Exclude course instructor AND Zoom host from attendance
     const instructorId = await getSessionInstructorId(session.id);
-    const matchedUser = await matchParticipantToUser(participantEmail, instructorId);
+    const hostEmail = await this.getHostEmail(meetingId);
+    const excludeEmails = hostEmail ? [hostEmail] : [];
+    const matchedUser = await matchParticipantToUser(participantEmail, instructorId, excludeEmails);
 
     // 1. Insert leave log
     await db.insert(attendanceLogs).values({

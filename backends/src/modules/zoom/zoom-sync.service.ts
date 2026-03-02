@@ -87,7 +87,19 @@ export class ZoomSyncService {
    */
   async syncSession(
     sessionId: string,
-  ): Promise<{ synced: number; skipped: number }> {
+  ): Promise<{
+    synced: number;
+    skipped: number;
+    details: Array<{
+      name: string;
+      email: string;
+      joinTime: string | null;
+      leaveTime: string | null;
+      durationMinutes: number;
+      action: 'synced' | 'updated_times' | 'skipped';
+      reason?: string;
+    }>;
+  }> {
     const [session] = await db
       .select()
       .from(sessions)
@@ -122,34 +134,90 @@ export class ZoomSyncService {
       session.meetingId,
     );
 
+    // Log raw participant data for debugging
+    this.logger.log(
+      `Raw Zoom participants for session ${sessionId}: ${JSON.stringify(
+        participants.map((p) => ({
+          name: p.name,
+          email: p.userEmail,
+          role: p.role,
+          duration: p.duration,
+        })),
+      )}`,
+    );
+
     let synced = 0;
     let skipped = 0;
+    const details: Array<{
+      name: string;
+      email: string;
+      joinTime: string | null;
+      leaveTime: string | null;
+      durationMinutes: number;
+      action: 'synced' | 'updated_times' | 'skipped';
+      reason?: string;
+    }> = [];
 
     // Get course instructor to exclude from attendance (Zoom host)
     const instructorId = await getSessionInstructorId(sessionId);
 
+    // Get the Zoom meeting host email to exclude from attendance
+    // The Reports API often returns the host with role='participant', so role check alone is not enough
+    let hostEmail: string | null = null;
+    try {
+      const meetingDetails = await this.zoomService.getMeeting(session.meetingId);
+      hostEmail = meetingDetails.hostEmail || null;
+    } catch (e) {
+      this.logger.warn(`Could not fetch host email for meeting ${session.meetingId}: ${(e as Error).message}`);
+    }
+    const excludeEmails = hostEmail ? [hostEmail.toLowerCase()] : [];
+
     for (const participant of participants) {
-      // Skip Zoom host — they are not a student
-      if (participant.role === 'host') {
+      // Skip Zoom host — by role OR by email match
+      const isHost = participant.role === 'host'
+        || (participant.userEmail && excludeEmails.includes(participant.userEmail.toLowerCase()));
+      if (isHost) {
         this.logger.debug(
           `Skipping Zoom host: ${participant.userEmail} in session ${sessionId}`,
         );
         skipped++;
+        details.push({
+          name: participant.name,
+          email: participant.userEmail,
+          joinTime: participant.joinTime,
+          leaveTime: participant.leaveTime,
+          durationMinutes: Math.round(participant.duration / 60),
+          action: 'skipped',
+          reason: 'host',
+        });
         continue;
       }
 
       // Item #5, #9: shared case-insensitive email matching
-      // Exclude course instructor from attendance tracking
+      // Exclude course instructor and Zoom host from attendance tracking
       const matchedUser = await matchParticipantToUser(
         participant.userEmail,
         instructorId,
+        hostEmail ? [hostEmail] : [],
       );
 
       if (!matchedUser) {
-        this.logger.debug(
-          `Unmatched participant: ${participant.userEmail} in session ${sessionId}`,
+        const reason = !participant.userEmail
+          ? 'no_email'
+          : 'unmatched';
+        this.logger.warn(
+          `Unmatched participant: name="${participant.name}", email="${participant.userEmail || '(empty)'}" in session ${sessionId}`,
         );
         skipped++;
+        details.push({
+          name: participant.name,
+          email: participant.userEmail,
+          joinTime: participant.joinTime,
+          leaveTime: participant.leaveTime,
+          durationMinutes: Math.round(participant.duration / 60),
+          action: 'skipped',
+          reason,
+        });
         continue;
       }
 
@@ -174,9 +242,31 @@ export class ZoomSyncService {
       const durationMinutes = Math.round(participant.duration / 60);
 
       if (existing) {
-        // Manual marks always win
+        // Manual marks: keep status but supplement timing data from Zoom
         if (existing.markedBy) {
-          skipped++;
+          const timingUpdates: Record<string, unknown> = {};
+          if (joinTime && !existing.joinedAt) timingUpdates.joinedAt = joinTime;
+          if (leaveTime && !existing.leftAt) timingUpdates.leftAt = leaveTime;
+          if (durationMinutes > 0 && !existing.durationMinutes) {
+            timingUpdates.durationMinutes = durationMinutes;
+          }
+
+          if (Object.keys(timingUpdates).length > 0) {
+            await db
+              .update(attendance)
+              .set(timingUpdates)
+              .where(eq(attendance.id, existing.id));
+          }
+
+          synced++;
+          details.push({
+            name: participant.name,
+            email: participant.userEmail,
+            joinTime: participant.joinTime,
+            leaveTime: participant.leaveTime,
+            durationMinutes,
+            action: 'updated_times',
+          });
           continue;
         }
 
@@ -205,6 +295,15 @@ export class ZoomSyncService {
 
         synced++;
       }
+
+      details.push({
+        name: participant.name,
+        email: participant.userEmail,
+        joinTime: participant.joinTime,
+        leaveTime: participant.leaveTime,
+        durationMinutes,
+        action: 'synced',
+      });
 
       // Also insert attendance log entries for historical tracking
       if (joinTime) {
@@ -261,6 +360,6 @@ export class ZoomSyncService {
       `Session ${sessionId} synced: ${synced} records updated, ${skipped} skipped`,
     );
 
-    return { synced, skipped };
+    return { synced, skipped, details };
   }
 }

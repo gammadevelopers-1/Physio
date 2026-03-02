@@ -170,6 +170,9 @@ export class ZoomService implements IZoomService, OnModuleInit {
         waiting_room: true,
         mute_upon_entry: true,
         auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
+        // Require participants to sign in to Zoom before joining
+        // Ensures every participant has an email for attendance matching
+        meeting_authentication: true,
       },
     };
 
@@ -225,6 +228,7 @@ export class ZoomService implements IZoomService, OnModuleInit {
       startUrl: meeting.start_url,
       joinUrl: meeting.join_url,
       status: (meeting as any).status || 'waiting',
+      hostEmail: (meeting as any).host_email || undefined,
     };
   }
 
@@ -417,10 +421,10 @@ export class ZoomService implements IZoomService, OnModuleInit {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 400/404 = report not yet available (can take 10-30 min after meeting ends)
-      if (response.status === 404 || response.status === 400) {
+      // 404 = report not yet available (can take 10-30 min after meeting ends)
+      if (response.status === 404) {
         this.logger.warn(
-          `Zoom participant report not yet available for meeting ${meetingId} (${response.status})`,
+          `Zoom participant report not yet available for meeting ${meetingId}`,
         );
         throw new Error(
           'Zoom attendance report is not yet available. Reports typically take 10-30 minutes to become available after a meeting ends. Please try again later.',

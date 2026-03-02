@@ -170,7 +170,6 @@ if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
         --image=${IMAGE_TAG} \
         --region=${GCP_REGION} \
         --platform=managed \
-        --allow-unauthenticated \
         --port=${BACKEND_PORT} \
         --memory=${BACKEND_MEMORY} \
         --cpu=${BACKEND_CPU} \
@@ -188,7 +187,6 @@ else
         --image=${IMAGE_TAG} \
         --region=${GCP_REGION} \
         --platform=managed \
-        --allow-unauthenticated \
         --port=${BACKEND_PORT} \
         --memory=${BACKEND_MEMORY} \
         --cpu=${BACKEND_CPU} \

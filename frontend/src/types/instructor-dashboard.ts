@@ -376,6 +376,10 @@ export interface CourseDetailResponse {
   status: 'draft' | 'active' | 'completed' | 'archived';
   thumbnail: string | null;
   maxEnrollment: number | null;
+  price: number | string | null;
+  cmeHours: number | null;
+  enrollmentDeadline: string | null;
+  isCmeAccredited: boolean | null;
   startDate: string | null;
   endDate: string | null;
   createdAt: string;

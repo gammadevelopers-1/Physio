@@ -66,6 +66,12 @@ export * from './course-ratings';
 // Waitlist schemas
 export * from './waitlists';
 
+// Payment schemas
+export * from './payments';
+export * from './invoices';
+export * from './refunds';
+export * from './discount-codes';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 const BottomNav = () => {
   const pathname = usePathname();
@@ -14,11 +15,12 @@ const BottomNav = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { itemCount } = useCart();
 
   const navItems = [
     { href: `/${locale}`, label: t("home"), icon: "/home-01.svg" },
     { href: `/${locale}/search`, label: t("search"), icon: "/search-lg.svg" },
-    { href: `/${locale}/checkout`, label: t("cart"), icon: "/file-02.svg" },
+    { href: `/${locale}/cart`, label: t("cart"), icon: "/file-02.svg" },
   ];
 
   const platformLinks = [
@@ -82,6 +84,11 @@ const BottomNav = () => {
                       : "none",
                   }}
                 />
+                {item.label === t("cart") && itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                    {itemCount > 9 ? "9+" : itemCount}
+                  </span>
+                )}
               </div>
               <span
                 className={`mt-1 ${

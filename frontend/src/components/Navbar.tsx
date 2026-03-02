@@ -16,7 +16,7 @@ import BottomNav from "./BottomNav";
 import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { UserMenu } from "./UserMenu";
-import { useAuth } from "@/contexts";
+import { useAuth, useCart } from "@/contexts";
 
 interface NavbarProps {
   siteSettings?: SiteSettings | null;
@@ -31,6 +31,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
   const pathname = usePathname();
   const isRTL = locale === "ar";
   const { isAuthenticated, isLoading } = useAuth();
+  const { itemCount } = useCart();
 
   // Get logo URL from Strapi or use fallback
   const logoUrl = siteSettings?.logo?.url
@@ -134,10 +135,15 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
 
           {/* Cart Icon - Hidden on mobile/tablet */}
           <Link
-            href={`/${locale}/checkout`}
-            className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            href={`/${locale}/cart`}
+            className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors relative"
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
+            {itemCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {itemCount > 9 ? "9+" : itemCount}
+              </span>
+            )}
           </Link>
 
           {/* User Menu or Get Started Button - Hidden on mobile/tablet */}

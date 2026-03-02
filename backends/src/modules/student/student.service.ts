@@ -1042,7 +1042,15 @@ export class StudentService {
       throw new NotFoundException('Course not found or not available');
     }
 
-    // 2. NELC limit enforcement
+    // 2. Block self-enrollment for paid courses (payment required)
+    const coursePrice = Number(course.price || 0);
+    if (coursePrice > 0) {
+      throw new BadRequestException(
+        'This course requires payment. Please complete the checkout process to enroll.',
+      );
+    }
+
+    // 3. NELC limit enforcement
     const classification = classifyCourse(course.startDate, course.endDate);
     const nelcMax = getNelcMaxEnrollment(classification);
     const effectiveMax = course.maxEnrollment

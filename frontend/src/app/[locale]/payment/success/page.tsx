@@ -1,0 +1,174 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { CheckCircle, Download, ArrowRight, ArrowLeft } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { paymentApi, invoiceApi } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
+
+interface PaymentDetails {
+  status: string;
+  paymentId: string;
+  amount?: string;
+  currency?: string;
+  gateway?: string;
+  paidAt?: string;
+}
+
+export default function PaymentSuccessPage() {
+  const t = useTranslations("paymentSuccess");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const paymentId = searchParams.get("paymentId");
+
+  const { removeItem } = useCart();
+  const [payment, setPayment] = useState<PaymentDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!paymentId) {
+      setLoading(false);
+      return;
+    }
+
+    paymentApi
+      .verify(paymentId)
+      .then((data) => {
+        setPayment(data);
+        // Remove purchased course from cart
+        try {
+          const courseId = sessionStorage.getItem("checkout_courseId");
+          if (courseId && data?.status === "paid") {
+            removeItem(courseId);
+            sessionStorage.removeItem("checkout_courseId");
+          }
+        } catch {}
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [paymentId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDownloadInvoice = async () => {
+    if (!paymentId) return;
+    try {
+      const myPayments = await paymentApi.getMyPayments(1, 100);
+      const thisPayment = myPayments.data?.find(
+        (p: { id: string }) => p.id === paymentId
+      );
+      if (!thisPayment) return;
+
+      const myInvoices = await invoiceApi.getMyInvoices(1, 100);
+      const invoice = myInvoices.data?.find(
+        (inv: { paymentId?: string }) => inv.paymentId === paymentId
+      );
+      if (invoice) {
+        const result = await invoiceApi.getPdfUrl(invoice.id);
+        if (result.url) {
+          window.open(result.url, "_blank");
+        }
+      }
+    } catch {
+      // Invoice might not be ready yet
+    }
+  };
+
+  const Arrow = isRTL ? ArrowLeft : ArrowRight;
+
+  return (
+    <div className="min-h-screen bg-[#EEF3F7] flex flex-col">
+      <Navbar />
+      <main className="flex-1 flex items-center justify-center px-4 py-20">
+        <div className="bg-white rounded-2xl shadow-sm p-8 max-w-lg w-full text-center">
+          {loading ? (
+            <div className="py-12">
+              <div className="w-8 h-8 border-2 border-[#B8860B] border-t-transparent rounded-full animate-spin mx-auto" />
+            </div>
+          ) : (
+            <>
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="w-10 h-10 text-green-600" />
+              </div>
+
+              <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">
+                {t("title")}
+              </h1>
+              <p className="text-[#737373] mb-6">{t("subtitle")}</p>
+
+              {payment && (
+                <div className="bg-[#f0fdf4] border border-green-200 rounded-xl p-5 mb-6 text-left">
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-[#737373]">
+                        {t("paymentId")}
+                      </span>
+                      <span className="text-sm font-medium text-[#1a1a1a] font-mono">
+                        {payment.paymentId?.slice(0, 8)}...
+                      </span>
+                    </div>
+                    {payment.amount && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-[#737373]">
+                          {t("amount")}
+                        </span>
+                        <span className="text-sm font-medium text-[#1a1a1a]">
+                          {payment.currency || "SAR"} {payment.amount}
+                        </span>
+                      </div>
+                    )}
+                    {payment.gateway && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-[#737373]">
+                          {t("gateway")}
+                        </span>
+                        <span className="text-sm font-medium text-[#1a1a1a] capitalize">
+                          {payment.gateway}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-[#737373]">
+                        {t("status")}
+                      </span>
+                      <span className="text-sm font-medium text-green-600">
+                        {t("paid")}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => router.push(`/${locale}/student-dashboard`)}
+                  className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2"
+                >
+                  {t("goToDashboard")}
+                  <Arrow className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleDownloadInvoice}
+                  className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                >
+                  <Download className="w-4 h-4" />
+                  {t("downloadInvoice")}
+                </button>
+                <button
+                  onClick={() => router.push(`/${locale}/courses`)}
+                  className="text-sm text-[#737373] hover:text-[#1a1a1a] transition"
+                >
+                  {t("browseCourses")}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}

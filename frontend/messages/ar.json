@@ -945,7 +945,9 @@
       "interestFree": "أو 4 دفعات بدون فوائد.",
       "shariahCompliant": "متوافق مع الشريعة الإسلامية.",
       "learnMore": "معرفة المزيد",
-      "securePayment": "الدفع الآمن من خلال"
+      "securePayment": "الدفع الآمن من خلال",
+      "inCart": "في السلة",
+      "addedToCart": "تمت الإضافة إلى السلة!"
     },
     "courseDetails": {
       "title": "تفاصيل الدورة",
@@ -982,6 +984,25 @@
       "contactMessage": "يرجى التواصل معنا للتسجيل في الدورات المدفوعة.",
       "courseFull": "الدورة ممتلئة — انضم لقائمة الانتظار"
     }
+  },
+  "cartPage": {
+    "title": "سلة التسوق",
+    "breadcrumb": {
+      "home": "الرئيسية",
+      "cart": "السلة"
+    },
+    "itemCount": "{count} عناصر في سلتك",
+    "removeItem": "إزالة",
+    "proceedToCheckout": "متابعة الدفع",
+    "emptyTitle": "سلتك فارغة",
+    "emptyDescription": "تصفح دوراتنا وأضفها إلى سلتك",
+    "browseCourses": "تصفح الدورات",
+    "checkoutNote": "يتم دفع كل دورة على حدة",
+    "price": "السعر",
+    "deliveryType": "النوع",
+    "cmeHours": "ساعات التعليم الطبي المستمر",
+    "startDate": "تاريخ البدء",
+    "instructor": "المدرب"
   },
   "checkoutPage": {
     "breadcrumb": {
@@ -1730,7 +1751,30 @@
       "statusCancelled": "ملغي",
       "moreOptions": "المزيد من الخيارات",
       "viewInvoice": "عرض الفاتورة",
-      "downloadInvoice": "تحميل الفاتورة"
+      "downloadInvoice": "تحميل الفاتورة",
+      "requestRefund": "طلب استرداد"
+    },
+    "refund": {
+      "title": "طلب استرداد",
+      "invoice": "الفاتورة",
+      "amount": "المبلغ",
+      "reasonLabel": "لماذا تريد استرداد المبلغ؟",
+      "selectReason": "يرجى اختيار سبب",
+      "reasons": {
+        "course_issue": "مشكلة في محتوى الدورة",
+        "personal": "أسباب شخصية",
+        "technical": "مشاكل تقنية",
+        "duplicate": "دفع مكرر",
+        "other": "سبب آخر"
+      },
+      "notesLabel": "ملاحظات إضافية (اختياري)",
+      "notesPlaceholder": "قدم أي تفاصيل إضافية...",
+      "cancel": "إلغاء",
+      "submit": "إرسال الطلب",
+      "submitError": "فشل في إرسال طلب الاسترداد. يرجى المحاولة مرة أخرى.",
+      "successTitle": "تم طلب الاسترداد",
+      "successMessage": "تم تقديم طلب الاسترداد. سيقوم فريق المالية بمراجعته قريباً.",
+      "close": "إغلاق"
     },
     "inviteFriends": {
       "title": "دعوة الأصدقاء",
@@ -2468,7 +2512,18 @@
       "submit": "إنشاء الدورة",
       "success": "تم إنشاء الدورة بنجاح!",
       "error": "فشل في إنشاء الدورة.",
-      "titleRequired": "عنوان الدورة مطلوب."
+      "titleRequired": "عنوان الدورة مطلوب.",
+      "pricingTitle": "تسعير الدورة",
+      "pricingFree": "مجانية",
+      "pricingPaid": "مدفوعة",
+      "priceLabel": "السعر (ريال سعودي)",
+      "pricePlaceholder": "مثال: 500.00",
+      "priceRequired": "السعر مطلوب للدورات المدفوعة",
+      "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
+      "cmeHoursLabel": "ساعات التعليم الطبي المستمر",
+      "cmeAccreditedLabel": "معتمد للتعليم الطبي المستمر",
+      "cmeAccreditedDesc": "اعتماد التعليم الطبي المستمر لهذه الدورة",
+      "reviewPricing": "التسعير"
     },
     "sessionsPage": {
       "title": "الجلسات",
@@ -3564,6 +3619,18 @@
       "wcagCompliant": "متوافق مع WCAG 2.1",
       "wcagCompliantDesc": "محتوى الدورة يستوفي إرشادات الوصول WCAG 2.1.",
       "minimumHours": "الحد الأدنى لساعات التدريب",
+      "pricingTitle": "تسعير الدورة",
+      "pricingDescription": "حدد ما إذا كانت هذه الدورة مجانية أو تتطلب دفعاً",
+      "pricingFree": "مجانية",
+      "pricingPaid": "مدفوعة",
+      "priceLabel": "السعر (ريال سعودي)",
+      "pricePlaceholder": "مثال: 500.00",
+      "priceRequired": "السعر مطلوب للدورات المدفوعة",
+      "priceMinError": "يجب أن يكون السعر أكبر من 0",
+      "enrollmentDeadlineLabel": "الموعد النهائي للتسجيل",
+      "cmeHoursLabel": "ساعات التعليم الطبي المستمر",
+      "cmeAccreditedLabel": "معتمد للتعليم الطبي المستمر",
+      "cmeAccreditedDesc": "هذه الدورة معتمدة للتعليم الطبي المستمر",
       "reviewTitle": "مراجعة وإنشاء",
       "reviewDescription": "راجع جميع تفاصيل الدورة قبل الإنشاء. يمكنك التعديل بعد الإنشاء.",
       "instructorAssignment": "تعيين المدرب",
@@ -5953,5 +6020,33 @@
     "copyLink": "نسخ الرابط",
     "attendance": "الحضور",
     "uploadMaterial": "رفع المادة"
+  },
+  "paymentCallback": {
+    "processingTitle": "جاري معالجة الدفع",
+    "processingMessage": "يرجى الانتظار بينما نؤكد عملية الدفع. قد يستغرق ذلك بضع لحظات.",
+    "timeoutTitle": "يستغرق وقتاً أطول من المتوقع",
+    "timeoutMessage": "لا يزال يتم معالجة الدفع. يمكنك المحاولة مرة أخرى أو التواصل مع الدعم.",
+    "tryAgain": "التحقق مرة أخرى",
+    "errorTitle": "حدث خطأ",
+    "backToCourses": "العودة للدورات"
+  },
+  "paymentSuccess": {
+    "title": "تم الدفع بنجاح!",
+    "subtitle": "تم تأكيد الدفع وأنت الآن مسجل في الدورة.",
+    "paymentId": "رقم الدفع",
+    "amount": "المبلغ",
+    "gateway": "طريقة الدفع",
+    "status": "الحالة",
+    "paid": "مدفوع",
+    "goToDashboard": "الذهاب إلى لوحة التحكم",
+    "downloadInvoice": "تحميل الفاتورة",
+    "browseCourses": "تصفح المزيد من الدورات"
+  },
+  "paymentFailed": {
+    "title": "فشل الدفع",
+    "subtitle": "للأسف، لم يتم معالجة الدفع.",
+    "message": "لم تكتمل عملية الدفع. قد يكون ذلك بسبب عدم كفاية الرصيد أو رفض البطاقة أو مشكلة مؤقتة مع مزود الدفع. لم يتم خصم أي مبلغ من حسابك.",
+    "tryAgain": "حاول مرة أخرى",
+    "browseCourses": "تصفح الدورات"
   }
 }

@@ -26,6 +26,7 @@ import { courseDetails } from "@/data/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { studentApi } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
@@ -71,6 +72,9 @@ const CourseDetailContent = () => {
     message: string;
   } | null>(null);
 
+  // Cart
+  const { addItem, isInCart } = useCart();
+
   // Derive pricing/capacity from API data
   const apiPrice = apiCourse?.price ?? 0;
   const apiIsFree = apiPrice === 0;
@@ -100,6 +104,26 @@ const CourseDetailContent = () => {
   const handleGuestRedirect = () => {
     const returnUrl = pathname;
     router.push(`/${locale}/signup?redirect=${encodeURIComponent(returnUrl)}`);
+  };
+
+  const handleAddToCart = () => {
+    if (!apiCourse?.id) return;
+    if (isInCart(apiCourse.id)) {
+      router.push(`/${locale}/cart`);
+      return;
+    }
+    addItem({
+      id: apiCourse.id,
+      title: apiCourse.title,
+      titleAr: apiCourse.titleAr || null,
+      price: Number(apiCourse.price) || 0,
+      thumbnail: apiCourse.thumbnail || null,
+      deliveryType: apiCourse.deliveryType || "",
+      startDate: apiCourse.startDate || null,
+      cmeHours: apiCourse.cmeHours || 0,
+      instructorName: apiCourse.instructorName || "",
+      addedAt: new Date().toISOString(),
+    });
   };
 
   // Fetch related courses from API
@@ -526,9 +550,10 @@ const CourseDetailContent = () => {
                         <button
                           onClick={() => {
                             if (!isAuthenticated) {
-                              handleGuestRedirect();
-                            } else if (isStudent) {
-                              alert(t("enrollment.contactMessage"));
+                              const checkoutUrl = `/${locale}/checkout?courseId=${apiCourse?.id}`;
+                              router.push(`/${locale}/signup?redirect=${encodeURIComponent(checkoutUrl)}`);
+                            } else if (isStudent && apiCourse?.id) {
+                              router.push(`/${locale}/checkout?courseId=${apiCourse.id}`);
                             }
                           }}
                           className="w-full h-12 btn-gold rounded-xl text-white font-medium mb-3"
@@ -540,13 +565,19 @@ const CourseDetailContent = () => {
                             if (!isAuthenticated) {
                               handleGuestRedirect();
                             } else if (isStudent) {
-                              alert(t("enrollment.contactMessage"));
+                              handleAddToCart();
                             }
                           }}
                           className="w-full h-12 bg-[#0b0f17] rounded-xl text-white font-medium flex items-center justify-center gap-2 mb-3"
                         >
-                          {t("pricingCard.addToCart")}
-                          <ShoppingCart className="w-4 h-4" />
+                          {apiCourse?.id && isInCart(apiCourse.id)
+                            ? t("pricingCard.inCart")
+                            : t("pricingCard.addToCart")}
+                          {apiCourse?.id && isInCart(apiCourse.id) ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <ShoppingCart className="w-4 h-4" />
+                          )}
                         </button>
                       </>
                     )}
@@ -848,9 +879,10 @@ const CourseDetailContent = () => {
                 <button
                   onClick={() => {
                     if (!isAuthenticated) {
-                      handleGuestRedirect();
-                    } else if (isStudent) {
-                      alert(t("enrollment.contactMessage"));
+                      const checkoutUrl = `/${locale}/checkout?courseId=${apiCourse?.id}`;
+                      router.push(`/${locale}/signup?redirect=${encodeURIComponent(checkoutUrl)}`);
+                    } else if (isStudent && apiCourse?.id) {
+                      router.push(`/${locale}/checkout?courseId=${apiCourse.id}`);
                     }
                   }}
                   className="w-full h-10 btn-gold rounded-xl text-white text-sm font-medium mb-2"
@@ -862,13 +894,19 @@ const CourseDetailContent = () => {
                     if (!isAuthenticated) {
                       handleGuestRedirect();
                     } else if (isStudent) {
-                      alert(t("enrollment.contactMessage"));
+                      handleAddToCart();
                     }
                   }}
                   className="w-full h-10 bg-[#0b0f17] rounded-xl text-white text-sm font-medium flex items-center justify-center gap-2 mb-2"
                 >
-                  {t("pricingCard.addToCart")}
-                  <ShoppingCart className="w-4 h-4" />
+                  {apiCourse?.id && isInCart(apiCourse.id)
+                    ? t("pricingCard.inCart")
+                    : t("pricingCard.addToCart")}
+                  {apiCourse?.id && isInCart(apiCourse.id) ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4" />
+                  )}
                 </button>
               </>
             )}

@@ -32,10 +32,15 @@ export interface WizardState {
   deliveryType: "zoom" | "onsite" | "blended";
   thumbnail: string;
   thumbnailUploading: boolean;
-  // Step 2 - Schedule
+  // Step 2 - Schedule & Pricing
   maxEnrollment: number | "";
   startDate: string;
   endDate: string;
+  pricingType: "free" | "paid";
+  price: number | "";
+  enrollmentDeadline: string;
+  cmeHours: number | "";
+  isCmeAccredited: boolean;
   // Step 3 - Modules
   modules: WizardModule[];
   // Meta
@@ -63,6 +68,11 @@ const initialState: WizardState = {
   maxEnrollment: "",
   startDate: "",
   endDate: "",
+  pricingType: "free",
+  price: "",
+  enrollmentDeadline: "",
+  cmeHours: "",
+  isCmeAccredited: false,
   modules: [],
   saving: false,
 };
@@ -117,6 +127,10 @@ const CreateCourseWizard = () => {
         toast.error(t("endDateError"));
         return;
       }
+      if (state.pricingType === "paid" && (!state.price || Number(state.price) <= 0)) {
+        toast.error(t("priceRequired"));
+        return;
+      }
     }
     if (state.step < 4) {
       dispatch({ type: "SET_STEP", step: (state.step + 1) as 1 | 2 | 3 | 4 });
@@ -145,6 +159,12 @@ const CreateCourseWizard = () => {
       if (state.maxEnrollment) courseData.maxEnrollment = Number(state.maxEnrollment);
       if (state.startDate) courseData.startDate = state.startDate;
       if (state.endDate) courseData.endDate = state.endDate;
+
+      // Pricing fields
+      courseData.price = state.pricingType === "paid" && state.price ? Number(state.price) : 0;
+      if (state.enrollmentDeadline) courseData.enrollmentDeadline = state.enrollmentDeadline;
+      if (state.cmeHours) courseData.cmeHours = Number(state.cmeHours);
+      courseData.isCmeAccredited = state.isCmeAccredited;
 
       const course = await instructorApi.createCourse(
         courseData as Parameters<typeof instructorApi.createCourse>[0]

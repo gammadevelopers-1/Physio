@@ -797,7 +797,7 @@ export const instructorApi = {
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
 
   // Course creation
-  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string }) =>
+  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string; price?: number; enrollmentDeadline?: string; cmeHours?: number; isCmeAccredited?: boolean }) =>
     api.post<CourseDetailResponse>('/courses', data),
 
   // Course update & delete
@@ -1227,6 +1227,10 @@ export interface CreateCourseManagerData {
   startDate?: string;
   endDate?: string;
   instructorId: string;
+  price?: number;
+  enrollmentDeadline?: string;
+  cmeHours?: number;
+  isCmeAccredited?: boolean;
 }
 
 export interface SessionsParams {
@@ -2058,6 +2062,115 @@ export const publicApi = {
       { skipAuth: true },
     );
   },
+};
+
+// ===========================================
+// Payment API
+// ===========================================
+
+export const paymentApi = {
+  initiate: (data: {
+    courseId: string;
+    gateway: string;
+    paymentMethod: string;
+    discountCode?: string;
+    locale?: string;
+  }) => api.post<{ paymentId: string; redirectUrl: string; amount: number; currency: string }>('/payments/initiate', data),
+
+  verify: (paymentId: string) =>
+    api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string }>(`/payments/verify/${paymentId}`),
+
+  getMyPayments: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments/my-payments?page=${page}&limit=${limit}`),
+
+  getAll: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments?page=${page}&limit=${limit}`),
+};
+
+// ===========================================
+// Invoice API
+// ===========================================
+
+export const invoiceApi = {
+  getMyInvoices: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices/my-invoices?page=${page}&limit=${limit}`),
+
+  getAll: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices?page=${page}&limit=${limit}`),
+
+  getPdfUrl: (invoiceId: string) =>
+    api.get<{ url: string; invoiceNumber: string }>(`/invoices/${invoiceId}/pdf`),
+
+  resend: (invoiceId: string) =>
+    api.post<{ sent: boolean }>(`/invoices/${invoiceId}/resend`),
+};
+
+// ===========================================
+// Refund API
+// ===========================================
+
+export const refundApi = {
+  request: (data: { paymentId: string; reason: string; reasonNote?: string }) =>
+    api.post<any>('/refunds', data),
+
+  getAll: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/refunds?page=${page}&limit=${limit}`),
+
+  approve: (refundId: string) =>
+    api.patch<{ status: string }>(`/refunds/${refundId}/approve`),
+
+  reject: (refundId: string, rejectionNote: string) =>
+    api.patch<{ status: string }>(`/refunds/${refundId}/reject`, { rejectionNote }),
+};
+
+// ===========================================
+// Finance API
+// ===========================================
+
+export const financeApi = {
+  getSummary: () =>
+    api.get<any>('/finance/summary'),
+
+  getRevenueBySource: () =>
+    api.get<any[]>('/finance/revenue-by-source'),
+
+  getPaymentStatus: () =>
+    api.get<any[]>('/finance/payment-status'),
+
+  getRefundRate: () =>
+    api.get<any>('/finance/refund-rate'),
+
+  getInvoiceAging: () =>
+    api.get<any>('/finance/invoice-aging'),
+};
+
+// ===========================================
+// Discount API
+// ===========================================
+
+export const discountApi = {
+  validate: (code: string, courseId: string) =>
+    api.post<{ valid: boolean; discountAmount: number; discountId: string | null; error?: string }>('/discounts/validate', { code, courseId }),
+
+  getAll: (page = 1, limit = 10) =>
+    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/discounts?page=${page}&limit=${limit}`),
+
+  create: (data: {
+    code: string;
+    type: string;
+    value: number;
+    maxUses?: number;
+    minOrderAmount?: number;
+    courseId?: string;
+    validFrom?: string;
+    validUntil?: string;
+  }) => api.post<any>('/discounts', data),
+
+  update: (id: string, data: any) =>
+    api.patch<any>(`/discounts/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete<{ deleted: boolean }>(`/discounts/${id}`),
 };
 
 export default api;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
@@ -13,8 +13,9 @@ import {
   DollarSign,
   TrendingUp,
   Download,
-  RefreshCcw,
+  Loader2,
 } from "lucide-react";
+import { paymentApi, financeApi } from "@/lib/api";
 
 const mockProfile = {
   name: "Nora Al-Fahad",
@@ -30,54 +31,81 @@ const PaymentsContent = () => {
   const isRTL = locale === "ar";
   const profile = { ...mockProfile, name: t("names.noraAlFahad") };
 
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [paymentsRes, summaryRes] = await Promise.all([
+        paymentApi.getAll(page, 10),
+        financeApi.getSummary(),
+      ]);
+
+      const mapped = (paymentsRes.data || []).map((p: any) => ({
+        id: p.id,
+        invoiceNumber: p.id.slice(0, 13).toUpperCase(),
+        date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" }),
+        customer: p.userName || p.userEmail || "-",
+        course: isRTL ? (p.courseTitleAr || p.courseTitle || "-") : (p.courseTitle || "-"),
+        amount: `${t("kpi.sar")} ${Number(p.amount).toLocaleString()}`,
+        gateway: (p.gateway || "").charAt(0).toUpperCase() + (p.gateway || "").slice(1) as any,
+        status: p.status as any,
+      }));
+
+      setTransactions(mapped);
+      setTotalPages(paymentsRes.pagination?.totalPages || 1);
+      setTotal(paymentsRes.pagination?.total || 0);
+      setSummary(summaryRes);
+    } catch {
+      // Fallback to empty
+    } finally {
+      setLoading(false);
+    }
+  }, [page, locale, isRTL, t]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const totalPayments = summary?.totalPayments ?? 0;
+  const failedPayments = summary?.failedPayments ?? 0;
+  const successRate = totalPayments > 0 ? (((totalPayments - failedPayments) / totalPayments) * 100).toFixed(1) : "0";
+  const totalVolume = summary?.totalRevenue ?? 0;
+
   const stats = [
     {
       label: t("paymentsPage.stats.totalPayments"),
-      value: "1,245",
+      value: totalPayments.toLocaleString(),
       icon: CreditCard,
       iconBg: "bg-[#EFF6FF]",
       iconColor: "text-[#3B82F6]",
-      trend: "+8%",
-      trendUp: true,
     },
     {
       label: t("paymentsPage.stats.successRate"),
-      value: "96.2%",
+      value: `${successRate}%`,
       icon: CheckCircle,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#16A34A]",
-      trend: "+1.5%",
-      trendUp: true,
     },
     {
       label: t("paymentsPage.stats.failedPayments"),
-      value: "47",
+      value: failedPayments.toLocaleString(),
       icon: XCircle,
       iconBg: "bg-[#FEE2E2]",
       iconColor: "text-[#DC2626]",
-      trend: "-12%",
-      trendUp: true,
     },
     {
       label: t("paymentsPage.stats.totalVolume"),
-      value: `${t("kpi.sar")} 892K`,
+      value: `${t("kpi.sar")} ${Number(totalVolume).toLocaleString()}`,
       icon: DollarSign,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#16A34A]",
-      trend: "+15%",
-      trendUp: true,
     },
-  ];
-
-  const allTransactions = [
-    { id: "1", invoiceNumber: "INV-2024-0156", date: t("mockDates.feb10_2026"), customer: t("names.fatimaAlNoor"), course: t("courses.aclsTraining"), amount: `${t("kpi.sar")} 1,200`, gateway: "Tap" as const, status: "paid" as const },
-    { id: "2", invoiceNumber: "INV-2024-0155", date: t("mockDates.feb10_2026"), customer: t("names.omarAbdullah"), course: t("courses.firstAidCert"), amount: `${t("kpi.sar")} 850`, gateway: "Tamara" as const, status: "paid" as const },
-    { id: "3", invoiceNumber: "INV-2024-0154", date: t("mockDates.feb9_2026"), customer: t("names.laylaHassan"), course: t("courses.cprCert"), amount: `${t("kpi.sar")} 650`, gateway: "Moyasar" as const, status: "pending" as const },
-    { id: "4", invoiceNumber: "INV-2024-0153", date: t("mockDates.feb9_2026"), customer: t("names.ahmedKhalid"), course: t("courses.emergencyResponse"), amount: `${t("kpi.sar")} 980`, gateway: "Tap" as const, status: "failed" as const },
-    { id: "5", invoiceNumber: "INV-2024-0152", date: t("mockDates.feb8_2026"), customer: t("names.saraMohammed"), course: t("courses.aclsTraining"), amount: `${t("kpi.sar")} 1,200`, gateway: "Tamara" as const, status: "refunded" as const },
-    { id: "6", invoiceNumber: "INV-2024-0151", date: t("mockDates.feb8_2026"), customer: t("names.mohammedAlHarbi"), course: t("courses.infectionControl"), amount: `${t("kpi.sar")} 750`, gateway: "Tap" as const, status: "paid" as const },
-    { id: "7", invoiceNumber: "INV-2024-0150", date: t("mockDates.feb7_2026"), customer: t("names.nouraAlQahtani"), course: t("courses.cprCert"), amount: `${t("kpi.sar")} 650`, gateway: "Tabby" as const, status: "paid" as const },
-    { id: "8", invoiceNumber: "INV-2024-0149", date: t("mockDates.feb7_2026"), customer: t("names.yusufAlRashid"), course: t("courses.emergencyResponse"), amount: `${t("kpi.sar")} 980`, gateway: "Moyasar" as const, status: "pending" as const },
   ];
 
   return (
@@ -129,14 +157,8 @@ const PaymentsContent = () => {
                           {stat.label}
                         </p>
                         <p className="text-xl font-bold text-[#111827]">
-                          {stat.value}
+                          {loading ? "..." : stat.value}
                         </p>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <TrendingUp className="w-3 h-3 text-[#16A34A]" />
-                          <span className="text-[11px] font-semibold text-[#16A34A]">
-                            {stat.trend}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   );
@@ -144,11 +166,17 @@ const PaymentsContent = () => {
               </div>
 
               {/* All Payments Table */}
-              <PaymentsInvoicesTable
-                transactions={allTransactions}
-                showPagination={true}
-                showExport={true}
-              />
+              {loading ? (
+                <div className="bg-white rounded-2xl border border-[#E5E7EB] p-12 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-[#B8860B] animate-spin" />
+                </div>
+              ) : (
+                <PaymentsInvoicesTable
+                  transactions={transactions}
+                  showPagination={true}
+                  showExport={true}
+                />
+              )}
             </div>
           </div>
         </div>

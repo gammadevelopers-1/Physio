@@ -1,0 +1,110 @@
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Loader2 } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { paymentApi } from "@/lib/api";
+
+export default function PaymentCallbackPage() {
+  const t = useTranslations("paymentCallback");
+  const locale = useLocale();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const paymentId = searchParams.get("paymentId");
+
+  const [status, setStatus] = useState<string>("processing");
+  const [error, setError] = useState<string | null>(null);
+  const pollCount = useRef(0);
+  const maxPolls = 20; // 60 seconds max (20 × 3s)
+
+  useEffect(() => {
+    if (!paymentId) {
+      setError("No payment ID provided");
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        pollCount.current += 1;
+        const result = await paymentApi.verify(paymentId);
+
+        if (result.status === "paid") {
+          clearInterval(pollInterval);
+          router.replace(`/${locale}/payment/success?paymentId=${paymentId}`);
+        } else if (result.status === "failed") {
+          clearInterval(pollInterval);
+          router.replace(`/${locale}/payment/failed?paymentId=${paymentId}`);
+        } else if (pollCount.current >= maxPolls) {
+          clearInterval(pollInterval);
+          setStatus("timeout");
+        }
+      } catch {
+        // Keep polling on network errors
+        if (pollCount.current >= maxPolls) {
+          clearInterval(pollInterval);
+          setStatus("timeout");
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [paymentId, locale, router]);
+
+  return (
+    <div className="min-h-screen bg-[#EEF3F7] flex flex-col">
+      <Navbar />
+      <main className="flex-1 flex items-center justify-center px-4 py-20">
+        <div className="bg-white rounded-2xl shadow-sm p-8 max-w-md w-full text-center">
+          {error ? (
+            <>
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">&#10060;</span>
+              </div>
+              <h1 className="text-xl font-bold text-[#1a1a1a] mb-2">
+                {t("errorTitle")}
+              </h1>
+              <p className="text-[#737373] mb-6">{error}</p>
+              <button
+                onClick={() => router.push(`/${locale}/courses`)}
+                className="btn-gold px-6 py-3 rounded-xl text-white font-medium"
+              >
+                {t("backToCourses")}
+              </button>
+            </>
+          ) : status === "timeout" ? (
+            <>
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">&#9888;&#65039;</span>
+              </div>
+              <h1 className="text-xl font-bold text-[#1a1a1a] mb-2">
+                {t("timeoutTitle")}
+              </h1>
+              <p className="text-[#737373] mb-6">{t("timeoutMessage")}</p>
+              <button
+                onClick={() => {
+                  pollCount.current = 0;
+                  setStatus("processing");
+                }}
+                className="btn-gold px-6 py-3 rounded-xl text-white font-medium"
+              >
+                {t("tryAgain")}
+              </button>
+            </>
+          ) : (
+            <>
+              <Loader2 className="w-12 h-12 text-[#B8860B] animate-spin mx-auto mb-4" />
+              <h1 className="text-xl font-bold text-[#1a1a1a] mb-2">
+                {t("processingTitle")}
+              </h1>
+              <p className="text-[#737373]">{t("processingMessage")}</p>
+            </>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+}

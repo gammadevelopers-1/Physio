@@ -1,45 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { FileText, MoreVertical } from "lucide-react";
+import { FileText, MoreVertical, Loader2 } from "lucide-react";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
+import { invoiceApi } from "@/lib/api";
+import RefundRequestModal from "./RefundRequestModal";
 
 interface Invoice {
   id: string;
+  paymentId: string;
   invoiceNo: string;
   amount: number;
   date: string;
   status: "paid" | "pending" | "cancelled";
 }
-
-// Mock invoices data
-const mockInvoicesData: Invoice[] = [
-  {
-    id: "inv-1",
-    invoiceNo: "30000001",
-    amount: 480.0,
-    date: "24/1/26",
-    status: "paid",
-  },
-  {
-    id: "inv-2",
-    invoiceNo: "30000002",
-    amount: 560.0,
-    date: "24/1/26",
-    status: "paid",
-  },
-  {
-    id: "inv-3",
-    invoiceNo: "30000003",
-    amount: 320.0,
-    date: "24/1/26",
-    status: "paid",
-  },
-];
 
 const InvoicesContent = () => {
   const locale = useLocale();
@@ -47,9 +25,31 @@ const InvoicesContent = () => {
   const isRTL = locale === "ar";
   const userData = useStudentProfile();
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refundModal, setRefundModal] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
 
-  // Use mockInvoicesData to show the table, or empty array [] to show empty state
-  const invoices = mockInvoicesData;
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      try {
+        const res = await invoiceApi.getMyInvoices(1, 50);
+        const mapped: Invoice[] = (res.data || []).map((inv: any) => ({
+          id: inv.id,
+          paymentId: inv.paymentId || inv.id,
+          invoiceNo: inv.invoiceNumber || inv.id.slice(0, 8),
+          amount: Number(inv.totalAmount) || 0,
+          date: new Date(inv.issuedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { day: "numeric", month: "numeric", year: "2-digit" }),
+          status: (inv.status === "issued" ? "pending" : inv.status === "cancelled" ? "cancelled" : "paid") as Invoice["status"],
+        }));
+        setInvoices(mapped);
+      } catch {
+        // Keep empty
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInvoices();
+  }, [locale]);
 
   const getStatusLabel = (status: Invoice["status"]) => {
     switch (status) {
@@ -81,6 +81,14 @@ const InvoicesContent = () => {
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
+  const handleDownload = async (invoiceId: string) => {
+    try {
+      const result = await invoiceApi.getPdfUrl(invoiceId);
+      if (result.url) window.open(result.url, "_blank");
+    } catch {}
+    setOpenMenuId(null);
+  };
+
   return (
     <>
       {/* Dashboard Navbar */}
@@ -109,8 +117,11 @@ const InvoicesContent = () => {
 
               {/* Invoices Section */}
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
-                {/* Invoices Table or Empty State */}
-                {invoices.length === 0 ? (
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 text-[#B8860B] animate-spin" />
+                  </div>
+                ) : invoices.length === 0 ? (
                   // Empty State
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
@@ -201,16 +212,21 @@ const InvoicesContent = () => {
                                 >
                                   <button
                                     className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
-                                    onClick={() => setOpenMenuId(null)}
-                                  >
-                                    {t("invoices.viewInvoice")}
-                                  </button>
-                                  <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
-                                    onClick={() => setOpenMenuId(null)}
+                                    onClick={() => handleDownload(invoice.id)}
                                   >
                                     {t("invoices.downloadInvoice")}
                                   </button>
+                                  {invoice.status === "paid" && (
+                                    <button
+                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        setRefundModal({ open: true, invoice });
+                                      }}
+                                    >
+                                      {t("invoices.requestRefund")}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </td>
@@ -245,16 +261,21 @@ const InvoicesContent = () => {
                                 >
                                   <button
                                     className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
-                                    onClick={() => setOpenMenuId(null)}
-                                  >
-                                    {t("invoices.viewInvoice")}
-                                  </button>
-                                  <button
-                                    className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
-                                    onClick={() => setOpenMenuId(null)}
+                                    onClick={() => handleDownload(invoice.id)}
                                   >
                                     {t("invoices.downloadInvoice")}
                                   </button>
+                                  {invoice.status === "paid" && (
+                                    <button
+                                      className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors ${isRTL ? "text-right" : "text-left"}`}
+                                      onClick={() => {
+                                        setOpenMenuId(null);
+                                        setRefundModal({ open: true, invoice });
+                                      }}
+                                    >
+                                      {t("invoices.requestRefund")}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -296,6 +317,17 @@ const InvoicesContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Refund Request Modal */}
+      {refundModal.invoice && (
+        <RefundRequestModal
+          isOpen={refundModal.open}
+          onClose={() => setRefundModal({ open: false, invoice: null })}
+          paymentId={refundModal.invoice.paymentId}
+          invoiceNumber={refundModal.invoice.invoiceNo}
+          amount={refundModal.invoice.amount}
+        />
+      )}
     </>
   );
 };

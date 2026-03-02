@@ -21,6 +21,7 @@ import {
   X,
   ShieldCheck,
   AlertTriangle,
+  BadgeDollarSign,
 } from "lucide-react";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -125,6 +126,13 @@ const CreateCourseContent = () => {
   const [bilingualContent, setBilingualContent] = useState(true);
   const [wcagCompliant, setWcagCompliant] = useState(true);
 
+  // Step 2: Pricing & CME
+  const [pricingType, setPricingType] = useState<"free" | "paid">("free");
+  const [price, setPrice] = useState("");
+  const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
+  const [cmeHours, setCmeHours] = useState("");
+  const [isCmeAccredited, setIsCmeAccredited] = useState(false);
+
   // Step 3: Instructor Assignment
   const [instructorId, setInstructorId] = useState("");
 
@@ -191,7 +199,11 @@ const CreateCourseContent = () => {
         }
         return true;
       case 2:
-        return true; // Schedule fields are optional
+        if (pricingType === "paid" && (!price || Number(price) <= 0)) {
+          toast.error(t("createCourse.priceRequired"));
+          return false;
+        }
+        return true;
       case 3:
         if (!instructorId) {
           toast.error(t("createCourse.instructorRequired"));
@@ -218,7 +230,7 @@ const CreateCourseContent = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(1) || !validateStep(3)) return;
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
 
     setSubmitting(true);
     try {
@@ -234,6 +246,12 @@ const CreateCourseContent = () => {
       if (maxEnrollment) payload.maxEnrollment = Number(maxEnrollment);
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
+
+      // Pricing fields
+      payload.price = pricingType === "paid" && price ? Number(price) : 0;
+      if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
+      if (cmeHours) payload.cmeHours = Number(cmeHours);
+      payload.isCmeAccredited = isCmeAccredited;
 
       const created = await courseManagerApi.createCourse(payload);
       toast.success(t("createCourse.success"));
@@ -510,6 +528,121 @@ const CreateCourseContent = () => {
                     </div>
                   </div>
 
+                  {/* Pricing & CME */}
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <BadgeDollarSign className="w-5 h-5 text-[#002D87]" />
+                      <h2 className="text-lg font-semibold text-[#1F2937]">
+                        {t("createCourse.pricingTitle")}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-[#6B7280] mb-4">
+                      {t("createCourse.pricingDescription")}
+                    </p>
+
+                    {/* Free / Paid Toggle */}
+                    <div className="flex rounded-lg border border-[#E5E7EB] overflow-hidden mb-4 max-w-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPricingType("free");
+                          setPrice("");
+                        }}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                          pricingType === "free"
+                            ? "bg-[#22C55E] text-white"
+                            : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"
+                        }`}
+                      >
+                        {t("createCourse.pricingFree")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPricingType("paid")}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                          pricingType === "paid"
+                            ? "bg-[#3B82F6] text-white"
+                            : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"
+                        }`}
+                      >
+                        {t("createCourse.pricingPaid")}
+                      </button>
+                    </div>
+
+                    {/* Price Input (visible when Paid) */}
+                    {pricingType === "paid" && (
+                      <div className="mb-4">
+                        <label htmlFor="course-price" className="block text-sm font-medium text-[#374151] mb-1">
+                          {t("createCourse.priceLabel")} *
+                        </label>
+                        <div className="relative max-w-xs">
+                          <input
+                            id="course-price"
+                            type="number"
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
+                            placeholder={t("createCourse.pricePlaceholder")}
+                            step="0.01"
+                            min="1"
+                            className={`${inputClass} pr-14`}
+                            required
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-[#6B7280]">
+                            SAR
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Enrollment Deadline */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
+                          {t("createCourse.enrollmentDeadlineLabel")}
+                        </label>
+                        <input
+                          id="enrollment-deadline"
+                          type="datetime-local"
+                          value={enrollmentDeadline}
+                          onChange={(e) => setEnrollmentDeadline(e.target.value)}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cme-hours" className="block text-sm font-medium text-[#374151] mb-1">
+                          {t("createCourse.cmeHoursLabel")}
+                        </label>
+                        <input
+                          id="cme-hours"
+                          type="number"
+                          value={cmeHours}
+                          onChange={(e) => setCmeHours(e.target.value)}
+                          min={0}
+                          placeholder="0"
+                          className={inputClass}
+                        />
+                      </div>
+                    </div>
+
+                    {/* CME Accredited Checkbox */}
+                    <label className="flex items-center justify-between p-3 mt-4 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
+                      <div>
+                        <p className="text-sm font-medium text-[#1F2937]">
+                          {t("createCourse.cmeAccreditedLabel")}
+                        </p>
+                        <p className="text-xs text-[#6B7280] mt-0.5">
+                          {t("createCourse.cmeAccreditedDesc")}
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={isCmeAccredited}
+                        onChange={(e) => setIsCmeAccredited(e.target.checked)}
+                        className="w-5 h-5 rounded border-[#D1D5DB] text-[#002D87] focus:ring-[#002D87]"
+                      />
+                    </label>
+                  </div>
+
                   {/* NELC Configuration */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <div className="flex items-center gap-2 mb-4">
@@ -778,6 +911,71 @@ const CreateCourseContent = () => {
                               className={`px-2 py-1 text-xs rounded-full ${wcagCompliant ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
                             >
                               {wcagCompliant ? "✓" : "✗"} WCAG 2.1 AA
+                            </span>
+                          </div>
+                        </dl>
+                      </div>
+
+                      {/* Pricing & CME */}
+                      <div className="border border-[#E5E7EB] rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                          {t("createCourse.pricingTitle")}
+                        </h3>
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <dt className="text-[#6B7280]">
+                              {t("createCourse.pricingTitle")}
+                            </dt>
+                            <dd className="font-medium text-[#1F2937]">
+                              <span
+                                className={`inline-block px-2 py-0.5 text-xs rounded-full ${
+                                  pricingType === "free"
+                                    ? "bg-green-50 text-green-700"
+                                    : "bg-blue-50 text-blue-700"
+                                }`}
+                              >
+                                {pricingType === "free"
+                                  ? t("createCourse.pricingFree")
+                                  : t("createCourse.pricingPaid")}
+                              </span>
+                            </dd>
+                          </div>
+                          {pricingType === "paid" && price && (
+                            <div>
+                              <dt className="text-[#6B7280]">
+                                {t("createCourse.priceLabel")}
+                              </dt>
+                              <dd className="font-medium text-[#1F2937]">
+                                {Number(price).toFixed(2)} SAR
+                              </dd>
+                            </div>
+                          )}
+                          {enrollmentDeadline && (
+                            <div>
+                              <dt className="text-[#6B7280]">
+                                {t("createCourse.enrollmentDeadlineLabel")}
+                              </dt>
+                              <dd className="font-medium text-[#1F2937]">
+                                {new Date(enrollmentDeadline).toLocaleString()}
+                              </dd>
+                            </div>
+                          )}
+                          {cmeHours && (
+                            <div>
+                              <dt className="text-[#6B7280]">
+                                {t("createCourse.cmeHoursLabel")}
+                              </dt>
+                              <dd className="font-medium text-[#1F2937]">
+                                {cmeHours}
+                              </dd>
+                            </div>
+                          )}
+                          <div className="sm:col-span-2">
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full ${isCmeAccredited ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
+                            >
+                              {isCmeAccredited ? "\u2713" : "\u2717"}{" "}
+                              {t("createCourse.cmeAccreditedLabel")}
                             </span>
                           </div>
                         </dl>

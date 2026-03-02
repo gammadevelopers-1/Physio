@@ -28,19 +28,21 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
 import { AuditLogModule } from './modules/audit-logs/audit-logs.module';
 import { StudentModule } from './modules/student/student.module';
 import { UserNotificationsModule } from './modules/user-notifications/user-notifications.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
 import storageConfig from './config/storage.config';
 import zoomConfig from './config/zoom.config';
 import processingConfig from './config/processing.config';
+import paymentsConfig from './config/payments.config';
 
 @Module({
   imports: [
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig],
+      load: [appConfig, databaseConfig, storageConfig, zoomConfig, processingConfig, paymentsConfig],
       envFilePath: [
         `.env.${process.env.NODE_ENV || 'local'}`,
         '.env.local',
@@ -94,6 +96,7 @@ import processingConfig from './config/processing.config';
     AuditLogModule,
     StudentModule,
     UserNotificationsModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [

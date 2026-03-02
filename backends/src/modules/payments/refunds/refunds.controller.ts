@@ -6,9 +6,11 @@ import {
   Body,
   Param,
   Query,
+  Req,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { RefundService } from '../services/refund.service';
 import { CreateRefundDto } from '../dto/create-refund.dto';
 import { RejectRefundDto } from '../dto/reject-refund.dto';
@@ -25,8 +27,20 @@ export class RefundsController {
   async requestRefund(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateRefundDto,
+    @Req() req: Request,
   ) {
-    return this.refundService.requestRefund(user.id, dto);
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.requestRefund(user.id, dto, ipAddress);
+  }
+
+  @Get('my-refunds')
+  @Roles('STUDENT')
+  async getMyRefunds(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    return this.refundService.getMyRefunds(user.id, page, limit);
   }
 
   @Get()
@@ -43,8 +57,10 @@ export class RefundsController {
   async approveRefund(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
-    return this.refundService.approveRefund(id, user.id);
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.approveRefund(id, user.id, ipAddress);
   }
 
   @Patch(':id/reject')
@@ -53,7 +69,9 @@ export class RefundsController {
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: RejectRefundDto,
+    @Req() req: Request,
   ) {
-    return this.refundService.rejectRefund(id, user.id, dto);
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.refundService.rejectRefund(id, user.id, dto, ipAddress);
   }
 }

@@ -41,7 +41,7 @@ export class RefundService {
     private readonly emailService: EmailService,
   ) {}
 
-  async requestRefund(userId: string, dto: CreateRefundDto) {
+  async requestRefund(userId: string, dto: CreateRefundDto, ipAddress?: string) {
     // 1. Find the payment
     const [payment] = await db
       .select()
@@ -121,6 +121,7 @@ export class RefundService {
       entityId: refund.id,
       action: 'refund_requested',
       performedBy: userId,
+      ipAddress,
       metadata: {
         paymentId: dto.paymentId,
         reason: dto.reason,
@@ -133,7 +134,7 @@ export class RefundService {
     return refund;
   }
 
-  async approveRefund(refundId: string, processedBy: string) {
+  async approveRefund(refundId: string, processedBy: string, ipAddress?: string) {
     const [refund] = await db
       .select()
       .from(refunds)
@@ -196,6 +197,7 @@ export class RefundService {
       entityId: refundId,
       action: 'refund_approved',
       performedBy: processedBy,
+      ipAddress,
       metadata: {
         gatewayRefundId: refundResult.refundId,
         refundAmount: refund.refundAmount,
@@ -209,6 +211,7 @@ export class RefundService {
     refundId: string,
     processedBy: string,
     dto: RejectRefundDto,
+    ipAddress?: string,
   ) {
     const [refund] = await db
       .select()
@@ -253,6 +256,7 @@ export class RefundService {
       entityId: refundId,
       action: 'refund_rejected',
       performedBy: processedBy,
+      ipAddress,
       metadata: { rejectionNote: dto.rejectionNote },
     });
 
@@ -327,11 +331,53 @@ export class RefundService {
       entityId: refundId,
       action: 'refund_completed',
       performedBy: 'system',
+      ipAddress: 'system-webhook',
       metadata: {
         paymentId: refund.paymentId,
         refundAmount: refund.refundAmount,
       },
     });
+  }
+
+  async getMyRefunds(userId: string, page: number = 1, limit: number = 10) {
+    const offset = (page - 1) * limit;
+
+    const refundsList = await db
+      .select({
+        id: refunds.id,
+        paymentId: refunds.paymentId,
+        reason: refunds.reason,
+        reasonNote: refunds.reasonNote,
+        originalAmount: refunds.originalAmount,
+        deductionAmount: refunds.deductionAmount,
+        refundAmount: refunds.refundAmount,
+        status: refunds.status,
+        createdAt: refunds.createdAt,
+        approvedAt: refunds.approvedAt,
+        completedAt: refunds.completedAt,
+        rejectedAt: refunds.rejectedAt,
+        rejectionNote: refunds.rejectionNote,
+      })
+      .from(refunds)
+      .where(eq(refunds.requestedBy, userId))
+      .orderBy(desc(refunds.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const [totalResult] = await db
+      .select({ count: count() })
+      .from(refunds)
+      .where(eq(refunds.requestedBy, userId));
+
+    return {
+      data: refundsList,
+      pagination: {
+        page,
+        limit,
+        total: Number(totalResult?.count || 0),
+        totalPages: Math.ceil(Number(totalResult?.count || 0) / limit),
+      },
+    };
   }
 
   async getAllRefunds(page: number = 1, limit: number = 10) {

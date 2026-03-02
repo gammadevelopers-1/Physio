@@ -128,6 +128,7 @@
     "liveSupport": "الدعم المباشر",
     "feedback": "الملاحظات",
     "faq": "الأسئلة الشائعة",
+    "refundPolicy": "سياسة الاسترداد",
     "copyright": "فيزيو جايدنس، 2025"
   },
   "bottomNav": {
@@ -154,7 +155,8 @@
     "contactUs": "اتصل بنا",
     "liveSupport": "الدعم المباشر",
     "feedback": "الملاحظات",
-    "faq": "الأسئلة الشائعة"
+    "faq": "الأسئلة الشائعة",
+    "refundPolicy": "سياسة الاسترداد"
   },
   "aboutPage": {
     "hero": {
@@ -1034,6 +1036,8 @@
       "subtitle": "جميع المعاملات آمنة ومشفرة",
       "creditCard": "بطاقة إئتمان",
       "tabby": "ادفع لاحقًا مع Tabby",
+      "tamara": "تمارا - ٣ دفعات",
+      "selectGateway": "اختر طريقة الدفع",
       "cardNumber": "رقم البطاقة",
       "expiry": "انتهاء الصلاحية",
       "cvc": "رمز التحقق من البطاقة",
@@ -1041,7 +1045,23 @@
       "saveInfo": "احفظ معلوماتي لإجراء عملية دفع أسرع باستخدام حساب المتجر",
       "secureEncrypted": "آمنة ومشفرة",
       "payNow": "ادفع الان",
+      "processing": "جاري المعالجة...",
       "securePaymentThrough": "الدفع الآمن من خلال"
+    },
+    "discount": {
+      "title": "رمز الخصم",
+      "placeholder": "أدخل رمز الخصم",
+      "apply": "تطبيق",
+      "applied": "تم تطبيق الخصم:",
+      "subtotal": "المجموع الفرعي",
+      "discountLabel": "الخصم",
+      "total": "المجموع"
+    },
+    "errors": {
+      "courseNotFound": "لم يتم العثور على الدورة",
+      "selectCourse": "يرجى تحديد دورة للشراء",
+      "browseCourses": "تصفح الدورات",
+      "paymentFailed": "فشل بدء الدفع. يرجى المحاولة مرة أخرى."
     }
   },
   "blogsPage": {

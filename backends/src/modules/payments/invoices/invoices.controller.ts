@@ -27,6 +27,7 @@ export class InvoicesController {
   }
 
   @Get(':id/pdf')
+  @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getInvoicePdf(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,

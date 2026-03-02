@@ -47,7 +47,7 @@ export default function CartPage() {
           dir={isRTL ? "rtl" : "ltr"}
         >
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-[#6B7280] mb-6">
+          <nav aria-label={isRTL ? "مسار التنقل" : "Breadcrumb"} className="flex items-center gap-2 text-sm text-[#6B7280] mb-6">
             <Link
               href={`/${locale}`}
               className="hover:text-[#1F2937] transition-colors"
@@ -69,7 +69,7 @@ export default function CartPage() {
               </h1>
             </div>
             {mounted && itemCount > 0 && (
-              <span className="text-sm text-[#6B7280]">
+              <span aria-live="polite" className="text-sm text-[#6B7280]">
                 {t("itemCount", { count: itemCount })}
               </span>
             )}
@@ -113,6 +113,8 @@ export default function CartPage() {
                 {items.map((item) => (
                   <div
                     key={item.id}
+                    role="article"
+                    aria-label={getTitle(item)}
                     className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
                   >
                     {/* Card Content */}
@@ -180,7 +182,8 @@ export default function CartPage() {
                           </span>
                           <Link
                             href={`/${locale}/checkout?courseId=${item.id}`}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium"
+                            aria-label={`${t("proceedToCheckout")} - ${getTitle(item)}`}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium focus-ring"
                           >
                             {t("proceedToCheckout")}
                             <Arrow className="w-3.5 h-3.5" />

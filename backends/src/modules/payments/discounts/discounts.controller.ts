@@ -23,6 +23,7 @@ export class DiscountsController {
   constructor(private readonly discountService: DiscountService) {}
 
   @Post('validate')
+  @Roles('STUDENT')
   async validateDiscount(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ValidateDiscountDto,

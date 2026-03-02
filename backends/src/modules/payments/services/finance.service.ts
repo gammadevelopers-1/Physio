@@ -1,13 +1,27 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
+import { sql, and, gte, lte, eq, desc } from 'drizzle-orm';
 import { db } from '../../../database';
-import { payments, invoices, refunds } from '../../../database/schema';
+import { payments, invoices, users, courses } from '../../../database/schema';
 
 @Injectable()
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
 
-  async getSummary() {
+  private buildDateConditions(startDate?: string, endDate?: string) {
+    const conditions: any[] = [];
+    if (startDate) {
+      conditions.push(gte(payments.createdAt, new Date(startDate)));
+    }
+    if (endDate) {
+      conditions.push(lte(payments.createdAt, new Date(endDate)));
+    }
+    return conditions;
+  }
+
+  async getSummary(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
     const [stats] = await db
       .select({
         totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
@@ -17,7 +31,8 @@ export class FinanceService {
         pendingAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
         failedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'failed' THEN 1 END)`,
       })
-      .from(payments);
+      .from(payments)
+      .where(whereClause);
 
     const totalRevenue = Number(stats?.totalRevenue || 0);
     const totalPayments = Number(stats?.totalPayments || 0);
@@ -35,7 +50,10 @@ export class FinanceService {
     };
   }
 
-  async getRevenueBySource() {
+  async getRevenueBySource(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
     const results = await db
       .select({
         gateway: payments.gateway,
@@ -43,6 +61,7 @@ export class FinanceService {
         count: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)`,
       })
       .from(payments)
+      .where(whereClause)
       .groupBy(payments.gateway);
 
     return results.map((r) => ({
@@ -52,7 +71,10 @@ export class FinanceService {
     }));
   }
 
-  async getPaymentStatus() {
+  async getPaymentStatus(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
     const results = await db
       .select({
         status: payments.status,
@@ -60,6 +82,7 @@ export class FinanceService {
         totalAmount: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
       })
       .from(payments)
+      .where(whereClause)
       .groupBy(payments.status);
 
     return results.map((r) => ({
@@ -69,7 +92,10 @@ export class FinanceService {
     }));
   }
 
-  async getRefundRate() {
+  async getRefundRate(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
     const [stats] = await db
       .select({
         totalPaid: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)`,
@@ -77,7 +103,8 @@ export class FinanceService {
         refundedAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
         paidAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
       })
-      .from(payments);
+      .from(payments)
+      .where(whereClause);
 
     const totalPaid = Number(stats?.totalPaid || 0);
     const totalRefunded = Number(stats?.totalRefunded || 0);
@@ -117,5 +144,86 @@ export class FinanceService {
       ninetyPlus: Number(result?.ninetyPlus || 0),
       paid: Number(result?.paid || 0),
     };
+  }
+
+  async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string): Promise<string> {
+    const conditions: any[] = [];
+    if (startDate) {
+      conditions.push(gte(payments.createdAt, new Date(startDate)));
+    }
+    if (endDate) {
+      conditions.push(lte(payments.createdAt, new Date(endDate)));
+    }
+    if (status) {
+      conditions.push(eq(payments.status, status));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select({
+        id: payments.id,
+        userEmail: users.email,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        courseId: payments.courseId,
+        courseTitle: courses.title,
+        amount: payments.amount,
+        currency: payments.currency,
+        gateway: payments.gateway,
+        paymentMethod: payments.paymentMethod,
+        status: payments.status,
+        paidAt: payments.paidAt,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(whereClause)
+      .orderBy(desc(payments.createdAt));
+
+    // Build CSV
+    const lines: string[] = [];
+
+    // Metadata header
+    lines.push(`# PhysioGuidance Payment Export | NELC Compliant`);
+    lines.push(`# Generated: ${new Date().toISOString()}`);
+    if (startDate || endDate) {
+      lines.push(`# Date Range: ${startDate || 'beginning'} to ${endDate || 'now'}`);
+    }
+    if (status) {
+      lines.push(`# Status Filter: ${status}`);
+    }
+    lines.push('');
+
+    // CSV header
+    lines.push('PaymentID,UserEmail,UserName,CourseID,CourseTitle,Amount,Currency,Gateway,PaymentMethod,Status,PaidAt,CreatedAt');
+
+    // Data rows
+    for (const row of rows) {
+      const escapeCsv = (val: any) => {
+        if (val == null) return '';
+        const str = String(val);
+        return str.includes(',') || str.includes('"') || str.includes('\n')
+          ? `"${str.replace(/"/g, '""')}"`
+          : str;
+      };
+
+      lines.push([
+        escapeCsv(row.id),
+        escapeCsv(row.userEmail),
+        escapeCsv(row.userName),
+        escapeCsv(row.courseId),
+        escapeCsv(row.courseTitle),
+        escapeCsv(row.amount),
+        escapeCsv(row.currency),
+        escapeCsv(row.gateway),
+        escapeCsv(row.paymentMethod),
+        escapeCsv(row.status),
+        escapeCsv(row.paidAt ? new Date(row.paidAt).toISOString() : ''),
+        escapeCsv(row.createdAt ? new Date(row.createdAt).toISOString() : ''),
+      ].join(','));
+    }
+
+    return lines.join('\n');
   }
 }

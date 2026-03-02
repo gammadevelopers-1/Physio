@@ -128,6 +128,7 @@
     "liveSupport": "Live Support",
     "feedback": "Feedback",
     "faq": "FAQ",
+    "refundPolicy": "Refund Policy",
     "copyright": "2025, PhysioGuidance"
   },
   "bottomNav": {
@@ -154,7 +155,8 @@
     "contactUs": "Contact Us",
     "liveSupport": "Live Support",
     "feedback": "Feedback",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "refundPolicy": "Refund Policy"
   },
   "aboutPage": {
     "hero": {
@@ -931,6 +933,8 @@
       "subtitle": "All transactions are secure and encrypted",
       "creditCard": "Credit card",
       "tabby": "Pay later with Tabby",
+      "tamara": "Tamara - 3 Installments",
+      "selectGateway": "Select payment method",
       "cardNumber": "Card Number",
       "expiry": "Expiry",
       "cvc": "CVC",
@@ -938,7 +942,23 @@
       "saveInfo": "Save my information for a faster checkout with a Shop account",
       "secureEncrypted": "Secure and encrypted",
       "payNow": "Pay Now",
+      "processing": "Processing...",
       "securePaymentThrough": "Secure payment through"
+    },
+    "discount": {
+      "title": "Discount Code",
+      "placeholder": "Enter discount code",
+      "apply": "Apply",
+      "applied": "Discount applied:",
+      "subtotal": "Subtotal",
+      "discountLabel": "Discount",
+      "total": "Total"
+    },
+    "errors": {
+      "courseNotFound": "Course not found",
+      "selectCourse": "Please select a course to purchase",
+      "browseCourses": "Browse Courses",
+      "paymentFailed": "Payment initiation failed. Please try again."
     }
   },
   "blogsPage": {

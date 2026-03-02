@@ -5,11 +5,12 @@ import {
   Body,
   Query,
   Param,
+  Req,
   Res,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -26,8 +27,10 @@ export class PaymentsController {
   async initiatePayment(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: InitiatePaymentDto,
+    @Req() req: Request,
   ) {
-    return this.paymentsService.initiatePayment(user, dto);
+    const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
+    return this.paymentsService.initiatePayment(user, dto, ipAddress);
   }
 
   @Get('callback')

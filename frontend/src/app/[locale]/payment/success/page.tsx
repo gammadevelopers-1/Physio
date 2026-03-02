@@ -80,10 +80,10 @@ export default function PaymentSuccessPage() {
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
   return (
-    <div className="min-h-screen bg-[#EEF3F7] flex flex-col">
+    <div className="min-h-screen bg-[#EEF3F7] flex flex-col" dir={isRTL ? "rtl" : "ltr"}>
       <Navbar />
-      <main className="flex-1 flex items-center justify-center px-4 py-20">
-        <div className="bg-white rounded-2xl shadow-sm p-8 max-w-lg w-full text-center">
+      <main className="flex-1 flex items-center justify-center px-4 py-20" aria-label={t("title")}>
+        <div role="status" aria-live="polite" className="bg-white rounded-2xl shadow-sm p-8 max-w-lg w-full text-center">
           {loading ? (
             <div className="py-12">
               <div className="w-8 h-8 border-2 border-[#B8860B] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -145,21 +145,24 @@ export default function PaymentSuccessPage() {
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => router.push(`/${locale}/student-dashboard`)}
-                  className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2"
+                  aria-label={t("goToDashboard")}
+                  className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2 focus-ring"
                 >
                   {t("goToDashboard")}
-                  <Arrow className="w-4 h-4" />
+                  <Arrow className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
                   onClick={handleDownloadInvoice}
-                  className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                  aria-label={t("downloadInvoice")}
+                  className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition focus-ring"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4" aria-hidden="true" />
                   {t("downloadInvoice")}
                 </button>
                 <button
                   onClick={() => router.push(`/${locale}/courses`)}
-                  className="text-sm text-[#737373] hover:text-[#1a1a1a] transition"
+                  aria-label={t("browseCourses")}
+                  className="text-sm text-[#737373] hover:text-[#1a1a1a] transition focus-ring rounded"
                 >
                   {t("browseCourses")}
                 </button>

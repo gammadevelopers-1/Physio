@@ -88,7 +88,7 @@ export default function CheckoutPage() {
         valid: false,
         discountAmount: 0,
         discountId: null,
-        error: err.message || "Failed to validate discount code",
+        error: err.message || t("errors.paymentFailed"),
       });
     } finally {
       setValidatingDiscount(false);
@@ -118,7 +118,7 @@ export default function CheckoutPage() {
       // Redirect to gateway payment page
       window.location.href = result.redirectUrl;
     } catch (err: any) {
-      setError(err.message || "Payment initiation failed. Please try again.");
+      setError(err.message || t("errors.paymentFailed"));
       setProcessing(false);
     }
   };
@@ -133,11 +133,19 @@ export default function CheckoutPage() {
     }
   };
 
+  // Handle keyboard selection for gateway radio buttons
+  const handleGatewayKeyDown = (e: React.KeyboardEvent, gw: typeof gateway) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      handleGatewayChange(gw);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center" aria-label={t("payment.title")}>
           <Loader2 className="w-8 h-8 animate-spin text-[var(--on-surface-variant)]" />
         </main>
         <Footer />
@@ -149,12 +157,12 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
         <Navbar />
-        <main className="flex-1 flex items-center justify-center px-4">
+        <main className="flex-1 flex items-center justify-center px-4" dir={isRTL ? "rtl" : "ltr"}>
           <div className="text-center">
-            <h1 className="text-2xl font-semibold mb-2">{isRTL ? "لم يتم العثور على الدورة" : "Course not found"}</h1>
-            <p className="text-[var(--on-surface-variant)] mb-4">{isRTL ? "يرجى تحديد دورة للدفع" : "Please select a course to purchase"}</p>
-            <Link href="/courses" className="btn-gold px-6 py-3 rounded-xl text-white font-medium">
-              {isRTL ? "تصفح الدورات" : "Browse Courses"}
+            <h1 className="text-2xl font-semibold mb-2">{t("errors.courseNotFound")}</h1>
+            <p className="text-[var(--on-surface-variant)] mb-4">{t("errors.selectCourse")}</p>
+            <Link href="/courses" className="btn-gold px-6 py-3 rounded-xl text-white font-medium focus-ring">
+              {t("errors.browseCourses")}
             </Link>
           </div>
         </main>
@@ -169,20 +177,21 @@ export default function CheckoutPage() {
     <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
       <Navbar />
 
-      <main id="main-content" className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"}>
+      <main id="main-content" className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"} aria-label={t("payment.title")}>
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm mb-6">
-          <Link href="/" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <nav aria-label={isRTL ? "مسار التنقل" : "Breadcrumb"} className="flex items-center gap-2 text-sm mb-6">
+          <Link href="/" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] focus-ring rounded">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path d="M6.66667 14.1667H13.3333M9.18141 2.30333L3.52949 6.69927C3.15168 6.99312 2.96278 7.14005 2.82669 7.32405C2.70614 7.48704 2.61633 7.67065 2.56169 7.86588C2.5 8.08627 2.5 8.32558 2.5 8.80421V14.8333C2.5 15.7667 2.5 16.2335 2.68166 16.59C2.84144 16.9036 3.09641 17.1585 3.41002 17.3183C3.76654 17.5 4.23325 17.5 5.16667 17.5H14.8333C15.7668 17.5 16.2335 17.5 16.59 17.3183C16.9036 17.1585 17.1586 16.9036 17.3183 16.59C17.5 16.2335 17.5 15.7667 17.5 14.8333V8.80421C17.5 8.32558 17.5 8.08627 17.4383 7.86588C17.3837 7.67065 17.2939 7.48704 17.1733 7.32405C17.0372 7.14005 16.8483 6.99312 16.4705 6.69927L10.8186 2.30333C10.5258 2.07562 10.3794 1.96177 10.2178 1.91918C10.0752 1.88168 9.92484 1.88168 9.78221 1.91918C9.62057 1.96177 9.47418 2.07562 9.18141 2.30333Z" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+            <span className="sr-only">{isRTL ? "الرئيسية" : "Home"}</span>
           </Link>
-          {isRTL ? <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" /> : <ChevronRight size={14} className="text-[var(--on-surface-variant)]" />}
-          <Link href="/courses" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">
+          {isRTL ? <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" aria-hidden="true" /> : <ChevronRight size={14} className="text-[var(--on-surface-variant)]" aria-hidden="true" />}
+          <Link href="/courses" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] focus-ring rounded">
             {t("breadcrumb.courses")}
           </Link>
-          {isRTL ? <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" /> : <ChevronRight size={14} className="text-[var(--on-surface-variant)]" />}
-          <span className="text-[var(--on-surface-default)] font-medium">{t("breadcrumb.buyNow")}</span>
+          {isRTL ? <ChevronLeft size={14} className="text-[var(--on-surface-variant)]" aria-hidden="true" /> : <ChevronRight size={14} className="text-[var(--on-surface-variant)]" aria-hidden="true" />}
+          <span className="text-[var(--on-surface-default)] font-medium" aria-current="page">{t("breadcrumb.buyNow")}</span>
         </nav>
 
         {/* Main Grid */}
@@ -210,19 +219,19 @@ export default function CheckoutPage() {
                   <div className="flex items-center gap-3 flex-wrap">
                     {course.deliveryType && (
                       <div className="flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f]">
-                        <Video className="w-4 h-4" />
+                        <Video className="w-4 h-4" aria-hidden="true" />
                         <span>{course.deliveryType}</span>
                       </div>
                     )}
                     {course.startDate && (
                       <div className="flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f]">
-                        <Calendar className="w-4 h-4" />
+                        <Calendar className="w-4 h-4" aria-hidden="true" />
                         <span>{new Date(course.startDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}</span>
                       </div>
                     )}
                     {course.cmeHours > 0 && (
                       <div className="flex items-center gap-1 bg-[#f4f4f5] px-2 py-1 rounded-lg text-sm text-[#4a4c4f]">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-4 h-4" aria-hidden="true" />
                         <span>{course.cmeHours} {isRTL ? "ساعات" : "CME Hours"}</span>
                       </div>
                     )}
@@ -234,11 +243,11 @@ export default function CheckoutPage() {
             {/* Discount Code Card */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-[var(--on-surface-default)] mb-3">
-                {isRTL ? "رمز الخصم" : "Discount Code"}
+                {t("discount.title")}
               </h2>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Tag className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-variant)]`} />
+                  <Tag className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-variant)]`} aria-hidden="true" />
                   <input
                     type="text"
                     value={discountCode}
@@ -246,27 +255,29 @@ export default function CheckoutPage() {
                       setDiscountCode(e.target.value.toUpperCase());
                       setDiscountResult(null);
                     }}
-                    placeholder={isRTL ? "أدخل رمز الخصم" : "Enter discount code"}
-                    className={`w-full h-12 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors`}
+                    placeholder={t("discount.placeholder")}
+                    aria-label={t("discount.title")}
+                    className={`w-full h-12 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 transition-colors`}
                     dir="ltr"
                   />
                 </div>
                 <button
                   onClick={handleValidateDiscount}
                   disabled={!discountCode.trim() || validatingDiscount}
-                  className="h-12 px-6 rounded-lg bg-[#f4f4f5] text-[var(--on-surface-default)] font-medium hover:bg-[#e5e5e5] transition-colors disabled:opacity-50"
+                  aria-label={t("discount.apply")}
+                  className="h-12 px-6 rounded-lg bg-[#f4f4f5] text-[var(--on-surface-default)] font-medium hover:bg-[#e5e5e5] transition-colors disabled:opacity-50 focus-ring"
                 >
                   {validatingDiscount ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    isRTL ? "تطبيق" : "Apply"
+                    t("discount.apply")
                   )}
                 </button>
               </div>
               {discountResult && (
-                <p className={`mt-2 text-sm ${discountResult.valid ? "text-green-600" : "text-red-500"}`}>
+                <p aria-live="polite" className={`mt-2 text-sm ${discountResult.valid ? "text-green-600" : "text-red-500"}`}>
                   {discountResult.valid
-                    ? `${isRTL ? "تم تطبيق الخصم:" : "Discount applied:"} SAR ${discountResult.discountAmount.toFixed(2)}`
+                    ? `${t("discount.applied")} SAR ${discountResult.discountAmount.toFixed(2)}`
                     : discountResult.error}
                 </p>
               )}
@@ -284,17 +295,21 @@ export default function CheckoutPage() {
               </p>
 
               {/* Gateway Selection */}
-              <div className="flex flex-col gap-3 mb-4">
+              <div role="radiogroup" aria-label={t("payment.selectGateway")} className="flex flex-col gap-3 mb-4">
                 {/* Card Payment (Tap) */}
                 <div
-                  className={`cursor-pointer transition-colors border rounded-xl ${
+                  role="radio"
+                  aria-checked={gateway === "tap"}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleGatewayKeyDown(e, "tap")}
+                  className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${
                     gateway === "tap" ? "border-[#005bd3]" : "border-[#e5e5e5]"
                   }`}
                   onClick={() => handleGatewayChange("tap")}
                 >
                   <div className={`flex items-center justify-between p-[14px] ${gateway === "tap" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
                     <div className="flex items-center gap-[11px]">
-                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tap" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} />
+                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tap" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
                       <span className="font-medium text-[var(--on-surface-default)]">
                         {t("payment.creditCard")}
                       </span>
@@ -309,14 +324,18 @@ export default function CheckoutPage() {
 
                 {/* Tabby BNPL */}
                 <div
-                  className={`cursor-pointer transition-colors border rounded-xl ${
+                  role="radio"
+                  aria-checked={gateway === "tabby"}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleGatewayKeyDown(e, "tabby")}
+                  className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${
                     gateway === "tabby" ? "border-[#005bd3]" : "border-[#e5e5e5]"
                   }`}
                   onClick={() => handleGatewayChange("tabby")}
                 >
                   <div className={`flex items-center justify-between p-[14px] ${gateway === "tabby" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
                     <div className="flex items-center gap-[11px]">
-                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tabby" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} />
+                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tabby" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
                       <span className="font-medium text-[var(--on-surface-default)]">
                         {t("payment.tabby")}
                       </span>
@@ -327,16 +346,20 @@ export default function CheckoutPage() {
 
                 {/* Tamara BNPL */}
                 <div
-                  className={`cursor-pointer transition-colors border rounded-xl ${
+                  role="radio"
+                  aria-checked={gateway === "tamara"}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleGatewayKeyDown(e, "tamara")}
+                  className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${
                     gateway === "tamara" ? "border-[#005bd3]" : "border-[#e5e5e5]"
                   }`}
                   onClick={() => handleGatewayChange("tamara")}
                 >
                   <div className={`flex items-center justify-between p-[14px] ${gateway === "tamara" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
                     <div className="flex items-center gap-[11px]">
-                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tamara" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} />
+                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "tamara" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
                       <span className="font-medium text-[var(--on-surface-default)]">
-                        {isRTL ? "تمارا - ٣ دفعات" : "Tamara - 3 Installments"}
+                        {t("payment.tamara")}
                       </span>
                     </div>
                   </div>
@@ -346,30 +369,30 @@ export default function CheckoutPage() {
               {/* Order Summary */}
               <div className="border-t border-[#e5e5e5] pt-4 mb-4">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-[var(--on-surface-variant)]">{isRTL ? "المجموع الفرعي" : "Subtotal"}</span>
+                  <span className="text-sm text-[var(--on-surface-variant)]">{t("discount.subtotal")}</span>
                   <span className="text-sm font-medium">SAR {coursePrice.toFixed(2)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between mb-2">
-                    <span className="text-sm text-green-600">{isRTL ? "الخصم" : "Discount"}</span>
+                    <span className="text-sm text-green-600">{t("discount.discountLabel")}</span>
                     <span className="text-sm font-medium text-green-600">- SAR {discountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-[#e5e5e5]">
-                  <span className="font-semibold">{isRTL ? "المجموع" : "Total"}</span>
+                  <span className="font-semibold">{t("discount.total")}</span>
                   <span className="font-semibold text-lg">SAR {totalAmount.toFixed(2)}</span>
                 </div>
               </div>
 
               {/* Secure Text */}
               <div className="flex items-center justify-center gap-1.5 text-sm text-[var(--on-surface-variant)] mb-4">
-                <Lock className="w-4 h-4" />
+                <Lock className="w-4 h-4" aria-hidden="true" />
                 <span>{t("payment.secureEncrypted")}</span>
               </div>
 
               {/* Error Message */}
               {error && (
-                <div className="bg-[#FEE2E2] rounded-lg px-4 py-3 mb-4">
+                <div role="alert" className="bg-[#FEE2E2] rounded-lg px-4 py-3 mb-4">
                   <p className="text-[#DC2626] text-sm">{error}</p>
                 </div>
               )}
@@ -378,12 +401,14 @@ export default function CheckoutPage() {
               <button
                 onClick={handleSubmit}
                 disabled={processing}
-                className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4 flex items-center justify-center gap-2 disabled:opacity-50"
+                aria-busy={processing}
+                aria-label={processing ? (isRTL ? "جاري المعالجة" : "Processing payment") : `${t("payment.payNow")} - SAR ${totalAmount.toFixed(2)}`}
+                className="w-full h-12 rounded-xl text-white font-medium btn-gold hover:opacity-90 transition-opacity mb-4 flex items-center justify-center gap-2 disabled:opacity-50 focus-ring"
               >
                 {processing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{isRTL ? "جاري المعالجة..." : "Processing..."}</span>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>{t("payment.processing")}</span>
                   </>
                 ) : (
                   <span>{t("payment.payNow")} - SAR {totalAmount.toFixed(2)}</span>

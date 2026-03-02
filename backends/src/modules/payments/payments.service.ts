@@ -33,7 +33,7 @@ export class PaymentsService {
     private readonly auditLogService: AuditLogService,
   ) {}
 
-  async initiatePayment(user: AuthenticatedUser, dto: InitiatePaymentDto) {
+  async initiatePayment(user: AuthenticatedUser, dto: InitiatePaymentDto, ipAddress?: string) {
     // 1. Validate course exists, is active, and has a price
     const [course] = await db
       .select()
@@ -251,6 +251,7 @@ export class PaymentsService {
       entityId: result.payment.id,
       action: 'payment_initiated',
       performedBy: user.id,
+      ipAddress,
       metadata: {
         courseId: dto.courseId,
         gateway: dto.gateway,
@@ -379,6 +380,7 @@ export class PaymentsService {
       entityId: paymentId,
       action: 'payment_completed',
       performedBy: payment.userId,
+      ipAddress: 'system-webhook',
       metadata: {
         gateway: payment.gateway,
         amount: payment.amount,
@@ -431,6 +433,7 @@ export class PaymentsService {
       entityId: paymentId,
       action: 'payment_failed',
       performedBy: payment.userId,
+      ipAddress: 'system-webhook',
       metadata: { gateway: payment.gateway, reason },
     });
   }

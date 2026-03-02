@@ -45,6 +45,7 @@ const Footer = ({ siteSettings, footerLinks }: FooterProps) => {
     { label: t("liveSupport"), href: `/${locale}/support` },
     { label: t("feedback"), href: `/${locale}/feedback` },
     { label: t("faq"), href: `/${locale}/faq` },
+    { label: t("refundPolicy"), href: `/${locale}/policies#cancellation` },
   ];
 
   // Map Strapi links or use fallbacks

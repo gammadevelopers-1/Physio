@@ -22,8 +22,8 @@ export FRONTEND_MAX_INSTANCES=3
 # Backend Configuration
 export BACKEND_SERVICE_NAME="physioguidance-api"
 export BACKEND_PORT=8080
-export BACKEND_MEMORY="1Gi"
-export BACKEND_CPU="1"
+export BACKEND_MEMORY="2Gi"
+export BACKEND_CPU="2"
 export BACKEND_MIN_INSTANCES=0
 export BACKEND_MAX_INSTANCES=3
 

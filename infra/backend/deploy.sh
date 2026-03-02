@@ -151,6 +151,10 @@ if gcloud secrets describe REDIS_HOST &>/dev/null 2>&1; then
     SECRETS="${SECRETS},REDIS_HOST=REDIS_HOST:latest"
     ENV_VARS="${ENV_VARS}||REDIS_PORT=6378||REDIS_TLS=true||FFMPEG_ENABLED=true||AUTO_APPROVE_MATERIALS=false"
     log_info "Redis/Memorystore configured — content processing enabled"
+    if gcloud secrets describe REDIS_CA_CERT &>/dev/null 2>&1; then
+        SECRETS="${SECRETS},REDIS_CA_CERT=REDIS_CA_CERT:latest"
+        log_info "Redis CA cert found — using verified TLS"
+    fi
 else
     ENV_VARS="${ENV_VARS}||FFMPEG_ENABLED=false"
     log_warning "REDIS_HOST secret not found — content processing disabled"

@@ -146,6 +146,24 @@ else
     log_warning "ZOOM_ACCOUNT_ID secret not found - using mock Zoom service"
 fi
 
+# Content Processing (Redis/Memorystore)
+if gcloud secrets describe REDIS_HOST &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},REDIS_HOST=REDIS_HOST:latest"
+    ENV_VARS="${ENV_VARS}||REDIS_PORT=6379||REDIS_TLS=true||FFMPEG_ENABLED=true||AUTO_APPROVE_MATERIALS=false"
+    log_info "Redis/Memorystore configured — content processing enabled"
+else
+    ENV_VARS="${ENV_VARS}||FFMPEG_ENABLED=false"
+    log_warning "REDIS_HOST secret not found — content processing disabled"
+fi
+
+# OpenAI (Whisper transcription)
+if gcloud secrets describe OPENAI_API_KEY &>/dev/null 2>&1; then
+    SECRETS="${SECRETS},OPENAI_API_KEY=OPENAI_API_KEY:latest"
+    log_info "OpenAI API key found — auto-transcription enabled"
+else
+    log_warning "OPENAI_API_KEY secret not found — transcription disabled"
+fi
+
 if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
     log_info "Connecting to Cloud SQL: ${DB_INSTANCE_NAME}"
     gcloud run deploy ${BACKEND_SERVICE_NAME} \
@@ -159,6 +177,8 @@ if gcloud sql instances describe ${DB_INSTANCE_NAME} &>/dev/null; then
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
         --add-cloudsql-instances=${CONNECTION_NAME} \
+        --vpc-connector=physio-vpc-connector \
+        --vpc-egress=private-ranges-only \
         --set-env-vars="${ENV_VARS}" \
         --set-secrets="${SECRETS}" \
         --quiet
@@ -174,6 +194,8 @@ else
         --cpu=${BACKEND_CPU} \
         --min-instances=${BACKEND_MIN_INSTANCES} \
         --max-instances=${BACKEND_MAX_INSTANCES} \
+        --vpc-connector=physio-vpc-connector \
+        --vpc-egress=private-ranges-only \
         --set-env-vars="${ENV_VARS}" \
         --set-secrets="${SECRETS}" \
         --quiet

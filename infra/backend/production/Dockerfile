@@ -31,6 +31,9 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
+# Install FFmpeg for video processing pipeline
+RUN apk add --no-cache ffmpeg
+
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nestjs

@@ -60,6 +60,7 @@ import processingConfig from './config/processing.config';
               connection: {
                 host: configService.get('processing.redis.host', 'localhost'),
                 port: configService.get('processing.redis.port', 6379),
+                ...(configService.get('processing.redis.tls') ? { tls: {} } : {}),
               },
             }),
             inject: [ConfigService],

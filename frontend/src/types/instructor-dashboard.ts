@@ -548,6 +548,7 @@ export interface CourseMaterialResponse {
   transcriptUrl: string | null;
   processingStep: string | null;
   processingError: string | null;
+  autoTranscribe?: boolean;
   uploadedBy: string;
   reviewedBy: string | null;
   reviewNote: string | null;

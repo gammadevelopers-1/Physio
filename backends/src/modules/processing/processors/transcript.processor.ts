@@ -9,6 +9,7 @@ import { courseMaterials } from '../../../database/schema';
 import { QUEUE_NAMES, JOB_NAMES, PROCESSING_STEPS } from '../constants';
 import { ProcessingService } from '../processing.service';
 import { StorageService } from '../../storage/storage.service';
+import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import type { TranscriptJobData, WcagJobData } from '../interfaces';
 
 @Processor(QUEUE_NAMES.TRANSCRIPT, { concurrency: 2 })
@@ -18,6 +19,7 @@ export class TranscriptProcessor extends WorkerHost {
   constructor(
     private processingService: ProcessingService,
     private storageService: StorageService,
+    private auditLogService: AuditLogService,
     @InjectQueue(QUEUE_NAMES.WCAG) private wcagQueue: Queue,
   ) {
     super();
@@ -26,6 +28,14 @@ export class TranscriptProcessor extends WorkerHost {
   async process(job: Job<TranscriptJobData>): Promise<void> {
     const { materialId, captionsText, courseId } = job.data;
     this.logger.log(`Generating transcript for material ${materialId}`);
+
+    // Look up the material's uploadedBy for audit logging
+    const [materialInfo] = await db
+      .select({ uploadedBy: courseMaterials.uploadedBy })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.id, materialId))
+      .limit(1);
+    const performedBy = materialInfo?.uploadedBy || materialId;
 
     try {
       // 1. Upload plain text transcript to storage
@@ -44,6 +54,15 @@ export class TranscriptProcessor extends WorkerHost {
         .where(eq(courseMaterials.id, materialId));
 
       this.logger.log(`Transcript uploaded: ${transcriptUrl}`);
+
+      // Audit: transcript text completed
+      await this.auditLogService.log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'transcript.text_completed',
+        performedBy,
+        metadata: { courseId, transcriptUrl, textLength: captionsText.length },
+      });
 
       // 3. Chain to WCAG check
       // Get the material to check current state
@@ -80,6 +99,16 @@ export class TranscriptProcessor extends WorkerHost {
       );
     } catch (error) {
       this.logger.error(`Transcript generation failed for ${materialId}`, error);
+
+      // Audit: transcript text failed
+      await this.auditLogService.log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'transcript.text_failed',
+        performedBy,
+        metadata: { courseId, error: (error as Error).message },
+      });
+
       await this.processingService.markFailed(materialId, `Transcript generation failed: ${(error as Error).message}`);
       throw error;
     }

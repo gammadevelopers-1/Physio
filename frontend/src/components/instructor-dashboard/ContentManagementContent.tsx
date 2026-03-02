@@ -164,6 +164,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [detectedType, setDetectedType] = useState<MaterialType | null>(null);
+  const [autoTranscribe, setAutoTranscribe] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -228,6 +229,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
         detectedType,
         (pct) => setProgress(pct),
         selectedModuleId || undefined,
+        detectedType === "video" ? autoTranscribe : undefined,
       );
       toast.success(t("content.uploadSuccess"));
       onUploaded();
@@ -337,6 +339,31 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
                   <option key={m.id} value={m.id}>{m.title}</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Auto-Transcribe Toggle (video only) */}
+          {detectedType === "video" && (
+            <div className="mt-4 flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#374151]">{t("content.autoTranscribe")}</p>
+                <p className="text-xs text-[#6B7280] mt-0.5">{t("content.autoTranscribeDesc")}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoTranscribe}
+                onClick={() => setAutoTranscribe((v) => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 ${
+                  autoTranscribe ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    autoTranscribe ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
             </div>
           )}
 
@@ -531,23 +558,27 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
   const [title, setTitle] = useState(material.title);
   const [captionsUrl, setCaptionsUrl] = useState(material.captionsUrl || "");
   const [transcriptUrl, setTranscriptUrl] = useState(material.transcriptUrl || "");
+  const [autoTranscribe, setAutoTranscribe] = useState(material.autoTranscribe !== false);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      const data: Record<string, string> = {};
+      const data: Record<string, string | boolean> = {};
       if (title.trim() !== material.title) data.title = title.trim();
       if (captionsUrl !== (material.captionsUrl || "")) data.captionsUrl = captionsUrl;
       if (transcriptUrl !== (material.transcriptUrl || "")) data.transcriptUrl = transcriptUrl;
+      if (material.type === "video" && autoTranscribe !== (material.autoTranscribe !== false)) {
+        data.autoTranscribe = autoTranscribe;
+      }
 
       if (Object.keys(data).length === 0) {
         onClose();
         return;
       }
 
-      await materialsApi.update(material.id, data);
+      await materialsApi.update(material.id, data as Parameters<typeof materialsApi.update>[1]);
       toast.success(t("content.updateSuccess"));
       onUpdated();
       onClose();
@@ -679,6 +710,29 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   placeholder="https://..."
                   className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 />
+              </div>
+
+              {/* Auto-Transcribe Toggle */}
+              <div className="mb-4 flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#374151]">{t("content.autoTranscribe")}</p>
+                  <p className="text-xs text-[#6B7280] mt-0.5">{t("content.autoTranscribeDesc")}</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={autoTranscribe}
+                  onClick={() => setAutoTranscribe((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 ${
+                    autoTranscribe ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      autoTranscribe ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
             </>
           )}

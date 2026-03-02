@@ -35,6 +35,7 @@ export class ProcessingService {
     fileUrl: string,
     courseId: string,
     mimeType: string,
+    autoTranscribe = true,
   ): Promise<void> {
     if (!this.redisAvailable) {
       this.logger.warn(`Skipping processing for material ${materialId} — Redis not available`);
@@ -45,7 +46,7 @@ export class ProcessingService {
     this.logger.log(`Dispatching processing for material ${materialId} (type: ${materialType})`);
 
     if (materialType === 'video') {
-      await this.dispatchVideoProcessing(materialId, fileUrl, courseId, mimeType);
+      await this.dispatchVideoProcessing(materialId, fileUrl, courseId, mimeType, autoTranscribe);
     } else {
       // Non-video: skip directly to WCAG check
       await this.dispatchWcagOnly(materialId, materialType, fileUrl, courseId, mimeType);
@@ -57,6 +58,7 @@ export class ProcessingService {
     fileUrl: string,
     courseId: string,
     mimeType: string,
+    autoTranscribe = true,
   ): Promise<void> {
     const ffmpegEnabled = this.configService.get<boolean>('processing.ffmpeg.enabled');
     const openaiKey = this.configService.get<string>('processing.openai.apiKey');
@@ -66,7 +68,7 @@ export class ProcessingService {
       await this.updateProcessingStep(materialId, PROCESSING_STEPS.TRANSCODING);
       await this.transcodingQueue.add(
         JOB_NAMES.TRANSCODE_VIDEO,
-        { materialId, fileUrl, courseId, originalMimeType: mimeType } as TranscodeJobData,
+        { materialId, fileUrl, courseId, originalMimeType: mimeType, autoTranscribe } as TranscodeJobData,
         {
           attempts: this.configService.get<number>('processing.retries.transcoding') || 2,
           backoff: { type: 'exponential', delay: 5000 },
@@ -80,7 +82,7 @@ export class ProcessingService {
       await this.updateProcessingStep(materialId, PROCESSING_STEPS.GENERATING_CAPTIONS);
       await this.captionsQueue.add(
         JOB_NAMES.GENERATE_CAPTIONS,
-        { materialId, fileUrl, courseId } as CaptionsJobData,
+        { materialId, fileUrl, courseId, autoTranscribe } as CaptionsJobData,
         {
           attempts: this.configService.get<number>('processing.retries.captions') || 3,
           backoff: { type: 'exponential', delay: 10000 },

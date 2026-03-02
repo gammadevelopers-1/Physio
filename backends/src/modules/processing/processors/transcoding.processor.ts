@@ -85,13 +85,14 @@ export class TranscodingProcessor extends WorkerHost {
         await this.ffmpegService.deleteTempFile(outputPath);
       }
 
-      // 6. Chain to captions if Whisper is available
+      // 6. Chain to captions if Whisper is available and autoTranscribe is enabled
       const openaiKey = this.configService.get<string>('processing.openai.apiKey');
-      if (openaiKey) {
+      const autoTranscribe = job.data.autoTranscribe !== false;
+      if (openaiKey && autoTranscribe) {
         await this.processingService.updateProcessingStep(materialId, PROCESSING_STEPS.GENERATING_CAPTIONS);
         await this.captionsQueue.add(
           JOB_NAMES.GENERATE_CAPTIONS,
-          { materialId, fileUrl, courseId } as CaptionsJobData,
+          { materialId, fileUrl, courseId, autoTranscribe } as CaptionsJobData,
           {
             attempts: this.configService.get<number>('processing.retries.captions') || 3,
             backoff: { type: 'exponential', delay: 10000 },

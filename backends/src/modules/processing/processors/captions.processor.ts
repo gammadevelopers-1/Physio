@@ -16,7 +16,8 @@ import { FfmpegService } from '../services/ffmpeg.service';
 import { WhisperService } from '../services/whisper.service';
 import { ProcessingService } from '../processing.service';
 import { StorageService } from '../../storage/storage.service';
-import type { CaptionsJobData, TranscriptJobData } from '../interfaces';
+import { AuditLogService } from '../../audit-logs/audit-logs.service';
+import type { CaptionsJobData, TranscriptJobData, WcagJobData } from '../interfaces';
 
 @Processor(QUEUE_NAMES.CAPTIONS, { concurrency: 2 })
 export class CaptionsProcessor extends WorkerHost {
@@ -28,16 +29,43 @@ export class CaptionsProcessor extends WorkerHost {
     private processingService: ProcessingService,
     private storageService: StorageService,
     private configService: ConfigService,
+    private auditLogService: AuditLogService,
     @InjectQueue(QUEUE_NAMES.TRANSCRIPT) private transcriptQueue: Queue,
+    @InjectQueue(QUEUE_NAMES.WCAG) private wcagQueue: Queue,
   ) {
     super();
   }
 
   async process(job: Job<CaptionsJobData>): Promise<void> {
     const { materialId, fileUrl, courseId } = job.data;
+
+    // If autoTranscribe is disabled, skip captions and go to WCAG
+    if (job.data.autoTranscribe === false) {
+      this.logger.log(`Auto-transcribe disabled for material ${materialId} — skipping to WCAG`);
+      await this.skipToWcag(materialId, courseId, fileUrl);
+      return;
+    }
+
     this.logger.log(`Generating captions for material ${materialId}`);
 
+    // Look up the material's uploadedBy for audit logging
+    const [material] = await db
+      .select({ uploadedBy: courseMaterials.uploadedBy })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.id, materialId))
+      .limit(1);
+    const performedBy = material?.uploadedBy || materialId;
+
     try {
+      // Audit: transcript generation started
+      await this.auditLogService.log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'transcript.generation_started',
+        performedBy,
+        metadata: { courseId, trigger: 'auto' },
+      });
+
       // 1. Download source video to temp
       await this.processingService.updateProcessingStep(materialId, PROCESSING_STEPS.EXTRACTING_AUDIO);
       const tempDir = await this.ffmpegService.ensureTempDir(materialId);
@@ -75,6 +103,15 @@ export class CaptionsProcessor extends WorkerHost {
 
       this.logger.log(`Captions uploaded: ${captionsUrl}`);
 
+      // Audit: transcript generation completed
+      await this.auditLogService.log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'transcript.generation_completed',
+        performedBy,
+        metadata: { courseId, captionsUrl, vttLength: result.vtt.length },
+      });
+
       // 6. Chain to transcript generation
       await this.processingService.updateProcessingStep(materialId, PROCESSING_STEPS.GENERATING_TRANSCRIPT);
       await this.transcriptQueue.add(
@@ -89,11 +126,47 @@ export class CaptionsProcessor extends WorkerHost {
       );
     } catch (error) {
       this.logger.error(`Caption generation failed for ${materialId}`, error);
+
+      // Audit: transcript generation failed
+      await this.auditLogService.log({
+        entityType: 'material',
+        entityId: materialId,
+        action: 'transcript.generation_failed',
+        performedBy,
+        metadata: { courseId, error: (error as Error).message },
+      });
+
       await this.processingService.markFailed(materialId, `Caption generation failed: ${(error as Error).message}`);
       throw error;
     } finally {
       await this.ffmpegService.cleanupTempDir(materialId);
     }
+  }
+
+  /** Skip captions/transcript and go directly to WCAG check */
+  private async skipToWcag(materialId: string, courseId: string, fileUrl: string): Promise<void> {
+    const [material] = await db
+      .select({ mimeType: courseMaterials.mimeType })
+      .from(courseMaterials)
+      .where(eq(courseMaterials.id, materialId))
+      .limit(1);
+
+    await this.processingService.updateProcessingStep(materialId, PROCESSING_STEPS.WCAG_CHECK);
+    await this.wcagQueue.add(JOB_NAMES.CHECK_WCAG, {
+      materialId,
+      materialType: 'video',
+      courseId,
+      hasVideo: true,
+      hasCaptions: false,
+      hasTranscript: false,
+      fileUrl,
+      mimeType: material?.mimeType || undefined,
+    } as WcagJobData, {
+      attempts: 2,
+      backoff: { type: 'exponential', delay: 3000 },
+      removeOnComplete: 100,
+      removeOnFail: 200,
+    });
   }
 
   private downloadFile(url: string, dest: string): Promise<void> {

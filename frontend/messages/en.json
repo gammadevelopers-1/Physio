@@ -2963,7 +2963,9 @@
       "downloadTranscript": "Download Transcript (TXT)",
       "reviewFeedback": "Manager Feedback",
       "awaitingReview": "Awaiting manager review",
-      "resubmit": "Resubmit"
+      "resubmit": "Resubmit",
+      "autoTranscribe": "Auto-Transcription",
+      "autoTranscribeDesc": "Automatically generate captions and transcript for this video"
     },
     "reports": {
       "title": "Reports",

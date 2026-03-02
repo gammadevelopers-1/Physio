@@ -98,7 +98,7 @@ export class MaterialsService {
     courseId: string,
     user: AuthenticatedUser,
     file: { buffer: Buffer; originalname: string; mimetype: string; size: number },
-    body: { title: string; type: string; moduleId?: string },
+    body: { title: string; type: string; moduleId?: string; autoTranscribe?: string },
   ) {
     await this.verifyCourseAccess(courseId, user);
 
@@ -125,6 +125,9 @@ export class MaterialsService {
       );
     }
 
+    // Parse autoTranscribe flag (FormData sends strings)
+    const autoTranscribe = body.autoTranscribe !== 'false';
+
     // Create record with status='processing'
     const [material] = await db
       .insert(courseMaterials)
@@ -137,6 +140,7 @@ export class MaterialsService {
         mimeType: file.mimetype,
         uploadedBy: user.id,
         status: MATERIAL_STATUS.PROCESSING,
+        autoTranscribe,
       })
       .returning();
 
@@ -165,6 +169,7 @@ export class MaterialsService {
           fileUrl,
           courseId,
           file.mimetype,
+          autoTranscribe,
         );
       } catch (dispatchError) {
         this.logger.warn(

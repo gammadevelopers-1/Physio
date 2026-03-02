@@ -4,6 +4,7 @@ export default registerAs('processing', () => ({
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    tls: process.env.REDIS_TLS === 'true',
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',

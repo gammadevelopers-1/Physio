@@ -4,6 +4,7 @@ import {
   varchar,
   bigint,
   integer,
+  boolean,
   timestamp,
   index,
   check,
@@ -40,6 +41,7 @@ export const courseMaterials = pgTable(
     processingError: varchar('processing_error', { length: 1000 }),
     reviewedBy: uuid('reviewed_by').references(() => users.id),
     reviewNote: varchar('review_note', { length: 1000 }),
+    autoTranscribe: boolean('auto_transcribe').notNull().default(true),
     uploadedBy: uuid('uploaded_by')
       .notNull()
       .references(() => users.id),

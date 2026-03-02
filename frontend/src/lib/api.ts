@@ -983,12 +983,13 @@ export const materialsApi = {
     return api.get<CourseMaterialResponse[]>(`/courses/${courseId}/materials${qs ? `?${qs}` : ''}`);
   },
 
-  upload: (courseId: string, file: File, title: string, type: string, moduleId?: string) => {
+  upload: (courseId: string, file: File, title: string, type: string, moduleId?: string, autoTranscribe?: boolean) => {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('title', title);
     fd.append('type', type);
     if (moduleId) fd.append('moduleId', moduleId);
+    if (autoTranscribe !== undefined) fd.append('autoTranscribe', String(autoTranscribe));
     return uploadFormData<CourseMaterialResponse>(`/courses/${courseId}/materials`, fd);
   },
 
@@ -999,6 +1000,7 @@ export const materialsApi = {
     type: string,
     onProgress: (percent: number) => void,
     moduleId?: string,
+    autoTranscribe?: boolean,
   ): Promise<CourseMaterialResponse> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -1030,11 +1032,12 @@ export const materialsApi = {
       fd.append('title', title);
       fd.append('type', type);
       if (moduleId) fd.append('moduleId', moduleId);
+      if (autoTranscribe !== undefined) fd.append('autoTranscribe', String(autoTranscribe));
       xhr.send(fd);
     });
   },
 
-  update: (materialId: string, data: { title?: string; moduleId?: string | null; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string }) =>
+  update: (materialId: string, data: { title?: string; moduleId?: string | null; wcagStatus?: string; captionsUrl?: string; transcriptUrl?: string; autoTranscribe?: boolean }) =>
     api.patch<CourseMaterialResponse>(`/materials/${materialId}`, data),
 
   assignToModule: (materialId: string, moduleId: string) =>
@@ -1687,7 +1690,20 @@ export const zoomAttendanceApi = {
 
   /** Trigger post-meeting Zoom sync for a session */
   syncZoomAttendance: (sessionId: string) =>
-    api.post<{ message: string; synced: number }>(
+    api.post<{
+      message: string;
+      synced: number;
+      skipped: number;
+      details: Array<{
+        name: string;
+        email: string;
+        joinTime: string | null;
+        leaveTime: string | null;
+        durationMinutes: number;
+        action: 'synced' | 'updated_times' | 'skipped';
+        reason?: string;
+      }>;
+    }>(
       `/sessions/${sessionId}/sync-zoom`,
       {},
     ),

@@ -3,12 +3,14 @@ export interface TranscodeJobData {
   fileUrl: string;
   courseId: string;
   originalMimeType: string;
+  autoTranscribe?: boolean;
 }
 
 export interface CaptionsJobData {
   materialId: string;
   fileUrl: string;
   courseId: string;
+  autoTranscribe?: boolean;
 }
 
 export interface TranscriptJobData {

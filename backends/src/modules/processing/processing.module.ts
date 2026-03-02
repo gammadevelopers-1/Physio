@@ -12,6 +12,7 @@ import { WcagService } from './services/wcag.service';
 import { ProcessingCleanupService } from './processing-cleanup.service';
 import { StorageModule } from '../storage/storage.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
+import { AuditLogModule } from '../audit-logs/audit-logs.module';
 
 const redisEnabled = !!process.env.REDIS_HOST;
 
@@ -19,6 +20,7 @@ const redisEnabled = !!process.env.REDIS_HOST;
   imports: [
     StorageModule,
     UserNotificationsModule,
+    AuditLogModule,
 
     // Register BullMQ queues — only when Redis is available
     ...(redisEnabled

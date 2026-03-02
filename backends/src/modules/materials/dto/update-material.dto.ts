@@ -3,10 +3,12 @@ import {
   IsOptional,
   IsIn,
   IsUUID,
+  IsBoolean,
   MaxLength,
   ValidateIf,
   Allow,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { MATERIAL_TYPE, MaterialType } from '../../../database/schema';
 
 const validTypes = Object.values(MATERIAL_TYPE);
@@ -44,4 +46,9 @@ export class UpdateMaterialDto {
   @IsString()
   @MaxLength(500)
   transcriptUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === true || value === 'true')
+  autoTranscribe?: boolean;
 }

@@ -3144,7 +3144,9 @@
       "downloadTranscript": "تحميل النص (TXT)",
       "reviewFeedback": "ملاحظات المدير",
       "awaitingReview": "بانتظار مراجعة المدير",
-      "resubmit": "إعادة التقديم"
+      "resubmit": "إعادة التقديم",
+      "autoTranscribe": "النسخ التلقائي",
+      "autoTranscribeDesc": "إنشاء ترجمة ونص تلقائياً لهذا الفيديو"
     },
     "reports": {
       "title": "التقارير",

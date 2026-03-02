@@ -56,13 +56,23 @@ import processingConfig from './config/processing.config';
       ? [
           BullModule.forRootAsync({
             imports: [ConfigModule],
-            useFactory: (configService: ConfigService) => ({
-              connection: {
-                host: configService.get('processing.redis.host', 'localhost'),
-                port: configService.get('processing.redis.port', 6379),
-                ...(configService.get('processing.redis.tls') ? { tls: {} } : {}),
-              },
-            }),
+            useFactory: (configService: ConfigService) => {
+              const tlsEnabled = configService.get('processing.redis.tls');
+              const caCert = process.env.REDIS_CA_CERT;
+              return {
+                connection: {
+                  host: configService.get('processing.redis.host', 'localhost'),
+                  port: configService.get('processing.redis.port', 6379),
+                  ...(tlsEnabled
+                    ? {
+                        tls: {
+                          ...(caCert ? { ca: caCert } : { rejectUnauthorized: false }),
+                        },
+                      }
+                    : {}),
+                },
+              };
+            },
             inject: [ConfigService],
           }),
         ]

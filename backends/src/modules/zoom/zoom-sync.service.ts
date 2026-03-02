@@ -129,8 +129,17 @@ export class ZoomSyncService {
     const instructorId = await getSessionInstructorId(sessionId);
 
     for (const participant of participants) {
+      // Skip Zoom host — they are not a student
+      if (participant.role === 'host') {
+        this.logger.debug(
+          `Skipping Zoom host: ${participant.userEmail} in session ${sessionId}`,
+        );
+        skipped++;
+        continue;
+      }
+
       // Item #5, #9: shared case-insensitive email matching
-      // Exclude course instructor (Zoom host) from attendance tracking
+      // Exclude course instructor from attendance tracking
       const matchedUser = await matchParticipantToUser(
         participant.userEmail,
         instructorId,

@@ -417,12 +417,14 @@ export class ZoomService implements IZoomService, OnModuleInit {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 404 = report not yet available (can take 10-30 min after meeting ends)
-      if (response.status === 404) {
+      // 400/404 = report not yet available (can take 10-30 min after meeting ends)
+      if (response.status === 404 || response.status === 400) {
         this.logger.warn(
-          `Zoom participant report not yet available for meeting ${meetingId}`,
+          `Zoom participant report not yet available for meeting ${meetingId} (${response.status})`,
         );
-        return [];
+        throw new Error(
+          'Zoom attendance report is not yet available. Reports typically take 10-30 minutes to become available after a meeting ends. Please try again later.',
+        );
       }
 
       if (!response.ok) {
@@ -443,6 +445,7 @@ export class ZoomService implements IZoomService, OnModuleInit {
         joinTime: p.join_time || '',
         leaveTime: p.leave_time || '',
         duration: p.duration || 0,
+        role: p.role || 'participant',
       }));
 
       allParticipants.push(...participants);

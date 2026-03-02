@@ -33,6 +33,7 @@ export interface ZoomParticipantReport {
   joinTime: string;
   leaveTime: string;
   duration: number; // seconds
+  role: string; // 'host' | 'participant' | 'co-host' etc.
 }
 
 export interface UpdateZoomMeetingParams {

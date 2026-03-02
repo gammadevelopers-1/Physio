@@ -30,9 +30,16 @@ export class ZoomWebhookService {
     const participant = payload?.participant || payload;
     const participantEmail = participant?.email || participant?.user_email || '';
     const participantId = participant?.participant_uuid || participant?.user_id || '';
+    const participantRole = participant?.role || '';
 
     if (!meetingId) {
       this.logger.warn('participant_joined: no meetingId in payload');
+      return;
+    }
+
+    // Skip Zoom host — they are not a student
+    if (participantRole === 'host') {
+      this.logger.debug(`Skipping Zoom host join: ${participantEmail}`);
       return;
     }
 
@@ -114,9 +121,16 @@ export class ZoomWebhookService {
     const participant = payload?.participant || payload;
     const participantEmail = participant?.email || participant?.user_email || '';
     const participantId = participant?.participant_uuid || participant?.user_id || '';
+    const participantRole = participant?.role || '';
 
     if (!meetingId) {
       this.logger.warn('participant_left: no meetingId in payload');
+      return;
+    }
+
+    // Skip Zoom host
+    if (participantRole === 'host') {
+      this.logger.debug(`Skipping Zoom host leave: ${participantEmail}`);
       return;
     }
 

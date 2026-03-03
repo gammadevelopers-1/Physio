@@ -247,7 +247,9 @@ function AttendanceModal({
   const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
-  const isReadOnly = session.status !== "live";
+  // Allow editing attendance for live AND completed sessions.
+  // Completed sessions may need manual correction when Zoom sync misses someone.
+  const isReadOnly = session.status !== "live" && session.status !== "completed";
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {

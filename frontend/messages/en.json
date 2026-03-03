@@ -2443,7 +2443,7 @@
         "leftAt": "Left",
         "exportAttendance": "Export Attendance",
         "exportError": "Failed to export attendance",
-        "readOnly": "Attendance is locked. It can only be edited during a live session.",
+        "readOnly": "Attendance is locked. This session has not started yet.",
         "close": "Close"
       },
       "recordings": {

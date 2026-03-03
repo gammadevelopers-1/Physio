@@ -170,9 +170,10 @@ export class ZoomService implements IZoomService, OnModuleInit {
         waiting_room: true,
         mute_upon_entry: true,
         auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
-        // Require participants to sign in to Zoom before joining
-        // Ensures every participant has an email for attendance matching
-        meeting_authentication: true,
+        // Do NOT require Zoom account sign-in — students join as guests so
+        // the ?uname= platform ID pre-fill is respected by Zoom's web client.
+        // Access is controlled by the waiting room (instructor admits each person).
+        meeting_authentication: false,
       },
     };
 

@@ -153,9 +153,9 @@ export class InvoiceService {
         course,
       );
 
-      // Upload to storage
+      // Upload to storage (path used as key for signed URL generation)
       const filename = `invoices/${invoice.invoiceNumber}.pdf`;
-      const url = await this.storageService.uploadPrivate(
+      await this.storageService.uploadPrivate(
         pdfBuffer,
         filename,
         'application/pdf',

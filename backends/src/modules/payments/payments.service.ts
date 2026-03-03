@@ -325,6 +325,26 @@ export class PaymentsService {
       // For mock, directly process the payment (simulating webhook)
       if (status === 'paid') {
         await this.processPaymentSuccess(payment.id);
+
+        // Generate invoice + send confirmation email (same path as real webhook processor)
+        try {
+          await this.invoiceService.generateInvoice(payment.id);
+        } catch (err) {
+          this.logger.error(`Invoice generation failed for mock payment ${payment.id}: ${err.message}`);
+        }
+
+        let pdfAttachment: { buffer: Buffer; filename: string } | undefined;
+        try {
+          const pdf = await this.invoiceService.getInvoicePdfBuffer(payment.id);
+          if (pdf) pdfAttachment = pdf;
+        } catch (_err) { /* non-fatal */ }
+
+        try {
+          await this.emailService.sendPaymentConfirmation(payment.userId, payment.id, pdfAttachment);
+        } catch (err) {
+          this.logger.error(`Confirmation email failed for mock payment ${payment.id}: ${err.message}`);
+        }
+
         return { redirect: 'success', paymentId: payment_id };
       }
 
@@ -442,10 +462,11 @@ export class PaymentsService {
         })
         .where(eq(payments.id, paymentId));
 
-      // Remove pending enrollment
+      // Mark pending enrollment as dropped (preserves history for audit)
       if (payment.enrollmentId) {
         await tx
-          .delete(enrollments)
+          .update(enrollments)
+          .set({ status: ENROLLMENT_STATUS.DROPPED })
           .where(
             and(
               eq(enrollments.id, payment.enrollmentId),

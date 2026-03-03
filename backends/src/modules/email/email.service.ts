@@ -921,12 +921,16 @@ export class EmailService {
         subject: 'Refund Completed - PhysioGuidance',
         html: getRefundCompletedHtml({
           studentName,
-          amount: String(refund.refundAmount),
+          originalAmount: String(refund.originalAmount),
+          deductionAmount: String(refund.deductionAmount),
+          refundAmount: String(refund.refundAmount),
           currency: 'SAR',
         }),
         text: getRefundCompletedText({
           studentName,
-          amount: String(refund.refundAmount),
+          originalAmount: String(refund.originalAmount),
+          deductionAmount: String(refund.deductionAmount),
+          refundAmount: String(refund.refundAmount),
           currency: 'SAR',
         }),
       });

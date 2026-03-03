@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { sql, and, gte, lte, eq, desc } from 'drizzle-orm';
+import * as PDFDocument from 'pdfkit';
 import { db } from '../../../database';
 import { payments, invoices, users, courses } from '../../../database/schema';
 
@@ -225,5 +226,122 @@ export class FinanceService {
     }
 
     return lines.join('\n');
+  }
+
+  async exportPaymentsPdf(startDate?: string, endDate?: string, status?: string): Promise<Buffer> {
+    const conditions: any[] = [];
+    if (startDate) conditions.push(gte(payments.createdAt, new Date(startDate)));
+    if (endDate) conditions.push(lte(payments.createdAt, new Date(endDate)));
+    if (status) conditions.push(eq(payments.status, status));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await db
+      .select({
+        id: payments.id,
+        userEmail: users.email,
+        userName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        courseTitle: courses.title,
+        amount: payments.amount,
+        currency: payments.currency,
+        gateway: payments.gateway,
+        paymentMethod: payments.paymentMethod,
+        status: payments.status,
+        paidAt: payments.paidAt,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(whereClause)
+      .orderBy(desc(payments.createdAt));
+
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 40, layout: 'landscape' });
+        const chunks: Buffer[] = [];
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        // ── Header ──
+        doc.font('Helvetica-Bold').fontSize(16)
+          .text('PhysioGuidance — Payment Report', 40, 40);
+        doc.font('Helvetica').fontSize(9)
+          .text(`Generated: ${new Date().toISOString()}  |  NELC Audit Evidence`, 40, 62);
+
+        const filterParts: string[] = [];
+        if (startDate || endDate) filterParts.push(`Date: ${startDate || 'beginning'} → ${endDate || 'now'}`);
+        if (status) filterParts.push(`Status: ${status}`);
+        if (filterParts.length) doc.text(`Filters: ${filterParts.join('  |  ')}`, 40, 74);
+
+        doc.moveTo(40, 88).lineTo(800, 88).stroke();
+
+        // ── Column layout ──
+        const cols = [
+          { label: 'Date', x: 40,  w: 80  },
+          { label: 'User Email', x: 125, w: 130 },
+          { label: 'Course', x: 260, w: 130 },
+          { label: 'Gateway', x: 395, w: 65  },
+          { label: 'Method', x: 465, w: 65  },
+          { label: 'Amount', x: 535, w: 70  },
+          { label: 'Status', x: 610, w: 70  },
+          { label: 'Paid At', x: 685, w: 110 },
+        ];
+
+        // Table header
+        let y = 96;
+        doc.font('Helvetica-Bold').fontSize(8);
+        for (const col of cols) {
+          doc.text(col.label, col.x, y, { width: col.w });
+        }
+        y += 14;
+        doc.moveTo(40, y).lineTo(800, y).stroke();
+        y += 4;
+
+        doc.font('Helvetica').fontSize(7.5);
+        const truncate = (s: string | null | undefined, len: number) =>
+          s && s.length > len ? s.substring(0, len - 1) + '…' : (s || '—');
+
+        for (const row of rows) {
+          if (y > 530) {
+            doc.addPage({ size: 'A4', layout: 'landscape', margin: 40 });
+            y = 40;
+            doc.font('Helvetica-Bold').fontSize(8);
+            for (const col of cols) doc.text(col.label, col.x, y, { width: col.w });
+            y += 14;
+            doc.moveTo(40, y).lineTo(800, y).stroke();
+            y += 4;
+            doc.font('Helvetica').fontSize(7.5);
+          }
+
+          const dateStr = row.createdAt
+            ? new Date(row.createdAt).toLocaleDateString('en-US')
+            : '—';
+          const paidStr = row.paidAt
+            ? new Date(row.paidAt).toLocaleDateString('en-US')
+            : '—';
+
+          doc.text(dateStr,                               cols[0].x, y, { width: cols[0].w });
+          doc.text(truncate(row.userEmail, 22),           cols[1].x, y, { width: cols[1].w });
+          doc.text(truncate(row.courseTitle, 22),         cols[2].x, y, { width: cols[2].w });
+          doc.text(truncate(row.gateway, 10),             cols[3].x, y, { width: cols[3].w });
+          doc.text(truncate(row.paymentMethod, 10),       cols[4].x, y, { width: cols[4].w });
+          doc.text(`${row.currency} ${row.amount}`,       cols[5].x, y, { width: cols[5].w });
+          doc.text(truncate(row.status, 14),              cols[6].x, y, { width: cols[6].w });
+          doc.text(paidStr,                               cols[7].x, y, { width: cols[7].w });
+
+          y += 13;
+        }
+
+        // ── Footer summary ──
+        doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke();
+        doc.font('Helvetica-Bold').fontSize(8)
+          .text(`Total rows: ${rows.length}`, 40, y + 10);
+
+        doc.end();
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 }

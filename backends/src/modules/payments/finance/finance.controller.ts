@@ -56,13 +56,26 @@ export class FinanceController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('status') status?: string,
+    @Query('format') format?: string,
   ) {
-    const csv = await this.financeService.exportPaymentsCsv(startDate, endDate, status);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="payments-export-${new Date().toISOString().split('T')[0]}.csv"`,
-    );
-    res.send(csv);
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    if (format === 'pdf') {
+      const pdfBuffer = await this.financeService.exportPaymentsPdf(startDate, endDate, status);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="payments-export-${dateStr}.pdf"`,
+      );
+      res.send(pdfBuffer);
+    } else {
+      const csv = await this.financeService.exportPaymentsCsv(startDate, endDate, status);
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="payments-export-${dateStr}.csv"`,
+      );
+      res.send(csv);
+    }
   }
 }

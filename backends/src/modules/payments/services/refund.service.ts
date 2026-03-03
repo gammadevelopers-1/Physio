@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { eq, and, desc, count, sql } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
@@ -15,6 +16,7 @@ import {
   users,
   PAYMENT_STATUS,
   REFUND_STATUS,
+  ENROLLMENT_STATUS,
   INVOICE_STATUS,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
@@ -27,20 +29,24 @@ import { RejectRefundDto } from '../dto/reject-refund.dto';
 export class RefundService {
   private readonly logger = new Logger(RefundService.name);
 
-  // Deduction rates by gateway
-  private readonly deductionRates: Record<string, number> = {
-    tap: 0,
-    moyasar: 0,
-    tamara: 0.1,
-    tabby: 0.1,
-    mock: 0,
-  };
+  // Deduction rates by gateway — Tabby is configurable (per merchant agreement)
+  private readonly deductionRates: Record<string, number>;
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly gatewayFactory: GatewayFactory,
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
-  ) {}
+  ) {
+    const tabbyRate = this.configService.get<number>('payments.tabbyRefundDeductionRate') ?? 0.1;
+    this.deductionRates = {
+      tap: 0,
+      moyasar: 0,
+      tamara: 0.1,
+      tabby: tabbyRate,
+      mock: 0,
+    };
+  }
 
   async requestRefund(userId: string, dto: CreateRefundDto, ipAddress?: string) {
     // 1. Find the payment
@@ -161,29 +167,53 @@ export class RefundService {
       throw new BadRequestException('Payment or charge ID not found');
     }
 
-    // Call gateway refund
-    const gateway = this.gatewayFactory.getGateway(payment.gateway);
-    const refundResult = await gateway.refund({
-      gatewayChargeId: payment.gatewayChargeId,
-      amount: Number(refund.refundAmount),
-      reason: refund.reason,
-    });
-
-    // Update refund status
+    // Step 1: Persist the approval decision BEFORE calling the gateway.
+    // This ensures the approved state is saved even if the gateway call fails,
+    // allowing a retry without re-doing the Finance Manager approval.
     await db
       .update(refunds)
       .set({
-        status: REFUND_STATUS.PROCESSING,
+        status: REFUND_STATUS.APPROVED,
         processedBy,
-        gatewayRefundId: refundResult.refundId,
         approvedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(refunds.id, refundId));
 
-    // For mock gateway, complete immediately
-    if (payment.gateway === 'mock') {
-      await this.completeRefund(refundId);
+    // Step 2: Call gateway to initiate the actual refund transfer
+    let gatewayRefundId: string | null = null;
+    try {
+      const gateway = this.gatewayFactory.getGateway(payment.gateway);
+      const refundResult = await gateway.refund({
+        gatewayChargeId: payment.gatewayChargeId,
+        amount: Number(refund.refundAmount),
+        reason: refund.reason,
+      });
+
+      gatewayRefundId = refundResult.refundId;
+
+      // Step 3: Mark as processing once gateway accepted it
+      await db
+        .update(refunds)
+        .set({
+          status: REFUND_STATUS.PROCESSING,
+          gatewayRefundId: refundResult.refundId,
+          updatedAt: new Date(),
+        })
+        .where(eq(refunds.id, refundId));
+
+      // For mock gateway, complete immediately (no async webhook)
+      if (payment.gateway === 'mock') {
+        await this.completeRefund(refundId);
+      }
+    } catch (err) {
+      // Gateway call failed — refund stays in APPROVED state for retry.
+      this.logger.error(
+        `Gateway refund call failed for refund ${refundId}: ${err.message}. Refund stays in APPROVED state for retry.`,
+      );
+      throw new BadRequestException(
+        `Refund approved but gateway call failed: ${err.message}. Please retry the gateway call.`,
+      );
     }
 
     // Send approval email
@@ -200,12 +230,12 @@ export class RefundService {
       performedBy: processedBy,
       ipAddress,
       metadata: {
-        gatewayRefundId: refundResult.refundId,
+        gatewayRefundId,
         refundAmount: refund.refundAmount,
       },
     });
 
-    return { status: 'approved', gatewayRefundId: refundResult.refundId };
+    return { status: 'approved', gatewayRefundId };
   }
 
   async rejectRefund(
@@ -224,8 +254,12 @@ export class RefundService {
       throw new NotFoundException('Refund not found');
     }
 
-    if (refund.status !== REFUND_STATUS.PENDING) {
-      throw new BadRequestException('Only pending refunds can be rejected');
+    // Allow rejection of PENDING or APPROVED (gateway call not yet succeeded) refunds
+    if (
+      refund.status !== REFUND_STATUS.PENDING &&
+      refund.status !== REFUND_STATUS.APPROVED
+    ) {
+      throw new BadRequestException('Only pending or approved refunds can be rejected');
     }
 
     await db
@@ -273,6 +307,14 @@ export class RefundService {
 
     if (!refund) return;
 
+    // Pre-load the payment so we can use its enrollmentId inside the transaction
+    // without mixing tx and db selects.
+    const [payment] = await db
+      .select()
+      .from(payments)
+      .where(eq(payments.id, refund.paymentId))
+      .limit(1);
+
     await db.transaction(async (tx) => {
       // Update refund to completed
       await tx
@@ -311,17 +353,11 @@ export class RefundService {
           .where(eq(invoices.id, refund.invoiceId));
       }
 
-      // Cancel enrollment
-      const [payment] = await db
-        .select()
-        .from(payments)
-        .where(eq(payments.id, refund.paymentId))
-        .limit(1);
-
+      // Drop enrollment so the learner loses course access
       if (payment?.enrollmentId) {
         await tx
           .update(enrollments)
-          .set({ status: 'dropped' })
+          .set({ status: ENROLLMENT_STATUS.DROPPED })
           .where(eq(enrollments.id, payment.enrollmentId));
       }
     });

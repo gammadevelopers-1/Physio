@@ -37,4 +37,7 @@ export default registerAs('payments', () => ({
     webhookSecret: process.env.TABBY_WEBHOOK_SECRET || '',
     apiUrl: process.env.TABBY_API_URL || 'https://api.tabby.ai/api/v2',
   },
+
+  // Refund deduction rates (per merchant agreement — override via env)
+  tabbyRefundDeductionRate: parseFloat(process.env.TABBY_REFUND_DEDUCTION_RATE || '0.1'),
 }));

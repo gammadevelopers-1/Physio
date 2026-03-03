@@ -1558,6 +1558,8 @@
       "statusPaid": "Paid",
       "statusPending": "Pending",
       "statusCancelled": "Cancelled",
+      "statusRefunded": "Refunded",
+      "statusRefundPending": "Refund Pending",
       "moreOptions": "More options",
       "viewInvoice": "View Invoice",
       "downloadInvoice": "Download Invoice",

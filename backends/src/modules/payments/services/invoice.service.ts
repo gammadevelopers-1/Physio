@@ -6,6 +6,7 @@ import {
   payments,
   courses,
   users,
+  refunds,
   INVOICE_STATUS,
   PAYMENT_STATUS,
 } from '../../../database/schema';
@@ -13,6 +14,7 @@ import { StorageService } from '../../storage/storage.service';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import * as PDFDocument from 'pdfkit';
 import * as QRCode from 'qrcode';
+import * as path from 'path';
 
 @Injectable()
 export class InvoiceService {
@@ -194,168 +196,123 @@ export class InvoiceService {
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
         const chunks: Buffer[] = [];
 
-        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        // Header
-        doc
-          .fontSize(24)
-          .text('Roya Almustaqbal for Health Training', 50, 50)
-          .fontSize(10)
-          .text('\u0631\u0624\u064A\u0627 \u0627\u0644\u0645\u0633\u062A\u0642\u0628\u0644 \u0644\u0644\u062A\u062F\u0631\u064A\u0628 \u0627\u0644\u0635\u062D\u064A', 50, 80)
+        // Register Arabic-supporting fonts
+        // fontkit (PDFKit's font engine) handles Arabic GSUB shaping natively
+        const fontsDir = path.join(process.cwd(), 'src', 'assets', 'fonts');
+        doc.registerFont('NotoArabic', path.join(fontsDir, 'NotoSansArabic-Regular.ttf'));
+        doc.registerFont('NotoArabicBold', path.join(fontsDir, 'NotoSansArabic-Bold.ttf'));
+
+        // wordSpacing fixes collapsed spaces between Arabic words in PDFKit
+        const ws = { wordSpacing: 2 };
+
+        // ── Header: left side (company info) ──
+        doc.font('Helvetica-Bold').fontSize(20)
+          .text('Roya Almustaqbal for Health Training', 50, 50);
+        doc.font('NotoArabic').fontSize(10)
+          .text('رؤيا المستقبل للتدريب الصحي', 50, 78, ws);
+        doc.font('Helvetica').fontSize(10)
           .text('nelc@physioguidance.org', 50, 95);
 
-        // Invoice Title
-        doc
-          .fontSize(20)
-          .text('INVOICE / فاتورة', 350, 50, { align: 'right' })
-          .fontSize(10)
-          .text(`Invoice #: ${invoice.invoiceNumber}`, 350, 80, {
-            align: 'right',
-          })
-          .text(
-            `Date: ${new Date(invoice.issuedAt).toLocaleDateString('en-US')}`,
-            350,
-            95,
-            { align: 'right' },
-          );
+        // ── Header: right side (invoice title + meta) ──
+        doc.font('Helvetica-Bold').fontSize(18)
+          .text('INVOICE / ', 350, 50, { continued: true, align: 'right' });
+        doc.font('NotoArabicBold').text('فاتورة', ws);
 
-        // Payment date & due date
-        let headerY = 110;
+        doc.font('Helvetica').fontSize(10)
+          .text(`Invoice #: ${invoice.invoiceNumber}`, 350, 78, { align: 'right' })
+          .text(`Date: ${new Date(invoice.issuedAt).toLocaleDateString('en-US')}`, 350, 93, { align: 'right' });
+
+        let headerY = 108;
         if (invoice.paidAt) {
-          doc.text(
-            `Paid: ${new Date(invoice.paidAt).toLocaleDateString('en-US')}`,
-            350,
-            headerY,
-            { align: 'right' },
-          );
+          doc.text(`Paid: ${new Date(invoice.paidAt).toLocaleDateString('en-US')}`, 350, headerY, { align: 'right' });
           headerY += 15;
         }
         if (invoice.dueDate) {
-          doc.text(
-            `Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US')}`,
-            350,
-            headerY,
-            { align: 'right' },
-          );
+          doc.text(`Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US')}`, 350, headerY, { align: 'right' });
           headerY += 15;
         }
 
-        // Divider
+        // ── Divider ──
         const dividerY = Math.max(120, headerY + 5);
-        doc
-          .moveTo(50, dividerY)
-          .lineTo(545, dividerY)
-          .stroke();
+        doc.moveTo(50, dividerY).lineTo(545, dividerY).stroke();
 
-        // Customer info
+        // ── Customer info (left) ──
         const sectionTop = dividerY + 20;
-        doc
-          .fontSize(12)
-          .text('Bill To / فاتورة إلى:', 50, sectionTop)
-          .fontSize(10)
-          .text(
-            `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-            50,
-            sectionTop + 18,
-          )
-          .text(userData.email, 50, sectionTop + 33);
+        doc.font('Helvetica-Bold').fontSize(12)
+          .text('Bill To / ', 50, sectionTop, { continued: true });
+        doc.font('NotoArabicBold').text('فاتورة إلى', ws);
 
-        // National ID (if available)
-        let customerInfoY = sectionTop + 48;
+        doc.font('Helvetica').fontSize(10)
+          .text(`${userData.firstName || ''} ${userData.lastName || ''}`.trim(), 50, sectionTop + 20)
+          .text(userData.email, 50, sectionTop + 35);
+
+        let customerInfoY = sectionTop + 50;
         if ((userData as any).nationalId) {
           doc.text(`National ID: ${(userData as any).nationalId}`, 50, customerInfoY);
           customerInfoY += 15;
         }
 
-        // Payment info
-        doc
-          .fontSize(12)
-          .text('Payment Details / تفاصيل الدفع:', 350, sectionTop, {
-            align: 'right',
-          })
-          .fontSize(10)
-          .text(`Gateway: ${payment.gateway}`, 350, sectionTop + 18, { align: 'right' })
-          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, sectionTop + 33, {
-            align: 'right',
-          })
-          .text(`Transaction: ${payment.gatewayChargeId || 'N/A'}`, 350, sectionTop + 48, {
-            align: 'right',
-          });
+        // ── Payment info (right) ──
+        doc.font('Helvetica-Bold').fontSize(12)
+          .text('Payment Details / ', 350, sectionTop, { continued: true, align: 'right' });
+        doc.font('NotoArabicBold').text('تفاصيل الدفع', ws);
 
-        // Line items table
-        const tableTop = Math.max(customerInfoY, sectionTop + 63) + 20;
-        doc
-          .fontSize(10)
-          .font('Helvetica-Bold')
-          .text('Description', 50, tableTop)
-          .font('Helvetica')
-          .text('Amount', 450, tableTop, { align: 'right' });
+        doc.font('Helvetica').fontSize(10)
+          .text(`Gateway: ${payment.gateway}`, 350, sectionTop + 20, { align: 'right' })
+          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, sectionTop + 35, { align: 'right' })
+          .text(`Transaction: ${payment.gatewayChargeId || 'N/A'}`, 350, sectionTop + 50, { align: 'right' });
 
-        doc
-          .moveTo(50, tableTop + 15)
-          .lineTo(545, tableTop + 15)
-          .stroke();
+        // ── Line items table ──
+        const tableTop = Math.max(customerInfoY, sectionTop + 65) + 20;
+        doc.fontSize(10).font('Helvetica-Bold').text('Description', 50, tableTop);
+        doc.font('Helvetica').text('Amount', 450, tableTop, { align: 'right' });
+        doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
 
         // Course line item
         let y = tableTop + 25;
-        doc.text(course.title || 'Course', 50, y);
+        doc.font('Helvetica').fontSize(10).text(course.title || 'Course', 50, y);
         if (course.titleAr) {
-          doc.text(course.titleAr, 50, y + 15);
+          doc.font('NotoArabic').text(course.titleAr, 50, y + 15, ws);
           y += 15;
         }
         if (course.deliveryType) {
-          doc
-            .fontSize(9)
-            .text(`Delivery: ${course.deliveryType}`, 50, y + 15);
+          doc.font('Helvetica').fontSize(9).text(`Delivery: ${course.deliveryType}`, 50, y + 15);
           doc.fontSize(10);
           y += 15;
         }
-        doc.text(`SAR ${Number(invoice.subtotal).toFixed(2)}`, 450, tableTop + 25, {
-          align: 'right',
-        });
+        doc.font('Helvetica').fontSize(10)
+          .text(`SAR ${Number(invoice.subtotal).toFixed(2)}`, 450, tableTop + 25, { align: 'right' });
 
         y += 25;
 
         // Discount
         if (Number(invoice.discountAmount) > 0) {
-          doc
-            .text('Discount / خصم', 50, y)
-            .text(
-              `- SAR ${Number(invoice.discountAmount).toFixed(2)}`,
-              450,
-              y,
-              { align: 'right' },
-            );
+          doc.font('Helvetica').fontSize(10).text('Discount / ', 50, y, { continued: true });
+          doc.font('NotoArabic').text('خصم');
+          doc.font('Helvetica').text(`- SAR ${Number(invoice.discountAmount).toFixed(2)}`, 450, y, { align: 'right' });
           y += 20;
         }
 
         // Tax
         if (Number(invoice.taxAmount) > 0) {
-          doc
-            .text('VAT / ضريبة القيمة المضافة', 50, y)
-            .text(`SAR ${Number(invoice.taxAmount).toFixed(2)}`, 450, y, {
-              align: 'right',
-            });
+          doc.font('Helvetica').fontSize(10).text('VAT (15%) / ', 50, y, { continued: true });
+          doc.font('NotoArabic').text('ضريبة القيمة المضافة', ws);
+          doc.font('Helvetica').text(`SAR ${Number(invoice.taxAmount).toFixed(2)}`, 450, y, { align: 'right' });
           y += 20;
         }
 
-        // Total
-        doc
-          .moveTo(50, y)
-          .lineTo(545, y)
-          .stroke();
-
+        // ── Total ──
+        doc.moveTo(50, y).lineTo(545, y).stroke();
         y += 10;
-        doc
-          .fontSize(14)
-          .text('Total / المجموع', 50, y)
-          .text(`SAR ${Number(invoice.totalAmount).toFixed(2)}`, 450, y, {
-            align: 'right',
-          });
+        doc.font('Helvetica-Bold').fontSize(14).text('Total / ', 50, y, { continued: true });
+        doc.font('NotoArabicBold').text('المجموع', ws);
+        doc.font('Helvetica-Bold').text(`SAR ${Number(invoice.totalAmount).toFixed(2)}`, 450, y, { align: 'right' });
 
-        // QR Code
+        // ── QR Code ──
         y += 40;
         try {
           const qrDataUrl = await QRCode.toDataURL(
@@ -368,22 +325,16 @@ export class InvoiceService {
           );
           doc.image(qrBuffer, 230, y, { width: 80, height: 80 });
           y += 90;
-          doc
-            .fontSize(8)
+          doc.font('Helvetica').fontSize(8)
             .text('Scan to verify invoice', 230, y, { width: 80, align: 'center' });
         } catch (err) {
           this.logger.warn('Failed to generate QR code for invoice');
         }
 
-        // Footer
-        doc
-          .fontSize(8)
-          .text(
-            'Thank you for your purchase! | شكراً لك على الشراء',
-            50,
-            750,
-            { align: 'center', width: 495 },
-          );
+        // ── Footer ──
+        doc.font('Helvetica').fontSize(8)
+          .text('Thank you for your purchase! | ', 50, 750, { continued: true, align: 'center', width: 495 });
+        doc.font('NotoArabic').text('شكراً لك على الشراء', ws);
 
         doc.end();
       } catch (err) {
@@ -462,6 +413,11 @@ export class InvoiceService {
         status: invoices.status,
         issuedAt: invoices.issuedAt,
         paidAt: invoices.paidAt,
+        refundStatus: sql<string | null>`(
+          SELECT ${refunds.status} FROM ${refunds}
+          WHERE ${refunds.paymentId} = ${invoices.paymentId}
+          ORDER BY ${refunds.createdAt} DESC LIMIT 1
+        )`.as('refund_status'),
       })
       .from(invoices)
       .leftJoin(courses, eq(invoices.courseId, courses.id))

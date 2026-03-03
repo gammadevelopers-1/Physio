@@ -1770,6 +1770,8 @@
       "statusPaid": "مدفوع",
       "statusPending": "قيد الانتظار",
       "statusCancelled": "ملغي",
+      "statusRefunded": "مسترد",
+      "statusRefundPending": "استرداد قيد المراجعة",
       "moreOptions": "المزيد من الخيارات",
       "viewInvoice": "عرض الفاتورة",
       "downloadInvoice": "تحميل الفاتورة",

@@ -142,7 +142,15 @@
       "Bash(while read f)",
       "Bash(do if ! grep -q '<main' \"$f\")",
       "Bash(then echo \"$f\" fi done)",
-      "Bash(then echo \"NO MAIN: $f\" fi done)"
+      "Bash(then echo \"NO MAIN: $f\" fi done)",
+      "Bash(npm info arabic-reshape)",
+      "Bash(npm info harfbuzz)",
+      "Bash(npm info fontkit)",
+      "Bash(npm info text-shaper)",
+      "Bash(npm info @react-pdf/textkit)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:corpus.hubwiz.com)"
     ]
   }
 }

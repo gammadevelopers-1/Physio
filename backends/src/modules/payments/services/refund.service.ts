@@ -15,6 +15,7 @@ import {
   users,
   PAYMENT_STATUS,
   REFUND_STATUS,
+  INVOICE_STATUS,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { GatewayFactory } from '../gateways/gateway.factory';
@@ -298,6 +299,17 @@ export class RefundService {
           updatedAt: new Date(),
         })
         .where(eq(payments.id, refund.paymentId));
+
+      // Update invoice status to refunded
+      if (refund.invoiceId) {
+        await tx
+          .update(invoices)
+          .set({
+            status: INVOICE_STATUS.REFUNDED,
+            updatedAt: new Date(),
+          })
+          .where(eq(invoices.id, refund.invoiceId));
+      }
 
       // Cancel enrollment
       const [payment] = await db

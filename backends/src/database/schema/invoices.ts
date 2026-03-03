@@ -53,7 +53,7 @@ export const invoices = pgTable(
     index('invoices_payment_id_idx').on(table.paymentId),
     check(
       'invoices_status_check',
-      sql`${table.status} IN ('issued', 'paid', 'overdue', 'cancelled')`,
+      sql`${table.status} IN ('issued', 'paid', 'overdue', 'cancelled', 'refunded')`,
     ),
   ],
 );
@@ -81,6 +81,7 @@ export const INVOICE_STATUS = {
   PAID: 'paid',
   OVERDUE: 'overdue',
   CANCELLED: 'cancelled',
+  REFUNDED: 'refunded',
 } as const;
 
 export type InvoiceStatus =

@@ -17,7 +17,8 @@ interface Invoice {
   invoiceNo: string;
   amount: number;
   date: string;
-  status: "paid" | "pending" | "cancelled";
+  status: "paid" | "pending" | "cancelled" | "refunded";
+  refundStatus: string | null;
 }
 
 const InvoicesContent = () => {
@@ -41,7 +42,8 @@ const InvoicesContent = () => {
           invoiceNo: inv.invoiceNumber || inv.id.slice(0, 8),
           amount: Number(inv.totalAmount) || 0,
           date: new Date(inv.issuedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { day: "numeric", month: "numeric", year: "2-digit" }),
-          status: (inv.status === "issued" ? "pending" : inv.status === "cancelled" ? "cancelled" : "paid") as Invoice["status"],
+          status: (inv.status === "issued" ? "pending" : inv.status === "cancelled" ? "cancelled" : inv.status === "refunded" ? "refunded" : "paid") as Invoice["status"],
+          refundStatus: inv.refundStatus || null,
         }));
         setInvoices(mapped);
       } catch {
@@ -53,30 +55,46 @@ const InvoicesContent = () => {
     fetchInvoices();
   }, [locale]);
 
-  const getStatusLabel = (status: Invoice["status"]) => {
-    switch (status) {
+  const getStatusLabel = (invoice: Invoice) => {
+    // Show refund-related status if a refund is in progress
+    if (invoice.refundStatus === "pending" || invoice.refundStatus === "approved" || invoice.refundStatus === "processing") {
+      return t("invoices.statusRefundPending");
+    }
+    switch (invoice.status) {
       case "paid":
         return t("invoices.statusPaid");
       case "pending":
         return t("invoices.statusPending");
       case "cancelled":
         return t("invoices.statusCancelled");
+      case "refunded":
+        return t("invoices.statusRefunded");
       default:
-        return status;
+        return invoice.status;
     }
   };
 
-  const getStatusColor = (status: Invoice["status"]) => {
-    switch (status) {
+  const getStatusColor = (invoice: Invoice) => {
+    if (invoice.refundStatus === "pending" || invoice.refundStatus === "approved" || invoice.refundStatus === "processing") {
+      return "text-[#D97706]";
+    }
+    switch (invoice.status) {
       case "paid":
         return "text-[#16A34A]";
       case "pending":
         return "text-[#D4A520]";
       case "cancelled":
         return "text-[#DC2626]";
+      case "refunded":
+        return "text-[#6B7280]";
       default:
         return "text-[#6B7280]";
     }
+  };
+
+  const canRequestRefund = (invoice: Invoice) => {
+    // Only allow refund request if invoice is paid and no active refund exists
+    return invoice.status === "paid" && !invoice.refundStatus;
   };
 
   const toggleMenu = (id: string) => {
@@ -203,10 +221,10 @@ const InvoicesContent = () => {
                               className={`py-4 px-4 ${isRTL ? "text-right" : "text-left"}`}
                             >
                               <span
-                                className={`inline-flex items-center gap-1.5 text-sm ${getStatusColor(invoice.status)}`}
+                                className={`inline-flex items-center gap-1.5 text-sm ${getStatusColor(invoice)}`}
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                                {getStatusLabel(invoice.status)}
+                                {getStatusLabel(invoice)}
                               </span>
                             </td>
                             <td className="py-4 px-4 relative">
@@ -233,7 +251,7 @@ const InvoicesContent = () => {
                                   >
                                     {t("invoices.downloadInvoice")}
                                   </button>
-                                  {invoice.status === "paid" && (
+                                  {canRequestRefund(invoice) && (
                                     <button
                                       className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                       onClick={() => {
@@ -288,7 +306,7 @@ const InvoicesContent = () => {
                                   >
                                     {t("invoices.downloadInvoice")}
                                   </button>
-                                  {invoice.status === "paid" && (
+                                  {canRequestRefund(invoice) && (
                                     <button
                                       className={`w-full px-4 py-2 text-sm text-[#DC2626] hover:bg-[#FEE2E2] transition-colors ${isRTL ? "text-right" : "text-left"}`}
                                       onClick={() => {
@@ -323,10 +341,10 @@ const InvoicesContent = () => {
                                 {t("invoices.status")}
                               </p>
                               <span
-                                className={`inline-flex items-center gap-1.5 text-sm ${getStatusColor(invoice.status)}`}
+                                className={`inline-flex items-center gap-1.5 text-sm ${getStatusColor(invoice)}`}
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                                {getStatusLabel(invoice.status)}
+                                {getStatusLabel(invoice)}
                               </span>
                             </div>
                           </div>

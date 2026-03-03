@@ -4,13 +4,14 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ilike, or, desc, asc, count, sql } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, asc, count, sql, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
   courseModules,
   courseMaterials,
   enrollments,
+  payments,
   sessions,
   courseRatings,
   users,
@@ -517,6 +518,23 @@ export class CoursesService {
     if (existing.status !== COURSE_STATUS.DRAFT) {
       throw new BadRequestException(
         'Only draft courses can be deleted',
+      );
+    }
+
+    // Prevent deletion if there are active or pending payments
+    const [activePayments] = await db
+      .select({ count: count() })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.courseId, courseId),
+          inArray(payments.status, ['pending', 'paid']),
+        ),
+      );
+
+    if (Number(activePayments?.count || 0) > 0) {
+      throw new BadRequestException(
+        'Cannot delete course with active or pending payments',
       );
     }
 

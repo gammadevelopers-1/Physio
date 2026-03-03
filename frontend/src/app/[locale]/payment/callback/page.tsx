@@ -36,7 +36,12 @@ export default function PaymentCallbackPage() {
           router.replace(`/${locale}/payment/success?paymentId=${paymentId}`);
         } else if (result.status === "failed") {
           clearInterval(pollInterval);
-          router.replace(`/${locale}/payment/failed?paymentId=${paymentId}`);
+          const errorParam = result.failureReason
+            ? `&error=${encodeURIComponent(result.failureReason)}`
+            : "";
+          router.replace(
+            `/${locale}/payment/failed?paymentId=${paymentId}${errorParam}`,
+          );
         } else if (pollCount.current >= maxPolls) {
           clearInterval(pollInterval);
           setStatus("timeout");

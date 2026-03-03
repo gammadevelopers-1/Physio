@@ -4989,6 +4989,10 @@
       "title": "Discount & Coupon Management",
       "subtitle": "Create and manage coupons, track usage analytics",
       "createCoupon": "Create Coupon",
+      "editCoupon": "Edit Discount",
+      "createSuccess": "Discount created successfully",
+      "editSuccess": "Discount updated successfully",
+      "deleteSuccess": "Discount deleted",
       "tabs": {
         "active": "Active",
         "expired": "Expired",
@@ -5012,6 +5016,7 @@
         "expiryDate": "Expiry Date",
         "minOrder": "Minimum Order (SAR)",
         "create": "Create Coupon",
+        "save": "Save Changes",
         "cancel": "Cancel"
       },
       "actions": {
@@ -5113,7 +5118,9 @@
         "adminFee": "Admin Processing Fee (SAR)",
         "autoApproveBelow": "Auto-approve Refunds Below (SAR)",
         "save": "Save Policy"
-      }
+      },
+      "saved": "Settings saved successfully",
+      "saveError": "Failed to save settings"
     },
     "courses": {
       "aclsTraining": "ACLS Training",
@@ -5865,6 +5872,25 @@
     "subtitle": "Unfortunately, your payment could not be processed.",
     "message": "Your payment was not completed. This could be due to insufficient funds, a declined card, or a temporary issue with the payment provider. No charges have been made to your account.",
     "tryAgain": "Try Again",
-    "browseCourses": "Browse Courses"
+    "browseCourses": "Browse Courses",
+    "errors": {
+      "cardDeclined": "Your card was declined. Please try a different payment method.",
+      "insufficientFunds": "Insufficient funds. Please check your account balance.",
+      "expiredCard": "Your card has expired. Please use a different card.",
+      "gatewayTimeout": "The payment gateway timed out. Please try again."
+    }
+  },
+  "verifyInvoice": {
+    "verifying": "Verifying invoice...",
+    "notFound": "Invoice Not Found",
+    "notFoundDesc": "The invoice number provided could not be found in our records.",
+    "verified": "Invoice Verified",
+    "verifiedDesc": "This invoice is authentic and issued by Roya Almustaqbal for Health Training.",
+    "invoiceNumber": "Invoice Number",
+    "status": "Status",
+    "paid": "Paid",
+    "pending": "Pending",
+    "amount": "Amount",
+    "issuedDate": "Issued Date"
   }
 }

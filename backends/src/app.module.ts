@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bullmq';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -52,6 +53,11 @@ import paymentsConfig from './config/payments.config';
 
     // Task scheduling (cron jobs)
     ScheduleModule.forRoot(),
+
+    // Rate limiting (30 requests per minute default)
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60000, limit: 30 }],
+    }),
 
     // BullMQ job queue (Redis) — only when REDIS_HOST is configured
     ...(process.env.REDIS_HOST

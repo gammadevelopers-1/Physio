@@ -11,6 +11,7 @@ import {
 import { InvoiceService } from '../services/invoice.service';
 import { EmailService } from '../../email/email.service';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { Public } from '../../auth/decorators/public.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 
@@ -20,6 +21,24 @@ export class InvoicesController {
     private readonly invoiceService: InvoiceService,
     private readonly emailService: EmailService,
   ) {}
+
+  @Get('verify/:invoiceNumber')
+  @Public()
+  async verifyInvoice(@Param('invoiceNumber') invoiceNumber: string) {
+    const invoice = await this.invoiceService.getByInvoiceNumber(invoiceNumber);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+    return {
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      amount: invoice.totalAmount,
+      currency: 'SAR',
+      issuedDate: invoice.issuedAt,
+      paidDate: invoice.paidAt,
+      verified: true,
+    };
+  }
 
   @Get('my-invoices')
   @Roles('STUDENT')

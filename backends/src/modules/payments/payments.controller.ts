@@ -10,8 +10,10 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
+import { GatewayFactory } from './gateways/gateway.factory';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -20,10 +22,14 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly gatewayFactory: GatewayFactory,
+  ) {}
 
   @Post('initiate')
   @Roles('STUDENT')
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   async initiatePayment(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: InitiatePaymentDto,
@@ -54,11 +60,23 @@ export class PaymentsController {
   }
 
   @Post('verify/:id')
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   async verifyPayment(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.paymentsService.verifyPayment(id, user);
+  }
+
+  @Get('gateways/health')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getGatewayHealth() {
+    const available = this.gatewayFactory.getAvailableGateways();
+    const allGateways = ['tap', 'moyasar', 'tamara', 'tabby'];
+    return allGateways.map((name) => ({
+      gateway: name,
+      status: available.includes(name) ? 'available' : 'unavailable',
+    }));
   }
 
   @Get('my-payments')

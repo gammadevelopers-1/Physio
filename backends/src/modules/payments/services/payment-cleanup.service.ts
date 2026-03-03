@@ -33,12 +33,13 @@ export class PaymentCleanupService {
             eq(payments.status, PAYMENT_STATUS.PENDING),
             lt(payments.createdAt, twoHoursAgo),
           ),
-        );
+        )
+        .limit(100);
 
       if (stalePayments.length === 0) return;
 
       this.logger.log(
-        `Found ${stalePayments.length} stale pending payment(s) to expire`,
+        `Payment cleanup: processing ${stalePayments.length} stale payment(s) (batch limit: 100)`,
       );
 
       for (const stalePayment of stalePayments) {

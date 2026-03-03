@@ -21,6 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { discountApi } from "@/lib/api";
+import { toast } from "sonner";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 interface Coupon {
@@ -42,11 +43,12 @@ const DiscountsContent = () => {
   const isRTL = locale === "ar";
   const profile = useFinanceProfile();
   const [activeTab, setActiveTab] = useState("active");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [openActionId, setOpenActionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   // Create form state
   const [formCode, setFormCode] = useState("");
@@ -121,31 +123,59 @@ const DiscountsContent = () => {
     disabled: "bg-[#FEE2E2] text-[#DC2626]",
   };
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
     if (!formCode || !formValue) return;
-    setCreating(true);
+    setSaving(true);
     try {
-      await discountApi.create({
+      const payload = {
         code: formCode,
         type: formType,
         value: Number(formValue),
         maxUses: formLimit ? Number(formLimit) : undefined,
         validUntil: formExpiry || undefined,
         minOrderAmount: formMinOrder ? Number(formMinOrder) : undefined,
-      });
-      setShowCreateModal(false);
-      resetForm();
+      };
+
+      if (editingId) {
+        await discountApi.update(editingId, payload);
+        toast.success(t("discountsPage.editSuccess") || "Discount updated successfully");
+      } else {
+        await discountApi.create(payload);
+        toast.success(t("discountsPage.createSuccess") || "Discount created successfully");
+      }
+      closeModal();
       await fetchData();
-    } catch {}
-    setCreating(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save discount");
+    }
+    setSaving(false);
+  };
+
+  const handleEdit = (coupon: Coupon) => {
+    setEditingId(coupon.id);
+    setFormCode(coupon.code);
+    setFormType(coupon.type);
+    setFormValue(String(coupon.value));
+    setFormLimit(coupon.usageLimit ? String(coupon.usageLimit) : "");
+    setFormExpiry("");
+    setFormMinOrder(coupon.minOrder ? String(coupon.minOrder) : "");
+    setShowModal(true);
+    setOpenActionId(null);
   };
 
   const handleDelete = async (id: string) => {
     try {
       await discountApi.delete(id);
+      toast.success(t("discountsPage.deleteSuccess") || "Discount deleted");
       await fetchData();
     } catch {}
     setOpenActionId(null);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    resetForm();
   };
 
   const resetForm = () => {
@@ -186,7 +216,7 @@ const DiscountsContent = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => { setEditingId(null); resetForm(); setShowModal(true); }}
                   className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -279,6 +309,13 @@ const DiscountsContent = () => {
                                 {openActionId === coupon.id && (
                                   <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
                                     <button
+                                      onClick={() => handleEdit(coupon)}
+                                      className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#374151] hover:bg-[#F3F4F6]"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                      {t("discountsPage.actions.edit") || "Edit"}
+                                    </button>
+                                    <button
                                       onClick={() => handleDelete(coupon.id)}
                                       className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#DC2626] hover:bg-[#FEE2E2]"
                                     >
@@ -350,13 +387,15 @@ const DiscountsContent = () => {
         </div>
       </div>
 
-      {/* Create Coupon Modal */}
-      {showCreateModal && (
+      {/* Create/Edit Coupon Modal */}
+      {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-[#111827]">{t("discountsPage.createCoupon")}</h3>
-              <button onClick={() => { setShowCreateModal(false); resetForm(); }} className="text-[#6B7280] hover:text-[#374151]">
+              <h3 className="text-lg font-semibold text-[#111827]">
+                {editingId ? (t("discountsPage.editCoupon") || "Edit Discount") : t("discountsPage.createCoupon")}
+              </h3>
+              <button onClick={closeModal} className="text-[#6B7280] hover:text-[#374151]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -428,18 +467,18 @@ const DiscountsContent = () => {
             </div>
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => { setShowCreateModal(false); resetForm(); }}
+                onClick={closeModal}
                 className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
               >
                 {t("discountsPage.form.cancel")}
               </button>
               <button
-                onClick={handleCreate}
-                disabled={creating || !formCode || !formValue}
+                onClick={handleSave}
+                disabled={saving || !formCode || !formValue}
                 className="flex-1 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-                {t("discountsPage.form.create")}
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {editingId ? (t("discountsPage.form.save") || "Save") : t("discountsPage.form.create")}
               </button>
             </div>
           </div>

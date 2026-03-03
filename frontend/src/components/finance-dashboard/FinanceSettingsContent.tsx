@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { toast } from "sonner";
 import Link from "next/link";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
@@ -47,6 +48,43 @@ const FinanceSettingsContent = () => {
   const [bnplDeduction, setBnplDeduction] = useState("5");
   const [adminFee, setAdminFee] = useState("50");
   const [autoApproveBelow, setAutoApproveBelow] = useState("200");
+
+  // Load saved settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("finance-settings");
+      if (!saved) return;
+      const s = JSON.parse(saved);
+      if (s.gatewayEnabled) setGatewayEnabled(s.gatewayEnabled);
+      if (s.vatEnabled !== undefined) setVatEnabled(s.vatEnabled);
+      if (s.taxInclusive !== undefined) setTaxInclusive(s.taxInclusive);
+      if (s.vatRate) setVatRate(s.vatRate);
+      if (s.taxNumber) setTaxNumber(s.taxNumber);
+      if (s.fullRefundDays) setFullRefundDays(s.fullRefundDays);
+      if (s.partialRefundDays) setPartialRefundDays(s.partialRefundDays);
+      if (s.partialRefundPercent) setPartialRefundPercent(s.partialRefundPercent);
+      if (s.bnplDeduction) setBnplDeduction(s.bnplDeduction);
+      if (s.adminFee) setAdminFee(s.adminFee);
+      if (s.autoApproveBelow) setAutoApproveBelow(s.autoApproveBelow);
+    } catch {}
+  }, []);
+
+  const saveSection = useCallback(
+    (section: string, data: Record<string, unknown>) => {
+      try {
+        const saved = localStorage.getItem("finance-settings");
+        const current = saved ? JSON.parse(saved) : {};
+        localStorage.setItem(
+          "finance-settings",
+          JSON.stringify({ ...current, ...data }),
+        );
+        toast.success(t("settingsPage.saved"));
+      } catch {
+        toast.error(t("settingsPage.saveError"));
+      }
+    },
+    [t],
+  );
 
   const tabs = [
     { key: "gateways", label: t("settingsPage.tabs.gateways"), icon: CreditCard },
@@ -203,7 +241,10 @@ const FinanceSettingsContent = () => {
                           );
                         })}
                       </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                      <button
+                        onClick={() => saveSection("gateways", { gatewayEnabled })}
+                        className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                      >
                         <Save className="w-4 h-4" />
                         {t("settingsPage.gateways.save")}
                       </button>
@@ -237,7 +278,10 @@ const FinanceSettingsContent = () => {
                             <option>0</option>
                           </select>
                         </div>
-                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button
+                          onClick={() => saveSection("currency", {})}
+                          className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                        >
                           <Save className="w-4 h-4" />
                           {t("settingsPage.gateways.save")}
                         </button>
@@ -292,7 +336,12 @@ const FinanceSettingsContent = () => {
                             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
                           />
                         </div>
-                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button
+                          onClick={() =>
+                            saveSection("tax", { vatEnabled, taxInclusive, vatRate, taxNumber })
+                          }
+                          className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                        >
                           <Save className="w-4 h-4" />
                           {t("settingsPage.gateways.save")}
                         </button>
@@ -361,7 +410,19 @@ const FinanceSettingsContent = () => {
                             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#a37f49]"
                           />
                         </div>
-                        <button className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
+                        <button
+                          onClick={() =>
+                            saveSection("refund", {
+                              fullRefundDays,
+                              partialRefundDays,
+                              partialRefundPercent,
+                              bnplDeduction,
+                              adminFee,
+                              autoApproveBelow,
+                            })
+                          }
+                          className="flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
+                        >
                           <Save className="w-4 h-4" />
                           {t("settingsPage.refundPolicy.save")}
                         </button>

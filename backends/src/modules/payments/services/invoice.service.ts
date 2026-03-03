@@ -537,6 +537,22 @@ export class InvoiceService {
     return invoice || null;
   }
 
+  async getByInvoiceNumber(invoiceNumber: string) {
+    const [invoice] = await db
+      .select({
+        invoiceNumber: invoices.invoiceNumber,
+        status: invoices.status,
+        totalAmount: invoices.totalAmount,
+        issuedAt: invoices.issuedAt,
+        paidAt: invoices.paidAt,
+      })
+      .from(invoices)
+      .where(eq(invoices.invoiceNumber, invoiceNumber))
+      .limit(1);
+
+    return invoice || null;
+  }
+
   async getInvoicePdfBuffer(
     paymentId: string,
   ): Promise<{ buffer: Buffer; filename: string } | null> {

@@ -122,10 +122,12 @@ export class PaymentsService {
       discountId = discountResult.discountId;
     }
 
-    // 5. Calculate totals
+    // 5. Calculate totals (Saudi Arabia VAT = 15%)
     const subtotal = coursePrice;
-    const taxAmount = 0; // VAT can be added later
-    const totalAmount = Math.max(0, subtotal - discountAmount + taxAmount);
+    const VAT_RATE = 0.15;
+    const taxableAmount = Math.max(0, subtotal - discountAmount);
+    const taxAmount = Math.round(taxableAmount * VAT_RATE * 100) / 100;
+    const totalAmount = Math.max(0, taxableAmount + taxAmount);
 
     if (totalAmount <= 0) {
       throw new BadRequestException(

@@ -2078,7 +2078,7 @@ export const paymentApi = {
   }) => api.post<{ paymentId: string; redirectUrl: string; amount: number; currency: string }>('/payments/initiate', data),
 
   verify: (paymentId: string) =>
-    api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string }>(`/payments/verify/${paymentId}`),
+    api.post<{ status: string; paymentId: string; amount?: string; currency?: string; gateway?: string; paidAt?: string; failureReason?: string }>(`/payments/verify/${paymentId}`),
 
   getMyPayments: (page = 1, limit = 10) =>
     api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments/my-payments?page=${page}&limit=${limit}`),

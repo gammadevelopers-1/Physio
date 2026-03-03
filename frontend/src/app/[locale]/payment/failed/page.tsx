@@ -1,10 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { XCircle, RefreshCw, ArrowRight, ArrowLeft } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { paymentApi } from "@/lib/api";
+
+const ERROR_KEY_MAP: Record<string, string> = {
+  card_declined: "cardDeclined",
+  insufficient_funds: "insufficientFunds",
+  expired_card: "expiredCard",
+  gateway_timeout: "gatewayTimeout",
+};
 
 export default function PaymentFailedPage() {
   const t = useTranslations("paymentFailed");
@@ -13,12 +22,47 @@ export default function PaymentFailedPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
+  const errorParam = searchParams.get("error");
+
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
   // Get courseId from sessionStorage for retry
   let courseId: string | null = null;
   try {
     courseId = typeof window !== "undefined" ? sessionStorage.getItem("checkout_courseId") : null;
   } catch {}
+
+  // Try to get error details from URL param or by verifying the payment
+  useEffect(() => {
+    if (errorParam) {
+      const key = ERROR_KEY_MAP[errorParam];
+      if (key) {
+        setErrorDetail(t(`errors.${key}`));
+      }
+      return;
+    }
+
+    if (paymentId) {
+      paymentApi
+        .verify(paymentId)
+        .then((data) => {
+          if (data?.failureReason) {
+            // Try to match known error codes
+            const reason = data.failureReason.toLowerCase();
+            if (reason.includes("declined")) {
+              setErrorDetail(t("errors.cardDeclined"));
+            } else if (reason.includes("insufficient")) {
+              setErrorDetail(t("errors.insufficientFunds"));
+            } else if (reason.includes("expired")) {
+              setErrorDetail(t("errors.expiredCard"));
+            } else if (reason.includes("timeout")) {
+              setErrorDetail(t("errors.gatewayTimeout"));
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [paymentId, errorParam, t]);
 
   const Arrow = isRTL ? ArrowLeft : ArrowRight;
 
@@ -36,8 +80,11 @@ export default function PaymentFailedPage() {
           </h1>
           <p className="text-[#737373] mb-6">{t("subtitle")}</p>
 
-          <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-6">
+          <div className="bg-red-50 border border-red-200 rounded-xl p-5 mb-6 space-y-2">
             <p className="text-sm text-red-700">{t("message")}</p>
+            {errorDetail && (
+              <p className="text-sm font-medium text-red-800">{errorDetail}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">

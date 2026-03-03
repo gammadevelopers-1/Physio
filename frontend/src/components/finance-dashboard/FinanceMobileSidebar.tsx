@@ -29,9 +29,10 @@ interface FinanceProfile {
 
 interface FinanceMobileSidebarProps {
   profile: FinanceProfile;
+  pendingRefundCount?: number;
 }
 
-const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
+const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const locale = useLocale();
   const pathname = usePathname();
@@ -53,13 +54,12 @@ const FinanceMobileSidebar = ({ profile }: FinanceMobileSidebarProps) => {
       label: t("sidebar.invoices"),
       href: `/${locale}/dashboard/finance/invoices`,
       icon: FileText,
-      badge: 12,
     },
     {
       label: t("sidebar.refunds"),
       href: `/${locale}/dashboard/finance/refunds`,
       icon: RotateCcw,
-      badge: 5,
+      badge: pendingRefundCount > 0 ? pendingRefundCount : undefined,
     },
     {
       label: t("sidebar.discounts"),

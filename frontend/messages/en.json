@@ -5058,7 +5058,9 @@
       "columns": {
         "transactions": "Transactions",
         "growth": "Growth"
-      }
+      },
+      "noData": "No report data available yet",
+      "exportHint": "Use the export buttons above to download financial data as CSV"
     },
     "navbar": {
       "toggleMenu": "Toggle menu",

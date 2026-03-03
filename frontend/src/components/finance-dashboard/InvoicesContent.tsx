@@ -23,14 +23,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { invoiceApi, financeApi } from "@/lib/api";
-
-const mockProfile = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 interface Invoice {
   id: string;
@@ -47,7 +40,7 @@ const InvoicesContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+  const profile = useFinanceProfile();
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [openActionId, setOpenActionId] = useState<string | null>(null);

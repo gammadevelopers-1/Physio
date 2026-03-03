@@ -21,14 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { discountApi } from "@/lib/api";
-
-const mockProfile = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 interface Coupon {
   id: string;
@@ -47,7 +40,7 @@ const DiscountsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+  const profile = useFinanceProfile();
   const [activeTab, setActiveTab] = useState("active");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [openActionId, setOpenActionId] = useState<string | null>(null);

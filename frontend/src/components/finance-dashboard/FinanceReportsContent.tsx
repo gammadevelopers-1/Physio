@@ -7,31 +7,21 @@ import FinanceMobileSidebar from "./FinanceMobileSidebar";
 import FinanceNavbar from "./FinanceNavbar";
 import {
   BarChart3,
-  FileText,
   Download,
   DollarSign,
   CreditCard,
   RotateCcw,
-  TrendingUp,
-  Calendar,
   Filter,
   FileSpreadsheet,
 } from "lucide-react";
 import { financeApi } from "@/lib/api";
-
-const mockProfile = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 const FinanceReportsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+  const profile = useFinanceProfile();
   const [selectedReport, setSelectedReport] = useState("revenue");
   const [period, setPeriod] = useState("thisMonth");
   const [groupBy, setGroupBy] = useState("byCourse");
@@ -69,52 +59,6 @@ const FinanceReportsContent = () => {
       iconBg: "bg-[#EDE9FE]",
       iconColor: "text-[#8B5CF6]",
     },
-  ];
-
-  // Report chart data
-  const reportChartData = [32, 45, 38, 52, 48, 65, 58, 72, 68, 85, 78, 92];
-  const reportChartLabels = [t("months.jan"), t("months.feb"), t("months.mar"), t("months.apr"), t("months.may"), t("months.jun"), t("months.jul"), t("months.aug"), t("months.sep"), t("months.oct"), t("months.nov"), t("months.dec")];
-
-  const generateLinePath = (chartData: number[]) => {
-    const width = 100;
-    const height = 100;
-    const padding = 5;
-    const chartWidth = width - padding * 2;
-    const chartHeight = height - padding * 2;
-
-    const maxValue = Math.max(...chartData) * 1.1;
-    const minValue = Math.min(...chartData) * 0.9;
-    const range = maxValue - minValue || 1;
-
-    const pts = chartData.map((value, index) => {
-      const x = padding + (index / (chartData.length - 1)) * chartWidth;
-      const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
-      return { x, y };
-    });
-
-    let path = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const prev = pts[i - 1];
-      const curr = pts[i];
-      const cpx = (prev.x + curr.x) / 2;
-      path += ` Q ${prev.x + (cpx - prev.x) * 0.5} ${prev.y}, ${cpx} ${(prev.y + curr.y) / 2}`;
-      path += ` Q ${cpx + (curr.x - cpx) * 0.5} ${curr.y}, ${curr.x} ${curr.y}`;
-    }
-
-    const areaPath = path + ` L ${pts[pts.length - 1].x} ${height - padding} L ${pts[0].x} ${height - padding} Z`;
-
-    return { linePath: path, areaPath, points: pts };
-  };
-
-  const { linePath: reportLinePath, areaPath: reportAreaPath, points: reportPoints } = generateLinePath(reportChartData);
-
-  // Mock report data
-  const mockRevenueReport = [
-    { name: t("courses.aclsTraining"), revenue: `${t("kpi.sar")} 52,000`, transactions: 48, growth: "+15%" },
-    { name: t("courses.firstAidCert"), revenue: `${t("kpi.sar")} 38,000`, transactions: 45, growth: "+8%" },
-    { name: t("courses.cprCert"), revenue: `${t("kpi.sar")} 28,000`, transactions: 43, growth: "+12%" },
-    { name: t("courses.emergencyResponse"), revenue: `${t("kpi.sar")} 24,000`, transactions: 24, growth: "+5%" },
-    { name: t("courses.infectionControl"), revenue: `${t("kpi.sar")} 18,000`, transactions: 24, growth: "+3%" },
   ];
 
   return (
@@ -237,104 +181,14 @@ const FinanceReportsContent = () => {
                   </h3>
                 </div>
 
-                {/* Report Line Chart */}
-                <div className="px-5 py-4">
-                  <div className="h-[200px] bg-gradient-to-b from-[#EFF6FF] to-transparent rounded-xl p-4 relative">
-                    <svg
-                      viewBox="0 0 100 100"
-                      className="w-full h-full"
-                      preserveAspectRatio="none"
-                    >
-                      <defs>
-                        <linearGradient id="reportAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
-                        </linearGradient>
-                      </defs>
-
-                      {[0, 25, 50, 75, 100].map((y) => (
-                        <line
-                          key={y}
-                          x1="5"
-                          y1={5 + (90 * (100 - y)) / 100}
-                          x2="95"
-                          y2={5 + (90 * (100 - y)) / 100}
-                          stroke="#E5E7EB"
-                          strokeWidth="0.3"
-                          strokeDasharray="2,2"
-                        />
-                      ))}
-
-                      <path d={reportAreaPath} fill="url(#reportAreaGradient)" />
-
-                      <path
-                        d={reportLinePath}
-                        fill="none"
-                        stroke="#3B82F6"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
-
-                      {reportPoints.map((point, index) => (
-                        <g key={index}>
-                          <circle
-                            cx={point.x}
-                            cy={point.y}
-                            r="3"
-                            fill="white"
-                            stroke="#3B82F6"
-                            strokeWidth="2"
-                            vectorEffect="non-scaling-stroke"
-                          />
-                          <circle
-                            cx={point.x}
-                            cy={point.y}
-                            r="8"
-                            fill="transparent"
-                            className="cursor-pointer"
-                          >
-                            <title>{`${reportChartLabels[index]}: ${t("kpi.sar")} ${reportChartData[index]}K`}</title>
-                          </circle>
-                        </g>
-                      ))}
-                    </svg>
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
-                    {reportChartLabels.map((label, index) => (
-                      <span key={index} className="text-center">{label}</span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Data Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("sidebar.revenue")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.transactions")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.growth")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mockRevenueReport.map((item, index) => (
-                        <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                          <td className="py-3 px-5 text-[13px] font-medium text-[#111827]">{item.name}</td>
-                          <td className="py-3 px-5 text-[13px] font-semibold text-[#111827]">{item.revenue}</td>
-                          <td className="py-3 px-5 text-[13px] text-[#6B7280] hidden md:table-cell">{item.transactions}</td>
-                          <td className="py-3 px-5">
-                            <span className="flex items-center gap-1 text-[13px] font-semibold text-[#16A34A]">
-                              <TrendingUp className="w-3 h-3" />
-                              {item.growth}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="flex flex-col items-center justify-center py-16 px-5">
+                  <BarChart3 className="w-12 h-12 text-[#D1D5DB] mb-4" />
+                  <p className="text-sm text-[#6B7280] text-center">
+                    {t("reportsPage.noData")}
+                  </p>
+                  <p className="text-xs text-[#9CA3AF] text-center mt-1">
+                    {t("reportsPage.exportHint")}
+                  </p>
                 </div>
               </div>
             </div>

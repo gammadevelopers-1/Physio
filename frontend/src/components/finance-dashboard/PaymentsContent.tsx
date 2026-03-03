@@ -11,25 +11,17 @@ import {
   CheckCircle,
   XCircle,
   DollarSign,
-  TrendingUp,
   Download,
   Loader2,
 } from "lucide-react";
 import { paymentApi, financeApi } from "@/lib/api";
-
-const mockProfile = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 const PaymentsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+  const profile = useFinanceProfile();
 
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);

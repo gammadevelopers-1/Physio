@@ -11,7 +11,6 @@ import {
   X,
   Clock,
   CheckCircle,
-  XCircle,
   AlertCircle,
   MessageSquare,
   DollarSign,
@@ -20,14 +19,7 @@ import {
 } from "lucide-react";
 import { refundApi, financeApi } from "@/lib/api";
 import { toast } from "sonner";
-
-const mockProfile = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 interface RefundRequest {
   id: string;
@@ -46,7 +38,7 @@ const RefundsContent = () => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+  const profile = useFinanceProfile();
   const [activeTab, setActiveTab] = useState("pending");
   const [loading, setLoading] = useState(true);
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);

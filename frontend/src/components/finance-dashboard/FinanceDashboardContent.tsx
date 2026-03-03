@@ -12,20 +12,11 @@ import PaymentsInvoicesTable from "./PaymentsInvoicesTable";
 import RefundsQueueWidget from "./RefundsQueueWidget";
 import FinanceRightSidebar from "./FinanceRightSidebar";
 import { financeApi, paymentApi, refundApi, discountApi } from "@/lib/api";
-
-// Mock Finance Profile
-const mockProfile = {
-  name: "Nora Al-Fahad",
-  email: "n.alfahad@physio.edu.sa",
-  revenue: "245K",
-  invoices: 156,
-  refundRate: 2.1,
-};
+import { useFinanceProfile } from "@/hooks/useFinanceProfile";
 
 const FinanceDashboardContent = () => {
   const t = useTranslations("financeDashboard");
-
-  const profile = { ...mockProfile, name: t("names.noraAlFahad") };
+  const profile = useFinanceProfile();
 
   const [kpiData, setKpiData] = useState({
     revenueMTD: 0,
@@ -51,6 +42,7 @@ const FinanceDashboardContent = () => {
   const [transactionFeed, setTransactionFeed] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
+  const [pendingRefundCount, setPendingRefundCount] = useState(0);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -139,8 +131,10 @@ const FinanceDashboardContent = () => {
 
         // Refunds queue
         if (refundsRes.status === "fulfilled") {
+          const pendingRefunds = (refundsRes.value?.data || []).filter((r: any) => r.status === "pending");
+          setPendingRefundCount(pendingRefunds.length);
           setRefunds(
-            (refundsRes.value?.data || []).filter((r: any) => r.status === "pending").slice(0, 3).map((r: any) => ({
+            pendingRefunds.slice(0, 3).map((r: any) => ({
               id: r.id,
               customer: r.requesterName || r.requesterEmail || "-",
               course: r.courseTitle || "-",
@@ -243,11 +237,11 @@ const FinanceDashboardContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <FinanceSidebar profile={profile} />
+              <FinanceSidebar profile={profile} pendingRefundCount={pendingRefundCount} />
             </div>
 
             {/* Mobile Sidebar */}
-            <FinanceMobileSidebar profile={profile} />
+            <FinanceMobileSidebar profile={profile} pendingRefundCount={pendingRefundCount} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

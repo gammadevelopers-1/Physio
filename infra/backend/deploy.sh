@@ -7,9 +7,6 @@
 
 set -e
 
-# Prevent Git Bash on Windows from converting Linux paths (e.g. /tmp) to Windows paths
-export MSYS2_ARG_CONV_EXCL="*"
-
 # Get script directory and load config
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "${SCRIPT_DIR}/../config.sh"

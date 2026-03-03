@@ -367,7 +367,14 @@ export class EnrollmentsService {
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
-      .where(eq(enrollments.courseId, courseId))
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          // Only active students — completed/dropped/suspended should not appear
+          // in attendance dialogs or session management
+          eq(enrollments.status, 'active'),
+        ),
+      )
       .orderBy(desc(enrollments.enrolledAt));
 
     return data;

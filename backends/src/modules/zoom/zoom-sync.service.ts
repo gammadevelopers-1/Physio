@@ -174,7 +174,54 @@ export class ZoomSyncService {
     }
     const excludeEmails = hostEmail ? [hostEmail.toLowerCase()] : [];
 
-    for (const participant of participants) {
+    // ── Pre-aggregate participants ──────────────────────────
+    // Zoom creates separate entries per join/leave. Consolidate by
+    // (name + email) so each person appears once with earliest join,
+    // latest leave, and total duration.
+    interface AggregatedParticipant {
+      name: string;
+      userEmail: string;
+      role: string;
+      joinTime: string | null;
+      leaveTime: string | null;
+      duration: number; // seconds
+      id: string;
+    }
+
+    const aggregatedMap = new Map<string, AggregatedParticipant>();
+    for (const p of participants) {
+      const key = `${(p.name || '').toLowerCase()}||${(p.userEmail || '').toLowerCase()}`;
+      const existing = aggregatedMap.get(key);
+      if (existing) {
+        // Merge: earliest join, latest leave, sum duration
+        if (p.joinTime && (!existing.joinTime || p.joinTime < existing.joinTime)) {
+          existing.joinTime = p.joinTime;
+        }
+        if (p.leaveTime && (!existing.leaveTime || p.leaveTime > existing.leaveTime)) {
+          existing.leaveTime = p.leaveTime;
+        }
+        existing.duration += p.duration || 0;
+        // Keep host role if any entry has it
+        if (p.role === 'host') existing.role = 'host';
+      } else {
+        aggregatedMap.set(key, {
+          name: p.name,
+          userEmail: p.userEmail,
+          role: p.role,
+          joinTime: p.joinTime,
+          leaveTime: p.leaveTime,
+          duration: p.duration || 0,
+          id: p.id,
+        });
+      }
+    }
+    const aggregatedParticipants = Array.from(aggregatedMap.values());
+
+    this.logger.debug(
+      `Aggregated ${participants.length} raw → ${aggregatedParticipants.length} unique participants`,
+    );
+
+    for (const participant of aggregatedParticipants) {
       // Skip Zoom host — by role OR by email match
       const isHost = participant.role === 'host'
         || (participant.userEmail && excludeEmails.includes(participant.userEmail.toLowerCase()));

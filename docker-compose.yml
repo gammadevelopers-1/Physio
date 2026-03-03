@@ -81,6 +81,14 @@ services:
       - FFMPEG_ENABLED=true
       # Auto-approve materials after processing (skip manager review in dev)
       - AUTO_APPROVE_MATERIALS=true
+      # Payment Gateways
+      - PAYMENT_CALLBACK_URL=http://localhost:3000/payment/callback
+      - PAYMENT_WEBHOOK_BASE_URL=http://localhost:8080/api/webhooks
+      # Tap Payments (Test/Sandbox)
+      - TAP_SECRET_KEY=sk_test_XKokBfNWv6FIYuTMg5sLPjhJ
+      - TAP_PUBLIC_KEY=pk_test_EtHFV4BuPQokJT6jiROls87Y
+      - TAP_WEBHOOK_SECRET=
+      - TAP_MERCHANT_ID=599424
     volumes:
       - ./backends/src:/app/src:delegated
       - backend_node_modules:/app/node_modules

@@ -75,7 +75,12 @@ export class MoyasarGateway implements PaymentGateway {
   }
 
   verifyWebhook(headers: Record<string, string>, body: any): boolean {
-    if (!this.webhookSecret) return false;
+    if (!this.webhookSecret) {
+      this.logger.warn(
+        'MOYASAR_WEBHOOK_SECRET is not configured — all Moyasar webhooks will be rejected',
+      );
+      return false;
+    }
 
     // Moyasar uses a shared secret token in the payload
     const token = body?.secret_token || body?.token;

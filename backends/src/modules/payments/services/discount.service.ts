@@ -122,21 +122,33 @@ export class DiscountService {
     paymentId: string,
     amountSaved: number,
   ) {
+    // Atomic conditional increment — prevents maxUses race condition
+    const result = await db
+      .update(discountCodes)
+      .set({
+        currentUses: sql`${discountCodes.currentUses} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(discountCodes.id, discountId),
+          sql`(${discountCodes.maxUses} IS NULL OR ${discountCodes.currentUses} < ${discountCodes.maxUses})`,
+        ),
+      )
+      .returning({ id: discountCodes.id });
+
+    if (result.length === 0) {
+      throw new BadRequestException(
+        'Discount code has reached its maximum usage limit',
+      );
+    }
+
     await db.insert(discountUsage).values({
       discountId,
       userId,
       paymentId,
       amountSaved: amountSaved.toFixed(2),
     });
-
-    // Increment current uses
-    await db
-      .update(discountCodes)
-      .set({
-        currentUses: sql`${discountCodes.currentUses} + 1`,
-        updatedAt: new Date(),
-      })
-      .where(eq(discountCodes.id, discountId));
 
     await this.auditLogService.log({
       entityType: 'discount_code',

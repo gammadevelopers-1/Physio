@@ -6,15 +6,20 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { InvoiceService } from '../services/invoice.service';
+import { EmailService } from '../../email/email.service';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 
 @Controller('invoices')
 export class InvoicesController {
-  constructor(private readonly invoiceService: InvoiceService) {}
+  constructor(
+    private readonly invoiceService: InvoiceService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Get('my-invoices')
   @Roles('STUDENT')
@@ -45,6 +50,30 @@ export class InvoicesController {
     );
   }
 
+  @Get(':id')
+  @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getInvoiceDetail(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const invoice = await this.invoiceService.getInvoiceById(id);
+    if (!invoice) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    // Students can only view their own invoices
+    const isAdmin =
+      user.roles.includes('FINANCE') ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+
+    if (!isAdmin && invoice.userId !== user.id) {
+      throw new NotFoundException('Invoice not found');
+    }
+
+    return invoice;
+  }
+
   @Get()
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getAllInvoices(
@@ -59,9 +88,14 @@ export class InvoicesController {
   async resendInvoice(@Param('id') id: string) {
     const invoice = await this.invoiceService.getInvoiceById(id);
     if (!invoice) {
-      throw new Error('Invoice not found');
+      throw new NotFoundException('Invoice not found');
     }
-    // TODO: Resend invoice email
-    return { sent: true };
+
+    await this.emailService.sendPaymentConfirmation(
+      invoice.userId,
+      invoice.paymentId,
+    );
+
+    return { sent: true, invoiceNumber: invoice.invoiceNumber };
   }
 }

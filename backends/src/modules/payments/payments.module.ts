@@ -15,6 +15,7 @@ import { InvoiceService } from './services/invoice.service';
 import { RefundService } from './services/refund.service';
 import { DiscountService } from './services/discount.service';
 import { FinanceService } from './services/finance.service';
+import { PaymentCleanupService } from './services/payment-cleanup.service';
 
 // Gateways
 import { GatewayFactory } from './gateways/gateway.factory';
@@ -63,6 +64,7 @@ import { EmailModule } from '../email/email.module';
     MoyasarGateway,
     TamaraGateway,
     TabbyGateway,
+    PaymentCleanupService,
     // Webhook processor only when Redis is available
     ...(process.env.REDIS_HOST ? [WebhookProcessor] : []),
   ],

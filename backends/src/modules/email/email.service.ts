@@ -708,6 +708,7 @@ export class EmailService {
   async sendPaymentConfirmation(
     userId: string,
     paymentId: string,
+    pdfAttachment?: { buffer: Buffer; filename: string },
   ): Promise<void> {
     try {
       const user = await this.getUserData(userId);
@@ -748,6 +749,14 @@ export class EmailService {
         subject: `Payment Confirmed - ${course?.title || 'Course'}`,
         html: getPaymentConfirmationHtml(params),
         text: getPaymentConfirmationText(params),
+        ...(pdfAttachment && {
+          attachments: [
+            {
+              filename: pdfAttachment.filename,
+              content: pdfAttachment.buffer,
+            },
+          ],
+        }),
       });
       this.logger.log(`Payment confirmation email sent to ${user.email}`);
     } catch (error) {

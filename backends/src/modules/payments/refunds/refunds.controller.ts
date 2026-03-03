@@ -23,14 +23,20 @@ export class RefundsController {
   constructor(private readonly refundService: RefundService) {}
 
   @Post()
-  @Roles('STUDENT')
+  @Roles('STUDENT', 'FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async requestRefund(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateRefundDto,
     @Req() req: Request,
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
-    return this.refundService.requestRefund(user.id, dto, ipAddress);
+    // Finance/Admin can initiate refunds on behalf of learners
+    const isAdmin =
+      user.roles.includes('FINANCE') ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    const requesterId = isAdmin ? (dto as any).userId || user.id : user.id;
+    return this.refundService.requestRefund(requesterId, dto, ipAddress);
   }
 
   @Get('my-refunds')

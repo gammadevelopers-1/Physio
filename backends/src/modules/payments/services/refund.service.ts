@@ -389,6 +389,7 @@ export class RefundService {
         paymentId: refunds.paymentId,
         requesterName: sql<string>`CONCAT(requester.first_name, ' ', requester.last_name)`,
         requesterEmail: sql<string>`requester.email`,
+        courseTitle: sql<string>`${courses.title}`,
         reason: refunds.reason,
         reasonNote: refunds.reasonNote,
         originalAmount: refunds.originalAmount,
@@ -406,6 +407,8 @@ export class RefundService {
         sql`${users} AS requester`,
         eq(refunds.requestedBy, sql`requester.id`),
       )
+      .leftJoin(payments, eq(refunds.paymentId, payments.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id))
       .orderBy(desc(refunds.createdAt))
       .limit(limit)
       .offset(offset);

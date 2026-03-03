@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { CheckCircle, Download, ArrowRight, ArrowLeft } from "lucide-react";
+import { CheckCircle, Download, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { toast } from "sonner";
 import { paymentApi, invoiceApi } from "@/lib/api";
 import { useCart } from "@/contexts/CartContext";
 
@@ -29,6 +30,7 @@ export default function PaymentSuccessPage() {
   const { removeItem } = useCart();
   const [payment, setPayment] = useState<PaymentDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!paymentId) {
@@ -55,13 +57,8 @@ export default function PaymentSuccessPage() {
 
   const handleDownloadInvoice = async () => {
     if (!paymentId) return;
+    setDownloading(true);
     try {
-      const myPayments = await paymentApi.getMyPayments(1, 100);
-      const thisPayment = myPayments.data?.find(
-        (p: { id: string }) => p.id === paymentId
-      );
-      if (!thisPayment) return;
-
       const myInvoices = await invoiceApi.getMyInvoices(1, 100);
       const invoice = myInvoices.data?.find(
         (inv: { paymentId?: string }) => inv.paymentId === paymentId
@@ -70,10 +67,28 @@ export default function PaymentSuccessPage() {
         const result = await invoiceApi.getPdfUrl(invoice.id);
         if (result.url) {
           window.open(result.url, "_blank");
+        } else {
+          toast.info(
+            locale === "ar"
+              ? "جاري إنشاء الفاتورة. سيتم إرسالها إلى بريدك الإلكتروني قريبًا."
+              : "Invoice is being generated. It will be emailed to you shortly.",
+          );
         }
+      } else {
+        toast.info(
+          locale === "ar"
+            ? "جاري إنشاء الفاتورة. سيتم إرسالها إلى بريدك الإلكتروني قريبًا."
+            : "Invoice is being generated. It will be emailed to you shortly.",
+        );
       }
     } catch {
-      // Invoice might not be ready yet
+      toast.info(
+        locale === "ar"
+          ? "جاري إنشاء الفاتورة. سيتم إرسالها إلى بريدك الإلكتروني قريبًا."
+          : "Invoice is being generated. It will be emailed to you shortly.",
+      );
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -144,7 +159,7 @@ export default function PaymentSuccessPage() {
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => router.push(`/${locale}/student-dashboard`)}
+                  onClick={() => router.push(`/${locale}/dashboard/student`)}
                   aria-label={t("goToDashboard")}
                   className="w-full h-12 btn-gold rounded-xl text-white font-medium flex items-center justify-center gap-2 focus-ring"
                 >
@@ -153,10 +168,15 @@ export default function PaymentSuccessPage() {
                 </button>
                 <button
                   onClick={handleDownloadInvoice}
+                  disabled={downloading}
                   aria-label={t("downloadInvoice")}
-                  className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition focus-ring"
+                  className="w-full h-12 border border-[#d9d9d9] rounded-xl text-[#1a1a1a] font-medium flex items-center justify-center gap-2 hover:bg-gray-50 transition focus-ring disabled:opacity-50"
                 >
-                  <Download className="w-4 h-4" aria-hidden="true" />
+                  {downloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="w-4 h-4" aria-hidden="true" />
+                  )}
                   {t("downloadInvoice")}
                 </button>
                 <button

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { eq, and, desc, count, sql, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   payments,
@@ -20,7 +20,10 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { GatewayFactory } from './gateways/gateway.factory';
 import { DiscountService } from './services/discount.service';
+import { InvoiceService } from './services/invoice.service';
+import { EmailService } from '../email/email.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
+import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
 
 @Injectable()
 export class PaymentsService {
@@ -31,6 +34,8 @@ export class PaymentsService {
     private readonly gatewayFactory: GatewayFactory,
     private readonly discountService: DiscountService,
     private readonly auditLogService: AuditLogService,
+    private readonly invoiceService: InvoiceService,
+    private readonly emailService: EmailService,
   ) {}
 
   async initiatePayment(user: AuthenticatedUser, dto: InitiatePaymentDto, ipAddress?: string) {
@@ -74,46 +79,31 @@ export class PaymentsService {
       }
     }
 
-    // 3. Check for existing active or pending enrollment
-    const [existing] = await db
-      .select({ id: enrollments.id, status: enrollments.status })
+    // 3. Validate discount code if provided (before transaction — read-only validation)
+    // 4. NELC per-learner enrollment limit check
+    const classification = classifyCourse(course.startDate, course.endDate);
+    const nelcMaxPerLearner = getNelcMaxEnrollment(classification);
+
+    const [learnerEnrollmentCount] = await db
+      .select({ count: count() })
       .from(enrollments)
+      .innerJoin(courses, eq(enrollments.courseId, courses.id))
       .where(
         and(
-          eq(enrollments.courseId, dto.courseId),
           eq(enrollments.studentId, user.id),
+          inArray(enrollments.status, ['active', 'pending_payment']),
+          classification === 'long'
+            ? sql`(${courses.endDate}::date - ${courses.startDate}::date) > 5`
+            : sql`(${courses.endDate}::date - ${courses.startDate}::date) <= 5 OR ${courses.startDate} IS NULL OR ${courses.endDate} IS NULL`,
         ),
-      )
-      .limit(1);
+      );
 
-    if (existing) {
-      if (existing.status === 'active') {
-        throw new BadRequestException(
-          'You are already enrolled in this course',
-        );
-      }
-      if (existing.status === ENROLLMENT_STATUS.PENDING_PAYMENT) {
-        // Check if there's a pending payment for this enrollment
-        const [pendingPayment] = await db
-          .select()
-          .from(payments)
-          .where(
-            and(
-              eq(payments.enrollmentId, existing.id),
-              eq(payments.status, PAYMENT_STATUS.PENDING),
-            ),
-          )
-          .limit(1);
-
-        if (pendingPayment) {
-          throw new BadRequestException(
-            'You already have a pending payment for this course. Please complete or cancel it first.',
-          );
-        }
-      }
+    if (Number(learnerEnrollmentCount?.count || 0) >= nelcMaxPerLearner) {
+      throw new BadRequestException(
+        `NELC limit reached: you may enroll in at most ${nelcMaxPerLearner} ${classification} courses`,
+      );
     }
 
-    // 4. Validate discount code if provided
     let discountAmount = 0;
     let discountId: string | null = null;
     if (dto.discountCode) {
@@ -146,8 +136,43 @@ export class PaymentsService {
     // 6. Get the gateway adapter
     const gateway = this.gatewayFactory.getGateway(dto.gateway);
 
-    // 7. Atomic transaction: create enrollment + payment
+    // 7. Atomic transaction: create enrollment + payment (with FOR UPDATE lock)
     const result = await db.transaction(async (tx) => {
+      // Lock existing enrollment row to prevent concurrent duplicates
+      const existingRows = await tx.execute(
+        sql`SELECT id, status FROM enrollments
+            WHERE course_id = ${dto.courseId} AND student_id = ${user.id}
+            FOR UPDATE LIMIT 1`,
+      );
+      const existing = existingRows.rows?.[0] as
+        | { id: string; status: string }
+        | undefined;
+
+      if (existing) {
+        if (existing.status === 'active') {
+          throw new BadRequestException(
+            'You are already enrolled in this course',
+          );
+        }
+        if (existing.status === ENROLLMENT_STATUS.PENDING_PAYMENT) {
+          // Cancel any stale pending payments so the user can start fresh
+          await tx
+            .update(payments)
+            .set({
+              status: PAYMENT_STATUS.FAILED,
+              failedAt: new Date(),
+              failureReason: 'Superseded by new payment attempt',
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(payments.enrollmentId, existing.id),
+                eq(payments.status, PAYMENT_STATUS.PENDING),
+              ),
+            );
+        }
+      }
+
       // Create or reuse enrollment
       let enrollmentId: string;
 
@@ -463,6 +488,24 @@ export class PaymentsService {
 
           if (charge?.status === 'paid' || charge?.status === 'CAPTURED') {
             await this.processPaymentSuccess(paymentId);
+
+            // Generate invoice + send confirmation email (same as webhook path)
+            try {
+              await this.invoiceService.generateInvoice(paymentId);
+            } catch (err) {
+              this.logger.error(`Invoice generation failed for ${paymentId}: ${err.message}`);
+            }
+            try {
+              let pdfAttachment: { buffer: Buffer; filename: string } | undefined;
+              try {
+                const pdf = await this.invoiceService.getInvoicePdfBuffer(paymentId);
+                if (pdf) pdfAttachment = pdf;
+              } catch {}
+              await this.emailService.sendPaymentConfirmation(payment.userId, paymentId, pdfAttachment);
+            } catch (err) {
+              this.logger.error(`Payment confirmation email failed for ${paymentId}: ${err.message}`);
+            }
+
             return { status: PAYMENT_STATUS.PAID, paymentId };
           }
         } catch (err) {

@@ -51,45 +51,96 @@ export class InvoiceService {
       throw new NotFoundException('User or course not found');
     }
 
-    // Generate invoice number: INV-YYYY-XXXXX
-    const year = new Date().getFullYear();
-    const [maxResult] = await db
-      .select({
-        maxNum: sql<string>`MAX(${invoices.invoiceNumber})`,
-      })
-      .from(invoices)
-      .where(sql`${invoices.invoiceNumber} LIKE ${'INV-' + year + '-%'}`);
-
-    let nextSeq = 1;
-    if (maxResult?.maxNum) {
-      const parts = maxResult.maxNum.split('-');
-      nextSeq = parseInt(parts[2], 10) + 1;
-    }
-    const invoiceNumber = `INV-${year}-${String(nextSeq).padStart(5, '0')}`;
-
     // Calculate amounts from payment metadata
-    const metadata = payment.metadata as any;
-    const subtotal = Number(metadata?.subtotal || payment.amount);
-    const discountAmount = Number(metadata?.discountAmount || 0);
-    const taxAmount = Number(metadata?.taxAmount || 0);
+    const paymentMeta = payment.metadata as any;
+    const subtotal = Number(paymentMeta?.subtotal || payment.amount);
+    const discountAmount = Number(paymentMeta?.discountAmount || 0);
+    const taxAmount = Number(paymentMeta?.taxAmount || 0);
     const totalAmount = Number(payment.amount);
 
-    // Create invoice record
-    const [invoice] = await db
-      .insert(invoices)
-      .values({
-        invoiceNumber,
-        paymentId: payment.id,
-        userId: payment.userId,
-        courseId: payment.courseId,
-        subtotal: subtotal.toFixed(2),
-        discountAmount: discountAmount.toFixed(2),
-        taxAmount: taxAmount.toFixed(2),
-        totalAmount: totalAmount.toFixed(2),
-        status: INVOICE_STATUS.PAID,
-        paidAt: payment.paidAt || new Date(),
-      })
-      .returning();
+    // BNPL invoices get a 90-day due date
+    const isBnpl = payment.gateway === 'tamara' || payment.gateway === 'tabby';
+    const dueDate = isBnpl
+      ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+      : null;
+
+    // Build metadata snapshot for the invoice
+    const invoiceMetadata = {
+      buyer: {
+        name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+        email: userData.email,
+        nationalId: (userData as any).nationalId || null,
+      },
+      course: {
+        title: course.title,
+        titleAr: course.titleAr || null,
+        deliveryType: course.deliveryType || null,
+        startDate: course.startDate || null,
+        endDate: course.endDate || null,
+      },
+      lineItems: [
+        { description: course.title, amount: subtotal },
+      ],
+      discount:
+        discountAmount > 0
+          ? { code: paymentMeta?.discountCode || null, amount: discountAmount }
+          : null,
+      tax: { amount: taxAmount },
+    };
+
+    // Generate invoice number with retry on unique constraint violation
+    let invoice: any;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const year = new Date().getFullYear();
+      const [maxResult] = await db
+        .select({
+          maxNum: sql<string>`MAX(${invoices.invoiceNumber})`,
+        })
+        .from(invoices)
+        .where(sql`${invoices.invoiceNumber} LIKE ${'INV-' + year + '-%'}`);
+
+      let nextSeq = 1;
+      if (maxResult?.maxNum) {
+        const parts = maxResult.maxNum.split('-');
+        nextSeq = parseInt(parts[2], 10) + 1;
+      }
+      const invoiceNumber = `INV-${year}-${String(nextSeq).padStart(5, '0')}`;
+
+      try {
+        const [created] = await db
+          .insert(invoices)
+          .values({
+            invoiceNumber,
+            paymentId: payment.id,
+            userId: payment.userId,
+            courseId: payment.courseId,
+            subtotal: subtotal.toFixed(2),
+            discountAmount: discountAmount.toFixed(2),
+            taxAmount: taxAmount.toFixed(2),
+            totalAmount: totalAmount.toFixed(2),
+            status: INVOICE_STATUS.PAID,
+            paidAt: payment.paidAt || new Date(),
+            dueDate,
+            metadata: invoiceMetadata,
+          })
+          .returning();
+        invoice = created;
+        break;
+      } catch (err: any) {
+        // PostgreSQL unique violation code
+        if (err.code === '23505' && attempt < 2) {
+          this.logger.warn(
+            `Invoice number collision on ${invoiceNumber}, retrying (attempt ${attempt + 1})`,
+          );
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!invoice) {
+      throw new Error('Failed to generate unique invoice number after 3 attempts');
+    }
 
     // Generate PDF
     try {
@@ -101,7 +152,7 @@ export class InvoiceService {
       );
 
       // Upload to storage
-      const filename = `invoices/${invoiceNumber}.pdf`;
+      const filename = `invoices/${invoice.invoiceNumber}.pdf`;
       const url = await this.storageService.uploadPrivate(
         pdfBuffer,
         filename,
@@ -114,10 +165,10 @@ export class InvoiceService {
         .set({ pdfUrl: filename, updatedAt: new Date() })
         .where(eq(invoices.id, invoice.id));
 
-      this.logger.log(`Invoice ${invoiceNumber} generated for payment ${paymentId}`);
+      this.logger.log(`Invoice ${invoice.invoiceNumber} generated for payment ${paymentId}`);
     } catch (err) {
       this.logger.error(
-        `Failed to generate PDF for invoice ${invoiceNumber}: ${err.message}`,
+        `Failed to generate PDF for invoice ${invoice.invoiceNumber}: ${err.message}`,
       );
     }
 
@@ -126,7 +177,7 @@ export class InvoiceService {
       entityId: invoice.id,
       action: 'invoice_generated',
       performedBy: payment.userId,
-      metadata: { invoiceNumber, paymentId, amount: totalAmount },
+      metadata: { invoiceNumber: invoice.invoiceNumber, paymentId, amount: totalAmount },
     });
 
     return invoice;
@@ -150,9 +201,9 @@ export class InvoiceService {
         // Header
         doc
           .fontSize(24)
-          .text('PhysioGuidance', 50, 50)
+          .text('Roya Almustaqbal for Health Training', 50, 50)
           .fontSize(10)
-          .text('Healthcare eLearning Platform', 50, 80)
+          .text('\u0631\u0624\u064A\u0627 \u0627\u0644\u0645\u0633\u062A\u0642\u0628\u0644 \u0644\u0644\u062A\u062F\u0631\u064A\u0628 \u0627\u0644\u0635\u062D\u064A', 50, 80)
           .text('nelc@physioguidance.org', 50, 95);
 
         // Invoice Title
@@ -170,41 +221,71 @@ export class InvoiceService {
             { align: 'right' },
           );
 
+        // Payment date & due date
+        let headerY = 110;
+        if (invoice.paidAt) {
+          doc.text(
+            `Paid: ${new Date(invoice.paidAt).toLocaleDateString('en-US')}`,
+            350,
+            headerY,
+            { align: 'right' },
+          );
+          headerY += 15;
+        }
+        if (invoice.dueDate) {
+          doc.text(
+            `Due: ${new Date(invoice.dueDate).toLocaleDateString('en-US')}`,
+            350,
+            headerY,
+            { align: 'right' },
+          );
+          headerY += 15;
+        }
+
         // Divider
+        const dividerY = Math.max(120, headerY + 5);
         doc
-          .moveTo(50, 120)
-          .lineTo(545, 120)
+          .moveTo(50, dividerY)
+          .lineTo(545, dividerY)
           .stroke();
 
         // Customer info
+        const sectionTop = dividerY + 20;
         doc
           .fontSize(12)
-          .text('Bill To / فاتورة إلى:', 50, 140)
+          .text('Bill To / فاتورة إلى:', 50, sectionTop)
           .fontSize(10)
           .text(
             `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
             50,
-            158,
+            sectionTop + 18,
           )
-          .text(userData.email, 50, 173);
+          .text(userData.email, 50, sectionTop + 33);
+
+        // National ID (if available)
+        let customerInfoY = sectionTop + 48;
+        if ((userData as any).nationalId) {
+          doc.text(`National ID: ${(userData as any).nationalId}`, 50, customerInfoY);
+          customerInfoY += 15;
+        }
 
         // Payment info
         doc
           .fontSize(12)
-          .text('Payment Details / تفاصيل الدفع:', 350, 140, {
+          .text('Payment Details / تفاصيل الدفع:', 350, sectionTop, {
             align: 'right',
           })
           .fontSize(10)
-          .text(`Gateway: ${payment.gateway}`, 350, 158, { align: 'right' })
-          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, 173, {
+          .text(`Gateway: ${payment.gateway}`, 350, sectionTop + 18, { align: 'right' })
+          .text(`Method: ${payment.paymentMethod || 'N/A'}`, 350, sectionTop + 33, {
             align: 'right',
           })
-          .text(`Transaction: ${payment.gatewayChargeId || 'N/A'}`, 350, 188, {
+          .text(`Transaction: ${payment.gatewayChargeId || 'N/A'}`, 350, sectionTop + 48, {
             align: 'right',
           });
 
         // Line items table
-        const tableTop = 220;
+        const tableTop = Math.max(customerInfoY, sectionTop + 63) + 20;
         doc
           .fontSize(10)
           .font('Helvetica-Bold')
@@ -222,6 +303,13 @@ export class InvoiceService {
         doc.text(course.title || 'Course', 50, y);
         if (course.titleAr) {
           doc.text(course.titleAr, 50, y + 15);
+          y += 15;
+        }
+        if (course.deliveryType) {
+          doc
+            .fontSize(9)
+            .text(`Delivery: ${course.deliveryType}`, 50, y + 15);
+          doc.fontSize(10);
           y += 15;
         }
         doc.text(`SAR ${Number(invoice.subtotal).toFixed(2)}`, 450, tableTop + 25, {
@@ -320,6 +408,30 @@ export class InvoiceService {
       throw new NotFoundException('Invoice not found');
     }
 
+    // Self-healing: generate PDF on demand if missing
+    if (!invoice.pdfUrl) {
+      try {
+        const [payment] = await db.select().from(payments).where(eq(payments.id, invoice.paymentId)).limit(1);
+        const [userData] = await db.select().from(users).where(eq(users.id, invoice.userId)).limit(1);
+        const [course] = await db.select().from(courses).where(eq(courses.id, invoice.courseId)).limit(1);
+
+        if (payment && userData && course) {
+          const pdfBuffer = await this.generatePdf(invoice, payment, userData, course);
+          const filename = `invoices/${invoice.invoiceNumber}.pdf`;
+          await this.storageService.uploadPrivate(pdfBuffer, filename, 'application/pdf');
+          await db
+            .update(invoices)
+            .set({ pdfUrl: filename, updatedAt: new Date() })
+            .where(eq(invoices.id, invoice.id));
+          invoice.pdfUrl = filename;
+          this.logger.log(`On-demand PDF generated for invoice ${invoice.invoiceNumber}`);
+        }
+      } catch (err) {
+        this.logger.error(`On-demand PDF generation failed for ${invoiceId}: ${err.message}`);
+        throw new NotFoundException('Invoice PDF generation failed');
+      }
+    }
+
     if (!invoice.pdfUrl) {
       throw new NotFoundException('Invoice PDF not available');
     }
@@ -343,6 +455,7 @@ export class InvoiceService {
       .select({
         id: invoices.id,
         invoiceNumber: invoices.invoiceNumber,
+        paymentId: invoices.paymentId,
         courseTitle: courses.title,
         courseTitleAr: courses.titleAr,
         totalAmount: invoices.totalAmount,
@@ -422,5 +535,35 @@ export class InvoiceService {
       .limit(1);
 
     return invoice || null;
+  }
+
+  async getInvoicePdfBuffer(
+    paymentId: string,
+  ): Promise<{ buffer: Buffer; filename: string } | null> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.paymentId, paymentId))
+      .limit(1);
+
+    if (!invoice || !invoice.pdfUrl) return null;
+
+    try {
+      const buffer = await this.storageService.getFileBuffer(
+        'private',
+        invoice.pdfUrl,
+      );
+      if (!buffer) return null;
+
+      return {
+        buffer,
+        filename: `${invoice.invoiceNumber}.pdf`,
+      };
+    } catch (err) {
+      this.logger.error(
+        `Failed to retrieve PDF buffer for invoice ${invoice.invoiceNumber}: ${err.message}`,
+      );
+      return null;
+    }
   }
 }

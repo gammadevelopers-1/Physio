@@ -19,6 +19,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { refundApi, financeApi } from "@/lib/api";
+import { toast } from "sonner";
 
 const mockProfile = {
   name: "Nora Al-Fahad",
@@ -51,6 +52,11 @@ const RefundsContent = () => {
   const [refunds, setRefunds] = useState<RefundRequest[]>([]);
   const [processing, setProcessing] = useState<string | null>(null);
   const [refundRateData, setRefundRateData] = useState<any>(null);
+
+  // Rejection modal state
+  const [rejectingRefundId, setRejectingRefundId] = useState<string | null>(null);
+  const [rejectionNote, setRejectionNote] = useState("");
+  const [rejecting, setRejecting] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -139,20 +145,32 @@ const RefundsContent = () => {
     setProcessing(refundId);
     try {
       await refundApi.approve(refundId);
+      toast.success(t("refundsPage.approveSuccess") || "Refund approved successfully");
       await fetchData();
-    } catch {}
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to approve refund");
+    }
     setProcessing(null);
   };
 
-  const handleReject = async (refundId: string) => {
-    const note = prompt(t("refundsPage.rejectionNotePrompt") || "Rejection reason:");
-    if (note === null) return;
-    setProcessing(refundId);
+  const handleReject = (refundId: string) => {
+    setRejectingRefundId(refundId);
+    setRejectionNote("");
+  };
+
+  const handleConfirmReject = async () => {
+    if (!rejectingRefundId) return;
+    setRejecting(true);
     try {
-      await refundApi.reject(refundId, note);
+      await refundApi.reject(rejectingRefundId, rejectionNote);
+      toast.success(t("refundsPage.rejectSuccess") || "Refund rejected");
+      setRejectingRefundId(null);
+      setRejectionNote("");
       await fetchData();
-    } catch {}
-    setProcessing(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to reject refund");
+    }
+    setRejecting(false);
   };
 
   return (
@@ -322,6 +340,43 @@ const RefundsContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Rejection Modal */}
+      {rejectingRefundId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-[#111827] mb-1">
+              {t("refundsPage.rejectTitle") || "Reject Refund"}
+            </h3>
+            <p className="text-sm text-[#6B7280] mb-4">
+              {t("refundsPage.rejectionNoteLabel") || "Provide a reason for rejecting this refund request."}
+            </p>
+            <textarea
+              value={rejectionNote}
+              onChange={(e) => setRejectionNote(e.target.value)}
+              placeholder={t("refundsPage.notePlaceholder") || "Enter rejection reason or notes..."}
+              rows={3}
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:border-[#a37f49] resize-none"
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => { setRejectingRefundId(null); setRejectionNote(""); }}
+                className="px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              >
+                {t("refundsPage.cancel") || "Cancel"}
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={rejecting}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-[#DC2626] rounded-lg hover:bg-[#B91C1C] transition-colors disabled:opacity-50"
+              >
+                {rejecting && <Loader2 className="w-3 h-3 animate-spin" />}
+                {t("refundsQueue.reject")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

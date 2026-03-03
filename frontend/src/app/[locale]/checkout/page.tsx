@@ -322,6 +322,31 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
+                {/* Moyasar */}
+                <div
+                  role="radio"
+                  aria-checked={gateway === "moyasar"}
+                  tabIndex={0}
+                  onKeyDown={(e) => handleGatewayKeyDown(e, "moyasar")}
+                  className={`cursor-pointer transition-colors border rounded-xl focus-visible:ring-2 focus-visible:ring-[#005bd3] focus-visible:ring-offset-2 outline-none ${
+                    gateway === "moyasar" ? "border-[#005bd3]" : "border-[#e5e5e5]"
+                  }`}
+                  onClick={() => handleGatewayChange("moyasar")}
+                >
+                  <div className={`flex items-center justify-between p-[14px] ${gateway === "moyasar" ? "bg-[#e5edf4]" : "bg-white"} rounded-xl`}>
+                    <div className="flex items-center gap-[11px]">
+                      <div className={`w-[18px] h-[18px] rounded-full flex items-center justify-center ${gateway === "moyasar" ? "bg-white border-[6px] border-[#005bd3]" : "border-2 border-[#d5d7da] bg-white"}`} aria-hidden="true" />
+                      <span className="font-medium text-[var(--on-surface-default)]">
+                        {t("payment.moyasar")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-[11px]">
+                      <Image src="/checkout_cart/mada.svg.svg" alt="Mada" width={30} height={10} className="object-contain" />
+                      <Image src="/checkout_cart/visa.svg.svg" alt="Visa" width={30} height={18} className="object-contain" />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Tabby BNPL */}
                 <div
                   role="radio"

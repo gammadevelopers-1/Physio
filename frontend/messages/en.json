@@ -932,6 +932,7 @@
       "title": "Payment",
       "subtitle": "All transactions are secure and encrypted",
       "creditCard": "Credit card",
+      "moyasar": "Moyasar",
       "tabby": "Pay later with Tabby",
       "tamara": "Tamara - 3 Installments",
       "selectGateway": "Select payment method",
@@ -1560,7 +1561,8 @@
       "moreOptions": "More options",
       "viewInvoice": "View Invoice",
       "downloadInvoice": "Download Invoice",
-      "requestRefund": "Request Refund"
+      "requestRefund": "Request Refund",
+      "pdfGenerating": "Invoice is being generated. It will be emailed to you shortly."
     },
     "refund": {
       "title": "Request Refund",
@@ -4874,6 +4876,8 @@
       "approve": "Approve",
       "reject": "Reject",
       "deduction": "Deduction: {amount}",
+      "approveSuccess": "Refund approved successfully",
+      "rejectSuccess": "Refund rejected",
       "reasons": {
         "personal": "Personal reasons",
         "courseIssue": "Course issue",
@@ -4973,7 +4977,13 @@
       "bnplFees": "BNPL processing fees: {percent}%",
       "adminFee": "Admin fee: SAR {amount}",
       "addNote": "Add Note",
-      "notePlaceholder": "Enter rejection reason or notes..."
+      "notePlaceholder": "Enter rejection reason or notes...",
+      "rejectTitle": "Reject Refund",
+      "rejectionNoteLabel": "Provide a reason for rejecting this refund request.",
+      "cancel": "Cancel",
+      "approveSuccess": "Refund approved successfully",
+      "rejectSuccess": "Refund rejected",
+      "noRefunds": "No refunds found"
     },
     "discountsPage": {
       "title": "Discount & Coupon Management",
@@ -5008,6 +5018,7 @@
         "edit": "Edit",
         "delete": "Delete"
       },
+      "noCoupons": "No discount codes found",
       "analytics": {
         "title": "Usage Analytics",
         "totalUsage": "Total Usage",

@@ -211,6 +211,30 @@ export class StorageService {
     return file.createReadStream();
   }
 
+  /**
+   * Get a file's contents as a Buffer
+   */
+  async getFileBuffer(
+    bucket: 'public' | 'private' | 'trainers',
+    filename: string,
+  ): Promise<Buffer | null> {
+    if (this.useLocal) {
+      const filePath = this.getLocalFilePath(bucket, filename);
+      if (!filePath) return null;
+      return fs.readFileSync(filePath);
+    }
+
+    const stream = await this.getFileStream(bucket, filename);
+    if (!stream) return null;
+
+    const chunks: Buffer[] = [];
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
+  }
+
   // ── Private helpers ──
 
   private async uploadLocal(

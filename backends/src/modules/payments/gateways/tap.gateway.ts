@@ -42,7 +42,7 @@ export class TapGateway implements PaymentGateway {
           ? { country_code: '966', number: params.customerPhone }
           : undefined,
       },
-      source: { id: 'src_all' },
+      source: { id: 'src_card' },
       redirect: { url: params.redirectUrl },
       post: { url: params.webhookUrl },
     };
@@ -72,7 +72,12 @@ export class TapGateway implements PaymentGateway {
   }
 
   verifyWebhook(headers: Record<string, string>, body: any): boolean {
-    if (!this.webhookSecret) return false;
+    if (!this.webhookSecret) {
+      this.logger.warn(
+        'TAP_WEBHOOK_SECRET is not configured — all Tap webhooks will be rejected',
+      );
+      return false;
+    }
 
     const receivedHash = headers['hashstring'] || headers['Hashstring'];
     if (!receivedHash) return false;

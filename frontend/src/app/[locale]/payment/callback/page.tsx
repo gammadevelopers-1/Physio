@@ -13,7 +13,7 @@ export default function PaymentCallbackPage() {
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const paymentId = searchParams.get("paymentId");
+  const paymentId = searchParams.get("payment_id") || searchParams.get("paymentId");
 
   const [status, setStatus] = useState<string>("processing");
   const [error, setError] = useState<string | null>(null);

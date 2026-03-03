@@ -2142,6 +2142,33 @@ export const financeApi = {
 
   getInvoiceAging: () =>
     api.get<any>('/finance/invoice-aging'),
+
+  exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams();
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.status) query.set('status', params.status);
+    const qs = query.toString();
+
+    const res = await fetch(`${API_URL}/finance/export${qs ? `?${qs}` : ''}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 // ===========================================

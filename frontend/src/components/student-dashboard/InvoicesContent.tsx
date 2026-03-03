@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { FileText, MoreVertical, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -28,6 +29,7 @@ const InvoicesContent = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [refundModal, setRefundModal] = useState<{ open: boolean; invoice: Invoice | null }>({ open: false, invoice: null });
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -82,11 +84,20 @@ const InvoicesContent = () => {
   };
 
   const handleDownload = async (invoiceId: string) => {
+    setDownloadingId(invoiceId);
+    setOpenMenuId(null);
     try {
       const result = await invoiceApi.getPdfUrl(invoiceId);
-      if (result.url) window.open(result.url, "_blank");
-    } catch {}
-    setOpenMenuId(null);
+      if (result.url) {
+        window.open(result.url, "_blank");
+      } else {
+        toast.info(t("invoices.pdfGenerating"));
+      }
+    } catch {
+      toast.info(t("invoices.pdfGenerating"));
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -199,6 +210,11 @@ const InvoicesContent = () => {
                               </span>
                             </td>
                             <td className="py-4 px-4 relative">
+                              {downloadingId === invoice.id ? (
+                                <div className="p-1">
+                                  <Loader2 className="w-5 h-5 text-[#B8860B] animate-spin" />
+                                </div>
+                              ) : (
                               <button
                                 onClick={() => toggleMenu(invoice.id)}
                                 className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
@@ -206,6 +222,7 @@ const InvoicesContent = () => {
                               >
                                 <MoreVertical className="w-5 h-5 text-[#6B7280]" />
                               </button>
+                              )}
                               {openMenuId === invoice.id && (
                                 <div
                                   className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
@@ -248,6 +265,11 @@ const InvoicesContent = () => {
                               {invoice.invoiceNo}
                             </span>
                             <div className="relative">
+                              {downloadingId === invoice.id ? (
+                                <div className="p-1">
+                                  <Loader2 className="w-5 h-5 text-[#B8860B] animate-spin" />
+                                </div>
+                              ) : (
                               <button
                                 onClick={() => toggleMenu(invoice.id)}
                                 className="p-1 hover:bg-[#F3F4F6] rounded transition-colors"
@@ -255,6 +277,7 @@ const InvoicesContent = () => {
                               >
                                 <MoreVertical className="w-5 h-5 text-[#6B7280]" />
                               </button>
+                              )}
                               {openMenuId === invoice.id && (
                                 <div
                                   className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}

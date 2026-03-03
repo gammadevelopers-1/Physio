@@ -133,7 +133,10 @@ const PaymentsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button
+                    onClick={() => financeApi.exportCsv().catch(() => {})}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                  >
                     <Download className="w-4 h-4" />
                     {t("paymentsPage.exportTransactions")}
                   </button>

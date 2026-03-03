@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { RotateCcw, Check, X, AlertCircle } from "lucide-react";
+import { RotateCcw, Check, X, AlertCircle, Loader2 } from "lucide-react";
 
 interface RefundItem {
   id: string;
@@ -15,9 +16,12 @@ interface RefundItem {
 
 interface RefundsQueueWidgetProps {
   refunds: RefundItem[];
+  onApprove?: (refundId: string) => Promise<void>;
+  onReject?: (refundId: string) => void;
 }
 
-const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
+const RefundsQueueWidget = ({ refunds, onApprove, onReject }: RefundsQueueWidgetProps) => {
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -82,11 +86,27 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
                 </div>
               )}
               <div className="flex gap-2 w-full">
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#16A34A] text-white text-[11px] font-medium rounded-md hover:bg-[#15803D] transition-colors">
-                  <Check className="w-3 h-3" />
+                <button
+                  onClick={async () => {
+                    if (!onApprove) return;
+                    setProcessingId(refund.id);
+                    try { await onApprove(refund.id); } finally { setProcessingId(null); }
+                  }}
+                  disabled={processingId === refund.id}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#16A34A] text-white text-[11px] font-medium rounded-md hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                >
+                  {processingId === refund.id ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Check className="w-3 h-3" />
+                  )}
                   {t("refundsQueue.approve")}
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-white text-[#DC2626] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors">
+                <button
+                  onClick={() => onReject?.(refund.id)}
+                  disabled={processingId === refund.id}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 bg-white text-[#DC2626] text-[11px] font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEE2E2] transition-colors disabled:opacity-50"
+                >
                   <X className="w-3 h-3" />
                   {t("refundsQueue.reject")}
                 </button>

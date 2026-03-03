@@ -1035,6 +1035,7 @@
       "title": "قسط",
       "subtitle": "جميع المعاملات آمنة ومشفرة",
       "creditCard": "بطاقة إئتمان",
+      "moyasar": "ميسر",
       "tabby": "ادفع لاحقًا مع Tabby",
       "tamara": "تمارا - ٣ دفعات",
       "selectGateway": "اختر طريقة الدفع",
@@ -1772,7 +1773,8 @@
       "moreOptions": "المزيد من الخيارات",
       "viewInvoice": "عرض الفاتورة",
       "downloadInvoice": "تحميل الفاتورة",
-      "requestRefund": "طلب استرداد"
+      "requestRefund": "طلب استرداد",
+      "pdfGenerating": "جاري إنشاء الفاتورة. سيتم إرسالها إلى بريدك الإلكتروني قريباً."
     },
     "refund": {
       "title": "طلب استرداد",
@@ -5089,6 +5091,8 @@
       "approve": "الموافقة",
       "reject": "الرفض",
       "deduction": "الخصم: {amount}",
+      "approveSuccess": "تمت الموافقة على الاسترداد بنجاح",
+      "rejectSuccess": "تم رفض الاسترداد",
       "reasons": {
         "personal": "أسباب شخصية",
         "courseIssue": "مشكلة في الدورة",
@@ -5188,7 +5192,13 @@
       "bnplFees": "رسوم الدفع الآجل: {percent}%",
       "adminFee": "رسوم إدارية: ر.س {amount}",
       "addNote": "إضافة ملاحظة",
-      "notePlaceholder": "أدخل سبب الرفض أو الملاحظات..."
+      "notePlaceholder": "أدخل سبب الرفض أو الملاحظات...",
+      "rejectTitle": "رفض الاسترداد",
+      "rejectionNoteLabel": "يرجى تقديم سبب لرفض طلب الاسترداد.",
+      "cancel": "إلغاء",
+      "approveSuccess": "تمت الموافقة على الاسترداد بنجاح",
+      "rejectSuccess": "تم رفض الاسترداد",
+      "noRefunds": "لا توجد استردادات"
     },
     "discountsPage": {
       "title": "إدارة الخصومات والقسائم",
@@ -5223,6 +5233,7 @@
         "edit": "تعديل",
         "delete": "حذف"
       },
+      "noCoupons": "لا توجد أكواد خصم",
       "analytics": {
         "title": "تحليلات الاستخدام",
         "totalUsage": "إجمالي الاستخدام",

@@ -15,6 +15,7 @@ import { Public } from '../auth/decorators/public.decorator';
 import { GatewayFactory } from './gateways/gateway.factory';
 import { PaymentsService } from './payments.service';
 import { InvoiceService } from './services/invoice.service';
+import { RefundService } from './services/refund.service';
 import { EmailService } from '../email/email.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import {
@@ -30,6 +31,7 @@ export class WebhooksController {
     private readonly gatewayFactory: GatewayFactory,
     private readonly paymentsService: PaymentsService,
     private readonly invoiceService: InvoiceService,
+    private readonly refundService: RefundService,
     private readonly emailService: EmailService,
     private readonly auditLogService: AuditLogService,
     @Optional()
@@ -125,10 +127,21 @@ export class WebhooksController {
         } catch (err) {
           this.logger.error(`Invoice generation failed: ${err.message}`);
         }
+
+        // Get invoice PDF for email attachment
+        let pdfAttachment: { buffer: Buffer; filename: string } | undefined;
+        try {
+          const pdf = await this.invoiceService.getInvoicePdfBuffer(payment.id);
+          if (pdf) pdfAttachment = pdf;
+        } catch (err) {
+          this.logger.error(`Failed to get invoice PDF for attachment: ${err.message}`);
+        }
+
         try {
           await this.emailService.sendPaymentConfirmation(
             payment.userId,
             payment.id,
+            pdfAttachment,
           );
         } catch (err) {
           this.logger.error(`Payment email failed: ${err.message}`);
@@ -142,6 +155,37 @@ export class WebhooksController {
           );
         } catch (err) {
           this.logger.error(`Payment failure email failed: ${err.message}`);
+        }
+      } else if (status === 'refunded') {
+        try {
+          const { refunds } = await import('../../database/schema');
+          const { and, inArray } = await import('drizzle-orm');
+
+          const [refund] = await db
+            .select({ id: refunds.id })
+            .from(refunds)
+            .where(
+              and(
+                eq(refunds.paymentId, payment.id),
+                inArray(refunds.status, ['approved', 'processing']),
+              ),
+            )
+            .limit(1);
+
+          if (refund) {
+            await this.refundService.completeRefund(refund.id);
+            this.logger.log(
+              `Refund ${refund.id} completed via webhook for payment ${payment.id}`,
+            );
+          } else {
+            this.logger.warn(
+              `Refund webhook received for payment ${payment.id} but no active refund found`,
+            );
+          }
+        } catch (err) {
+          this.logger.error(
+            `Failed to process refund webhook for payment ${payment.id}: ${err.message}`,
+          );
         }
       }
 

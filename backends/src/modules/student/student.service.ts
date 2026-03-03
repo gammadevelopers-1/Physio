@@ -2033,6 +2033,93 @@ export class StudentService {
     };
   }
 
+  // ─── Zoom Join URL ─────────────────────────────────────
+
+  /**
+   * Generate a Zoom join URL with the student's name pre-filled as
+   * "Full Name | PG-xxxxxxxx" (platform ID = first 8 chars of user UUID).
+   * This allows Zoom sync to match attendance by platform ID instead of email.
+   */
+  async getSessionJoinUrl(
+    studentId: string,
+    sessionId: string,
+  ): Promise<{ joinUrl: string }> {
+    const [session] = await db
+      .select({
+        id: sessions.id,
+        courseId: sessions.courseId,
+        type: sessions.type,
+        status: sessions.status,
+        zoomLink: sessions.zoomLink,
+      })
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    if (!session) throw new NotFoundException('Session not found');
+    if (!session.zoomLink) {
+      throw new BadRequestException('This session has no Zoom link');
+    }
+    if (session.type !== 'zoom' && session.type !== 'hybrid') {
+      throw new BadRequestException('This is not a Zoom session');
+    }
+    if (session.status === 'cancelled') {
+      throw new BadRequestException('This session has been cancelled');
+    }
+
+    // Verify student is enrolled
+    const [enrollment] = await db
+      .select({ id: enrollments.id })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.courseId, session.courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new NotFoundException('You are not enrolled in this course');
+    }
+
+    // Get student name
+    const [student] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+
+    const fullName =
+      [student?.firstName, student?.lastName].filter(Boolean).join(' ') ||
+      'Student';
+    const platformId = `PG-${studentId.substring(0, 8)}`;
+    const displayName = `${fullName} | ${platformId}`;
+
+    // Append ?uname= to the Zoom join URL
+    const separator = session.zoomLink.includes('?') ? '&' : '?';
+    const joinUrl = `${session.zoomLink}${separator}uname=${encodeURIComponent(displayName)}`;
+
+    // Audit log (fire and forget)
+    this.auditService
+      .log({
+        eventType: NELC_EVENT_TYPE.ZOOM_JOIN_LINK_GENERATED,
+        entityType: 'session',
+        entityId: sessionId,
+        userId: studentId,
+        metadata: {
+          sessionId,
+          courseId: session.courseId,
+          platformId,
+          displayName,
+        },
+      })
+      .catch(() => {});
+
+    return { joinUrl };
+  }
+
   // ─── Recent Activity ───────────────────────────────────
 
   async getRecentActivity(studentId: string, limit = 10) {

@@ -84,6 +84,39 @@ export async function matchParticipantToUser(
 }
 
 /**
+ * Parse a platform student ID from a Zoom display name.
+ * Expects format: "Full Name | PG-xxxxxxxx" (8-char hex UUID prefix)
+ * Returns the 8-char hex prefix, or null if format not found.
+ */
+export function parsePlatformId(displayName: string): string | null {
+  const match = displayName.match(/\|\s*PG-([0-9a-f]{8})\s*$/i);
+  return match ? match[1].toLowerCase() : null;
+}
+
+/**
+ * Match a Zoom participant to a system user by platform ID (UUID prefix).
+ * Used when the student joined via the platform-controlled join flow.
+ * Returns user id, or null if no match.
+ */
+export async function matchParticipantByPlatformId(
+  displayName: string,
+  excludeUserId?: string | null,
+): Promise<{ id: string; matchMethod: 'platform_id' } | null> {
+  const prefix = parsePlatformId(displayName);
+  if (!prefix) return null;
+
+  const [found] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`LOWER(LEFT(${users.id}::text, 8)) = ${prefix}`)
+    .limit(1);
+
+  if (!found) return null;
+  if (excludeUserId && found.id === excludeUserId) return null;
+  return { id: found.id, matchMethod: 'platform_id' };
+}
+
+/**
  * Get the instructor ID for a session's course.
  */
 export async function getSessionInstructorId(

@@ -13,7 +13,7 @@ import {
 } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
-import { matchParticipantToUser, getSessionInstructorId } from './zoom.helpers';
+import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId } from './zoom.helpers';
 
 @Injectable()
 export class ZoomSyncService {
@@ -98,6 +98,7 @@ export class ZoomSyncService {
       durationMinutes: number;
       action: 'synced' | 'updated_times' | 'skipped';
       reason?: string;
+      matchMethod?: 'platform_id' | 'email';
     }>;
   }> {
     const [session] = await db
@@ -156,6 +157,7 @@ export class ZoomSyncService {
       durationMinutes: number;
       action: 'synced' | 'updated_times' | 'skipped';
       reason?: string;
+      matchMethod?: 'platform_id' | 'email';
     }> = [];
 
     // Get course instructor to exclude from attendance (Zoom host)
@@ -193,17 +195,36 @@ export class ZoomSyncService {
         continue;
       }
 
-      // Item #5, #9: shared case-insensitive email matching
-      // Exclude course instructor and Zoom host from attendance tracking
-      const matchedUser = await matchParticipantToUser(
-        participant.userEmail,
-        instructorId,
-        hostEmail ? [hostEmail] : [],
-      );
+      // Try platform ID match first (Platform-Controlled Join Flow)
+      // Format: "Full Name | PG-xxxxxxxx" in display name
+      let matchedUser: { id: string } | null = null;
+      let matchMethod: 'platform_id' | 'email' | null = null;
+
+      const platformMatch = await matchParticipantByPlatformId(participant.name, instructorId);
+      if (platformMatch) {
+        matchedUser = platformMatch;
+        matchMethod = 'platform_id';
+        this.logger.debug(
+          `Matched by platform ID: name="${participant.name}" → userId=${matchedUser.id}`,
+        );
+      }
+
+      // Fall back to email matching if platform ID not found
+      if (!matchedUser) {
+        const emailMatch = await matchParticipantToUser(
+          participant.userEmail,
+          instructorId,
+          hostEmail ? [hostEmail] : [],
+        );
+        if (emailMatch) {
+          matchedUser = emailMatch;
+          matchMethod = 'email';
+        }
+      }
 
       if (!matchedUser) {
-        const reason = !participant.userEmail
-          ? 'no_email'
+        const reason = !participant.userEmail && !participant.name
+          ? 'no_identity'
           : 'unmatched';
         this.logger.warn(
           `Unmatched participant: name="${participant.name}", email="${participant.userEmail || '(empty)'}" in session ${sessionId}`,
@@ -266,6 +287,7 @@ export class ZoomSyncService {
             leaveTime: participant.leaveTime,
             durationMinutes,
             action: 'updated_times',
+            matchMethod: matchMethod ?? undefined,
           });
           continue;
         }
@@ -303,6 +325,7 @@ export class ZoomSyncService {
         leaveTime: participant.leaveTime,
         durationMinutes,
         action: 'synced',
+        matchMethod: matchMethod ?? undefined,
       });
 
       // Also insert attendance log entries for historical tracking

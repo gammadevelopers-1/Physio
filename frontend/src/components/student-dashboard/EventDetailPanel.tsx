@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -10,10 +10,12 @@ import {
   Download,
   ExternalLink,
   FileText,
+  Loader2,
   MapPin,
   User,
   Video,
 } from "lucide-react";
+import { studentApi } from "@/lib/api";
 import type { CalendarEvent } from "@/types/student-dashboard";
 import EmptyStateIllustration from "./EmptyStateIllustration";
 import {
@@ -31,6 +33,21 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+
+  const handleJoinZoom = async (sessionId: string) => {
+    if (joiningSessionId) return;
+    setJoiningSessionId(sessionId);
+    try {
+      const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
+      window.open(joinUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      // Fallback: show error via alert (simple, no toast dependency)
+      alert(t("calendarPage.joinZoomError") || "Failed to generate join link. Please try again.");
+    } finally {
+      setJoiningSessionId(null);
+    }
+  };
 
   const dateLabel = useMemo(() => {
     if (!selectedDate) return "";
@@ -190,24 +207,25 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-2">
-                  {/* Join Zoom */}
+                  {/* Join Zoom — uses platform join endpoint to pre-fill display name */}
                   {hasZoom && event.zoomLink && (
-                    <a
-                      href={joinable ? event.zoomLink : "#"}
-                      target={joinable ? "_blank" : undefined}
-                      rel="noopener noreferrer"
-                      onClick={
-                        joinable ? undefined : (e) => e.preventDefault()
-                      }
+                    <button
+                      type="button"
+                      disabled={!joinable || joiningSessionId === event.id}
+                      onClick={() => joinable && handleJoinZoom(event.id)}
                       className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                         joinable
                           ? "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]"
                           : "bg-gray-100 text-gray-400 cursor-not-allowed"
                       }`}
                     >
-                      <Video className="w-3.5 h-3.5" />
+                      {joiningSessionId === event.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Video className="w-3.5 h-3.5" />
+                      )}
                       {t("calendarPage.joinZoom")}
-                    </a>
+                    </button>
                   )}
 
                   {/* Get Directions */}

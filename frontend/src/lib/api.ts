@@ -1926,6 +1926,9 @@ export const studentApi = {
   getCertificates: () =>
     api.get<StudentCertificate[]>('/student/certificates'),
 
+  getSessionJoinUrl: (sessionId: string) =>
+    api.get<{ joinUrl: string }>(`/student/sessions/${sessionId}/join`),
+
   getCalendar: (params?: { from?: string; to?: string }) => {
     const sp = new URLSearchParams();
     if (params?.from) sp.set('from', params.from);

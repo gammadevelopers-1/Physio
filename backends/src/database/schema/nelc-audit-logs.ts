@@ -47,6 +47,7 @@ export const NELC_EVENT_TYPE = {
   COMPLIANCE_CHECK_FAILED: 'compliance_check_failed',
   ZOOM_MEETING_CREATED: 'zoom_meeting_created',
   ZOOM_SYNC_COMPLETED: 'zoom_sync_completed',
+  ZOOM_JOIN_LINK_GENERATED: 'zoom_join_link_generated',
   CERTIFICATE_REVOKED: 'certificate_revoked',
   COURSE_ACTIVATED: 'course_activated',
   COURSE_DEACTIVATED: 'course_deactivated',

@@ -33,7 +33,7 @@ import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentCourseDetail } from "@/hooks/useStudentCourseDetail";
-import { zoomAttendanceApi } from "@/lib/api";
+import { zoomAttendanceApi, studentApi } from "@/lib/api";
 
 const StudentCourseDetailContent = () => {
   const locale = useLocale();
@@ -45,6 +45,7 @@ const StudentCourseDetailContent = () => {
 
   const { data, loading, error } = useStudentCourseDetail(courseId);
 
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [showAttendanceHistory, setShowAttendanceHistory] = useState(false);
   const [recordingsModalSession, setRecordingsModalSession] = useState<string | null>(null);
   const [recordings, setRecordings] = useState<
@@ -71,6 +72,19 @@ const StudentCourseDetailContent = () => {
     () => data?.sessions.filter((s) => s.status === "completed") ?? [],
     [data?.sessions]
   );
+
+  const handleJoinZoom = async (sessionId: string) => {
+    if (joiningSessionId) return;
+    setJoiningSessionId(sessionId);
+    try {
+      const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
+      window.open(joinUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      alert(t("calendarPage.joinZoomError") || "Failed to generate join link. Please try again.");
+    } finally {
+      setJoiningSessionId(null);
+    }
+  };
 
   const handleViewRecordings = async (sessionId: string) => {
     setRecordingsModalSession(sessionId);
@@ -573,15 +587,19 @@ const StudentCourseDetailContent = () => {
                                 </span>
                               </div>
                               {session.zoomLink && (
-                                <a
-                                  href={session.zoomLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 mt-2 text-xs text-[#002D87] hover:underline"
+                                <button
+                                  type="button"
+                                  onClick={() => handleJoinZoom(session.id)}
+                                  disabled={joiningSessionId === session.id}
+                                  className="inline-flex items-center gap-1 mt-2 text-xs text-[#002D87] hover:underline disabled:opacity-60"
                                 >
-                                  <Video className="w-3 h-3" />
+                                  {joiningSessionId === session.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Video className="w-3 h-3" />
+                                  )}
                                   {t("courseDetail.joinSession")}
-                                </a>
+                                </button>
                               )}
                               {session.venueAddress && (
                                 <p className="mt-1 text-xs text-[#6B7280]">

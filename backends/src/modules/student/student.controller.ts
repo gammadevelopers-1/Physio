@@ -250,6 +250,21 @@ export class StudentController {
     return this.studentService.getCertificates(user.id);
   }
 
+  // ─── Zoom Join ─────────────────────────────────────────
+
+  /**
+   * GET /student/sessions/:id/join — Generate a Zoom join URL with
+   * the student's display name pre-filled as "Full Name | PG-xxxxxxxx".
+   * This is the ONLY way students should join Zoom sessions (not the raw link).
+   */
+  @Get('sessions/:id/join')
+  async getSessionJoinUrl(
+    @Param('id') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.getSessionJoinUrl(user.id, sessionId);
+  }
+
   // ─── Calendar ──────────────────────────────────────────
 
   /**

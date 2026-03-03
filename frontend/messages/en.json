@@ -1230,6 +1230,7 @@
       "venue": "Venue",
       "room": "Room",
       "joinZoom": "Join Zoom",
+      "joinZoomError": "Failed to generate join link. Please try again.",
       "getDirections": "Get Directions",
       "addToCalendar": "Add to Calendar",
       "mins": "min",

@@ -152,8 +152,11 @@ export class RefundService {
       throw new NotFoundException('Refund not found');
     }
 
-    if (refund.status !== REFUND_STATUS.PENDING) {
-      throw new BadRequestException('Only pending refunds can be approved');
+    if (
+      refund.status !== REFUND_STATUS.PENDING &&
+      refund.status !== REFUND_STATUS.APPROVED
+    ) {
+      throw new BadRequestException('Only pending or approved refunds can be approved');
     }
 
     // Get the payment to call the gateway
@@ -170,15 +173,18 @@ export class RefundService {
     // Step 1: Persist the approval decision BEFORE calling the gateway.
     // This ensures the approved state is saved even if the gateway call fails,
     // allowing a retry without re-doing the Finance Manager approval.
-    await db
-      .update(refunds)
-      .set({
-        status: REFUND_STATUS.APPROVED,
-        processedBy,
-        approvedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(refunds.id, refundId));
+    // If already APPROVED (retry path), skip re-writing approval timestamps.
+    if (refund.status === REFUND_STATUS.PENDING) {
+      await db
+        .update(refunds)
+        .set({
+          status: REFUND_STATUS.APPROVED,
+          processedBy,
+          approvedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(refunds.id, refundId));
+    }
 
     // Step 2: Call gateway to initiate the actual refund transfer
     let gatewayRefundId: string | null = null;

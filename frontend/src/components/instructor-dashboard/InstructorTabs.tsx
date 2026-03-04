@@ -589,9 +589,9 @@ const InstructorTabs = ({
             {/* Report Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {/* Attendance Report Card */}
-              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col min-h-[260px]">
                 {/* Header */}
-                <div className="flex items-start gap-3 mb-4 min-h-[60px]">
+                <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center flex-shrink-0">
                     <Users className="w-5 h-5 text-[#3B82F6]" />
                   </div>
@@ -628,45 +628,33 @@ const InstructorTabs = ({
                 </div>
 
                 {/* Actions Row */}
-                <div className="flex items-center gap-2">
-                  {/* Generate Button — downloads CSV by default */}
-                  <button
-                    onClick={() => handleReportDownload("attendance", "csv")}
-                    disabled={generatingReports.has("attendance")}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
-                  >
-                    {generatingReports.has("attendance") ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {t("reportsTab.generating")}
-                      </>
-                    ) : (
-                      t("reportsTab.generate")
-                    )}
-                  </button>
-
-                  {/* Export Dropdown */}
-                  <div className="relative">
+                <div className="flex items-center gap-2 mt-auto pt-2">
+                  <div className="relative flex-1">
                     <button
                       onClick={() => setOpenExportDropdown(openExportDropdown === "attendance" ? null : "attendance")}
-                      className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
-                      aria-label={tA("exportOptions")}
-                      aria-haspopup="true"
-                      aria-expanded={openExportDropdown === "attendance"}
+                      disabled={generatingReports.has("attendance")}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
                     >
-                      <Download className="w-4 h-4" />
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      {generatingReports.has("attendance") ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {t("reportsTab.generating")}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          {t("reportsTab.generate")}
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </>
+                      )}
                     </button>
                     {openExportDropdown === "attendance" && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
-                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
+                        <div className="absolute start-0 end-0 top-full mt-1 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
                           <div className="py-1">
                             <button
-                              onClick={() => {
-                                setOpenExportDropdown(null);
-                                handleReportDownload("attendance", "csv");
-                              }}
+                              onClick={() => { setOpenExportDropdown(null); handleReportDownload("attendance", "csv"); }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                               role="menuitem"
                             >
@@ -674,10 +662,7 @@ const InstructorTabs = ({
                               {t("reportsTab.exportCSV")}
                             </button>
                             <button
-                              onClick={() => {
-                                setOpenExportDropdown(null);
-                                handleReportDownload("attendance", "pdf");
-                              }}
+                              onClick={() => { setOpenExportDropdown(null); handleReportDownload("attendance", "pdf"); }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                               role="menuitem"
                             >
@@ -693,9 +678,9 @@ const InstructorTabs = ({
               </div>
 
               {/* Gradebook Report Card */}
-              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col min-h-[260px]">
                 {/* Header */}
-                <div className="flex items-start gap-3 mb-4 min-h-[60px]">
+                <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
                     <BookOpen className="w-5 h-5 text-[#D97706]" />
                   </div>
@@ -732,45 +717,33 @@ const InstructorTabs = ({
                 </div>
 
                 {/* Actions Row */}
-                <div className="flex items-center gap-2">
-                  {/* Generate Button — downloads CSV by default */}
-                  <button
-                    onClick={() => handleReportDownload("gradebook", "csv")}
-                    disabled={generatingReports.has("gradebook")}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
-                  >
-                    {generatingReports.has("gradebook") ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {t("reportsTab.generating")}
-                      </>
-                    ) : (
-                      t("reportsTab.generate")
-                    )}
-                  </button>
-
-                  {/* Export Dropdown */}
-                  <div className="relative">
+                <div className="flex items-center gap-2 mt-auto pt-2">
+                  <div className="relative flex-1">
                     <button
                       onClick={() => setOpenExportDropdown(openExportDropdown === "gradebook" ? null : "gradebook")}
-                      className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
-                      aria-label={tA("exportOptions")}
-                      aria-haspopup="true"
-                      aria-expanded={openExportDropdown === "gradebook"}
+                      disabled={generatingReports.has("gradebook")}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
                     >
-                      <Download className="w-4 h-4" />
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      {generatingReports.has("gradebook") ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {t("reportsTab.generating")}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          {t("reportsTab.generate")}
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </>
+                      )}
                     </button>
                     {openExportDropdown === "gradebook" && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
-                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
+                        <div className="absolute start-0 end-0 top-full mt-1 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
                           <div className="py-1">
                             <button
-                              onClick={() => {
-                                setOpenExportDropdown(null);
-                                handleReportDownload("gradebook", "csv");
-                              }}
+                              onClick={() => { setOpenExportDropdown(null); handleReportDownload("gradebook", "csv"); }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                               role="menuitem"
                             >
@@ -778,10 +751,7 @@ const InstructorTabs = ({
                               {t("reportsTab.exportCSV")}
                             </button>
                             <button
-                              onClick={() => {
-                                setOpenExportDropdown(null);
-                                handleReportDownload("gradebook", "pdf");
-                              }}
+                              onClick={() => { setOpenExportDropdown(null); handleReportDownload("gradebook", "pdf"); }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                               role="menuitem"
                             >
@@ -797,9 +767,9 @@ const InstructorTabs = ({
               </div>
 
               {/* Assessment Results Report Card */}
-              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col min-h-[260px]">
                 {/* Header */}
-                <div className="flex items-start gap-3 mb-4 min-h-[60px]">
+                <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center flex-shrink-0">
                     <ClipboardList className="w-5 h-5 text-[#22C55E]" />
                   </div>
@@ -836,45 +806,33 @@ const InstructorTabs = ({
                 </div>
 
                 {/* Actions Row */}
-                <div className="flex items-center gap-2">
-                  {/* Generate Button — downloads CSV by default */}
-                  <button
-                    onClick={() => handleReportDownload("assessment", "csv")}
-                    disabled={generatingReports.has("assessment")}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
-                  >
-                    {generatingReports.has("assessment") ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {t("reportsTab.generating")}
-                      </>
-                    ) : (
-                      t("reportsTab.generate")
-                    )}
-                  </button>
-
-                  {/* Export Dropdown */}
-                  <div className="relative">
+                <div className="flex items-center gap-2 mt-auto pt-2">
+                  <div className="relative flex-1">
                     <button
                       onClick={() => setOpenExportDropdown(openExportDropdown === "assessment" ? null : "assessment")}
-                      className="inline-flex items-center gap-1 px-3 py-2.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
-                      aria-label={tA("exportOptions")}
-                      aria-haspopup="true"
-                      aria-expanded={openExportDropdown === "assessment"}
+                      disabled={generatingReports.has("assessment")}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] disabled:bg-[#93C5FD] disabled:cursor-not-allowed transition-colors"
                     >
-                      <Download className="w-4 h-4" />
-                      <ChevronDown className="w-3.5 h-3.5" />
+                      {generatingReports.has("assessment") ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {t("reportsTab.generating")}
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          {t("reportsTab.generate")}
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </>
+                      )}
                     </button>
                     {openExportDropdown === "assessment" && (
                       <>
                         <div className="fixed inset-0 z-40" onClick={() => setOpenExportDropdown(null)} />
-                        <div className="absolute end-0 top-full mt-1 w-32 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
+                        <div className="absolute start-0 end-0 top-full mt-1 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-50" role="menu">
                           <div className="py-1">
                             <button
-                              onClick={() => {
-                                setOpenExportDropdown(null);
-                                handleReportDownload("assessment", "csv");
-                              }}
+                              onClick={() => { setOpenExportDropdown(null); handleReportDownload("assessment", "csv"); }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                               role="menuitem"
                             >
@@ -882,10 +840,7 @@ const InstructorTabs = ({
                               {t("reportsTab.exportCSV")}
                             </button>
                             <button
-                              onClick={() => {
-                                setOpenExportDropdown(null);
-                                handleReportDownload("assessment", "pdf");
-                              }}
+                              onClick={() => { setOpenExportDropdown(null); handleReportDownload("assessment", "pdf"); }}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                               role="menuitem"
                             >

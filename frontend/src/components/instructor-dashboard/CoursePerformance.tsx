@@ -41,6 +41,7 @@ const CoursePerformance = ({
   const tA = useTranslations("accessibility");
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [deliveryFilter, setDeliveryFilter] = useState("all");
+  const [cohortFilter, setCohortFilter] = useState("all");
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.value || "all");
   const [courseLoading, setCourseLoading] = useState(false);
   const [courseData, setCourseData] = useState<{
@@ -79,18 +80,24 @@ const CoursePerformance = ({
   const modules = courseData?.moduleProgress ?? globalModules;
   const passFailStats = courseData?.passFailStats ?? globalPassFailStats;
 
-  // Filter courses by delivery type
-  const filteredCourses = deliveryFilter === "all"
-    ? courses
-    : courses.filter((c) => c.value === "all" || c.deliveryType === deliveryFilter);
+  // Get unique cohorts from courses
+  const cohorts = [...new Set(courses.filter((c) => c.cohort).map((c) => c.cohort!))];
 
-  // Reset course selection when delivery filter changes and current selection is not in filtered list
+  // Filter courses by delivery type and cohort
+  const filteredCourses = courses.filter((c) => {
+    if (c.value === "all") return true;
+    if (deliveryFilter !== "all" && c.deliveryType !== deliveryFilter) return false;
+    if (cohortFilter !== "all" && c.cohort !== cohortFilter) return false;
+    return true;
+  });
+
+  // Reset course selection when filters change and current selection is not in filtered list
   useEffect(() => {
-    if (deliveryFilter !== "all" && selectedCourse !== "all") {
+    if (selectedCourse !== "all") {
       const still = filteredCourses.find((c) => c.value === selectedCourse);
       if (!still) setSelectedCourse("all");
     }
-  }, [deliveryFilter, filteredCourses, selectedCourse]);
+  }, [deliveryFilter, cohortFilter, filteredCourses, selectedCourse]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -223,6 +230,20 @@ const CoursePerformance = ({
             <option value="onsite">{t("performance.onsite")}</option>
             <option value="blended">{t("performance.blended")}</option>
           </select>
+
+          {/* Cohort Filter */}
+          {cohorts.length > 0 && (
+            <select
+              value={cohortFilter}
+              onChange={(e) => setCohortFilter(e.target.value)}
+              className="flex-1 sm:flex-none sm:min-w-[130px] px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+            >
+              <option value="all">{t("performance.allCohorts")}</option>
+              {cohorts.map((cohort) => (
+                <option key={cohort} value={cohort}>{cohort}</option>
+              ))}
+            </select>
+          )}
 
           {/* Course Filter Dropdown */}
           <select

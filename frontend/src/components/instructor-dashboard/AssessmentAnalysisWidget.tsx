@@ -149,20 +149,25 @@ const AssessmentAnalysisWidget = ({
             </div>
           </div>
 
-          {/* Question Difficulty Analysis */}
+          {/* Most Challenging Questions (top 5 lowest correct rate) */}
           <div>
             <h4 className="text-sm text-[#4B5563] mb-4">
-              {t("assessmentAnalysis.questionDifficulty")}
+              {t("assessmentAnalysis.mostChallenging")}
             </h4>
+            {questions.length === 0 ? (
+              <p className="text-sm text-[#9CA3AF] text-center py-8">
+                {t("assessmentAnalysis.noQuestions")}
+              </p>
+            ) : (
             <div className="space-y-3">
-              {questions.map((question) => (
+              {[...questions].sort((a, b) => a.correctRate - b.correctRate).slice(0, 5).map((question, qIndex) => (
                 <div
                   key={question.id}
                   className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]"
                 >
                   {/* Question number */}
                   <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563] flex-shrink-0">
-                    Q{question.id}
+                    Q{qIndex + 1}
                   </div>
 
                   {/* Question text and stats */}
@@ -186,6 +191,7 @@ const AssessmentAnalysisWidget = ({
                 </div>
               ))}
             </div>
+            )}
           </div>
         </div>
 

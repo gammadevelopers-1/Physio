@@ -244,6 +244,48 @@ async function uploadFormData<T>(
 }
 
 // ===========================================
+// Blob Fetch Helpers (for file downloads)
+// ===========================================
+async function fetchBlob(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<Blob> {
+  const { skipAuth = false, headers: customHeaders, ...fetchOptions } = options;
+  const headers: Record<string, string> = {
+    ...(customHeaders as Record<string, string>),
+  };
+  if (!skipAuth) {
+    const token = getAccessToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+  const deviceId = getDeviceId();
+  if (deviceId) headers['X-Device-Id'] = deviceId;
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...fetchOptions,
+    headers,
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, `Download failed (${response.status})`);
+  }
+
+  return response.blob();
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ===========================================
 // API Methods
 // ===========================================
 export const api = {
@@ -679,6 +721,12 @@ export const instructorApi = {
   getDashboardSummary: () =>
     api.get<DashboardSummaryResponse>('/instructor/dashboard-summary'),
 
+  // Per-course performance data (attendance, modules, pass/fail)
+  getCoursePerformance: (courseId?: string) =>
+    api.get<{ attendanceTrend: number[]; moduleProgress: { name: string; percentage: number }[]; passFailStats: { totalStudents: number; passed: number; failed: number; passRate: number } | null }>(
+      `/instructor/course-performance${courseId && courseId !== 'all' ? `?courseId=${courseId}` : ''}`
+    ),
+
   // Course enrollments (for course performance widget)
   getCourseEnrollments: (courseId: string) =>
     api.get<CourseEnrollment[]>(`/courses/${courseId}/enrollments`),
@@ -700,7 +748,7 @@ export const instructorApi = {
   },
 
   // Assessment CRUD
-  createAssessment: (data: { courseId: string; title: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number; dueDate?: string; instructions?: string; moduleId?: string }) =>
+  createAssessment: (data: { courseId: string; title: string; type: string; totalMarks: number; passingMarks: number; durationMinutes?: number; attemptsAllowed?: number; dueDate?: string; instructions?: string; moduleId?: string; randomizeOrder?: boolean; questionsPerAttempt?: number }) =>
     api.post<AssessmentResponse>('/assessments', data),
 
   getAssessmentDetail: (assessmentId: string) =>
@@ -797,7 +845,7 @@ export const instructorApi = {
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
 
   // Course creation
-  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string }) =>
+  createCourse: (data: { title: string; titleAr?: string; description?: string; descriptionAr?: string; deliveryType: string; thumbnail?: string; maxEnrollment?: number; startDate?: string; endDate?: string; cohort?: string }) =>
     api.post<CourseDetailResponse>('/courses', data),
 
   // Course update & delete
@@ -896,6 +944,44 @@ export const instructorApi = {
   getAtRiskStudents: () =>
     api.get<AtRiskStudent[]>('/instructor/at-risk'),
 
+  updateAtRiskSettings: (courseId: string, data: { atRiskAttendanceThreshold?: number; atRiskScoreThreshold?: number; atRiskInactivityDays?: number }) =>
+    api.patch<{ message: string }>(`/instructor/courses/${courseId}/at-risk-settings`, data),
+
+  getFilterOptions: () =>
+    api.get<{ deliveryTypes: string[]; cohorts: string[] }>('/instructor/filter-options'),
+
+  // Session Materials Sharing (Feature 8)
+  shareMaterial: (sessionId: string, materialId: string) =>
+    api.post<{ message: string }>(`/sessions/${sessionId}/share-material`, { materialId }),
+
+  unshareMaterial: (sessionId: string, materialId: string) =>
+    api.delete<{ message: string }>(`/sessions/${sessionId}/share-material/${materialId}`),
+
+  getSharedMaterials: (sessionId: string) =>
+    api.get<Array<{
+      id: string;
+      materialId: string;
+      sharedAt: string;
+      materialTitle: string;
+      materialType: string;
+      fileUrl: string | null;
+      fileSize: number | null;
+      mimeType: string | null;
+      sharerFirstName: string;
+      sharerLastName: string;
+    }>>(`/sessions/${sessionId}/shared-materials`),
+
+  // Make-up Session (Feature 9)
+  createMakeupSession: (studentId: string, data: {
+    courseId: string;
+    title: string;
+    type: string;
+    scheduledAt: string;
+    durationMinutes?: number;
+    parentSessionId?: string;
+  }) =>
+    api.post<CourseSession>(`/instructor/students/${studentId}/makeup-session`, data),
+
   // Interventions
   createIntervention: (data: CreateInterventionPayload) =>
     api.post<InterventionResponse>('/instructor/interventions', data),
@@ -935,6 +1021,20 @@ export const instructorApi = {
 
   batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
     api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
+
+  downloadCertificate: async (certId: string) => {
+    const blob = await fetchBlob(`/certificates/${certId}/download`);
+    downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);
+  },
+
+  batchDownloadCertificates: async (ids: string[]) => {
+    const blob = await fetchBlob(`/certificates/batch-download`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    } as FetchOptions);
+    downloadBlob(blob, `certificates-${new Date().toISOString().split('T')[0]}.zip`);
+  },
 
   getMyCertificates: () =>
     api.get<{ id: string; courseId: string; status: string; certificateUrl: string | null; createdAt: string; reviewedAt: string | null; courseName: string; courseThumbnail: string | null }[]>('/certificates/my-certificates'),
@@ -1113,6 +1213,35 @@ export const materialsApi = {
 
   getVariants: (materialId: string) =>
     api.get<import('@/types/instructor-dashboard').MaterialVariant[]>(`/materials/${materialId}/variants`),
+
+  // ── Watch Analytics (Feature 7) ──
+  getWatchAnalytics: (materialId: string) =>
+    api.get<{
+      totalViewers: number;
+      bucketSize: number;
+      retention: { bucket: number; viewers: number; percent: number }[];
+      dropOffPoints: { bucket: number; drop: number }[];
+    }>(`/materials/${materialId}/watch-analytics`),
+
+  // ── Captions (Feature 5) ──
+  getCaptions: (materialId: string) =>
+    api.get<{ entries: { startTime: string; endTime: string; text: string }[]; raw: string }>(`/materials/${materialId}/captions`),
+
+  saveCaptions: (materialId: string, entries: { startTime: string; endTime: string; text: string }[]) =>
+    api.put<CourseMaterialResponse>(`/materials/${materialId}/captions`, { entries }),
+
+  uploadCaptionFile: (materialId: string, file: File) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return uploadFormData<CourseMaterialResponse>(`/materials/${materialId}/captions/upload`, fd);
+  },
+
+  // ── Version History (Feature 6) ──
+  getVersionHistory: (materialId: string) =>
+    api.get<Array<{ id: string; version: number; title: string; fileSize: number | null; mimeType: string | null; status: string; createdAt: string; isCurrent: boolean }>>(`/materials/${materialId}/versions`),
+
+  rollback: (materialId: string, versionId: string) =>
+    api.post<CourseMaterialResponse>(`/materials/${materialId}/rollback/${versionId}`, {}),
 };
 
 // ===========================================
@@ -1227,6 +1356,7 @@ export interface CreateCourseManagerData {
   startDate?: string;
   endDate?: string;
   instructorId: string;
+  cohort?: string;
 }
 
 export interface SessionsParams {
@@ -1925,6 +2055,14 @@ export const studentApi = {
 
   getCertificates: () =>
     api.get<StudentCertificate[]>('/student/certificates'),
+
+  downloadCertificate: async (certId: string) => {
+    const blob = await fetchBlob(`/student/certificates/${certId}/download`);
+    downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);
+  },
+
+  recordWatchEvents: (materialId: string, events: { eventType: string; position: number; fromPosition?: number }[]) =>
+    api.post<{ recorded: number }>(`/student/materials/${materialId}/watch-events`, { events }),
 
   getSessionJoinUrl: (sessionId: string) =>
     api.get<{ joinUrl: string }>(`/student/sessions/${sessionId}/join`),

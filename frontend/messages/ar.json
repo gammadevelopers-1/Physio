@@ -1587,7 +1587,8 @@
       },
       "statusRevoked": "ملغاة",
       "revokedTitle": "تم إلغاء الشهادة",
-      "revokedMessage": "تم إلغاء شهادتك. يرجى التواصل مع المدرب للحصول على مزيد من المعلومات."
+      "revokedMessage": "تم إلغاء شهادتك. يرجى التواصل مع المدرب للحصول على مزيد من المعلومات.",
+      "downloadFailed": "فشل تحميل الشهادة"
     },
     "verify": {
       "verifying": "جارٍ التحقق من الشهادة...",
@@ -2164,7 +2165,12 @@
       "passRate": "معدل النجاح",
       "passed": "ناجح",
       "failed": "راسب",
-      "ofStudents": "من {total} طالب"
+      "ofStudents": "من {total} طالب",
+      "allDeliveryTypes": "جميع أنواع التقديم",
+      "zoom": "زووم",
+      "onsite": "حضوري",
+      "blended": "مدمج",
+      "loading": "جاري التحميل..."
     },
     "atRisk": {
       "title": "المتعلمون المعرضون للخطر",
@@ -2179,7 +2185,16 @@
       "reminderFailed": "فشل إرسال بريد التذكير",
       "ticketCreated": "تم تسجيل تذكرة الدعم",
       "makeupSessionInfo": "تم تسجيل تدخل الجلسة التعويضية",
-      "actionFailed": "فشل الإجراء. يرجى المحاولة مرة أخرى."
+      "actionFailed": "فشل الإجراء. يرجى المحاولة مرة أخرى.",
+      "thresholdSettings": "إعدادات الحد الأدنى",
+      "thresholdsSaved": "تم حفظ الحدود بنجاح",
+      "selectCourse": "اختر الدورة",
+      "attendanceThreshold": "حد الحضور (%)",
+      "scoreThreshold": "حد الدرجة (%)",
+      "inactivityThreshold": "حد عدم النشاط",
+      "days": "أيام",
+      "resetDefaults": "إعادة التعيين",
+      "saveThresholds": "حفظ الحدود"
     },
     "needsGrading": {
       "title": "بحاجة للتصحيح",
@@ -2206,6 +2221,8 @@
       "hard": "صعب",
       "correctRate": "صحيح",
       "viewItemAnalysis": "عرض تحليل الأسئلة",
+      "mostChallenging": "الأسئلة الأكثر صعوبة",
+      "noQuestions": "لا تتوفر بيانات أسئلة بعد.",
       "questionSample1": "تقنيات دعم الحياة الأساسية",
       "questionSample2": "تفسير إيقاع تخطيط القلب",
       "questionSample3": "إدارة مجرى الهواء المتقدمة",
@@ -2935,7 +2952,11 @@
       "noAssessmentsFound": "لم يتم العثور على تقييمات",
       "noPublishedAssessments": "لم يتم العثور على تقييمات منشورة",
       "back": "رجوع",
-      "itemAnalysisQuizExamOnly": "تحليل العناصر متاح للاختبارات القصيرة والامتحانات فقط"
+      "itemAnalysisQuizExamOnly": "تحليل العناصر متاح للاختبارات القصيرة والامتحانات فقط",
+      "randomizeOrder": "ترتيب عشوائي للأسئلة",
+      "randomizeOrderHelp": "سيرى كل طالب الأسئلة بترتيب عشوائي مختلف",
+      "questionsPerAttempt": "عدد الأسئلة لكل محاولة",
+      "questionsPerAttemptHelp": "عدد الأسئلة المعروضة لكل محاولة (اتركه فارغاً لعرض الكل)"
     },
     "common": {
       "timeMinutesAgo": "منذ {count} د",
@@ -3034,7 +3055,10 @@
       "revokeReasonRequired": "يرجى تقديم سبب للإلغاء.",
       "revokeSuccess": "تم إلغاء الشهادة بنجاح.",
       "confirmRevoke": "إلغاء الشهادة",
-      "revokeReason": "سبب الإلغاء"
+      "revokeReason": "سبب الإلغاء",
+      "downloadSelected": "تحميل المحدد",
+      "noApprovedSelected": "لم يتم تحديد شهادات معتمدة للتحميل",
+      "batchDownloadFailed": "فشل تحميل الشهادات"
     },
     "content": {
       "title": "إدارة المحتوى",
@@ -3147,7 +3171,13 @@
       "awaitingReview": "بانتظار مراجعة المدير",
       "resubmit": "إعادة التقديم",
       "autoTranscribe": "النسخ التلقائي",
-      "autoTranscribeDesc": "إنشاء ترجمة ونص تلقائياً لهذا الفيديو"
+      "autoTranscribeDesc": "إنشاء ترجمة ونص تلقائياً لهذا الفيديو",
+      "editCaptions": "تحرير الترجمة",
+      "viewAnalytics": "عرض التحليلات",
+      "versionHistory": "سجل الإصدارات",
+      "previous": "السابق",
+      "next": "التالي",
+      "statusPendingReview": "قيد المراجعة"
     },
     "reports": {
       "title": "التقارير",
@@ -3200,7 +3230,11 @@
       "progressReport": "تقرير التقدم",
       "progressDescription": "مراقبة تقدم الطلاب ومعدلات الإنجاز واتجاهات الأداء عبر دوراتك.",
       "nelcReport": "تقرير الامتثال NELC",
-      "nelcDescription": "إنشاء تقارير متوافقة مع NELC للاعتماد والتقديم التنظيمي."
+      "nelcDescription": "إنشاء تقارير متوافقة مع NELC للاعتماد والتقديم التنظيمي.",
+      "allDeliveryTypes": "جميع أنواع التقديم",
+      "zoom": "زووم",
+      "onsite": "حضوري",
+      "blended": "مدمج"
     },
     "settings": {
       "title": "الإعدادات",
@@ -3313,6 +3347,54 @@
         "fri": "الجمعة",
         "sat": "السبت"
       }
+    },
+    "analytics": {
+      "title": "تحليلات مشاهدة الفيديو",
+      "loadError": "فشل تحميل بيانات التحليلات",
+      "noData": "لا توجد بيانات مشاهدة متاحة بعد",
+      "viewers": "مشاهد",
+      "dropOffs": "نقاط انسحاب",
+      "retentionCurve": "معدل الاحتفاظ بالمشاهدين",
+      "dropOffPoints": "نقاط الانسحاب الملحوظة",
+      "atPosition": "عند",
+      "close": "إغلاق"
+    },
+    "captions": {
+      "title": "محرر الترجمة",
+      "loadError": "فشل تحميل الترجمة",
+      "saveSuccess": "تم حفظ الترجمة بنجاح",
+      "saveError": "فشل حفظ الترجمة",
+      "uploadSuccess": "تم رفع ملف الترجمة بنجاح",
+      "uploadError": "فشل رفع ملف الترجمة",
+      "editorTab": "المحرر",
+      "uploadTab": "رفع",
+      "noCaptions": "لا توجد ترجمة بعد. أضف إدخالات أدناه أو ارفع ملف VTT/SRT.",
+      "addEntry": "إضافة إدخال",
+      "uploadDesc": "رفع ملف ترجمة VTT أو SRT",
+      "selectFile": "اختر ملف",
+      "acceptedFormats": "الصيغ المقبولة: .vtt، .srt",
+      "cancel": "إلغاء",
+      "save": "حفظ الترجمة"
+    },
+    "versions": {
+      "title": "سجل الإصدارات",
+      "loadError": "فشل تحميل سجل الإصدارات",
+      "rollbackSuccess": "تم الاستعادة بنجاح",
+      "rollbackError": "فشل الاستعادة",
+      "noHistory": "لا يوجد سجل إصدارات متاح",
+      "current": "الحالي",
+      "archived": "مؤرشف",
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "rollback": "استعادة",
+      "rollbackDesc": "سيتم إنشاء إصدار جديد باستخدام ملف الإصدار المحدد. سيتم أرشفة الإصدار الحالي.",
+      "close": "إغلاق"
+    },
+    "shareMaterials": {
+      "title": "مشاركة المواد",
+      "description": "اختر المواد لمشاركتها مع الطلاب خلال هذه الجلسة.",
+      "noMaterials": "لا توجد مواد متاحة لهذه الدورة.",
+      "done": "تم"
     }
   },
   "courseManagerDashboard": {
@@ -3569,6 +3651,9 @@
       "reviewDescription": "راجع جميع تفاصيل الدورة قبل الإنشاء. يمكنك التعديل بعد الإنشاء.",
       "instructorAssignment": "تعيين المدرب",
       "selectedInstructor": "المدرب المختار",
+      "cohort": "المجموعة",
+      "cohortPlaceholder": "مثال: ربيع 2026، المجموعة أ",
+      "cohortHint": "اختياري. تجميع الدورات حسب المجموعة لتسهيل التصفية.",
       "addModule": "إضافة وحدة",
       "updateModule": "تحديث الوحدة",
       "removeModule": "حذف الوحدة",

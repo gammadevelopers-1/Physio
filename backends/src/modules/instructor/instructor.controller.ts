@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   Param,
   Query,
@@ -30,6 +31,18 @@ export class InstructorController {
   }
 
   /**
+   * GET /instructor/course-performance — Per-course performance data
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('course-performance')
+  async getCoursePerformance(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+  ) {
+    return this.instructorService.getCoursePerformance(user, courseId);
+  }
+
+  /**
    * GET /instructor/roster — Enriched instructor list with workload metrics
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
@@ -45,6 +58,15 @@ export class InstructorController {
   @Get('suggestions')
   async suggestInstructor() {
     return this.instructorService.suggestInstructor();
+  }
+
+  /**
+   * GET /instructor/filter-options — Distinct delivery types & cohorts for filter dropdowns
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('filter-options')
+  async getFilterOptions(@CurrentUser() user: AuthenticatedUser) {
+    return this.instructorService.getFilterOptions(user);
   }
 
   /**
@@ -67,6 +89,19 @@ export class InstructorController {
   @Get('at-risk')
   async getAtRiskStudents(@CurrentUser() user: AuthenticatedUser) {
     return this.instructorService.getAtRiskStudents(user);
+  }
+
+  /**
+   * PATCH /instructor/courses/:courseId/at-risk-settings — Update at-risk thresholds
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Patch('courses/:courseId/at-risk-settings')
+  async updateAtRiskSettings(
+    @Param('courseId') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { atRiskAttendanceThreshold?: number; atRiskScoreThreshold?: number; atRiskInactivityDays?: number },
+  ) {
+    return this.instructorService.updateAtRiskSettings(courseId, user, body);
   }
 
   /**
@@ -114,5 +149,25 @@ export class InstructorController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.instructorService.getStudentDetail(studentId, user);
+  }
+
+  /**
+   * POST /instructor/students/:studentId/makeup-session — Create a make-up session for a student
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post('students/:studentId/makeup-session')
+  async createMakeupSession(
+    @Param('studentId') studentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: {
+      courseId: string;
+      title: string;
+      type: string;
+      scheduledAt: string;
+      durationMinutes?: number;
+      parentSessionId?: string;
+    },
+  ) {
+    return this.instructorService.createMakeupSession(user, studentId, body);
   }
 }

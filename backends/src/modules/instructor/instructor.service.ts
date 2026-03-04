@@ -488,51 +488,6 @@ export class InstructorService {
       }));
     }
 
-    // ─── Assessments for Assessments tab ────────────────────
-    let tabAssessments: {
-      id: string;
-      title: string;
-      questions: number;
-      submissions: number;
-      avgScore: number;
-    }[] = [];
-
-    if (courseIds.length > 0) {
-      const allAssessments = await db
-        .select({
-          id: assessments.id,
-          title: assessments.title,
-        })
-        .from(assessments)
-        .where(inArray(assessments.courseId, courseIds))
-        .orderBy(desc(assessments.createdAt));
-
-      tabAssessments = await Promise.all(
-        allAssessments.map(async (a) => {
-          const [qCount] = await db
-            .select({ count: count() })
-            .from(questions)
-            .where(eq(questions.assessmentId, a.id));
-
-          const [subStats] = await db
-            .select({
-              count: count(),
-              avgPct: sql<number>`COALESCE(ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC))), 0)`.as('avg_pct'),
-            })
-            .from(submissions)
-            .where(eq(submissions.assessmentId, a.id));
-
-          return {
-            id: a.id,
-            title: a.title,
-            questions: qCount?.count || 0,
-            submissions: subStats?.count || 0,
-            avgScore: Number(subStats?.avgPct ?? 0),
-          };
-        }),
-      );
-    }
-
     // ─── Total Students across all instructor courses ────────
     let totalStudents = 0;
     if (courseIds.length > 0) {
@@ -703,6 +658,29 @@ export class InstructorService {
       }
     }
 
+    // ─── Notifications ─────────────────────────────────────
+    let notifications: {
+      id: string;
+      title: string;
+      message: string;
+      type: string;
+      read: boolean;
+      date: string;
+    }[] = [];
+    try {
+      const notifResult = await this.userNotificationsService.findAllForUser(user.id, { limit: 5 });
+      notifications = (notifResult.data || []).map((n) => ({
+        id: n.id,
+        title: n.title,
+        message: n.message ?? '',
+        type: n.type ?? 'info',
+        read: n.isRead ?? false,
+        date: n.createdAt?.toISOString?.() ?? new Date().toISOString(),
+      }));
+    } catch (err) {
+      this.logger.warn('Failed to fetch notifications for dashboard', err);
+    }
+
     return {
       kpis: {
         activeCourses: coursesResult.total || 0,
@@ -720,23 +698,241 @@ export class InstructorService {
         title: c.title,
         titleAr: c.titleAr,
         status: c.status,
+        deliveryType: c.deliveryType,
+        cohort: c.cohort,
       })),
       attendanceTrend,
       moduleProgress,
       assessmentScores,
       questionAnalysis,
       materials,
-      tabAssessments,
       pendingSubmissions,
       recentFeedback,
       passFailStats,
+      notifications,
     };
+  }
+
+  // ─── Per-Course Performance ──────────────────────────────
+
+  /**
+   * GET /instructor/course-performance?courseId=xxx
+   * Returns attendance trend, module progress, and pass/fail stats for a specific course.
+   */
+  async getCoursePerformance(user: AuthenticatedUser, courseId?: string) {
+    // Get instructor's courses to validate access
+    const courseConditions = this.isAdmin(user)
+      ? []
+      : [eq(courses.instructorId, user.id)];
+
+    const instructorCourses = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(
+        courseConditions.length > 0
+          ? and(...courseConditions)
+          : undefined,
+      );
+
+    const allCourseIds = instructorCourses.map((c) => c.id);
+    if (allCourseIds.length === 0) {
+      return { attendanceTrend: [0, 0, 0, 0, 0, 0, 0], moduleProgress: [], passFailStats: null };
+    }
+
+    // If courseId is provided and not "all", filter to that single course
+    const targetCourseIds = courseId && courseId !== 'all' && allCourseIds.includes(courseId)
+      ? [courseId]
+      : allCourseIds;
+
+    // ─── Attendance Trend ──────────────────────────────────
+    let attendanceTrend: number[] = [0, 0, 0, 0, 0, 0, 0];
+    const courseSessions = await db
+      .select({ id: sessions.id, scheduledAt: sessions.scheduledAt })
+      .from(sessions)
+      .where(inArray(sessions.courseId, targetCourseIds));
+
+    const sessionIds = courseSessions.map((s) => s.id);
+
+    if (sessionIds.length > 0) {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      const dailyAttendance = await db
+        .select({
+          dayOfWeek: sql<number>`EXTRACT(DOW FROM ${sessions.scheduledAt})`.as('dow'),
+          totalRecords: count(),
+          presentCount:
+            sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as('present_count'),
+        })
+        .from(attendance)
+        .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+        .where(
+          and(
+            inArray(attendance.sessionId, sessionIds),
+            sql`${sessions.scheduledAt} >= ${sevenDaysAgo.toISOString()}`,
+          ),
+        )
+        .groupBy(sql`EXTRACT(DOW FROM ${sessions.scheduledAt})`);
+
+      const trendMap = new Map<number, number>();
+      for (const row of dailyAttendance) {
+        const total = Number(row.totalRecords);
+        const present = Number(row.presentCount);
+        trendMap.set(Number(row.dayOfWeek), total > 0 ? Math.round((present / total) * 100) : 0);
+      }
+      attendanceTrend = [1, 2, 3, 4, 5, 6, 0].map((dow) => trendMap.get(dow) ?? 0);
+    }
+
+    // ─── Module Progress ──────────────────────────────────
+    let moduleProgress: { name: string; percentage: number }[] = [];
+    const targetCourseId = targetCourseIds[0];
+
+    const modules = await db
+      .select({ id: courseModules.id, title: courseModules.title, orderIndex: courseModules.orderIndex })
+      .from(courseModules)
+      .where(eq(courseModules.courseId, targetCourseId))
+      .orderBy(asc(courseModules.orderIndex));
+
+    if (modules.length > 0) {
+      const [enrollCount] = await db
+        .select({ count: count() })
+        .from(enrollments)
+        .where(eq(enrollments.courseId, targetCourseId));
+      const totalEnrolledStudents = enrollCount?.count || 0;
+
+      moduleProgress = await Promise.all(
+        modules.map(async (mod) => {
+          const moduleMaterials = await db
+            .select({ id: courseMaterials.id })
+            .from(courseMaterials)
+            .where(eq(courseMaterials.moduleId, mod.id));
+
+          const totalMaterials = moduleMaterials.length;
+          if (totalMaterials === 0 || totalEnrolledStudents === 0) {
+            return { name: mod.title, percentage: 0 };
+          }
+
+          const materialIds = moduleMaterials.map((m) => m.id);
+          const completionRows = await db
+            .select({ studentId: materialProgress.studentId, completedCount: count() })
+            .from(materialProgress)
+            .where(
+              and(
+                inArray(materialProgress.materialId, materialIds),
+                sql`${materialProgress.completedAt} IS NOT NULL`,
+              ),
+            )
+            .groupBy(materialProgress.studentId);
+
+          const studentsCompletedAll = completionRows.filter(
+            (r) => Number(r.completedCount) >= totalMaterials,
+          ).length;
+
+          return { name: mod.title, percentage: Math.round((studentsCompletedAll / totalEnrolledStudents) * 100) };
+        }),
+      );
+    }
+
+    // ─── Pass/Fail Stats ──────────────────────────────────
+    let passFailStats: { totalStudents: number; passed: number; failed: number; passRate: number } | null = null;
+
+    const courseAssessments = await db
+      .select({ id: assessments.id, passingMarks: assessments.passingMarks })
+      .from(assessments)
+      .where(
+        and(
+          inArray(assessments.courseId, targetCourseIds),
+          eq(assessments.status, 'published'),
+        ),
+      );
+
+    if (courseAssessments.length > 0) {
+      const allEnrolled = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(inArray(enrollments.courseId, targetCourseIds));
+
+      const uniqueStudentIds = [...new Set(allEnrolled.map((e) => e.studentId))];
+
+      if (uniqueStudentIds.length > 0) {
+        const assessmentIds = courseAssessments.map((a) => a.id);
+        const allSubs = await db
+          .select({
+            studentId: submissions.studentId,
+            assessmentId: submissions.assessmentId,
+            score: submissions.score,
+          })
+          .from(submissions)
+          .where(
+            and(
+              inArray(submissions.assessmentId, assessmentIds),
+              eq(submissions.status, 'graded'),
+            ),
+          );
+
+        const scoreMap = new Map<string, Map<string, number>>();
+        for (const sub of allSubs) {
+          if (!scoreMap.has(sub.studentId)) scoreMap.set(sub.studentId, new Map());
+          const studentScores = scoreMap.get(sub.studentId)!;
+          const existing = studentScores.get(sub.assessmentId) ?? -1;
+          if ((sub.score ?? 0) > existing) studentScores.set(sub.assessmentId, sub.score ?? 0);
+        }
+
+        const totalPassingMarks = courseAssessments.reduce((sum, a) => sum + (a.passingMarks ?? 0), 0);
+        let passed = 0;
+        for (const studentId of uniqueStudentIds) {
+          const studentScores = scoreMap.get(studentId);
+          if (!studentScores) continue;
+          let totalScore = 0;
+          for (const a of courseAssessments) totalScore += studentScores.get(a.id) ?? 0;
+          if (totalScore >= totalPassingMarks) passed++;
+        }
+
+        const pfTotal = uniqueStudentIds.length;
+        passFailStats = {
+          totalStudents: pfTotal,
+          passed,
+          failed: pfTotal - passed,
+          passRate: pfTotal > 0 ? Math.round((passed / pfTotal) * 100) : 0,
+        };
+      }
+    }
+
+    return { attendanceTrend, moduleProgress, passFailStats };
   }
 
   // ─── Students View ────────────────────────────────────────
 
   /**
    * GET /instructor/students
+   * GET /instructor/filter-options
+   * Return distinct delivery types and cohorts for filter dropdowns.
+   */
+  async getFilterOptions(user: AuthenticatedUser) {
+    const courseConditions = this.isAdmin(user)
+      ? []
+      : [eq(courses.instructorId, user.id)];
+
+    const instructorCourses = await db
+      .select({
+        deliveryType: courses.deliveryType,
+        cohort: courses.cohort,
+      })
+      .from(courses)
+      .where(
+        courseConditions.length > 0
+          ? and(...courseConditions)
+          : undefined,
+      );
+
+    const deliveryTypes = [...new Set(instructorCourses.map((c) => c.deliveryType))];
+    const cohorts = [...new Set(instructorCourses.map((c) => c.cohort).filter(Boolean))] as string[];
+
+    return { deliveryTypes, cohorts };
+  }
+
+  /**
    * List all unique students across the instructor's courses.
    * - Instructor: students enrolled in their own courses only.
    * - Admin: all enrolled students across all courses.
@@ -1121,13 +1317,18 @@ export class InstructorService {
    * - Admin: all students.
    */
   async getAtRiskStudents(user: AuthenticatedUser) {
-    // Get the instructor's course IDs (or all for admin)
+    // Get the instructor's course IDs (or all for admin) with thresholds
     const courseConditions = this.isAdmin(user)
       ? []
       : [eq(courses.instructorId, user.id)];
 
     const instructorCourses = await db
-      .select({ id: courses.id })
+      .select({
+        id: courses.id,
+        atRiskAttendanceThreshold: courses.atRiskAttendanceThreshold,
+        atRiskScoreThreshold: courses.atRiskScoreThreshold,
+        atRiskInactivityDays: courses.atRiskInactivityDays,
+      })
       .from(courses)
       .where(
         courseConditions.length > 0
@@ -1136,6 +1337,23 @@ export class InstructorService {
       );
 
     const courseIds = instructorCourses.map((c) => c.id);
+
+    // Build per-course threshold map (with defaults)
+    const courseThresholds = new Map(
+      instructorCourses.map((c) => [
+        c.id,
+        {
+          attendance: c.atRiskAttendanceThreshold ?? 70,
+          score: c.atRiskScoreThreshold ?? 60,
+          inactivityDays: c.atRiskInactivityDays ?? 7,
+        },
+      ]),
+    );
+
+    // Compute the most strict thresholds across all courses for global evaluation
+    const minAttThreshold = Math.min(...[...courseThresholds.values()].map((t) => t.attendance));
+    const minScoreThreshold = Math.min(...[...courseThresholds.values()].map((t) => t.score));
+    const maxInactivityDays = Math.max(...[...courseThresholds.values()].map((t) => t.inactivityDays));
 
     if (courseIds.length === 0) {
       return [];
@@ -1239,8 +1457,8 @@ export class InstructorService {
       enrolledStudents.map((s) => [s.studentId, s.lastAccessedAt]),
     );
 
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const inactivityCutoff = new Date();
+    inactivityCutoff.setDate(inactivityCutoff.getDate() - maxInactivityDays);
 
     // Evaluate at-risk criteria for each student
     const atRiskStudents = [];
@@ -1254,15 +1472,15 @@ export class InstructorService {
 
       const riskReasons: string[] = [];
 
-      // Criterion 1: Attendance rate < 70%
+      // Criterion 1: Attendance rate below threshold
       const attendanceRate = attnData?.rate ?? 0;
-      if (attnData && attnData.totalSessions > 0 && attendanceRate < 70) {
+      if (attnData && attnData.totalSessions > 0 && attendanceRate < minAttThreshold) {
         riskReasons.push(
-          `Attendance rate ${attendanceRate}% (below 70%)`,
+          `Attendance rate ${attendanceRate}% (below ${minAttThreshold}%)`,
         );
       }
 
-      // Criterion 2: Assessment average < 60%
+      // Criterion 2: Assessment average below threshold
       const studentCourseIds = studentCoursesMap.get(studentId) || [];
       if (studentCourseIds.length > 0) {
         const studentSubmissions = await db
@@ -1286,16 +1504,16 @@ export class InstructorService {
               0,
             ) / studentSubmissions.length;
 
-          if (avgPercentage < 60) {
+          if (avgPercentage < minScoreThreshold) {
             riskReasons.push(
-              `Assessment average ${avgPercentage.toFixed(1)}% (below 60%)`,
+              `Assessment average ${avgPercentage.toFixed(1)}% (below ${minScoreThreshold}%)`,
             );
           }
         }
       }
 
-      // Criterion 3: No activity in last 7 days
-      if (!lastAccess || new Date(lastAccess) < sevenDaysAgo) {
+      // Criterion 3: No activity in configured days
+      if (!lastAccess || new Date(lastAccess) < inactivityCutoff) {
         riskReasons.push(
           lastAccess
             ? `Last activity on ${new Date(lastAccess).toISOString().split('T')[0]}`
@@ -1315,6 +1533,48 @@ export class InstructorService {
     }
 
     return atRiskStudents;
+  }
+
+  /**
+   * PATCH /instructor/courses/:courseId/at-risk-settings
+   * Update at-risk threshold settings for a course.
+   */
+  async updateAtRiskSettings(
+    courseId: string,
+    user: AuthenticatedUser,
+    data: {
+      atRiskAttendanceThreshold?: number;
+      atRiskScoreThreshold?: number;
+      atRiskInactivityDays?: number;
+    },
+  ) {
+    // Verify course access
+    const [course] = await db
+      .select({ id: courses.id, instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) throw new NotFoundException('Course not found');
+    if (!this.isAdmin(user) && course.instructorId !== user.id) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (data.atRiskAttendanceThreshold !== undefined) {
+      updateData.atRiskAttendanceThreshold = data.atRiskAttendanceThreshold;
+    }
+    if (data.atRiskScoreThreshold !== undefined) {
+      updateData.atRiskScoreThreshold = data.atRiskScoreThreshold;
+    }
+    if (data.atRiskInactivityDays !== undefined) {
+      updateData.atRiskInactivityDays = data.atRiskInactivityDays;
+    }
+
+    if (Object.keys(updateData).length === 0) return { message: 'No changes' };
+
+    await db.update(courses).set(updateData).where(eq(courses.id, courseId));
+    return { message: 'Thresholds updated' };
   }
 
   // ─── Interventions ──────────────────────────────────────────
@@ -1855,5 +2115,62 @@ export class InstructorService {
       },
       courses: instructorCourses.map((c) => ({ id: c.id, title: c.title, status: c.status })),
     };
+  }
+
+  // ─── Make-Up Session (Feature 9) ──────────────────────
+
+  async createMakeupSession(
+    user: AuthenticatedUser,
+    studentId: string,
+    data: {
+      courseId: string;
+      title: string;
+      type: string;
+      scheduledAt: string;
+      durationMinutes?: number;
+      parentSessionId?: string;
+    },
+  ) {
+    // Verify student enrollment
+    const [enrollment] = await db
+      .select({ id: enrollments.id })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.courseId, data.courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new NotFoundException('Student is not enrolled in this course');
+    }
+
+    // Create the session with assignedStudents
+    const session = await this.sessionsService.create(user, {
+      courseId: data.courseId,
+      title: data.title,
+      type: data.type as any,
+      scheduledAt: data.scheduledAt,
+      durationMinutes: data.durationMinutes,
+      isMakeup: true,
+      parentSessionId: data.parentSessionId,
+      assignedStudents: [studentId],
+    });
+
+    // Create intervention record for audit trail
+    await db
+      .insert(interventions)
+      .values({
+        studentId,
+        courseId: data.courseId,
+        instructorId: user.id,
+        type: INTERVENTION_TYPE.MAKEUP_SESSION as string,
+        message: `Make-up session "${data.title}" scheduled`,
+      });
+
+    return session;
   }
 }

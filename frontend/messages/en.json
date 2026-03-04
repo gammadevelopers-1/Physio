@@ -1375,7 +1375,8 @@
       },
       "statusRevoked": "Revoked",
       "revokedTitle": "Certificate Revoked",
-      "revokedMessage": "Your certificate has been revoked. Please contact your instructor for more information."
+      "revokedMessage": "Your certificate has been revoked. Please contact your instructor for more information.",
+      "downloadFailed": "Failed to download certificate"
     },
     "verify": {
       "verifying": "Verifying certificate...",
@@ -1952,7 +1953,12 @@
       "passRate": "Pass Rate",
       "passed": "Passed",
       "failed": "Failed",
-      "ofStudents": "of {total} students"
+      "ofStudents": "of {total} students",
+      "allDeliveryTypes": "All Delivery Types",
+      "zoom": "Zoom",
+      "onsite": "On-site",
+      "blended": "Blended",
+      "loading": "Loading..."
     },
     "atRisk": {
       "title": "At-Risk Learners",
@@ -1967,7 +1973,16 @@
       "reminderFailed": "Failed to send reminder email",
       "ticketCreated": "Support ticket has been logged",
       "makeupSessionInfo": "Make-up session intervention recorded",
-      "actionFailed": "Action failed. Please try again."
+      "actionFailed": "Action failed. Please try again.",
+      "thresholdSettings": "Threshold Settings",
+      "thresholdsSaved": "Thresholds saved successfully",
+      "selectCourse": "Select Course",
+      "attendanceThreshold": "Attendance Threshold (%)",
+      "scoreThreshold": "Score Threshold (%)",
+      "inactivityThreshold": "Inactivity Threshold",
+      "days": "days",
+      "resetDefaults": "Reset Defaults",
+      "saveThresholds": "Save Thresholds"
     },
     "needsGrading": {
       "title": "Needs Grading",
@@ -1994,6 +2009,8 @@
       "hard": "Hard",
       "correctRate": "Correct",
       "viewItemAnalysis": "View Item Analysis",
+      "mostChallenging": "Most Challenging Questions",
+      "noQuestions": "No question data available yet.",
       "questionSample1": "Basic life support techniques",
       "questionSample2": "ECG rhythm interpretation",
       "questionSample3": "Advanced airway management",
@@ -2754,7 +2771,11 @@
       "noAssessmentsFound": "No assessments found",
       "noPublishedAssessments": "No published assessments found",
       "back": "Back",
-      "itemAnalysisQuizExamOnly": "Item analysis is available for quizzes and exams only"
+      "itemAnalysisQuizExamOnly": "Item analysis is available for quizzes and exams only",
+      "randomizeOrder": "Randomize question order",
+      "randomizeOrderHelp": "Each student will see questions in a different random order",
+      "questionsPerAttempt": "Questions per attempt",
+      "questionsPerAttemptHelp": "Number of questions shown per attempt (leave empty for all)"
     },
     "common": {
       "timeMinutesAgo": "{count}m ago",
@@ -2853,7 +2874,10 @@
       "revokeReasonRequired": "Please provide a reason for revocation.",
       "revokeSuccess": "Certificate revoked successfully.",
       "confirmRevoke": "Revoke Certificate",
-      "revokeReason": "Revocation Reason"
+      "revokeReason": "Revocation Reason",
+      "downloadSelected": "Download Selected",
+      "noApprovedSelected": "No approved certificates selected for download",
+      "batchDownloadFailed": "Failed to download certificates"
     },
     "content": {
       "title": "Content Management",
@@ -2966,7 +2990,13 @@
       "awaitingReview": "Awaiting manager review",
       "resubmit": "Resubmit",
       "autoTranscribe": "Auto-Transcription",
-      "autoTranscribeDesc": "Automatically generate captions and transcript for this video"
+      "autoTranscribeDesc": "Automatically generate captions and transcript for this video",
+      "editCaptions": "Edit Captions",
+      "viewAnalytics": "View Analytics",
+      "versionHistory": "Version History",
+      "previous": "Previous",
+      "next": "Next",
+      "statusPendingReview": "Pending Review"
     },
     "reports": {
       "title": "Reports",
@@ -3019,7 +3049,11 @@
       "progressReport": "Progress Report",
       "progressDescription": "Monitor student progress, completion rates, and performance trends across your courses.",
       "nelcReport": "NELC Compliance Report",
-      "nelcDescription": "Generate NELC-compliant reports for accreditation and regulatory submission."
+      "nelcDescription": "Generate NELC-compliant reports for accreditation and regulatory submission.",
+      "allDeliveryTypes": "All Delivery Types",
+      "zoom": "Zoom",
+      "onsite": "On-site",
+      "blended": "Blended"
     },
     "settings": {
       "title": "Settings",
@@ -3132,6 +3166,54 @@
         "fri": "Fri",
         "sat": "Sat"
       }
+    },
+    "analytics": {
+      "title": "Video Retention Analytics",
+      "loadError": "Failed to load analytics data",
+      "noData": "No viewing data available yet",
+      "viewers": "viewers",
+      "dropOffs": "drop-off points",
+      "retentionCurve": "Viewer Retention",
+      "dropOffPoints": "Significant Drop-off Points",
+      "atPosition": "At",
+      "close": "Close"
+    },
+    "captions": {
+      "title": "Caption Editor",
+      "loadError": "Failed to load captions",
+      "saveSuccess": "Captions saved successfully",
+      "saveError": "Failed to save captions",
+      "uploadSuccess": "Caption file uploaded successfully",
+      "uploadError": "Failed to upload caption file",
+      "editorTab": "Editor",
+      "uploadTab": "Upload",
+      "noCaptions": "No captions yet. Add entries below or upload a VTT/SRT file.",
+      "addEntry": "Add Entry",
+      "uploadDesc": "Upload a VTT or SRT subtitle file",
+      "selectFile": "Select File",
+      "acceptedFormats": "Accepted formats: .vtt, .srt",
+      "cancel": "Cancel",
+      "save": "Save Captions"
+    },
+    "versions": {
+      "title": "Version History",
+      "loadError": "Failed to load version history",
+      "rollbackSuccess": "Rolled back successfully",
+      "rollbackError": "Failed to rollback",
+      "noHistory": "No version history available",
+      "current": "Current",
+      "archived": "Archived",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "rollback": "Rollback",
+      "rollbackDesc": "This will create a new version using the selected version's file. The current version will be archived.",
+      "close": "Close"
+    },
+    "shareMaterials": {
+      "title": "Share Materials",
+      "description": "Select materials to share with students during this session.",
+      "noMaterials": "No materials available for this course.",
+      "done": "Done"
     }
   },
   "courseManagerDashboard": {
@@ -3385,7 +3467,10 @@
       "back": "Back",
       "next": "Next",
       "instructorAssignment": "Instructor Assignment",
-      "selectedInstructor": "Selected Instructor"
+      "selectedInstructor": "Selected Instructor",
+      "cohort": "Cohort",
+      "cohortPlaceholder": "e.g. Spring 2026, Group A",
+      "cohortHint": "Optional. Group courses by cohort for easier filtering."
     },
     "courseDetail": {
       "backToCourses": "Back to Courses",

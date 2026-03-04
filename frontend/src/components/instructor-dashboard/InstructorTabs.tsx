@@ -36,18 +36,10 @@ interface ContentFile {
   type: "video" | "pdf" | "document" | "image";
   name: string;
   version: string;
-  status: "live" | "processing" | "draft";
+  status: "live" | "processing" | "draft" | "pending_review";
   wcagCompliant: boolean | "warning";
   size?: string;
   lastModified?: string;
-}
-
-interface AssessmentItem {
-  id: string;
-  title: string;
-  questions: number;
-  submissions: number;
-  avgScore: number;
 }
 
 interface ReportItem {
@@ -59,7 +51,6 @@ interface ReportItem {
 
 interface InstructorTabsProps {
   contentFiles: ContentFile[];
-  assessments: AssessmentItem[];
   reports: ReportItem[];
   courseId?: string;
   onMaterialChange?: () => void;
@@ -67,14 +58,15 @@ interface InstructorTabsProps {
 
 const InstructorTabs = ({
   contentFiles,
-  assessments,
   reports,
   courseId,
   onMaterialChange,
 }: InstructorTabsProps) => {
+  const PAGE_SIZE = 10;
   const [activeTab, setActiveTab] = useState<
-    "content" | "reports" | "assessments"
+    "content" | "reports"
   >("content");
+  const [contentPage, setContentPage] = useState(0);
   const [openActionMenu, setOpenActionMenu] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -130,6 +122,14 @@ const InstructorTabs = ({
 
   // All files come from backend (no local uploadedFiles state)
   const allFiles = contentFiles;
+  const totalFiles = allFiles.length;
+  const totalPages = Math.ceil(totalFiles / PAGE_SIZE);
+  const paginatedFiles = allFiles.slice(contentPage * PAGE_SIZE, (contentPage + 1) * PAGE_SIZE);
+
+  // Reset page when content files change
+  useEffect(() => {
+    setContentPage(0);
+  }, [contentFiles]);
 
   // Close action menu when clicking outside
   useEffect(() => {
@@ -206,7 +206,6 @@ const InstructorTabs = ({
   const tabs = [
     { id: "content" as const, label: t("tabs.contentManagement"), icon: FolderOpen },
     { id: "reports" as const, label: t("tabs.reports"), icon: BarChart3 },
-    { id: "assessments" as const, label: t("tabs.assessments"), icon: ClipboardList },
   ];
 
   // Get file type icon
@@ -244,6 +243,8 @@ const InstructorTabs = ({
         return { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", icon: Check };
       case "processing":
         return { bg: "bg-[#FEF9C3]", text: "text-[#EAB308]", icon: Clock };
+      case "pending_review":
+        return { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", icon: Clock };
       case "draft":
         return { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", icon: File };
       default:
@@ -449,7 +450,7 @@ const InstructorTabs = ({
                   </tr>
                 </thead>
                 <tbody ref={actionMenuRef}>
-                  {allFiles.map((file) => {
+                  {paginatedFiles.map((file) => {
                     const statusStyle = getStatusStyle(file.status);
                     const wcagStyle = getWcagStyle(file.wcagCompliant);
                     const StatusIcon = statusStyle.icon;
@@ -488,7 +489,7 @@ const InstructorTabs = ({
                         <td className="py-3.5">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
                             <StatusIcon className="w-3 h-3" />
-                            {t(`content.status${file.status.charAt(0).toUpperCase() + file.status.slice(1)}`)}
+                            {file.status === "pending_review" ? t("content.statusPendingReview") : t(`content.status${file.status.charAt(0).toUpperCase() + file.status.slice(1)}`)}
                           </span>
                         </td>
                         {/* WCAG Compliance */}
@@ -554,6 +555,31 @@ const InstructorTabs = ({
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalFiles > PAGE_SIZE && (
+              <div className="flex items-center justify-between pt-3 border-t border-[#F3F4F6]">
+                <p className="text-sm text-[#6B7280]">
+                  {t("content.showing")} {contentPage * PAGE_SIZE + 1}-{Math.min((contentPage + 1) * PAGE_SIZE, totalFiles)} {t("content.of")} {totalFiles}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setContentPage((p) => Math.max(0, p - 1))}
+                    disabled={contentPage === 0}
+                    className="px-3 py-1.5 text-sm font-medium border border-[#E5E7EB] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {t("content.previous")}
+                  </button>
+                  <button
+                    onClick={() => setContentPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={contentPage >= totalPages - 1}
+                    className="px-3 py-1.5 text-sm font-medium border border-[#E5E7EB] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {t("content.next")}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -561,9 +587,9 @@ const InstructorTabs = ({
         {activeTab === "reports" && (
           <div className="space-y-4">
             {/* Report Cards Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {/* Attendance Report Card */}
-              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-4 min-h-[60px]">
                   <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center flex-shrink-0">
@@ -667,7 +693,7 @@ const InstructorTabs = ({
               </div>
 
               {/* Gradebook Report Card */}
-              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-4 min-h-[60px]">
                   <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
@@ -771,7 +797,7 @@ const InstructorTabs = ({
               </div>
 
               {/* Assessment Results Report Card */}
-              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-md transition-shadow flex flex-col h-full">
+              <div className="p-5 border border-[#E5E7EB] rounded-xl bg-white hover:shadow-lg transition-shadow flex flex-col h-full min-h-[260px]">
                 {/* Header */}
                 <div className="flex items-start gap-3 mb-4 min-h-[60px]">
                   <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center flex-shrink-0">
@@ -877,35 +903,6 @@ const InstructorTabs = ({
           </div>
         )}
 
-        {/* Assessments Tab */}
-        {activeTab === "assessments" && (
-          <div className="space-y-3">
-            {assessments.map((assessment) => (
-              <div
-                key={assessment.id}
-                className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
-              >
-                <div>
-                  <h4 className="text-sm font-semibold text-[#1F2937]">
-                    {assessment.title}
-                  </h4>
-                  <p className="text-xs text-[#6B7280]">
-                    {assessment.questions} {t("assessments.questions")} •{" "}
-                    {assessment.submissions} {t("assessments.submissions")}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-[#1F2937]">
-                    {assessment.avgScore}%
-                  </p>
-                  <p className="text-xs text-[#6B7280]">
-                    {t("assessments.avgScore")}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

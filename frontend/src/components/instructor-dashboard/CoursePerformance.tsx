@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { Download, ChevronDown, FileText, FileSpreadsheet } from "lucide-react";
+import { Download, ChevronDown, FileText, FileSpreadsheet, Loader2 } from "lucide-react";
+import { instructorApi } from "@/lib/api";
 
 interface ModuleProgress {
   name: string;
@@ -16,24 +17,80 @@ interface PassFailStats {
   passRate: number;
 }
 
+interface CourseOption {
+  value: string;
+  label: string;
+  deliveryType?: string;
+  cohort?: string;
+}
+
 interface CoursePerformanceProps {
   attendanceData: number[];
   modules: ModuleProgress[];
-  courses: { value: string; label: string }[];
+  courses: CourseOption[];
   passFailStats?: PassFailStats | null;
 }
 
 const CoursePerformance = ({
-  attendanceData,
-  modules,
+  attendanceData: globalAttendanceData,
+  modules: globalModules,
   courses,
-  passFailStats,
+  passFailStats: globalPassFailStats,
 }: CoursePerformanceProps) => {
   const t = useTranslations("instructorDashboard");
   const tA = useTranslations("accessibility");
   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [deliveryFilter, setDeliveryFilter] = useState("all");
   const [selectedCourse, setSelectedCourse] = useState(courses[0]?.value || "all");
+  const [courseLoading, setCourseLoading] = useState(false);
+  const [courseData, setCourseData] = useState<{
+    attendanceTrend: number[];
+    moduleProgress: ModuleProgress[];
+    passFailStats: PassFailStats | null;
+  } | null>(null);
   const exportRef = useRef<HTMLDivElement>(null);
+
+  // Fetch per-course data when a specific course is selected
+  useEffect(() => {
+    if (selectedCourse === "all") {
+      setCourseData(null);
+      return;
+    }
+    let cancelled = false;
+    setCourseLoading(true);
+    instructorApi.getCoursePerformance(selectedCourse).then((data) => {
+      if (!cancelled) {
+        setCourseData({
+          attendanceTrend: data.attendanceTrend,
+          moduleProgress: data.moduleProgress,
+          passFailStats: data.passFailStats,
+        });
+      }
+    }).catch(() => {
+      if (!cancelled) setCourseData(null);
+    }).finally(() => {
+      if (!cancelled) setCourseLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [selectedCourse]);
+
+  // Use course-specific data when available, otherwise global
+  const attendanceData = courseData?.attendanceTrend ?? globalAttendanceData;
+  const modules = courseData?.moduleProgress ?? globalModules;
+  const passFailStats = courseData?.passFailStats ?? globalPassFailStats;
+
+  // Filter courses by delivery type
+  const filteredCourses = deliveryFilter === "all"
+    ? courses
+    : courses.filter((c) => c.value === "all" || c.deliveryType === deliveryFilter);
+
+  // Reset course selection when delivery filter changes and current selection is not in filtered list
+  useEffect(() => {
+    if (deliveryFilter !== "all" && selectedCourse !== "all") {
+      const still = filteredCourses.find((c) => c.value === selectedCourse);
+      if (!still) setSelectedCourse("all");
+    }
+  }, [deliveryFilter, filteredCourses, selectedCourse]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -155,13 +212,25 @@ const CoursePerformance = ({
           {t("performance.title")}
         </h2>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {/* Delivery Type Filter */}
+          <select
+            value={deliveryFilter}
+            onChange={(e) => setDeliveryFilter(e.target.value)}
+            className="flex-1 sm:flex-none sm:min-w-[130px] px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+          >
+            <option value="all">{t("performance.allDeliveryTypes")}</option>
+            <option value="zoom">{t("performance.zoom")}</option>
+            <option value="onsite">{t("performance.onsite")}</option>
+            <option value="blended">{t("performance.blended")}</option>
+          </select>
+
           {/* Course Filter Dropdown */}
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
             className="flex-1 sm:flex-none sm:min-w-[160px] px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
           >
-            {courses.map((course) => (
+            {filteredCourses.map((course) => (
               <option key={course.value} value={course.value}>
                 {course.label}
               </option>
@@ -210,7 +279,15 @@ const CoursePerformance = ({
       </div>
 
       {/* Content */}
-      <div className="p-4 sm:p-5">
+      <div className="p-4 sm:p-5 relative">
+        {courseLoading && (
+          <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-b-xl">
+            <div className="flex items-center gap-2 text-sm text-[#3B82F6]">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              {t("performance.loading")}
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Line Chart - Attendance Trend */}
           <div>

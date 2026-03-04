@@ -60,6 +60,8 @@ export interface DashboardCourse {
   title: string;
   titleAr: string | null;
   status: string;
+  deliveryType?: string;
+  cohort?: string | null;
 }
 
 export interface DashboardAssessmentScore {
@@ -145,10 +147,11 @@ export interface DashboardSummaryResponse {
   assessmentScores: DashboardAssessmentScore[];
   questionAnalysis: DashboardQuestionAnalysis[];
   materials: DashboardMaterial[];
-  tabAssessments: DashboardTabAssessment[];
+  tabAssessments?: DashboardTabAssessment[];
   pendingSubmissions: DashboardPendingSubmission[];
   recentFeedback?: DashboardRecentFeedback;
   passFailStats?: DashboardPassFailStats;
+  notifications?: { id: string; title: string; message: string; type: string; read: boolean; date: string }[];
 }
 
 // ─── Course Enrollments API Response ────────────────────────
@@ -332,6 +335,7 @@ export interface InstructorCourse {
   completedSessions: number;
   nextSessionAt: string | null;
   instructorName: string | null;
+  cohort?: string | null;
 }
 
 export interface InstructorCoursesResponse {
@@ -378,6 +382,7 @@ export interface CourseDetailResponse {
   maxEnrollment: number | null;
   startDate: string | null;
   endDate: string | null;
+  cohort: string | null;
   createdAt: string;
   updatedAt: string;
   modules: CourseModule[];

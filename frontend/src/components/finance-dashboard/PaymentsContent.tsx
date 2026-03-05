@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import FinanceSidebar from "./FinanceSidebar";
 import FinanceMobileSidebar from "./FinanceMobileSidebar";
@@ -29,23 +29,33 @@ const PaymentsContent = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
 
+  // Server-side filter state
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [paymentsRes, summaryRes] = await Promise.all([
-        paymentApi.getAll(page, 10),
+        paymentApi.getAll(page, 10, { status: statusFilter, search: searchQuery }),
         financeApi.getSummary(),
       ]);
 
       const mapped = (paymentsRes.data || []).map((p: any) => ({
         id: p.id,
-        invoiceNumber: p.id.slice(0, 13).toUpperCase(),
+        invoiceNumber: p.invoiceNumber || p.id.slice(0, 13).toUpperCase(),
+        invoiceId: p.invoiceId || null,
         date: new Date(p.createdAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" }),
         customer: p.userName || p.userEmail || "-",
         course: isRTL ? (p.courseTitleAr || p.courseTitle || "-") : (p.courseTitle || "-"),
         amount: `${t("kpi.sar")} ${Number(p.amount).toLocaleString()}`,
         gateway: (p.gateway || "").charAt(0).toUpperCase() + (p.gateway || "").slice(1) as any,
         status: p.status as any,
+        errorCode: p.errorCode || null,
+        failureReason: p.failureReason || null,
+        gatewayChargeId: p.gatewayChargeId || null,
+        paymentMethod: p.paymentMethod || null,
       }));
 
       setTransactions(mapped);
@@ -57,11 +67,30 @@ const PaymentsContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, locale, isRTL, t]);
+  }, [page, statusFilter, searchQuery, locale, isRTL, t]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Auto-refresh when pending payments exist
+  useEffect(() => {
+    const hasPending = transactions.some((tx) => tx.status === "pending");
+    if (!hasPending) return;
+    const interval = setInterval(fetchData, 30_000);
+    return () => clearInterval(interval);
+  }, [transactions, fetchData]);
+
+  const handleStatusFilterChange = (val: string) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => setPage(1), 300);
+  };
 
   const totalPayments = summary?.totalPayments ?? 0;
   const failedPayments = summary?.failedPayments ?? 0;
@@ -152,7 +181,7 @@ const PaymentsContent = () => {
               </div>
 
               {/* All Payments Table */}
-              {loading ? (
+              {loading && transactions.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-[#E5E7EB] p-12 flex items-center justify-center">
                   <Loader2 className="w-6 h-6 text-[#B8860B] animate-spin" />
                 </div>
@@ -166,6 +195,11 @@ const PaymentsContent = () => {
                   totalCount={total}
                   onPageChange={setPage}
                   onExport={() => financeApi.exportCsv().catch(() => {})}
+                  onExportPdf={() => financeApi.exportPdf().catch(() => {})}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={handleStatusFilterChange}
+                  searchQuery={searchQuery}
+                  onSearchChange={handleSearchChange}
                 />
               )}
             </div>

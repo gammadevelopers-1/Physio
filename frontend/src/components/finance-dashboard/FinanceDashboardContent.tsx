@@ -117,13 +117,18 @@ const FinanceDashboardContent = () => {
         if (paymentsRes.status === "fulfilled") {
           const mapped = (paymentsRes.value?.data || []).map((p: any) => ({
             id: p.id,
-            invoiceNumber: p.id.slice(0, 13).toUpperCase(),
+            invoiceNumber: p.invoiceNumber || p.id.slice(0, 13).toUpperCase(),
+            invoiceId: p.invoiceId || null,
             date: new Date(p.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
             customer: p.userName || p.userEmail || "-",
             course: p.courseTitle || "-",
             amount: `${t("kpi.sar")} ${Number(p.amount).toLocaleString()}`,
             gateway: (p.gateway || "").charAt(0).toUpperCase() + (p.gateway || "").slice(1) as any,
             status: p.status as any,
+            errorCode: p.errorCode || null,
+            failureReason: p.failureReason || null,
+            gatewayChargeId: p.gatewayChargeId || null,
+            paymentMethod: p.paymentMethod || null,
           }));
           setTransactions(mapped);
 

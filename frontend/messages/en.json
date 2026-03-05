@@ -4849,12 +4849,16 @@
     "paymentsTable": {
       "title": "Recent Payments & Invoices",
       "export": "Export",
+      "exportCsv": "Export CSV",
+      "exportPdf": "Export PDF",
       "searchPlaceholder": "Search invoices...",
+      "noResults": "No transactions found for the selected filters.",
       "filters": {
         "allStatus": "All Status",
         "paid": "Paid",
         "pending": "Pending",
         "failed": "Failed",
+        "refunded": "Refunded",
         "allGateways": "All Gateways"
       },
       "columns": {
@@ -4877,7 +4881,35 @@
         "view": "View",
         "download": "Download",
         "resend": "Resend",
-        "refund": "Refund"
+        "refund": "Refund",
+        "resendSuccess": "Invoice sent successfully",
+        "resendError": "Failed to send invoice",
+        "downloadError": "Failed to download PDF"
+      },
+      "transactionDetail": {
+        "title": "Transaction Detail",
+        "paymentId": "Payment ID",
+        "errorCode": "Error Code",
+        "failureReason": "Failure Reason",
+        "gatewayTxId": "Gateway TX ID",
+        "paymentMethod": "Payment Method",
+        "close": "Close"
+      },
+      "refundModal": {
+        "title": "Request Refund",
+        "reason": "Reason",
+        "note": "Note (optional)",
+        "submit": "Submit Refund",
+        "cancel": "Cancel",
+        "success": "Refund request submitted",
+        "error": "Failed to submit refund",
+        "reasons": {
+          "policy": "Policy Request",
+          "cancelled": "Course Cancelled",
+          "duplicate": "Duplicate Payment",
+          "technical": "Technical Error",
+          "other": "Other"
+        }
       },
       "pagination": {
         "showing": "Showing {from}-{to} of {total}",

@@ -5064,12 +5064,16 @@
     "paymentsTable": {
       "title": "المدفوعات والفواتير الأخيرة",
       "export": "تصدير",
+      "exportCsv": "تصدير CSV",
+      "exportPdf": "تصدير PDF",
       "searchPlaceholder": "بحث في الفواتير...",
+      "noResults": "لا توجد معاملات للفلاتر المحددة.",
       "filters": {
         "allStatus": "جميع الحالات",
         "paid": "مدفوع",
         "pending": "معلق",
         "failed": "فشل",
+        "refunded": "مُسترد",
         "allGateways": "جميع البوابات"
       },
       "columns": {
@@ -5092,7 +5096,35 @@
         "view": "عرض",
         "download": "تحميل",
         "resend": "إعادة إرسال",
-        "refund": "استرداد"
+        "refund": "استرداد",
+        "resendSuccess": "تم إرسال الفاتورة بنجاح",
+        "resendError": "فشل إرسال الفاتورة",
+        "downloadError": "فشل تحميل PDF"
+      },
+      "transactionDetail": {
+        "title": "تفاصيل المعاملة",
+        "paymentId": "معرّف الدفع",
+        "errorCode": "رمز الخطأ",
+        "failureReason": "سبب الفشل",
+        "gatewayTxId": "معرّف معاملة البوابة",
+        "paymentMethod": "طريقة الدفع",
+        "close": "إغلاق"
+      },
+      "refundModal": {
+        "title": "طلب استرداد",
+        "reason": "السبب",
+        "note": "ملاحظة (اختياري)",
+        "submit": "إرسال طلب الاسترداد",
+        "cancel": "إلغاء",
+        "success": "تم تقديم طلب الاسترداد",
+        "error": "فشل تقديم طلب الاسترداد",
+        "reasons": {
+          "policy": "طلب بموجب السياسة",
+          "cancelled": "الدورة ملغاة",
+          "duplicate": "دفع مكرر",
+          "technical": "خطأ تقني",
+          "other": "أخرى"
+        }
       },
       "pagination": {
         "showing": "عرض {from}-{to} من {total}",

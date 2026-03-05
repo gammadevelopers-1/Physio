@@ -2083,8 +2083,14 @@ export const paymentApi = {
   getMyPayments: (page = 1, limit = 10) =>
     api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments/my-payments?page=${page}&limit=${limit}`),
 
-  getAll: (page = 1, limit = 10) =>
-    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments?page=${page}&limit=${limit}`),
+  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.search) sp.set('search', filters.search);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/payments?${sp.toString()}`);
+  },
 };
 
 // ===========================================
@@ -2197,6 +2203,29 @@ export const financeApi = {
     const a = document.createElement('a');
     a.href = url;
     a.download = `finance-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportPdf: async (params?: { startDate?: string; endDate?: string; status?: string }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'pdf' });
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.status) query.set('status', params.status);
+
+    const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-export-${new Date().toISOString().slice(0, 10)}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

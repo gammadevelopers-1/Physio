@@ -5,13 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, and, desc, count, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, count, sql, inArray, or, ilike, gte, lte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   payments,
   courses,
   enrollments,
   users,
+  invoices,
   PAYMENT_STATUS,
   COURSE_STATUS,
   ENROLLMENT_STATUS,
@@ -638,8 +639,39 @@ export class PaymentsService {
     return payment || null;
   }
 
-  async getAllPayments(page: number = 1, limit: number = 10) {
+  async getAllPayments(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    search?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const offset = (page - 1) * limit;
+    const conditions: any[] = [];
+
+    if (status && status !== 'all') {
+      conditions.push(eq(payments.status, status as any));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(users.email, `%${search}%`),
+          ilike(invoices.invoiceNumber, `%${search}%`),
+          sql`CONCAT(${users.firstName}, ' ', ${users.lastName}) ILIKE ${'%' + search + '%'}`,
+        ),
+      );
+    }
+    if (startDate) {
+      conditions.push(gte(payments.createdAt, new Date(startDate)));
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(payments.createdAt, end));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const paymentsList = await db
       .select({
@@ -655,6 +687,11 @@ export class PaymentsService {
         amount: payments.amount,
         currency: payments.currency,
         status: payments.status,
+        errorCode: payments.errorCode,
+        failureReason: payments.failureReason,
+        gatewayChargeId: payments.gatewayChargeId,
+        invoiceId: invoices.id,
+        invoiceNumber: invoices.invoiceNumber,
         paidAt: payments.paidAt,
         failedAt: payments.failedAt,
         createdAt: payments.createdAt,
@@ -662,13 +699,18 @@ export class PaymentsService {
       .from(payments)
       .leftJoin(courses, eq(payments.courseId, courses.id))
       .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(invoices, eq(invoices.paymentId, payments.id))
+      .where(whereClause)
       .orderBy(desc(payments.createdAt))
       .limit(limit)
       .offset(offset);
 
     const [totalResult] = await db
       .select({ count: count() })
-      .from(payments);
+      .from(payments)
+      .leftJoin(users, eq(payments.userId, users.id))
+      .leftJoin(invoices, eq(invoices.paymentId, payments.id))
+      .where(whereClause);
 
     return {
       data: paymentsList,

@@ -123,7 +123,11 @@ export class PaymentsController {
   async getAllPayments(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.paymentsService.getAllPayments(page, limit);
+    return this.paymentsService.getAllPayments(page, limit, status, search, startDate, endDate);
   }
 }

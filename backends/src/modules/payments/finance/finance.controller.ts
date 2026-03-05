@@ -71,6 +71,42 @@ export class FinanceController {
     return this.financeService.getTopCourses(safeLimit, startDate, endDate);
   }
 
+  @Get('revenue-by-course')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRevenueByCourse(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getRevenueByCourse(startDate, endDate);
+  }
+
+  @Get('revenue-by-instructor')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRevenueByInstructor(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getRevenueByInstructor(startDate, endDate);
+  }
+
+  @Get('revenue-by-delivery-type')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRevenueByDeliveryType(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getRevenueByDeliveryType(startDate, endDate);
+  }
+
+  @Get('chargeback-rate')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getChargebackRate(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getChargebackRate(startDate, endDate);
+  }
+
   @Get('export')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async exportPayments(

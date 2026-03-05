@@ -208,6 +208,159 @@ export class FinanceService {
     };
   }
 
+  async getRevenueByCourse(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
+    const result = await db
+      .select({
+        courseId: payments.courseId,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        revenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        refundAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        enrollmentCount: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)::int`,
+      })
+      .from(payments)
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(whereClause)
+      .groupBy(payments.courseId, courses.title, courses.titleAr)
+      .orderBy(sql`SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END) DESC`);
+
+    return result.map((r) => {
+      const revenue = Number(r.revenue);
+      const refundAmount = Number(r.refundAmount);
+      const netRevenue = revenue - refundAmount;
+      return {
+        courseId: r.courseId,
+        title: r.title || 'Unknown Course',
+        titleAr: r.titleAr,
+        revenue,
+        refundAmount,
+        netRevenue,
+        marginPercent: revenue > 0 ? Number(((netRevenue / revenue) * 100).toFixed(2)) : 0,
+        enrollmentCount: Number(r.enrollmentCount),
+      };
+    });
+  }
+
+  async getRevenueByInstructor(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
+    const result = await db
+      .select({
+        instructorId: courses.instructorId,
+        instructorName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        courseCount: sql<number>`COUNT(DISTINCT ${payments.courseId})::int`,
+        revenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        refundAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        enrollmentCount: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)::int`,
+      })
+      .from(payments)
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .leftJoin(users, eq(courses.instructorId, users.id))
+      .where(whereClause)
+      .groupBy(courses.instructorId, users.firstName, users.lastName)
+      .orderBy(sql`SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END) DESC`);
+
+    return result.map((r) => {
+      const revenue = Number(r.revenue);
+      const refundAmount = Number(r.refundAmount);
+      return {
+        instructorId: r.instructorId,
+        instructorName: r.instructorName,
+        courseCount: Number(r.courseCount),
+        revenue,
+        refundAmount,
+        netRevenue: revenue - refundAmount,
+        enrollmentCount: Number(r.enrollmentCount),
+      };
+    });
+  }
+
+  async getRevenueByDeliveryType(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
+    const result = await db
+      .select({
+        deliveryType: courses.deliveryType,
+        revenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        refundAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+        enrollmentCount: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)::int`,
+        courseCount: sql<number>`COUNT(DISTINCT ${payments.courseId})::int`,
+      })
+      .from(payments)
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(whereClause)
+      .groupBy(courses.deliveryType)
+      .orderBy(sql`SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END) DESC`);
+
+    return result.map((r) => {
+      const revenue = Number(r.revenue);
+      const refundAmount = Number(r.refundAmount);
+      return {
+        deliveryType: r.deliveryType || 'unknown',
+        revenue,
+        refundAmount,
+        netRevenue: revenue - refundAmount,
+        enrollmentCount: Number(r.enrollmentCount),
+        courseCount: Number(r.courseCount),
+      };
+    });
+  }
+
+  async getChargebackRate(startDate?: string, endDate?: string) {
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
+
+    const [totals] = await db
+      .select({
+        totalTransactions: sql<number>`COUNT(*)::int`,
+        chargebackCount: sql<number>`COUNT(CASE WHEN ${payments.status} = 'chargeback' THEN 1 END)::int`,
+        chargebackAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'chargeback' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+      })
+      .from(payments)
+      .where(whereClause);
+
+    const chargebackConditions: any[] = [eq(payments.status, 'chargeback' as any)];
+    if (dateConditions.length > 0) chargebackConditions.push(...dateConditions);
+
+    const breakdown = await db
+      .select({
+        courseId: payments.courseId,
+        courseTitle: courses.title,
+        gateway: payments.gateway,
+        chargebackCount: sql<number>`COUNT(*)::int`,
+        chargebackAmount: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+      })
+      .from(payments)
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(and(...chargebackConditions))
+      .groupBy(payments.courseId, courses.title, payments.gateway)
+      .orderBy(sql`COUNT(*) DESC`);
+
+    const totalTransactions = Number(totals?.totalTransactions || 0);
+    const chargebackCount = Number(totals?.chargebackCount || 0);
+
+    return {
+      chargebackCount,
+      chargebackAmount: Number(totals?.chargebackAmount || 0),
+      totalTransactions,
+      chargebackRate: totalTransactions > 0
+        ? ((chargebackCount / totalTransactions) * 100).toFixed(4)
+        : '0.0000',
+      breakdown: breakdown.map((r) => ({
+        courseId: r.courseId,
+        courseTitle: r.courseTitle || 'Unknown',
+        gateway: r.gateway,
+        chargebackCount: Number(r.chargebackCount),
+        chargebackAmount: Number(r.chargebackAmount),
+      })),
+    };
+  }
+
   async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string): Promise<string> {
     const conditions: any[] = [];
     if (startDate) {

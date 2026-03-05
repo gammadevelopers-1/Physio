@@ -2231,6 +2231,74 @@ export const financeApi = {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   },
+
+  getRevenueByCourse: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      courseId: string;
+      title: string;
+      titleAr: string | null;
+      revenue: number;
+      refundAmount: number;
+      netRevenue: number;
+      marginPercent: number;
+      enrollmentCount: number;
+    }>>(`/finance/revenue-by-course${qs ? `?${qs}` : ''}`);
+  },
+
+  getRevenueByInstructor: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      instructorId: string | null;
+      instructorName: string;
+      courseCount: number;
+      revenue: number;
+      refundAmount: number;
+      netRevenue: number;
+      enrollmentCount: number;
+    }>>(`/finance/revenue-by-instructor${qs ? `?${qs}` : ''}`);
+  },
+
+  getRevenueByDeliveryType: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{
+      deliveryType: string;
+      revenue: number;
+      refundAmount: number;
+      netRevenue: number;
+      enrollmentCount: number;
+      courseCount: number;
+    }>>(`/finance/revenue-by-delivery-type${qs ? `?${qs}` : ''}`);
+  },
+
+  getChargebackRate: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      chargebackCount: number;
+      chargebackAmount: number;
+      totalTransactions: number;
+      chargebackRate: string;
+      breakdown: Array<{
+        courseId: string;
+        courseTitle: string;
+        gateway: string;
+        chargebackCount: number;
+        chargebackAmount: number;
+      }>;
+    }>(`/finance/chargeback-rate${qs ? `?${qs}` : ''}`);
+  },
 };
 
 // ===========================================

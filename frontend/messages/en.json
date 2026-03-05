@@ -4958,7 +4958,9 @@
         "issued": "Issued",
         "paid": "Paid",
         "overdue": "Overdue",
-        "draft": "Draft"
+        "draft": "Draft",
+        "refunded": "Refunded",
+        "cancelled": "Cancelled"
       },
       "stats": {
         "totalInvoices": "Total Invoices",

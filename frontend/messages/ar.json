@@ -5173,7 +5173,9 @@
         "issued": "صادرة",
         "paid": "مدفوعة",
         "overdue": "متأخرة",
-        "draft": "مسودة"
+        "draft": "مسودة",
+        "refunded": "مستردة",
+        "cancelled": "ملغاة"
       },
       "stats": {
         "totalInvoices": "إجمالي الفواتير",

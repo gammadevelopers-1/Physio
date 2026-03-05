@@ -263,6 +263,7 @@ export class PaymentsService {
           userId: user.id,
         },
         locale: (dto.locale as 'ar' | 'en') || 'en',
+        paymentMethod: dto.paymentMethod,
       });
     } catch (err) {
       if (err instanceof PaymentGatewayError) {

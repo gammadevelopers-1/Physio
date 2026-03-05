@@ -12,6 +12,7 @@ interface WebhookJobData {
   gateway: string;
   chargeId: string;
   status: 'paid' | 'failed' | 'refunded';
+  errorCode?: string;
   rawBody: any;
 }
 
@@ -114,15 +115,8 @@ export class WebhookProcessor extends WorkerHost {
           metadata: { gateway, status, paymentId: payment.id },
         });
       } else if (status === 'failed') {
-        // Extract machine-readable error code from gateway response
-        let errorCode: string | undefined;
-        if (gateway === 'tap') {
-          errorCode = rawBody?.response?.code;
-        } else if (gateway === 'moyasar') {
-          errorCode = rawBody?.source?.message;
-        } else if (gateway === 'tamara' || gateway === 'tabby') {
-          errorCode = rawBody?.error_code || rawBody?.status;
-        }
+        // errorCode is normalized by the gateway in processWebhook()
+        const { errorCode } = job.data;
 
         await this.paymentsService.processPaymentFailure(
           payment.id,

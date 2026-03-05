@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { eq, and, desc, count, sql, gte, lte } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   invoices,
@@ -399,8 +399,13 @@ export class InvoiceService {
     userId: string,
     page: number = 1,
     limit: number = 10,
+    status?: string,
   ) {
     const offset = (page - 1) * limit;
+
+    const conditions: any[] = [eq(invoices.userId, userId)];
+    if (status) conditions.push(eq(invoices.status, status as any));
+    const whereClause = and(...conditions);
 
     const invoicesList = await db
       .select({
@@ -421,7 +426,7 @@ export class InvoiceService {
       })
       .from(invoices)
       .leftJoin(courses, eq(invoices.courseId, courses.id))
-      .where(eq(invoices.userId, userId))
+      .where(whereClause)
       .orderBy(desc(invoices.issuedAt))
       .limit(limit)
       .offset(offset);
@@ -429,7 +434,7 @@ export class InvoiceService {
     const [totalResult] = await db
       .select({ count: count() })
       .from(invoices)
-      .where(eq(invoices.userId, userId));
+      .where(whereClause);
 
     return {
       data: invoicesList,
@@ -442,8 +447,20 @@ export class InvoiceService {
     };
   }
 
-  async getAllInvoices(page: number = 1, limit: number = 10) {
+  async getAllInvoices(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const offset = (page - 1) * limit;
+
+    const conditions: any[] = [];
+    if (status) conditions.push(eq(invoices.status, status as any));
+    if (startDate) conditions.push(gte(invoices.issuedAt, new Date(startDate)));
+    if (endDate) conditions.push(lte(invoices.issuedAt, new Date(endDate)));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const invoicesList = await db
       .select({
@@ -464,13 +481,15 @@ export class InvoiceService {
       .from(invoices)
       .leftJoin(courses, eq(invoices.courseId, courses.id))
       .leftJoin(users, eq(invoices.userId, users.id))
+      .where(whereClause)
       .orderBy(desc(invoices.issuedAt))
       .limit(limit)
       .offset(offset);
 
     const [totalResult] = await db
       .select({ count: count() })
-      .from(invoices);
+      .from(invoices)
+      .where(whereClause);
 
     return {
       data: invoicesList,

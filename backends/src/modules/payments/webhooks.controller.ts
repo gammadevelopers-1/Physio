@@ -123,7 +123,15 @@ export class WebhooksController {
     // 3. Extract charge info
     const webhookResult = gateway.processWebhook(body);
 
-    // 4. Deduplication check — skip if already processed
+    // 4. Skip non-terminal statuses (e.g. Tap INITIATED / IN_PROGRESS)
+    if (webhookResult.status === 'pending') {
+      this.logger.log(
+        `Non-terminal webhook ignored: ${gatewayName}/${webhookResult.chargeId} (status=pending)`,
+      );
+      return { received: true };
+    }
+
+    // 6. Deduplication check — skip if already processed
     if (this.isDuplicate(gatewayName, webhookResult.chargeId)) {
       this.logger.log(
         `Duplicate webhook skipped: ${gatewayName}/${webhookResult.chargeId}`,
@@ -131,7 +139,7 @@ export class WebhooksController {
       return { received: true, duplicate: true };
     }
 
-    // 5. Timestamp validation — reject stale webhooks (replay protection)
+    // 7. Timestamp validation — reject stale webhooks (replay protection)
     if (this.isStaleWebhook(gatewayName, body)) {
       this.logger.warn(
         `Stale webhook rejected: ${gatewayName}/${webhookResult.chargeId}`,
@@ -139,7 +147,7 @@ export class WebhooksController {
       return { received: true, rejected: true, reason: 'stale' };
     }
 
-    // 6. Audit log webhook received
+    // 8. Audit log webhook received
     await this.auditLogService.log({
       entityType: 'webhook',
       entityId: webhookResult.chargeId,
@@ -152,12 +160,13 @@ export class WebhooksController {
       },
     });
 
-    // 7. Process: use queue if available, otherwise process synchronously
+    // 9. Process: use queue if available, otherwise process synchronously
     if (this.webhookQueue) {
       await this.webhookQueue.add(PAYMENT_JOB_NAMES.PROCESS_WEBHOOK, {
         gateway: gatewayName,
         chargeId: webhookResult.chargeId,
         status: webhookResult.status,
+        errorCode: webhookResult.errorCode,
         rawBody: body,
       });
     } else {
@@ -167,6 +176,7 @@ export class WebhooksController {
         webhookResult.chargeId,
         webhookResult.status,
         body,
+        webhookResult.errorCode,
       );
     }
 
@@ -178,6 +188,7 @@ export class WebhooksController {
     chargeId: string,
     status: 'paid' | 'failed' | 'refunded',
     rawBody: any,
+    errorCode?: string,
   ) {
     try {
       const payment =
@@ -223,7 +234,7 @@ export class WebhooksController {
           this.logger.error(`Payment email failed: ${err.message}`);
         }
       } else if (status === 'failed' && payment.status !== 'failed') {
-        await this.paymentsService.processPaymentFailure(payment.id);
+        await this.paymentsService.processPaymentFailure(payment.id, 'Payment failed via webhook', errorCode);
         try {
           await this.emailService.sendPaymentFailed(
             payment.userId,

@@ -150,7 +150,9 @@
       "Bash(npm info @react-pdf/textkit)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:corpus.hubwiz.com)"
+      "WebFetch(domain:corpus.hubwiz.com)",
+      "WebFetch(domain:)",
+      "Bash(pdftotext /home/haseeb-raza/Desktop/physioguidance/Finance_Dashboard_Team_Assignment.pdf.pdf -)"
     ]
   }
 }

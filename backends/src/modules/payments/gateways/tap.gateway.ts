@@ -30,6 +30,15 @@ export class TapGateway extends BaseGateway implements PaymentGateway {
     this.apiUrl = this.configService.get<string>('payments.tap.apiUrl', 'https://api.tap.company/v2');
   }
 
+  private getTapSourceId(paymentMethod?: string): string {
+    switch (paymentMethod) {
+      case 'mada':      return 'src_sa.mada';
+      case 'apple_pay': return 'src_apple_pay';
+      case 'card':
+      default:          return 'src_card';
+    }
+  }
+
   async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
     const body = {
       amount: params.amount,
@@ -48,9 +57,10 @@ export class TapGateway extends BaseGateway implements PaymentGateway {
           ? { country_code: '966', number: params.customerPhone }
           : undefined,
       },
-      source: { id: 'src_card' },
+      source: { id: this.getTapSourceId(params.paymentMethod) },
       redirect: { url: params.redirectUrl },
       post: { url: params.webhookUrl },
+      language: params.locale === 'ar' ? 'ar' : 'en',
     };
 
     const response = await this.fetchWithRetry(`${this.apiUrl}/charges`, {
@@ -104,15 +114,40 @@ export class TapGateway extends BaseGateway implements PaymentGateway {
 
   processWebhook(body: any): WebhookResult {
     const chargeId = body.id || body.object?.id;
-    let status: 'paid' | 'failed' | 'refunded' = 'failed';
+    const tapStatus = (body.status || '').toUpperCase();
+    let status: WebhookResult['status'];
 
-    if (body.status === 'CAPTURED' || body.status === 'captured') {
-      status = 'paid';
-    } else if (body.status === 'REFUNDED' || body.status === 'refunded') {
-      status = 'refunded';
+    switch (tapStatus) {
+      case 'CAPTURED':
+        status = 'paid';
+        break;
+      case 'REFUNDED':
+        status = 'refunded';
+        break;
+      case 'FAILED':
+      case 'DECLINED':
+      case 'VOID':
+      case 'CANCELLED':
+        status = 'failed';
+        break;
+      case 'INITIATED':
+      case 'IN_PROGRESS':
+      case 'SAVED':
+      default:
+        // Non-terminal status — controller will skip processing
+        status = 'pending';
+        break;
     }
 
-    return { chargeId, status, rawData: body };
+    let errorCode: string | undefined;
+    if (status === 'failed') {
+      const rawCode = body?.response?.code || body?.acquirer?.response?.code;
+      if (rawCode) {
+        errorCode = this.normalizeErrorCode(String(rawCode));
+      }
+    }
+
+    return { chargeId, status, errorCode, rawData: body };
   }
 
   async refund(params: RefundParams): Promise<RefundResult> {
@@ -159,7 +194,20 @@ export class TapGateway extends BaseGateway implements PaymentGateway {
       },
     });
 
-    return response.json();
+    const data = await response.json();
+
+    if (!response.ok) {
+      this.logger.error(`Tap getCharge failed for ${chargeId}: ${JSON.stringify(data)}`);
+      const code = this.normalizeErrorCode(data.errors?.[0]?.code || data.response?.code);
+      throw new PaymentGatewayError(
+        'tap',
+        data.errors?.[0]?.description || `Failed to fetch charge ${chargeId}`,
+        code,
+        data,
+      );
+    }
+
+    return data;
   }
 
   async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
@@ -205,7 +253,9 @@ export class TapGateway extends BaseGateway implements PaymentGateway {
 
   getSupportedPaymentMethods(): SupportedPaymentMethod[] {
     return [
-      { type: 'card', label: 'Card via Tap', currencies: ['SAR', 'USD', 'AED', 'KWD', 'BHD', 'QAR', 'OMR'] },
+      { type: 'card',   label: 'Card via Tap', currencies: ['SAR', 'USD', 'AED', 'KWD', 'BHD', 'QAR', 'OMR'] },
+      { type: 'card',   label: 'Mada',         currencies: ['SAR'] },
+      { type: 'wallet', label: 'Apple Pay',    currencies: ['SAR', 'USD', 'AED'] },
     ];
   }
 }

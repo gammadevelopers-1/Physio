@@ -21,6 +21,7 @@ export interface CreateChargeParams {
     userId: string;
   };
   locale?: 'ar' | 'en';
+  paymentMethod?: string;
 }
 
 export interface ChargeResult {
@@ -44,7 +45,8 @@ export interface RefundResult {
 
 export interface WebhookResult {
   chargeId: string;
-  status: 'paid' | 'failed' | 'refunded';
+  status: 'paid' | 'failed' | 'refunded' | 'pending';
+  errorCode?: string;
   rawData?: any;
 }
 

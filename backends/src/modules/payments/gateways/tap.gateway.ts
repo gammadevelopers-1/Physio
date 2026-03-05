@@ -8,17 +8,23 @@ import {
   RefundParams,
   RefundResult,
   WebhookResult,
+  GatewayHealthResult,
+  NormalizedPaymentStatus,
+  SupportedPaymentMethod,
 } from './payment-gateway.interface';
+import { BaseGateway } from './base.gateway';
+import { PaymentGatewayError } from './payment-gateway.error';
 
 @Injectable()
-export class TapGateway implements PaymentGateway {
+export class TapGateway extends BaseGateway implements PaymentGateway {
   readonly name = 'tap' as const;
-  private readonly logger = new Logger(TapGateway.name);
+  protected readonly logger = new Logger(TapGateway.name);
   private readonly secretKey: string;
   private readonly webhookSecret: string;
   private readonly apiUrl: string;
 
   constructor(private readonly configService: ConfigService) {
+    super();
     this.secretKey = this.configService.get<string>('payments.tap.secretKey', '');
     this.webhookSecret = this.configService.get<string>('payments.tap.webhookSecret', '');
     this.apiUrl = this.configService.get<string>('payments.tap.apiUrl', 'https://api.tap.company/v2');
@@ -47,7 +53,7 @@ export class TapGateway implements PaymentGateway {
       post: { url: params.webhookUrl },
     };
 
-    const response = await fetch(`${this.apiUrl}/charges`, {
+    const response = await this.fetchWithRetry(`${this.apiUrl}/charges`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.secretKey}`,
@@ -60,7 +66,13 @@ export class TapGateway implements PaymentGateway {
 
     if (!response.ok) {
       this.logger.error(`Tap createCharge failed: ${JSON.stringify(data)}`);
-      throw new Error(`Tap payment creation failed: ${data.errors?.[0]?.description || 'Unknown error'}`);
+      const code = this.normalizeErrorCode(data.errors?.[0]?.code || data.response?.code);
+      throw new PaymentGatewayError(
+        'tap',
+        data.errors?.[0]?.description || 'Payment creation failed',
+        code,
+        data,
+      );
     }
 
     return {
@@ -111,7 +123,7 @@ export class TapGateway implements PaymentGateway {
       reason: params.reason || 'Refund requested',
     };
 
-    const response = await fetch(`${this.apiUrl}/refunds`, {
+    const response = await this.fetchWithRetry(`${this.apiUrl}/refunds`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.secretKey}`,
@@ -124,7 +136,13 @@ export class TapGateway implements PaymentGateway {
 
     if (!response.ok) {
       this.logger.error(`Tap refund failed: ${JSON.stringify(data)}`);
-      throw new Error(`Tap refund failed: ${data.errors?.[0]?.description || 'Unknown error'}`);
+      const code = this.normalizeErrorCode(data.errors?.[0]?.code);
+      throw new PaymentGatewayError(
+        'tap',
+        data.errors?.[0]?.description || 'Refund failed',
+        code,
+        data,
+      );
     }
 
     return {
@@ -135,12 +153,59 @@ export class TapGateway implements PaymentGateway {
   }
 
   async getCharge(chargeId: string): Promise<any> {
-    const response = await fetch(`${this.apiUrl}/charges/${chargeId}`, {
+    const response = await this.fetchWithTimeout(`${this.apiUrl}/charges/${chargeId}`, {
       headers: {
         Authorization: `Bearer ${this.secretKey}`,
       },
     });
 
     return response.json();
+  }
+
+  async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
+    const data = await this.getCharge(chargeId);
+    switch ((data.status || '').toUpperCase()) {
+      case 'CAPTURED': return 'paid';
+      case 'INITIATED': case 'IN_PROGRESS': return 'processing';
+      case 'FAILED': case 'DECLINED': return 'failed';
+      case 'REFUNDED': return 'refunded';
+      case 'VOID': case 'CANCELLED': return 'cancelled';
+      default: return 'unknown';
+    }
+  }
+
+  async healthCheck(): Promise<GatewayHealthResult> {
+    const start = Date.now();
+    try {
+      const res = await this.fetchWithTimeout(
+        `${this.apiUrl}/charges?count=1`,
+        { headers: { Authorization: `Bearer ${this.secretKey}` } },
+        5000,
+      );
+      const latencyMs = Date.now() - start;
+      // 401 = API reachable but key may be invalid in test env
+      const ok = res.ok || res.status === 401;
+      return {
+        gateway: 'tap',
+        status: ok ? 'healthy' : 'degraded',
+        latencyMs,
+        ...(ok ? {} : { error: `HTTP ${res.status}` }),
+        checkedAt: new Date(),
+      };
+    } catch (err: any) {
+      return {
+        gateway: 'tap',
+        status: 'down',
+        latencyMs: Date.now() - start,
+        error: err.message,
+        checkedAt: new Date(),
+      };
+    }
+  }
+
+  getSupportedPaymentMethods(): SupportedPaymentMethod[] {
+    return [
+      { type: 'card', label: 'Card via Tap', currencies: ['SAR', 'USD', 'AED', 'KWD', 'BHD', 'QAR', 'OMR'] },
+    ];
   }
 }

@@ -24,6 +24,7 @@ import { InvoiceService } from './services/invoice.service';
 import { EmailService } from '../email/email.service';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { classifyCourse, getNelcMaxEnrollment } from '../courses/nelc-config';
+import { PaymentGatewayError } from './gateways/payment-gateway.error';
 
 @Injectable()
 export class PaymentsService {
@@ -244,23 +245,35 @@ export class PaymentsService {
       .where(eq(users.id, user.id))
       .limit(1);
 
-    const chargeResult = await gateway.createCharge({
-      amount: totalAmount,
-      currency: 'SAR',
-      description: `Enrollment: ${course.title}`,
-      customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
-      customerEmail: userData?.email || user.email,
-      customerPhone: userData?.phone || undefined,
-      redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
-      webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,
-      metadata: {
-        paymentId: result.payment.id,
-        enrollmentId: result.enrollmentId,
-        courseId: dto.courseId,
-        userId: user.id,
-      },
-      locale: (dto.locale as 'ar' | 'en') || 'en',
-    });
+    let chargeResult: Awaited<ReturnType<typeof gateway.createCharge>>;
+    try {
+      chargeResult = await gateway.createCharge({
+        amount: totalAmount,
+        currency: 'SAR',
+        description: `Enrollment: ${course.title}`,
+        customerName: `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim(),
+        customerEmail: userData?.email || user.email,
+        customerPhone: userData?.phone || undefined,
+        redirectUrl: `${callbackUrl}?gateway=${dto.gateway}&payment_id=${result.payment.id}`,
+        webhookUrl: `${webhookBaseUrl}/${dto.gateway}`,
+        metadata: {
+          paymentId: result.payment.id,
+          enrollmentId: result.enrollmentId,
+          courseId: dto.courseId,
+          userId: user.id,
+        },
+        locale: (dto.locale as 'ar' | 'en') || 'en',
+      });
+    } catch (err) {
+      if (err instanceof PaymentGatewayError) {
+        this.logger.error(
+          `Gateway error [${err.gateway}]: ${err.originalMessage} (${err.normalizedCode})`,
+        );
+        await this.processPaymentFailure(result.payment.id, err.originalMessage, err.normalizedCode);
+        throw new BadRequestException(`Payment failed: ${err.originalMessage}`);
+      }
+      throw err;
+    }
 
     // 9. Store gateway charge ID
     await db
@@ -436,7 +449,7 @@ export class PaymentsService {
     });
   }
 
-  async processPaymentFailure(paymentId: string, reason?: string) {
+  async processPaymentFailure(paymentId: string, reason?: string, errorCode?: string) {
     const [payment] = await db
       .select()
       .from(payments)
@@ -458,6 +471,7 @@ export class PaymentsService {
           status: PAYMENT_STATUS.FAILED,
           failedAt: new Date(),
           failureReason: reason || 'Payment failed',
+          ...(errorCode ? { errorCode } : {}),
           updatedAt: new Date(),
         })
         .where(eq(payments.id, paymentId));

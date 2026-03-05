@@ -7,17 +7,23 @@ import {
   RefundParams,
   RefundResult,
   WebhookResult,
+  GatewayHealthResult,
+  NormalizedPaymentStatus,
+  SupportedPaymentMethod,
 } from './payment-gateway.interface';
+import { BaseGateway } from './base.gateway';
+import { PaymentGatewayError } from './payment-gateway.error';
 
 @Injectable()
-export class MoyasarGateway implements PaymentGateway {
+export class MoyasarGateway extends BaseGateway implements PaymentGateway {
   readonly name = 'moyasar' as const;
-  private readonly logger = new Logger(MoyasarGateway.name);
+  protected readonly logger = new Logger(MoyasarGateway.name);
   private readonly secretKey: string;
   private readonly webhookSecret: string;
   private readonly apiUrl: string;
 
   constructor(private readonly configService: ConfigService) {
+    super();
     this.secretKey = this.configService.get<string>('payments.moyasar.secretKey', '');
     this.webhookSecret = this.configService.get<string>('payments.moyasar.webhookSecret', '');
     this.apiUrl = this.configService.get<string>('payments.moyasar.apiUrl', 'https://api.moyasar.com/v1');
@@ -31,20 +37,7 @@ export class MoyasarGateway implements PaymentGateway {
     // Moyasar uses amount in halalah (smallest currency unit)
     const amountInHalalah = Math.round(params.amount * 100);
 
-    const body = {
-      amount: amountInHalalah,
-      currency: params.currency,
-      description: params.description,
-      callback_url: params.redirectUrl,
-      metadata: params.metadata,
-      source: {
-        type: 'creditcard',
-        name: params.customerName,
-        // Card details are collected on Moyasar's hosted page
-      },
-    };
-
-    const response = await fetch(`${this.apiUrl}/invoices`, {
+    const response = await this.fetchWithRetry(`${this.apiUrl}/invoices`, {
       method: 'POST',
       headers: {
         Authorization: this.getAuthHeader(),
@@ -63,7 +56,13 @@ export class MoyasarGateway implements PaymentGateway {
 
     if (!response.ok) {
       this.logger.error(`Moyasar createCharge failed: ${JSON.stringify(data)}`);
-      throw new Error(`Moyasar payment creation failed: ${data.message || 'Unknown error'}`);
+      const code = this.normalizeErrorCode(data.type || data.message);
+      throw new PaymentGatewayError(
+        'moyasar',
+        data.message || 'Payment creation failed',
+        code,
+        data,
+      );
     }
 
     return {
@@ -104,7 +103,7 @@ export class MoyasarGateway implements PaymentGateway {
   async refund(params: RefundParams): Promise<RefundResult> {
     const amountInHalalah = Math.round(params.amount * 100);
 
-    const response = await fetch(
+    const response = await this.fetchWithRetry(
       `${this.apiUrl}/payments/${params.gatewayChargeId}/refund`,
       {
         method: 'POST',
@@ -120,7 +119,13 @@ export class MoyasarGateway implements PaymentGateway {
 
     if (!response.ok) {
       this.logger.error(`Moyasar refund failed: ${JSON.stringify(data)}`);
-      throw new Error(`Moyasar refund failed: ${data.message || 'Unknown error'}`);
+      const code = this.normalizeErrorCode(data.type || data.message);
+      throw new PaymentGatewayError(
+        'moyasar',
+        data.message || 'Refund failed',
+        code,
+        data,
+      );
     }
 
     return {
@@ -131,12 +136,58 @@ export class MoyasarGateway implements PaymentGateway {
   }
 
   async getCharge(chargeId: string): Promise<any> {
-    const response = await fetch(`${this.apiUrl}/payments/${chargeId}`, {
+    const response = await this.fetchWithTimeout(`${this.apiUrl}/payments/${chargeId}`, {
       headers: {
         Authorization: this.getAuthHeader(),
       },
     });
 
     return response.json();
+  }
+
+  async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
+    const data = await this.getCharge(chargeId);
+    switch (data.status) {
+      case 'paid': case 'captured': return 'paid';
+      case 'pending': case 'initiated': return 'pending';
+      case 'failed': return 'failed';
+      case 'refunded': return 'refunded';
+      default: return 'unknown';
+    }
+  }
+
+  async healthCheck(): Promise<GatewayHealthResult> {
+    const start = Date.now();
+    try {
+      const res = await this.fetchWithTimeout(
+        `${this.apiUrl}/payments?per_page=1`,
+        { headers: { Authorization: this.getAuthHeader() } },
+        5000,
+      );
+      const latencyMs = Date.now() - start;
+      // 401 = API reachable but key may be invalid in test env
+      const ok = res.ok || res.status === 401;
+      return {
+        gateway: 'moyasar',
+        status: ok ? 'healthy' : 'degraded',
+        latencyMs,
+        ...(ok ? {} : { error: `HTTP ${res.status}` }),
+        checkedAt: new Date(),
+      };
+    } catch (err: any) {
+      return {
+        gateway: 'moyasar',
+        status: 'down',
+        latencyMs: Date.now() - start,
+        error: err.message,
+        checkedAt: new Date(),
+      };
+    }
+  }
+
+  getSupportedPaymentMethods(): SupportedPaymentMethod[] {
+    return [
+      { type: 'card', label: 'Card via Moyasar', currencies: ['SAR'] },
+    ];
   }
 }

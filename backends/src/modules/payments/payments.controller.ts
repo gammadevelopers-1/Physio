@@ -9,11 +9,13 @@ import {
   Res,
   DefaultValuePipe,
   ParseIntPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { GatewayFactory } from './gateways/gateway.factory';
+import { MockGateway } from './gateways/mock.gateway';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -71,12 +73,18 @@ export class PaymentsController {
   @Get('gateways/health')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getGatewayHealth() {
-    const available = this.gatewayFactory.getAvailableGateways();
-    const allGateways = ['tap', 'moyasar', 'tamara', 'tabby'];
-    return allGateways.map((name) => ({
-      gateway: name,
-      status: available.includes(name) ? 'available' : 'unavailable',
-    }));
+    return this.gatewayFactory.healthCheckAll();
+  }
+
+  @Post('dev/mock-state')
+  @Public()
+  async setMockState(@Body() body: { outcome: 'success' | 'failure' | 'pending' }) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('Not available in production');
+    }
+    const mock = this.gatewayFactory.getGateway('mock') as MockGateway;
+    mock.setOutcome(body.outcome);
+    return { outcome: body.outcome };
   }
 
   @Get('my-payments')

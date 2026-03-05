@@ -9,7 +9,6 @@ import { db } from '../../../database';
 import {
   discountCodes,
   discountUsage,
-  courses,
 } from '../../../database/schema';
 import { AuditLogService } from '../../audit-logs/audit-logs.service';
 import { CreateDiscountDto } from '../dto/create-discount.dto';
@@ -64,8 +63,8 @@ export class DiscountService {
       return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code has reached its maximum usage limit' };
     }
 
-    // Check course restriction
-    if (discount.courseId && discount.courseId !== courseId) {
+    // Check course restriction (empty array = global discount)
+    if (discount.applicableCourses.length > 0 && !discount.applicableCourses.includes(courseId)) {
       return { valid: false, discountAmount: 0, discountId: null, error: 'Discount code is not valid for this course' };
     }
 
@@ -181,7 +180,7 @@ export class DiscountService {
         minOrderAmount: dto.minOrderAmount
           ? dto.minOrderAmount.toFixed(2)
           : null,
-        courseId: dto.courseId || null,
+        applicableCourses: dto.courseIds || [],
         validFrom: dto.validFrom ? new Date(dto.validFrom) : null,
         validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
         createdBy: userId,
@@ -217,7 +216,7 @@ export class DiscountService {
     if (dto.maxUses !== undefined) updateData.maxUses = dto.maxUses;
     if (dto.minOrderAmount !== undefined)
       updateData.minOrderAmount = dto.minOrderAmount?.toFixed(2) || null;
-    if (dto.courseId !== undefined) updateData.courseId = dto.courseId || null;
+    if (dto.courseIds !== undefined) updateData.applicableCourses = dto.courseIds;
     if (dto.validFrom !== undefined)
       updateData.validFrom = dto.validFrom ? new Date(dto.validFrom) : null;
     if (dto.validUntil !== undefined)
@@ -280,15 +279,13 @@ export class DiscountService {
         maxUses: discountCodes.maxUses,
         currentUses: discountCodes.currentUses,
         minOrderAmount: discountCodes.minOrderAmount,
-        courseId: discountCodes.courseId,
-        courseTitle: courses.title,
+        applicableCourses: discountCodes.applicableCourses,
         validFrom: discountCodes.validFrom,
         validUntil: discountCodes.validUntil,
         isActive: discountCodes.isActive,
         createdAt: discountCodes.createdAt,
       })
       .from(discountCodes)
-      .leftJoin(courses, eq(discountCodes.courseId, courses.id))
       .orderBy(desc(discountCodes.createdAt))
       .limit(limit)
       .offset(offset);

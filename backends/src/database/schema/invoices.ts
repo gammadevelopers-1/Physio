@@ -53,7 +53,7 @@ export const invoices = pgTable(
     index('invoices_payment_id_idx').on(table.paymentId),
     check(
       'invoices_status_check',
-      sql`${table.status} IN ('issued', 'paid', 'overdue', 'cancelled', 'refunded')`,
+      sql`${table.status} IN ('draft', 'issued', 'paid', 'overdue', 'cancelled', 'refunded')`,
     ),
   ],
 );
@@ -77,6 +77,7 @@ export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
 
 export const INVOICE_STATUS = {
+  DRAFT: 'draft',
   ISSUED: 'issued',
   PAID: 'paid',
   OVERDUE: 'overdue',

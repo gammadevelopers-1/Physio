@@ -92,6 +92,16 @@ export class RefundService {
     const deductionAmount = originalAmount * deductionRate;
     const refundAmount = originalAmount - deductionAmount;
 
+    // Build human-readable deduction reason for NELC audit trail
+    const gatewayLabels: Record<string, string> = {
+      tamara: 'Tamara BNPL',
+      tabby: 'Tabby BNPL',
+    };
+    const deductionReason =
+      deductionAmount > 0
+        ? `${gatewayLabels[payment.gateway] || payment.gateway} ${Math.round(deductionRate * 100)}% processing fee`
+        : null;
+
     // 4. Find associated invoice
     const [invoice] = await db
       .select()
@@ -110,6 +120,7 @@ export class RefundService {
         reasonNote: dto.reasonNote,
         originalAmount: originalAmount.toFixed(2),
         deductionAmount: deductionAmount.toFixed(2),
+        deductionReason,
         refundAmount: refundAmount.toFixed(2),
         status: REFUND_STATUS.PENDING,
       })

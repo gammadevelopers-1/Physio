@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsUUID,
+  IsArray,
   IsDateString,
   IsBoolean,
   IsInt,
@@ -35,8 +36,9 @@ export class UpdateDiscountDto {
   minOrderAmount?: number;
 
   @IsOptional()
-  @IsUUID()
-  courseId?: string;
+  @IsArray()
+  @IsUUID('4', { each: true })
+  courseIds?: string[];
 
   @IsOptional()
   @IsDateString()

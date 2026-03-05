@@ -1,3 +1,10 @@
+import {
+  GatewayHealthResult,
+  NormalizedPaymentStatus,
+  SupportedPaymentMethod,
+  InstallmentOption,
+} from './gateway-types';
+
 export interface CreateChargeParams {
   amount: number;
   currency: string;
@@ -53,4 +60,27 @@ export interface PaymentGateway {
   refund(params: RefundParams): Promise<RefundResult>;
 
   getCharge(chargeId: string): Promise<any>;
+
+  getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus>;
+
+  healthCheck(): Promise<GatewayHealthResult>;
+
+  getSupportedPaymentMethods(): SupportedPaymentMethod[];
 }
+
+export interface BnplPaymentGateway extends PaymentGateway {
+  readonly isBnpl: true;
+  readonly deductionRate: number; // e.g. 0.10 = 10%
+  getInstallmentOptions(amount: number, currency: string): InstallmentOption[];
+}
+
+export function isBnplGateway(gateway: PaymentGateway): gateway is BnplPaymentGateway {
+  return (gateway as BnplPaymentGateway).isBnpl === true;
+}
+
+export type {
+  GatewayHealthResult,
+  NormalizedPaymentStatus,
+  SupportedPaymentMethod,
+  InstallmentOption,
+} from './gateway-types';

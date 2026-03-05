@@ -38,6 +38,7 @@ export const refunds = pgTable(
     deductionAmount: numeric('deduction_amount', { precision: 10, scale: 2 })
       .notNull()
       .default('0'),
+    deductionReason: text('deduction_reason'),
     refundAmount: numeric('refund_amount', {
       precision: 10,
       scale: 2,
@@ -57,7 +58,7 @@ export const refunds = pgTable(
     index('refunds_requested_by_idx').on(table.requestedBy),
     check(
       'refunds_reason_check',
-      sql`${table.reason} IN ('course_issue', 'personal', 'technical', 'duplicate', 'other')`,
+      sql`${table.reason} IN ('policy', 'cancelled', 'technical', 'duplicate', 'other')`,
     ),
     check(
       'refunds_status_check',
@@ -102,8 +103,8 @@ export const REFUND_STATUS = {
 export type RefundStatus = (typeof REFUND_STATUS)[keyof typeof REFUND_STATUS];
 
 export const REFUND_REASON = {
-  COURSE_ISSUE: 'course_issue',
-  PERSONAL: 'personal',
+  POLICY: 'policy',
+  CANCELLED: 'cancelled',
   TECHNICAL: 'technical',
   DUPLICATE: 'duplicate',
   OTHER: 'other',

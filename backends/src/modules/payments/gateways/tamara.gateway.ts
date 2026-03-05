@@ -1,26 +1,42 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  PaymentGateway,
+  BnplPaymentGateway,
   CreateChargeParams,
   ChargeResult,
   RefundParams,
   RefundResult,
   WebhookResult,
+  GatewayHealthResult,
+  NormalizedPaymentStatus,
+  SupportedPaymentMethod,
+  InstallmentOption,
 } from './payment-gateway.interface';
+import { BaseGateway } from './base.gateway';
+import { PaymentGatewayError } from './payment-gateway.error';
 
 @Injectable()
-export class TamaraGateway implements PaymentGateway {
+export class TamaraGateway extends BaseGateway implements BnplPaymentGateway {
   readonly name = 'tamara' as const;
-  private readonly logger = new Logger(TamaraGateway.name);
+  readonly isBnpl = true as const;
+  readonly deductionRate = 0.10;
+  protected readonly logger = new Logger(TamaraGateway.name);
   private readonly apiToken: string;
   private readonly notificationToken: string;
   private readonly apiUrl: string;
 
   constructor(private readonly configService: ConfigService) {
+    super();
     this.apiToken = this.configService.get<string>('payments.tamara.apiToken', '');
     this.notificationToken = this.configService.get<string>('payments.tamara.notificationToken', '');
     this.apiUrl = this.configService.get<string>('payments.tamara.apiUrl', 'https://api-sandbox.tamara.co');
+  }
+
+  getInstallmentOptions(amount: number, currency: string): InstallmentOption[] {
+    return [
+      { installments: 3, monthlyAmount: +(amount / 3).toFixed(2), totalAmount: amount, currency },
+      { installments: 6, monthlyAmount: +(amount / 6).toFixed(2), totalAmount: amount, currency },
+    ];
   }
 
   async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
@@ -73,7 +89,7 @@ export class TamaraGateway implements PaymentGateway {
       metadata: params.metadata,
     };
 
-    const response = await fetch(`${this.apiUrl}/checkout`, {
+    const response = await this.fetchWithRetry(`${this.apiUrl}/checkout`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiToken}`,
@@ -86,7 +102,13 @@ export class TamaraGateway implements PaymentGateway {
 
     if (!response.ok) {
       this.logger.error(`Tamara createCharge failed: ${JSON.stringify(data)}`);
-      throw new Error(`Tamara checkout creation failed: ${data.message || 'Unknown error'}`);
+      const code = this.normalizeErrorCode(data.error_code || data.message);
+      throw new PaymentGatewayError(
+        'tamara',
+        data.message || 'Checkout creation failed',
+        code,
+        data,
+      );
     }
 
     return {
@@ -131,7 +153,7 @@ export class TamaraGateway implements PaymentGateway {
       comment: params.reason || 'Refund requested',
     };
 
-    const response = await fetch(
+    const response = await this.fetchWithRetry(
       `${this.apiUrl}/orders/${params.gatewayChargeId}/refund`,
       {
         method: 'POST',
@@ -147,23 +169,79 @@ export class TamaraGateway implements PaymentGateway {
 
     if (!response.ok) {
       this.logger.error(`Tamara refund failed: ${JSON.stringify(data)}`);
-      throw new Error(`Tamara refund failed: ${data.message || 'Unknown error'}`);
+      const code = this.normalizeErrorCode(data.error_code || data.message);
+      throw new PaymentGatewayError(
+        'tamara',
+        data.message || 'Refund failed',
+        code,
+        data,
+      );
     }
 
     return {
       refundId: data.refund_id || data.capture_id || params.gatewayChargeId,
-      status: 'processing',
+      status: data.status || 'processing',
       rawResponse: data,
     };
   }
 
   async getCharge(chargeId: string): Promise<any> {
-    const response = await fetch(`${this.apiUrl}/orders/${chargeId}`, {
+    const response = await this.fetchWithTimeout(`${this.apiUrl}/orders/${chargeId}`, {
       headers: {
         Authorization: `Bearer ${this.apiToken}`,
       },
     });
 
     return response.json();
+  }
+
+  async getPaymentStatus(chargeId: string): Promise<NormalizedPaymentStatus> {
+    const data = await this.getCharge(chargeId);
+    switch (data.status) {
+      case 'approved': case 'captured': case 'fully_captured': return 'paid';
+      case 'pending_customer_action': case 'pending': return 'pending';
+      case 'declined': case 'expired': return 'failed';
+      case 'refunded': case 'fully_refunded': return 'refunded';
+      case 'cancelled': return 'cancelled';
+      default: return 'unknown';
+    }
+  }
+
+  async healthCheck(): Promise<GatewayHealthResult> {
+    const start = Date.now();
+    try {
+      const res = await this.fetchWithTimeout(
+        `${this.apiUrl}/payment-types?country=SA&currency=SAR&order_value=100`,
+        { headers: { Authorization: `Bearer ${this.apiToken}` } },
+        5000,
+      );
+      const latencyMs = Date.now() - start;
+      return {
+        gateway: 'tamara',
+        status: res.ok ? 'healthy' : 'degraded',
+        latencyMs,
+        ...(res.ok ? {} : { error: `HTTP ${res.status}` }),
+        checkedAt: new Date(),
+      };
+    } catch (err: any) {
+      return {
+        gateway: 'tamara',
+        status: 'down',
+        latencyMs: Date.now() - start,
+        error: err.message,
+        checkedAt: new Date(),
+      };
+    }
+  }
+
+  getSupportedPaymentMethods(): SupportedPaymentMethod[] {
+    return [
+      {
+        type: 'bnpl',
+        label: 'Tamara — Pay in Installments',
+        currencies: ['SAR', 'AED', 'KWD', 'BHD'],
+        installmentOptions: this.getInstallmentOptions(100, 'SAR'),
+      },
+    ];
   }
 }

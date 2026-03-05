@@ -34,6 +34,7 @@ export const payments = pgTable(
     currency: varchar('currency', { length: 3 }).notNull().default('SAR'),
     status: varchar('status', { length: 30 }).notNull().default('pending'),
     gatewayResponse: jsonb('gateway_response'),
+    errorCode: varchar('error_code', { length: 50 }),
     paidAt: timestamp('paid_at'),
     failedAt: timestamp('failed_at'),
     failureReason: text('failure_reason'),
@@ -54,7 +55,7 @@ export const payments = pgTable(
     ),
     check(
       'payments_status_check',
-      sql`${table.status} IN ('pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded')`,
+      sql`${table.status} IN ('pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded', 'chargeback')`,
     ),
     check(
       'payments_method_check',
@@ -88,6 +89,7 @@ export const PAYMENT_STATUS = {
   FAILED: 'failed',
   REFUNDED: 'refunded',
   PARTIALLY_REFUNDED: 'partially_refunded',
+  CHARGEBACK: 'chargeback',
 } as const;
 
 export type PaymentStatus =

@@ -12,7 +12,6 @@ import {
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
-import { courses } from './courses';
 import { payments } from './payments';
 
 export const discountCodes = pgTable(
@@ -25,9 +24,7 @@ export const discountCodes = pgTable(
     maxUses: integer('max_uses'),
     currentUses: integer('current_uses').notNull().default(0),
     minOrderAmount: numeric('min_order_amount', { precision: 10, scale: 2 }),
-    courseId: uuid('course_id').references(() => courses.id, {
-      onDelete: 'set null',
-    }),
+    applicableCourses: uuid('applicable_courses').array().notNull().default(sql`'{}'::uuid[]`),
     validFrom: timestamp('valid_from'),
     validUntil: timestamp('valid_until'),
     isActive: boolean('is_active').notNull().default(true),
@@ -40,7 +37,6 @@ export const discountCodes = pgTable(
   (table) => [
     uniqueIndex('discount_codes_code_unique').on(table.code),
     index('discount_codes_is_active_idx').on(table.isActive),
-    index('discount_codes_course_id_idx').on(table.courseId),
     check(
       'discount_codes_type_check',
       sql`${table.type} IN ('percentage', 'fixed')`,
@@ -49,10 +45,6 @@ export const discountCodes = pgTable(
 );
 
 export const discountCodesRelations = relations(discountCodes, ({ one }) => ({
-  course: one(courses, {
-    fields: [discountCodes.courseId],
-    references: [courses.id],
-  }),
   creator: one(users, {
     fields: [discountCodes.createdBy],
     references: [users.id],

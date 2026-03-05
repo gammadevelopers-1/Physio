@@ -8,24 +8,51 @@ import {
   RefundParams,
   RefundResult,
   WebhookResult,
+  GatewayHealthResult,
+  NormalizedPaymentStatus,
+  SupportedPaymentMethod,
 } from './payment-gateway.interface';
+import { BaseGateway } from './base.gateway';
+
+type MockOutcome = 'success' | 'failure' | 'pending';
 
 @Injectable()
-export class MockGateway implements PaymentGateway {
+export class MockGateway extends BaseGateway implements PaymentGateway {
   readonly name = 'mock' as const;
-  private readonly logger = new Logger(MockGateway.name);
+  protected readonly logger = new Logger(MockGateway.name);
 
-  constructor(private readonly configService: ConfigService) {}
+  private outcome: MockOutcome = 'success';
+
+  constructor(private readonly configService: ConfigService) {
+    super();
+  }
+
+  setOutcome(o: MockOutcome): void {
+    this.outcome = o;
+  }
+
+  getOutcome(): MockOutcome {
+    return this.outcome;
+  }
 
   async createCharge(params: CreateChargeParams): Promise<ChargeResult> {
     const chargeId = `mock_chg_${randomUUID()}`;
     const callbackUrl = this.configService.get<string>('payments.callbackUrl');
 
     this.logger.log(
-      `[MockGateway] Creating charge ${chargeId} for ${params.amount} ${params.currency}`,
+      `[MockGateway] Creating charge ${chargeId} for ${params.amount} ${params.currency} (outcome: ${this.outcome})`,
     );
 
-    const redirectUrl = `${callbackUrl}?gateway=mock&charge_id=${chargeId}&status=paid&payment_id=${params.metadata.paymentId}`;
+    let status: string;
+    if (this.outcome === 'failure') {
+      status = 'failed';
+    } else if (this.outcome === 'pending') {
+      status = 'pending';
+    } else {
+      status = 'paid';
+    }
+
+    const redirectUrl = `${callbackUrl}?gateway=mock&charge_id=${chargeId}&status=${status}&payment_id=${params.metadata.paymentId}`;
 
     return {
       chargeId,
@@ -64,9 +91,21 @@ export class MockGateway implements PaymentGateway {
 
     return {
       id: chargeId,
-      status: 'paid',
+      status: this.outcome === 'success' ? 'paid' : this.outcome === 'failure' ? 'failed' : 'pending',
       amount: 0,
       currency: 'SAR',
     };
+  }
+
+  async getPaymentStatus(_chargeId: string): Promise<NormalizedPaymentStatus> {
+    return this.outcome === 'success' ? 'paid' : this.outcome === 'failure' ? 'failed' : 'pending';
+  }
+
+  async healthCheck(): Promise<GatewayHealthResult> {
+    return { gateway: 'mock', status: 'healthy', latencyMs: 0, checkedAt: new Date() };
+  }
+
+  getSupportedPaymentMethods(): SupportedPaymentMethod[] {
+    return [{ type: 'card', label: 'Mock (Test Only)', currencies: ['SAR', 'USD'] }];
   }
 }

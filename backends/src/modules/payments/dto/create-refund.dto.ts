@@ -4,7 +4,7 @@ export class CreateRefundDto {
   @IsUUID()
   paymentId: string;
 
-  @IsIn(['course_issue', 'personal', 'technical', 'duplicate', 'other'])
+  @IsIn(['policy', 'cancelled', 'technical', 'duplicate', 'other'])
   reason: string;
 
   @IsOptional()

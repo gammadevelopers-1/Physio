@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PaymentGateway } from './payment-gateway.interface';
+import { PaymentGateway, GatewayHealthResult } from './payment-gateway.interface';
 import { MockGateway } from './mock.gateway';
 import { TapGateway } from './tap.gateway';
 import { MoyasarGateway } from './moyasar.gateway';
@@ -66,5 +66,17 @@ export class GatewayFactory {
 
   getAvailableGateways(): string[] {
     return Array.from(this.gateways.keys());
+  }
+
+  async healthCheckAll(): Promise<GatewayHealthResult[]> {
+    const checks = Array.from(this.gateways.values()).map(gw =>
+      gw.healthCheck().catch(err => ({
+        gateway: gw.name,
+        status: 'down' as const,
+        error: err.message,
+        checkedAt: new Date(),
+      })),
+    );
+    return Promise.all(checks);
   }
 }

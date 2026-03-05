@@ -208,10 +208,12 @@ export function transformToCertificateQueue(
 
 export function transformToCourseOptions(courses: DashboardCourse[]) {
   return [
-    { value: "all", label: "All Courses" },
+    { value: "all", label: "All Courses", deliveryType: undefined as string | undefined, cohort: undefined as string | undefined },
     ...courses.map((c) => ({
       value: c.id,
       label: c.title,
+      deliveryType: c.deliveryType,
+      cohort: c.cohort ?? undefined,
     })),
   ];
 }

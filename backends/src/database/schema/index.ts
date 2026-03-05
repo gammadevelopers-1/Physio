@@ -66,6 +66,12 @@ export * from './course-ratings';
 // Waitlist schemas
 export * from './waitlists';
 
+// Video Watch Events schemas
+export * from './video-watch-events';
+
+// Session Materials schemas
+export * from './session-materials';
+
 // Health check (can remove later)
 import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
 

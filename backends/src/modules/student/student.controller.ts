@@ -250,6 +250,36 @@ export class StudentController {
     return this.studentService.getCertificates(user.id);
   }
 
+  /**
+   * GET /student/certificates/:id/download — Download a certificate PDF.
+   */
+  @Get('certificates/:id/download')
+  async downloadCertificate(
+    @Param('id') certId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.studentService.downloadStudentCertificate(certId, user.id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+    res.send(buffer);
+  }
+
+  /**
+   * POST /student/materials/:id/watch-events — Record video watch events
+   */
+  @Post('materials/:id/watch-events')
+  @HttpCode(HttpStatus.OK)
+  async recordWatchEvents(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { events: { eventType: string; position: number; fromPosition?: number }[] },
+  ) {
+    return this.studentService.recordWatchEvents(user.id, materialId, body.events);
+  }
+
   // ─── Zoom Join ─────────────────────────────────────────
 
   /**

@@ -24,6 +24,7 @@ import {
   ticketReplies,
   COURSE_STATUS,
   NELC_EVENT_TYPE,
+  videoWatchEvents,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import type { AssessmentFile } from '../../database/schema/assessments';
@@ -42,6 +43,25 @@ import { RateTicketDto } from './dto/rate-ticket.dto';
 import { CertificatesService } from '../certificates/certificates.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
+import { createHash } from 'crypto';
+
+/** Deterministic seeded shuffle using LCG PRNG (Fisher-Yates) */
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const result = [...array];
+  let s = seed >>> 0;
+  for (let i = result.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+/** Create a numeric seed from string inputs */
+function makeSeed(...parts: string[]): number {
+  const hash = createHash('md5').update(parts.join(':')).digest();
+  return hash.readUInt32BE(0);
+}
 
 @Injectable()
 export class StudentService {
@@ -1293,6 +1313,53 @@ export class StudentService {
 
     // For assignments, compute canSubmit flag
     const isAssignment = assessment.type === 'assignment';
+
+    // ─── Randomization / subset logic ─────────────────────────
+    let finalQuestions = sanitizedQuestions;
+    let questionOrder: string[] | undefined;
+
+    if (assessment.randomizeOrder && !isAssignment) {
+      // Check for existing in-progress submission with stored order
+      const [inProgressSub] = await db
+        .select({ id: submissions.id, questionOrder: submissions.questionOrder })
+        .from(submissions)
+        .where(
+          and(
+            eq(submissions.assessmentId, assessmentId),
+            eq(submissions.studentId, studentId),
+            eq(submissions.status, 'in_progress'),
+          ),
+        )
+        .orderBy(desc(submissions.createdAt))
+        .limit(1);
+
+      if (inProgressSub?.questionOrder && Array.isArray(inProgressSub.questionOrder)) {
+        // Resume: use the stored order
+        questionOrder = inProgressSub.questionOrder as string[];
+        const orderMap = new Map(questionOrder.map((id, idx) => [id, idx]));
+        finalQuestions = finalQuestions
+          .filter((q) => orderMap.has(q.id))
+          .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
+      } else {
+        // New attempt: generate deterministic order
+        const attemptNum = totalAttempts + 1;
+        const seed = makeSeed(assessmentId, studentId, String(attemptNum));
+        let shuffled = seededShuffle(finalQuestions, seed);
+
+        // If questionsPerAttempt is set, take a subset
+        if (
+          assessment.questionsPerAttempt &&
+          assessment.questionsPerAttempt > 0 &&
+          assessment.questionsPerAttempt < shuffled.length
+        ) {
+          shuffled = shuffled.slice(0, assessment.questionsPerAttempt);
+        }
+
+        finalQuestions = shuffled;
+        questionOrder = shuffled.map((q) => q.id);
+      }
+    }
+
     const pastDeadline = isAssignment && assessment.dueDate
       ? new Date() > new Date(assessment.dueDate)
       : false;
@@ -1310,6 +1377,8 @@ export class StudentService {
       canRetake,
       retakeAvailableAt,
       maxAttemptsReached,
+      randomizeOrder: assessment.randomizeOrder,
+      questionsPerAttempt: assessment.questionsPerAttempt,
       latestSubmission: latestSubmission
         ? {
             id: latestSubmission.id,
@@ -1317,7 +1386,8 @@ export class StudentService {
             score: latestSubmission.score,
           }
         : null,
-      questions: maxAttemptsReached && !isAssignment ? [] : (isAssignment ? [] : sanitizedQuestions),
+      questions: maxAttemptsReached && !isAssignment ? [] : (isAssignment ? [] : finalQuestions),
+      questionOrder,
       // Assignment-specific fields
       ...(isAssignment && {
         assignmentFiles: assessment.assignmentFiles || [],
@@ -1529,6 +1599,7 @@ export class StudentService {
     studentId: string,
     assessmentId: string,
     answersData: { questionId: string; answer: string }[],
+    questionOrder?: string[],
   ) {
     const draftAnswers: SubmissionAnswer[] = answersData.map((a) => ({
       questionId: a.questionId,
@@ -1550,9 +1621,13 @@ export class StudentService {
       .limit(1);
 
     if (existing) {
+      const updateData: Record<string, unknown> = { answers: draftAnswers };
+      if (questionOrder && !existing.questionOrder) {
+        updateData.questionOrder = questionOrder;
+      }
       await db
         .update(submissions)
-        .set({ answers: draftAnswers })
+        .set(updateData)
         .where(eq(submissions.id, existing.id));
       return { submissionId: existing.id, saved: true };
     }
@@ -1563,6 +1638,7 @@ export class StudentService {
         assessmentId,
         studentId,
         answers: draftAnswers,
+        questionOrder: questionOrder || null,
         startedAt: new Date(),
         status: 'in_progress',
       })
@@ -1850,6 +1926,13 @@ export class StudentService {
       .orderBy(desc(certificateRequests.createdAt));
 
     return certs;
+  }
+
+  async downloadStudentCertificate(
+    certId: string,
+    studentId: string,
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    return this.certificatesService.downloadStudentCertificate(certId, studentId);
   }
 
   // ─── Calendar Events ───────────────────────────────────
@@ -2859,5 +2942,27 @@ export class StudentService {
         },
       ],
     };
+  }
+
+  // ─── Video Watch Events (Feature 7) ───────────────────
+
+  async recordWatchEvents(
+    studentId: string,
+    materialId: string,
+    events: { eventType: string; position: number; fromPosition?: number }[],
+  ) {
+    if (events.length === 0) return { recorded: 0 };
+
+    const values = events.map((e) => ({
+      materialId,
+      studentId,
+      eventType: e.eventType,
+      position: e.position,
+      fromPosition: e.fromPosition ?? null,
+    }));
+
+    await db.insert(videoWatchEvents).values(values);
+
+    return { recorded: events.length };
   }
 }

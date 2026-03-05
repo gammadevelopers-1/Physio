@@ -15,6 +15,7 @@ import {
   assessments,
   users,
   materialVariants,
+  videoWatchEvents,
   MATERIAL_STATUS,
 } from '../../database/schema';
 import {
@@ -341,13 +342,18 @@ export class MaterialsService {
       .where(eq(courseMaterials.id, existing.id));
 
     // Create new version record with status='processing'
+    // Use new file's name (without extension) if no explicit title provided
+    const inferredTitle =
+      body?.title ||
+      file.originalname.replace(/\.[^.]+$/, '') ||
+      existing.title;
     const newVersion = existing.version + 1;
     const [material] = await db
       .insert(courseMaterials)
       .values({
         courseId: existing.courseId,
         moduleId: existing.moduleId,
-        title: body?.title || existing.title,
+        title: inferredTitle,
         type: materialType,
         fileSize: file.size,
         mimeType: file.mimetype,
@@ -1046,5 +1052,320 @@ export class MaterialsService {
     }
 
     return null;
+  }
+
+  // ─── Captions (Feature 5) ──────────────────────────────
+
+  /**
+   * GET /materials/:id/captions
+   * Fetch the VTT file, parse into entries.
+   */
+  async getCaptions(
+    materialId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ entries: import('./vtt-utils').CaptionEntry[]; raw: string }> {
+    const material = await this.verifyMaterialAccess(materialId, user);
+
+    if (!material.captionsUrl) {
+      return { entries: [], raw: '' };
+    }
+
+    const buffer = await this.storageService.downloadBuffer(material.captionsUrl);
+    const raw = buffer.toString('utf-8');
+
+    const { parseVtt } = await import('./vtt-utils');
+    const entries = parseVtt(raw);
+    return { entries, raw };
+  }
+
+  /**
+   * PUT /materials/:id/captions
+   * Serialize entries to VTT, upload, update captionsUrl.
+   */
+  async saveCaptions(
+    materialId: string,
+    user: AuthenticatedUser,
+    entries: import('./vtt-utils').CaptionEntry[],
+  ) {
+    await this.verifyMaterialAccess(materialId, user);
+
+    const { serializeVtt } = await import('./vtt-utils');
+    const vttContent = serializeVtt(entries);
+    const buffer = Buffer.from(vttContent, 'utf-8');
+
+    const filename = `captions/${materialId}.vtt`;
+    const url = await this.storageService.uploadPublic(
+      buffer,
+      filename,
+      'text/vtt',
+    );
+
+    const [updated] = await db
+      .update(courseMaterials)
+      .set({ captionsUrl: url, updatedAt: new Date() })
+      .where(eq(courseMaterials.id, materialId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * POST /materials/:id/captions/upload
+   * Accept a VTT or SRT file, convert SRT→VTT if needed, upload.
+   */
+  async uploadCaptionFile(
+    materialId: string,
+    user: AuthenticatedUser,
+    file: { buffer: Buffer; originalname: string; mimetype: string },
+  ) {
+    await this.verifyMaterialAccess(materialId, user);
+
+    let vttContent: string;
+    const raw = file.buffer.toString('utf-8');
+
+    if (
+      file.originalname.endsWith('.srt') ||
+      file.mimetype === 'application/x-subrip'
+    ) {
+      const { srtToVtt } = await import('./vtt-utils');
+      vttContent = srtToVtt(raw);
+    } else {
+      vttContent = raw;
+    }
+
+    const buffer = Buffer.from(vttContent, 'utf-8');
+    const filename = `captions/${materialId}.vtt`;
+    const url = await this.storageService.uploadPublic(
+      buffer,
+      filename,
+      'text/vtt',
+    );
+
+    const [updated] = await db
+      .update(courseMaterials)
+      .set({ captionsUrl: url, updatedAt: new Date() })
+      .where(eq(courseMaterials.id, materialId))
+      .returning();
+
+    return updated;
+  }
+
+  // ─── Version History (Feature 6) ───────────────────────
+
+  /**
+   * GET /materials/:id/versions
+   * Walk the previousVersionId chain to build full version history.
+   */
+  async getVersionHistory(materialId: string, user: AuthenticatedUser) {
+    const material = await this.verifyMaterialAccess(materialId, user);
+
+    // Collect all versions by walking backward then forward
+    const versions: Array<{
+      id: string;
+      version: number;
+      title: string;
+      fileSize: number | null;
+      mimeType: string | null;
+      status: string;
+      createdAt: Date;
+      isCurrent: boolean;
+    }> = [];
+
+    // Walk backward from current material
+    let current = material;
+    const visited = new Set<string>();
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id);
+      versions.push({
+        id: current.id,
+        version: current.version,
+        title: current.title,
+        fileSize: current.fileSize,
+        mimeType: current.mimeType,
+        status: current.status,
+        createdAt: current.createdAt,
+        isCurrent: current.id === material.id,
+      });
+
+      if (current.previousVersionId) {
+        const [prev] = await db
+          .select()
+          .from(courseMaterials)
+          .where(eq(courseMaterials.id, current.previousVersionId))
+          .limit(1);
+        if (prev) {
+          current = prev;
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+
+    // Walk forward: find materials that point to this one
+    let forwardId = material.id;
+    for (let i = 0; i < 10; i++) {
+      const [newer] = await db
+        .select()
+        .from(courseMaterials)
+        .where(eq(courseMaterials.previousVersionId, forwardId))
+        .limit(1);
+      if (newer && !visited.has(newer.id)) {
+        visited.add(newer.id);
+        versions.push({
+          id: newer.id,
+          version: newer.version,
+          title: newer.title,
+          fileSize: newer.fileSize,
+          mimeType: newer.mimeType,
+          status: newer.status,
+          createdAt: newer.createdAt,
+          isCurrent: false,
+        });
+        forwardId = newer.id;
+      } else {
+        break;
+      }
+    }
+
+    // Sort by version descending, limit 10
+    versions.sort((a, b) => b.version - a.version);
+    return versions.slice(0, 10);
+  }
+
+  /**
+   * POST /materials/:id/rollback/:versionId
+   * Reactivate the target version (set it to LIVE) and archive the current one.
+   * No new version is created — we simply swap which version is active.
+   */
+  async rollbackToVersion(
+    currentId: string,
+    targetVersionId: string,
+    user: AuthenticatedUser,
+  ) {
+    const current = await this.verifyMaterialAccess(currentId, user);
+
+    const [target] = await db
+      .select()
+      .from(courseMaterials)
+      .where(eq(courseMaterials.id, targetVersionId))
+      .limit(1);
+
+    if (!target) {
+      throw new NotFoundException('Target version not found');
+    }
+
+    if (target.courseId !== current.courseId) {
+      throw new BadRequestException('Target version does not belong to the same course');
+    }
+
+    // Archive the current version
+    await db
+      .update(courseMaterials)
+      .set({ status: MATERIAL_STATUS.ARCHIVED, updatedAt: new Date() })
+      .where(eq(courseMaterials.id, current.id));
+
+    // Reactivate the target version (set it back to LIVE)
+    const [rolled] = await db
+      .update(courseMaterials)
+      .set({
+        status: MATERIAL_STATUS.LIVE,
+        orderIndex: current.orderIndex,
+        updatedAt: new Date(),
+      })
+      .where(eq(courseMaterials.id, target.id))
+      .returning();
+
+    return rolled;
+  }
+
+  // ─── Video Watch Analytics (Feature 7) ─────────────────
+
+  /**
+   * GET /materials/:id/watch-analytics
+   * Bucket heartbeat events into ~50 segments, compute retention curve.
+   */
+  async getWatchAnalytics(materialId: string, user: AuthenticatedUser) {
+    await this.verifyMaterialAccess(materialId, user);
+
+    // Get total unique viewers
+    const [viewerResult] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${videoWatchEvents.studentId})` })
+      .from(videoWatchEvents)
+      .where(eq(videoWatchEvents.materialId, materialId));
+
+    const totalViewers = Number(viewerResult?.count ?? 0);
+    if (totalViewers === 0) {
+      return { totalViewers: 0, bucketSize: 0, retention: [], dropOffPoints: [] };
+    }
+
+    // Find max position (approximate duration)
+    const [maxPosResult] = await db
+      .select({ maxPos: sql<number>`MAX(${videoWatchEvents.position})` })
+      .from(videoWatchEvents)
+      .where(
+        and(
+          eq(videoWatchEvents.materialId, materialId),
+          eq(videoWatchEvents.eventType, 'heartbeat'),
+        ),
+      );
+
+    const maxPos = Number(maxPosResult?.maxPos ?? 0);
+    if (maxPos === 0) {
+      return { totalViewers, bucketSize: 0, retention: [], dropOffPoints: [] };
+    }
+
+    const numBuckets = Math.min(50, maxPos);
+    const bucketSize = Math.max(1, Math.ceil(maxPos / numBuckets));
+
+    // Query distinct students per bucket (inline bucketSize as literal to avoid parameter type issues)
+    const bucketExpr = sql`FLOOR(${videoWatchEvents.position} / ${sql.raw(String(bucketSize))})`;
+    const bucketData = await db
+      .select({
+        bucket: sql<number>`${bucketExpr}`.as('bucket'),
+        viewers: sql<number>`COUNT(DISTINCT ${videoWatchEvents.studentId})`,
+      })
+      .from(videoWatchEvents)
+      .where(
+        and(
+          eq(videoWatchEvents.materialId, materialId),
+          eq(videoWatchEvents.eventType, 'heartbeat'),
+        ),
+      )
+      .groupBy(bucketExpr)
+      .orderBy(sql`1`);
+
+    // Build retention array
+    const retention: { bucket: number; viewers: number; percent: number }[] = [];
+    const bucketMap = new Map<number, number>();
+    for (const row of bucketData) {
+      bucketMap.set(Number(row.bucket), Number(row.viewers));
+    }
+
+    for (let i = 0; i < numBuckets; i++) {
+      const viewers = bucketMap.get(i) ?? 0;
+      retention.push({
+        bucket: i,
+        viewers,
+        percent: Math.round((viewers / totalViewers) * 100),
+      });
+    }
+
+    // Identify drop-off points (>10% drop between consecutive buckets)
+    const dropOffPoints: { bucket: number; drop: number }[] = [];
+    for (let i = 1; i < retention.length; i++) {
+      const drop = retention[i - 1].percent - retention[i].percent;
+      if (drop > 10) {
+        dropOffPoints.push({ bucket: i, drop });
+      }
+    }
+
+    return {
+      totalViewers,
+      bucketSize,
+      retention,
+      dropOffPoints,
+    };
   }
 }

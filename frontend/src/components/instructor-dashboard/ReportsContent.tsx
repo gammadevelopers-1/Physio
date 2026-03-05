@@ -346,8 +346,14 @@ const ReportsContent = () => {
   const [exportModal, setExportModal] = useState<ReportTypeConfig | null>(null);
 
   // Global filter
+  const [filterDelivery, setFilterDelivery] = useState("all");
   const [filterCourse, setFilterCourse] = useState("");
   const [filterFormat, setFilterFormat] = useState<ReportFormat>("pdf");
+
+  // Filter courses by delivery type
+  const filteredCourses = filterDelivery === "all"
+    ? courses
+    : courses.filter((c) => c.deliveryType === filterDelivery);
 
   // Fetch courses
   const fetchCourses = useCallback(async () => {
@@ -449,6 +455,18 @@ const ReportsContent = () => {
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 flex flex-col md:flex-row gap-3">
+                    {/* Delivery type filter */}
+                    <select
+                      value={filterDelivery}
+                      onChange={(e) => { setFilterDelivery(e.target.value); setFilterCourse(""); }}
+                      className="md:w-40 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    >
+                      <option value="all">{t("reports.allDeliveryTypes")}</option>
+                      <option value="zoom">{t("reports.zoom")}</option>
+                      <option value="onsite">{t("reports.onsite")}</option>
+                      <option value="blended">{t("reports.blended")}</option>
+                    </select>
+
                     {/* Course filter */}
                     <select
                       value={filterCourse}
@@ -457,7 +475,7 @@ const ReportsContent = () => {
                       className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
                     >
                       <option value="">{t("reports.allCourses")}</option>
-                      {courses.map((c) => (
+                      {filteredCourses.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.title}
                         </option>
@@ -644,7 +662,7 @@ const ReportsContent = () => {
       {exportModal && (
         <ExportModal
           reportType={exportModal}
-          courses={courses}
+          courses={filteredCourses}
           onClose={() => setExportModal(null)}
           t={t}
         />

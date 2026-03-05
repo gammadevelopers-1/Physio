@@ -5,6 +5,7 @@ import {
   IsInt,
   IsIn,
   IsUUID,
+  IsBoolean,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -61,4 +62,13 @@ export class CreateAssessmentDto {
   @IsString()
   @MaxLength(5000)
   instructions?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  randomizeOrder?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  questionsPerAttempt?: number;
 }

@@ -86,6 +86,8 @@ const CreateAssessmentModal = ({
   const [instructions, setInstructions] = useState("");
   const [moduleId, setModuleId] = useState("");
   const [courseModules, setCourseModules] = useState<{ id: string; title: string }[]>([]);
+  const [randomizeOrder, setRandomizeOrder] = useState(false);
+  const [questionsPerAttempt, setQuestionsPerAttempt] = useState("");
   const [saving, setSaving] = useState(false);
   const isAssignment = type === "assignment";
 
@@ -124,6 +126,8 @@ const CreateAssessmentModal = ({
         dueDate: isAssignment && dueDate ? dueDate + ":00+03:00" : undefined,
         instructions: isAssignment && instructions ? instructions : undefined,
         moduleId: moduleId || undefined,
+        randomizeOrder: randomizeOrder || undefined,
+        questionsPerAttempt: questionsPerAttempt ? Number(questionsPerAttempt) : undefined,
       });
       toast.success(t("assessments.createSuccess"));
       onCreated();
@@ -280,6 +284,40 @@ const CreateAssessmentModal = ({
               />
             </div>
           </div>
+          {/* Randomization options — only for quiz/exam */}
+          {!isAssignment && (
+            <div className="space-y-3 border-t border-[#E5E7EB] pt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={randomizeOrder}
+                  onChange={(e) => setRandomizeOrder(e.target.checked)}
+                  className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                />
+                <span className="text-sm font-medium text-[#374151]">
+                  {t("assessments.randomizeOrder")}
+                </span>
+              </label>
+              {randomizeOrder && (
+                <p className="text-xs text-[#6B7280] ml-6">{t("assessments.randomizeOrderHelp")}</p>
+              )}
+              {randomizeOrder && (
+                <div className="ml-6">
+                  <label className="block text-sm font-medium text-[#374151] mb-1">
+                    {t("assessments.questionsPerAttempt")}
+                  </label>
+                  <input
+                    type="number"
+                    value={questionsPerAttempt}
+                    onChange={(e) => setQuestionsPerAttempt(e.target.value)}
+                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    placeholder={t("assessments.questionsPerAttemptHelp")}
+                    min={1}
+                  />
+                </div>
+              )}
+            </div>
+          )}
           <div className="flex gap-3 pt-2">
             <button
               type="button"

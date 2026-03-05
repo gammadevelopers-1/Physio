@@ -46,6 +46,9 @@ export const assessments = pgTable(
     retakeCoolingHours: integer('retake_cooling_hours').notNull().default(24),
     retakeScorePolicy: varchar('retake_score_policy', { length: 20 }).notNull().default('highest'),
     retakeScope: varchar('retake_scope', { length: 20 }).notNull().default('full'),
+    // Randomization
+    randomizeOrder: boolean('randomize_order').notNull().default(false),
+    questionsPerAttempt: integer('questions_per_attempt'),
     // Flagging (manager review)
     flaggedAt: timestamp('flagged_at'),
     flaggedReason: text('flagged_reason'),

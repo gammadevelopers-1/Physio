@@ -321,7 +321,7 @@ export interface InstructorCourse {
   description: string | null;
   descriptionAr: string | null;
   deliveryType: 'zoom' | 'onsite' | 'blended';
-  status: 'draft' | 'active' | 'completed' | 'archived';
+  status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'completed' | 'archived';
   thumbnail: string | null;
   maxEnrollment: number | null;
   startDate: string | null;
@@ -377,7 +377,8 @@ export interface CourseDetailResponse {
   description: string | null;
   descriptionAr: string | null;
   deliveryType: 'zoom' | 'onsite' | 'blended';
-  status: 'draft' | 'active' | 'completed' | 'archived';
+  status: 'draft' | 'pending_review' | 'changes_requested' | 'active' | 'completed' | 'archived';
+  reviewNote?: string | null;
   thumbnail: string | null;
   maxEnrollment: number | null;
   startDate: string | null;

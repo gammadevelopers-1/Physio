@@ -121,6 +121,7 @@ const CreateCourseContent = () => {
   const [endDate, setEndDate] = useState("");
   const [maxEnrollment, setMaxEnrollment] = useState("");
   const [minimumHours, setMinimumHours] = useState("");
+  const [cohort, setCohort] = useState("");
   const [nelcAccreditation, setNelcAccreditation] = useState(true);
   const [bilingualContent, setBilingualContent] = useState(true);
   const [wcagCompliant, setWcagCompliant] = useState(true);
@@ -234,6 +235,7 @@ const CreateCourseContent = () => {
       if (maxEnrollment) payload.maxEnrollment = Number(maxEnrollment);
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
+      if (cohort.trim()) payload.cohort = cohort.trim();
 
       const created = await courseManagerApi.createCourse(payload);
       toast.success(t("createCourse.success"));
@@ -506,6 +508,23 @@ const CreateCourseContent = () => {
                           min={1}
                           className={inputClass}
                         />
+                      </div>
+                      <div>
+                        <label htmlFor="cohort" className="block text-sm font-medium text-[#374151] mb-1">
+                          {t("createCourse.cohort")}
+                        </label>
+                        <input
+                          id="cohort"
+                          type="text"
+                          value={cohort}
+                          onChange={(e) => setCohort(e.target.value)}
+                          placeholder={t("createCourse.cohortPlaceholder")}
+                          maxLength={100}
+                          className={inputClass}
+                        />
+                        <p className="text-xs text-[#6B7280] mt-1">
+                          {t("createCourse.cohortHint")}
+                        </p>
                       </div>
                     </div>
                   </div>

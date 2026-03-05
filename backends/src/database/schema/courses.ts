@@ -36,6 +36,17 @@ export const courses = pgTable(
     language: varchar('language', { length: 10 }).default('en'),
     startDate: date('start_date'),
     endDate: date('end_date'),
+    // At-risk thresholds
+    atRiskAttendanceThreshold: integer('at_risk_attendance_threshold').default(70),
+    atRiskScoreThreshold: integer('at_risk_score_threshold').default(60),
+    atRiskInactivityDays: integer('at_risk_inactivity_days').default(7),
+    // Cohort
+    cohort: varchar('cohort', { length: 100 }),
+    // Review workflow
+    reviewNote: varchar('review_note', { length: 1000 }),
+    reviewedBy: uuid('reviewed_by').references(() => users.id),
+    submittedAt: timestamp('submitted_at'),
+    reviewedAt: timestamp('reviewed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -48,7 +59,7 @@ export const courses = pgTable(
     ),
     check(
       'courses_status_check',
-      sql`${table.status} IN ('draft', 'active', 'completed', 'archived')`,
+      sql`${table.status} IN ('draft', 'pending_review', 'changes_requested', 'active', 'completed', 'archived')`,
     ),
   ],
 );
@@ -65,6 +76,8 @@ export type NewCourse = typeof courses.$inferInsert;
 
 export const COURSE_STATUS = {
   DRAFT: 'draft',
+  PENDING_REVIEW: 'pending_review',
+  CHANGES_REQUESTED: 'changes_requested',
   ACTIVE: 'active',
   COMPLETED: 'completed',
   ARCHIVED: 'archived',

@@ -14,6 +14,8 @@ import {
   enrollments,
   attendanceLogs,
   sessionRecordings,
+  sessionMaterials,
+  courseMaterials,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -117,6 +119,7 @@ export class SessionsService {
           recordingEnabled: dto.recordingEnabled !== false,
           isMakeup: dto.isMakeup || false,
           parentSessionId: dto.parentSessionId || null,
+          assignedStudents: dto.assignedStudents || null,
         })
         .returning();
 
@@ -174,6 +177,7 @@ export class SessionsService {
         recordingEnabled: dto.recordingEnabled !== false,
         isMakeup: dto.isMakeup || false,
         parentSessionId: dto.parentSessionId || null,
+        assignedStudents: dto.assignedStudents || null,
       })
       .returning();
 
@@ -1128,5 +1132,88 @@ export class SessionsService {
       .orderBy(asc(sessionRecordings.recordingStart));
 
     return recordings;
+  }
+
+  // ─── Share Materials (Feature 8) ──────────────────────
+
+  /** Share a course material with a session */
+  async shareMaterial(
+    sessionId: string,
+    materialId: string,
+    user: AuthenticatedUser,
+  ) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    // Verify material belongs to the same course
+    const [material] = await db
+      .select({ id: courseMaterials.id })
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.id, materialId),
+          eq(courseMaterials.courseId, session.courseId),
+        ),
+      )
+      .limit(1);
+
+    if (!material) {
+      throw new NotFoundException('Material not found in this course');
+    }
+
+    // Insert (on conflict do nothing for idempotency)
+    await db
+      .insert(sessionMaterials)
+      .values({
+        sessionId,
+        materialId,
+        sharedBy: user.id,
+      })
+      .onConflictDoNothing();
+
+    return { message: 'Material shared successfully' };
+  }
+
+  /** Unshare a material from a session */
+  async unshareMaterial(
+    sessionId: string,
+    materialId: string,
+    user: AuthenticatedUser,
+  ) {
+    await this.verifySessionAccess(sessionId, user);
+
+    await db
+      .delete(sessionMaterials)
+      .where(
+        and(
+          eq(sessionMaterials.sessionId, sessionId),
+          eq(sessionMaterials.materialId, materialId),
+        ),
+      );
+
+    return { message: 'Material unshared successfully' };
+  }
+
+  /** Get shared materials for a session */
+  async getSharedMaterials(sessionId: string) {
+    const shared = await db
+      .select({
+        id: sessionMaterials.id,
+        materialId: sessionMaterials.materialId,
+        sharedAt: sessionMaterials.sharedAt,
+        materialTitle: courseMaterials.title,
+        materialType: courseMaterials.type,
+        fileUrl: courseMaterials.fileUrl,
+        fileSize: courseMaterials.fileSize,
+        mimeType: courseMaterials.mimeType,
+        sharerFirstName: users.firstName,
+        sharerLastName: users.lastName,
+      })
+      .from(sessionMaterials)
+      .innerJoin(courseMaterials, eq(sessionMaterials.materialId, courseMaterials.id))
+      .innerJoin(users, eq(sessionMaterials.sharedBy, users.id))
+      .where(eq(sessionMaterials.sessionId, sessionId))
+      .orderBy(desc(sessionMaterials.sharedAt));
+
+    return shared;
   }
 }

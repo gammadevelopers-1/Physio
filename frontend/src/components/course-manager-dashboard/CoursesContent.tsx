@@ -56,11 +56,13 @@ const CourseCardSkeleton = () => (
   </div>
 );
 
-const COURSE_STATUSES = ["active", "draft", "completed", "archived"] as const;
+const COURSE_STATUSES = ["active", "draft", "pending_review", "changes_requested", "completed", "archived"] as const;
 
 const statusIcons: Record<string, React.ReactNode> = {
   active: <Play className="w-3.5 h-3.5" />,
   draft: <FileText className="w-3.5 h-3.5" />,
+  pending_review: <AlertCircle className="w-3.5 h-3.5" />,
+  changes_requested: <AlertCircle className="w-3.5 h-3.5" />,
   completed: <CheckCircle className="w-3.5 h-3.5" />,
   archived: <Archive className="w-3.5 h-3.5" />,
 };
@@ -104,8 +106,8 @@ const CoursesContent = () => {
       setOpenDropdown(null);
       setStatusLoading(courseId);
       try {
-        if (newStatus === "active" && currentStatus === "draft") {
-          // Use dedicated activate endpoint with content review validation
+        if (newStatus === "active" && currentStatus === "pending_review") {
+          // Approve: activate from pending_review
           await courseManagerApi.activateCourse(courseId);
         } else if (newStatus === "archived" && currentStatus === "active") {
           // Use dedicated deactivate endpoint with NELC audit
@@ -117,7 +119,6 @@ const CoursesContent = () => {
         refetch();
       } catch (err) {
         if (err instanceof ApiError) {
-          // Show pending materials error from activation validation
           const parsed = (() => { try { return JSON.parse(err.message); } catch { return null; } })();
           if (parsed?.pendingMaterials) {
             toast.error(t("coursesPage.activationFailed"), {
@@ -144,6 +145,8 @@ const CoursesContent = () => {
     const styles: Record<string, string> = {
       active: "bg-[#DCFCE7] text-[#22C55E]",
       draft: "bg-[#F3F4F6] text-[#6B7280]",
+      pending_review: "bg-[#EEF2FF] text-[#6366F1]",
+      changes_requested: "bg-[#FEF3C7] text-[#D97706]",
       completed: "bg-[#EFF6FF] text-[#3B82F6]",
       archived: "bg-[#FEF3C7] text-[#D4A520]",
     };
@@ -250,6 +253,12 @@ const CoursesContent = () => {
                       </option>
                       <option value="draft">
                         {t("coursesPage.filters.draft")}
+                      </option>
+                      <option value="pending_review">
+                        {t("coursesPage.filters.pendingReview")}
+                      </option>
+                      <option value="changes_requested">
+                        {t("coursesPage.filters.changesRequested")}
                       </option>
                       <option value="completed">
                         {t("coursesPage.filters.completed")}

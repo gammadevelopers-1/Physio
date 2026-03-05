@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Put,
   Patch,
   Delete,
   Body,
@@ -292,6 +293,105 @@ export class MaterialsController {
       throw new BadRequestException('No file provided');
     }
     return this.materialsService.replace(materialId, user, file, body);
+  }
+
+  // ─── Watch Analytics (Feature 7) ─────────────────────────
+
+  /**
+   * GET /materials/:id/watch-analytics — Video retention analytics
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('materials/:id/watch-analytics')
+  async getWatchAnalytics(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.getWatchAnalytics(materialId, user);
+  }
+
+  // ─── Captions (Feature 5) ────────────────────────────────
+
+  /**
+   * GET /materials/:id/captions — Fetch parsed VTT captions
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('materials/:id/captions')
+  async getCaptions(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.getCaptions(materialId, user);
+  }
+
+  /**
+   * PUT /materials/:id/captions — Save edited caption entries
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Put('materials/:id/captions')
+  async saveCaptions(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { entries: { startTime: string; endTime: string; text: string }[] },
+  ) {
+    return this.materialsService.saveCaptions(materialId, user, body.entries);
+  }
+
+  /**
+   * POST /materials/:id/captions/upload — Upload a VTT or SRT file
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Post('materials/:id/captions/upload')
+  @HttpCode(HttpStatus.OK)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+      fileFilter: (_req, file, cb) => {
+        const allowed = ['text/vtt', 'text/plain', 'application/x-subrip', 'application/octet-stream'];
+        if (allowed.includes(file.mimetype) || file.originalname.endsWith('.vtt') || file.originalname.endsWith('.srt')) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Only VTT and SRT files are allowed'), false);
+        }
+      },
+    }),
+  )
+  async uploadCaptionFile(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string },
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+    return this.materialsService.uploadCaptionFile(materialId, user, file);
+  }
+
+  // ─── Version History (Feature 6) ───────────────────────
+
+  /**
+   * GET /materials/:id/versions — List version history
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Get('materials/:id/versions')
+  async getVersionHistory(
+    @Param('id') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.getVersionHistory(materialId, user);
+  }
+
+  /**
+   * POST /materials/:id/rollback/:versionId — Rollback to a previous version
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole)
+  @Post('materials/:id/rollback/:versionId')
+  @HttpCode(HttpStatus.CREATED)
+  async rollbackToVersion(
+    @Param('id') materialId: string,
+    @Param('versionId') versionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.materialsService.rollbackToVersion(materialId, versionId, user);
   }
 
   /**

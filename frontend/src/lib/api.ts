@@ -989,6 +989,10 @@ export const instructorApi = {
   getStudentInterventions: (studentId: string) =>
     api.get<InterventionRecord[]>(`/instructor/students/${studentId}/interventions`),
 
+  // Course Review Workflow
+  submitForReview: (courseId: string) =>
+    api.post<CourseDetailResponse>(`/courses/${courseId}/submit-review`, {}),
+
   // Course Rating Stats
   getCourseRatingStats: (courseId: string) =>
     api.get<{ avgRating: number; totalRatings: number }>(`/courses/${courseId}/ratings/stats`),
@@ -1622,6 +1626,10 @@ export const courseManagerApi = {
   // Deactivate (archive) an active course
   deactivateCourse: (courseId: string) =>
     api.post<CourseDetailResponse>(`/courses/${courseId}/deactivate`, {}),
+
+  // Request changes on a course (sends back to instructor)
+  requestChanges: (courseId: string, note: string) =>
+    api.post<CourseDetailResponse>(`/courses/${courseId}/request-changes`, { note }),
 
   // Delete course (draft only)
   deleteCourse: (courseId: string) =>

@@ -93,6 +93,8 @@ export class AssessmentsService {
         attemptsAllowed,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         instructions: dto.instructions,
+        randomizeOrder: dto.randomizeOrder ?? false,
+        questionsPerAttempt: dto.questionsPerAttempt,
       })
       .returning();
 

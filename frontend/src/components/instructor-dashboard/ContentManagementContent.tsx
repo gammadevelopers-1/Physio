@@ -8,6 +8,9 @@ import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { instructorApi, materialsApi } from "@/lib/api";
 import { toast } from "sonner";
+import CaptionEditor from "./CaptionEditor";
+import VersionHistoryPanel from "./VersionHistoryPanel";
+import VideoRetentionChart from "./VideoRetentionChart";
 import type {
   InstructorCourse,
   CourseMaterialResponse,
@@ -42,6 +45,9 @@ import {
   Replace,
   Loader2,
   MoreVertical,
+  Subtitles,
+  History,
+  BarChart3,
 } from "lucide-react";
 
 // ─── Helpers ───────────────────────────────────────────────
@@ -848,6 +854,9 @@ const ContentManagementContent = () => {
   const [replacingMaterial, setReplacingMaterial] = useState<CourseMaterialResponse | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<CourseMaterialResponse | null>(null);
   const [deletingMaterial, setDeletingMaterial] = useState<CourseMaterialResponse | null>(null);
+  const [captionEditingMaterial, setCaptionEditingMaterial] = useState<CourseMaterialResponse | null>(null);
+  const [versionHistoryMaterial, setVersionHistoryMaterial] = useState<CourseMaterialResponse | null>(null);
+  const [analyticsViewMaterial, setAnalyticsViewMaterial] = useState<CourseMaterialResponse | null>(null);
 
   // ── Fetch courses ────────────────────────────────────────
   const fetchCourses = useCallback(async () => {
@@ -1429,6 +1438,20 @@ const ContentManagementContent = () => {
                                         icon: <Replace className="w-4 h-4" />,
                                         onClick: () => setReplacingMaterial(m),
                                       },
+                                      ...(m.type === "video" ? [{
+                                        label: t("content.editCaptions"),
+                                        icon: <Subtitles className="w-4 h-4" />,
+                                        onClick: () => setCaptionEditingMaterial(m),
+                                      }, {
+                                        label: t("content.viewAnalytics"),
+                                        icon: <BarChart3 className="w-4 h-4" />,
+                                        onClick: () => setAnalyticsViewMaterial(m),
+                                      }] : []),
+                                      {
+                                        label: t("content.versionHistory"),
+                                        icon: <History className="w-4 h-4" />,
+                                        onClick: () => setVersionHistoryMaterial(m),
+                                      },
                                       {
                                         label: t("content.delete"),
                                         icon: <Trash2 className="w-4 h-4" />,
@@ -1538,6 +1561,20 @@ const ContentManagementContent = () => {
                                       icon: <Replace className="w-4 h-4" />,
                                       onClick: () => setReplacingMaterial(m),
                                     },
+                                    ...(m.type === "video" ? [{
+                                      label: t("content.editCaptions"),
+                                      icon: <Subtitles className="w-4 h-4" />,
+                                      onClick: () => setCaptionEditingMaterial(m),
+                                    }, {
+                                      label: t("content.viewAnalytics"),
+                                      icon: <BarChart3 className="w-4 h-4" />,
+                                      onClick: () => setAnalyticsViewMaterial(m),
+                                    }] : []),
+                                    {
+                                      label: t("content.versionHistory"),
+                                      icon: <History className="w-4 h-4" />,
+                                      onClick: () => setVersionHistoryMaterial(m),
+                                    },
                                     {
                                       label: t("content.delete"),
                                       icon: <Trash2 className="w-4 h-4" />,
@@ -1612,6 +1649,29 @@ const ContentManagementContent = () => {
           onClose={() => setDeletingMaterial(null)}
           onDeleted={refetch}
           t={t}
+        />
+      )}
+      {captionEditingMaterial && (
+        <CaptionEditor
+          materialId={captionEditingMaterial.id}
+          materialTitle={captionEditingMaterial.title}
+          onClose={() => setCaptionEditingMaterial(null)}
+          onSaved={refetch}
+        />
+      )}
+      {versionHistoryMaterial && (
+        <VersionHistoryPanel
+          materialId={versionHistoryMaterial.id}
+          materialTitle={versionHistoryMaterial.title}
+          onClose={() => setVersionHistoryMaterial(null)}
+          onRollback={refetch}
+        />
+      )}
+      {analyticsViewMaterial && (
+        <VideoRetentionChart
+          materialId={analyticsViewMaterial.id}
+          materialTitle={analyticsViewMaterial.title}
+          onClose={() => setAnalyticsViewMaterial(null)}
         />
       )}
     </>

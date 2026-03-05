@@ -211,6 +211,33 @@ export class StorageService {
     return file.createReadStream();
   }
 
+  /**
+   * Download a file as a Buffer given its URL (local or GCS).
+   * Handles both local file paths and GCS-backed URLs.
+   */
+  async downloadBuffer(fileUrl: string): Promise<Buffer> {
+    // If the URL is a local storage URL, read the file directly
+    if (this.useLocal) {
+      // Extract bucket and filename from URL like .../storage/files/{bucket}/{filename}
+      const match = fileUrl.match(/\/storage\/files\/(public|private|trainers)\/(.+)/);
+      if (match) {
+        const [, bucket, filename] = match;
+        const filePath = path.join(this.localDir, bucket, filename);
+        if (fs.existsSync(filePath)) {
+          return fs.readFileSync(filePath);
+        }
+      }
+    }
+
+    // For GCS or external URLs, fetch via HTTP
+    const response = await fetch(fileUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.status}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
   // ── Private helpers ──
 
   private async uploadLocal(

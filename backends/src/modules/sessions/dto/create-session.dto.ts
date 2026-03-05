@@ -87,4 +87,8 @@ export class CreateSessionDto {
   @IsOptional()
   @IsUUID('4')
   parentSessionId?: string;
+
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  assignedStudents?: string[];
 }

@@ -5,6 +5,7 @@ import {
   IsIn,
   IsUUID,
   MaxLength,
+  IsBooleanString,
 } from 'class-validator';
 import { MATERIAL_TYPE, MaterialType } from '../../../database/schema';
 
@@ -26,4 +27,8 @@ export class UploadMaterialDto {
   @IsOptional()
   @IsUUID('4', { message: 'Module ID must be a valid UUID' })
   moduleId?: string;
+
+  @IsOptional()
+  @IsBooleanString({ message: 'autoTranscribe must be a boolean string' })
+  autoTranscribe?: string;
 }

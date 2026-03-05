@@ -246,9 +246,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   });
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
-  const [showDeleteCourse, setShowDeleteCourse] = useState(false);
-  const [statusChanging, setStatusChanging] = useState(false);
-  const [courseDeleting, setCourseDeleting] = useState(false);
+  const [submittingForReview, setSubmittingForReview] = useState(false);
   const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null);
 
   // Initialize settings form from course data
@@ -651,28 +649,24 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     }
   };
 
-  const handleChangeStatus = async (newStatus: string) => {
-    setStatusChanging(true);
+  const handleSubmitForReview = async () => {
+    setSubmittingForReview(true);
     try {
-      await instructorApi.updateCourse(courseId, { status: newStatus });
-      toast.success(t("courseDetail.statusUpdateSuccess"));
+      await instructorApi.submitForReview(courseId);
+      toast.success(t("courseDetail.submitForReviewSuccess"));
       refetch();
-    } catch {
-      toast.error(t("courseDetail.statusUpdateError"));
+    } catch (err: any) {
+      const parsed = (() => { try { return JSON.parse(err?.message || ""); } catch { return null; } })();
+      if (parsed?.pendingMaterials) {
+        toast.error(t("courseDetail.submitForReviewMaterialsError"), {
+          description: parsed.pendingMaterials.join(", "),
+          duration: 8000,
+        });
+      } else {
+        toast.error(err?.message || t("courseDetail.submitForReviewError"));
+      }
     } finally {
-      setStatusChanging(false);
-    }
-  };
-
-  const handleDeleteCourse = async () => {
-    setCourseDeleting(true);
-    try {
-      await instructorApi.deleteCourse(courseId);
-      toast.success(t("courseDetail.deleteSuccess"));
-      router.push(`/${locale}/dashboard/instructor/courses`);
-    } catch {
-      toast.error(t("courseDetail.deleteError"));
-      setCourseDeleting(false);
+      setSubmittingForReview(false);
     }
   };
 
@@ -1507,60 +1501,45 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           </div>
                         </div>
 
-                        {/* Status Management */}
+                        {/* Review Workflow */}
                         <div className="border-t border-[#E5E7EB] pt-6">
                           <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.statusManagement")}</h3>
                           <p className="text-sm text-[#6B7280] mb-4">
                             {t("courseDetail.currentStatus")}:{" "}
                             <span className="font-medium text-[#1F2937] capitalize">{t(`courses.status.${course.status}`)}</span>
                           </p>
-                          <div className="flex flex-wrap gap-3">
-                            {course.status === "draft" && (
-                              <button onClick={() => handleChangeStatus("active")} disabled={statusChanging} className="px-4 py-2 bg-[#22C55E] text-white text-sm font-medium rounded-lg hover:bg-[#16A34A] transition-colors disabled:opacity-50">
-                                {t("courseDetail.activateCourse")}
-                              </button>
-                            )}
-                            {course.status === "active" && (
-                              <button onClick={() => handleChangeStatus("completed")} disabled={statusChanging} className="px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors disabled:opacity-50">
-                                {t("courseDetail.completeCourse")}
-                              </button>
-                            )}
-                            {(course.status === "completed" || course.status === "active") && (
-                              <button onClick={() => handleChangeStatus("archived")} disabled={statusChanging} className="px-4 py-2 bg-[#6B7280] text-white text-sm font-medium rounded-lg hover:bg-[#4B5563] transition-colors disabled:opacity-50">
-                                {t("courseDetail.archiveCourse")}
-                              </button>
-                            )}
-                          </div>
-                        </div>
 
-                        {/* Danger Zone */}
-                        {course.status === "draft" && (
-                          <div className="border-t border-[#FEE2E2] pt-6">
-                            <h3 className="text-base font-semibold text-[#EF4444] mb-2 flex items-center gap-2">
-                              <AlertTriangle className="w-5 h-5" />
-                              {t("courseDetail.dangerZone")}
-                            </h3>
-                            <p className="text-sm text-[#6B7280] mb-4">{t("courseDetail.deleteWarning")}</p>
-                            {!showDeleteCourse ? (
-                              <button onClick={() => setShowDeleteCourse(true)} className="px-4 py-2 border border-[#EF4444] text-[#EF4444] text-sm font-medium rounded-lg hover:bg-[#FEF2F2] transition-colors">
-                                {t("courseDetail.deleteCourse")}
-                              </button>
-                            ) : (
-                              <div className="p-4 bg-[#FEF2F2] rounded-lg border border-[#FEE2E2]">
-                                <p className="text-sm font-medium text-[#EF4444] mb-3">{t("courseDetail.deleteConfirm")}</p>
-                                <div className="flex items-center gap-3">
-                                  <button onClick={handleDeleteCourse} disabled={courseDeleting} className="px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50">
-                                    <Trash2 className="w-4 h-4 inline mr-1" />
-                                    {courseDeleting ? t("courseDetail.deleting") : t("courseDetail.confirmDelete")}
-                                  </button>
-                                  <button onClick={() => setShowDeleteCourse(false)} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">
-                                    {t("courseDetail.cancel")}
-                                  </button>
+                          {/* Review note banner when changes requested */}
+                          {course.status === "changes_requested" && (course as any).reviewNote && (
+                            <div className="p-4 bg-[#FEF3C7] border border-[#F59E0B]/30 rounded-lg mb-4">
+                              <div className="flex items-start gap-2">
+                                <AlertTriangle className="w-5 h-5 text-[#D97706] mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm font-medium text-[#92400E]">{t("courseDetail.reviewNoteTitle")}</p>
+                                  <p className="text-sm text-[#92400E] mt-1">{(course as any).reviewNote}</p>
                                 </div>
                               </div>
-                            )}
-                          </div>
-                        )}
+                            </div>
+                          )}
+
+                          {/* Pending review info */}
+                          {course.status === "pending_review" && (
+                            <div className="p-4 bg-[#EEF2FF] border border-[#6366F1]/20 rounded-lg mb-4">
+                              <p className="text-sm text-[#4338CA]">{t("courseDetail.pendingReviewInfo")}</p>
+                            </div>
+                          )}
+
+                          {/* Submit for review button */}
+                          {(course.status === "draft" || course.status === "changes_requested") && (
+                            <button
+                              onClick={handleSubmitForReview}
+                              disabled={submittingForReview}
+                              className="px-4 py-2 bg-[#6366F1] text-white text-sm font-medium rounded-lg hover:bg-[#4F46E5] transition-colors disabled:opacity-50"
+                            >
+                              {submittingForReview ? t("courseDetail.submitting") : t("courseDetail.submitForReview")}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

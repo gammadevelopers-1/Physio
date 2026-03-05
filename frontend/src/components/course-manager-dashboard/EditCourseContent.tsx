@@ -50,6 +50,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [instructorId, setInstructorId] = useState("");
+  const [cohort, setCohort] = useState("");
 
   // Thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -77,6 +78,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setDeliveryType(courseData.deliveryType as "zoom" | "onsite" | "blended");
         setMaxEnrollment(courseData.maxEnrollment?.toString() || "");
         setInstructorId(courseData.instructorId);
+        setCohort(courseData.cohort || "");
         if (courseData.startDate) {
           setStartDate(courseData.startDate.split("T")[0]);
         }
@@ -153,6 +155,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (descriptionAr.trim()) payload.descriptionAr = descriptionAr.trim();
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
+      if (cohort.trim()) payload.cohort = cohort.trim();
 
       await courseManagerApi.updateCourse(courseId, payload);
       toast.success(t("editCourse.success"));
@@ -438,6 +441,23 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         min={1}
                         className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-cohort" className="block text-sm font-medium text-[#374151] mb-1">
+                        {t("createCourse.cohort")}
+                      </label>
+                      <input
+                        id="edit-cohort"
+                        type="text"
+                        value={cohort}
+                        onChange={(e) => setCohort(e.target.value)}
+                        placeholder={t("createCourse.cohortPlaceholder")}
+                        maxLength={100}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      />
+                      <p className="text-xs text-[#6B7280] mt-1">
+                        {t("createCourse.cohortHint")}
+                      </p>
                     </div>
                     <div>
                       <label htmlFor="edit-start-date" className="block text-sm font-medium text-[#374151] mb-1">

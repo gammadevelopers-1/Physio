@@ -939,4 +939,118 @@ export class CertificatesService {
 
     return request;
   }
+
+  // ─── Download Helpers ─────────────────────────────────────
+
+  /**
+   * Download a single certificate PDF.
+   * If certificateUrl exists, fetch from storage. Otherwise re-generate.
+   */
+  async downloadCertificate(
+    certId: string,
+    user: AuthenticatedUser,
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    const request = await this.findOne(certId, user);
+
+    if (request.status !== 'approved') {
+      throw new BadRequestException('Certificate is not approved');
+    }
+
+    let pdfUrl = request.certificateUrl;
+    if (!pdfUrl) {
+      // Re-generate
+      pdfUrl = await this.generatePlaceholderPdf(
+        request.id,
+        request.courseId,
+        request.studentId,
+      );
+      await db
+        .update(certificateRequests)
+        .set({ certificateUrl: pdfUrl })
+        .where(eq(certificateRequests.id, certId));
+    }
+
+    // Fetch the PDF from storage
+    const buffer = await this.storageService.downloadBuffer(pdfUrl);
+    const filename = `certificate-${certId.slice(0, 8)}.pdf`;
+    return { buffer, filename };
+  }
+
+  /**
+   * Batch download multiple certificates as a ZIP.
+   */
+  async batchDownloadCertificates(
+    ids: string[],
+    user: AuthenticatedUser,
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    // Dynamically import archiver
+    const archiver = (await import('archiver')).default;
+    const { PassThrough } = await import('stream');
+
+    const archive = archiver('zip', { zlib: { level: 5 } });
+    const chunks: Buffer[] = [];
+    const passthrough = new PassThrough();
+    passthrough.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    archive.pipe(passthrough);
+
+    for (const id of ids) {
+      try {
+        const { buffer, filename } = await this.downloadCertificate(id, user);
+        archive.append(buffer, { name: filename });
+      } catch (err) {
+        this.logger.warn(`Skipping cert ${id} in batch download: ${err}`);
+      }
+    }
+
+    await archive.finalize();
+
+    // Wait for all data to be collected
+    await new Promise<void>((resolve) => passthrough.on('end', resolve));
+
+    return {
+      buffer: Buffer.concat(chunks),
+      filename: `certificates-${new Date().toISOString().split('T')[0]}.zip`,
+    };
+  }
+
+  /**
+   * Student download — verifies the certificate belongs to the student
+   */
+  async downloadStudentCertificate(
+    certId: string,
+    studentId: string,
+  ): Promise<{ buffer: Buffer; filename: string }> {
+    const [request] = await db
+      .select()
+      .from(certificateRequests)
+      .where(
+        and(
+          eq(certificateRequests.id, certId),
+          eq(certificateRequests.studentId, studentId),
+          eq(certificateRequests.status, 'approved'),
+        ),
+      )
+      .limit(1);
+
+    if (!request) {
+      throw new NotFoundException('Certificate not found');
+    }
+
+    let pdfUrl = request.certificateUrl;
+    if (!pdfUrl) {
+      pdfUrl = await this.generatePlaceholderPdf(
+        request.id,
+        request.courseId,
+        request.studentId,
+      );
+      await db
+        .update(certificateRequests)
+        .set({ certificateUrl: pdfUrl })
+        .where(eq(certificateRequests.id, certId));
+    }
+
+    const buffer = await this.storageService.downloadBuffer(pdfUrl);
+    return { buffer, filename: `certificate-${certId.slice(0, 8)}.pdf` };
+  }
 }

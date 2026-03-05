@@ -39,6 +39,7 @@ export const submissions = pgTable(
     submittedAt: timestamp('submitted_at'),
     status: varchar('status', { length: 20 }).notNull().default('in_progress'),
     submissionFiles: jsonb('submission_files').$type<AssessmentFile[]>(),
+    questionOrder: jsonb('question_order').$type<string[]>(),
     instructorComment: text('instructor_comment'),
     questionComments: jsonb('question_comments').$type<Record<string, string>>(),
     createdAt: timestamp('created_at').defaultNow().notNull(),

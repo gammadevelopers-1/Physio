@@ -13,6 +13,13 @@ import {
 } from 'class-validator';
 import { DELIVERY_TYPE, DeliveryType } from '../../../database/schema';
 
+export class RequestChangesDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Review note is required' })
+  @MaxLength(1000, { message: 'Review note must not exceed 1000 characters' })
+  note: string;
+}
+
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
 
 export class CreateCourseDto {
@@ -85,4 +92,9 @@ export class CreateCourseDto {
   @IsOptional()
   @IsDateString({}, { message: 'End date must be a valid date string (YYYY-MM-DD)' })
   endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  cohort?: string;
 }

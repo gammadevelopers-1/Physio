@@ -91,6 +91,9 @@ const CourseManagerCourseDetailContent = ({
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [showRequestChanges, setShowRequestChanges] = useState(false);
+  const [requestChangesNote, setRequestChangesNote] = useState("");
+  const [requestingChanges, setRequestingChanges] = useState(false);
 
   // Module materials
   interface MaterialItem {
@@ -147,13 +150,11 @@ const CourseManagerCourseDetailContent = ({
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleActivate = async () => {
     if (!course) return;
     setUpdatingStatus(true);
     try {
-      const updated = await courseManagerApi.updateCourse(course.id, {
-        status: newStatus,
-      });
+      const updated = await courseManagerApi.activateCourse(course.id);
       setCourse(updated);
       toast.success(t("courseDetail.statusUpdated"));
     } catch (err) {
@@ -162,6 +163,40 @@ const CourseManagerCourseDetailContent = ({
       );
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!course) return;
+    setUpdatingStatus(true);
+    try {
+      const updated = await courseManagerApi.deactivateCourse(course.id);
+      setCourse(updated);
+      toast.success(t("courseDetail.statusUpdated"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("courseDetail.statusError")
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleRequestChanges = async () => {
+    if (!course || !requestChangesNote.trim()) return;
+    setRequestingChanges(true);
+    try {
+      const updated = await courseManagerApi.requestChanges(course.id, requestChangesNote.trim());
+      setCourse(updated);
+      setShowRequestChanges(false);
+      setRequestChangesNote("");
+      toast.success(t("courseDetail.changesRequested"));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("courseDetail.statusError")
+      );
+    } finally {
+      setRequestingChanges(false);
     }
   };
 
@@ -249,6 +284,18 @@ const CourseManagerCourseDetailContent = ({
         return (
           <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEF3C7] text-[#D97706]">
             {t("courseDetail.status.draft")}
+          </span>
+        );
+      case "pending_review":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#EEF2FF] text-[#6366F1]">
+            {t("courseDetail.status.pending_review")}
+          </span>
+        );
+      case "changes_requested":
+        return (
+          <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEF3C7] text-[#D97706]">
+            {t("courseDetail.status.changes_requested")}
           </span>
         );
       case "completed":
@@ -367,19 +414,29 @@ const CourseManagerCourseDetailContent = ({
 
                       {/* Action Buttons */}
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {course.status === "draft" && (
-                          <button
-                            onClick={() => handleStatusChange("active")}
-                            disabled={updatingStatus}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            {t("courseDetail.activate")}
-                          </button>
+                        {course.status === "pending_review" && (
+                          <>
+                            <button
+                              onClick={handleActivate}
+                              disabled={updatingStatus}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              {t("courseDetail.approve")}
+                            </button>
+                            <button
+                              onClick={() => setShowRequestChanges(true)}
+                              disabled={updatingStatus}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#F59E0B] text-[#D97706] text-sm font-medium rounded-lg hover:bg-[#FFFBEB] transition-colors disabled:opacity-50"
+                            >
+                              <AlertTriangle className="w-4 h-4" />
+                              {t("courseDetail.requestChanges")}
+                            </button>
+                          </>
                         )}
                         {course.status === "active" && (
                           <button
-                            onClick={() => handleStatusChange("archived")}
+                            onClick={handleDeactivate}
                             disabled={updatingStatus}
                             className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                           >
@@ -407,6 +464,27 @@ const CourseManagerCourseDetailContent = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Review note banner when changes_requested */}
+                {course.status === "changes_requested" && (course as any).reviewNote && (
+                  <div className="p-4 bg-[#FEF3C7] border border-[#F59E0B]/30 rounded-xl mb-6">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-5 h-5 text-[#D97706] mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-[#92400E]">{t("courseDetail.reviewNoteSent")}</p>
+                        <p className="text-sm text-[#92400E] mt-1">{(course as any).reviewNote}</p>
+                        <p className="text-xs text-[#B45309] mt-2">{t("courseDetail.waitingForInstructor")}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pending review info */}
+                {course.status === "pending_review" && (
+                  <div className="p-4 bg-[#EEF2FF] border border-[#6366F1]/20 rounded-xl mb-6">
+                    <p className="text-sm text-[#4338CA]">{t("courseDetail.pendingReviewInfo")}</p>
+                  </div>
+                )}
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -744,6 +822,52 @@ const CourseManagerCourseDetailContent = ({
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 {t("courseDetail.confirmDeleteBtn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Changes Modal */}
+      {showRequestChanges && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-[#D97706]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("courseDetail.requestChangesTitle")}
+                </h3>
+                <p className="text-xs text-[#6B7280]">
+                  {t("courseDetail.requestChangesDesc")}
+                </p>
+              </div>
+            </div>
+            <textarea
+              value={requestChangesNote}
+              onChange={(e) => setRequestChangesNote(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder={t("courseDetail.requestChangesPlaceholder")}
+              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none mb-1"
+            />
+            <p className="text-xs text-[#9CA3AF] mb-4 text-end">{requestChangesNote.length}/1000</p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => { setShowRequestChanges(false); setRequestChangesNote(""); }}
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+              >
+                {t("courseDetail.cancel")}
+              </button>
+              <button
+                onClick={handleRequestChanges}
+                disabled={requestingChanges || !requestChangesNote.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#D97706] rounded-lg hover:bg-[#B45309] disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {requestingChanges && <Loader2 className="w-4 h-4 animate-spin" />}
+                {t("courseDetail.requestChangesBtn")}
               </button>
             </div>
           </div>

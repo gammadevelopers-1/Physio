@@ -12,12 +12,9 @@ import {
 import {
   DELIVERY_TYPE,
   DeliveryType,
-  COURSE_STATUS,
-  CourseStatus,
 } from '../../../database/schema';
 
 const validDeliveryTypes = Object.values(DELIVERY_TYPE);
-const validStatuses = Object.values(COURSE_STATUS);
 
 export class UpdateCourseDto {
   @IsOptional()
@@ -44,13 +41,6 @@ export class UpdateCourseDto {
     message: `Delivery type must be one of: ${validDeliveryTypes.join(', ')}`,
   })
   deliveryType?: DeliveryType;
-
-  @IsOptional()
-  @IsString()
-  @IsIn(validStatuses, {
-    message: `Status must be one of: ${validStatuses.join(', ')}`,
-  })
-  status?: CourseStatus;
 
   @IsOptional()
   @IsString()
@@ -92,4 +82,9 @@ export class UpdateCourseDto {
   @IsOptional()
   @IsDateString({}, { message: 'End date must be a valid date string (YYYY-MM-DD)' })
   endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  cohort?: string;
 }

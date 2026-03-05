@@ -2,9 +2,10 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ilike, or, desc, asc, count, sql } from 'drizzle-orm';
+import { eq, and, ilike, or, desc, asc, count, sql, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -26,12 +27,18 @@ import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
 import { classifyCourse, getNelcMaxEnrollment } from './nelc-config';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class CoursesService {
   private readonly logger = new Logger(CoursesService.name);
 
-  constructor(private readonly auditService: NelcAuditService) {}
+  constructor(
+    private readonly auditService: NelcAuditService,
+    private readonly userNotificationsService: UserNotificationsService,
+    private readonly emailService: EmailService,
+  ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
@@ -76,6 +83,7 @@ export class CoursesService {
         language: dto.language,
         startDate: dto.startDate,
         endDate: dto.endDate,
+        cohort: dto.cohort,
       })
       .returning();
 
@@ -475,15 +483,26 @@ export class CoursesService {
 
   /**
    * Update a course.
-   * - Instructor: only their own.
-   * - Admin: any course.
+   * - Instructor: only their own, and only when status is draft or changes_requested.
+   * - Admin/Manager: any course, any status.
    */
   async update(
     courseId: string,
     user: AuthenticatedUser,
     dto: UpdateCourseDto,
   ) {
-    await this.verifyCourseAccess(courseId, user);
+    const existing = await this.verifyCourseAccess(courseId, user);
+
+    // Instructors can only edit courses in draft or changes_requested status
+    if (
+      !this.isAdmin(user) &&
+      existing.status !== COURSE_STATUS.DRAFT &&
+      existing.status !== COURSE_STATUS.CHANGES_REQUESTED
+    ) {
+      throw new ForbiddenException(
+        'You can only edit courses in draft or changes requested status',
+      );
+    }
 
     const { price, enrollmentDeadline, ...restDto } = dto;
     const updateData: Record<string, any> = {
@@ -507,12 +526,22 @@ export class CoursesService {
   }
 
   /**
-   * Delete a course — only draft courses.
-   * - Instructor: only their own drafts.
-   * - Admin: any draft course.
+   * Delete a course — only draft courses, only MANAGER/ADMIN.
    */
   async remove(courseId: string, user: AuthenticatedUser) {
-    const existing = await this.verifyCourseAccess(courseId, user);
+    if (!this.isAdmin(user)) {
+      throw new ForbiddenException('Only managers and admins can delete courses');
+    }
+
+    const [existing] = await db
+      .select({ id: courses.id, status: courses.status })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!existing) {
+      throw new NotFoundException('Course not found');
+    }
 
     if (existing.status !== COURSE_STATUS.DRAFT) {
       throw new BadRequestException(
@@ -523,6 +552,203 @@ export class CoursesService {
     await db.delete(courses).where(eq(courses.id, courseId));
 
     return { message: 'Course deleted successfully' };
+  }
+
+  // ─── Course Review Workflow ────────────────────────────────
+
+  /**
+   * Instructor submits a course for manager review.
+   */
+  async submitForReview(courseId: string, user: AuthenticatedUser) {
+    const [course] = await db
+      .select({
+        id: courses.id,
+        status: courses.status,
+        title: courses.title,
+        instructorId: courses.instructorId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    // Verify the user is the course's instructor
+    if (course.instructorId !== user.id && !this.isAdmin(user)) {
+      throw new ForbiddenException('You are not the instructor of this course');
+    }
+
+    if (
+      course.status !== COURSE_STATUS.DRAFT &&
+      course.status !== COURSE_STATUS.CHANGES_REQUESTED
+    ) {
+      throw new BadRequestException(
+        'Only draft or changes-requested courses can be submitted for review',
+      );
+    }
+
+    // Validate all materials are live or archived
+    const pendingMaterials = await db
+      .select({
+        id: courseMaterials.id,
+        title: courseMaterials.title,
+        status: courseMaterials.status,
+      })
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.courseId, courseId),
+          sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+        ),
+      );
+
+    if (pendingMaterials.length > 0) {
+      const pendingList = pendingMaterials.map(
+        (m) => `${m.title || m.id} (${m.status})`,
+      );
+      throw new BadRequestException({
+        message: 'Cannot submit for review: some materials have not been approved',
+        pendingMaterials: pendingList,
+      });
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set({
+        status: COURSE_STATUS.PENDING_REVIEW,
+        submittedAt: new Date(),
+        reviewNote: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Log NELC audit event
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.COURSE_SUBMITTED_FOR_REVIEW,
+      entityType: 'course',
+      entityId: courseId,
+      userId: user.id,
+      metadata: { courseTitle: course.title },
+    });
+
+    // Notify all managers (in-app + email)
+    const managers = await db
+      .select({ id: users.id, email: users.email, firstName: users.firstName })
+      .from(users)
+      .where(
+        sql`${users.activeRole} IN ('MANAGER', 'ADMIN', 'SUPER_ADMIN')`,
+      );
+
+    const managerIds = managers.map((m) => m.id);
+    if (managerIds.length > 0) {
+      const instructorName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+      await this.userNotificationsService.createBulk(managerIds, {
+        type: 'course_submitted_for_review',
+        title: 'Course Submitted for Review',
+        message: `${instructorName} submitted "${course.title}" for review.`,
+        link: '/dashboard/manager/courses',
+        entityType: 'course',
+        entityId: courseId,
+      });
+
+      // Email each manager
+      for (const mgr of managers) {
+        if (mgr.email) {
+          await this.emailService.sendContentPendingReview(mgr.email, {
+            recipientName: mgr.firstName || 'Manager',
+            materialTitle: course.title,
+            courseName: course.title,
+            instructorName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
+            wcagStatus: 'N/A',
+            wcagSummary: 'Course submitted for review',
+          }).catch(() => {});
+        }
+      }
+    }
+
+    this.logger.log(`Course "${course.title}" submitted for review by ${user.id}`);
+
+    return updated;
+  }
+
+  /**
+   * Manager requests changes on a course.
+   */
+  async requestChanges(courseId: string, user: AuthenticatedUser, note: string) {
+    const [course] = await db
+      .select({
+        id: courses.id,
+        status: courses.status,
+        title: courses.title,
+        instructorId: courses.instructorId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.status !== COURSE_STATUS.PENDING_REVIEW) {
+      throw new BadRequestException(
+        'Only courses pending review can have changes requested',
+      );
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set({
+        status: COURSE_STATUS.CHANGES_REQUESTED,
+        reviewNote: note,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Log NELC audit event
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.COURSE_CHANGES_REQUESTED,
+      entityType: 'course',
+      entityId: courseId,
+      userId: user.id,
+      metadata: { courseTitle: course.title, reviewNote: note },
+    });
+
+    // Notify instructor (in-app + email)
+    await this.userNotificationsService.create({
+      recipientId: course.instructorId,
+      type: 'course_changes_requested',
+      title: 'Changes Requested',
+      message: `Changes have been requested on your course "${course.title}": ${note}`,
+      link: '/dashboard/instructor/courses',
+      entityType: 'course',
+      entityId: courseId,
+    });
+
+    const [instructor] = await db
+      .select({ email: users.email, firstName: users.firstName })
+      .from(users)
+      .where(eq(users.id, course.instructorId))
+      .limit(1);
+    if (instructor?.email) {
+      await this.emailService.sendContentReview(instructor.email, {
+        recipientName: instructor.firstName || 'Instructor',
+        materialTitle: course.title,
+        courseName: course.title,
+        decision: 'changes_requested',
+        comment: note,
+      }).catch(() => {});
+    }
+
+    this.logger.log(`Changes requested on course "${course.title}" by ${user.id}: ${note}`);
+
+    return updated;
   }
 
   // ─── Module CRUD ────────────────────────────────────────────
@@ -678,12 +904,18 @@ export class CoursesService {
   // ─── Course Activation / Deactivation ──────────────────────
 
   /**
-   * Activate a course — validates all materials have been reviewed (status = 'live').
+   * Activate (approve) a course — validates all materials have been reviewed (status = 'live').
    * Only MANAGER and ADMIN can activate a course.
+   * Course must be in pending_review status.
    */
   async activate(courseId: string, user: AuthenticatedUser) {
     const [course] = await db
-      .select({ id: courses.id, status: courses.status, title: courses.title })
+      .select({
+        id: courses.id,
+        status: courses.status,
+        title: courses.title,
+        instructorId: courses.instructorId,
+      })
       .from(courses)
       .where(eq(courses.id, courseId))
       .limit(1);
@@ -696,9 +928,9 @@ export class CoursesService {
       throw new BadRequestException('Course is already active');
     }
 
-    if (course.status !== COURSE_STATUS.DRAFT) {
+    if (course.status !== COURSE_STATUS.PENDING_REVIEW) {
       throw new BadRequestException(
-        'Only draft courses can be activated',
+        'Only courses pending review can be activated',
       );
     }
 
@@ -729,7 +961,13 @@ export class CoursesService {
 
     const [updated] = await db
       .update(courses)
-      .set({ status: COURSE_STATUS.ACTIVE, updatedAt: new Date() })
+      .set({
+        status: COURSE_STATUS.ACTIVE,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        reviewNote: null,
+        updatedAt: new Date(),
+      })
       .where(eq(courses.id, courseId))
       .returning();
 
@@ -741,6 +979,33 @@ export class CoursesService {
       userId: user.id,
       metadata: { courseTitle: course.title },
     });
+
+    // Notify instructor: course approved
+    await this.userNotificationsService.create({
+      recipientId: course.instructorId,
+      type: 'course_approved',
+      title: 'Course Approved',
+      message: `Your course "${course.title}" has been approved and is now active.`,
+      link: '/dashboard/instructor/courses',
+      entityType: 'course',
+      entityId: courseId,
+    });
+
+    // Email instructor
+    const [instructor] = await db
+      .select({ email: users.email, firstName: users.firstName })
+      .from(users)
+      .where(eq(users.id, course.instructorId))
+      .limit(1);
+    if (instructor?.email) {
+      await this.emailService.sendContentReview(instructor.email, {
+        recipientName: instructor.firstName || 'Instructor',
+        materialTitle: course.title,
+        courseName: course.title,
+        decision: 'approved',
+        comment: null,
+      }).catch(() => {});
+    }
 
     this.logger.log(`Course "${course.title}" activated by ${user.id}`);
 

@@ -321,4 +321,47 @@ export class SessionsController {
     // Instructors: filter timeline but return full data
     return recordings.filter((r) => r.recordingType !== 'timeline');
   }
+
+  // ─── Share Materials (Feature 8) ──────────────────────
+
+  /**
+   * POST /sessions/:id/share-material — Share a material with a session
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post(':id/share-material')
+  @HttpCode(HttpStatus.OK)
+  async shareMaterial(
+    @Param('id') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { materialId: string },
+  ) {
+    return this.sessionsService.shareMaterial(sessionId, body.materialId, user);
+  }
+
+  /**
+   * DELETE /sessions/:id/share-material/:materialId — Unshare a material
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Delete(':id/share-material/:materialId')
+  async unshareMaterial(
+    @Param('id') sessionId: string,
+    @Param('materialId') materialId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.unshareMaterial(sessionId, materialId, user);
+  }
+
+  /**
+   * GET /sessions/:id/shared-materials — Get shared materials
+   */
+  @Roles(
+    'INSTRUCTOR' as UserRole,
+    'ADMIN' as UserRole,
+    'MANAGER' as UserRole,
+    'STUDENT' as UserRole,
+  )
+  @Get(':id/shared-materials')
+  async getSharedMaterials(@Param('id') sessionId: string) {
+    return this.sessionsService.getSharedMaterials(sessionId);
+  }
 }

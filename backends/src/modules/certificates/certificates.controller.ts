@@ -6,10 +6,12 @@ import {
   Body,
   Param,
   Query,
+  Res,
   UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CertificatesService } from './certificates.service';
 import { CreateCertificateRequestDto } from './dto/create-certificate-request.dto';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
@@ -76,6 +78,26 @@ export class CertificatesController {
   }
 
   /**
+   * POST /certificates/batch-download — Download multiple certificates as ZIP.
+   * Static route must come BEFORE parameterized :id route.
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post('certificates/batch-download')
+  @HttpCode(HttpStatus.OK)
+  async batchDownload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { ids: string[] },
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.certificatesService.batchDownloadCertificates(body.ids, user);
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+    res.send(buffer);
+  }
+
+  /**
    * GET /certificates/verify/:id — Public certificate verification endpoint.
    * No authentication required.
    */
@@ -83,6 +105,29 @@ export class CertificatesController {
   @Get('certificates/verify/:id')
   async verifyCertificate(@Param('id') id: string) {
     return this.certificatesService.verifyCertificate(id);
+  }
+
+  /**
+   * GET /certificates/:id/download — Download a single certificate PDF.
+   */
+  @Roles(
+    'INSTRUCTOR' as UserRole,
+    'ADMIN' as UserRole,
+    'MANAGER' as UserRole,
+    'STUDENT' as UserRole,
+  )
+  @Get('certificates/:id/download')
+  async download(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.certificatesService.downloadCertificate(id, user);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+    res.send(buffer);
   }
 
   /**

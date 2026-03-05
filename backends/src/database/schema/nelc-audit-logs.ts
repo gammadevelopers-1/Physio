@@ -49,6 +49,8 @@ export const NELC_EVENT_TYPE = {
   ZOOM_SYNC_COMPLETED: 'zoom_sync_completed',
   ZOOM_JOIN_LINK_GENERATED: 'zoom_join_link_generated',
   CERTIFICATE_REVOKED: 'certificate_revoked',
+  COURSE_SUBMITTED_FOR_REVIEW: 'course_submitted_for_review',
+  COURSE_CHANGES_REQUESTED: 'course_changes_requested',
   COURSE_ACTIVATED: 'course_activated',
   COURSE_DEACTIVATED: 'course_deactivated',
 } as const;

@@ -104,6 +104,10 @@ export default function VideoPlayer({
   const seekBarRef = useRef<HTMLDivElement>(null);
   const volumeBarRef = useRef<HTMLDivElement>(null);
 
+  // Watch event tracking refs
+  const watchEventsBufferRef = useRef<{ eventType: string; position: number; fromPosition?: number }[]>([]);
+  const watchEventsFlushRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // ── State ───────────────────────────────────────────────────
 
   // Playback
@@ -261,6 +265,41 @@ export default function VideoPlayer({
     };
   }, [courseId, moduleId, material.id]);
 
+  // ── Watch event tracking (heartbeat + flush every 10s) ────────
+
+  const flushWatchEvents = useCallback(() => {
+    const events = watchEventsBufferRef.current;
+    if (events.length === 0) return;
+    watchEventsBufferRef.current = [];
+    studentApi.recordWatchEvents(material.id, events).catch(() => {});
+  }, [material.id]);
+
+  const pushWatchEvent = useCallback((eventType: string, position: number, fromPosition?: number) => {
+    watchEventsBufferRef.current.push({
+      eventType,
+      position: Math.floor(position),
+      ...(fromPosition !== undefined ? { fromPosition: Math.floor(fromPosition) } : {}),
+    });
+  }, []);
+
+  useEffect(() => {
+    // Heartbeat: push a heartbeat event every 10s while playing, then flush
+    watchEventsFlushRef.current = setInterval(() => {
+      const video = videoRef.current;
+      if (video && !video.paused && video.duration > 0) {
+        pushWatchEvent("heartbeat", video.currentTime);
+      }
+      flushWatchEvents();
+    }, 10000);
+
+    return () => {
+      if (watchEventsFlushRef.current) clearInterval(watchEventsFlushRef.current);
+      // Flush remaining events on unmount
+      flushWatchEvents();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [material.id]);
+
   // ── Fullscreen change listener ──────────────────────────────
 
   useEffect(() => {
@@ -307,13 +346,17 @@ export default function VideoPlayer({
       autoAdvanceTimerRef.current = null;
     }
     showControlsTemporarily();
-  }, [showControlsTemporarily]);
+    const video = videoRef.current;
+    if (video) pushWatchEvent("play", video.currentTime);
+  }, [showControlsTemporarily, pushWatchEvent]);
 
   const handlePause = useCallback(() => {
     setIsPlaying(false);
     setShowControls(true);
     if (controlTimeoutRef.current) clearTimeout(controlTimeoutRef.current);
-  }, []);
+    const video = videoRef.current;
+    if (video) pushWatchEvent("pause", video.currentTime);
+  }, [pushWatchEvent]);
 
   const handleLoadedMetadata = useCallback(() => {
     const video = videoRef.current;
@@ -362,19 +405,29 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    if (video.currentTime > furthestWatchedSecond + 2) {
+    const seekTarget = video.currentTime;
+    if (seekTarget > furthestWatchedSecond + 2) {
       video.currentTime = furthestWatchedSecond;
       toast.warning(t("skipPrevented"));
     }
-  }, [furthestWatchedSecond, t]);
+    pushWatchEvent("seek", video.currentTime, seekTarget);
+  }, [furthestWatchedSecond, t, pushWatchEvent]);
 
-  const handleWaiting = useCallback(() => setIsWaiting(true), []);
+  const handleWaiting = useCallback(() => {
+    setIsWaiting(true);
+    const video = videoRef.current;
+    if (video) pushWatchEvent("buffer", video.currentTime);
+  }, [pushWatchEvent]);
   const handleCanPlay = useCallback(() => setIsWaiting(false), []);
 
   const handleEnded = useCallback(() => {
     setIsPlaying(false);
     setHasEnded(true);
     setShowControls(true);
+
+    // Record complete event
+    const videoEl = videoRef.current;
+    if (videoEl) pushWatchEvent("complete", videoEl.duration);
 
     // Save final progress
     const video = videoRef.current;
@@ -407,7 +460,7 @@ export default function VideoPlayer({
         });
       }, 1000);
     }
-  }, [courseId, moduleId, material.id, nextMaterialTitle, onNextMaterial]);
+  }, [courseId, moduleId, material.id, nextMaterialTitle, onNextMaterial, pushWatchEvent]);
 
   // ── Player control actions ──────────────────────────────────
 
@@ -737,6 +790,7 @@ export default function VideoPlayer({
           className="w-full h-full object-contain"
           preload="metadata"
           playsInline
+          crossOrigin="anonymous"
           onClick={togglePlayPause}
           onPlay={handlePlay}
           onPause={handlePause}
@@ -757,8 +811,9 @@ export default function VideoPlayer({
             <track
               kind="captions"
               src={material.captionsUrl}
+              srcLang="en"
               label="Captions"
-              default={captionsOn}
+              default
             />
           )}
         </video>

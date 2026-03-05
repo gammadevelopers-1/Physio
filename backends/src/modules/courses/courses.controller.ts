@@ -12,7 +12,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
-import { CreateCourseDto } from './dto/create-course.dto';
+import { CreateCourseDto, RequestChangesDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
@@ -136,6 +136,33 @@ export class CoursesController {
   }
 
   /**
+   * POST /courses/:id/submit-review — Instructor submits course for manager review
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/submit-review')
+  @HttpCode(HttpStatus.OK)
+  async submitForReview(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.submitForReview(courseId, user);
+  }
+
+  /**
+   * POST /courses/:id/request-changes — Manager requests changes on a course
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/request-changes')
+  @HttpCode(HttpStatus.OK)
+  async requestChanges(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: RequestChangesDto,
+  ) {
+    return this.coursesService.requestChanges(courseId, user, dto.note);
+  }
+
+  /**
    * PATCH /courses/:id/assign-instructor — Reassign instructor for a course
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
@@ -174,9 +201,9 @@ export class CoursesController {
   }
 
   /**
-   * DELETE /courses/:id — Delete a draft course
+   * DELETE /courses/:id — Delete a draft course (manager/admin only)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Delete(':id')
   async remove(
     @Param('id') id: string,

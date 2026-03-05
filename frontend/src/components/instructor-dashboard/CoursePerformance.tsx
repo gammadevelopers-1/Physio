@@ -214,65 +214,25 @@ const CoursePerformance = ({
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB] gap-3">
-        <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
-          {t("performance.title")}
-        </h2>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-          {/* Delivery Type Filter */}
-          <select
-            value={deliveryFilter}
-            onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="flex-1 sm:flex-none sm:min-w-[130px] px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
-          >
-            <option value="all">{t("performance.allDeliveryTypes")}</option>
-            <option value="zoom">{t("performance.zoom")}</option>
-            <option value="onsite">{t("performance.onsite")}</option>
-            <option value="blended">{t("performance.blended")}</option>
-          </select>
-
-          {/* Cohort Filter */}
-          {cohorts.length > 0 && (
-            <select
-              value={cohortFilter}
-              onChange={(e) => setCohortFilter(e.target.value)}
-              className="flex-1 sm:flex-none sm:min-w-[130px] px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
-            >
-              <option value="all">{t("performance.allCohorts")}</option>
-              {cohorts.map((cohort) => (
-                <option key={cohort} value={cohort}>{cohort}</option>
-              ))}
-            </select>
-          )}
-
-          {/* Course Filter Dropdown */}
-          <select
-            value={selectedCourse}
-            onChange={(e) => setSelectedCourse(e.target.value)}
-            className="flex-1 sm:flex-none sm:min-w-[160px] px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
-          >
-            {filteredCourses.map((course) => (
-              <option key={course.value} value={course.value}>
-                {course.label}
-              </option>
-            ))}
-          </select>
-
+      <div className="p-4 sm:p-5 border-b border-[#E5E7EB]">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
+            {t("performance.title")}
+          </h2>
           {/* Export Dropdown */}
           <div className="relative" ref={exportRef}>
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
               aria-label={tA("exportOptions")}
               aria-haspopup="true"
               aria-expanded={showExportDropdown}
             >
               <Download className="w-4 h-4" />
               {t("performance.export")}
-              <ChevronDown className={`w-4 h-4 transition-transform ${showExportDropdown ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showExportDropdown ? "rotate-180" : ""}`} />
             </button>
 
-            {/* Export Options Dropdown */}
             {showExportDropdown && (
               <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
                 <div className="py-1">
@@ -296,6 +256,44 @@ const CoursePerformance = ({
               </div>
             )}
           </div>
+        </div>
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={deliveryFilter}
+            onChange={(e) => setDeliveryFilter(e.target.value)}
+            className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+          >
+            <option value="all">{t("performance.allDeliveryTypes")}</option>
+            <option value="zoom">{t("performance.zoom")}</option>
+            <option value="onsite">{t("performance.onsite")}</option>
+            <option value="blended">{t("performance.blended")}</option>
+          </select>
+
+          {cohorts.length > 0 && (
+            <select
+              value={cohortFilter}
+              onChange={(e) => setCohortFilter(e.target.value)}
+              className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+            >
+              <option value="all">{t("performance.allCohorts")}</option>
+              {cohorts.map((cohort) => (
+                <option key={cohort} value={cohort}>{cohort}</option>
+              ))}
+            </select>
+          )}
+
+          <select
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+          >
+            {filteredCourses.map((course) => (
+              <option key={course.value} value={course.value}>
+                {course.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

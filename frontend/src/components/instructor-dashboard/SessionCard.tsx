@@ -165,7 +165,7 @@ const SessionCard = ({
             </button>
           )}
 
-          {isScheduled && (
+          {(isScheduled || isLive) && (
             <button
               onClick={onShare}
               className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors"

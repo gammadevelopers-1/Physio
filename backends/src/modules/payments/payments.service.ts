@@ -361,6 +361,16 @@ export class PaymentsService {
         return { redirect: 'success', paymentId: payment_id };
       }
 
+      if (status === 'failed') {
+        const errorCode = query.error_code || 'unknown';
+        await this.processPaymentFailure(
+          payment.id,
+          'Payment declined by gateway',
+          errorCode,
+        );
+        return { redirect: 'failed', paymentId: payment_id };
+      }
+
       return { redirect: 'processing', paymentId: payment_id };
     }
 

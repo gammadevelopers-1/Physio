@@ -15,7 +15,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { GatewayFactory } from './gateways/gateway.factory';
-import { MockGateway } from './gateways/mock.gateway';
+import { MockGateway, MockConfig } from './gateways/mock.gateway';
 import { InitiatePaymentDto } from './dto/initiate-payment.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -78,13 +78,34 @@ export class PaymentsController {
 
   @Post('dev/mock-state')
   @Public()
-  async setMockState(@Body() body: { outcome: 'success' | 'failure' | 'pending' }) {
+  async setMockState(
+    @Body()
+    body: {
+      outcome: 'success' | 'failure' | 'pending' | 'refunded';
+      errorCode?: string;
+      refundOutcome?: 'success' | 'failure';
+    },
+  ) {
     if (process.env.NODE_ENV === 'production') {
       throw new ForbiddenException('Not available in production');
     }
     const mock = this.gatewayFactory.getGateway('mock') as MockGateway;
-    mock.setOutcome(body.outcome);
-    return { outcome: body.outcome };
+    mock.configure({
+      outcome: body.outcome,
+      errorCode: body.errorCode,
+      refundOutcome: body.refundOutcome || 'success',
+    });
+    return mock.getConfig();
+  }
+
+  @Get('dev/mock-state')
+  @Public()
+  async getMockState() {
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('Not available in production');
+    }
+    const mock = this.gatewayFactory.getGateway('mock') as MockGateway;
+    return mock.getConfig();
   }
 
   @Get('my-payments')

@@ -72,6 +72,67 @@ export class FinanceService {
     }));
   }
 
+  async getRevenueTrend(
+    period: 'day' | 'week' | 'month' = 'day',
+    startDate?: string,
+    endDate?: string,
+  ): Promise<{ period: string; revenue: number; count: number }[]> {
+    const safePeriod = ['day', 'week', 'month'].includes(period) ? period : 'day';
+    const conditions: any[] = [eq(payments.status, 'paid' as any)];
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    conditions.push(...dateConditions);
+
+    const result = await db
+      .select({
+        period: sql<string>`date_trunc(${safePeriod}, ${payments.createdAt})::text`,
+        revenue: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(payments)
+      .where(and(...conditions))
+      .groupBy(sql`date_trunc(${safePeriod}, ${payments.createdAt})`)
+      .orderBy(sql`date_trunc(${safePeriod}, ${payments.createdAt})`);
+
+    return result.map((r) => ({
+      period: r.period,
+      revenue: Number(r.revenue),
+      count: Number(r.count),
+    }));
+  }
+
+  async getTopCourses(
+    limit: number = 5,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<{ courseId: string; title: string; titleAr: string | null; revenue: number; count: number }[]> {
+    const conditions: any[] = [eq(payments.status, 'paid' as any)];
+    const dateConditions = this.buildDateConditions(startDate, endDate);
+    conditions.push(...dateConditions);
+
+    const result = await db
+      .select({
+        courseId: payments.courseId,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        revenue: sql<string>`COALESCE(SUM(${payments.amount}::numeric), 0)`,
+        count: sql<number>`COUNT(*)::int`,
+      })
+      .from(payments)
+      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .where(and(...conditions))
+      .groupBy(payments.courseId, courses.title, courses.titleAr)
+      .orderBy(sql`SUM(${payments.amount}::numeric) DESC`)
+      .limit(Math.min(limit, 20));
+
+    return result.map((r) => ({
+      courseId: r.courseId,
+      title: r.title || 'Unknown Course',
+      titleAr: r.titleAr,
+      revenue: Number(r.revenue),
+      count: Number(r.count),
+    }));
+  }
+
   async getPaymentStatus(startDate?: string, endDate?: string) {
     const dateConditions = this.buildDateConditions(startDate, endDate);
     const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;

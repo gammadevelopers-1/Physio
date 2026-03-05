@@ -4818,6 +4818,13 @@
       "totalPending": "SAR {amount} pending",
       "thisMonth": "This month"
     },
+    "dateFilter": {
+      "today": "Today",
+      "7d": "7D",
+      "30d": "30D",
+      "3m": "3M",
+      "custom": "Custom"
+    },
     "revenueSummary": {
       "title": "Revenue Summary",
       "viewDetails": "View Details",
@@ -4831,7 +4838,13 @@
         "month": "30D",
         "quarter": "90D",
         "year": "1Y"
-      }
+      },
+      "aov": "AOV",
+      "vsPrevious": "vs prev. period",
+      "bnplSplit": "BNPL VS DIRECT",
+      "bnpl": "BNPL",
+      "direct": "Direct",
+      "noData": "No data for this period"
     },
     "paymentsTable": {
       "title": "Recent Payments & Invoices",

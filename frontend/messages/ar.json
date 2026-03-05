@@ -5033,6 +5033,13 @@
       "totalPending": "ر.س {amount} معلق",
       "thisMonth": "هذا الشهر"
     },
+    "dateFilter": {
+      "today": "اليوم",
+      "7d": "7 أيام",
+      "30d": "30 يوم",
+      "3m": "3 أشهر",
+      "custom": "مخصص"
+    },
     "revenueSummary": {
       "title": "ملخص الإيرادات",
       "viewDetails": "عرض التفاصيل",
@@ -5046,7 +5053,13 @@
         "month": "30 يوم",
         "quarter": "90 يوم",
         "year": "سنة"
-      }
+      },
+      "aov": "متوسط قيمة الطلب",
+      "vsPrevious": "مقارنة بالفترة السابقة",
+      "bnplSplit": "BNPL مقابل المباشر",
+      "bnpl": "BNPL",
+      "direct": "مباشر",
+      "noData": "لا توجد بيانات لهذه الفترة"
     },
     "paymentsTable": {
       "title": "المدفوعات والفواتير الأخيرة",

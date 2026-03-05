@@ -2128,20 +2128,53 @@ export const refundApi = {
 // ===========================================
 
 export const financeApi = {
-  getSummary: () =>
-    api.get<any>('/finance/summary'),
+  getSummary: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<any>(`/finance/summary${qs ? `?${qs}` : ''}`);
+  },
 
-  getRevenueBySource: () =>
-    api.get<any[]>('/finance/revenue-by-source'),
+  getRevenueBySource: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<any[]>(`/finance/revenue-by-source${qs ? `?${qs}` : ''}`);
+  },
 
   getPaymentStatus: () =>
     api.get<any[]>('/finance/payment-status'),
 
-  getRefundRate: () =>
-    api.get<any>('/finance/refund-rate'),
+  getRefundRate: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<any>(`/finance/refund-rate${qs ? `?${qs}` : ''}`);
+  },
 
   getInvoiceAging: () =>
     api.get<any>('/finance/invoice-aging'),
+
+  getRevenueTrend: (params?: { period?: 'day' | 'week' | 'month'; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.period) sp.set('period', params.period);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{ period: string; revenue: number; count: number }>>(`/finance/revenue-trend${qs ? `?${qs}` : ''}`);
+  },
+
+  getTopCourses: (params?: { limit?: number; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<Array<{ courseId: string; title: string; titleAr: string | null; revenue: number; count: number }>>(`/finance/top-courses${qs ? `?${qs}` : ''}`);
+  },
 
   exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string }) => {
     const token = getAccessToken();

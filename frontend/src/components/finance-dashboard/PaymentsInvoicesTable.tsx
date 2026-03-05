@@ -29,12 +29,22 @@ interface PaymentsInvoicesTableProps {
   transactions: Transaction[];
   showPagination?: boolean;
   showExport?: boolean;
+  currentPage?: number;
+  totalPages?: number;
+  totalCount?: number;
+  onPageChange?: (page: number) => void;
+  onExport?: () => void;
 }
 
 const PaymentsInvoicesTable = ({
   transactions,
   showPagination = true,
   showExport = true,
+  currentPage,
+  totalPages,
+  totalCount,
+  onPageChange,
+  onExport,
 }: PaymentsInvoicesTableProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
@@ -82,7 +92,10 @@ const PaymentsInvoicesTable = ({
           </h3>
         </div>
         {showExport && (
-          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium btn-gold text-white rounded-lg transition-colors">
+          <button
+            onClick={onExport}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium btn-gold text-white rounded-lg transition-colors"
+          >
             <Download className="w-4 h-4" />
             {t("paymentsTable.export")}
           </button>
@@ -260,18 +273,32 @@ const PaymentsInvoicesTable = ({
       {showPagination && (
         <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
           <p className="text-[13px] text-[#6B7280]">
-            {t("paymentsTable.pagination.showing", {
-              from: 1,
-              to: filteredTransactions.length,
-              total: filteredTransactions.length,
-            })}
+            {totalCount !== undefined && currentPage !== undefined
+              ? t("paymentsTable.pagination.showing", {
+                  from: totalCount === 0 ? 0 : (currentPage - 1) * transactions.length + 1,
+                  to: Math.min(currentPage * transactions.length, totalCount),
+                  total: totalCount,
+                })
+              : t("paymentsTable.pagination.showing", {
+                  from: filteredTransactions.length === 0 ? 0 : 1,
+                  to: filteredTransactions.length,
+                  total: filteredTransactions.length,
+                })}
           </p>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <button
+              onClick={() => onPageChange?.(Math.max(1, (currentPage ?? 1) - 1))}
+              disabled={!onPageChange || !currentPage || currentPage <= 1}
+              className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 disabled:cursor-default"
+            >
               <ChevronLeft className="w-4 h-4" />
               {t("paymentsTable.pagination.previous")}
             </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <button
+              onClick={() => onPageChange?.((currentPage ?? 1) + 1)}
+              disabled={!onPageChange || !currentPage || currentPage >= (totalPages ?? 1)}
+              className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 disabled:cursor-default"
+            >
               {t("paymentsTable.pagination.next")}
               <ChevronRight className="w-4 h-4" />
             </button>

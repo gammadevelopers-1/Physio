@@ -49,6 +49,28 @@ export class FinanceController {
     return this.financeService.getInvoiceAging();
   }
 
+  @Get('revenue-trend')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRevenueTrend(
+    @Query('period') period: string = 'day',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const safePeriod = (['day', 'week', 'month'].includes(period) ? period : 'day') as 'day' | 'week' | 'month';
+    return this.financeService.getRevenueTrend(safePeriod, startDate, endDate);
+  }
+
+  @Get('top-courses')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getTopCourses(
+    @Query('limit') limit: string = '5',
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 5, 1), 20);
+    return this.financeService.getTopCourses(safeLimit, startDate, endDate);
+  }
+
   @Get('export')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async exportPayments(

@@ -11,7 +11,6 @@ import {
   CheckCircle,
   XCircle,
   DollarSign,
-  Download,
   Loader2,
 } from "lucide-react";
 import { paymentApi, financeApi } from "@/lib/api";
@@ -124,15 +123,7 @@ const PaymentsContent = () => {
                     {t("paymentsPage.subtitle")}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => financeApi.exportCsv().catch(() => {})}
-                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    {t("paymentsPage.exportTransactions")}
-                  </button>
-                </div>
+                <div className="flex items-center gap-3"></div>
               </div>
 
               {/* Stats Cards */}
@@ -170,6 +161,11 @@ const PaymentsContent = () => {
                   transactions={transactions}
                   showPagination={true}
                   showExport={true}
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalCount={total}
+                  onPageChange={setPage}
+                  onExport={() => financeApi.exportCsv().catch(() => {})}
                 />
               )}
             </div>

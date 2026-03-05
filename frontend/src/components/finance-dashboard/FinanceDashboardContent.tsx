@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import FinanceSidebar from "./FinanceSidebar";
@@ -11,12 +11,22 @@ import RevenueSummaryWidget from "./RevenueSummaryWidget";
 import PaymentsInvoicesTable from "./PaymentsInvoicesTable";
 import RefundsQueueWidget from "./RefundsQueueWidget";
 import FinanceRightSidebar from "./FinanceRightSidebar";
+import DateRangeFilter from "./DateRangeFilter";
 import { financeApi, paymentApi, refundApi, discountApi } from "@/lib/api";
 import { useFinanceProfile } from "@/hooks/useFinanceProfile";
+
+function getDefaultDateRange() {
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 29);
+  return { startDate: start.toISOString().slice(0, 10), endDate: todayStr, label: "30d" };
+}
 
 const FinanceDashboardContent = () => {
   const t = useTranslations("financeDashboard");
   const profile = useFinanceProfile();
+  const [dateRange, setDateRange] = useState<{ startDate?: string; endDate?: string; label: string }>(getDefaultDateRange);
 
   const [kpiData, setKpiData] = useState({
     revenueMTD: 0,
@@ -44,17 +54,17 @@ const FinanceDashboardContent = () => {
   const [coupons, setCoupons] = useState<any[]>([]);
   const [pendingRefundCount, setPendingRefundCount] = useState(0);
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [summaryRes, revenueRes, paymentsRes, refundsRes, refundRateRes, discountsRes] = await Promise.allSettled([
-          financeApi.getSummary(),
-          financeApi.getRevenueBySource(),
-          paymentApi.getAll(1, 5),
-          refundApi.getAll(1, 3),
-          financeApi.getRefundRate(),
-          discountApi.getAll(1, 4),
-        ]);
+  const fetchAll = useCallback(async () => {
+    try {
+      const [summaryRes, revenueRes, paymentsRes, refundsRes, refundRateRes, discountsRes, topCoursesRes] = await Promise.allSettled([
+        financeApi.getSummary({ startDate: dateRange.startDate, endDate: dateRange.endDate }),
+        financeApi.getRevenueBySource({ startDate: dateRange.startDate, endDate: dateRange.endDate }),
+        paymentApi.getAll(1, 5),
+        refundApi.getAll(1, 3),
+        financeApi.getRefundRate({ startDate: dateRange.startDate, endDate: dateRange.endDate }),
+        discountApi.getAll(1, 4),
+        financeApi.getTopCourses({ limit: 5, startDate: dateRange.startDate, endDate: dateRange.endDate }),
+      ]);
 
         // KPI Data
         if (summaryRes.status === "fulfilled") {
@@ -93,14 +103,14 @@ const FinanceDashboardContent = () => {
             tabby: "bg-[#F59E0B]",
             mock: "bg-[#6B7280]",
           };
-          setRevenueData({
+          setRevenueData((prev) => ({
+            ...prev,
             gateways: sources.map((s: any) => ({
               name: s.gateway?.charAt(0).toUpperCase() + s.gateway?.slice(1) || "-",
               percentage: total > 0 ? Math.round((s.totalRevenue / total) * 100) : 0,
               color: gatewayColors[s.gateway] || "bg-[#6B7280]",
             })),
-            topCourses: [],
-          });
+          }));
         }
 
         // Recent transactions
@@ -169,6 +179,17 @@ const FinanceDashboardContent = () => {
         }
         setAlerts(alertsList);
 
+        // Top courses
+        if (topCoursesRes.status === "fulfilled") {
+          setRevenueData((prev) => ({
+            ...prev,
+            topCourses: (topCoursesRes.value || []).map((c: any) => ({
+              name: c.title || "-",
+              revenue: `${t("kpi.sar")} ${Number(c.revenue).toLocaleString()}`,
+            })),
+          }));
+        }
+
         // Coupons
         if (discountsRes.status === "fulfilled") {
           setCoupons(
@@ -182,13 +203,14 @@ const FinanceDashboardContent = () => {
             }))
           );
         }
-      } catch {
-        // Keep empty state on error
-      }
-    };
+    } catch {
+      // Keep empty state on error
+    }
+  }, [t, dateRange]);
 
+  useEffect(() => {
     fetchAll();
-  }, [t]);
+  }, [fetchAll]);
 
   // Refund action handlers
   const [rejectingRefundId, setRejectingRefundId] = useState<string | null>(null);
@@ -246,15 +268,18 @@ const FinanceDashboardContent = () => {
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               {/* Page Title */}
-              <div className="mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
-                  {t("title")}
-                </h1>
-                <p className="text-sm text-[var(--on-surface-variant)] mt-1">
-                  {t("subtitle", {
-                    name: profile.name.split(" ")[0],
-                  })}
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-6 gap-4">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
+                    {t("title")}
+                  </h1>
+                  <p className="text-sm text-[var(--on-surface-variant)] mt-1">
+                    {t("subtitle", {
+                      name: profile.name.split(" ")[0],
+                    })}
+                  </p>
+                </div>
+                <DateRangeFilter onChange={setDateRange} defaultPreset="30d" />
               </div>
 
               {/* KPI Cards */}
@@ -263,7 +288,11 @@ const FinanceDashboardContent = () => {
               {/* Revenue Summary + Refunds Queue */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
                 <div className="lg:col-span-3">
-                  <RevenueSummaryWidget data={revenueData} />
+                  <RevenueSummaryWidget
+                    data={revenueData}
+                    summaryData={{ totalRevenue: kpiData.revenueMTD, averageOrderValue: kpiData.avgOrderValue }}
+                    dateRange={dateRange}
+                  />
                 </div>
                 <div className="lg:col-span-2">
                   <RefundsQueueWidget refunds={refunds} onApprove={handleApproveRefund} onReject={handleRejectRefund} />

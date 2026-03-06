@@ -127,4 +127,14 @@ export class UserNotificationsService {
       );
     return { message: 'All notifications marked as read' };
   }
+
+  /**
+   * Delete all notifications for a user
+   */
+  async clearAll(userId: string) {
+    await db
+      .delete(userNotifications)
+      .where(eq(userNotifications.recipientId, userId));
+    return { message: 'All notifications cleared' };
+  }
 }

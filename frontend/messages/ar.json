@@ -1409,6 +1409,8 @@
       "noNotificationsTitle": "لا توجد إشعارات",
       "noNotificationsDescription": "أنت على اطلاع. ستظهر الإشعارات الجديدة هنا.",
       "refresh": "تحديث",
+      "markAllRead": "تعيين الكل كمقروء",
+      "clearAll": "مسح الكل",
       "courseAdded": "تمت إضافة دورة",
       "courseAddedMessage": "تمت إضافة دورة جديدة إلى مكتبتك."
     },
@@ -2431,6 +2433,7 @@
       },
       "thumbnail": "الصورة المصغرة",
       "changeThumbnail": "تغيير الصورة المصغرة",
+      "managerOnlyField": "فقط مدير الدورة يمكنه تغيير هذا",
       "uploading": "جاري الرفع...",
       "saveChanges": "حفظ التغييرات",
       "saving": "جاري الحفظ...",
@@ -2461,9 +2464,14 @@
       "submitForReviewError": "فشل في تقديم الدورة للمراجعة",
       "submitForReviewMaterialsError": "لا يمكن التقديم: بعض المحتوى لم تتم الموافقة عليه",
       "reviewNoteTitle": "ملاحظة المدير",
+      "changesRequestedNote": "تعديلات مطلوبة من المدير",
       "pendingReviewInfo": "دورتك قيد المراجعة حالياً من قبل مدير الدورات. سيتم إشعارك عند الرد.",
       "moduleMaterials": "المحتوى",
       "noModuleMaterials": "لا يوجد محتوى في هذه الوحدة",
+      "moduleAssessments": "التقييمات",
+      "marks": "درجات",
+      "submissions": "تسليمات",
+      "viewSubmissions": "تسليمات",
       "addMaterial": "إضافة محتوى",
       "addExisting": "إضافة محتوى موجود",
       "addExistingDescription": "اختر محتوى من مكتبتك لإضافته إلى هذه الوحدة.",
@@ -2881,6 +2889,10 @@
       "option": "خيار",
       "addOption": "إضافة خيار",
       "correctAnswer": "الإجابة الصحيحة",
+      "filesUploaded": "تم رفع ملفات الواجب",
+      "noFiles": "لم يتم رفع ملفات الواجب",
+      "dueDateSet": "تم تحديد تاريخ التسليم",
+      "noDueDate": "لم يتم تحديد تاريخ التسليم",
       "saving": "جارٍ الحفظ...",
       "noSubmissions": "لا توجد إجابات لهذا التقييم",
       "submissionsLoadError": "فشل في تحميل الإجابات",
@@ -3593,10 +3605,22 @@
       },
       "students": "طلاب",
       "sessions": "جلسات",
-      "changeStatus": "تغيير الحالة",
       "statusChanged": "تم تحديث حالة الدورة بنجاح",
       "statusFailed": "فشل في تحديث حالة الدورة",
       "activationFailed": "لا يمكن تفعيل الدورة: بعض المواد لم تتم مراجعتها بعد.",
+      "actions": {
+        "title": "الإجراءات",
+        "activate": "تفعيل",
+        "approve": "موافقة",
+        "requestChanges": "طلب تعديلات",
+        "requestChangesDesc": "قدم ملاحظات للمدرب حول ما يحتاج إلى تعديل.",
+        "requestChangesPlaceholder": "صف التعديلات المطلوبة...",
+        "complete": "إكمال الدورة",
+        "archive": "أرشفة",
+        "delete": "حذف",
+        "cancel": "إلغاء",
+        "send": "إرسال"
+      },
       "viewAnalytics": "عرض التحليلات",
       "courseSettings": "إعدادات الدورة"
     },
@@ -3756,7 +3780,9 @@
       "removeReasonPlaceholder": "أدخل سبب الإزالة...",
       "removeMaterialBtn": "إزالة المحتوى",
       "materialRemoved": "تم إزالة المحتوى بنجاح",
-      "materialRemoveError": "فشل في إزالة المحتوى"
+      "materialRemoveError": "فشل في إزالة المحتوى",
+      "moduleAssessments": "التقييمات",
+      "marks": "درجات"
     },
     "editCourse": {
       "title": "تعديل الدورة",
@@ -3976,6 +4002,8 @@
       "status": {
         "active": "نشط",
         "draft": "مسودة",
+        "published": "منشور",
+        "closed": "مغلق",
         "archived": "مؤرشف"
       },
       "table": {
@@ -6021,6 +6049,7 @@
   "notifications": {
     "title": "الإشعارات",
     "markAllRead": "تعيين الكل كمقروء",
+    "clearAll": "مسح الكل",
     "noNotifications": "لا توجد إشعارات بعد",
     "sessionStarted": "بدأت الجلسة",
     "sessionEnded": "انتهت الجلسة",

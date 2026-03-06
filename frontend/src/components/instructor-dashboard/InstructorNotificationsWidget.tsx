@@ -14,6 +14,8 @@ interface Notification {
 interface InstructorNotificationsWidgetProps {
   notifications: Notification[];
   onRefresh?: () => void;
+  onMarkAllRead?: () => void;
+  onClearAll?: () => void;
 }
 
 function formatRelativeDate(isoString: string): string {
@@ -39,20 +41,46 @@ function formatRelativeDate(isoString: string): string {
 const InstructorNotificationsWidget = ({
   notifications,
   onRefresh,
+  onMarkAllRead,
+  onClearAll,
 }: InstructorNotificationsWidgetProps) => {
   const t = useTranslations("instructorDashboard");
   const tA = useTranslations("accessibility");
 
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1F2937]">
-          {t("notifications.title")}
-        </h3>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-semibold text-[#1F2937]">
+            {t("notifications.title")}
+          </h3>
+          {unreadCount > 0 && (
+            <span className="text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-full">
+              {unreadCount}
+            </span>
+          )}
+        </div>
         {notifications.length > 0 && (
-          <span className="text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-full">
-            {notifications.filter((n) => !n.read).length || ""}
-          </span>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && onMarkAllRead && (
+              <button
+                onClick={onMarkAllRead}
+                className="text-[11px] text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+              >
+                {t("notifications.markAllRead")}
+              </button>
+            )}
+            {onClearAll && (
+              <button
+                onClick={onClearAll}
+                className="text-[11px] text-[#6B7280] hover:text-[#EF4444] font-medium transition-colors"
+              >
+                {t("notifications.clearAll")}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -76,7 +104,7 @@ const InstructorNotificationsWidget = ({
           </button>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="max-h-[400px] overflow-y-auto space-y-2 scrollbar-thin">
           {notifications.map((notification) => (
             <div
               key={notification.id}

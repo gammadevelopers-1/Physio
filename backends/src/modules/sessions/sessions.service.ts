@@ -92,7 +92,12 @@ export class SessionsService {
     if (this.isAdmin(user)) {
       // Admin: verify course exists (any course)
       const [course] = await db
-        .select({ id: courses.id, instructorId: courses.instructorId })
+        .select({
+          id: courses.id,
+          instructorId: courses.instructorId,
+          startDate: courses.startDate,
+          endDate: courses.endDate,
+        })
         .from(courses)
         .where(eq(courses.id, dto.courseId))
         .limit(1);
@@ -100,6 +105,9 @@ export class SessionsService {
       if (!course) {
         throw new NotFoundException('Course not found');
       }
+
+      // Validate session date is within course date range
+      this.validateSessionDateRange(dto.scheduledAt, course.startDate, course.endDate);
 
       const instructorId = dto.instructorId || course.instructorId;
 
@@ -147,7 +155,11 @@ export class SessionsService {
 
     // Instructor: verify course belongs to them
     const [course] = await db
-      .select({ id: courses.id })
+      .select({
+        id: courses.id,
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+      })
       .from(courses)
       .where(
         and(
@@ -160,6 +172,9 @@ export class SessionsService {
     if (!course) {
       throw new NotFoundException('Course not found');
     }
+
+    // Validate session date is within course date range
+    this.validateSessionDateRange(dto.scheduledAt, course.startDate, course.endDate);
 
     const [session] = await db
       .insert(sessions)
@@ -1069,6 +1084,37 @@ export class SessionsService {
   }
 
   // ─── Helpers ────────────────────────────────────────────────
+
+  /**
+   * Validate that a session date falls within the course date range.
+   */
+  private validateSessionDateRange(
+    scheduledAt: string,
+    courseStartDate: string | null,
+    courseEndDate: string | null,
+  ) {
+    const sessionDate = new Date(scheduledAt);
+    if (courseStartDate) {
+      const start = new Date(courseStartDate);
+      start.setHours(0, 0, 0, 0);
+      const sessionDay = new Date(sessionDate);
+      sessionDay.setHours(0, 0, 0, 0);
+      if (sessionDay < start) {
+        throw new BadRequestException(
+          `Session date cannot be before the course start date (${courseStartDate})`,
+        );
+      }
+    }
+    if (courseEndDate) {
+      const end = new Date(courseEndDate);
+      end.setHours(23, 59, 59, 999);
+      if (sessionDate > end) {
+        throw new BadRequestException(
+          `Session date cannot be after the course end date (${courseEndDate})`,
+        );
+      }
+    }
+  }
 
   /**
    * Verify the user can access the session.

@@ -15,31 +15,39 @@ export function transformToKPIData(summary: DashboardSummaryResponse) {
 // ─── Today's Sessions → Session Cards ──────────────────────
 
 export function transformToSessionCards(sessions: DashboardSession[]) {
-  return sessions.map((s) => {
-    const scheduledDate = new Date(s.scheduledAt);
-    const endDate = new Date(
-      scheduledDate.getTime() + s.durationMinutes * 60 * 1000
-    );
+  const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
 
-    const formatTime = (d: Date) =>
-      d.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+  return sessions
+    .filter((s) => {
+      // Only include sessions actually scheduled for today
+      const sessionDate = new Date(s.scheduledAt).toLocaleDateString("en-CA");
+      return sessionDate === todayStr;
+    })
+    .map((s) => {
+      const scheduledDate = new Date(s.scheduledAt);
+      const endDate = new Date(
+        scheduledDate.getTime() + s.durationMinutes * 60 * 1000
+      );
 
-    return {
-      id: s.id,
-      title: s.title,
-      thumbnail: s.courseThumbnail || "/student_dashboard/courses/image 473.svg",
-      type: s.type as "zoom" | "onsite" | "hybrid",
-      status: s.status as "scheduled" | "live" | "completed" | "cancelled",
-      location: s.roomName || s.venueAddress || undefined,
-      enrolled: s.enrolledCount,
-      zoomLink: s.zoomLink || undefined,
-      time: `${formatTime(scheduledDate)} - ${formatTime(endDate)}`,
-    };
-  });
+      const formatTime = (d: Date) =>
+        d.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+      return {
+        id: s.id,
+        title: s.title,
+        thumbnail: s.courseThumbnail || "/student_dashboard/courses/image 473.svg",
+        type: s.type as "zoom" | "onsite" | "hybrid",
+        status: s.status as "scheduled" | "live" | "completed" | "cancelled",
+        location: s.roomName || s.venueAddress || undefined,
+        enrolled: s.enrolledCount,
+        zoomLink: s.zoomLink || undefined,
+        time: `${formatTime(scheduledDate)} - ${formatTime(endDate)}`,
+      };
+    });
 }
 
 // ─── Sessions → Calendar Sessions Widget ───────────────────
@@ -67,8 +75,8 @@ export function transformToCalendarSessions(sessions: DashboardSession[]) {
       status: s.status as "scheduled" | "live" | "completed" | "cancelled",
       venue: s.roomName || s.venueAddress || undefined,
       enrolled: s.enrolledCount,
-      dayIndex: scheduledDate.getDay(), // 0 = Sunday
-      date: scheduledDate.toISOString().split("T")[0], // YYYY-MM-DD
+      dayIndex: scheduledDate.getDay(), // 0 = Sunday (local timezone)
+      date: scheduledDate.toLocaleDateString("en-CA"), // YYYY-MM-DD in local timezone
     };
   });
 }

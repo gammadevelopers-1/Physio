@@ -31,6 +31,8 @@ import {
   FileText,
   Archive,
   Play,
+  Trash2,
+  MessageSquare,
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
@@ -55,8 +57,6 @@ const CourseCardSkeleton = () => (
     </div>
   </div>
 );
-
-const COURSE_STATUSES = ["active", "draft", "pending_review", "changes_requested", "completed", "archived"] as const;
 
 const statusIcons: Record<string, React.ReactNode> = {
   active: <Play className="w-3.5 h-3.5" />,
@@ -101,19 +101,23 @@ const CoursesContent = () => {
     limit: 50,
   });
 
-  const handleStatusChange = useCallback(
-    async (courseId: string, newStatus: string, currentStatus: string) => {
+  const [requestChangesId, setRequestChangesId] = useState<string | null>(null);
+  const [requestChangesNote, setRequestChangesNote] = useState("");
+  const [requestingChanges, setRequestingChanges] = useState(false);
+
+  const handleAction = useCallback(
+    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete") => {
       setOpenDropdown(null);
       setStatusLoading(courseId);
       try {
-        if (newStatus === "active" && currentStatus === "pending_review") {
-          // Approve: activate from pending_review
+        if (action === "activate" || action === "approve") {
           await courseManagerApi.activateCourse(courseId);
-        } else if (newStatus === "archived" && currentStatus === "active") {
-          // Use dedicated deactivate endpoint with NELC audit
+        } else if (action === "archive") {
           await courseManagerApi.deactivateCourse(courseId);
-        } else {
-          await courseManagerApi.updateCourse(courseId, { status: newStatus });
+        } else if (action === "complete") {
+          await courseManagerApi.completeCourse(courseId);
+        } else if (action === "delete") {
+          await courseManagerApi.deleteCourse(courseId);
         }
         toast.success(t("coursesPage.statusChanged"));
         refetch();
@@ -123,6 +127,11 @@ const CoursesContent = () => {
           if (parsed?.pendingMaterials) {
             toast.error(t("coursesPage.activationFailed"), {
               description: parsed.pendingMaterials.join(", "),
+              duration: 8000,
+            });
+          } else if (parsed?.outOfRangeSessions) {
+            toast.error(parsed.message, {
+              description: parsed.outOfRangeSessions.join(", "),
               duration: 8000,
             });
           } else {
@@ -136,6 +145,29 @@ const CoursesContent = () => {
       }
     },
     [t, refetch]
+  );
+
+  const handleRequestChanges = useCallback(
+    async (courseId: string) => {
+      if (!requestChangesNote.trim()) return;
+      setRequestingChanges(true);
+      try {
+        await courseManagerApi.requestChanges(courseId, requestChangesNote.trim());
+        toast.success(t("coursesPage.statusChanged"));
+        setRequestChangesId(null);
+        setRequestChangesNote("");
+        refetch();
+      } catch (err) {
+        if (err instanceof ApiError) {
+          toast.error(err.message);
+        } else {
+          toast.error(t("coursesPage.statusFailed"));
+        }
+      } finally {
+        setRequestingChanges(false);
+      }
+    },
+    [requestChangesNote, t, refetch]
   );
 
   const activeCourses = courses.filter((c) => c.status === "active").length;
@@ -368,7 +400,7 @@ const CoursesContent = () => {
                     return (
                       <div
                         key={course.id}
-                        className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow"
+                        className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
                       >
                         <div className="relative h-36">
                           <Image
@@ -391,7 +423,8 @@ const CoursesContent = () => {
                               )}
                             </span>
                           </div>
-                          {/* Status dropdown trigger */}
+                          {/* Context-aware action dropdown */}
+                          {(course.status === "draft" || course.status === "pending_review" || course.status === "active" || course.status === "completed") && (
                           <div className="absolute top-3 right-3" ref={openDropdown === course.id ? dropdownRef : undefined}>
                             <button
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
@@ -409,27 +442,99 @@ const CoursesContent = () => {
                             </button>
 
                             {openDropdown === course.id && (
-                              <div className="absolute end-0 top-full mt-1 w-44 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20" role="menu">
+                              <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20" role="menu">
                                 <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
-                                  {t("coursesPage.changeStatus")}
+                                  {t("coursesPage.actions.title")}
                                 </p>
-                                {COURSE_STATUSES.filter((s) => s !== course.status).map((status) => (
+
+                                {/* Draft: Activate + Delete */}
+                                {course.status === "draft" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "activate")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#22C55E] hover:bg-[#F0FDF4] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Play className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.activate")}
+                                    </button>
+                                    <button
+                                      onClick={() => handleAction(course.id, "delete")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#EF4444] hover:bg-[#FEF2F2] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.delete")}
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Pending Review: Approve + Request Changes */}
+                                {course.status === "pending_review" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "approve")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#22C55E] hover:bg-[#F0FDF4] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.approve")}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setOpenDropdown(null);
+                                        setRequestChangesId(course.id);
+                                        setRequestChangesNote("");
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D97706] hover:bg-[#FFFBEB] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.requestChanges")}
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Active: Complete + Archive */}
+                                {course.status === "active" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "complete")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <CheckCircle className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.complete")}
+                                    </button>
+                                    <button
+                                      onClick={() => handleAction(course.id, "archive")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D97706] hover:bg-[#FFFBEB] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Archive className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.archive")}
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Completed: Archive */}
+                                {course.status === "completed" && (
                                   <button
-                                    key={status}
-                                    onClick={() => handleStatusChange(course.id, status, course.status)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                                    onClick={() => handleAction(course.id, "archive")}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D97706] hover:bg-[#FFFBEB] transition-colors"
                                     role="menuitem"
                                   >
-                                    {statusIcons[status]}
-                                    {t(`coursesPage.status.${status}`)}
+                                    <Archive className="w-3.5 h-3.5" />
+                                    {t("coursesPage.actions.archive")}
                                   </button>
-                                ))}
+                                )}
                               </div>
                             )}
                           </div>
+                          )}
                         </div>
 
-                        <div className="p-4">
+                        <div className="p-4 flex flex-col flex-1">
                           <h3 className="text-base font-semibold text-[#1F2937] mb-1 line-clamp-1">
                             {courseTitle}
                           </h3>
@@ -475,7 +580,7 @@ const CoursesContent = () => {
                             </div>
                           )}
 
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 mt-auto">
                             <Link
                               href={`/${locale}/dashboard/manager/courses/${course.id}`}
                               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
@@ -502,6 +607,45 @@ const CoursesContent = () => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Request Changes Modal */}
+              {requestChangesId && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                    <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                      {t("coursesPage.actions.requestChanges")}
+                    </h3>
+                    <p className="text-sm text-[#6B7280] mb-4">
+                      {t("coursesPage.actions.requestChangesDesc")}
+                    </p>
+                    <textarea
+                      value={requestChangesNote}
+                      onChange={(e) => setRequestChangesNote(e.target.value)}
+                      placeholder={t("coursesPage.actions.requestChangesPlaceholder")}
+                      className="w-full border border-[#E5E7EB] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[100px] resize-none"
+                    />
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button
+                        onClick={() => {
+                          setRequestChangesId(null);
+                          setRequestChangesNote("");
+                        }}
+                        className="px-4 py-2 text-sm text-[#6B7280] hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                      >
+                        {t("coursesPage.actions.cancel")}
+                      </button>
+                      <button
+                        onClick={() => handleRequestChanges(requestChangesId)}
+                        disabled={!requestChangesNote.trim() || requestingChanges}
+                        className="px-4 py-2 text-sm text-white bg-[#D97706] hover:bg-[#B45309] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {requestingChanges && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        {t("coursesPage.actions.send")}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

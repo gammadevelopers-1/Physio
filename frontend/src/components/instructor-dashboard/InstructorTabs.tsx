@@ -426,7 +426,15 @@ const InstructorTabs = ({
 
             {/* File Table */}
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
+                <colgroup>
+                  <col className="w-[35%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[15%]" />
+                </colgroup>
                 <thead>
                   <tr className="text-left">
                     <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
@@ -462,13 +470,13 @@ const InstructorTabs = ({
                         className="border-t border-[#F3F4F6] hover:bg-[#F9FAFB]"
                       >
                         {/* File Name */}
-                        <td className="py-3.5">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${getFileTypeStyle(file.type)}`}>
+                        <td className="py-3.5 overflow-hidden">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${getFileTypeStyle(file.type)}`}>
                               {getFileIcon(file.type)}
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-[#1F2937]">{file.name}</p>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-[#1F2937] truncate">{file.name}</p>
                               {file.size && (
                                 <p className="text-xs text-[#9CA3AF]">{file.size}</p>
                               )}
@@ -476,32 +484,30 @@ const InstructorTabs = ({
                           </div>
                         </td>
                         {/* Type */}
-                        <td className="py-3.5">
+                        <td className="py-3.5 overflow-hidden">
                           <span className={`inline-flex px-2 py-1 rounded text-xs font-medium capitalize ${getFileTypeStyle(file.type)}`}>
                             {file.type}
                           </span>
                         </td>
                         {/* Version */}
-                        <td className="py-3.5 text-sm text-[#374151]">
+                        <td className="py-3.5 text-sm text-[#374151] overflow-hidden">
                           {file.version}
                         </td>
                         {/* Status */}
-                        <td className="py-3.5">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                        <td className="py-3.5 overflow-hidden">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium whitespace-nowrap ${statusStyle.bg} ${statusStyle.text}`}>
                             <StatusIcon className="w-3 h-3" />
                             {file.status === "pending_review" ? t("content.statusPendingReview") : t(`content.status${file.status.charAt(0).toUpperCase() + file.status.slice(1)}`)}
                           </span>
                         </td>
                         {/* WCAG Compliance */}
-                        <td className="py-3.5">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`w-7 h-7 rounded-full flex items-center justify-center ${wcagStyle.bg} ${wcagStyle.text}`}
-                              title={wcagStyle.label}
-                            >
-                              <WcagIcon className="w-4 h-4" />
-                            </span>
-                          </div>
+                        <td className="py-3.5 overflow-hidden">
+                          <span
+                            className={`w-7 h-7 rounded-full flex items-center justify-center ${wcagStyle.bg} ${wcagStyle.text}`}
+                            title={wcagStyle.label}
+                          >
+                            <WcagIcon className="w-4 h-4" />
+                          </span>
                         </td>
                         {/* Actions Dropdown */}
                         <td className="py-3.5">

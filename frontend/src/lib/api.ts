@@ -1627,6 +1627,10 @@ export const courseManagerApi = {
   deactivateCourse: (courseId: string) =>
     api.post<CourseDetailResponse>(`/courses/${courseId}/deactivate`, {}),
 
+  // Mark active course as completed
+  completeCourse: (courseId: string) =>
+    api.post<CourseDetailResponse>(`/courses/${courseId}/complete`, {}),
+
   // Request changes on a course (sends back to instructor)
   requestChanges: (courseId: string, note: string) =>
     api.post<CourseDetailResponse>(`/courses/${courseId}/request-changes`, { note }),
@@ -1997,6 +2001,9 @@ export const userNotificationsApi = {
 
   markAllAsRead: () =>
     api.patch<{ message: string }>('/user-notifications/read-all'),
+
+  clearAll: () =>
+    api.delete<{ message: string }>('/user-notifications/clear-all'),
 };
 
 // ===========================================

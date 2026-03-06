@@ -1197,6 +1197,8 @@
       "noNotificationsTitle": "No Notifications",
       "noNotificationsDescription": "You're all caught up. New notifications will appear here.",
       "refresh": "Refresh",
+      "markAllRead": "Mark all read",
+      "clearAll": "Clear all",
       "courseAdded": "Course Added",
       "courseAddedMessage": "New course added to your library."
     },
@@ -2216,6 +2218,7 @@
       },
       "thumbnail": "Thumbnail",
       "changeThumbnail": "Change Thumbnail",
+      "managerOnlyField": "Only the course manager can change this",
       "uploading": "Uploading...",
       "saveChanges": "Save Changes",
       "saving": "Saving...",
@@ -2246,9 +2249,14 @@
       "submitForReviewError": "Failed to submit course for review",
       "submitForReviewMaterialsError": "Cannot submit: some materials have not been approved",
       "reviewNoteTitle": "Manager's Review Note",
+      "changesRequestedNote": "Changes Requested by Manager",
       "pendingReviewInfo": "Your course is currently under review by the course manager. You will be notified when they respond.",
       "moduleMaterials": "Materials",
       "noModuleMaterials": "No materials in this module",
+      "moduleAssessments": "Assessments",
+      "marks": "marks",
+      "submissions": "submissions",
+      "viewSubmissions": "submissions",
       "addMaterial": "Add Material",
       "addExisting": "Add Existing Materials",
       "addExistingDescription": "Select materials from your content library to add to this module.",
@@ -2697,6 +2705,10 @@
       "option": "Option",
       "addOption": "Add Option",
       "correctAnswer": "Correct Answer",
+      "filesUploaded": "Assignment files uploaded",
+      "noFiles": "No assignment files uploaded",
+      "dueDateSet": "Due date set",
+      "noDueDate": "No due date set",
       "saving": "Saving...",
       "noSubmissions": "No submissions found for this assessment",
       "submissionsLoadError": "Failed to load submissions",
@@ -3409,10 +3421,22 @@
       },
       "students": "students",
       "sessions": "sessions",
-      "changeStatus": "Change Status",
       "statusChanged": "Course status updated successfully",
       "statusFailed": "Failed to update course status",
       "activationFailed": "Cannot activate course: some materials have not been reviewed yet.",
+      "actions": {
+        "title": "Actions",
+        "activate": "Activate",
+        "approve": "Approve",
+        "requestChanges": "Request Changes",
+        "requestChangesDesc": "Provide feedback to the instructor about what needs to be changed.",
+        "requestChangesPlaceholder": "Describe the changes needed...",
+        "complete": "Mark Complete",
+        "archive": "Archive",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "send": "Send"
+      },
       "viewAnalytics": "View Analytics",
       "courseSettings": "Course Settings"
     },
@@ -3549,7 +3573,9 @@
       "removeReasonPlaceholder": "Enter a reason for removal...",
       "removeMaterialBtn": "Remove Material",
       "materialRemoved": "Material removed successfully",
-      "materialRemoveError": "Failed to remove material"
+      "materialRemoveError": "Failed to remove material",
+      "moduleAssessments": "Assessments",
+      "marks": "marks"
     },
     "editCourse": {
       "title": "Edit Course",
@@ -3767,6 +3793,8 @@
       "status": {
         "active": "Active",
         "draft": "Draft",
+        "published": "Published",
+        "closed": "Closed",
         "archived": "Archived"
       },
       "table": {
@@ -5803,6 +5831,7 @@
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all as read",
+    "clearAll": "Clear all",
     "noNotifications": "No notifications yet",
     "sessionStarted": "Session Started",
     "sessionEnded": "Session Ended",

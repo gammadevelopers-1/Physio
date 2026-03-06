@@ -86,8 +86,6 @@ const CreateAssessmentModal = ({
   const [instructions, setInstructions] = useState("");
   const [moduleId, setModuleId] = useState("");
   const [courseModules, setCourseModules] = useState<{ id: string; title: string }[]>([]);
-  const [randomizeOrder, setRandomizeOrder] = useState(false);
-  const [questionsPerAttempt, setQuestionsPerAttempt] = useState("");
   const [saving, setSaving] = useState(false);
   const isAssignment = type === "assignment";
 
@@ -126,8 +124,7 @@ const CreateAssessmentModal = ({
         dueDate: isAssignment && dueDate ? dueDate + ":00+03:00" : undefined,
         instructions: isAssignment && instructions ? instructions : undefined,
         moduleId: moduleId || undefined,
-        randomizeOrder: randomizeOrder || undefined,
-        questionsPerAttempt: questionsPerAttempt ? Number(questionsPerAttempt) : undefined,
+        randomizeOrder: !isAssignment ? true : undefined,
       });
       toast.success(t("assessments.createSuccess"));
       onCreated();
@@ -284,40 +281,6 @@ const CreateAssessmentModal = ({
               />
             </div>
           </div>
-          {/* Randomization options — only for quiz/exam */}
-          {!isAssignment && (
-            <div className="space-y-3 border-t border-[#E5E7EB] pt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={randomizeOrder}
-                  onChange={(e) => setRandomizeOrder(e.target.checked)}
-                  className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
-                />
-                <span className="text-sm font-medium text-[#374151]">
-                  {t("assessments.randomizeOrder")}
-                </span>
-              </label>
-              {randomizeOrder && (
-                <p className="text-xs text-[#6B7280] ml-6">{t("assessments.randomizeOrderHelp")}</p>
-              )}
-              {randomizeOrder && (
-                <div className="ml-6">
-                  <label className="block text-sm font-medium text-[#374151] mb-1">
-                    {t("assessments.questionsPerAttempt")}
-                  </label>
-                  <input
-                    type="number"
-                    value={questionsPerAttempt}
-                    onChange={(e) => setQuestionsPerAttempt(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    placeholder={t("assessments.questionsPerAttemptHelp")}
-                    min={1}
-                  />
-                </div>
-              )}
-            </div>
-          )}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -1519,6 +1482,9 @@ const AssessmentsContent = () => {
     marksSum: number;
     totalMarks: number;
     missingCorrect: boolean;
+    isAssignment?: boolean;
+    hasFiles?: boolean;
+    hasDueDate?: boolean;
   } | null>(null);
   const [publishCheckLoading, setPublishCheckLoading] = useState(false);
 
@@ -2174,22 +2140,35 @@ const AssessmentsContent = () => {
                                           setPublishConfirmId(assessment.id);
                                           setPublishCheckLoading(true);
                                           try {
-                                            const qs = await instructorApi.getAssessmentQuestions(assessment.id);
-                                            const marksSum = qs.reduce((s: number, q: AssessmentQuestion) => s + q.marks, 0);
-                                            const hasMissingCorrect = qs.some((q: AssessmentQuestion) => {
-                                              if (q.type === "mcq") {
-                                                const opts = (q.options as { isCorrect: boolean }[] | undefined) || [];
-                                                return !opts.some((o) => o.isCorrect);
-                                              }
-                                              if (q.type === "true_false") return !q.correctAnswer;
-                                              return false;
-                                            });
-                                            setPublishCheckData({
-                                              questionCount: qs.length,
-                                              marksSum,
-                                              totalMarks: assessment.totalMarks,
-                                              missingCorrect: hasMissingCorrect,
-                                            });
+                                            if (assessment.type === "assignment") {
+                                              const detail = await instructorApi.getAssessmentDetail(assessment.id);
+                                              setPublishCheckData({
+                                                questionCount: 0,
+                                                marksSum: 0,
+                                                totalMarks: assessment.totalMarks,
+                                                missingCorrect: false,
+                                                isAssignment: true,
+                                                hasFiles: ((detail.assignmentFiles as unknown[]) || []).length > 0,
+                                                hasDueDate: !!detail.dueDate,
+                                              });
+                                            } else {
+                                              const qs = await instructorApi.getAssessmentQuestions(assessment.id);
+                                              const marksSum = qs.reduce((s: number, q: AssessmentQuestion) => s + q.marks, 0);
+                                              const hasMissingCorrect = qs.some((q: AssessmentQuestion) => {
+                                                if (q.type === "mcq") {
+                                                  const opts = (q.options as { isCorrect: boolean }[] | undefined) || [];
+                                                  return !opts.some((o) => o.isCorrect);
+                                                }
+                                                if (q.type === "true_false") return !q.correctAnswer;
+                                                return false;
+                                              });
+                                              setPublishCheckData({
+                                                questionCount: qs.length,
+                                                marksSum,
+                                                totalMarks: assessment.totalMarks,
+                                                missingCorrect: hasMissingCorrect,
+                                              });
+                                            }
                                           } catch {
                                             setPublishCheckData({ questionCount: 0, marksSum: 0, totalMarks: assessment.totalMarks, missingCorrect: false });
                                           } finally {
@@ -3200,38 +3179,65 @@ const AssessmentsContent = () => {
               </div>
             ) : publishCheckData ? (
               <div className="space-y-3 mb-5">
-                <div className="flex items-center gap-2">
-                  {publishCheckData.questionCount > 0 ? (
-                    <CheckCircle className="w-4 h-4 text-[#22C55E]" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
-                  )}
-                  <span className="text-sm text-[#374151]">
-                    {publishCheckData.questionCount} {t("assessments.questions")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {publishCheckData.marksSum === publishCheckData.totalMarks ? (
-                    <CheckCircle className="w-4 h-4 text-[#22C55E]" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-[#EAB308]" />
-                  )}
-                  <span className="text-sm text-[#374151]">
-                    {t("assessments.marksTotal")}: {publishCheckData.marksSum} / {publishCheckData.totalMarks}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!publishCheckData.missingCorrect ? (
-                    <CheckCircle className="w-4 h-4 text-[#22C55E]" />
-                  ) : (
-                    <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
-                  )}
-                  <span className="text-sm text-[#374151]">
-                    {publishCheckData.missingCorrect
-                      ? t("assessments.mcqNoCorrectAnswer")
-                      : t("assessments.correctAnswer")}
-                  </span>
-                </div>
+                {publishCheckData.isAssignment ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      {publishCheckData.hasFiles ? (
+                        <CheckCircle className="w-4 h-4 text-[#22C55E]" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
+                      )}
+                      <span className="text-sm text-[#374151]">
+                        {publishCheckData.hasFiles ? t("assessments.filesUploaded") || "Assignment files uploaded" : t("assessments.noFiles") || "No assignment files uploaded"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {publishCheckData.hasDueDate ? (
+                        <CheckCircle className="w-4 h-4 text-[#22C55E]" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
+                      )}
+                      <span className="text-sm text-[#374151]">
+                        {publishCheckData.hasDueDate ? t("assessments.dueDateSet") || "Due date set" : t("assessments.noDueDate") || "No due date set"}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2">
+                      {publishCheckData.questionCount > 0 ? (
+                        <CheckCircle className="w-4 h-4 text-[#22C55E]" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
+                      )}
+                      <span className="text-sm text-[#374151]">
+                        {publishCheckData.questionCount} {t("assessments.questions")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {publishCheckData.marksSum === publishCheckData.totalMarks ? (
+                        <CheckCircle className="w-4 h-4 text-[#22C55E]" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-[#EAB308]" />
+                      )}
+                      <span className="text-sm text-[#374151]">
+                        {t("assessments.marksTotal")}: {publishCheckData.marksSum} / {publishCheckData.totalMarks}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!publishCheckData.missingCorrect ? (
+                        <CheckCircle className="w-4 h-4 text-[#22C55E]" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
+                      )}
+                      <span className="text-sm text-[#374151]">
+                        {publishCheckData.missingCorrect
+                          ? t("assessments.mcqNoCorrectAnswer")
+                          : t("assessments.correctAnswer")}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             ) : null}
             <div className="flex gap-3">

@@ -1341,7 +1341,15 @@ const ContentManagementContent = () => {
                   {viewMode === "list" && filteredMaterials.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                       <div className="overflow-x-auto">
-                        <table className="w-full">
+                        <table className="w-full table-fixed">
+                          <colgroup>
+                            <col className="w-[35%]" />
+                            <col className="w-[18%]" />
+                            <col className="w-[10%]" />
+                            <col className="w-[13%]" />
+                            <col className="w-[12%]" />
+                            <col className="w-[12%]" />
+                          </colgroup>
                           <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                               <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
@@ -1367,13 +1375,13 @@ const ContentManagementContent = () => {
                           <tbody className="divide-y divide-[#E5E7EB]">
                             {paginatedMaterials.map((m) => (
                               <tr key={m.id} className="hover:bg-[#F9FAFB] transition-colors">
-                                <td className="px-4 py-4">
-                                  <div className="flex items-center gap-3">
+                                <td className="px-4 py-4 overflow-hidden">
+                                  <div className="flex items-center gap-3 min-w-0">
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getFileIconBg(m.type)}`}>
                                       {getFileIcon(m.type)}
                                     </div>
-                                    <div className="min-w-0">
-                                      <p className="text-sm font-medium text-[#1F2937] max-w-[250px] truncate">{m.title}</p>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-sm font-medium text-[#1F2937] truncate">{m.title}</p>
                                       <div className="flex items-center gap-2 text-xs text-[#6B7280]">
                                         <span>v{m.version}</span>
                                         <span>&bull;</span>
@@ -1387,8 +1395,8 @@ const ContentManagementContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-4 py-4">
-                                  <span className="text-sm text-[#374151] max-w-[150px] truncate block">
+                                <td className="px-4 py-4 overflow-hidden">
+                                  <span className="text-sm text-[#374151] truncate block">
                                     {courseNameMap[m.courseId] || m.courseId}
                                   </span>
                                 </td>

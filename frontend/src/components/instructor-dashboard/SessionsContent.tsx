@@ -1121,8 +1121,8 @@ function ScheduleSessionModal({
       );
       onScheduled();
       onClose();
-    } catch {
-      toast.error(t("sessionsPage.schedule.error"));
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.schedule.error"));
     } finally {
       setSaving(false);
     }
@@ -1389,177 +1389,122 @@ function SessionCard({
   const badge = getStatusBadge(session.status);
   const isPast = variant === "past";
 
+  const isLive = session.status === "live";
+
   return (
-    <div className={`p-4 hover:bg-[#F9FAFB] transition-colors ${isPast ? "opacity-75" : ""}`}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isPast ? "bg-[#F3F4F6] text-[#9CA3AF]" : getTypeBadgeStyle(session.type)}`}>
-            {getTypeIcon(session.type)}
-          </div>
-          <div>
-            <h3 className={`text-sm font-semibold ${isPast ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+    <div className={`px-4 py-3 transition-colors ${
+      isLive ? "bg-[#FEF2F2]/50" : "hover:bg-[#F9FAFB]"
+    } ${isPast ? "opacity-70" : ""}`}>
+      {/* Main row */}
+      <div className="flex items-center gap-3">
+        {/* Type icon */}
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isPast ? "bg-[#F3F4F6] text-[#9CA3AF]" : getTypeBadgeStyle(session.type)}`}>
+          {getTypeIcon(session.type)}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className={`text-sm font-semibold truncate ${isPast ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
               {session.title}
             </h3>
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-[#6B7280]">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                {formatSessionDate(session.scheduledAt, locale)}
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
+              {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />}
+              {badge.label}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-[#6B7280]">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {formatSessionDate(session.scheduledAt, locale)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {formatSessionTime(session.scheduledAt, locale)}
+              {session.durationMinutes ? ` (${session.durationMinutes}m)` : ""}
+            </span>
+            {(session.venueAddress || session.roomName) && (
+              <span className="flex items-center gap-1 truncate max-w-[200px]">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{session.venueAddress || session.roomName}</span>
               </span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                {formatSessionTime(session.scheduledAt, locale)}
+            )}
+            {session.nelcLimit != null && session.nelcLimit > 0 && (
+              <span className={`flex items-center gap-1 font-medium ${
+                (session.capacityPercent || 0) >= 95 ? "text-[#EF4444]"
+                : (session.capacityPercent || 0) >= 80 ? "text-[#D97706]"
+                : "text-[#6B7280]"
+              }`}>
+                <Users className="w-3 h-3" />
+                {session.enrolledCount || 0}/{session.nelcLimit}
               </span>
-              {session.durationMinutes && (
-                <span className="text-[#9CA3AF]">
-                  ({session.durationMinutes} {t("sessionsPage.form.minutes")})
-                </span>
-              )}
-              {session.venueAddress && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {session.venueAddress}
-                </span>
-              )}
-              {session.roomName && !session.venueAddress && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {session.roomName}
-                </span>
-              )}
-              {/* Capacity indicator */}
-              {session.nelcLimit != null && session.nelcLimit > 0 && (
-                <span className={`flex items-center gap-1 font-medium ${
-                  (session.capacityPercent || 0) >= 95
-                    ? "text-[#EF4444]"
-                    : (session.capacityPercent || 0) >= 80
-                    ? "text-[#D97706]"
-                    : "text-[#6B7280]"
-                }`}>
-                  <Users className="w-3.5 h-3.5" />
-                  {session.enrolledCount || 0}/{session.nelcLimit}
-                  {(session.capacityPercent || 0) >= 80 && (session.capacityPercent || 0) < 95 && (
-                    <AlertTriangle className="w-3 h-3 text-[#D97706]" />
-                  )}
-                  {(session.capacityPercent || 0) >= 95 && (
-                    <AlertTriangle className="w-3 h-3 text-[#EF4444]" />
-                  )}
-                </span>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:flex-shrink-0 flex-wrap">
-          <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${badge.bg} ${badge.text}`}>
-            {badge.label}
-          </span>
-          <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getTypeBadgeStyle(session.type)}`}>
-            {t(`sessionsPage.type.${session.type}`)}
-          </span>
-
-          {/* Lifecycle actions */}
+        {/* Actions */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {session.status === "scheduled" && (
             <>
               <button
                 onClick={onStart}
                 disabled={actionLoading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] disabled:opacity-50 transition-colors"
-                aria-label={t("sessionsPage.start")}
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
               </button>
-              <button
-                onClick={onAttendance}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                aria-label={t("sessionsPage.attendance.title")}
-              >
-                <ClipboardCheck className="w-4 h-4" />
+              <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
-              <button
-                onClick={onEdit}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                aria-label={t("sessionsPage.edit")}
-              >
-                <Edit className="w-4 h-4" />
+              <button onClick={onEdit} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.edit")}>
+                <Edit className="w-3.5 h-3.5" />
               </button>
-              <button
-                onClick={onCancel}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
-                aria-label={t("sessionsPage.cancel")}
-              >
-                <Ban className="w-4 h-4" />
+              <button onClick={onCancel} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.cancel")}>
+                <Ban className="w-3.5 h-3.5" />
               </button>
             </>
           )}
 
-          {session.status === "live" && (
+          {isLive && (
             <>
               <button
                 onClick={onEnd}
                 disabled={actionLoading}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] disabled:opacity-50 transition-colors"
               >
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                 {t("sessionsPage.endSession")}
               </button>
-              <button
-                onClick={onAttendance}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                aria-label={t("sessionsPage.attendance.title")}
-              >
-                <ClipboardCheck className="w-4 h-4" />
+              <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
+              {session.zoomLink && (
+                <a href={session.zoomLink} target="_blank" rel="noopener noreferrer" className="p-1.5 border border-[#BFDBFE] rounded-lg text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors" title={t("sessionsPage.rejoinZoom")}>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
             </>
           )}
 
           {session.status === "completed" && (
             <>
-              <button
-                onClick={onAttendance}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                aria-label={t("sessionsPage.attendance.title")}
-              >
-                <ClipboardCheck className="w-4 h-4" />
+              <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
-              <button
-                onClick={onRecordings}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
-                aria-label={t("sessionsPage.recordings.title")}
-              >
-                <Film className="w-4 h-4" />
+              <button onClick={onRecordings} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.recordings.title")}>
+                <Film className="w-3.5 h-3.5" />
               </button>
-              <button
-                onClick={onDelete}
-                className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
-                aria-label={t("sessionsPage.deleteSession")}
-              >
-                <Trash2 className="w-4 h-4" />
+              <button onClick={onDelete} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.deleteSession")}>
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </>
           )}
 
           {session.status === "cancelled" && (
-            <button
-              onClick={onDelete}
-              className="p-2 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
-              aria-label={t("sessionsPage.deleteSession")}
-            >
-              <Trash2 className="w-4 h-4" />
+            <button onClick={onDelete} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.deleteSession")}>
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
-          )}
-
-          {/* Rejoin Zoom for live sessions */}
-          {session.zoomLink && session.status === "live" && (
-            <a
-              href={session.zoomLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-[#3B82F6] hover:underline"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              {t("sessionsPage.rejoinZoom")}
-            </a>
           )}
         </div>
       </div>
@@ -1973,8 +1918,8 @@ const SessionsContent = () => {
         window.open((result as any).zoomStartUrl, "_blank");
       }
       fetchData();
-    } catch {
-      toast.error(t("sessionsPage.lifecycle.startError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.lifecycle.startError"));
     } finally {
       setActionLoadingId(null);
     }
@@ -2001,8 +1946,8 @@ const SessionsContent = () => {
       }
       setEndSessionData(null);
       fetchData();
-    } catch {
-      toast.error(t("sessionsPage.lifecycle.endError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.lifecycle.endError"));
     } finally {
       setActionLoadingId(null);
     }
@@ -2016,8 +1961,8 @@ const SessionsContent = () => {
       toast.success(t("sessionsPage.lifecycle.cancelled"));
       setCancelSessionData(null);
       fetchData();
-    } catch {
-      toast.error(t("sessionsPage.lifecycle.cancelError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.lifecycle.cancelError"));
     } finally {
       setActionLoadingId(null);
     }
@@ -2035,8 +1980,8 @@ const SessionsContent = () => {
       toast.success(t("sessionsPage.lifecycle.deleted"));
       setDeleteSessionData(null);
       fetchData();
-    } catch {
-      toast.error(t("sessionsPage.lifecycle.deleteError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.lifecycle.deleteError"));
     } finally {
       setActionLoadingId(null);
     }

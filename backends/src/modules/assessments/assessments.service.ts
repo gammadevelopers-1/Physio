@@ -93,8 +93,7 @@ export class AssessmentsService {
         attemptsAllowed,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         instructions: dto.instructions,
-        randomizeOrder: dto.randomizeOrder ?? false,
-        questionsPerAttempt: dto.questionsPerAttempt,
+        randomizeOrder: dto.type === 'quiz' || dto.type === 'exam' ? true : (dto.randomizeOrder ?? false),
       })
       .returning();
 
@@ -260,16 +259,35 @@ export class AssessmentsService {
           );
         }
       } else {
-        // Quiz/exam need ≥1 question
-        const [questionCount] = await db
-          .select({ count: count() })
+        // Quiz/exam need ≥1 question and marks must match totalMarks
+        const assessmentQuestions = await db
+          .select({ marks: questions.marks })
           .from(questions)
           .where(eq(questions.assessmentId, assessmentId));
 
-        if (!questionCount || Number(questionCount.count) === 0) {
+        if (assessmentQuestions.length === 0) {
           throw new BadRequestException(
             'Cannot publish an assessment with no questions. Add at least one question first.',
           );
+        }
+
+        const effectiveTotalMarks = dto.totalMarks ?? existing.totalMarks;
+        const sumMarks = assessmentQuestions.reduce((s, q) => s + (q.marks ?? 1), 0);
+        if (sumMarks !== effectiveTotalMarks) {
+          throw new BadRequestException(
+            `Total question marks (${sumMarks}) must equal the assessment total marks (${effectiveTotalMarks}). Adjust your questions or update the total marks.`,
+          );
+        }
+
+        // If questionsPerAttempt is set, all questions must have equal marks
+        const effectiveQPA = existing.questionsPerAttempt;
+        if (effectiveQPA && effectiveQPA > 0 && effectiveQPA < assessmentQuestions.length) {
+          const markValues = new Set(assessmentQuestions.map((q) => q.marks ?? 1));
+          if (markValues.size > 1) {
+            throw new BadRequestException(
+              'When using randomized question selection, all questions must have equal marks to ensure fairness.',
+            );
+          }
         }
       }
     }
@@ -354,6 +372,10 @@ export class AssessmentsService {
       assessmentId,
       user,
     );
+
+    // Validate adding this question won't exceed totalMarks
+    const questionMarks = dto.marks ?? 1;
+    await this.validateQuestionMarks(assessmentId, assessment.totalMarks, questionMarks, null);
 
     const [question] = await db
       .insert(questions)
@@ -445,7 +467,25 @@ export class AssessmentsService {
     user: AuthenticatedUser,
     dto: UpdateQuestionDto,
   ) {
-    await this.verifyQuestionAccess(questionId, user);
+    const question = await this.verifyQuestionAccess(questionId, user);
+
+    // If marks are being changed, validate against assessment totalMarks
+    if (dto.marks !== undefined && question.assessmentId) {
+      const [assessment] = await db
+        .select({ totalMarks: assessments.totalMarks })
+        .from(assessments)
+        .where(eq(assessments.id, question.assessmentId))
+        .limit(1);
+
+      if (assessment) {
+        await this.validateQuestionMarks(
+          question.assessmentId,
+          assessment.totalMarks,
+          dto.marks,
+          questionId,
+        );
+      }
+    }
 
     const updateData: Record<string, unknown> = { ...dto };
 
@@ -1248,6 +1288,34 @@ export class AssessmentsService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────
+
+  /**
+   * Validate that adding/updating a question's marks won't exceed assessment totalMarks.
+   * @param excludeQuestionId — the question being updated (exclude from sum)
+   */
+  private async validateQuestionMarks(
+    assessmentId: string,
+    assessmentTotalMarks: number,
+    newQuestionMarks: number,
+    excludeQuestionId: string | null,
+  ) {
+    const existingQuestions = await db
+      .select({ id: questions.id, marks: questions.marks })
+      .from(questions)
+      .where(eq(questions.assessmentId, assessmentId));
+
+    const currentSum = existingQuestions
+      .filter((q) => q.id !== excludeQuestionId)
+      .reduce((s, q) => s + (q.marks ?? 1), 0);
+
+    const newSum = currentSum + newQuestionMarks;
+
+    if (newSum > assessmentTotalMarks) {
+      throw new BadRequestException(
+        `Adding this question (${newQuestionMarks} marks) would make the total ${newSum}, which exceeds the assessment total of ${assessmentTotalMarks} marks. Remaining capacity: ${assessmentTotalMarks - currentSum} marks.`,
+      );
+    }
+  }
 
   /**
    * Get course IDs for an instructor.

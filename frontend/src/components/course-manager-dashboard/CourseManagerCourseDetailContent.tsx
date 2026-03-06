@@ -15,6 +15,7 @@ import type {
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
+import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import {
   ArrowLeft,
   ArrowRight,
@@ -40,6 +41,7 @@ import {
   File,
   X,
   Eye,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface CourseManagerCourseDetailContentProps {
@@ -108,6 +110,15 @@ const CourseManagerCourseDetailContent = ({
   }
   const [moduleMaterials, setModuleMaterials] = useState<Record<string, MaterialItem[]>>({});
   const [loadingMaterials, setLoadingMaterials] = useState<Set<string>>(new Set());
+
+  // Module assessments
+  const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
+  useEffect(() => {
+    if (!courseId) return;
+    courseManagerApi.getAssessments({ courseId, limit: 100 }).then((res) => {
+      setModuleAssessments(res.data || []);
+    }).catch(() => {});
+  }, [courseId]);
 
   // Remove material modal
   const [removingMaterial, setRemovingMaterial] = useState<MaterialItem | null>(null);
@@ -562,6 +573,13 @@ const CourseManagerCourseDetailContent = ({
                   )}
                 </div>
 
+                {/* NELC Compliance Scorecard */}
+                {(course.status === "pending_review" || course.status === "active" || course.status === "changes_requested") && (
+                  <div className="mb-6">
+                    <NELCScorecardPanel courseId={course.id} />
+                  </div>
+                )}
+
                 {/* Modules */}
                 <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
                   <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
@@ -695,6 +713,40 @@ const CourseManagerCourseDetailContent = ({
                                     </p>
                                   )}
                                 </div>
+
+                                {/* Module assessments */}
+                                {(() => {
+                                  const modAssessments = moduleAssessments.filter((a) => a.moduleId === mod.id);
+                                  if (modAssessments.length === 0) return null;
+                                  return (
+                                    <div className="border-t border-[#E5E7EB] pt-3">
+                                      <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
+                                        {t("courseDetail.moduleAssessments")}
+                                      </p>
+                                      <div className="space-y-2">
+                                        {modAssessments.map((ma) => (
+                                          <div
+                                            key={ma.id}
+                                            className="flex items-center gap-3 bg-white rounded-lg border border-[#E5E7EB] px-3 py-2"
+                                          >
+                                            <ClipboardCheck className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm text-[#1F2937] truncate">{ma.title}</p>
+                                              <p className="text-xs text-[#6B7280]">
+                                                {ma.totalMarks} {t("courseDetail.marks") || "marks"}
+                                              </p>
+                                            </div>
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                              ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
+                                            }`}>
+                                              {ma.type}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
                           </div>

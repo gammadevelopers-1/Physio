@@ -49,6 +49,7 @@ export default function NotificationBell() {
     unreadCount,
     markAsRead,
     markAllAsRead,
+    clearAll,
     refetch,
   } = useNotifications();
 
@@ -119,13 +120,23 @@ export default function NotificationBell() {
             <h3 className="text-sm font-semibold text-[#1F2937]">
               {t("title")}
             </h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="text-xs text-[#a37f49] hover:text-[#6b4e24] font-medium transition-colors"
-              >
-                {t("markAllRead")}
-              </button>
+            {notifications.length > 0 && (
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-[#a37f49] hover:text-[#6b4e24] font-medium transition-colors"
+                  >
+                    {t("markAllRead")}
+                  </button>
+                )}
+                <button
+                  onClick={clearAll}
+                  className="text-xs text-[#6B7280] hover:text-[#EF4444] font-medium transition-colors"
+                >
+                  {t("clearAll")}
+                </button>
+              </div>
             )}
           </div>
 

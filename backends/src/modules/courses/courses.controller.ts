@@ -136,6 +136,19 @@ export class CoursesController {
   }
 
   /**
+   * POST /courses/:id/complete — Mark an active course as completed
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/complete')
+  @HttpCode(HttpStatus.OK)
+  async complete(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.complete(courseId, user);
+  }
+
+  /**
    * POST /courses/:id/submit-review — Instructor submits course for manager review
    */
   @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)

@@ -177,73 +177,61 @@ const SessionsCalendarWidget = ({
     return (
       <div
         key={session.id}
-        className={`relative p-2 rounded-lg border cursor-pointer transition-all duration-200 ${getSessionStyle(session)}`}
+        className={`relative rounded-lg border transition-all duration-200 overflow-hidden ${getSessionStyle(session)}`}
         onMouseEnter={() => !isMobile && setHoveredSession(session.id)}
         onMouseLeave={() => !isMobile && setHoveredSession(null)}
         onClick={() => isMobile && setHoveredSession(hoveredSession === session.id ? null : session.id)}
       >
-        {/* Type + Status Badges */}
-        <div className="flex items-center gap-1 mb-1 flex-wrap">
-          {getTypeIcon(session.type)}
-          <span className={`text-[10px] font-medium ${getTypeColor(session.type)}`}>
-            {getTypeLabel(session.type)}
-          </span>
-          {isCompleted && (
-            <span className="flex items-center gap-0.5 text-[10px] font-medium text-[#22C55E]">
-              <CheckCircle className="w-2.5 h-2.5" />
+        {/* Colored top bar by type */}
+        <div className={`h-1 ${
+          session.type === "zoom" ? "bg-[#3B82F6]" :
+          session.type === "hybrid" ? "bg-[#8B5CF6]" : "bg-[#22C55E]"
+        }`} />
+
+        <div className="px-2 py-1.5">
+          {/* Title + status */}
+          <p className={`text-[11px] font-semibold leading-tight truncate ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+            {session.title}
+          </p>
+
+          {/* Time */}
+          <p className="text-[10px] text-[#6B7280] mt-0.5">{session.time}</p>
+
+          {/* Meta row */}
+          <div className="flex items-center gap-2 mt-1">
+            <span className="flex items-center gap-0.5 text-[9px] text-[#9CA3AF]">
+              <Users className="w-2.5 h-2.5" />
+              {session.enrolled}
             </span>
-          )}
-          {isLive && (
-            <span className="flex items-center gap-0.5 px-1 py-0.5 bg-[#FEE2E2] rounded text-[9px] font-bold text-[#EF4444]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />
-              LIVE
-            </span>
-          )}
-          {isCancelled && (
-            <span className="text-[9px] font-medium text-[#9CA3AF] line-through">Cancelled</span>
-          )}
+            {isLive && (
+              <span className="flex items-center gap-0.5 text-[9px] font-bold text-[#EF4444]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />
+                LIVE
+              </span>
+            )}
+            {isCompleted && <CheckCircle className="w-2.5 h-2.5 text-[#22C55E]" />}
+          </div>
         </div>
 
-        {/* Session Title */}
-        <p className={`text-xs font-medium line-clamp-2 mb-1 ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
-          {session.title}
-        </p>
-
-        {/* Time */}
-        <p className="text-[10px] text-[#6B7280]">{session.time}</p>
-
-        {/* Venue for on-site/hybrid */}
-        {(session.type === "onsite" || session.type === "hybrid") && session.venue && (
-          <p className="text-[10px] text-[#6B7280] truncate">{session.venue}</p>
-        )}
-
-        {/* Enrolled count */}
-        <div className="flex items-center gap-1 mt-1">
-          <Users className="w-2.5 h-2.5 text-[#9CA3AF]" />
-          <span className="text-[10px] text-[#9CA3AF]">{session.enrolled}</span>
-        </div>
-
-        {/* Action Buttons - Show on Hover/Tap - Status aware */}
+        {/* Action overlay on hover */}
         {hoveredSession === session.id && !isCancelled && (
-          <div className={`${isMobile ? "flex items-center justify-center gap-1 mt-2 pt-2 border-t border-[#E5E7EB]" : "absolute bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] rounded-b-lg p-1.5 flex items-center justify-center gap-1 shadow-sm"}`}>
+          <div className={`${isMobile ? "flex items-center justify-center gap-1 px-2 pb-2" : "absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-[#E5E7EB] p-1 flex items-center justify-center gap-1"}`}>
             {isScheduled && (
               <button
                 onClick={(e) => { e.stopPropagation(); onStartSession?.(session.id); }}
-                className={`${isMobile ? "flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium" : "p-1"} bg-[#3B82F6] text-white rounded hover:bg-[#2563EB] transition-colors`}
+                className="p-1 bg-[#3B82F6] text-white rounded hover:bg-[#2563EB] transition-colors"
                 title={t("sessionsCalendar.startSession")}
               >
                 <Play className="w-3 h-3" />
-                {isMobile && t("sessionsCalendar.start")}
               </button>
             )}
             {isLive && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEndSession?.(session.id); }}
-                className={`${isMobile ? "flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium" : "p-1"} bg-[#EF4444] text-white rounded hover:bg-[#DC2626] transition-colors`}
+                className="p-1 bg-[#EF4444] text-white rounded hover:bg-[#DC2626] transition-colors"
                 title="End Session"
               >
                 <Square className="w-3 h-3" />
-                {isMobile && "End"}
               </button>
             )}
             <button

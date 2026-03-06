@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Patch,
   Param,
@@ -56,5 +57,14 @@ export class UserNotificationsController {
   @Patch('read-all')
   async markAllAsRead(@Req() req: any) {
     return this.notificationsService.markAllAsRead(req.user.id);
+  }
+
+  /**
+   * DELETE /user-notifications/clear-all
+   * Delete all notifications for the authenticated user
+   */
+  @Delete('clear-all')
+  async clearAll(@Req() req: any) {
+    return this.notificationsService.clearAll(req.user.id);
   }
 }

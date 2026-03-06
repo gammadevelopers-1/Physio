@@ -59,6 +59,17 @@ export function useNotifications() {
     }
   }, []);
 
+  // Clear all notifications
+  const clearAll = useCallback(async () => {
+    try {
+      await userNotificationsApi.clearAll();
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch {
+      // Silently ignore
+    }
+  }, []);
+
   // Initial fetch + start polling
   useEffect(() => {
     refetch();
@@ -75,6 +86,7 @@ export function useNotifications() {
     loading,
     markAsRead,
     markAllAsRead,
+    clearAll,
     refetch,
   };
 }

@@ -614,6 +614,9 @@ export class CoursesService {
       });
     }
 
+    // Validate course readiness (modules, sessions, dates, CME hours)
+    await this.validateCourseReadiness(courseId);
+
     const [updated] = await db
       .update(courses)
       .set({
@@ -928,11 +931,17 @@ export class CoursesService {
       throw new BadRequestException('Course is already active');
     }
 
-    if (course.status !== COURSE_STATUS.PENDING_REVIEW) {
+    if (
+      course.status !== COURSE_STATUS.PENDING_REVIEW &&
+      course.status !== COURSE_STATUS.DRAFT
+    ) {
       throw new BadRequestException(
-        'Only courses pending review can be activated',
+        'Only draft or pending-review courses can be activated',
       );
     }
+
+    // Validate course readiness (modules, sessions, dates, CME hours)
+    await this.validateCourseReadiness(courseId, 'activation');
 
     // Check all materials have been reviewed (status = 'live')
     const pendingMaterials = await db
@@ -1051,6 +1060,154 @@ export class CoursesService {
     this.logger.log(`Course "${course.title}" deactivated by ${user.id}`);
 
     return updated;
+  }
+
+  /**
+   * Mark an active course as completed.
+   * Only MANAGER and ADMIN can complete a course.
+   */
+  async complete(courseId: string, user: AuthenticatedUser) {
+    const [course] = await db
+      .select({ id: courses.id, status: courses.status, title: courses.title, instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (course.status !== COURSE_STATUS.ACTIVE) {
+      throw new BadRequestException(
+        'Only active courses can be marked as completed',
+      );
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set({ status: COURSE_STATUS.COMPLETED, updatedAt: new Date() })
+      .where(eq(courses.id, courseId))
+      .returning();
+
+    // Log NELC audit event
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.COURSE_DEACTIVATED,
+      entityType: 'course',
+      entityId: courseId,
+      userId: user.id,
+      metadata: { courseTitle: course.title, action: 'completed' },
+    });
+
+    // Notify instructor
+    await this.userNotificationsService.create({
+      recipientId: course.instructorId,
+      type: 'course_approved',
+      title: 'Course Completed',
+      message: `Your course "${course.title}" has been marked as completed.`,
+      link: '/dashboard/instructor/courses',
+      entityType: 'course',
+      entityId: courseId,
+    });
+
+    this.logger.log(`Course "${course.title}" marked as completed by ${user.id}`);
+
+    return updated;
+  }
+
+  // ─── Validation ────────────────────────────────────────────
+
+  /**
+   * Validate that a course is ready for activation/review.
+   * Checks: modules, sessions, dates, CME hours, session date ranges.
+   */
+  private async validateCourseReadiness(
+    courseId: string,
+    context: 'review' | 'activation' = 'review',
+  ) {
+    const label =
+      context === 'activation' ? 'activation' : 'submitting for review';
+
+    // Must have at least 1 module
+    const moduleCount = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(courseModules)
+      .where(eq(courseModules.courseId, courseId));
+    if (moduleCount[0].count === 0) {
+      throw new BadRequestException(
+        `Course must have at least one module before ${label}`,
+      );
+    }
+
+    // Must have at least 1 session
+    const sessionCount = await db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(sessions)
+      .where(eq(sessions.courseId, courseId));
+    if (sessionCount[0].count === 0) {
+      throw new BadRequestException(
+        `Course must have at least one session before ${label}`,
+      );
+    }
+
+    // Must have start date and end date
+    const [courseDetail] = await db
+      .select({
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+        cmeHours: courses.cmeHours,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!courseDetail.startDate || !courseDetail.endDate) {
+      throw new BadRequestException(
+        `Course must have start and end dates set before ${label}`,
+      );
+    }
+
+    // Total module hours must meet CME hours (if CME accredited)
+    if (courseDetail.cmeHours && courseDetail.cmeHours > 0) {
+      const totalMinutes = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(${courseModules.durationMinutes}), 0)`.mapWith(Number),
+        })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId));
+      const totalHours = Math.floor(totalMinutes[0].total / 60);
+      if (totalHours < courseDetail.cmeHours) {
+        throw new BadRequestException(
+          `Total module duration (${totalHours}h) is less than the required CME hours (${courseDetail.cmeHours}h). Add more modules or increase their duration.`,
+        );
+      }
+    }
+
+    // All sessions must be within course date range
+    const outOfRangeSessions = await db
+      .select({
+        id: sessions.id,
+        title: sessions.title,
+        scheduledAt: sessions.scheduledAt,
+      })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.courseId, courseId),
+          or(
+            sql`${sessions.scheduledAt}::date < ${courseDetail.startDate}::date`,
+            sql`${sessions.scheduledAt}::date > ${courseDetail.endDate}::date`,
+          ),
+        ),
+      );
+    if (outOfRangeSessions.length > 0) {
+      throw new BadRequestException({
+        message: 'Some sessions are scheduled outside the course date range',
+        outOfRangeSessions: outOfRangeSessions.map(
+          (s) =>
+            `${s.title} (${new Date(s.scheduledAt).toLocaleDateString()})`,
+        ),
+      });
+    }
   }
 
   // ─── Helpers ────────────────────────────────────────────────

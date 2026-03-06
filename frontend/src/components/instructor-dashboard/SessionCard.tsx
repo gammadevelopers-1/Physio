@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
   Video,
@@ -12,8 +11,6 @@ import {
   Square,
   ClipboardCheck,
   Upload,
-  CheckCircle,
-  XCircle,
   ExternalLink,
 } from "lucide-react";
 
@@ -72,62 +69,56 @@ const SessionCard = ({
   const isScheduled = session.status === "scheduled";
 
   return (
-    <div className={`flex flex-col sm:flex-row gap-4 p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] hover:border-[#3B82F6] hover:shadow-[0_0_0_3px_#EFF6FF] transition-all duration-200 ${isCompleted || isCancelled ? "opacity-75" : ""}`}>
-      {/* Course Image */}
-      <div className="relative w-full sm:w-36 h-24 sm:h-24 rounded-lg overflow-hidden flex-shrink-0">
-        <Image
-          src={session.thumbnail}
-          alt={session.title}
-          fill
-          className="object-cover"
-          unoptimized
-        />
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="mb-1">
-          <h3 className={`text-base font-semibold line-clamp-1 ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
-            {session.title}
-          </h3>
+    <div className={`rounded-xl border overflow-hidden transition-all duration-200 ${
+      isLive
+        ? "border-[#EF4444]/30 bg-gradient-to-r from-[#FEF2F2] to-white shadow-sm"
+        : isCompleted || isCancelled
+        ? "border-[#E5E7EB] bg-[#F9FAFB] opacity-75"
+        : "border-[#E5E7EB] bg-white hover:border-[#3B82F6]/40 hover:shadow-sm"
+    }`}>
+      <div className="flex items-center gap-4 p-4">
+        {/* Type Icon */}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeBg}`}>
+          {typeIcon}
         </div>
 
-        {/* Badges Row */}
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${typeBg}`}>
-            {typeIcon}
-            {typeLabel}
-            {session.type === "onsite" && session.location && ` \u2022 ${session.location}`}
-          </span>
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${badge.bg} ${badge.text}`}>
-            {isCompleted && <CheckCircle className="w-3 h-3" />}
-            {isCancelled && <XCircle className="w-3 h-3" />}
-            {isLive && <span className="w-2 h-2 rounded-full bg-[#EF4444] animate-pulse" />}
-            {badge.label}
-          </span>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className={`text-sm font-semibold truncate ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+              {session.title}
+            </h3>
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
+              {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />}
+              {badge.label}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-[#6B7280]">
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" />
+              {session.time}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              {session.enrolled}
+            </span>
+            {session.type === "onsite" && session.location && (
+              <span className="flex items-center gap-1 truncate">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="truncate">{session.location}</span>
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Meta Info */}
-        <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
-          <span className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            {session.enrolled} {t("sessions.enrolled")}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            {session.time}
-          </span>
-        </div>
-
-        {/* Action Buttons - Status aware */}
-        <div className="flex items-center gap-2 mt-auto">
+        {/* Actions */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
           {isScheduled && (
             <button
               onClick={onStart}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6] text-white text-xs font-medium rounded-lg hover:bg-[#2563EB] transition-colors"
             >
-              <Play className="w-4 h-4" />
+              <Play className="w-3.5 h-3.5" />
               {t("sessions.startSession")}
             </button>
           )}
@@ -136,9 +127,9 @@ const SessionCard = ({
             <>
               <button
                 onClick={onEnd}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EF4444] text-white text-xs font-medium rounded-lg hover:bg-[#DC2626] transition-colors"
               >
-                <Square className="w-4 h-4" />
+                <Square className="w-3.5 h-3.5" />
                 {t("sessions.endSession")}
               </button>
               {session.zoomLink && (
@@ -146,10 +137,10 @@ const SessionCard = ({
                   href={session.zoomLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-2 text-xs text-[#3B82F6] border border-[#BFDBFE] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                  className="p-1.5 text-[#3B82F6] border border-[#BFDBFE] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                  title="Rejoin Zoom"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  Rejoin Zoom
                 </a>
               )}
             </>
@@ -158,20 +149,20 @@ const SessionCard = ({
           {!isCancelled && (
             <button
               onClick={onAttendance}
-              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors"
+              className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
               aria-label={t("sessions.attendance")}
             >
-              <ClipboardCheck className="w-4 h-4" />
+              <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
           )}
 
           {(isScheduled || isLive) && (
             <button
               onClick={onShare}
-              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] hover:border-[#9CA3AF] transition-colors"
+              className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
               aria-label={t("sessions.shareMaterials")}
             >
-              <Upload className="w-4 h-4" />
+              <Upload className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

@@ -77,6 +77,7 @@ export class NelcComplianceController {
    * GET /nelc-compliance/course/:id/scorecard — 7-category compliance scorecard
    */
   @Roles(
+    'INSTRUCTOR' as UserRole,
     'MANAGER' as UserRole,
     'ADMIN' as UserRole,
     'SUPER_ADMIN' as UserRole,

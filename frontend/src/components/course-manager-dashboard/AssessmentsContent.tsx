@@ -687,7 +687,15 @@ const AssessmentsContent = () => {
                 <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                   {/* Desktop Table */}
                   <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full table-fixed">
+                      <colgroup>
+                        <col className="w-[35%]" />
+                        <col className="w-[12%]" />
+                        <col className="w-[12%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[15%]" />
+                      </colgroup>
                       <thead>
                         <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                           <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
@@ -699,79 +707,100 @@ const AssessmentsContent = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E5E7EB]">
-                        {filteredAssessments.map((assessment) => (
+                        {filteredAssessments.map((assessment) => {
+                          const badge = getStatusBadge(assessment.status);
+                          return (
                           <tr key={assessment.id} className="group">
                             <td colSpan={6} className="p-0">
-                              <div
-                                className={`hover:bg-[#F9FAFB] transition-colors cursor-pointer ${
-                                  expandedId === assessment.id ? "bg-[#F9FAFB]" : ""
-                                }`}
-                                onClick={() => toggleSettings(assessment)}
-                              >
-                                <div className="flex items-center">
-                                  <div className="flex-1 px-4 py-4 min-w-0">
-                                    <p className="text-sm font-medium text-[#1F2937]">{assessment.title}</p>
-                                    {assessment.durationMinutes && (
-                                      <p className="text-xs text-[#6B7280] mt-0.5">
-                                        {assessment.durationMinutes} min
-                                      </p>
-                                    )}
-                                    {renderProctoringIndicators(assessment)}
-                                  </div>
-                                  <div className="px-4 py-4">
-                                    <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getTypeBadge(assessment.type)}`}>
-                                      {t(`assessmentsPage.type.${assessment.type}`)}
-                                    </span>
-                                  </div>
-                                  <div className="px-4 py-4">
-                                    <span className="text-sm text-[#1F2937]">{assessment.totalMarks}</span>
-                                  </div>
-                                  <div className="px-4 py-4">
-                                    <span className="text-sm text-[#1F2937]">{assessment.passingMarks}</span>
-                                  </div>
-                                  <div className="px-4 py-4">
-                                    <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(assessment.status)}`}>
-                                      {t(`assessmentsPage.status.${assessment.status}`)}
-                                    </span>
-                                  </div>
-                                  <div className="px-4 py-4 flex items-center gap-1">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleSettings(assessment);
-                                      }}
-                                      className={`p-1.5 rounded-lg transition-colors ${
-                                        expandedId === assessment.id
-                                          ? "bg-[#3B82F6] text-white"
-                                          : "hover:bg-[#F3F4F6] text-[#6B7280]"
-                                      }`}
-                                      title={t("assessmentsPage.actions.configure")}
-                                    >
-                                      <Settings className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
-                                        courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
-                                          setOverrideStudents(res.data.map((e: any) => ({
-                                            id: e.studentId || e.userId || e.id,
-                                            name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
-                                          })));
-                                        }).catch(() => setOverrideStudents([]));
-                                      }}
-                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                      title={t("assessmentsPage.override.title")}
-                                    >
-                                      <Shield className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                              {renderSettingsPanel(assessment.id)}
+                              <table className="w-full table-fixed">
+                                <colgroup>
+                                  <col className="w-[35%]" />
+                                  <col className="w-[12%]" />
+                                  <col className="w-[12%]" />
+                                  <col className="w-[13%]" />
+                                  <col className="w-[13%]" />
+                                  <col className="w-[15%]" />
+                                </colgroup>
+                                <tbody>
+                                  <tr
+                                    className={`hover:bg-[#F9FAFB] transition-colors cursor-pointer ${
+                                      expandedId === assessment.id ? "bg-[#F9FAFB]" : ""
+                                    }`}
+                                    onClick={() => toggleSettings(assessment)}
+                                  >
+                                    <td className="px-4 py-3">
+                                      <p className="text-sm font-medium text-[#1F2937] truncate">{assessment.title}</p>
+                                      {assessment.durationMinutes && (
+                                        <p className="text-xs text-[#6B7280] mt-0.5">
+                                          {assessment.durationMinutes} min
+                                        </p>
+                                      )}
+                                      {renderProctoringIndicators(assessment)}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getTypeBadge(assessment.type)}`}>
+                                        {t(`assessmentsPage.type.${assessment.type}`)}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="text-sm text-[#1F2937]">{assessment.totalMarks}</span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="text-sm text-[#1F2937]">{assessment.passingMarks}</span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${badge}`}>
+                                        {t(`assessmentsPage.status.${assessment.status}`)}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleSettings(assessment);
+                                          }}
+                                          className={`p-1.5 rounded-lg transition-colors ${
+                                            expandedId === assessment.id
+                                              ? "bg-[#3B82F6] text-white"
+                                              : "hover:bg-[#F3F4F6] text-[#6B7280]"
+                                          }`}
+                                          title={t("assessmentsPage.actions.configure")}
+                                        >
+                                          <Settings className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
+                                            courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
+                                              setOverrideStudents(res.data.map((e: any) => ({
+                                                id: e.studentId || e.userId || e.id,
+                                                name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
+                                              })));
+                                            }).catch(() => setOverrideStudents([]));
+                                          }}
+                                          className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                          title={t("assessmentsPage.override.title")}
+                                        >
+                                          <Shield className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                  {expandedId === assessment.id && (
+                                    <tr>
+                                      <td colSpan={6} className="p-0">
+                                        {renderSettingsPanel(assessment.id)}
+                                      </td>
+                                    </tr>
+                                  )}
+                                </tbody>
+                              </table>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

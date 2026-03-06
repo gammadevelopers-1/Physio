@@ -10,6 +10,7 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
+import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
 import { instructorApi, materialsApi } from "@/lib/api";
@@ -46,6 +47,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
@@ -206,6 +208,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const [loadingUnassigned, setLoadingUnassigned] = useState(false);
   const [selectedMaterialIds, setSelectedMaterialIds] = useState<string[]>([]);
   const [assigningMaterials, setAssigningMaterials] = useState(false);
+
+  // ─── Module Assessments State ─────────────────────────────
+  const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
+
+  useEffect(() => {
+    if (!courseId) return;
+    instructorApi.getAssessments(courseId).then((res) => {
+      setModuleAssessments(res.data || []);
+    }).catch(() => {});
+  }, [courseId]);
 
   // ─── Session State ─────────────────────────────────────────
   const [sessionModal, setSessionModal] = useState<{
@@ -370,8 +382,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         [moduleId]: (prev[moduleId] || []).filter((m) => m.id !== materialId),
       }));
       toast.success(t("courseDetail.materialUnlinked"));
-    } catch {
-      toast.error(t("courseDetail.materialUnlinkError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.materialUnlinkError"));
     }
   };
 
@@ -402,8 +414,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       setAddMaterialModal({ open: false, moduleId: null });
       // Refresh the module materials
       fetchModuleMaterials(addMaterialModal.moduleId!);
-    } catch {
-      toast.error(t("courseDetail.materialAssignError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.materialAssignError"));
     } finally {
       setAssigningMaterials(false);
     }
@@ -456,11 +468,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       }
       setModuleModal({ open: false, editing: null });
       refetch();
-    } catch {
+    } catch (err: any) {
       toast.error(
-        moduleModal.editing
-          ? t("courseDetail.moduleUpdateError")
-          : t("courseDetail.moduleAddError")
+        err?.message ||
+          (moduleModal.editing
+            ? t("courseDetail.moduleUpdateError")
+            : t("courseDetail.moduleAddError"))
       );
     } finally {
       setModuleSaving(false);
@@ -473,8 +486,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       await instructorApi.deleteModule(courseId, moduleId);
       toast.success(t("courseDetail.moduleDeleteSuccess"));
       refetch();
-    } catch {
-      toast.error(t("courseDetail.moduleDeleteError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.moduleDeleteError"));
     } finally {
       setDeletingModuleId(null);
     }
@@ -497,8 +510,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     try {
       await instructorApi.reorderModules(courseId, reordered);
       refetch();
-    } catch {
-      toast.error(t("courseDetail.moduleUpdateError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.moduleUpdateError"));
     }
   };
 
@@ -555,11 +568,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       }
       setSessionModal({ open: false, editing: null });
       refetch();
-    } catch {
+    } catch (err: any) {
       toast.error(
-        sessionModal.editing
-          ? t("courseDetail.sessionUpdateError")
-          : t("courseDetail.sessionCreateError")
+        err?.message ||
+          (sessionModal.editing
+            ? t("courseDetail.sessionUpdateError")
+            : t("courseDetail.sessionCreateError"))
       );
     } finally {
       setSessionSaving(false);
@@ -571,8 +585,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       await instructorApi.startSession(sessionId);
       toast.success(t("courseDetail.sessionStartSuccess"));
       refetch();
-    } catch {
-      toast.error(t("courseDetail.sessionStartError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.sessionStartError"));
     }
   };
 
@@ -581,8 +595,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       await instructorApi.endSession(sessionId);
       toast.success(t("courseDetail.sessionEndSuccess"));
       refetch();
-    } catch {
-      toast.error(t("courseDetail.sessionEndError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.sessionEndError"));
     }
   };
 
@@ -594,8 +608,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       setCancelModal({ open: false, sessionId: null });
       setCancelReason("");
       refetch();
-    } catch {
-      toast.error(t("courseDetail.sessionCancelError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.sessionCancelError"));
     }
   };
 
@@ -612,21 +626,17 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       const data: Record<string, unknown> = {
         title: settingsForm.title.trim(),
         description: settingsForm.description.trim() || null,
-        deliveryType: settingsForm.deliveryType,
       };
       if (settingsForm.titleAr.trim()) data.titleAr = settingsForm.titleAr.trim();
       else data.titleAr = null;
       if (settingsForm.descriptionAr.trim()) data.descriptionAr = settingsForm.descriptionAr.trim();
       else data.descriptionAr = null;
-      if (settingsForm.maxEnrollment) data.maxEnrollment = parseInt(settingsForm.maxEnrollment, 10);
-      if (settingsForm.startDate) data.startDate = settingsForm.startDate;
-      if (settingsForm.endDate) data.endDate = settingsForm.endDate;
 
       await instructorApi.updateCourse(courseId, data);
       toast.success(t("courseDetail.updateSuccess"));
       refetch();
-    } catch {
-      toast.error(t("courseDetail.updateError"));
+    } catch (err: any) {
+      toast.error(err?.message || t("courseDetail.updateError"));
     } finally {
       setSettingsSaving(false);
     }
@@ -660,6 +670,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       if (parsed?.pendingMaterials) {
         toast.error(t("courseDetail.submitForReviewMaterialsError"), {
           description: parsed.pendingMaterials.join(", "),
+          duration: 8000,
+        });
+      } else if (parsed?.outOfRangeSessions) {
+        toast.error(parsed.message, {
+          description: parsed.outOfRangeSessions.join(", "),
           duration: 8000,
         });
       } else {
@@ -831,6 +846,19 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     {/* ═══ OVERVIEW ═══ */}
                     {activeTab === "overview" && (
                       <div className="space-y-6">
+                        {/* Review note banner for changes_requested */}
+                        {course.status === "changes_requested" && course.reviewNote && (
+                          <div className="p-4 bg-[#FEF3C7] border border-[#F59E0B]/30 rounded-xl">
+                            <div className="flex items-start gap-2">
+                              <AlertTriangle className="w-5 h-5 text-[#D97706] mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-[#92400E]">{t("courseDetail.changesRequestedNote")}</p>
+                                <p className="text-sm text-[#92400E] mt-1">{course.reviewNote}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <div>
                           <h3 className="text-base font-semibold text-[#1F2937] mb-2">{t("courseDetail.description")}</h3>
                           <p className="text-sm text-[#6B7280] leading-relaxed whitespace-pre-wrap">
@@ -875,6 +903,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <Edit className="w-4 h-4" />
                           {t("courseDetail.editCourse")}
                         </button>
+
+                        {/* NELC Compliance Scorecard */}
+                        <NELCScorecardPanel courseId={courseId} />
                       </div>
                     )}
 
@@ -1051,6 +1082,48 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       </div>
                                     )}
                                   </div>
+
+                                  {/* Module assessments */}
+                                  {(() => {
+                                    const modAssessments = moduleAssessments.filter((a) => a.moduleId === mod.id);
+                                    if (modAssessments.length === 0) return null;
+                                    return (
+                                      <div className="px-4 pb-3">
+                                        <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wide">
+                                          {t("courseDetail.moduleAssessments")}
+                                        </span>
+                                        <div className="mt-2 space-y-1.5">
+                                          {modAssessments.map((ma) => (
+                                            <div
+                                              key={ma.id}
+                                              className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[#E5E7EB] transition-colors"
+                                            >
+                                              <ClipboardCheck className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
+                                              <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-[#1F2937] truncate">{ma.title}</p>
+                                                <p className="text-xs text-[#9CA3AF]">
+                                                  {ma.totalMarks} {t("courseDetail.marks") || "marks"}
+                                                </p>
+                                              </div>
+                                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                                ma.type === "assignment" ? "bg-amber-50 text-amber-700" : ma.type === "exam" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"
+                                              }`}>
+                                                {ma.type}
+                                              </span>
+                                              {(ma.submissionCount ?? 0) > 0 && (
+                                                <Link
+                                                  href={`/${locale}/dashboard/instructor/assessments`}
+                                                  className="text-[10px] text-[#3B82F6] hover:text-[#2563EB] font-medium whitespace-nowrap"
+                                                >
+                                                  {ma.submissionCount} {t("courseDetail.viewSubmissions") || "submissions"}
+                                                </Link>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               )}
                             </div>
@@ -1431,8 +1504,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.deliveryTypeLabel")}</label>
                               <select
                                 value={settingsForm.deliveryType}
-                                onChange={(e) => setSettingsForm((f) => ({ ...f, deliveryType: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
+                                disabled
+                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               >
                                 <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
                                 <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
@@ -1445,8 +1518,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 type="number"
                                 min="1"
                                 value={settingsForm.maxEnrollment}
-                                onChange={(e) => setSettingsForm((f) => ({ ...f, maxEnrollment: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                disabled
+                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               />
                             </div>
                             <div>
@@ -1454,8 +1527,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <input
                                 type="date"
                                 value={settingsForm.startDate}
-                                onChange={(e) => setSettingsForm((f) => ({ ...f, startDate: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                disabled
+                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               />
                             </div>
                             <div>
@@ -1463,8 +1536,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <input
                                 type="date"
                                 value={settingsForm.endDate}
-                                onChange={(e) => setSettingsForm((f) => ({ ...f, endDate: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                disabled
+                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               />
                             </div>
                           </div>
@@ -1472,20 +1545,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <div className="mt-4">
                             <label className="block text-sm font-medium text-[#374151] mb-2">{t("courseDetail.thumbnail")}</label>
                             <div className="flex items-center gap-4">
-                              {course.thumbnail && (
+                              {course.thumbnail ? (
                                 <div className="w-20 h-14 rounded-lg overflow-hidden border border-[#E5E7EB]">
                                   <Image src={course.thumbnail} alt="Thumbnail" width={80} height={56} className="object-cover w-full h-full" unoptimized={course.thumbnail.startsWith("http")} />
                                 </div>
+                              ) : (
+                                <p className="text-sm text-[#6B7280]">—</p>
                               )}
-                              <button
-                                onClick={() => thumbnailInputRef.current?.click()}
-                                disabled={thumbnailUploading}
-                                className="inline-flex items-center gap-2 px-3 py-2 text-sm text-[#374151] border border-[#D1D5DB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
-                              >
-                                <Upload className="w-4 h-4" />
-                                {thumbnailUploading ? t("courseDetail.uploading") : t("courseDetail.changeThumbnail")}
-                              </button>
-                              <input ref={thumbnailInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleThumbnailUpload} className="hidden" />
+                              <p className="text-xs text-[#9CA3AF]">{t("courseDetail.managerOnlyField")}</p>
                             </div>
                           </div>
 

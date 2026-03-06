@@ -24,6 +24,7 @@ import DashboardSkeleton from "./DashboardSkeleton";
 import DashboardError from "./DashboardError";
 import { useInstructorDashboard } from "@/hooks/useInstructorDashboard";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { useNotifications } from "@/hooks/useNotifications";
 import { instructorApi, materialsApi } from "@/lib/api";
 import {
   transformToKPIData,
@@ -39,6 +40,7 @@ const InstructorDashboardContent = () => {
   const t = useTranslations("instructorDashboard");
   const { data: dashboard, loading, error, refetch } = useInstructorDashboard();
   const instructor = useInstructorProfile();
+  const { markAllAsRead: markAllNotificationsRead, clearAll: clearAllNotifications } = useNotifications();
   const router = useRouter();
   const locale = useLocale();
 
@@ -91,8 +93,8 @@ const InstructorDashboardContent = () => {
         window.open((result as any).zoomStartUrl, "_blank");
       }
       refetch();
-    } catch {
-      toast.error("Failed to start session");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to start session");
     }
   };
 
@@ -273,6 +275,8 @@ const InstructorDashboardContent = () => {
               <InstructorNotificationsWidget
                 notifications={dashboard?.notifications ?? []}
                 onRefresh={handleRefreshNotifications}
+                onMarkAllRead={async () => { await markAllNotificationsRead(); refetch(); }}
+                onClearAll={async () => { await clearAllNotifications(); refetch(); }}
               />
 
               {/* Calendar */}

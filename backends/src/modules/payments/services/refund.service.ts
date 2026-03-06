@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { eq, and, desc, count, sql, or, ilike, gte, lte } from 'drizzle-orm';
 import { db } from '../../../database';
 import {
   refunds,
@@ -24,6 +24,7 @@ import { GatewayFactory } from '../gateways/gateway.factory';
 import { EmailService } from '../../email/email.service';
 import { CreateRefundDto } from '../dto/create-refund.dto';
 import { RejectRefundDto } from '../dto/reject-refund.dto';
+import { DiscountService } from './discount.service';
 
 @Injectable()
 export class RefundService {
@@ -37,6 +38,7 @@ export class RefundService {
     private readonly gatewayFactory: GatewayFactory,
     private readonly auditLogService: AuditLogService,
     private readonly emailService: EmailService,
+    private readonly discountService: DiscountService,
   ) {
     const tabbyRate = this.configService.get<number>('payments.tabbyRefundDeductionRate') ?? 0.1;
     this.deductionRates = {
@@ -152,7 +154,7 @@ export class RefundService {
     return refund;
   }
 
-  async approveRefund(refundId: string, processedBy: string, ipAddress?: string) {
+  async approveRefund(refundId: string, processedBy: string, ipAddress?: string, approvalNote?: string) {
     const [refund] = await db
       .select()
       .from(refunds)
@@ -191,6 +193,7 @@ export class RefundService {
         .set({
           status: REFUND_STATUS.APPROVED,
           processedBy,
+          approvalNote: approvalNote || null,
           approvedAt: new Date(),
           updatedAt: new Date(),
         })
@@ -249,6 +252,7 @@ export class RefundService {
       metadata: {
         gatewayRefundId,
         refundAmount: refund.refundAmount,
+        ...(approvalNote ? { approvalNote } : {}),
       },
     });
 
@@ -379,6 +383,15 @@ export class RefundService {
       }
     });
 
+    // Reverse discount usage so the coupon can be reused
+    try {
+      await this.discountService.reverseUsage(refund.paymentId);
+    } catch (err) {
+      this.logger.error(
+        `Failed to reverse discount usage for payment ${refund.paymentId}: ${err.message}`,
+      );
+    }
+
     // Send completion email
     try {
       await this.emailService.sendRefundCompleted(
@@ -445,42 +458,124 @@ export class RefundService {
     };
   }
 
-  async getAllRefunds(page: number = 1, limit: number = 10) {
-    const offset = (page - 1) * limit;
+  private readonly refundSelectFields = {
+    id: refunds.id,
+    paymentId: refunds.paymentId,
+    requesterName: sql<string>`CONCAT(requester.first_name, ' ', requester.last_name)`,
+    requesterEmail: sql<string>`requester.email`,
+    courseTitle: sql<string>`${courses.title}`,
+    courseTitleAr: sql<string>`${courses.titleAr}`,
+    gateway: payments.gateway,
+    reason: refunds.reason,
+    reasonNote: refunds.reasonNote,
+    originalAmount: refunds.originalAmount,
+    deductionAmount: refunds.deductionAmount,
+    deductionReason: refunds.deductionReason,
+    refundAmount: refunds.refundAmount,
+    status: refunds.status,
+    approvalNote: refunds.approvalNote,
+    createdAt: refunds.createdAt,
+    approvedAt: refunds.approvedAt,
+    completedAt: refunds.completedAt,
+    rejectedAt: refunds.rejectedAt,
+    rejectionNote: refunds.rejectionNote,
+    processedBy: refunds.processedBy,
+    gatewayRefundId: refunds.gatewayRefundId,
+  };
 
-    const refundsList = await db
-      .select({
-        id: refunds.id,
-        paymentId: refunds.paymentId,
-        requesterName: sql<string>`CONCAT(requester.first_name, ' ', requester.last_name)`,
-        requesterEmail: sql<string>`requester.email`,
-        courseTitle: sql<string>`${courses.title}`,
-        reason: refunds.reason,
-        reasonNote: refunds.reasonNote,
-        originalAmount: refunds.originalAmount,
-        deductionAmount: refunds.deductionAmount,
-        refundAmount: refunds.refundAmount,
-        status: refunds.status,
-        createdAt: refunds.createdAt,
-        approvedAt: refunds.approvedAt,
-        completedAt: refunds.completedAt,
-        rejectedAt: refunds.rejectedAt,
-        rejectionNote: refunds.rejectionNote,
-      })
+  private buildRefundBaseQuery() {
+    return db
+      .select(this.refundSelectFields)
       .from(refunds)
       .leftJoin(
         sql`${users} AS requester`,
         eq(refunds.requestedBy, sql`requester.id`),
       )
       .leftJoin(payments, eq(refunds.paymentId, payments.id))
-      .leftJoin(courses, eq(payments.courseId, courses.id))
+      .leftJoin(courses, eq(payments.courseId, courses.id));
+  }
+
+  private buildRefundConditions(
+    status?: string,
+    search?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const conditions: any[] = [];
+    if (status && status !== 'all') {
+      conditions.push(eq(refunds.status, status));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(sql`requester.email`, `%${search}%`),
+          ilike(
+            sql`CONCAT(requester.first_name, ' ', requester.last_name)`,
+            `%${search}%`,
+          ),
+          ilike(courses.title, `%${search}%`),
+        ),
+      );
+    }
+    if (startDate) {
+      conditions.push(gte(refunds.createdAt, new Date(startDate)));
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      conditions.push(lte(refunds.createdAt, end));
+    }
+    return conditions;
+  }
+
+  async getRefundById(refundId: string) {
+    const [refund] = await this.buildRefundBaseQuery()
+      .where(eq(refunds.id, refundId))
+      .limit(1);
+
+    if (!refund) {
+      throw new NotFoundException('Refund not found');
+    }
+
+    return refund;
+  }
+
+  async getAllRefunds(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    search?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    const offset = (page - 1) * limit;
+    const conditions = this.buildRefundConditions(status, search, startDate, endDate);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const refundsList = await this.buildRefundBaseQuery()
+      .where(whereClause)
       .orderBy(desc(refunds.createdAt))
       .limit(limit)
       .offset(offset);
 
+    // Count query — use status + date filters only (skip search for performance)
+    const countConditions: any[] = [];
+    if (status && status !== 'all') {
+      countConditions.push(eq(refunds.status, status));
+    }
+    if (startDate) countConditions.push(gte(refunds.createdAt, new Date(startDate)));
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      countConditions.push(lte(refunds.createdAt, end));
+    }
+    const countWhere =
+      countConditions.length > 0 ? and(...countConditions) : undefined;
+
     const [totalResult] = await db
       .select({ count: count() })
-      .from(refunds);
+      .from(refunds)
+      .where(countWhere);
 
     return {
       data: refundsList,
@@ -491,5 +586,66 @@ export class RefundService {
         totalPages: Math.ceil(Number(totalResult?.count || 0) / limit),
       },
     };
+  }
+
+  async exportRefundsCsv(
+    status?: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<string> {
+    const conditions = this.buildRefundConditions(status, undefined, startDate, endDate);
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const rows = await this.buildRefundBaseQuery()
+      .where(whereClause)
+      .orderBy(desc(refunds.createdAt));
+
+    const lines: string[] = [];
+
+    // NELC metadata header
+    lines.push('# PhysioGuidance Refund Export | NELC Compliant');
+    lines.push(`# Generated: ${new Date().toISOString()}`);
+    if (startDate || endDate) {
+      lines.push(`# Date Range: ${startDate || 'beginning'} to ${endDate || 'now'}`);
+    }
+    if (status) {
+      lines.push(`# Status Filter: ${status}`);
+    }
+    lines.push('');
+
+    // CSV header
+    lines.push(
+      'RefundID,Requester,Email,Course,Reason,OriginalAmount,DeductionAmount,RefundAmount,Gateway,Status,RequestDate,ApprovedAt,CompletedAt',
+    );
+
+    const escapeCsv = (val: any) => {
+      if (val == null) return '';
+      const str = String(val);
+      return str.includes(',') || str.includes('"') || str.includes('\n')
+        ? `"${str.replace(/"/g, '""')}"`
+        : str;
+    };
+
+    for (const row of rows) {
+      lines.push(
+        [
+          escapeCsv(row.id),
+          escapeCsv(row.requesterName),
+          escapeCsv(row.requesterEmail),
+          escapeCsv(row.courseTitle),
+          escapeCsv(row.reason),
+          escapeCsv(row.originalAmount),
+          escapeCsv(row.deductionAmount),
+          escapeCsv(row.refundAmount),
+          escapeCsv(row.gateway),
+          escapeCsv(row.status),
+          escapeCsv(row.createdAt ? new Date(row.createdAt).toISOString() : ''),
+          escapeCsv(row.approvedAt ? new Date(row.approvedAt).toISOString() : ''),
+          escapeCsv(row.completedAt ? new Date(row.completedAt).toISOString() : ''),
+        ].join(','),
+      );
+    }
+
+    return lines.join('\n');
   }
 }

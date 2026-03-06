@@ -5229,7 +5229,12 @@
       "tabs": {
         "pending": "معلقة",
         "approved": "موافق عليها",
-        "rejected": "مرفوضة"
+        "rejected": "مرفوضة",
+        "processed": "مُعالجة"
+      },
+      "statusLabels": {
+        "processing": "قيد المعالجة",
+        "completed": "مكتملة"
       },
       "stats": {
         "totalRefunds": "إجمالي الاستردادات",
@@ -5238,16 +5243,46 @@
         "refundRate": "معدل الاسترداد"
       },
       "deductionRules": "قواعد الخصم",
+      "tamaraRule": "تمارا (الدفع الآجل): خصم 10% رسوم معالجة تلقائيًا",
+      "tabbyRule": "تابي (الدفع الآجل): خصم رسوم المعالجة حسب اتفاقية التاجر",
       "bnplFees": "رسوم الدفع الآجل: {percent}%",
       "adminFee": "رسوم إدارية: ر.س {amount}",
       "addNote": "إضافة ملاحظة",
       "notePlaceholder": "أدخل سبب الرفض أو الملاحظات...",
       "rejectTitle": "رفض الاسترداد",
-      "rejectionNoteLabel": "يرجى تقديم سبب لرفض طلب الاسترداد.",
+      "rejectionNoteLabel": "يرجى تقديم سبب لرفض طلب الاسترداد. هذه الملاحظة إلزامية.",
+      "noteRequired": "سبب الرفض مطلوب",
       "cancel": "إلغاء",
+      "close": "إغلاق",
       "approveSuccess": "تمت الموافقة على الاسترداد بنجاح",
       "rejectSuccess": "تم رفض الاسترداد",
-      "noRefunds": "لا توجد استردادات"
+      "noRefunds": "لا توجد استردادات",
+      "searchPlaceholder": "البحث بالاسم أو البريد أو الدورة...",
+      "export": "تصدير",
+      "exportSuccess": "بدأ التصدير",
+      "exportError": "فشل التصدير",
+      "viewDetail": "عرض",
+      "retryGateway": "إعادة المحاولة",
+      "showing": "عرض",
+      "of": "من",
+      "detail": {
+        "refundId": "رقم الاسترداد",
+        "requester": "مقدم الطلب",
+        "course": "الدورة",
+        "reason": "السبب",
+        "originalAmount": "المبلغ الأصلي",
+        "deduction": "الخصم",
+        "refundAmount": "مبلغ الاسترداد",
+        "gateway": "بوابة الدفع",
+        "status": "الحالة",
+        "timeline": "الجدول الزمني",
+        "requested": "تم الطلب",
+        "approvedAt": "تمت الموافقة",
+        "completedAt": "اكتمل",
+        "rejectedAt": "تم الرفض",
+        "rejectionReason": "سبب الرفض"
+      },
+      "detailTitle": "تفاصيل الاسترداد"
     },
     "discountsPage": {
       "title": "إدارة الخصومات والقسائم",
@@ -5257,6 +5292,14 @@
       "createSuccess": "تم إنشاء الخصم بنجاح",
       "editSuccess": "تم تحديث الخصم بنجاح",
       "deleteSuccess": "تم حذف الخصم",
+      "searchPlaceholder": "البحث برمز القسيمة...",
+      "bulkGenerate": "إنشاء مجموعة",
+      "export": "تصدير CSV",
+      "exportSuccess": "تم تحميل التصدير بنجاح",
+      "exportError": "فشل التصدير",
+      "totalSaved": "ر.س {amount} وُفِّر",
+      "showing": "عرض",
+      "of": "من",
       "tabs": {
         "active": "نشطة",
         "expired": "منتهية",
@@ -5269,6 +5312,10 @@
         "revenueLift": "زيادة الإيرادات",
         "avgDiscount": "متوسط الخصم"
       },
+      "toggle": {
+        "enable": "تفعيل",
+        "disable": "تعطيل"
+      },
       "form": {
         "code": "رمز القسيمة",
         "codePlaceholder": "مثال: PHYSIO25",
@@ -5279,6 +5326,8 @@
         "usageLimit": "حد الاستخدام",
         "expiryDate": "تاريخ الانتهاء",
         "minOrder": "الحد الأدنى للطلب (ر.س)",
+        "courses": "الدورات المطبقة",
+        "allCourses": "جميع الدورات",
         "create": "إنشاء القسيمة",
         "save": "حفظ التغييرات",
         "cancel": "إلغاء"
@@ -5288,10 +5337,24 @@
         "delete": "حذف"
       },
       "noCoupons": "لا توجد أكواد خصم",
+      "bulk": {
+        "title": "إنشاء قسائم مجمعة",
+        "prefix": "بادئة الرمز",
+        "prefixPlaceholder": "مثال: HEALTH",
+        "count": "عدد الرموز",
+        "preview": "معاينة: {prefix}-XXXXXX",
+        "generate": "إنشاء {count} رمز",
+        "success": "تم إنشاء {count} رمز خصم"
+      },
       "analytics": {
         "title": "تحليلات الاستخدام",
         "totalUsage": "إجمالي الاستخدام",
+        "totalSavings": "إجمالي التوفير",
+        "avgPerUse": "متوسط الخصم/استخدام",
         "revenueLift": "زيادة الإيرادات",
+        "topCoupons": "أفضل القسائم أداءً",
+        "conversions": "استخدام",
+        "saved": "وُفِّر",
         "cannibalization": "تأثير سلبي"
       }
     },

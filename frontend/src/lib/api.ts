@@ -2119,14 +2119,47 @@ export const refundApi = {
   request: (data: { paymentId: string; reason: string; reasonNote?: string }) =>
     api.post<any>('/refunds', data),
 
-  getAll: (page = 1, limit = 10) =>
-    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/refunds?page=${page}&limit=${limit}`),
+  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.search) sp.set('search', filters.search);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/refunds?${sp.toString()}`);
+  },
 
-  approve: (refundId: string) =>
-    api.patch<{ status: string }>(`/refunds/${refundId}/approve`),
+  getById: (refundId: string) =>
+    api.get<any>(`/refunds/${refundId}`),
+
+  approve: (refundId: string, approvalNote?: string) =>
+    api.patch<{ status: string }>(`/refunds/${refundId}/approve`, approvalNote ? { approvalNote } : {}),
 
   reject: (refundId: string, rejectionNote: string) =>
     api.patch<{ status: string }>(`/refunds/${refundId}/reject`, { rejectionNote }),
+
+  export: async (params?: { status?: string; startDate?: string; endDate?: string }) => {
+    const token = getAccessToken();
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set('status', params.status);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+
+    const res = await fetch(`${API_URL}/refunds/export${qs ? `?${qs}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `refunds-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 // ===========================================
@@ -2309,8 +2342,31 @@ export const discountApi = {
   validate: (code: string, courseId: string) =>
     api.post<{ valid: boolean; discountAmount: number; discountId: string | null; error?: string }>('/discounts/validate', { code, courseId }),
 
-  getAll: (page = 1, limit = 10) =>
-    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/discounts?page=${page}&limit=${limit}`),
+  getAll: (page = 1, limit = 10, filters?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.search) sp.set('search', filters.search);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/discounts?${sp.toString()}`);
+  },
+
+  getById: (id: string) => api.get<any>(`/discounts/${id}`),
+
+  getAnalytics: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      totalSavings: number;
+      avgDiscountPerUse: number;
+      totalRedemptions: number;
+      revenueLift: { withCoupon: number; withoutCoupon: number; liftPercentage: number };
+      cannibalization: { totalCouponUsers: number; repeatBuyerCount: number; rate: number };
+      topCoupons: Array<{ id: string; code: string; type: string; value: number; isActive: boolean; conversions: number; totalSaved: number }>;
+    }>(`/discounts/analytics${qs ? `?${qs}` : ''}`);
+  },
 
   create: (data: {
     code: string;
@@ -2318,16 +2374,53 @@ export const discountApi = {
     value: number;
     maxUses?: number;
     minOrderAmount?: number;
-    courseId?: string;
+    courseIds?: string[];
     validFrom?: string;
     validUntil?: string;
   }) => api.post<any>('/discounts', data),
+
+  bulkGenerate: (data: {
+    prefix: string;
+    count: number;
+    type: string;
+    value: number;
+    maxUses?: number;
+    minOrderAmount?: number;
+    courseIds?: string[];
+    validFrom?: string;
+    validUntil?: string;
+  }) => api.post<{ created: number; codes: string[] }>('/discounts/bulk', data),
 
   update: (id: string, data: any) =>
     api.patch<any>(`/discounts/${id}`, data),
 
   delete: (id: string) =>
     api.delete<{ deleted: boolean }>(`/discounts/${id}`),
+
+  export: async (params?: { status?: string; search?: string; startDate?: string; endDate?: string }) => {
+    const token = getAccessToken();
+    const sp = new URLSearchParams();
+    if (params?.status) sp.set('status', params.status);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+
+    const res = await fetch(`${API_URL}/discounts/export${qs ? `?${qs}` : ''}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `discounts-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export default api;

@@ -5014,7 +5014,12 @@
       "tabs": {
         "pending": "Pending",
         "approved": "Approved",
-        "rejected": "Rejected"
+        "rejected": "Rejected",
+        "processed": "Processed"
+      },
+      "statusLabels": {
+        "processing": "Processing",
+        "completed": "Completed"
       },
       "stats": {
         "totalRefunds": "Total Refunds",
@@ -5023,16 +5028,46 @@
         "refundRate": "Refund Rate"
       },
       "deductionRules": "Deduction Rules",
+      "tamaraRule": "Tamara BNPL: 10% processing fee deducted automatically",
+      "tabbyRule": "Tabby BNPL: Processing fee deducted per merchant agreement",
       "bnplFees": "BNPL processing fees: {percent}%",
       "adminFee": "Admin fee: SAR {amount}",
       "addNote": "Add Note",
       "notePlaceholder": "Enter rejection reason or notes...",
       "rejectTitle": "Reject Refund",
-      "rejectionNoteLabel": "Provide a reason for rejecting this refund request.",
+      "rejectionNoteLabel": "Provide a reason for rejecting this refund request. This note is mandatory.",
+      "noteRequired": "Rejection reason is required",
       "cancel": "Cancel",
+      "close": "Close",
       "approveSuccess": "Refund approved successfully",
       "rejectSuccess": "Refund rejected",
-      "noRefunds": "No refunds found"
+      "noRefunds": "No refunds found",
+      "searchPlaceholder": "Search by name, email, or course...",
+      "export": "Export",
+      "exportSuccess": "Export started",
+      "exportError": "Export failed",
+      "viewDetail": "View",
+      "retryGateway": "Retry Gateway",
+      "showing": "Showing",
+      "of": "of",
+      "detail": {
+        "refundId": "Refund ID",
+        "requester": "Requester",
+        "course": "Course",
+        "reason": "Reason",
+        "originalAmount": "Original Amount",
+        "deduction": "Deduction",
+        "refundAmount": "Refund Amount",
+        "gateway": "Gateway",
+        "status": "Status",
+        "timeline": "Timeline",
+        "requested": "Requested",
+        "approvedAt": "Approved",
+        "completedAt": "Completed",
+        "rejectedAt": "Rejected",
+        "rejectionReason": "Rejection Reason"
+      },
+      "detailTitle": "Refund Details"
     },
     "discountsPage": {
       "title": "Discount & Coupon Management",
@@ -5042,6 +5077,14 @@
       "createSuccess": "Discount created successfully",
       "editSuccess": "Discount updated successfully",
       "deleteSuccess": "Discount deleted",
+      "searchPlaceholder": "Search by code...",
+      "bulkGenerate": "Bulk Generate",
+      "export": "Export CSV",
+      "exportSuccess": "Export downloaded successfully",
+      "exportError": "Export failed",
+      "totalSaved": "SAR {amount} saved",
+      "showing": "Showing",
+      "of": "of",
       "tabs": {
         "active": "Active",
         "expired": "Expired",
@@ -5054,6 +5097,10 @@
         "revenueLift": "Revenue Lift",
         "avgDiscount": "Avg Discount"
       },
+      "toggle": {
+        "enable": "Enable",
+        "disable": "Disable"
+      },
       "form": {
         "code": "Coupon Code",
         "codePlaceholder": "e.g., PHYSIO25",
@@ -5064,6 +5111,8 @@
         "usageLimit": "Usage Limit",
         "expiryDate": "Expiry Date",
         "minOrder": "Minimum Order (SAR)",
+        "courses": "Applicable Courses",
+        "allCourses": "All Courses",
         "create": "Create Coupon",
         "save": "Save Changes",
         "cancel": "Cancel"
@@ -5073,10 +5122,24 @@
         "delete": "Delete"
       },
       "noCoupons": "No discount codes found",
+      "bulk": {
+        "title": "Bulk Generate Coupons",
+        "prefix": "Code Prefix",
+        "prefixPlaceholder": "e.g., HEALTH",
+        "count": "Number of Codes",
+        "preview": "Preview: {prefix}-XXXXXX",
+        "generate": "Generate {count} Codes",
+        "success": "{count} discount codes created"
+      },
       "analytics": {
         "title": "Usage Analytics",
         "totalUsage": "Total Usage",
+        "totalSavings": "Total Savings",
+        "avgPerUse": "Avg. Discount/Use",
         "revenueLift": "Revenue Lift",
+        "topCoupons": "Top Performing Coupons",
+        "conversions": "uses",
+        "saved": "Saved",
         "cannibalization": "Cannibalization"
       }
     },

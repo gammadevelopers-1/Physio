@@ -49,6 +49,7 @@ export const refunds = pgTable(
     completedAt: timestamp('completed_at'),
     rejectedAt: timestamp('rejected_at'),
     rejectionNote: text('rejection_note'),
+    approvalNote: text('approval_note'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },

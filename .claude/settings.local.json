@@ -152,7 +152,14 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:corpus.hubwiz.com)",
       "WebFetch(domain:)",
-      "Bash(pdftotext /home/haseeb-raza/Desktop/physioguidance/Finance_Dashboard_Team_Assignment.pdf.pdf -)"
+      "Bash(pdftotext /home/haseeb-raza/Desktop/physioguidance/Finance_Dashboard_Team_Assignment.pdf.pdf -)",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker restart physio-backend)",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker logs physio-backend --tail 10)",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker ps --format \"{{.Names}}\")",
+      "Bash(sudo docker ps --format \"{{.Names}}\")",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker exec physio-database psql -U postgres -d physioguidance -c \"ALTER TABLE refunds ADD COLUMN IF NOT EXISTS approval_note TEXT;\")",
+      "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker ps)",
+      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/finance/page.tsx)"
     ]
   }
 }

@@ -17,7 +17,7 @@ export class AuditLogController {
   /**
    * GET /audit-logs?entityType=session&entityId=xxx&page=1&limit=20
    */
-  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Roles('FINANCE' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get()
   async getByEntity(
     @Query('entityType') entityType: string,

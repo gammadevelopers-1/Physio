@@ -7,12 +7,14 @@ import {
   Param,
   Query,
   Req,
+  Res,
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { RefundService } from '../services/refund.service';
 import { CreateRefundDto } from '../dto/create-refund.dto';
+import { ApproveRefundDto } from '../dto/approve-refund.dto';
 import { RejectRefundDto } from '../dto/reject-refund.dto';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -49,13 +51,51 @@ export class RefundsController {
     return this.refundService.getMyRefunds(user.id, page, limit);
   }
 
+  @Get('export')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async exportRefunds(
+    @Res() res: Response,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const csv = await this.refundService.exportRefundsCsv(
+      status,
+      startDate,
+      endDate,
+    );
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="refunds-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+    );
+    res.send(csv);
+  }
+
   @Get()
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async getAllRefunds(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('status') status?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.refundService.getAllRefunds(page, limit);
+    return this.refundService.getAllRefunds(
+      page,
+      limit,
+      status,
+      search,
+      startDate,
+      endDate,
+    );
+  }
+
+  @Get(':id')
+  @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
+  async getRefundById(@Param('id') id: string) {
+    return this.refundService.getRefundById(id);
   }
 
   @Patch(':id/approve')
@@ -63,10 +103,16 @@ export class RefundsController {
   async approveRefund(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ApproveRefundDto,
     @Req() req: Request,
   ) {
     const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
-    return this.refundService.approveRefund(id, user.id, ipAddress);
+    return this.refundService.approveRefund(
+      id,
+      user.id,
+      ipAddress,
+      dto.approvalNote,
+    );
   }
 
   @Patch(':id/reject')

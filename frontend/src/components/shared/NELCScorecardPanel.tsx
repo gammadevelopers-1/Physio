@@ -57,6 +57,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
     categories: ScorecardCategory[];
   } | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,7 +96,6 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
   const overallCfg = STATUS_CONFIG[scorecard.overallStatus];
   const OverallIcon = overallCfg.icon;
 
-  const [panelOpen, setPanelOpen] = useState(true);
   const passedCount = scorecard.categories.filter((c) => c.status === "passed").length;
   const totalCount = scorecard.categories.length;
 

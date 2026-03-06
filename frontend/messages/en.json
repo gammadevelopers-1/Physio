@@ -2043,7 +2043,9 @@
       "assessmentSubmitted": "Assessment Submitted",
       "assessmentSubmittedMessage": "3 students completed Module 2 quiz",
       "reviewRequested": "Review Requested",
-      "reviewRequestedMessage": "Certificate approval pending for 2 students"
+      "reviewRequestedMessage": "Certificate approval pending for 2 students",
+      "markAllRead": "Read all",
+      "clearAll": "Clear all"
     },
     "feedback": {
       "title": "Recent Feedback",

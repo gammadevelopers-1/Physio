@@ -2258,7 +2258,9 @@
       "assessmentSubmitted": "تم تقديم التقييم",
       "assessmentSubmittedMessage": "أكمل 3 طلاب اختبار الوحدة 2",
       "reviewRequested": "طلب مراجعة",
-      "reviewRequestedMessage": "موافقة الشهادة معلقة لـ 2 طالب"
+      "reviewRequestedMessage": "موافقة الشهادة معلقة لـ 2 طالب",
+      "markAllRead": "قراءة الكل",
+      "clearAll": "مسح الكل"
     },
     "feedback": {
       "title": "التقييمات الأخيرة",

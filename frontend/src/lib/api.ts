@@ -2194,8 +2194,19 @@ export const financeApi = {
     return api.get<any>(`/finance/refund-rate${qs ? `?${qs}` : ''}`);
   },
 
-  getInvoiceAging: () =>
-    api.get<any>('/finance/invoice-aging'),
+  getInvoiceAging: (params?: { startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    const qs = sp.toString();
+    return api.get<{
+      current: { count: number; amount: number };
+      thirtyDay: { count: number; amount: number };
+      sixtyDay: { count: number; amount: number };
+      ninetyPlus: { count: number; amount: number };
+      paid: { count: number; amount: number };
+    }>(`/finance/invoice-aging${qs ? `?${qs}` : ''}`);
+  },
 
   getRevenueTrend: (params?: { period?: 'day' | 'week' | 'month'; startDate?: string; endDate?: string }) => {
     const sp = new URLSearchParams();
@@ -2215,12 +2226,13 @@ export const financeApi = {
     return api.get<Array<{ courseId: string; title: string; titleAr: string | null; revenue: number; count: number }>>(`/finance/top-courses${qs ? `?${qs}` : ''}`);
   },
 
-  exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string }) => {
+  exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string }) => {
     const token = getAccessToken();
     const query = new URLSearchParams();
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
     if (params?.status) query.set('status', params.status);
+    if (params?.reportType) query.set('reportType', params.reportType);
     const qs = query.toString();
 
     const res = await fetch(`${API_URL}/finance/export${qs ? `?${qs}` : ''}`, {
@@ -2242,12 +2254,13 @@ export const financeApi = {
     window.URL.revokeObjectURL(url);
   },
 
-  exportPdf: async (params?: { startDate?: string; endDate?: string; status?: string }) => {
+  exportPdf: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string }) => {
     const token = getAccessToken();
     const query = new URLSearchParams({ format: 'pdf' });
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
     if (params?.status) query.set('status', params.status);
+    if (params?.reportType) query.set('reportType', params.reportType);
 
     const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -2259,6 +2272,29 @@ export const financeApi = {
     const a = document.createElement('a');
     a.href = url;
     a.download = `finance-export-${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportExcel: async (params?: { startDate?: string; endDate?: string; reportType?: string }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'xlsx' });
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.reportType) query.set('reportType', params.reportType);
+
+    const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `finance-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2308,6 +2344,7 @@ export const financeApi = {
       revenue: number;
       refundAmount: number;
       netRevenue: number;
+      marginPercent: number;
       enrollmentCount: number;
       courseCount: number;
     }>>(`/finance/revenue-by-delivery-type${qs ? `?${qs}` : ''}`);

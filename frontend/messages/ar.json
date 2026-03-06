@@ -5364,15 +5364,20 @@
       "generateReport": "إنشاء تقرير",
       "exportExcel": "تصدير Excel",
       "exportPdf": "تصدير PDF",
+      "exportSuccess": "تم تصدير التقرير بنجاح",
+      "exportError": "فشل تصدير التقرير",
+      "loading": "جارٍ تحميل بيانات التقرير...",
       "reportTypes": {
-        "revenue": "تقرير الإيرادات",
-        "revenueDesc": "الإيرادات حسب الدورة والمدرب والفترة",
-        "payments": "تقرير المدفوعات",
-        "paymentsDesc": "المدفوعات حسب البوابة والحالة",
-        "refunds": "تقرير الاستردادات",
-        "refundsDesc": "اتجاهات الاسترداد والأسباب والتحليلات",
-        "summary": "الملخص التنفيذي",
-        "summaryDesc": "نظرة مالية عامة عالية المستوى"
+        "profitByCourse": "الربحية حسب الدورة",
+        "profitByCourseDesc": "الإيرادات والاستردادات وصافي الربح ونسبة الهامش لكل دورة",
+        "profitByInstructor": "الربحية حسب المدرب",
+        "profitByInstructorDesc": "الإيرادات المولدة وعدد الدورات وصافي المساهمة لكل مدرب",
+        "profitByDelivery": "حسب نوع التقديم",
+        "profitByDeliveryDesc": "مقارنة الربحية: حضوري مقابل مباشر (Zoom) مقابل مدمج",
+        "invoiceAging": "تقادم الفواتير",
+        "invoiceAgingDesc": "الفواتير المستحقة مجمعة حسب العمر (0-30 يوم، 31-60 يوم، 61-90 يوم، 90+ يوم)",
+        "chargeback": "معدل رد المبالغ",
+        "chargebackDesc": "تحليل رد المبالغ حسب الدورة وبوابة الدفع"
       },
       "filters": {
         "period": "الفترة",
@@ -5381,18 +5386,63 @@
         "thisQuarter": "هذا الربع",
         "thisYear": "هذا العام",
         "custom": "نطاق مخصص",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
         "groupBy": "تجميع حسب",
         "byCourse": "حسب الدورة",
         "byInstructor": "حسب المدرب",
         "byGateway": "حسب البوابة",
-        "byStatus": "حسب الحالة"
+        "byDelivery": "حسب نوع التقديم"
       },
       "columns": {
+        "course": "الدورة",
+        "instructor": "المدرب",
+        "deliveryType": "نوع التقديم",
+        "revenue": "الإيرادات",
+        "refunds": "الاستردادات",
+        "netProfit": "صافي الربح",
+        "margin": "نسبة الهامش",
+        "enrollments": "التسجيلات",
+        "courses": "الدورات",
+        "gateway": "البوابة",
+        "count": "العدد",
+        "amount": "المبلغ",
+        "rate": "المعدل",
         "transactions": "المعاملات",
         "growth": "النمو"
       },
+      "aging": {
+        "current": "0-30 يوم",
+        "thirtyDay": "31-60 يوم",
+        "sixtyDay": "61-90 يوم",
+        "ninetyPlus": "90+ يوم",
+        "paid": "مدفوعة",
+        "total": "إجمالي المستحقات",
+        "invoices": "فواتير"
+      },
+      "chargeback": {
+        "totalTransactions": "إجمالي المعاملات",
+        "chargebackCount": "عدد رد المبالغ",
+        "chargebackAmount": "مبلغ رد المبالغ",
+        "chargebackRate": "معدل رد المبالغ",
+        "breakdown": "التفصيل حسب الدورة والبوابة",
+        "noCases": "لا توجد حالات رد مبالغ"
+      },
+      "delivery": {
+        "zoom": "مباشر (Zoom)",
+        "onsite": "حضوري",
+        "blended": "مدمج",
+        "unknown": "غير محدد"
+      },
+      "summary": {
+        "totalRevenue": "إجمالي الإيرادات",
+        "totalRefunds": "إجمالي الاستردادات",
+        "netRevenue": "صافي الإيرادات",
+        "avgMargin": "متوسط الهامش"
+      },
       "noData": "لا توجد بيانات تقارير متاحة بعد",
-      "exportHint": "استخدم أزرار التصدير أعلاه لتحميل البيانات المالية كملف CSV"
+      "noResults": "لا توجد بيانات للفلاتر المحددة",
+      "exportHint": "اختر نوع التقرير وانقر إنشاء لعرض البيانات المالية"
     },
     "navbar": {
       "toggleMenu": "تبديل القائمة",

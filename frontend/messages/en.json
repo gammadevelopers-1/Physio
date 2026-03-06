@@ -5149,15 +5149,20 @@
       "generateReport": "Generate Report",
       "exportExcel": "Export Excel",
       "exportPdf": "Export PDF",
+      "exportSuccess": "Report exported successfully",
+      "exportError": "Failed to export report",
+      "loading": "Loading report data...",
       "reportTypes": {
-        "revenue": "Revenue Report",
-        "revenueDesc": "Revenue by course, instructor, and period",
-        "payments": "Payments Report",
-        "paymentsDesc": "Payments by gateway and status",
-        "refunds": "Refunds Report",
-        "refundsDesc": "Refund trends, reasons, and analytics",
-        "summary": "Executive Summary",
-        "summaryDesc": "High-level financial overview"
+        "profitByCourse": "Profitability by Course",
+        "profitByCourseDesc": "Revenue, refunds, net profit, and margin % per course",
+        "profitByInstructor": "Profitability by Instructor",
+        "profitByInstructorDesc": "Revenue generated, course count, and net contribution per instructor",
+        "profitByDelivery": "By Delivery Type",
+        "profitByDeliveryDesc": "On-site vs. Live (Zoom) vs. Blended profitability comparison",
+        "invoiceAging": "Invoice Aging",
+        "invoiceAgingDesc": "Outstanding invoices grouped by age (0-30d, 31-60d, 61-90d, 90d+)",
+        "chargeback": "Chargeback Rate",
+        "chargebackDesc": "Chargeback analysis by course and payment gateway"
       },
       "filters": {
         "period": "Period",
@@ -5166,18 +5171,63 @@
         "thisQuarter": "This Quarter",
         "thisYear": "This Year",
         "custom": "Custom Range",
+        "startDate": "Start Date",
+        "endDate": "End Date",
         "groupBy": "Group By",
         "byCourse": "By Course",
         "byInstructor": "By Instructor",
         "byGateway": "By Gateway",
-        "byStatus": "By Status"
+        "byDelivery": "By Delivery Type"
       },
       "columns": {
+        "course": "Course",
+        "instructor": "Instructor",
+        "deliveryType": "Delivery Type",
+        "revenue": "Revenue",
+        "refunds": "Refunds",
+        "netProfit": "Net Profit",
+        "margin": "Margin %",
+        "enrollments": "Enrollments",
+        "courses": "Courses",
+        "gateway": "Gateway",
+        "count": "Count",
+        "amount": "Amount",
+        "rate": "Rate",
         "transactions": "Transactions",
         "growth": "Growth"
       },
+      "aging": {
+        "current": "0-30 Days",
+        "thirtyDay": "31-60 Days",
+        "sixtyDay": "61-90 Days",
+        "ninetyPlus": "90+ Days",
+        "paid": "Paid",
+        "total": "Total Outstanding",
+        "invoices": "invoices"
+      },
+      "chargeback": {
+        "totalTransactions": "Total Transactions",
+        "chargebackCount": "Chargeback Count",
+        "chargebackAmount": "Chargeback Amount",
+        "chargebackRate": "Chargeback Rate",
+        "breakdown": "Breakdown by Course & Gateway",
+        "noCases": "No chargeback cases found"
+      },
+      "delivery": {
+        "zoom": "Live (Zoom)",
+        "onsite": "On-site",
+        "blended": "Blended",
+        "unknown": "Unknown"
+      },
+      "summary": {
+        "totalRevenue": "Total Revenue",
+        "totalRefunds": "Total Refunds",
+        "netRevenue": "Net Revenue",
+        "avgMargin": "Avg Margin"
+      },
       "noData": "No report data available yet",
-      "exportHint": "Use the export buttons above to download financial data as CSV"
+      "noResults": "No data found for the selected filters",
+      "exportHint": "Select a report type and click Generate to view financial data"
     },
     "navbar": {
       "toggleMenu": "Toggle menu",

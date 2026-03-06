@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { sql, and, gte, lte, eq, desc } from 'drizzle-orm';
 import * as PDFDocument from 'pdfkit';
+import * as ExcelJS from 'exceljs';
 import { db } from '../../../database';
 import { payments, invoices, users, courses } from '../../../database/schema';
 
@@ -183,28 +184,43 @@ export class FinanceService {
     };
   }
 
-  async getInvoiceAging() {
+  async getInvoiceAging(startDate?: string, endDate?: string) {
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
-    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const d30 = new Date(now.getTime() - 30 * 86400000);
+    const d60 = new Date(now.getTime() - 60 * 86400000);
+    const d90 = new Date(now.getTime() - 90 * 86400000);
+
+    const conditions: any[] = [];
+    if (startDate) conditions.push(gte(invoices.issuedAt, new Date(startDate)));
+    if (endDate) conditions.push(lte(invoices.issuedAt, new Date(endDate)));
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Use dueDate for aging (fall back to issuedAt if dueDate is null)
+    const ageDate = sql`COALESCE(${invoices.dueDate}, ${invoices.issuedAt})`;
+    const outstanding = sql`${invoices.status} IN ('issued', 'overdue')`;
 
     const [result] = await db
       .select({
-        current: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'issued' AND ${invoices.issuedAt} >= ${thirtyDaysAgo} THEN 1 END)`,
-        thirtyDay: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'issued' AND ${invoices.issuedAt} < ${thirtyDaysAgo} AND ${invoices.issuedAt} >= ${sixtyDaysAgo} THEN 1 END)`,
-        sixtyDay: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'issued' AND ${invoices.issuedAt} < ${sixtyDaysAgo} AND ${invoices.issuedAt} >= ${ninetyDaysAgo} THEN 1 END)`,
-        ninetyPlus: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'issued' AND ${invoices.issuedAt} < ${ninetyDaysAgo} THEN 1 END)`,
-        paid: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'paid' THEN 1 END)`,
+        currentCount: sql<number>`COUNT(CASE WHEN ${outstanding} AND ${ageDate} >= ${d30} THEN 1 END)`,
+        currentAmount: sql<string>`COALESCE(SUM(CASE WHEN ${outstanding} AND ${ageDate} >= ${d30} THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        thirtyDayCount: sql<number>`COUNT(CASE WHEN ${outstanding} AND ${ageDate} < ${d30} AND ${ageDate} >= ${d60} THEN 1 END)`,
+        thirtyDayAmount: sql<string>`COALESCE(SUM(CASE WHEN ${outstanding} AND ${ageDate} < ${d30} AND ${ageDate} >= ${d60} THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        sixtyDayCount: sql<number>`COUNT(CASE WHEN ${outstanding} AND ${ageDate} < ${d60} AND ${ageDate} >= ${d90} THEN 1 END)`,
+        sixtyDayAmount: sql<string>`COALESCE(SUM(CASE WHEN ${outstanding} AND ${ageDate} < ${d60} AND ${ageDate} >= ${d90} THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        ninetyPlusCount: sql<number>`COUNT(CASE WHEN ${outstanding} AND ${ageDate} < ${d90} THEN 1 END)`,
+        ninetyPlusAmount: sql<string>`COALESCE(SUM(CASE WHEN ${outstanding} AND ${ageDate} < ${d90} THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
+        paidCount: sql<number>`COUNT(CASE WHEN ${invoices.status} = 'paid' THEN 1 END)`,
+        paidAmount: sql<string>`COALESCE(SUM(CASE WHEN ${invoices.status} = 'paid' THEN ${invoices.totalAmount}::numeric ELSE 0 END), 0)`,
       })
-      .from(invoices);
+      .from(invoices)
+      .where(whereClause);
 
     return {
-      current: Number(result?.current || 0),
-      thirtyDay: Number(result?.thirtyDay || 0),
-      sixtyDay: Number(result?.sixtyDay || 0),
-      ninetyPlus: Number(result?.ninetyPlus || 0),
-      paid: Number(result?.paid || 0),
+      current: { count: Number(result?.currentCount || 0), amount: Number(result?.currentAmount || 0) },
+      thirtyDay: { count: Number(result?.thirtyDayCount || 0), amount: Number(result?.thirtyDayAmount || 0) },
+      sixtyDay: { count: Number(result?.sixtyDayCount || 0), amount: Number(result?.sixtyDayAmount || 0) },
+      ninetyPlus: { count: Number(result?.ninetyPlusCount || 0), amount: Number(result?.ninetyPlusAmount || 0) },
+      paid: { count: Number(result?.paidCount || 0), amount: Number(result?.paidAmount || 0) },
     };
   }
 
@@ -300,11 +316,13 @@ export class FinanceService {
     return result.map((r) => {
       const revenue = Number(r.revenue);
       const refundAmount = Number(r.refundAmount);
+      const netRevenue = revenue - refundAmount;
       return {
         deliveryType: r.deliveryType || 'unknown',
         revenue,
         refundAmount,
-        netRevenue: revenue - refundAmount,
+        netRevenue,
+        marginPercent: revenue > 0 ? Number(((netRevenue / revenue) * 100).toFixed(2)) : 0,
         enrollmentCount: Number(r.enrollmentCount),
         courseCount: Number(r.courseCount),
       };
@@ -361,7 +379,7 @@ export class FinanceService {
     };
   }
 
-  async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string): Promise<string> {
+  async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string, userId?: string): Promise<string> {
     const conditions: any[] = [];
     if (startDate) {
       conditions.push(gte(payments.createdAt, new Date(startDate)));
@@ -402,12 +420,14 @@ export class FinanceService {
     // Metadata header
     lines.push(`# PhysioGuidance Payment Export | NELC Compliant`);
     lines.push(`# Generated: ${new Date().toISOString()}`);
+    lines.push(`# Generated by: ${userId || 'system'}`);
     if (startDate || endDate) {
       lines.push(`# Date Range: ${startDate || 'beginning'} to ${endDate || 'now'}`);
     }
     if (status) {
       lines.push(`# Status Filter: ${status}`);
     }
+    lines.push(`# Platform Version: 1.0.0`);
     lines.push('');
 
     // CSV header
@@ -442,7 +462,7 @@ export class FinanceService {
     return lines.join('\n');
   }
 
-  async exportPaymentsPdf(startDate?: string, endDate?: string, status?: string): Promise<Buffer> {
+  async exportPaymentsPdf(startDate?: string, endDate?: string, status?: string, userId?: string): Promise<Buffer> {
     const conditions: any[] = [];
     if (startDate) conditions.push(gte(payments.createdAt, new Date(startDate)));
     if (endDate) conditions.push(lte(payments.createdAt, new Date(endDate)));
@@ -480,15 +500,17 @@ export class FinanceService {
         // ── Header ──
         doc.font('Helvetica-Bold').fontSize(16)
           .text('PhysioGuidance — Payment Report', 40, 40);
+        doc.font('Helvetica').fontSize(8)
+          .text('Gamma Developers  |  PhysioGuidance Platform', 40, 58);
         doc.font('Helvetica').fontSize(9)
-          .text(`Generated: ${new Date().toISOString()}  |  NELC Audit Evidence`, 40, 62);
+          .text(`Generated: ${new Date().toISOString()}  |  Generated by: ${userId || 'system'}  |  NELC Audit Evidence`, 40, 70);
 
         const filterParts: string[] = [];
         if (startDate || endDate) filterParts.push(`Date: ${startDate || 'beginning'} → ${endDate || 'now'}`);
         if (status) filterParts.push(`Status: ${status}`);
-        if (filterParts.length) doc.text(`Filters: ${filterParts.join('  |  ')}`, 40, 74);
+        if (filterParts.length) doc.text(`Filters: ${filterParts.join('  |  ')}`, 40, 82);
 
-        doc.moveTo(40, 88).lineTo(800, 88).stroke();
+        doc.moveTo(40, 96).lineTo(800, 96).stroke();
 
         // ── Column layout ──
         const cols = [
@@ -503,7 +525,7 @@ export class FinanceService {
         ];
 
         // Table header
-        let y = 96;
+        let y = 104;
         doc.font('Helvetica-Bold').fontSize(8);
         for (const col of cols) {
           doc.text(col.label, col.x, y, { width: col.w });
@@ -548,6 +570,268 @@ export class FinanceService {
         }
 
         // ── Footer summary ──
+        doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke();
+        doc.font('Helvetica-Bold').fontSize(8)
+          .text(`Total rows: ${rows.length}`, 40, y + 10);
+
+        doc.end();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  async exportReport(
+    reportType: string,
+    format: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): Promise<Buffer | string> {
+    // Fetch data based on report type
+    const { title, headers, rows } = await this.getReportData(reportType, startDate, endDate);
+
+    switch (format) {
+      case 'xlsx':
+        return this.buildExcelExport(title, headers, rows, reportType, startDate, endDate, userId);
+      case 'pdf':
+        return this.buildPdfExport(title, headers, rows, reportType, startDate, endDate, userId);
+      default:
+        return this.buildCsvExport(title, headers, rows, reportType, startDate, endDate, userId);
+    }
+  }
+
+  private async getReportData(
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<{ title: string; headers: string[]; rows: (string | number)[][] }> {
+    switch (reportType) {
+      case 'profitByCourse': {
+        const data = await this.getRevenueByCourse(startDate, endDate);
+        return {
+          title: 'Profitability by Course',
+          headers: ['Course', 'Revenue (SAR)', 'Refunds (SAR)', 'Net Profit (SAR)', 'Margin %', 'Enrollments'],
+          rows: data.map((r) => [r.title, r.revenue, r.refundAmount, r.netRevenue, r.marginPercent, r.enrollmentCount]),
+        };
+      }
+      case 'profitByInstructor': {
+        const data = await this.getRevenueByInstructor(startDate, endDate);
+        return {
+          title: 'Profitability by Instructor',
+          headers: ['Instructor', 'Courses', 'Revenue (SAR)', 'Refunds (SAR)', 'Net Profit (SAR)', 'Enrollments'],
+          rows: data.map((r) => [r.instructorName, r.courseCount, r.revenue, r.refundAmount, r.netRevenue, r.enrollmentCount]),
+        };
+      }
+      case 'profitByDelivery': {
+        const data = await this.getRevenueByDeliveryType(startDate, endDate);
+        return {
+          title: 'Profitability by Delivery Type',
+          headers: ['Delivery Type', 'Revenue (SAR)', 'Refunds (SAR)', 'Net Profit (SAR)', 'Margin %', 'Courses', 'Enrollments'],
+          rows: data.map((r) => [r.deliveryType, r.revenue, r.refundAmount, r.netRevenue, r.marginPercent, r.courseCount, r.enrollmentCount]),
+        };
+      }
+      case 'invoiceAging': {
+        const data = await this.getInvoiceAging(startDate, endDate);
+        return {
+          title: 'Invoice Aging Report',
+          headers: ['Age Bucket', 'Count', 'Amount (SAR)'],
+          rows: [
+            ['0-30 Days', data.current.count, data.current.amount],
+            ['31-60 Days', data.thirtyDay.count, data.thirtyDay.amount],
+            ['61-90 Days', data.sixtyDay.count, data.sixtyDay.amount],
+            ['90+ Days', data.ninetyPlus.count, data.ninetyPlus.amount],
+            ['Paid', data.paid.count, data.paid.amount],
+          ],
+        };
+      }
+      case 'chargeback': {
+        const data = await this.getChargebackRate(startDate, endDate);
+        return {
+          title: 'Chargeback Rate Report',
+          headers: ['Course', 'Gateway', 'Count', 'Amount (SAR)'],
+          rows: data.breakdown.map((r) => [r.courseTitle, r.gateway, r.chargebackCount, r.chargebackAmount]),
+        };
+      }
+      default:
+        throw new BadRequestException(`Unknown report type: ${reportType}`);
+    }
+  }
+
+  private async buildExcelExport(
+    title: string,
+    headers: string[],
+    rows: (string | number)[][],
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): Promise<Buffer> {
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'PhysioGuidance Platform';
+    workbook.created = new Date();
+
+    // Metadata sheet
+    const metaSheet = workbook.addWorksheet('Metadata');
+    metaSheet.addRow(['PhysioGuidance Platform — Financial Report']);
+    metaSheet.addRow(['Report', title]);
+    metaSheet.addRow(['Generated', new Date().toISOString()]);
+    metaSheet.addRow(['Generated by', userId || 'system']);
+    metaSheet.addRow(['Date Range', `${startDate || 'all'} to ${endDate || 'all'}`]);
+    metaSheet.addRow(['Platform Version', '1.0.0']);
+    metaSheet.addRow(['Publisher', 'Gamma Developers']);
+    metaSheet.getColumn(1).width = 20;
+    metaSheet.getColumn(2).width = 50;
+
+    // Data sheet
+    const dataSheet = workbook.addWorksheet('Report Data');
+
+    // Header row with bold styling
+    const headerRow = dataSheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+      cell.alignment = { horizontal: 'center' };
+    });
+
+    // Data rows
+    for (const row of rows) {
+      const dataRow = dataSheet.addRow(row);
+      dataRow.eachCell((cell, colIdx) => {
+        // Right-align numeric columns
+        if (typeof row[colIdx - 1] === 'number') {
+          cell.alignment = { horizontal: 'right' };
+          cell.numFmt = '#,##0.00';
+        }
+      });
+    }
+
+    // Auto-width columns
+    dataSheet.columns.forEach((col) => {
+      let maxLen = 10;
+      col.eachCell?.({ includeEmpty: false }, (cell) => {
+        const len = String(cell.value || '').length;
+        if (len > maxLen) maxLen = len;
+      });
+      col.width = Math.min(maxLen + 4, 40);
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return Buffer.from(buffer);
+  }
+
+  private buildCsvExport(
+    title: string,
+    headers: string[],
+    rows: (string | number)[][],
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): string {
+    const lines: string[] = [];
+
+    // NELC metadata header
+    lines.push(`# PhysioGuidance Platform — ${title}`);
+    lines.push(`# Generated: ${new Date().toISOString()}`);
+    lines.push(`# Generated by: ${userId || 'system'}`);
+    lines.push(`# Report Type: ${reportType}`);
+    lines.push(`# Date Range: ${startDate || 'all'} to ${endDate || 'all'}`);
+    lines.push(`# Platform Version: 1.0.0`);
+    lines.push('');
+
+    // CSV content
+    const escapeCsv = (val: any) => {
+      if (val == null) return '';
+      const str = String(val);
+      return str.includes(',') || str.includes('"') || str.includes('\n')
+        ? `"${str.replace(/"/g, '""')}"`
+        : str;
+    };
+
+    lines.push(headers.map(escapeCsv).join(','));
+    for (const row of rows) {
+      lines.push(row.map(escapeCsv).join(','));
+    }
+
+    return lines.join('\n');
+  }
+
+  private buildPdfExport(
+    title: string,
+    headers: string[],
+    rows: (string | number)[][],
+    reportType: string,
+    startDate?: string,
+    endDate?: string,
+    userId?: string,
+  ): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 40, layout: 'landscape' });
+        const chunks: Buffer[] = [];
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        // Header with Gamma branding
+        doc.font('Helvetica-Bold').fontSize(16)
+          .text(`PhysioGuidance — ${title}`, 40, 40);
+        doc.font('Helvetica').fontSize(8)
+          .text('Gamma Developers  |  PhysioGuidance Platform', 40, 58);
+        doc.font('Helvetica').fontSize(9)
+          .text(`Generated: ${new Date().toISOString()}  |  Generated by: ${userId || 'system'}  |  NELC Audit Evidence`, 40, 70);
+
+        if (startDate || endDate) {
+          doc.text(`Date Range: ${startDate || 'beginning'} → ${endDate || 'now'}`, 40, 82);
+        }
+
+        doc.moveTo(40, 96).lineTo(800, 96).stroke();
+
+        // Calculate column widths
+        const colCount = headers.length;
+        const totalWidth = 760;
+        const colWidth = Math.floor(totalWidth / colCount);
+
+        // Table header
+        let y = 104;
+        doc.font('Helvetica-Bold').fontSize(8);
+        headers.forEach((h, i) => {
+          doc.text(h, 40 + i * colWidth, y, { width: colWidth });
+        });
+        y += 14;
+        doc.moveTo(40, y).lineTo(800, y).stroke();
+        y += 4;
+
+        // Data rows
+        doc.font('Helvetica').fontSize(7.5);
+        const truncate = (s: string | number | null | undefined, len: number) => {
+          const str = String(s ?? '—');
+          return str.length > len ? str.substring(0, len - 1) + '…' : str;
+        };
+
+        for (const row of rows) {
+          if (y > 530) {
+            doc.addPage({ size: 'A4', layout: 'landscape', margin: 40 });
+            y = 40;
+            doc.font('Helvetica-Bold').fontSize(8);
+            headers.forEach((h, i) => {
+              doc.text(h, 40 + i * colWidth, y, { width: colWidth });
+            });
+            y += 14;
+            doc.moveTo(40, y).lineTo(800, y).stroke();
+            y += 4;
+            doc.font('Helvetica').fontSize(7.5);
+          }
+
+          row.forEach((cell, i) => {
+            const val = typeof cell === 'number' ? cell.toLocaleString('en-US', { maximumFractionDigits: 2 }) : truncate(cell, 30);
+            doc.text(val, 40 + i * colWidth, y, { width: colWidth });
+          });
+          y += 13;
+        }
+
+        // Footer
         doc.moveTo(40, y + 4).lineTo(800, y + 4).stroke();
         doc.font('Helvetica-Bold').fontSize(8)
           .text(`Total rows: ${rows.length}`, 40, y + 10);

@@ -2,6 +2,8 @@ import { Controller, Get, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { FinanceService } from '../services/finance.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../../auth/strategies/jwt.strategy';
 
 @Controller('finance')
 export class FinanceController {
@@ -45,8 +47,11 @@ export class FinanceController {
 
   @Get('invoice-aging')
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
-  async getInvoiceAging() {
-    return this.financeService.getInvoiceAging();
+  async getInvoiceAging(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.financeService.getInvoiceAging(startDate, endDate);
   }
 
   @Get('revenue-trend')
@@ -111,29 +116,46 @@ export class FinanceController {
   @Roles('FINANCE', 'ADMIN', 'SUPER_ADMIN')
   async exportPayments(
     @Res() res: Response,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('status') status?: string,
     @Query('format') format?: string,
+    @Query('reportType') reportType?: string,
   ) {
     const dateStr = new Date().toISOString().split('T')[0];
+    const safeReport = reportType || 'payments';
+    const safeFormat = ['csv', 'xlsx', 'pdf'].includes(format || '') ? format! : 'csv';
 
-    if (format === 'pdf') {
-      const pdfBuffer = await this.financeService.exportPaymentsPdf(startDate, endDate, status);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="payments-export-${dateStr}.pdf"`,
-      );
-      res.send(pdfBuffer);
-    } else {
-      const csv = await this.financeService.exportPaymentsCsv(startDate, endDate, status);
+    // Legacy payments-only export (backward compatible)
+    if (safeReport === 'payments') {
+      if (safeFormat === 'pdf') {
+        const buf = await this.financeService.exportPaymentsPdf(startDate, endDate, status, user.id);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="payments-export-${dateStr}.pdf"`);
+        return res.send(buf);
+      }
+      const csv = await this.financeService.exportPaymentsCsv(startDate, endDate, status, user.id);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="payments-export-${dateStr}.csv"`,
-      );
-      res.send(csv);
+      res.setHeader('Content-Disposition', `attachment; filename="payments-export-${dateStr}.csv"`);
+      return res.send(csv);
     }
+
+    // Report-specific export
+    const result = await this.financeService.exportReport(
+      safeReport, safeFormat, startDate, endDate, user.id,
+    );
+
+    if (safeFormat === 'xlsx') {
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeReport}-${dateStr}.xlsx"`);
+    } else if (safeFormat === 'pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeReport}-${dateStr}.pdf"`);
+    } else {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeReport}-${dateStr}.csv"`);
+    }
+    res.send(result);
   }
 }

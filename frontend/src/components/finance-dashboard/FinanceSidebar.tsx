@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   LayoutDashboard,
@@ -34,6 +34,7 @@ interface FinanceSidebarProps {
 const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps) => {
   const locale = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
   const t = useTranslations("financeDashboard");
   const isRTL = locale === "ar";
 
@@ -120,6 +121,7 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
               </div>
             </div>
             <button
+              onClick={() => router.push(`/${locale}/dashboard/finance/settings`)}
               className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white`}
               aria-label={t("sidebar.editProfile")}
             >
@@ -167,7 +169,10 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
+        <button
+          onClick={() => router.push(`/${locale}/dashboard/finance/settings`)}
+          className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+        >
           {t("sidebar.viewProfile")}
         </button>
       </div>

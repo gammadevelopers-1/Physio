@@ -5237,11 +5237,33 @@
     "settingsPage": {
       "title": "Finance Settings",
       "subtitle": "Configure payment gateways, currency, tax, and refund policies",
+      "personalSecurity": "Personal Security Settings",
       "tabs": {
+        "profile": "Profile",
         "gateways": "Payment Gateways",
         "currency": "Currency",
         "tax": "Tax Configuration",
         "refundPolicy": "Refund Policy"
+      },
+      "profile": {
+        "personalInfo": "Personal Information",
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email",
+        "phone": "Phone",
+        "uploadPhoto": "Upload Photo",
+        "removePhoto": "Remove Photo",
+        "saveChanges": "Save Changes",
+        "saved": "Profile updated successfully",
+        "avatarError": "Failed to update profile picture",
+        "changePassword": "Change Password",
+        "currentPassword": "Current Password",
+        "newPassword": "New Password",
+        "passwordHint": "Minimum 6 characters. You will be logged out after changing.",
+        "updatePassword": "Update Password",
+        "passwordChanged": "Password changed successfully. Please log in again.",
+        "passwordRequired": "Both password fields are required",
+        "passwordMinLength": "New password must be at least 6 characters"
       },
       "gateways": {
         "title": "Payment Gateway Configuration",

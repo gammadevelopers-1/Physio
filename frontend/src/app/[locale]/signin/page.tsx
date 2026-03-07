@@ -45,9 +45,11 @@ function SignInForm() {
       const message =
         err instanceof ApiError
           ? err.message
-          : err instanceof Error
-            ? err.message
-            : "An error occurred. Please try again.";
+          : err instanceof TypeError && err.message === "Failed to fetch"
+            ? t("form.networkError")
+            : err instanceof Error
+              ? err.message
+              : t("form.genericError");
       setError(message);
       toast.error(message);
     } finally {

@@ -274,7 +274,9 @@
       "forgotPassword": "نسيت كلمة السر؟",
       "rememberMe": "تذكر لمدة 30 يومًا",
       "login": "تسجيل الدخول",
-      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل"
+      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل",
+      "networkError": "تعذر الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+      "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى."
     },
     "footer": {
       "noAccount": "ليس لديك حساب؟",
@@ -5465,7 +5467,9 @@
     },
     "navbar": {
       "toggleMenu": "تبديل القائمة",
-      "closeMenu": "إغلاق القائمة"
+      "closeMenu": "إغلاق القائمة",
+      "notifications": "الإشعارات",
+      "search": "بحث"
     },
     "settingsPage": {
       "title": "إعدادات المالية",

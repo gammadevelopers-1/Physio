@@ -173,7 +173,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />
 
           {/* Notifications Icon - Hidden on mobile */}
-          <button className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors relative" aria-label={t("notifications")}>
+          <button className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors relative" aria-label={tDashboard("navbar.notifications")}>
             <Bell className="w-5 h-5" strokeWidth={1.67} />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#EF4444] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
               3
@@ -184,7 +184,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
           <button
             onClick={() => setIsSearchOpen(true)}
             className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-            aria-label={t("search")}
+            aria-label={tDashboard("navbar.search")}
           >
             <Search className="w-5 h-5" strokeWidth={1.67} />
           </button>
@@ -378,7 +378,7 @@ const FinanceNavbar = ({ profile }: FinanceNavbarProps) => {
               <button
                 onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-                aria-label={t("search")}
+                aria-label={tDashboard("navbar.search")}
               >
                 <Search className="w-5 h-5" strokeWidth={1.67} />
               </button>

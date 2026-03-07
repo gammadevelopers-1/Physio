@@ -274,7 +274,9 @@
       "forgotPassword": "Forgot your password?",
       "rememberMe": "Remember for 30 days",
       "login": "Login",
-      "signInWithGoogle": "Sign in with Google"
+      "signInWithGoogle": "Sign in with Google",
+      "networkError": "Unable to connect to the server. Please check your internet connection and try again.",
+      "genericError": "An error occurred. Please try again."
     },
     "footer": {
       "noAccount": "Don't have an account?",
@@ -5250,7 +5252,9 @@
     },
     "navbar": {
       "toggleMenu": "Toggle menu",
-      "closeMenu": "Close menu"
+      "closeMenu": "Close menu",
+      "notifications": "Notifications",
+      "search": "Search"
     },
     "settingsPage": {
       "title": "Finance Settings",

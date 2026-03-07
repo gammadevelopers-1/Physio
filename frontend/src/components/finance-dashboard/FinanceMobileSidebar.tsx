@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { profileApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   CreditCard,
@@ -17,6 +20,8 @@ import {
   X,
   Pencil,
   Wallet,
+  Upload,
+  Trash2,
 } from "lucide-react";
 
 interface FinanceProfile {
@@ -39,7 +44,49 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
   const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations("financeDashboard");
+  const { refreshUser } = useAuth();
   const isRTL = locale === "ar";
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+
+  const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [avatarMenuOpen, closeAvatarMenu]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+      toast.success(t("settingsPage.profile.saved"));
+    } catch {
+      toast.error(t("settingsPage.profile.avatarError"));
+    }
+    e.target.value = "";
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await profileApi.update({ avatar: null });
+      await refreshUser();
+      toast.success(t("settingsPage.profile.saved"));
+    } catch {
+      toast.error(t("settingsPage.profile.avatarError"));
+    }
+  };
 
   const navItems = [
     {
@@ -147,12 +194,41 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
                     <Wallet className="w-3 h-3 text-white" />
                   </div>
                 </div>
-                <button
-                  onClick={() => { router.push(`/${locale}/dashboard/finance/settings`); setIsOpen(false); }}
-                  className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white`}
-                >
-                  <Pencil className="w-3.5 h-3.5 text-white" />
-                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+                <div ref={avatarMenuRef}>
+                  <button
+                    onClick={() => setAvatarMenuOpen((v) => !v)}
+                    className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#8a6a3d] transition-colors`}
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-white" />
+                  </button>
+                  {avatarMenuOpen && (
+                    <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}>
+                      <button
+                        onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                      >
+                        <Upload className="w-4 h-4 text-[#4B5563]" />
+                        {t("settingsPage.profile.uploadPhoto")}
+                      </button>
+                      {profile.avatar && (
+                        <button
+                          onClick={() => { handleRemoveAvatar(); setAvatarMenuOpen(false); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {t("settingsPage.profile.removePhoto")}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <h3 className="text-lg font-semibold text-[#1F2937]">
@@ -199,7 +275,7 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
             {/* View Profile Button */}
             <button
               onClick={() => { router.push(`/${locale}/dashboard/finance/settings`); setIsOpen(false); }}
-              className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+              className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
             >
               {t("sidebar.viewProfile")}
             </button>

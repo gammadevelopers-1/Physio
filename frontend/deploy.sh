@@ -205,7 +205,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --cpu=1 \
     --min-instances=0 \
     --max-instances=3 \
-    --set-env-vars="NODE_ENV=production" \
+    --set-env-vars="NODE_ENV=production,BACKEND_API_URL=${BACKEND_URL}/api" \
     --quiet
 
 # ============================================

@@ -73,11 +73,16 @@ const InvoicesContent = () => {
       setTotalCount(invoicesRes.pagination?.total || mapped.length);
 
       if (agingRes) {
+        const bucket = (b: any) => (b && typeof b === 'object' ? b : { count: b || 0, amount: 0 });
+        const cur = bucket(agingRes.current);
+        const d30 = bucket(agingRes.thirtyDay);
+        const d60 = bucket(agingRes.sixtyDay);
+        const d90 = bucket(agingRes.ninetyPlus);
         setAgingData([
-          { label: t("invoicesPage.agingCategories.current"), count: agingRes.current || 0, amount: `${t("kpi.sar")} ${(agingRes.current || 0).toLocaleString()}`, color: "bg-[#16A34A]" },
-          { label: t("invoicesPage.agingCategories.days30"), count: agingRes.thirtyDay || 0, amount: `${t("kpi.sar")} ${(agingRes.thirtyDay || 0).toLocaleString()}`, color: "bg-[#D97706]" },
-          { label: t("invoicesPage.agingCategories.days60"), count: agingRes.sixtyDay || 0, amount: `${t("kpi.sar")} ${(agingRes.sixtyDay || 0).toLocaleString()}`, color: "bg-[#EA580C]" },
-          { label: t("invoicesPage.agingCategories.overdue90"), count: agingRes.ninetyPlus || 0, amount: `${t("kpi.sar")} ${(agingRes.ninetyPlus || 0).toLocaleString()}`, color: "bg-[#DC2626]" },
+          { label: t("invoicesPage.agingCategories.current"), count: cur.count, amount: `${t("kpi.sar")} ${Number(cur.amount).toLocaleString()}`, color: "bg-[#16A34A]" },
+          { label: t("invoicesPage.agingCategories.days30"), count: d30.count, amount: `${t("kpi.sar")} ${Number(d30.amount).toLocaleString()}`, color: "bg-[#D97706]" },
+          { label: t("invoicesPage.agingCategories.days60"), count: d60.count, amount: `${t("kpi.sar")} ${Number(d60.amount).toLocaleString()}`, color: "bg-[#EA580C]" },
+          { label: t("invoicesPage.agingCategories.overdue90"), count: d90.count, amount: `${t("kpi.sar")} ${Number(d90.amount).toLocaleString()}`, color: "bg-[#DC2626]" },
         ]);
       }
     } catch {

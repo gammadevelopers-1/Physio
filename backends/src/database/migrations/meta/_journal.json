@@ -85,6 +85,13 @@
       "when": 1772640000000,
       "tag": "0013_fin_01_finance_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1772862240145,
+      "tag": "0014_smart_fixer",
+      "breakpoints": true
     }
   ]
 }

@@ -159,7 +159,11 @@
       "Bash(sudo docker ps --format \"{{.Names}}\")",
       "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker exec physio-database psql -U postgres -d physioguidance -c \"ALTER TABLE refunds ADD COLUMN IF NOT EXISTS approval_note TEXT;\")",
       "Bash(DOCKER_HOST=unix:///var/run/docker.sock docker ps)",
-      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/finance/page.tsx)"
+      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/finance/page.tsx)",
+      "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/finance/)",
+      "Bash(ls -la \"/home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\(dashboards\\)/dashboard/finance/payments/\")",
+      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/finance/payments/page.tsx)",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/finance/)"
     ]
   }
 }

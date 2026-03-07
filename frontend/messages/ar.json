@@ -5012,6 +5012,7 @@
       "refunds": "المبالغ المستردة",
       "discounts": "الخصومات",
       "reports": "التقارير",
+      "auditLog": "سجل المراجعة",
       "settings": "الإعدادات",
       "financeManager": "مدير المالية",
       "revenue": "الإيرادات",
@@ -5576,6 +5577,43 @@
       "khalidHassan": "خالد حسن",
       "laylaNoor": "ليلى نور",
       "omarFahad": "عمر فهد"
+    },
+    "auditLog": {
+      "title": "سجل المراجعة",
+      "subtitle": "سجل غير قابل للتعديل لجميع الأحداث المالية — متوافق مع المركز الوطني للتعلم الإلكتروني",
+      "filters": {
+        "entityType": "نوع الكيان",
+        "action": "الإجراء",
+        "startDate": "تاريخ البداية",
+        "endDate": "تاريخ النهاية",
+        "search": "البحث بمعرف الكيان أو الإجراء...",
+        "clearFilters": "مسح الفلاتر",
+        "allEntityTypes": "جميع أنواع الكيانات",
+        "allActions": "جميع الإجراءات"
+      },
+      "export": {
+        "csv": "تصدير CSV",
+        "pdf": "تصدير PDF",
+        "success": "تم تحميل التصدير بنجاح",
+        "error": "فشل تصدير سجلات المراجعة"
+      },
+      "table": {
+        "timestamp": "التوقيت",
+        "entityType": "نوع الكيان",
+        "entityId": "معرف الكيان",
+        "action": "الإجراء",
+        "performedBy": "بواسطة",
+        "ipAddress": "عنوان IP",
+        "metadata": "التفاصيل",
+        "system": "النظام",
+        "noResults": "لم يتم العثور على سجلات مراجعة",
+        "loading": "جاري تحميل سجلات المراجعة..."
+      },
+      "pagination": {
+        "showing": "عرض {from}-{to} من {total}",
+        "previous": "السابق",
+        "next": "التالي"
+      }
     }
   },
   "supportDashboard": {

@@ -2369,6 +2369,112 @@ export const financeApi = {
       }>;
     }>(`/finance/chargeback-rate${qs ? `?${qs}` : ''}`);
   },
+
+  // ── Audit Log ──
+
+  getAuditLogs: (params?: {
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.entityType) sp.set('entityType', params.entityType);
+    if (params?.action) sp.set('action', params.action);
+    if (params?.startDate) sp.set('startDate', params.startDate);
+    if (params?.endDate) sp.set('endDate', params.endDate);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        entityType: string;
+        entityId: string;
+        action: string;
+        performedBy: string | null;
+        metadata: Record<string, unknown> | null;
+        ipAddress: string | null;
+        createdAt: string;
+        performerFirstName: string | null;
+        performerLastName: string | null;
+        performerEmail: string | null;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/audit-logs/finance${qs ? `?${qs}` : ''}`);
+  },
+
+  getAuditLogFilters: () => {
+    return api.get<{ entityTypes: string[]; actions: string[] }>('/audit-logs/finance/filters');
+  },
+
+  exportAuditLogsCsv: async (params?: {
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'csv' });
+    if (params?.entityType) query.set('entityType', params.entityType);
+    if (params?.action) query.set('action', params.action);
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.search) query.set('search', params.search);
+
+    const res = await fetch(`${API_URL}/audit-logs/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
+
+  exportAuditLogsPdf: async (params?: {
+    entityType?: string;
+    action?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) => {
+    const token = getAccessToken();
+    const query = new URLSearchParams({ format: 'pdf' });
+    if (params?.entityType) query.set('entityType', params.entityType);
+    if (params?.action) query.set('action', params.action);
+    if (params?.startDate) query.set('startDate', params.startDate);
+    if (params?.endDate) query.set('endDate', params.endDate);
+    if (params?.search) query.set('search', params.search);
+
+    const res = await fetch(`${API_URL}/audit-logs/finance/export?${query.toString()}`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) throw new Error('Export failed');
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 // ===========================================

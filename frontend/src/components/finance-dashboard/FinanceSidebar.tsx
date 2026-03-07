@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Tag,
   BarChart3,
+  Shield,
   Settings,
   Pencil,
   Wallet,
@@ -67,6 +68,11 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
       label: t("sidebar.reports"),
       href: `/${locale}/dashboard/finance/reports`,
       icon: BarChart3,
+    },
+    {
+      label: t("sidebar.auditLog"),
+      href: `/${locale}/dashboard/finance/audit-log`,
+      icon: Shield,
     },
     {
       label: t("sidebar.settings"),

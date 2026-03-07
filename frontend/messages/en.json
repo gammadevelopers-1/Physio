@@ -4797,6 +4797,7 @@
       "refunds": "Refunds",
       "discounts": "Discounts",
       "reports": "Reports",
+      "auditLog": "Audit Log",
       "settings": "Settings",
       "financeManager": "Finance Manager",
       "revenue": "Revenue",
@@ -5361,6 +5362,43 @@
       "khalidHassan": "Khalid Hassan",
       "laylaNoor": "Layla Noor",
       "omarFahad": "Omar Fahad"
+    },
+    "auditLog": {
+      "title": "Audit Trail",
+      "subtitle": "Immutable log of all financial events — NELC compliant",
+      "filters": {
+        "entityType": "Entity Type",
+        "action": "Action",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "search": "Search by entity ID, action...",
+        "clearFilters": "Clear Filters",
+        "allEntityTypes": "All Entity Types",
+        "allActions": "All Actions"
+      },
+      "export": {
+        "csv": "Export CSV",
+        "pdf": "Export PDF",
+        "success": "Export downloaded successfully",
+        "error": "Failed to export audit logs"
+      },
+      "table": {
+        "timestamp": "Timestamp",
+        "entityType": "Entity Type",
+        "entityId": "Entity ID",
+        "action": "Action",
+        "performedBy": "Performed By",
+        "ipAddress": "IP Address",
+        "metadata": "Details",
+        "system": "System",
+        "noResults": "No audit log entries found",
+        "loading": "Loading audit logs..."
+      },
+      "pagination": {
+        "showing": "Showing {from}-{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
     }
   },
   "supportDashboard": {

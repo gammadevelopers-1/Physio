@@ -23,7 +23,7 @@ interface CalendarSession {
   time: string;
   duration: string;
   type: "zoom" | "onsite" | "hybrid";
-  status: "scheduled" | "live" | "completed" | "cancelled";
+  status: "scheduled" | "live" | "ended" | "completed" | "cancelled";
   venue?: string;
   enrolled: number;
   dayIndex: number; // 0-6 (Sunday-Saturday)
@@ -138,6 +138,9 @@ const SessionsCalendarWidget = ({
     if (session.status === "completed") {
       return "bg-[#F0FDF4] border-[#BBF7D0] opacity-70";
     }
+    if (session.status === "ended") {
+      return "bg-[#FEF3C7] border-[#FDE68A]";
+    }
     if (session.status === "cancelled") {
       return "bg-[#F3F4F6] border-[#E5E7EB] opacity-50";
     }
@@ -170,6 +173,7 @@ const SessionsCalendarWidget = ({
 
   const renderSessionCard = (session: CalendarSession, isMobile: boolean) => {
     const isCompleted = session.status === "completed";
+    const isEnded = session.status === "ended";
     const isCancelled = session.status === "cancelled";
     const isLive = session.status === "live";
     const isScheduled = session.status === "scheduled";

@@ -247,7 +247,7 @@ function AttendanceModal({
   const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
-  const isReadOnly = session.status !== "live";
+  const isReadOnly = session.status !== "live" && session.status !== "ended";
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
@@ -359,7 +359,7 @@ function AttendanceModal({
       ) : (
         <>
           {/* Zoom sync bar */}
-          {isZoomSession && session.status === "completed" && (
+          {isZoomSession && (session.status === "ended" || session.status === "completed") && (
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E5E7EB] bg-[#EFF6FF]">
               <div className="flex items-center gap-2 text-xs text-[#3B82F6]">
                 <Video className="w-3.5 h-3.5" />
@@ -621,7 +621,7 @@ function AttendanceModal({
           {/* Footer */}
           <div className="flex items-center justify-between p-4 border-t border-[#E5E7EB]">
             <div className="flex items-center gap-2">
-              {session.status === "completed" && (
+              {(session.status === "ended" || session.status === "completed") && (
                 <>
                   <select
                     value={exportFormat}
@@ -1337,6 +1337,7 @@ function SessionCard({
   onStart,
   onEnd,
   onCancel,
+  onFinalize,
   onAttendance,
   onRecordings,
   onEdit,
@@ -1350,6 +1351,7 @@ function SessionCard({
   onStart: () => void;
   onEnd: () => void;
   onCancel: () => void;
+  onFinalize: () => void;
   onAttendance: () => void;
   onRecordings: () => void;
   onEdit: () => void;
@@ -1362,6 +1364,7 @@ function SessionCard({
     const styles: Record<string, { bg: string; text: string; label: string }> = {
       scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessionsPage.statusUpcoming") },
       live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusLive") },
+      ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
       cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessionsPage.statusCancelled") },
     };
@@ -1484,6 +1487,18 @@ function SessionCard({
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               )}
+            </>
+          )}
+
+          {session.status === "ended" && (
+            <>
+              <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+                <ClipboardCheck className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={onFinalize} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-[#22C55E] rounded-lg hover:bg-[#16A34A] transition-colors">
+                <Lock className="w-3 h-3" />
+                {t("sessionsPage.finalizeSession")}
+              </button>
             </>
           )}
 
@@ -1968,6 +1983,20 @@ const SessionsContent = () => {
     }
   };
 
+  const handleFinalize = async (session: CourseSession) => {
+    if (actionLoadingId) return;
+    setActionLoadingId(session.id);
+    try {
+      await instructorApi.finalizeSession(session.id);
+      toast.success(t("sessionsPage.lifecycle.finalized"));
+      fetchData();
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.lifecycle.finalizeError"));
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   const handleDelete = (session: CourseSession) => {
     setDeleteSessionData(session);
   };
@@ -2006,6 +2035,7 @@ const SessionsContent = () => {
     switch (status) {
       case "scheduled": return "bg-[#3B82F6]";
       case "live": return "bg-[#EF4444]";
+      case "ended": return "bg-[#D97706]";
       case "completed": return "bg-[#22C55E]";
       case "cancelled": return "bg-[#9CA3AF]";
       default: return "bg-[#3B82F6]";
@@ -2038,6 +2068,7 @@ const SessionsContent = () => {
               onAttendance={() => setAttendanceSession(session)}
               onRecordings={() => setRecordingsSession(session)}
               onEdit={() => setEditSessionData(session)}
+              onFinalize={() => handleFinalize(session)}
               onDelete={() => handleDelete(session)}
               actionLoading={actionLoadingId === session.id}
               t={t}

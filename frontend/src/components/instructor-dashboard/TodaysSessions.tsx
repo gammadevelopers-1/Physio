@@ -10,7 +10,7 @@ interface Session {
   title: string;
   thumbnail: string;
   type: "zoom" | "onsite" | "hybrid";
-  status: "scheduled" | "live" | "completed" | "cancelled";
+  status: "scheduled" | "live" | "ended" | "completed" | "cancelled";
   location?: string;
   enrolled: number;
   time: string;

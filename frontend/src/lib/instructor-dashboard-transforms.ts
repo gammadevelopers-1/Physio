@@ -41,7 +41,7 @@ export function transformToSessionCards(sessions: DashboardSession[]) {
         title: s.title,
         thumbnail: s.courseThumbnail || "/student_dashboard/courses/image 473.svg",
         type: s.type as "zoom" | "onsite" | "hybrid",
-        status: s.status as "scheduled" | "live" | "completed" | "cancelled",
+        status: s.status as "scheduled" | "live" | "ended" | "completed" | "cancelled",
         location: s.roomName || s.venueAddress || undefined,
         enrolled: s.enrolledCount,
         zoomLink: s.zoomLink || undefined,
@@ -72,7 +72,7 @@ export function transformToCalendarSessions(sessions: DashboardSession[]) {
       time: `${formatTime(scheduledDate)} - ${formatTime(endDate)}`,
       duration: `${s.durationMinutes} mins`,
       type: s.type as "zoom" | "onsite" | "hybrid",
-      status: s.status as "scheduled" | "live" | "completed" | "cancelled",
+      status: s.status as "scheduled" | "live" | "ended" | "completed" | "cancelled",
       venue: s.roomName || s.venueAddress || undefined,
       enrolled: s.enrolledCount,
       dayIndex: scheduledDate.getDay(), // 0 = Sunday (local timezone)
@@ -127,7 +127,7 @@ export function transformToCalendarEvents(sessions: DashboardSession[]) {
       duration: `${s.durationMinutes} mins`,
       enrolled: s.enrolledCount,
       type: s.type as "zoom" | "onsite",
-      status: s.status as "scheduled" | "live" | "completed" | "cancelled",
+      status: s.status as "scheduled" | "live" | "ended" | "completed" | "cancelled",
       zoomLink: s.zoomLink || undefined,
     };
   });

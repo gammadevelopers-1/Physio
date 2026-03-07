@@ -276,6 +276,43 @@ export class ZoomSyncService {
         this.logger.warn(
           `Unmatched participant: name="${participant.name}", email="${participant.userEmail || '(empty)'}" in session ${sessionId}`,
         );
+
+        // Persist unmatched participants in attendance_logs with null studentId
+        // so instructors can see and manually assign them
+        if (reason === 'unmatched') {
+          const zoomEmail = participant.userEmail || participant.name || 'unknown';
+          // Check if already logged to avoid duplicates
+          const [existingLog] = await db
+            .select({ id: attendanceLogs.id })
+            .from(attendanceLogs)
+            .where(
+              and(
+                eq(attendanceLogs.sessionId, sessionId),
+                isNull(attendanceLogs.studentId),
+                eq(attendanceLogs.zoomUserEmail, zoomEmail),
+                eq(attendanceLogs.eventType, ATTENDANCE_LOG_EVENT.JOIN),
+              ),
+            )
+            .limit(1);
+
+          if (!existingLog) {
+            await db.insert(attendanceLogs).values({
+              sessionId,
+              studentId: null,
+              eventType: ATTENDANCE_LOG_EVENT.JOIN,
+              timestamp: participant.joinTime ? new Date(participant.joinTime) : new Date(),
+              zoomParticipantId: participant.id || null,
+              zoomUserEmail: zoomEmail,
+              rawPayload: {
+                name: participant.name,
+                email: participant.userEmail,
+                duration: participant.duration,
+                leaveTime: participant.leaveTime,
+              },
+            });
+          }
+        }
+
         skipped++;
         details.push({
           name: participant.name,

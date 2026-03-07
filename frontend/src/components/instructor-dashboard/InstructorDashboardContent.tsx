@@ -142,7 +142,7 @@ const InstructorDashboardContent = () => {
         const ended = prev.filter(
           (old) =>
             old.status === "live" &&
-            fresh.todaySessions.find((n) => n.id === old.id && n.status === "completed")
+            fresh.todaySessions.find((n) => n.id === old.id && (n.status === "ended" || n.status === "completed"))
         );
         if (ended.length > 0) {
           refetch();

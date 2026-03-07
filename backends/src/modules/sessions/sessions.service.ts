@@ -586,8 +586,8 @@ export class SessionsService {
   }
 
   /**
-   * End a session — sets status=completed and actualEndedAt=NOW()
-   * Cannot end a non-live session.
+   * End a session — sets status=ended and actualEndedAt=NOW()
+   * Attendance remains editable until the instructor finalizes (→ completed).
    */
   async end(sessionId: string, user: AuthenticatedUser) {
     const session = await this.verifySessionAccess(sessionId, user);
@@ -632,7 +632,7 @@ export class SessionsService {
     const [updated] = await db
       .update(sessions)
       .set({
-        status: SESSION_STATUS.COMPLETED,
+        status: SESSION_STATUS.ENDED,
         actualEndedAt: new Date(),
         updatedAt: new Date(),
       })
@@ -666,6 +666,49 @@ export class SessionsService {
       .catch(() => {});
 
     return { ...updated, zoomEndedSuccessfully, zoomErrorMessage };
+  }
+
+  /**
+   * Finalize a session — moves from 'ended' to 'completed', locking attendance.
+   */
+  async finalize(sessionId: string, user: AuthenticatedUser) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (session.status !== SESSION_STATUS.ENDED) {
+      throw new BadRequestException(
+        `Cannot finalize a ${session.status} session. Only ended sessions can be finalized.`,
+      );
+    }
+
+    const [updated] = await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.COMPLETED,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId))
+      .returning();
+
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.SESSION_FINALIZED,
+      entityType: 'session',
+      entityId: updated.id,
+      userId: user.id,
+      metadata: {
+        sessionId: updated.id,
+        courseId: updated.courseId,
+      },
+    });
+
+    await this.auditLogService.log({
+      entityType: 'session',
+      entityId: updated.id,
+      action: 'session.finalized',
+      performedBy: user.id,
+      metadata: { courseId: updated.courseId },
+    }).catch(() => {});
+
+    return updated;
   }
 
   /**
@@ -1028,7 +1071,7 @@ export class SessionsService {
           eq(sessions.instructorId, instructorId),
           gte(sessions.scheduledAt, start),
           lte(sessions.scheduledAt, end),
-          sql`${sessions.status} IN ('scheduled', 'live', 'completed')`,
+          sql`${sessions.status} IN ('scheduled', 'live', 'ended', 'completed')`,
         ),
       );
 
@@ -1075,7 +1118,7 @@ export class SessionsService {
           eq(sessions.instructorId, instructorId),
           gte(sessions.scheduledAt, start),
           lte(sessions.scheduledAt, end),
-          sql`${sessions.status} IN ('scheduled', 'live', 'completed')`,
+          sql`${sessions.status} IN ('scheduled', 'live', 'ended', 'completed')`,
         ),
       )
       .orderBy(asc(sessions.scheduledAt));

@@ -11,7 +11,7 @@ interface CalendarEvent {
   duration: string;
   enrolled: number;
   type: "zoom" | "onsite";
-  status: "scheduled" | "live" | "completed" | "cancelled";
+  status: "scheduled" | "live" | "ended" | "completed" | "cancelled";
   zoomLink?: string;
 }
 

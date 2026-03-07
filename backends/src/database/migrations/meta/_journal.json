@@ -99,6 +99,13 @@
       "when": 1772600000000,
       "tag": "0013_course_review_workflow",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1772700000000,
+      "tag": "0014_session_ended_status",
+      "breakpoints": true
     }
   ]
 }

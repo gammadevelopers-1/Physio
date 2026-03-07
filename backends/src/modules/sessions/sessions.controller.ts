@@ -171,7 +171,7 @@ export class SessionsController {
   }
 
   /**
-   * POST /sessions/:id/end — Mark session as completed
+   * POST /sessions/:id/end — End session (attendance still editable)
    */
   @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/end')
@@ -180,6 +180,18 @@ export class SessionsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.sessionsService.end(id, user);
+  }
+
+  /**
+   * POST /sessions/:id/finalize — Lock attendance and mark session completed
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Post(':id/finalize')
+  async finalize(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.finalize(id, user);
   }
 
   /**

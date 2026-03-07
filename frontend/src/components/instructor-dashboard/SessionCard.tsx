@@ -19,7 +19,7 @@ interface Session {
   title: string;
   thumbnail: string;
   type: "zoom" | "onsite" | "hybrid";
-  status: "scheduled" | "live" | "completed" | "cancelled";
+  status: "scheduled" | "live" | "ended" | "completed" | "cancelled";
   location?: string;
   enrolled: number;
   time: string;
@@ -46,6 +46,7 @@ const SessionCard = ({
   const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
     scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessions.statusScheduled") },
     live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessions.statusLive") },
+    ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusEnded") },
     completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessions.statusCompleted") },
     cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessions.statusCancelled") },
   };

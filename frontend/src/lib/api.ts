@@ -881,6 +881,9 @@ export const instructorApi = {
   endSession: (sessionId: string) =>
     api.post<CourseSession>(`/sessions/${sessionId}/end`, {}),
 
+  finalizeSession: (sessionId: string) =>
+    api.post<CourseSession>(`/sessions/${sessionId}/finalize`, {}),
+
   cancelSession: (sessionId: string, cancelReason: string) =>
     api.patch<CourseSession>(`/sessions/${sessionId}/cancel`, { cancelReason }),
 

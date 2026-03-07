@@ -52,7 +52,7 @@ interface SessionWithInstructor {
   zoomLink: string | null;
   meetingId: string | null;
   venueAddress: string | null;
-  status: "scheduled" | "live" | "completed" | "cancelled";
+  status: "scheduled" | "live" | "ended" | "completed" | "cancelled";
   cancelReason: string | null;
   createdAt: string;
   updatedAt: string;
@@ -201,6 +201,7 @@ const SessionsContent = () => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
       scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessionsPage.statusUpcoming") },
       live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessionsPage.statusLive") },
+      ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
       cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessionsPage.statusCancelled") },
     };
@@ -311,7 +312,7 @@ const SessionsContent = () => {
   const today = new Date().toISOString().split("T")[0];
   const todaySessions = sessions.filter((s) => s.scheduledAt.startsWith(today));
   const upcomingSessions = sessions.filter(
-    (s) => !s.scheduledAt.startsWith(today) && (s.status === "scheduled" || s.status === "live")
+    (s) => !s.scheduledAt.startsWith(today) && (s.status === "scheduled" || s.status === "live" || s.status === "ended")
   );
   const pastSessions = sessions.filter((s) => s.status === "completed" || s.status === "cancelled");
 
@@ -486,6 +487,7 @@ const SessionsContent = () => {
                     <option value="">{t("sessionsPage.allStatuses")}</option>
                     <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
                     <option value="live">{t("sessionsPage.statusLive")}</option>
+                    <option value="ended">{t("sessionsPage.statusEnded")}</option>
                     <option value="completed">{t("sessionsPage.statusCompleted")}</option>
                     <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
                   </select>

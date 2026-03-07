@@ -1923,8 +1923,10 @@
       "statusScheduled": "Scheduled",
       "statusUpcoming": "Upcoming",
       "statusLive": "Live",
+      "statusEnded": "Ended",
       "statusCompleted": "Completed",
       "statusCancelled": "Cancelled",
+      "finalizeSession": "Finalize & Lock",
       "endSessionConfirm": "End this session? All participants will be disconnected from Zoom.",
       "sessionEnded": "Session ended successfully",
       "endSessionError": "Failed to end session",
@@ -2370,8 +2372,10 @@
       "edit": "Edit",
       "statusUpcoming": "Scheduled",
       "statusLive": "Live",
+      "statusEnded": "Ended",
       "statusCompleted": "Completed",
       "statusCancelled": "Cancelled",
+      "finalizeSession": "Finalize & Lock",
       "type": {
         "zoom": "Zoom",
         "onsite": "On-site",
@@ -2429,6 +2433,8 @@
         "cancelError": "Failed to cancel session",
         "deleted": "Session deleted successfully",
         "deleteError": "Failed to delete session",
+        "finalized": "Session finalized and attendance locked",
+        "finalizeError": "Failed to finalize session",
         "sessionEnded": "\"{title}\" has ended"
       },
       "cancelSession": {
@@ -3601,6 +3607,7 @@
       "viewRecording": "View Recording",
       "statusUpcoming": "Upcoming",
       "statusLive": "Live",
+      "statusEnded": "Ended",
       "statusCompleted": "Completed",
       "statusCancelled": "Cancelled",
       "allStatuses": "All Statuses",

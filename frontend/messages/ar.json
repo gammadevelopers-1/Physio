@@ -2138,8 +2138,10 @@
       "statusScheduled": "مجدول",
       "statusUpcoming": "قادم",
       "statusLive": "مباشر",
+      "statusEnded": "منتهي",
       "statusCompleted": "مكتمل",
       "statusCancelled": "ملغي",
+      "finalizeSession": "إنهاء وقفل الحضور",
       "endSessionConfirm": "إنهاء هذه الجلسة؟ سيتم فصل جميع المشاركين من زووم.",
       "sessionEnded": "تم إنهاء الجلسة بنجاح",
       "endSessionError": "فشل في إنهاء الجلسة",
@@ -2555,8 +2557,10 @@
       "edit": "تعديل",
       "statusUpcoming": "مجدولة",
       "statusLive": "مباشرة",
+      "statusEnded": "منتهية",
       "statusCompleted": "مكتملة",
       "statusCancelled": "ملغاة",
+      "finalizeSession": "إنهاء وقفل الحضور",
       "type": {
         "zoom": "زوم",
         "onsite": "حضوري",
@@ -2614,6 +2618,8 @@
         "cancelError": "فشل في إلغاء الجلسة",
         "deleted": "تم حذف الجلسة بنجاح",
         "deleteError": "فشل في حذف الجلسة",
+        "finalized": "تم إنهاء الجلسة وقفل الحضور",
+        "finalizeError": "فشل في إنهاء الجلسة",
         "sessionEnded": "انتهت جلسة \"{title}\""
       },
       "cancelSession": {
@@ -3808,6 +3814,7 @@
       "viewRecording": "عرض التسجيل",
       "statusUpcoming": "قادمة",
       "statusLive": "مباشر",
+      "statusEnded": "منتهية",
       "statusCompleted": "مكتملة",
       "statusCancelled": "ملغاة",
       "allStatuses": "جميع الحالات",

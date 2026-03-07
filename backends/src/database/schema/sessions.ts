@@ -58,7 +58,7 @@ export const sessions = pgTable(
     ),
     check(
       'sessions_status_check',
-      sql`${table.status} IN ('scheduled', 'live', 'completed', 'cancelled')`,
+      sql`${table.status} IN ('scheduled', 'live', 'ended', 'completed', 'cancelled')`,
     ),
   ],
 );
@@ -80,6 +80,7 @@ export type NewSession = typeof sessions.$inferInsert;
 export const SESSION_STATUS = {
   SCHEDULED: 'scheduled',
   LIVE: 'live',
+  ENDED: 'ended',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
 } as const;

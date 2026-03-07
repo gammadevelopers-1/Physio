@@ -41,10 +41,13 @@ function SignInForm() {
     setIsSubmitting(true);
     try {
       await login(email, password, redirectTo || undefined);
-    } catch (err) {
-      const message = err instanceof ApiError
-        ? err.message
-        : "An error occurred. Please try again.";
+    } catch (err: unknown) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "An error occurred. Please try again.";
       setError(message);
       toast.error(message);
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   CreditCard,
@@ -53,6 +54,7 @@ const FinanceRightSidebar = ({
 }: FinanceRightSidebarProps) => {
   const t = useTranslations("financeDashboard");
   const locale = useLocale();
+  const router = useRouter();
   const isRTL = locale === "ar";
 
   const transactionIcons = {
@@ -233,19 +235,31 @@ const FinanceRightSidebar = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/invoices`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <FileText className="w-3.5 h-3.5" />
             {t("quickActions.createInvoice")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/reports`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <BarChart3 className="w-3.5 h-3.5" />
             {t("quickActions.exportReport")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/discounts`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <Tag className="w-3.5 h-3.5" />
             {t("quickActions.addCoupon")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors">
+          <button
+            onClick={() => router.push(`/${locale}/dashboard/finance/refunds`)}
+            className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#FDF6EC] hover:border-[#a37f49] hover:text-[#a37f49] transition-colors"
+          >
             <RotateCcw className="w-3.5 h-3.5" />
             {t("quickActions.processRefund")}
           </button>

@@ -35,12 +35,10 @@ export default function ForgotPasswordPage() {
       router.push(
         `/${locale}/reset-password?email=${encodeURIComponent(email)}`
       );
-    } catch {
-      // Always show success to prevent email enumeration
-      toast.success(t("codeSent"));
-      router.push(
-        `/${locale}/reset-password?email=${encodeURIComponent(email)}`
-      );
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : t("errors.generic");
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

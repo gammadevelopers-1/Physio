@@ -747,9 +747,8 @@ export class AuthService {
       .where(eq(users.email, normalizedEmail))
       .limit(1);
 
-    // Always return success to prevent email enumeration
     if (!user) {
-      return { message: 'If an account exists with that email, a reset code has been sent.' };
+      throw new NotFoundException('No account found with this email address');
     }
 
     // Generate 6-digit OTP
@@ -788,7 +787,7 @@ export class AuthService {
     }
 
     const [user] = await db
-      .select({ id: users.id })
+      .select({ id: users.id, passwordHash: users.passwordHash })
       .from(users)
       .where(eq(users.email, normalizedEmail))
       .limit(1);
@@ -830,6 +829,12 @@ export class AuthService {
         .set({ attempts: challenge.attempts + 1 })
         .where(eq(twoFactorChallenges.id, challenge.id));
       throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    // Check new password isn't the same as current
+    const isSamePassword = await argon2.verify(user.passwordHash, newPassword);
+    if (isSamePassword) {
+      throw new BadRequestException('New password must be different from your current password');
     }
 
     // Mark challenge as used

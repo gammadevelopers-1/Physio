@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -25,7 +25,17 @@ function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const interval = setInterval(() => {
+      setResendTimer((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) {
@@ -59,13 +69,15 @@ function ResetPasswordForm() {
   };
 
   const handleResend = async () => {
-    if (!email || isResending) return;
+    if (!email || isResending || resendTimer > 0) return;
     setIsResending(true);
     try {
       await authApi.forgotPassword(email);
       toast.success(t("codeResent"));
+      setResendTimer(60);
     } catch {
       toast.success(t("codeResent"));
+      setResendTimer(60);
     } finally {
       setIsResending(false);
     }
@@ -203,14 +215,20 @@ function ResetPasswordForm() {
                       ))}
                     </div>
                     <div className="text-center mt-1">
-                      <button
-                        type="button"
-                        onClick={handleResend}
-                        disabled={isResending}
-                        className="text-xs text-[#a37f49] hover:underline disabled:opacity-50"
-                      >
-                        {isResending ? t("resending") : t("resendCode")}
-                      </button>
+                      {resendTimer > 0 ? (
+                        <p className="text-xs text-[#737373]">
+                          {t("resendIn", { seconds: resendTimer })}
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleResend}
+                          disabled={isResending}
+                          className="text-xs text-[#a37f49] hover:underline disabled:opacity-50"
+                        >
+                          {isResending ? t("resending") : t("resendCode")}
+                        </button>
+                      )}
                     </div>
                   </div>
 

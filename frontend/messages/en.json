@@ -288,7 +288,8 @@
     "codeSent": "If an account exists with that email, a reset code has been sent.",
     "backToLogin": "Back to login",
     "errors": {
-      "emailRequired": "Please enter your email address"
+      "emailRequired": "Please enter your email address",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "resetPasswordPage": {
@@ -299,6 +300,7 @@
     "confirmPassword": "Confirm Password",
     "resetButton": "Reset Password",
     "resendCode": "Didn't receive a code? Resend",
+    "resendIn": "Resend code in {seconds}s",
     "resending": "Sending...",
     "codeResent": "A new code has been sent to your email.",
     "back": "Back",

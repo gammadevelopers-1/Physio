@@ -71,14 +71,14 @@ const FinanceDashboardContent = () => {
           const s = summaryRes.value;
           setKpiData({
             revenueMTD: s.totalRevenue || 0,
-            revenueTrend: 0,
+            revenueTrend: s.revenueTrend || 0,
             netRevenue: s.netRevenue || 0,
             avgOrderValue: s.averageOrderValue || 0,
-            avgOrderTrend: 0,
+            avgOrderTrend: s.avgOrderTrend || 0,
             pendingInvoices: s.pendingPayments || 0,
             pendingInvoicesAmount: s.pendingAmount || 0,
             refundRate: 0,
-            refundRateTrend: 0,
+            refundRateTrend: s.refundRateTrend || 0,
             totalTransactions: s.totalPayments || 0,
             totalTransactionsPeriod: t("kpi.thisMonth"),
           });

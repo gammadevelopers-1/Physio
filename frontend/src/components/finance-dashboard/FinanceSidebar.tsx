@@ -188,6 +188,7 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
                   <button
                     onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                    aria-label={t("settingsPage.profile.uploadPhoto")}
                   >
                     <Upload className="w-4 h-4 text-[#4B5563]" />
                     {t("settingsPage.profile.uploadPhoto")}
@@ -196,6 +197,7 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
                     <button
                       onClick={() => { handleRemoveAvatar(); setAvatarMenuOpen(false); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      aria-label={t("settingsPage.profile.removePhoto")}
                     >
                       <Trash2 className="w-4 h-4" />
                       {t("settingsPage.profile.removePhoto")}
@@ -256,7 +258,7 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
 
       {/* Navigation Card */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4">
-        <nav className="space-y-1">
+        <nav className="space-y-1" aria-label="Finance navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -265,6 +267,7 @@ const FinanceSidebar = ({ profile, pendingRefundCount = 0 }: FinanceSidebarProps
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[#F0F7FF] text-[#002D87]"

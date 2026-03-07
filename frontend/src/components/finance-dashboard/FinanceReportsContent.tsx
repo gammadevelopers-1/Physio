@@ -57,6 +57,8 @@ interface InstructorProfitRow {
   revenue: number;
   refundAmount: number;
   netRevenue: number;
+  platformFee: number;
+  netPayout: number;
   enrollmentCount: number;
 }
 
@@ -269,7 +271,7 @@ const FinanceReportsContent = () => {
   const handleExportExcel = async () => {
     try {
       const { startDate, endDate } = getDateRange(period, customStart, customEnd);
-      await financeApi.exportExcel({ startDate, endDate, reportType: reportTypeMap[selectedReport] });
+      await financeApi.exportExcel({ startDate, endDate, reportType: reportTypeMap[selectedReport], locale });
       toast.success(t("reportsPage.exportSuccess"));
     } catch {
       toast.error(t("reportsPage.exportError"));
@@ -279,7 +281,7 @@ const FinanceReportsContent = () => {
   const handleExportPdf = async () => {
     try {
       const { startDate, endDate } = getDateRange(period, customStart, customEnd);
-      await financeApi.exportPdf({ startDate, endDate, reportType: reportTypeMap[selectedReport] });
+      await financeApi.exportPdf({ startDate, endDate, reportType: reportTypeMap[selectedReport], locale });
       toast.success(t("reportsPage.exportSuccess"));
     } catch {
       toast.error(t("reportsPage.exportError"));
@@ -365,25 +367,25 @@ const FinanceReportsContent = () => {
     }
     return (
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Course profit report">
           <thead>
             <tr className="border-b border-[#F3F4F6]">
-              <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
                 {t("reportsPage.columns.course")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.revenue")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.refunds")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.netProfit")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.margin")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.enrollments")}
               </th>
             </tr>
@@ -417,25 +419,31 @@ const FinanceReportsContent = () => {
     }
     return (
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm" aria-label="Instructor profit report">
           <thead>
             <tr className="border-b border-[#F3F4F6]">
-              <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+              <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
                 {t("reportsPage.columns.instructor")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.courses")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.revenue")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.refunds")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.netProfit")}
               </th>
-              <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+                {t("reportsPage.columns.platformFee")}
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
+                {t("reportsPage.columns.netPayout")}
+              </th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                 {t("reportsPage.columns.enrollments")}
               </th>
             </tr>
@@ -454,6 +462,8 @@ const FinanceReportsContent = () => {
                     {row.refundAmount > 0 ? `-${formatSAR(row.refundAmount)}` : formatSAR(0)}
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-[#111827]">{formatSAR(row.netRevenue)}</td>
+                  <td className="px-4 py-3 text-right text-[#EA580C]">{formatSAR(row.platformFee)}</td>
+                  <td className="px-4 py-3 text-right font-medium text-[#16A34A]">{formatSAR(row.netPayout)}</td>
                   <td className="px-4 py-3 text-right text-[#6B7280]">{row.enrollmentCount}</td>
                 </tr>
               );
@@ -519,17 +529,17 @@ const FinanceReportsContent = () => {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm" aria-label="Delivery type report">
             <thead>
               <tr className="border-b border-[#F3F4F6]">
-                <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+                <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
                   {t("reportsPage.columns.deliveryType")}
                 </th>
-                <th className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.revenue")}</th>
-                <th className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.refunds")}</th>
-                <th className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.netProfit")}</th>
-                <th className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.courses")}</th>
-                <th className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.enrollments")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.revenue")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.refunds")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.netProfit")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.courses")}</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">{t("reportsPage.columns.enrollments")}</th>
               </tr>
             </thead>
             <tbody>
@@ -666,19 +676,19 @@ const FinanceReportsContent = () => {
           <p className="px-5 pb-4 text-sm text-[#6B7280]">{t("reportsPage.chargeback.noCases")}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm" aria-label="Chargeback report">
               <thead>
                 <tr className="border-b border-[#F3F4F6]">
-                  <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
                     {t("reportsPage.columns.course")}
                   </th>
-                  <th className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
+                  <th scope="col" className={`px-4 py-3 text-${isRTL ? "right" : "left"} font-semibold text-[#374151]`}>
                     {t("reportsPage.columns.gateway")}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                     {t("reportsPage.columns.count")}
                   </th>
-                  <th className="px-4 py-3 text-right font-semibold text-[#374151]">
+                  <th scope="col" className="px-4 py-3 text-right font-semibold text-[#374151]">
                     {t("reportsPage.columns.amount")}
                   </th>
                 </tr>

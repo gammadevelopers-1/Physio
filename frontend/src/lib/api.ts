@@ -2101,8 +2101,13 @@ export const invoiceApi = {
   getMyInvoices: (page = 1, limit = 10) =>
     api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices/my-invoices?page=${page}&limit=${limit}`),
 
-  getAll: (page = 1, limit = 10) =>
-    api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices?page=${page}&limit=${limit}`),
+  getAll: (page = 1, limit = 10, filters?: { status?: string; startDate?: string; endDate?: string }) => {
+    const sp = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters?.status && filters.status !== 'all') sp.set('status', filters.status);
+    if (filters?.startDate) sp.set('startDate', filters.startDate);
+    if (filters?.endDate) sp.set('endDate', filters.endDate);
+    return api.get<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/invoices?${sp.toString()}`);
+  },
 
   getPdfUrl: (invoiceId: string) =>
     api.get<{ url: string; invoiceNumber: string }>(`/invoices/${invoiceId}/pdf`),
@@ -2226,13 +2231,14 @@ export const financeApi = {
     return api.get<Array<{ courseId: string; title: string; titleAr: string | null; revenue: number; count: number }>>(`/finance/top-courses${qs ? `?${qs}` : ''}`);
   },
 
-  exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string }) => {
+  exportCsv: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string; locale?: string }) => {
     const token = getAccessToken();
     const query = new URLSearchParams();
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
     if (params?.status) query.set('status', params.status);
     if (params?.reportType) query.set('reportType', params.reportType);
+    if (params?.locale) query.set('locale', params.locale);
     const qs = query.toString();
 
     const res = await fetch(`${API_URL}/finance/export${qs ? `?${qs}` : ''}`, {
@@ -2254,13 +2260,14 @@ export const financeApi = {
     window.URL.revokeObjectURL(url);
   },
 
-  exportPdf: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string }) => {
+  exportPdf: async (params?: { startDate?: string; endDate?: string; status?: string; reportType?: string; locale?: string }) => {
     const token = getAccessToken();
     const query = new URLSearchParams({ format: 'pdf' });
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
     if (params?.status) query.set('status', params.status);
     if (params?.reportType) query.set('reportType', params.reportType);
+    if (params?.locale) query.set('locale', params.locale);
 
     const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -2278,12 +2285,13 @@ export const financeApi = {
     window.URL.revokeObjectURL(url);
   },
 
-  exportExcel: async (params?: { startDate?: string; endDate?: string; reportType?: string }) => {
+  exportExcel: async (params?: { startDate?: string; endDate?: string; reportType?: string; locale?: string }) => {
     const token = getAccessToken();
     const query = new URLSearchParams({ format: 'xlsx' });
     if (params?.startDate) query.set('startDate', params.startDate);
     if (params?.endDate) query.set('endDate', params.endDate);
     if (params?.reportType) query.set('reportType', params.reportType);
+    if (params?.locale) query.set('locale', params.locale);
 
     const res = await fetch(`${API_URL}/finance/export?${query.toString()}`, {
       headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },

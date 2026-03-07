@@ -180,6 +180,7 @@ const PaymentsInvoicesTable = ({
             <div className="relative" ref={exportMenuRef}>
               <button
                 onClick={() => setShowExportMenu((v) => !v)}
+                aria-label="Export options"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium btn-gold text-white rounded-lg transition-colors"
               >
                 <Download className="w-4 h-4" />
@@ -254,31 +255,31 @@ const PaymentsInvoicesTable = ({
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full" aria-label="Payments and invoices">
             <thead>
               <tr className="border-b border-[#E5E7EB]">
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.invoice")}
                 </th>
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.date")}
                 </th>
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.customer")}
                 </th>
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.course")}
                 </th>
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.amount")}
                 </th>
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase hidden lg:table-cell ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.gateway")}
                 </th>
-                <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                <th scope="col" className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                   {t("paymentsTable.columns.status")}
                 </th>
-                <th className="py-3 px-4 w-10"></th>
+                <th scope="col" className="py-3 px-4 w-10"></th>
               </tr>
             </thead>
             <tbody>
@@ -315,9 +316,9 @@ const PaymentsInvoicesTable = ({
                         {t(`paymentsTable.statuses.${tx.status}`)}
                       </span>
                       {tx.status === "failed" && tx.errorCode && (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-[#DC2626] font-mono bg-[#FEF2F2] px-1.5 py-0.5 rounded w-fit">
+                        <span className="inline-flex items-center gap-1 text-[10px] text-[#DC2626] bg-[#FEF2F2] px-1.5 py-0.5 rounded w-fit">
                           <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
-                          {tx.errorCode}
+                          {t.has(`paymentsTable.errorCodes.${tx.errorCode}`) ? t(`paymentsTable.errorCodes.${tx.errorCode}`) : tx.errorCode}
                         </span>
                       )}
                     </div>
@@ -328,6 +329,7 @@ const PaymentsInvoicesTable = ({
                         onClick={() =>
                           setOpenActionId(openActionId === tx.id ? null : tx.id)
                         }
+                        aria-label="Actions"
                         className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] text-[#6B7280] hover:text-[#374151] transition-colors"
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
@@ -407,6 +409,7 @@ const PaymentsInvoicesTable = ({
               <button
                 onClick={() => onPageChange?.(Math.max(1, (currentPage ?? 1) - 1))}
                 disabled={!onPageChange || !currentPage || currentPage <= 1}
+                aria-label="Previous page"
                 className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 disabled:cursor-default"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -415,6 +418,7 @@ const PaymentsInvoicesTable = ({
               <button
                 onClick={() => onPageChange?.((currentPage ?? 1) + 1)}
                 disabled={!onPageChange || !currentPage || currentPage >= (totalPages ?? 1)}
+                aria-label="Next page"
                 className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 disabled:cursor-default"
               >
                 {t("paymentsTable.pagination.next")}

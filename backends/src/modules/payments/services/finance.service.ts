@@ -8,6 +8,7 @@ import { payments, invoices, users, courses } from '../../../database/schema';
 @Injectable()
 export class FinanceService {
   private readonly logger = new Logger(FinanceService.name);
+  private readonly platformFeePercent = 15; // Platform fee percentage — configurable later
 
   private buildDateConditions(startDate?: string, endDate?: string) {
     const conditions: any[] = [];
@@ -20,25 +21,67 @@ export class FinanceService {
     return conditions;
   }
 
+  private computeTrend(current: number, previous: number): number {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Number((((current - previous) / previous) * 100).toFixed(1));
+  }
+
   async getSummary(startDate?: string, endDate?: string) {
     const dateConditions = this.buildDateConditions(startDate, endDate);
     const whereClause = dateConditions.length > 0 ? and(...dateConditions) : undefined;
 
+    const selectFields = {
+      totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+      totalPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)`,
+      totalRefunds: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+      pendingPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'pending' THEN 1 END)`,
+      pendingAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
+      failedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'failed' THEN 1 END)`,
+    };
+
     const [stats] = await db
-      .select({
-        totalRevenue: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'paid' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
-        totalPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'paid' THEN 1 END)`,
-        totalRefunds: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} IN ('refunded', 'partially_refunded') THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
-        pendingPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'pending' THEN 1 END)`,
-        pendingAmount: sql<string>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN ${payments.amount}::numeric ELSE 0 END), 0)`,
-        failedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'failed' THEN 1 END)`,
-      })
+      .select(selectFields)
       .from(payments)
       .where(whereClause);
 
     const totalRevenue = Number(stats?.totalRevenue || 0);
     const totalPayments = Number(stats?.totalPayments || 0);
     const totalRefunds = Number(stats?.totalRefunds || 0);
+    const averageOrderValue = totalPayments > 0 ? totalRevenue / totalPayments : 0;
+
+    // Compute previous period for trend comparison
+    let revenueTrend = 0;
+    let avgOrderTrend = 0;
+    let refundRateTrend = 0;
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const durationMs = end.getTime() - start.getTime();
+      const prevEnd = new Date(start.getTime() - 1); // day before current start
+      const prevStart = new Date(prevEnd.getTime() - durationMs);
+
+      const prevConditions = [
+        gte(payments.createdAt, prevStart),
+        lte(payments.createdAt, prevEnd),
+      ];
+
+      const [prevStats] = await db
+        .select(selectFields)
+        .from(payments)
+        .where(and(...prevConditions));
+
+      const prevRevenue = Number(prevStats?.totalRevenue || 0);
+      const prevPayments = Number(prevStats?.totalPayments || 0);
+      const prevRefunds = Number(prevStats?.totalRefunds || 0);
+      const prevAvgOrder = prevPayments > 0 ? prevRevenue / prevPayments : 0;
+      const currentRefundRate = totalPayments > 0 ? (totalRefunds / totalRevenue) * 100 : 0;
+      const prevRefundRate = prevPayments > 0 ? (prevRefunds / prevRevenue) * 100 : 0;
+
+      revenueTrend = this.computeTrend(totalRevenue, prevRevenue);
+      avgOrderTrend = this.computeTrend(averageOrderValue, prevAvgOrder);
+      refundRateTrend = Number((currentRefundRate - prevRefundRate).toFixed(1));
+    }
 
     return {
       totalRevenue,
@@ -48,7 +91,10 @@ export class FinanceService {
       pendingPayments: Number(stats?.pendingPayments || 0),
       pendingAmount: Number(stats?.pendingAmount || 0),
       failedPayments: Number(stats?.failedPayments || 0),
-      averageOrderValue: totalPayments > 0 ? totalRevenue / totalPayments : 0,
+      averageOrderValue,
+      revenueTrend,
+      avgOrderTrend,
+      refundRateTrend,
     };
   }
 
@@ -283,13 +329,18 @@ export class FinanceService {
     return result.map((r) => {
       const revenue = Number(r.revenue);
       const refundAmount = Number(r.refundAmount);
+      const netRevenue = revenue - refundAmount;
+      const platformFee = Number((netRevenue * (this.platformFeePercent / 100)).toFixed(2));
+      const netPayout = Number((netRevenue - platformFee).toFixed(2));
       return {
         instructorId: r.instructorId,
         instructorName: r.instructorName,
         courseCount: Number(r.courseCount),
         revenue,
         refundAmount,
-        netRevenue: revenue - refundAmount,
+        netRevenue,
+        platformFee,
+        netPayout,
         enrollmentCount: Number(r.enrollmentCount),
       };
     });
@@ -379,7 +430,35 @@ export class FinanceService {
     };
   }
 
-  async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string, userId?: string): Promise<string> {
+  private readonly csvHeaders: Record<string, Record<string, string>> = {
+    en: {
+      paymentId: 'PaymentID', userEmail: 'UserEmail', userName: 'UserName',
+      courseId: 'CourseID', courseTitle: 'CourseTitle', amount: 'Amount',
+      currency: 'Currency', gateway: 'Gateway', paymentMethod: 'PaymentMethod',
+      status: 'Status', paidAt: 'PaidAt', createdAt: 'CreatedAt',
+    },
+    ar: {
+      paymentId: 'معرّف الدفع', userEmail: 'البريد الإلكتروني', userName: 'اسم المستخدم',
+      courseId: 'معرّف الدورة', courseTitle: 'عنوان الدورة', amount: 'المبلغ',
+      currency: 'العملة', gateway: 'البوابة', paymentMethod: 'طريقة الدفع',
+      status: 'الحالة', paidAt: 'تاريخ الدفع', createdAt: 'تاريخ الإنشاء',
+    },
+  };
+
+  private readonly pdfHeaders: Record<string, Record<string, string>> = {
+    en: {
+      date: 'Date', userEmail: 'User Email', course: 'Course',
+      gateway: 'Gateway', method: 'Method', amount: 'Amount',
+      status: 'Status', paidAt: 'Paid At',
+    },
+    ar: {
+      date: 'التاريخ', userEmail: 'البريد الإلكتروني', course: 'الدورة',
+      gateway: 'البوابة', method: 'الطريقة', amount: 'المبلغ',
+      status: 'الحالة', paidAt: 'تاريخ الدفع',
+    },
+  };
+
+  async exportPaymentsCsv(startDate?: string, endDate?: string, status?: string, userId?: string, locale?: string): Promise<string> {
     const conditions: any[] = [];
     if (startDate) {
       conditions.push(gte(payments.createdAt, new Date(startDate)));
@@ -431,7 +510,8 @@ export class FinanceService {
     lines.push('');
 
     // CSV header
-    lines.push('PaymentID,UserEmail,UserName,CourseID,CourseTitle,Amount,Currency,Gateway,PaymentMethod,Status,PaidAt,CreatedAt');
+    const h = this.csvHeaders[locale === 'ar' ? 'ar' : 'en'];
+    lines.push([h.paymentId, h.userEmail, h.userName, h.courseId, h.courseTitle, h.amount, h.currency, h.gateway, h.paymentMethod, h.status, h.paidAt, h.createdAt].join(','));
 
     // Data rows
     for (const row of rows) {
@@ -462,7 +542,7 @@ export class FinanceService {
     return lines.join('\n');
   }
 
-  async exportPaymentsPdf(startDate?: string, endDate?: string, status?: string, userId?: string): Promise<Buffer> {
+  async exportPaymentsPdf(startDate?: string, endDate?: string, status?: string, userId?: string, locale?: string): Promise<Buffer> {
     const conditions: any[] = [];
     if (startDate) conditions.push(gte(payments.createdAt, new Date(startDate)));
     if (endDate) conditions.push(lte(payments.createdAt, new Date(endDate)));
@@ -513,15 +593,16 @@ export class FinanceService {
         doc.moveTo(40, 96).lineTo(800, 96).stroke();
 
         // ── Column layout ──
+        const ph = this.pdfHeaders[locale === 'ar' ? 'ar' : 'en'];
         const cols = [
-          { label: 'Date', x: 40,  w: 80  },
-          { label: 'User Email', x: 125, w: 130 },
-          { label: 'Course', x: 260, w: 130 },
-          { label: 'Gateway', x: 395, w: 65  },
-          { label: 'Method', x: 465, w: 65  },
-          { label: 'Amount', x: 535, w: 70  },
-          { label: 'Status', x: 610, w: 70  },
-          { label: 'Paid At', x: 685, w: 110 },
+          { label: ph.date, x: 40,  w: 80  },
+          { label: ph.userEmail, x: 125, w: 130 },
+          { label: ph.course, x: 260, w: 130 },
+          { label: ph.gateway, x: 395, w: 65  },
+          { label: ph.method, x: 465, w: 65  },
+          { label: ph.amount, x: 535, w: 70  },
+          { label: ph.status, x: 610, w: 70  },
+          { label: ph.paidAt, x: 685, w: 110 },
         ];
 
         // Table header

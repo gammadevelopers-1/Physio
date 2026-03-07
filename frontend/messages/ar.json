@@ -5102,6 +5102,17 @@
         "resendError": "فشل إرسال الفاتورة",
         "downloadError": "فشل تحميل PDF"
       },
+      "errorCodes": {
+        "CARD_DECLINED": "البطاقة مرفوضة",
+        "INSUFFICIENT_FUNDS": "رصيد غير كافٍ",
+        "EXPIRED_CARD": "بطاقة منتهية الصلاحية",
+        "GATEWAY_TIMEOUT": "انتهاء مهلة البوابة",
+        "INVALID_CARD": "بطاقة غير صالحة",
+        "AUTHENTICATION_FAILED": "فشل المصادقة",
+        "PROCESSING_ERROR": "خطأ في المعالجة",
+        "CURRENCY_NOT_SUPPORTED": "العملة غير مدعومة",
+        "AMOUNT_LIMIT_EXCEEDED": "تجاوز حد المبلغ"
+      },
       "transactionDetail": {
         "title": "تفاصيل المعاملة",
         "paymentId": "معرّف الدفع",
@@ -5222,6 +5233,11 @@
         "days30": "31-60 يوم",
         "days60": "61-90 يوم",
         "overdue90": "أكثر من 90 يوم"
+      },
+      "filters": {
+        "startDate": "من",
+        "endDate": "إلى",
+        "clearDates": "مسح التواريخ"
       }
     },
     "refundsPage": {
@@ -5410,7 +5426,9 @@
         "amount": "المبلغ",
         "rate": "المعدل",
         "transactions": "المعاملات",
-        "growth": "النمو"
+        "growth": "النمو",
+        "platformFee": "رسوم المنصة",
+        "netPayout": "صافي الدفع"
       },
       "aging": {
         "current": "0-30 يوم",

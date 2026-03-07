@@ -122,6 +122,7 @@ export class FinanceController {
     @Query('status') status?: string,
     @Query('format') format?: string,
     @Query('reportType') reportType?: string,
+    @Query('locale') locale?: string,
   ) {
     const dateStr = new Date().toISOString().split('T')[0];
     const safeReport = reportType || 'payments';
@@ -130,12 +131,12 @@ export class FinanceController {
     // Legacy payments-only export (backward compatible)
     if (safeReport === 'payments') {
       if (safeFormat === 'pdf') {
-        const buf = await this.financeService.exportPaymentsPdf(startDate, endDate, status, user.id);
+        const buf = await this.financeService.exportPaymentsPdf(startDate, endDate, status, user.id, locale);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="payments-export-${dateStr}.pdf"`);
         return res.send(buf);
       }
-      const csv = await this.financeService.exportPaymentsCsv(startDate, endDate, status, user.id);
+      const csv = await this.financeService.exportPaymentsCsv(startDate, endDate, status, user.id, locale);
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="payments-export-${dateStr}.csv"`);
       return res.send(csv);

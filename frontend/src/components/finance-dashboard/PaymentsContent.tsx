@@ -194,8 +194,8 @@ const PaymentsContent = () => {
                   totalPages={totalPages}
                   totalCount={total}
                   onPageChange={setPage}
-                  onExport={() => financeApi.exportCsv().catch(() => {})}
-                  onExportPdf={() => financeApi.exportPdf().catch(() => {})}
+                  onExport={() => financeApi.exportCsv({ locale }).catch(() => {})}
+                  onExportPdf={() => financeApi.exportPdf({ locale }).catch(() => {})}
                   statusFilter={statusFilter}
                   onStatusFilterChange={handleStatusFilterChange}
                   searchQuery={searchQuery}

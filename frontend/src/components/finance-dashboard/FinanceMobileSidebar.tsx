@@ -146,6 +146,8 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
 
       {/* Sidebar Drawer */}
       <div
+        role="dialog"
+        aria-label="Navigation menu"
         className={`lg:hidden fixed top-0 ${isRTL ? "right-0" : "left-0"} h-full w-[300px] bg-[#F9FAFB] z-50 transform transition-transform duration-300 overflow-y-auto ${
           isOpen
             ? "translate-x-0"
@@ -205,6 +207,7 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
                   <button
                     onClick={() => setAvatarMenuOpen((v) => !v)}
                     className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#a37f49] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#8a6a3d] transition-colors`}
+                    aria-label={t("sidebar.editProfile")}
                   >
                     <Pencil className="w-3.5 h-3.5 text-white" />
                   </button>
@@ -283,7 +286,7 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
 
           {/* Navigation Card */}
           <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4">
-            <nav className="space-y-1">
+            <nav className="space-y-1" aria-label="Finance navigation">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -293,6 +296,7 @@ const FinanceMobileSidebar = ({ profile, pendingRefundCount = 0 }: FinanceMobile
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
+                    aria-current={active ? "page" : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
                         ? "bg-[#F0F7FF] text-[#002D87]"

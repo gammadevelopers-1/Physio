@@ -4887,6 +4887,17 @@
         "resendError": "Failed to send invoice",
         "downloadError": "Failed to download PDF"
       },
+      "errorCodes": {
+        "CARD_DECLINED": "Card Declined",
+        "INSUFFICIENT_FUNDS": "Insufficient Funds",
+        "EXPIRED_CARD": "Expired Card",
+        "GATEWAY_TIMEOUT": "Gateway Timeout",
+        "INVALID_CARD": "Invalid Card",
+        "AUTHENTICATION_FAILED": "Authentication Failed",
+        "PROCESSING_ERROR": "Processing Error",
+        "CURRENCY_NOT_SUPPORTED": "Currency Not Supported",
+        "AMOUNT_LIMIT_EXCEEDED": "Amount Limit Exceeded"
+      },
       "transactionDetail": {
         "title": "Transaction Detail",
         "paymentId": "Payment ID",
@@ -5007,6 +5018,11 @@
         "days30": "31-60 days",
         "days60": "61-90 days",
         "overdue90": "90+ days"
+      },
+      "filters": {
+        "startDate": "From",
+        "endDate": "To",
+        "clearDates": "Clear Dates"
       }
     },
     "refundsPage": {
@@ -5195,7 +5211,9 @@
         "amount": "Amount",
         "rate": "Rate",
         "transactions": "Transactions",
-        "growth": "Growth"
+        "growth": "Growth",
+        "platformFee": "Platform Fee",
+        "netPayout": "Net Payout"
       },
       "aging": {
         "current": "0-30 Days",

@@ -1,13 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Calendar, Video, MapPin, Download } from "lucide-react";
+import { Calendar, Video, MapPin, Download, Loader2 } from "lucide-react";
 import type { CalendarEvent } from "@/types/student-dashboard";
 import {
   getDeliveryIcon,
   isJoinable,
   downloadIcs,
 } from "@/lib/calendar-utils";
+import { studentApi } from "@/lib/api";
 
 interface CalendarPanelProps {
   events: CalendarEvent[];
@@ -16,6 +18,19 @@ interface CalendarPanelProps {
 const CalendarPanel = ({ events }: CalendarPanelProps) => {
   const t = useTranslations("studentDashboard");
   const locale = useLocale();
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+
+  const handleJoinZoom = async (event: CalendarEvent) => {
+    setJoiningSessionId(event.id);
+    try {
+      const { joinUrl } = await studentApi.getSessionJoinUrl(event.id);
+      window.open(joinUrl, "_blank");
+    } catch {
+      if (event.zoomLink) window.open(event.zoomLink, "_blank");
+    } finally {
+      setJoiningSessionId(null);
+    }
+  };
 
   const dateFormatter = new Intl.DateTimeFormat(locale, {
     weekday: "short",
@@ -92,24 +107,20 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 mt-2">
-                    {/* Join Button — time-gated */}
+                    {/* Join Button — time-gated, uses platform join endpoint for name pre-fill */}
                     {isZoom && event.zoomLink && (
-                      <a
-                        href={joinable ? event.zoomLink : "#"}
-                        target={joinable ? "_blank" : undefined}
-                        rel="noopener noreferrer"
-                        onClick={
-                          joinable ? undefined : (e) => e.preventDefault()
-                        }
+                      <button
+                        onClick={() => joinable && handleJoinZoom(event)}
+                        disabled={!joinable || joiningSessionId === event.id}
                         className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                           joinable
                             ? "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]"
                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
                         }`}
                       >
-                        <Video className="w-3 h-3" />
+                        {joiningSessionId === event.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Video className="w-3 h-3" />}
                         {joinable ? t("calendar.joinNow") : t("calendar.zoom")}
-                      </a>
+                      </button>
                     )}
 
                     {/* Venue indicator for onsite */}

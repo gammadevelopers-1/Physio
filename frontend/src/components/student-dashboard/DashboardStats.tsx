@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Video, MapPin, Globe } from "lucide-react";
+import { Video, MapPin, Globe, Loader2 } from "lucide-react";
 import type { StudentDashboardStats } from "@/types/student-dashboard";
+import { studentApi } from "@/lib/api";
 
 interface DashboardStatsProps {
   stats: StudentDashboardStats | null;
@@ -81,9 +82,23 @@ function useCountdown(targetDate: string | null) {
 // ─── Main Component ──────────────────────────────────────
 const DashboardStats = ({ stats }: DashboardStatsProps) => {
   const t = useTranslations("studentDashboard");
+  const [joiningZoom, setJoiningZoom] = useState(false);
   const { timeLeft, isJoinable } = useCountdown(
     stats?.nextSession?.scheduledAt ?? null,
   );
+
+  const handleJoinZoom = async (sessionId: string) => {
+    setJoiningZoom(true);
+    try {
+      const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
+      window.open(joinUrl, "_blank");
+    } catch {
+      // Fallback to raw link
+      if (stats?.nextSession?.zoomLink) window.open(stats.nextSession.zoomLink, "_blank");
+    } finally {
+      setJoiningZoom(false);
+    }
+  };
 
   if (!stats) return null;
 
@@ -226,20 +241,18 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
               </div>
             </div>
             {isZoom && nextSession.zoomLink && (
-              <a
-                href={isJoinable ? nextSession.zoomLink : "#"}
-                target={isJoinable ? "_blank" : undefined}
-                rel="noopener noreferrer"
-                onClick={isJoinable ? undefined : (e) => e.preventDefault()}
+              <button
+                onClick={() => isJoinable && handleJoinZoom(nextSession.id)}
+                disabled={!isJoinable || joiningZoom}
                 className={`mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                   isJoinable
                     ? "bg-[#2D8CFF] text-white hover:bg-[#1A73E8]"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 }`}
               >
-                <Video className="w-3 h-3" />
+                {joiningZoom ? <Loader2 className="w-3 h-3 animate-spin" /> : <Video className="w-3 h-3" />}
                 {isJoinable ? t("kpi.joinNow") : t("kpi.join")}
-              </a>
+              </button>
             )}
           </div>
         ) : (

@@ -2373,6 +2373,7 @@
       "scheduleSession": "جدولة جلسة",
       "startSession": "بدء الجلسة",
       "endSession": "إنهاء الجلسة",
+      "rejoinZoom": "إعادة الانضمام لزووم",
       "editSession": "تعديل الجلسة",
       "cancelSession": "إلغاء الجلسة",
       "sessionTitle": "عنوان الجلسة",

@@ -2158,6 +2158,7 @@
       "scheduleSession": "Schedule Session",
       "startSession": "Start Session",
       "endSession": "End Session",
+      "rejoinZoom": "Rejoin Zoom",
       "editSession": "Edit Session",
       "cancelSession": "Cancel Session",
       "sessionTitle": "Session Title",

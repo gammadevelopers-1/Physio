@@ -48,6 +48,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
+  ExternalLink,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
@@ -1295,12 +1296,25 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   </button>
                                 )}
                                 {session.status === "live" && (
-                                  <button
-                                    onClick={() => handleEndSession(session.id)}
-                                    className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-lg hover:bg-[#16A34A] transition-colors"
-                                  >
-                                    {t("courseDetail.endSession")}
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleEndSession(session.id)}
+                                      className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-lg hover:bg-[#16A34A] transition-colors"
+                                    >
+                                      {t("courseDetail.endSession")}
+                                    </button>
+                                    {session.zoomLink && (
+                                      <a
+                                        href={session.zoomLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1.5 border border-[#BFDBFE] rounded-lg text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors"
+                                        title={t("courseDetail.rejoinZoom")}
+                                      >
+                                        <ExternalLink className="w-4 h-4" />
+                                      </a>
+                                    )}
+                                  </>
                                 )}
                                 {(session.status === "scheduled" || session.status === "live") && (
                                   <>

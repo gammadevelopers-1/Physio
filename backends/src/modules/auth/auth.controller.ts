@@ -285,6 +285,28 @@ export class AuthController {
   }
 
   // ===========================================
+  // Forgot Password — send reset OTP
+  // ===========================================
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  // ===========================================
+  // Reset Password — verify OTP + set new password
+  // ===========================================
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() body: { email: string; code: string; newPassword: string },
+  ) {
+    return this.authService.resetPassword(body.email, body.code, body.newPassword);
+  }
+
+  // ===========================================
   // Logout
   // ===========================================
   @Post('logout')

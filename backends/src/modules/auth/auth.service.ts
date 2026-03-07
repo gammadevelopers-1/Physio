@@ -9,8 +9,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { eq, and, or, inArray, count, sql, ilike, asc, desc, SQL } from 'drizzle-orm';
-import { randomBytes } from 'crypto';
+import { eq, and, or, gt, inArray, count, sql, ilike, asc, desc, SQL } from 'drizzle-orm';
+import { randomBytes, createHash, randomInt } from 'crypto';
 import { db } from '../../database';
 import {
   users,
@@ -24,13 +24,18 @@ import {
   RoleName,
 } from '../../database/schema';
 import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto, UpdateProfileDto } from './dto';
+import { EmailService } from '../email/email.service';
 import { JwtPayload } from './strategies/jwt.strategy';
 
 @Injectable()
 export class AuthService {
+  private readonly RESET_OTP_EXPIRY_MINUTES = 10;
+  private readonly RESET_MAX_ATTEMPTS = 3;
+
   constructor(
     private jwtService: JwtService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {}
 
   // ===========================================
@@ -728,6 +733,122 @@ export class AuthService {
     await this.revokeAllUserSessions(userId);
 
     return { message: 'Password changed successfully' };
+  }
+
+  // ===========================================
+  // Forgot Password — send OTP to email
+  // ===========================================
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const [user] = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return { message: 'If an account exists with that email, a reset code has been sent.' };
+    }
+
+    // Generate 6-digit OTP
+    const code = String(randomInt(100000, 999999));
+    const codeHash = createHash('sha256').update(code).digest('hex');
+    const expiresAt = new Date(Date.now() + this.RESET_OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    // Store in two_factor_challenges with a special fingerprint prefix
+    await db.insert(twoFactorChallenges).values({
+      userId: user.id,
+      codeHash,
+      fingerprint: `password-reset::${normalizedEmail}`,
+      expiresAt,
+      attempts: 0,
+      isUsed: false,
+    });
+
+    // Send email
+    await this.emailService.sendPasswordReset(normalizedEmail, code);
+
+    return { message: 'If an account exists with that email, a reset code has been sent.' };
+  }
+
+  // ===========================================
+  // Reset Password — verify OTP + set new password
+  // ===========================================
+  async resetPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters');
+    }
+
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, normalizedEmail))
+      .limit(1);
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    // Find the latest valid challenge for this user
+    const [challenge] = await db
+      .select()
+      .from(twoFactorChallenges)
+      .where(
+        and(
+          eq(twoFactorChallenges.userId, user.id),
+          eq(twoFactorChallenges.fingerprint, `password-reset::${normalizedEmail}`),
+          eq(twoFactorChallenges.isUsed, false),
+          gt(twoFactorChallenges.expiresAt, new Date()),
+        ),
+      )
+      .orderBy(desc(twoFactorChallenges.createdAt))
+      .limit(1);
+
+    if (!challenge) {
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    // Check attempts
+    if (challenge.attempts >= this.RESET_MAX_ATTEMPTS) {
+      throw new BadRequestException('Too many attempts. Please request a new reset code.');
+    }
+
+    // Verify code
+    const codeHash = createHash('sha256').update(code).digest('hex');
+    if (codeHash !== challenge.codeHash) {
+      // Increment attempts
+      await db
+        .update(twoFactorChallenges)
+        .set({ attempts: challenge.attempts + 1 })
+        .where(eq(twoFactorChallenges.id, challenge.id));
+      throw new BadRequestException('Invalid or expired reset code');
+    }
+
+    // Mark challenge as used
+    await db
+      .update(twoFactorChallenges)
+      .set({ isUsed: true })
+      .where(eq(twoFactorChallenges.id, challenge.id));
+
+    // Update password
+    const hashedPassword = await argon2.hash(newPassword);
+    await db
+      .update(users)
+      .set({ passwordHash: hashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, user.id));
+
+    // Revoke all sessions for security
+    await this.revokeAllUserSessions(user.id);
+
+    return { message: 'Password reset successfully. Please log in with your new password.' };
   }
 
   // ===========================================

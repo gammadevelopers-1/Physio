@@ -279,6 +279,40 @@
       "signUp": "Sign up"
     }
   },
+  "forgotPasswordPage": {
+    "title": "Forgot your password?",
+    "description": "Enter your email address and we'll send you a code to reset your password.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email address",
+    "sendCode": "Send Reset Code",
+    "codeSent": "If an account exists with that email, a reset code has been sent.",
+    "backToLogin": "Back to login",
+    "errors": {
+      "emailRequired": "Please enter your email address"
+    }
+  },
+  "resetPasswordPage": {
+    "title": "Reset your password",
+    "description": "We sent a 6-digit code to {email}. Enter it below with your new password.",
+    "codeLabel": "Reset Code",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "resetButton": "Reset Password",
+    "resendCode": "Didn't receive a code? Resend",
+    "resending": "Sending...",
+    "codeResent": "A new code has been sent to your email.",
+    "back": "Back",
+    "noEmail": "No email address provided.",
+    "goToForgotPassword": "Go to Forgot Password",
+    "success": "Password reset successfully. Please log in with your new password.",
+    "errors": {
+      "codeRequired": "Please enter all 6 digits",
+      "passwordRequired": "Please enter a new password",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "passwordMismatch": "Passwords do not match",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
   "verifyPage": {
     "title": "Verify Your Identity",
     "subtitle": "We sent a verification code to",

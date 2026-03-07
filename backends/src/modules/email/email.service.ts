@@ -75,6 +75,10 @@ import {
   getEnrollmentConfirmationHtml,
   getEnrollmentConfirmationText,
 } from './templates/enrollment-confirmation.template';
+import {
+  getPasswordResetHtml,
+  getPasswordResetText,
+} from './templates/password-reset.template';
 
 @Injectable()
 export class EmailService {
@@ -636,6 +640,26 @@ export class EmailService {
   /**
    * Send enrollment confirmation email to student
    */
+  /**
+   * Send password reset OTP email
+   */
+  async sendPasswordReset(to: string, code: string): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `${code} - Password Reset Code`,
+        html: getPasswordResetHtml(code),
+        text: getPasswordResetText(code),
+      });
+      this.logger.log(`Password reset email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send password reset email to ${to}`, error);
+      if (this.configService.get<string>('NODE_ENV') !== 'production') {
+        this.logger.warn(`[DEV FALLBACK] Password reset code for ${to}: ${code}`);
+      }
+    }
+  }
+
   async sendEnrollmentConfirmation(
     to: string,
     params: {

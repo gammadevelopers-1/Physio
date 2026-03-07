@@ -408,6 +408,13 @@ export const authApi = {
   resend2FA: (challengeId: string) =>
     api.post<{ challengeId: string }>('/auth/resend-2fa', { challengeId }, { skipAuth: true }),
 
+  // Password Reset
+  forgotPassword: (email: string) =>
+    api.post<{ message: string }>('/auth/forgot-password', { email }, { skipAuth: true }),
+
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    api.post<{ message: string }>('/auth/reset-password', { email, code, newPassword }, { skipAuth: true }),
+
   // Trusted Devices
   getTrustedDevices: () => api.get<TrustedDevice[]>('/auth/trusted-devices'),
 

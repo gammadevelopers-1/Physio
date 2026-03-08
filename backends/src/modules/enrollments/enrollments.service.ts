@@ -451,9 +451,9 @@ export class EnrollmentsService {
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
 
-    if (session.status !== 'live' && session.status !== 'ended') {
+    if (session.status !== 'live' && session.status !== 'ended' && session.status !== 'completed') {
       throw new BadRequestException(
-        `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live or ended session.`,
+        `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live, ended, or completed session.`,
       );
     }
 
@@ -515,9 +515,9 @@ export class EnrollmentsService {
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
 
-    if (session.status !== 'live' && session.status !== 'ended') {
+    if (session.status !== 'live' && session.status !== 'ended' && session.status !== 'completed') {
       throw new BadRequestException(
-        `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live or ended session.`,
+        `Cannot mark attendance for a ${session.status} session. Attendance can only be marked during a live, ended, or completed session.`,
       );
     }
 

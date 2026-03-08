@@ -172,9 +172,30 @@ function AttendanceModal({
           eventType: string;
           timestamp: string;
         }>;
-        const unmatched = logs.filter(
-          (l) => !l.studentId && l.eventType === "join"
-        );
+        // Collect emails/names of participants that WERE matched (have studentId)
+        // so we can exclude stale webhook entries that were later resolved by report sync
+        const matchedIdentifiers = new Set<string>();
+        for (const l of logs) {
+          if (l.studentId) {
+            if (l.zoomUserEmail) matchedIdentifiers.add(l.zoomUserEmail.toLowerCase());
+            const payload = l.rawPayload as Record<string, unknown> | null;
+            const participant = payload?.participant as Record<string, unknown> | undefined;
+            const name = (participant?.user_name as string) || (payload?.name as string);
+            if (name) matchedIdentifiers.add(name.toLowerCase());
+          }
+        }
+        const unmatched = logs.filter((l) => {
+          if (l.studentId) return false;
+          if (l.eventType !== "join") return false;
+          // Check if this participant was later matched
+          const payload = l.rawPayload as Record<string, unknown> | null;
+          const participant = payload?.participant as Record<string, unknown> | undefined;
+          const email = l.zoomUserEmail?.toLowerCase();
+          const name = ((participant?.user_name as string) || (payload?.name as string))?.toLowerCase();
+          if (email && matchedIdentifiers.has(email)) return false;
+          if (name && matchedIdentifiers.has(name)) return false;
+          return true;
+        });
         // Deduplicate by email or participant name
         const seen = new Set<string>();
         const unique = unmatched.filter((l) => {
@@ -256,7 +277,7 @@ function AttendanceModal({
   const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
-  const isReadOnly = session.status !== "live" && session.status !== "ended";
+  const isReadOnly = session.status !== "live" && session.status !== "ended" && session.status !== "completed";
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {

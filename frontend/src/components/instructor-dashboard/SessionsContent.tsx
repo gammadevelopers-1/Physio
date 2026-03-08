@@ -636,57 +636,65 @@ function AttendanceModal({
                 </span>
               </div>
               <div className="max-h-[200px] overflow-y-auto divide-y divide-[#E5E7EB]">
-                {unmatchedParticipants.map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2">
-                    <div className="w-6 h-6 shrink-0 rounded-full bg-[#FEF3C7] flex items-center justify-center">
-                      <Users className="w-3 h-3 text-[#D97706]" />
+                {unmatchedParticipants.map((p, i) => {
+                  const selectedStudent = manualAssignments[p.zoomUserEmail]
+                    ? enrollments.find((e) => e.studentId === manualAssignments[p.zoomUserEmail])
+                    : null;
+                  return (
+                  <div key={i} className="px-4 py-2 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 shrink-0 rounded-full bg-[#FEF3C7] flex items-center justify-center">
+                        <Users className="w-3 h-3 text-[#D97706]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-medium text-[#374151] truncate block">
+                          {p.zoomUserEmail}
+                          {selectedStudent && (
+                            <span className="text-[#16A34A] font-medium">
+                              {" → "}{selectedStudent.studentFirstName} {selectedStudent.studentLastName}
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-[10px] text-[#9CA3AF]">
+                          {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs text-[#6B7280] truncate block">{p.zoomUserEmail}</span>
-                      {manualAssignments[p.zoomUserEmail] && (() => {
-                        const matched = enrollments.find((e) => e.studentId === manualAssignments[p.zoomUserEmail]);
-                        return matched ? (
-                          <span className="text-[10px] text-[#16A34A] font-medium truncate block">
-                            → {matched.studentFirstName} {matched.studentLastName}
-                          </span>
-                        ) : null;
-                      })()}
-                      <span className="text-[10px] text-[#9CA3AF]">
-                        {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+                    <div className="flex items-center gap-2 ps-8">
+                      <select
+                        value={manualAssignments[p.zoomUserEmail] || ""}
+                        onChange={(e) =>
+                          setManualAssignments((prev) => ({
+                            ...prev,
+                            [p.zoomUserEmail]: e.target.value,
+                          }))
+                        }
+                        disabled={attendanceLocked}
+                        className="flex-1 px-2 py-1.5 text-xs border border-[#E5E7EB] rounded-lg bg-white text-[#374151] disabled:opacity-50"
+                      >
+                        <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
+                        {enrollments
+                          .filter((e) => !markedStudentIds.has(e.studentId))
+                          .map((e) => (
+                            <option key={e.studentId} value={e.studentId}>
+                              {e.studentFirstName} {e.studentLastName}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        onClick={() => handleManualAssign(p.zoomUserEmail)}
+                        disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
+                        className="px-3 py-1.5 text-xs font-medium bg-[#3B82F6] text-white rounded-lg disabled:opacity-40 hover:bg-[#2563EB] transition-colors shrink-0"
+                      >
+                        {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}
+                      </button>
                     </div>
-                    <select
-                      value={manualAssignments[p.zoomUserEmail] || ""}
-                      onChange={(e) =>
-                        setManualAssignments((prev) => ({
-                          ...prev,
-                          [p.zoomUserEmail]: e.target.value,
-                        }))
-                      }
-                      disabled={attendanceLocked}
-                      className="px-1.5 py-1 text-[10px] border border-[#E5E7EB] rounded bg-white text-[#374151] max-w-[180px] truncate disabled:opacity-50"
-                    >
-                      <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
-                      {enrollments
-                        .filter((e) => !markedStudentIds.has(e.studentId))
-                        .map((e) => (
-                          <option key={e.studentId} value={e.studentId}>
-                            {e.studentFirstName} {e.studentLastName}
-                          </option>
-                        ))}
-                    </select>
-                    <button
-                      onClick={() => handleManualAssign(p.zoomUserEmail)}
-                      disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
-                      className="px-2 py-1 text-[10px] font-medium bg-[#3B82F6] text-white rounded disabled:opacity-40 hover:bg-[#2563EB] transition-colors shrink-0"
-                    >
-                      {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}
-                    </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

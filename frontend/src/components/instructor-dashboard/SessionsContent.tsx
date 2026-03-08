@@ -168,25 +168,34 @@ function AttendanceModal({
         const logs = results[2] as Array<{
           studentId: string | null;
           zoomUserEmail: string | null;
+          rawPayload: Record<string, unknown> | null;
           eventType: string;
           timestamp: string;
         }>;
         const unmatched = logs.filter(
-          (l) => !l.studentId && l.zoomUserEmail && l.eventType === "join"
+          (l) => !l.studentId && l.eventType === "join"
         );
-        // Deduplicate by email
+        // Deduplicate by email or participant name
         const seen = new Set<string>();
         const unique = unmatched.filter((l) => {
-          if (seen.has(l.zoomUserEmail!)) return false;
-          seen.add(l.zoomUserEmail!);
+          const payload = l.rawPayload as Record<string, unknown> | null;
+          const participant = payload?.participant as Record<string, unknown> | undefined;
+          const key = l.zoomUserEmail || (participant?.user_name as string) || (payload?.name as string) || l.timestamp;
+          if (seen.has(key)) return false;
+          seen.add(key);
           return true;
         });
         setUnmatchedParticipants(
-          unique.map((l) => ({
-            zoomUserEmail: l.zoomUserEmail!,
-            eventType: l.eventType,
-            timestamp: l.timestamp,
-          }))
+          unique.map((l) => {
+            const payload = l.rawPayload as Record<string, unknown> | null;
+            const participant = payload?.participant as Record<string, unknown> | undefined;
+            const displayName = l.zoomUserEmail || (participant?.user_name as string) || (payload?.name as string) || "Unknown Participant";
+            return {
+              zoomUserEmail: displayName,
+              eventType: l.eventType,
+              timestamp: l.timestamp,
+            };
+          })
         );
       }
     } catch {

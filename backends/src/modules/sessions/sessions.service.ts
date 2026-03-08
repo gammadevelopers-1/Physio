@@ -1200,6 +1200,7 @@ export class SessionsService {
         timestamp: attendanceLogs.timestamp,
         zoomParticipantId: attendanceLogs.zoomParticipantId,
         zoomUserEmail: attendanceLogs.zoomUserEmail,
+        rawPayload: attendanceLogs.rawPayload,
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,

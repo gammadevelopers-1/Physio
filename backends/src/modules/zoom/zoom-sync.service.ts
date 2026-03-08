@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { eq, and, isNull, isNotNull, sql } from 'drizzle-orm';
+import { eq, and, or, isNull, isNotNull, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -49,7 +49,10 @@ export class ZoomSyncService {
         .from(sessions)
         .where(
           and(
-            eq(sessions.status, SESSION_STATUS.COMPLETED),
+            or(
+              eq(sessions.status, SESSION_STATUS.ENDED),
+              eq(sessions.status, SESSION_STATUS.COMPLETED),
+            ),
             isNotNull(sessions.meetingId),
             isNull(sessions.zoomSyncedAt),
             // Item #11: extended window to 7 days (covers weekends, failures)
@@ -124,9 +127,9 @@ export class ZoomSyncService {
       throw new Error('This session is not a Zoom or hybrid session');
     }
 
-    if (session.status !== SESSION_STATUS.COMPLETED) {
+    if (session.status !== SESSION_STATUS.ENDED && session.status !== SESSION_STATUS.COMPLETED) {
       throw new Error(
-        'Zoom attendance can only be synced after the session is completed. Zoom reports typically become available 10-30 minutes after a meeting ends.',
+        'Zoom attendance can only be synced after the session has ended. Zoom reports typically become available 10-30 minutes after a meeting ends.',
       );
     }
 

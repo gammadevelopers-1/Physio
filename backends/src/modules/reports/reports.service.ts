@@ -236,7 +236,7 @@ export class ReportsService {
       attendancePctMap.set(`${ac.studentId}:${ac.courseId}`, `${pct}%`);
     }
 
-    // Build rows with enhanced attendance data
+    // Build rows from existing attendance records
     const rows = filteredData.map((row) => {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
       const pctNum = parseFloat(pct);
@@ -258,6 +258,57 @@ export class ReportsService {
         completionStatus,
       ];
     });
+
+    // Include enrolled students who have NO attendance record (implicit absent)
+    const filteredSessions = await db
+      .select({ id: sessions.id, courseId: sessions.courseId, title: sessions.title, scheduledAt: sessions.scheduledAt })
+      .from(sessions)
+      .where(and(...sessionConditions));
+
+    for (const sess of filteredSessions) {
+      // Get enrolled students for this course
+      const enrolledStudents = await db
+        .select({
+          studentId: enrollments.studentId,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(enrollments)
+        .innerJoin(users, eq(enrollments.studentId, users.id))
+        .where(
+          and(
+            eq(enrollments.courseId, sess.courseId),
+            sql`${enrollments.status} IN ('active', 'completed')`,
+          ),
+        );
+
+      // Find students who already have an attendance record for this session
+      const existingStudentIds = new Set(
+        filteredData
+          .filter((r) => r.sessionDate?.getTime() === sess.scheduledAt?.getTime() && r.courseId === sess.courseId)
+          .map((r) => r.studentId),
+      );
+
+      for (const student of enrolledStudents) {
+        if (existingStudentIds.has(student.studentId)) continue;
+        if (instructorIds.has(student.studentId)) continue;
+
+        const pct = attendancePctMap.get(`${student.studentId}:${sess.courseId}`) || '0.00%';
+        rows.push([
+          `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+          student.email || '',
+          this.formatDate(sess.scheduledAt),
+          sess.title || '',
+          'absent',
+          '',
+          '',
+          '',
+          pct,
+          'Incomplete',
+        ]);
+      }
+    }
 
     return this.formatReport('Attendance Report', headers, rows, format, metadata);
   }

@@ -122,6 +122,7 @@ function AttendanceModal({
   >([]);
   const [manualAssignments, setManualAssignments] = useState<Record<string, string>>({});
   const [assigningEmail, setAssigningEmail] = useState<string | null>(null);
+  const [attendanceLocked, setAttendanceLocked] = useState(false);
   const [syncResult, setSyncResult] = useState<{
     synced: number;
     skipped: number;
@@ -277,7 +278,7 @@ function AttendanceModal({
   const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
-  const isReadOnly = session.status !== "live" && session.status !== "ended" && session.status !== "completed";
+  const isReadOnly = attendanceLocked || (session.status !== "live" && session.status !== "ended" && session.status !== "completed");
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
@@ -338,7 +339,22 @@ function AttendanceModal({
         return;
       }
       await instructorApi.bulkMarkAttendance(session.id, records);
-      toast.success(t("sessionsPage.attendance.saved"));
+      // If session is ended, finalize it (locks attendance and moves to completed)
+      if (session.status === "ended") {
+        try {
+          await instructorApi.finalizeSession(session.id);
+          toast.success(t("sessionsPage.attendance.saved") + " — " + (locale === "ar" ? "تم قفل الحضور" : "Attendance finalized & locked"));
+        } catch {
+          toast.success(t("sessionsPage.attendance.saved"));
+        }
+      } else if (session.status === "completed") {
+        // Already completed — lock the UI so no further edits
+        toast.success(t("sessionsPage.attendance.saved") + " — " + (locale === "ar" ? "تم قفل الحضور" : "Attendance locked"));
+        setAttendanceLocked(true);
+        return; // don't close — show locked state
+      } else {
+        toast.success(t("sessionsPage.attendance.saved"));
+      }
       onClose();
     } catch {
       toast.error(t("sessionsPage.attendance.saveError"));
@@ -397,7 +413,7 @@ function AttendanceModal({
               </div>
               <button
                 onClick={handleSyncZoom}
-                disabled={syncing}
+                disabled={syncing || attendanceLocked}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#3B82F6] hover:text-white transition-colors disabled:opacity-50"
               >
                 {syncing ? (
@@ -609,6 +625,14 @@ function AttendanceModal({
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-xs text-[#6B7280] truncate block">{p.zoomUserEmail}</span>
+                      {manualAssignments[p.zoomUserEmail] && (() => {
+                        const matched = enrollments.find((e) => e.studentId === manualAssignments[p.zoomUserEmail]);
+                        return matched ? (
+                          <span className="text-[10px] text-[#16A34A] font-medium truncate block">
+                            → {matched.studentFirstName} {matched.studentLastName}
+                          </span>
+                        ) : null;
+                      })()}
                       <span className="text-[10px] text-[#9CA3AF]">
                         {new Date(p.timestamp).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
                           hour: "2-digit",
@@ -624,7 +648,8 @@ function AttendanceModal({
                           [p.zoomUserEmail]: e.target.value,
                         }))
                       }
-                      className="px-1.5 py-1 text-[10px] border border-[#E5E7EB] rounded bg-white text-[#374151] max-w-[140px] truncate"
+                      disabled={attendanceLocked}
+                      className="px-1.5 py-1 text-[10px] border border-[#E5E7EB] rounded bg-white text-[#374151] max-w-[180px] truncate disabled:opacity-50"
                     >
                       <option value="">{locale === "ar" ? "اختر طالب" : "Select student"}</option>
                       {enrollments
@@ -637,7 +662,7 @@ function AttendanceModal({
                     </select>
                     <button
                       onClick={() => handleManualAssign(p.zoomUserEmail)}
-                      disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail}
+                      disabled={!manualAssignments[p.zoomUserEmail] || assigningEmail === p.zoomUserEmail || attendanceLocked}
                       className="px-2 py-1 text-[10px] font-medium bg-[#3B82F6] text-white rounded disabled:opacity-40 hover:bg-[#2563EB] transition-colors shrink-0"
                     >
                       {assigningEmail === p.zoomUserEmail ? "..." : locale === "ar" ? "تعيين" : "Assign"}

@@ -219,13 +219,21 @@ function AttendanceModal({
             };
           })
         );
+        // Auto-lock if post-session Zoom with no unmatched participants
+        if ((session.status === "ended" || session.status === "completed") && unique.length === 0) {
+          setAttendanceLocked(true);
+        }
+      }
+      // Non-Zoom or no logs: auto-lock post-session
+      if (!isZoomSession && (session.status === "ended" || session.status === "completed")) {
+        setAttendanceLocked(true);
       }
     } catch {
       toast.error(t("sessionsPage.attendance.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [session.id, session.courseId, isZoomSession, t]);
+  }, [session.id, session.courseId, isZoomSession, session.status, t]);
 
   useEffect(() => {
     loadData();
@@ -278,7 +286,13 @@ function AttendanceModal({
   const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
-  const isReadOnly = attendanceLocked || (session.status !== "live" && session.status !== "ended" && session.status !== "completed");
+  // For ended/completed Zoom sessions: verified students are always read-only,
+  // only unmatched assignment is allowed (until finalized)
+  const isPostSession = session.status === "ended" || session.status === "completed";
+  const hasUnmatched = unmatchedParticipants.length > 0;
+  const isReadOnly = attendanceLocked || (session.status !== "live" && !isPostSession);
+  // Verified students (auto-synced) are read-only on post-session — only unmatched can be assigned
+  const isVerifiedReadOnly = isReadOnly || (isPostSession && isZoomSession);
 
   const getStatusColor = (status: AttendanceStatus) => {
     switch (status) {
@@ -339,22 +353,22 @@ function AttendanceModal({
         return;
       }
       await instructorApi.bulkMarkAttendance(session.id, records);
-      // If session is ended, finalize it (locks attendance and moves to completed)
-      if (session.status === "ended") {
-        try {
-          await instructorApi.finalizeSession(session.id);
-          toast.success(t("sessionsPage.attendance.saved") + " — " + (locale === "ar" ? "تم قفل الحضور" : "Attendance finalized & locked"));
-        } catch {
-          toast.success(t("sessionsPage.attendance.saved"));
+      // Post-session: finalize & lock attendance
+      if (isPostSession) {
+        if (session.status === "ended") {
+          try {
+            await instructorApi.finalizeSession(session.id);
+          } catch {
+            // Already completed or finalize not applicable — still lock UI
+          }
         }
-      } else if (session.status === "completed") {
-        // Already completed — lock the UI so no further edits
-        toast.success(t("sessionsPage.attendance.saved") + " — " + (locale === "ar" ? "تم قفل الحضور" : "Attendance locked"));
+        toast.success(locale === "ar" ? "تم حفظ وقفل الحضور نهائياً" : "Attendance saved & locked");
         setAttendanceLocked(true);
-        return; // don't close — show locked state
-      } else {
-        toast.success(t("sessionsPage.attendance.saved"));
+        setUnmatchedParticipants([]); // Clear unmatched since they're now assigned
+        setSaving(false);
+        return; // stay open to show locked state
       }
+      toast.success(t("sessionsPage.attendance.saved"));
       onClose();
     } catch {
       toast.error(t("sessionsPage.attendance.saveError"));
@@ -488,12 +502,16 @@ function AttendanceModal({
             <span className="text-xs text-[#3B82F6]">{excusedCount} {t("sessionsPage.attendance.excused")}</span>
           </div>
 
-          {/* Bulk actions — only during live sessions */}
-          {isReadOnly ? (
+          {/* Bulk actions / lock banner */}
+          {isVerifiedReadOnly ? (
             <div className="flex items-center gap-2 px-4 py-2 border-b border-[#E5E7EB] bg-[#F9FAFB]">
               <Lock className="w-3.5 h-3.5 text-[#9CA3AF]" />
               <span className="text-xs text-[#6B7280]">
-                {t("sessionsPage.attendance.readOnly")}
+                {attendanceLocked
+                  ? (locale === "ar" ? "تم قفل الحضور نهائياً" : "Attendance is finalized & locked")
+                  : isPostSession && isZoomSession && hasUnmatched
+                    ? (locale === "ar" ? "الحضور المتحقق مقفل — يمكنك تعيين الطلاب غير المتحققين أدناه" : "Verified attendance is locked — assign unmatched participants below")
+                    : t("sessionsPage.attendance.readOnly")}
               </span>
             </div>
           ) : (
@@ -536,13 +554,13 @@ function AttendanceModal({
                           {statusOptions.map((status) => (
                             <button
                               key={status}
-                              onClick={() => !isReadOnly && handleStatusChange(e.studentId, status)}
-                              disabled={isReadOnly}
+                              onClick={() => !isVerifiedReadOnly && handleStatusChange(e.studentId, status)}
+                              disabled={isVerifiedReadOnly}
                               className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
                                 currentStatus === status
                                   ? `${getStatusColor(status)} ring-2 ring-offset-1 ring-current`
                                   : "bg-[#F3F4F6] text-[#9CA3AF] hover:bg-[#E5E7EB]"
-                              } ${isReadOnly ? "cursor-default opacity-70" : ""}`}
+                              } ${isVerifiedReadOnly ? "cursor-default opacity-70" : ""}`}
                             >
                               {t(`sessionsPage.attendance.${status}`)}
                             </button>
@@ -702,9 +720,14 @@ function AttendanceModal({
                 onClick={onClose}
                 className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
               >
-                {isReadOnly ? t("sessionsPage.attendance.close") : t("sessionsPage.attendance.cancel")}
+                {(attendanceLocked || (isPostSession && isZoomSession && !hasUnmatched))
+                  ? t("sessionsPage.attendance.close")
+                  : isReadOnly
+                    ? t("sessionsPage.attendance.close")
+                    : t("sessionsPage.attendance.cancel")}
               </button>
-              {!isReadOnly && (
+              {/* Live session: normal Save */}
+              {!isReadOnly && !isPostSession && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
@@ -712,6 +735,17 @@ function AttendanceModal({
                 >
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {t("sessionsPage.attendance.save")}
+                </button>
+              )}
+              {/* Post-session with unmatched: Finalize & Lock */}
+              {isPostSession && hasUnmatched && !attendanceLocked && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                  {locale === "ar" ? "حفظ وقفل الحضور" : "Save & Lock Attendance"}
                 </button>
               )}
             </div>

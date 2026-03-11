@@ -866,4 +866,54 @@ export class CourseAssistantsService {
       this.logger.warn('Failed to send TA assignment email', err);
     }
   }
+
+  /**
+   * Get all courses assigned to a specific TA (for TA dashboard).
+   */
+  async getMyCourses(userId: string) {
+    const data = await db
+      .select({
+        id: courseAssistants.id,
+        courseId: courseAssistants.courseId,
+        status: courseAssistants.status,
+        priority: courseAssistants.priority,
+        assignedAt: courseAssistants.assignedAt,
+        approvedAt: courseAssistants.approvedAt,
+        deactivationScheduledAt: courseAssistants.deactivationScheduledAt,
+        courseTitle: courses.title,
+        courseStatus: courses.status,
+        instructorId: courses.instructorId,
+        instructorFirstName: users.firstName,
+        instructorLastName: users.lastName,
+      })
+      .from(courseAssistants)
+      .innerJoin(courses, eq(courseAssistants.courseId, courses.id))
+      .leftJoin(users, eq(courses.instructorId, users.id))
+      .where(eq(courseAssistants.userId, userId));
+
+    return data;
+  }
+
+  /**
+   * List all users with the TEACHING_ASSISTANT role (for assignment dropdown).
+   */
+  async listAvailableTAs() {
+    const tas = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+      })
+      .from(users)
+      .innerJoin(userRoles, eq(users.id, userRoles.userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(
+        and(
+          eq(roles.name, ROLE_NAMES.TEACHING_ASSISTANT),
+          eq(users.isActive, true),
+        ),
+      );
+    return tas;
+  }
 }

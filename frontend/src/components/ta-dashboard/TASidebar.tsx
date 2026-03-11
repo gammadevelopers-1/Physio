@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
+  BookOpen,
   Calendar,
   Settings,
   Pencil,
@@ -73,6 +74,11 @@ const TASidebar = () => {
       label: t("sidebar.dashboard"),
       href: `/${locale}/dashboard/ta`,
       icon: LayoutDashboard,
+    },
+    {
+      label: t("sidebar.courses"),
+      href: `/${locale}/dashboard/ta/courses`,
+      icon: BookOpen,
     },
     {
       label: t("sidebar.sessions"),

@@ -16,14 +16,12 @@ import {
 import { toast } from "sonner";
 import {
   courseAssistantsApi,
-  sessionAssistantsApi,
   type CourseAssistantTA,
   type ThresholdStatus,
 } from "@/lib/api";
 
 interface CourseAssistantsManagePanelProps {
   courseId: string;
-  sessionId?: string;
 }
 
 interface AvailableTA {
@@ -35,7 +33,6 @@ interface AvailableTA {
 
 const CourseAssistantsManagePanel = ({
   courseId,
-  sessionId,
 }: CourseAssistantsManagePanelProps) => {
   const t = useTranslations("courseManagerDashboard");
   const [tas, setTAs] = useState<CourseAssistantTA[]>([]);
@@ -65,14 +62,13 @@ const CourseAssistantsManagePanel = ({
   }, [courseId]);
 
   const fetchAvailableTAs = useCallback(async () => {
-    if (!sessionId) return;
     try {
-      const data = await sessionAssistantsApi.listAvailableTAs(sessionId);
+      const data = await courseAssistantsApi.listAvailableTAs(courseId);
       setAvailableTAs(data);
     } catch {
       setAvailableTAs([]);
     }
-  }, [sessionId]);
+  }, [courseId]);
 
   useEffect(() => {
     fetchData();

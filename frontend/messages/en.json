@@ -5951,6 +5951,7 @@
     "title": "Teaching Assistant Dashboard",
     "sidebar": {
       "dashboard": "Dashboard",
+      "courses": "Courses",
       "sessions": "Sessions",
       "settings": "Settings",
       "viewProfile": "View Profile",
@@ -5963,8 +5964,22 @@
       "title": "Dashboard",
       "todaysSessions": "Today's Sessions",
       "noSessions": "No sessions assigned for today",
+      "myCourses": "My Courses",
+      "noCourses": "No courses assigned yet",
       "upcomingSessions": "Upcoming Sessions",
       "weeklyCalendar": "Weekly Calendar"
+    },
+    "courses": {
+      "title": "My Courses",
+      "all": "All",
+      "active": "Active",
+      "preAssigned": "Pre-assigned",
+      "pendingApproval": "Pending Approval",
+      "activatesAtThreshold": "Will activate when enrollment reaches threshold",
+      "instructor": "Instructor",
+      "assignedOn": "Assigned on",
+      "deactivationPending": "Deactivation scheduled (24h grace)",
+      "noCourses": "No courses match the selected filter"
     },
     "settings": {
       "title": "Settings",

@@ -6169,6 +6169,7 @@
     "title": "لوحة تحكم مساعد التدريس",
     "sidebar": {
       "dashboard": "لوحة التحكم",
+      "courses": "الدورات",
       "sessions": "الجلسات",
       "settings": "الإعدادات",
       "viewProfile": "عرض الملف الشخصي",
@@ -6181,8 +6182,22 @@
       "title": "لوحة التحكم",
       "todaysSessions": "جلسات اليوم",
       "noSessions": "لا توجد جلسات مخصصة لليوم",
+      "myCourses": "دوراتي",
+      "noCourses": "لا توجد دورات مخصصة بعد",
       "upcomingSessions": "الجلسات القادمة",
       "weeklyCalendar": "التقويم الأسبوعي"
+    },
+    "courses": {
+      "title": "دوراتي",
+      "all": "الكل",
+      "active": "نشط",
+      "preAssigned": "معيّن مسبقاً",
+      "pendingApproval": "بانتظار الموافقة",
+      "activatesAtThreshold": "سيتم التفعيل عند وصول التسجيل إلى الحد المطلوب",
+      "instructor": "المدرب",
+      "assignedOn": "تم التعيين في",
+      "deactivationPending": "تم جدولة إلغاء التفعيل (مهلة 24 ساعة)",
+      "noCourses": "لا توجد دورات تطابق الفلتر المحدد"
     },
     "settings": {
       "title": "الإعدادات",

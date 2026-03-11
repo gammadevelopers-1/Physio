@@ -2263,6 +2263,21 @@ export interface ThresholdStatus {
   thresholds: { low: number; mid: number };
 }
 
+export interface TAAssignedCourse {
+  id: string;
+  courseId: string;
+  status: 'approved' | 'pre_assigned' | 'suggested' | 'rejected';
+  priority: number;
+  assignedAt: string;
+  approvedAt: string | null;
+  deactivationScheduledAt: string | null;
+  courseTitle: string;
+  courseStatus: string;
+  instructorId: string;
+  instructorFirstName: string | null;
+  instructorLastName: string | null;
+}
+
 export const courseAssistantsApi = {
   getCourseTAs: (courseId: string) =>
     api.get<CourseAssistantTA[]>(`/courses/${courseId}/assistants`),
@@ -2300,6 +2315,14 @@ export const courseAssistantsApi = {
 
   getThresholdStatus: (courseId: string) =>
     api.get<ThresholdStatus>(`/courses/${courseId}/assistants/threshold-status`),
+
+  listAvailableTAs: (courseId: string) =>
+    api.get<Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }>>(`/courses/${courseId}/assistants/available`),
 };
 
 // ===========================================
@@ -2351,6 +2374,9 @@ export const taApi = {
       studentLastName: string | null;
       studentEmail: string;
     }>>(`/assessments/${assessmentId}/submissions`),
+
+  getMyAssignedCourses: () =>
+    api.get<TAAssignedCourse[]>('/course-assistants/my-courses'),
 };
 
 export default api;

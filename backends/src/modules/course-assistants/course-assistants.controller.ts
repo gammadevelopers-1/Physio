@@ -131,4 +131,13 @@ export class CourseAssistantsController {
   async getThresholdStatus(@Param('courseId') courseId: string) {
     return this.courseAssistantsService.getThresholdStatus(courseId);
   }
+
+  /**
+   * GET /courses/:courseId/assistants/available — List all users with TA role
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('available')
+  async listAvailableTAs() {
+    return this.courseAssistantsService.listAvailableTAs();
+  }
 }

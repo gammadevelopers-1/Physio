@@ -186,7 +186,7 @@ export class CoursesService {
       .select({
         ...getTableColumns(courses),
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         completionRate: sql<number>`(
           SELECT COALESCE(ROUND(AVG(e.progress)), 0) FROM enrollments e WHERE e.course_id = "courses"."id"
@@ -319,7 +319,7 @@ export class CoursesService {
         startDate: courses.startDate,
         endDate: courses.endDate,
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         totalHours: sql<number>`(
           SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
@@ -418,7 +418,7 @@ export class CoursesService {
         startDate: courses.startDate,
         endDate: courses.endDate,
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         totalHours: sql<number>`(
           SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"

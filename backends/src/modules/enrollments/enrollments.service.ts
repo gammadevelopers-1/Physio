@@ -378,9 +378,8 @@ export class EnrollmentsService {
       .where(
         and(
           eq(enrollments.courseId, courseId),
-          // Only active students — completed/dropped/suspended should not appear
-          // in attendance dialogs or session management
-          eq(enrollments.status, 'active'),
+          // Active + completed students — dropped/suspended excluded
+          sql`${enrollments.status} IN ('active', 'completed')`,
         ),
       )
       .orderBy(desc(enrollments.enrolledAt));

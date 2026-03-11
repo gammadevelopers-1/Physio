@@ -16,6 +16,7 @@ import {
   sessionRecordings,
   sessionMaterials,
   courseMaterials,
+  sessionAssistants,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -26,6 +27,7 @@ import { CancelSessionDto } from './dto/cancel-session.dto';
 import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { CourseAssistantsService } from '../course-assistants/course-assistants.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionNotificationService } from './session-notification.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
@@ -41,6 +43,7 @@ export class SessionsService {
     private readonly assistantsService: SessionAssistantsService,
     private readonly auditLogService: AuditLogService,
     private readonly sessionNotificationService: SessionNotificationService,
+    private readonly courseAssistantsService: CourseAssistantsService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -136,6 +139,11 @@ export class SessionsService {
         this.logger.warn('Auto-allocation failed for session', err);
       });
 
+      // Propagate course-level TAs to this new session
+      await this.courseAssistantsService.propagateToSession(dto.courseId, session.id).catch((err) => {
+        this.logger.warn('Course TA propagation failed for session', err);
+      });
+
       // Audit log
       await this.auditLogService.log({
         entityType: 'session',
@@ -201,6 +209,11 @@ export class SessionsService {
       this.logger.warn('Auto-allocation failed for session', err);
     });
 
+    // Propagate course-level TAs to this new session
+    await this.courseAssistantsService.propagateToSession(dto.courseId, session.id).catch((err) => {
+      this.logger.warn('Course TA propagation failed for session', err);
+    });
+
     // Audit log
     await this.auditLogService.log({
       entityType: 'session',
@@ -216,6 +229,56 @@ export class SessionsService {
       .catch(() => {});
 
     return session;
+  }
+
+  /**
+   * Get sessions assigned to a Teaching Assistant via session_assistants.
+   */
+  async getAssignedSessions(
+    userId: string,
+    params: {
+      dateRange?: string;
+      status?: string;
+      courseId?: string;
+    } = {},
+  ) {
+    const conditions = [eq(sessionAssistants.userId, userId)];
+
+    if (params.status) {
+      conditions.push(eq(sessions.status, params.status));
+    }
+    if (params.courseId) {
+      conditions.push(eq(sessions.courseId, params.courseId));
+    }
+    if (params.dateRange) {
+      const [startStr, endStr] = params.dateRange.split(',');
+      if (startStr) conditions.push(gte(sessions.scheduledAt, new Date(startStr)));
+      if (endStr) conditions.push(lte(sessions.scheduledAt, new Date(endStr)));
+    }
+
+    const data = await db
+      .select({
+        id: sessions.id,
+        courseId: sessions.courseId,
+        courseName: courses.title,
+        instructorId: sessions.instructorId,
+        title: sessions.title,
+        type: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        zoomLink: sessions.zoomLink,
+        status: sessions.status,
+        roomName: sessions.roomName,
+        venueAddress: sessions.venueAddress,
+        assistantRole: sessionAssistants.role,
+      })
+      .from(sessionAssistants)
+      .innerJoin(sessions, eq(sessionAssistants.sessionId, sessions.id))
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .where(and(...conditions))
+      .orderBy(desc(sessions.scheduledAt));
+
+    return data;
   }
 
   /**

@@ -15,6 +15,9 @@ import {
   users,
   assessmentOverrides,
   enrollments,
+  courseAssistants,
+  sessionAssistants,
+  sessions,
   ASSESSMENT_STATUS,
   QUESTION_TYPE,
   QuestionOption,
@@ -657,7 +660,7 @@ export class AssessmentsService {
    * - Admin: any assessment.
    */
   async getSubmissions(assessmentId: string, user: AuthenticatedUser) {
-    await this.verifyAssessmentAccess(assessmentId, user);
+    const assessment = await this.verifyAssessmentAccess(assessmentId, user);
 
     const data = await db
       .select({
@@ -681,6 +684,18 @@ export class AssessmentsService {
       .innerJoin(users, eq(submissions.studentId, users.id))
       .where(eq(submissions.assessmentId, assessmentId))
       .orderBy(desc(submissions.submittedAt));
+
+    // For TAs: strip scores/grades unless assessment is closed (results published)
+    if (user.roles.includes('TEACHING_ASSISTANT') && !this.isAdmin(user)) {
+      const gradesPublished = assessment.status === 'closed';
+      return data.map((row) => ({
+        ...row,
+        score: gradesPublished ? row.score : null,
+        totalMarks: gradesPublished ? row.totalMarks : null,
+        percentage: gradesPublished ? row.percentage : null,
+        instructorComment: gradesPublished ? row.instructorComment : null,
+      }));
+    }
 
     return data;
   }
@@ -1375,6 +1390,7 @@ export class AssessmentsService {
 
     // Verify course access
     if (!this.isAdmin(user)) {
+      // Check if user is the course instructor
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
@@ -1387,7 +1403,41 @@ export class AssessmentsService {
         .limit(1);
 
       if (!course) {
-        throw new NotFoundException('Assessment not found');
+        // Check if user is a TA assigned to this course
+        if (user.roles.includes('TEACHING_ASSISTANT')) {
+          const [courseTA] = await db
+            .select({ id: courseAssistants.id })
+            .from(courseAssistants)
+            .where(
+              and(
+                eq(courseAssistants.courseId, assessment.courseId),
+                eq(courseAssistants.userId, user.id),
+                eq(courseAssistants.status, 'approved'),
+              ),
+            )
+            .limit(1);
+
+          if (!courseTA) {
+            // Also check session-level assignment
+            const [sessionTA] = await db
+              .select({ id: sessionAssistants.id })
+              .from(sessionAssistants)
+              .innerJoin(sessions, eq(sessionAssistants.sessionId, sessions.id))
+              .where(
+                and(
+                  eq(sessions.courseId, assessment.courseId),
+                  eq(sessionAssistants.userId, user.id),
+                ),
+              )
+              .limit(1);
+
+            if (!sessionTA) {
+              throw new NotFoundException('Assessment not found');
+            }
+          }
+        } else {
+          throw new NotFoundException('Assessment not found');
+        }
       }
     }
 

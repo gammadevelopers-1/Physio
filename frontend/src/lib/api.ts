@@ -1756,6 +1756,14 @@ export const sessionAssistantsApi = {
 
   removeAssistant: (sessionId: string, userId: string) =>
     api.delete<{ message: string }>(`/sessions/${sessionId}/assistants/${userId}`),
+
+  listAvailableTAs: (sessionId: string) =>
+    api.get<Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }>>(`/sessions/${sessionId}/assistants/available`),
 };
 
 // ===========================================
@@ -2224,6 +2232,100 @@ export const publicApi = {
       { skipAuth: true },
     );
   },
+};
+
+// ===========================================
+// Course Assistants API (Course-level TA management)
+// ===========================================
+export const courseAssistantsApi = {
+  getCourseTAs: (courseId: string) =>
+    api.get<Array<{
+      id: string;
+      courseId: string;
+      userId: string;
+      status: 'suggested' | 'approved' | 'rejected';
+      assignedAt: string;
+      approvedAt: string | null;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }>>(`/courses/${courseId}/assistants`),
+
+  assignTA: (courseId: string, data: { userId: string }) =>
+    api.post<{ id: string; courseId: string; userId: string; status: string }>(
+      `/courses/${courseId}/assistants`,
+      data,
+    ),
+
+  suggestTA: (courseId: string, data: { userId: string }) =>
+    api.post<{ id: string; courseId: string; userId: string; status: string }>(
+      `/courses/${courseId}/assistants/suggest`,
+      data,
+    ),
+
+  approveTA: (courseId: string, userId: string) =>
+    api.patch<{ id: string; status: string }>(
+      `/courses/${courseId}/assistants/${userId}/approve`,
+    ),
+
+  rejectTA: (courseId: string, userId: string) =>
+    api.patch<{ id: string; status: string }>(
+      `/courses/${courseId}/assistants/${userId}/reject`,
+    ),
+
+  removeTA: (courseId: string, userId: string) =>
+    api.delete<{ message: string }>(`/courses/${courseId}/assistants/${userId}`),
+};
+
+// ===========================================
+// Teaching Assistant API (TA Dashboard)
+// ===========================================
+export const taApi = {
+  getMyAssignedSessions: (params?: {
+    dateRange?: string;
+    status?: string;
+    courseId?: string;
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateRange) sp.set('dateRange', params.dateRange);
+    if (params?.status) sp.set('status', params.status);
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    const qs = sp.toString();
+    return api.get<Array<{
+      id: string;
+      courseId: string;
+      courseName: string;
+      instructorId: string;
+      title: string;
+      type: string;
+      scheduledAt: string;
+      durationMinutes: number;
+      zoomLink: string | null;
+      status: string;
+      roomName: string | null;
+      venueAddress: string | null;
+      assistantRole: string;
+    }>>(`/sessions/my-assigned${qs ? `?${qs}` : ''}`);
+  },
+
+  getSessionSubmissions: (assessmentId: string) =>
+    api.get<Array<{
+      id: string;
+      assessmentId: string;
+      studentId: string;
+      score: number | null;
+      totalMarks: number | null;
+      percentage: number | null;
+      startedAt: string | null;
+      submittedAt: string | null;
+      status: string;
+      answers: unknown;
+      submissionFiles: unknown;
+      instructorComment: string | null;
+      studentFirstName: string | null;
+      studentLastName: string | null;
+      studentEmail: string;
+    }>>(`/assessments/${assessmentId}/submissions`),
 };
 
 export default api;

@@ -46,6 +46,7 @@ export * from './interventions';
 // NELC Compliance schemas
 export * from './nelc-audit-logs';
 export * from './session-assistants';
+export * from './course-assistants';
 export * from './attendance-logs';
 
 // Session Recordings schemas

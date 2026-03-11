@@ -14,6 +14,11 @@ const PREDEFINED_ROLES = [
     description: 'Can create and manage courses, grade assignments, and manage students',
   },
   {
+    name: ROLE_NAMES.TEACHING_ASSISTANT,
+    displayName: 'Teaching Assistant',
+    description: 'Can view assigned sessions, attendance, and assessment submissions in read-only mode',
+  },
+  {
     name: ROLE_NAMES.MANAGER,
     displayName: 'Manager',
     description: 'Can manage instructors, view reports, and oversee departments',

@@ -10,6 +10,7 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
+import CourseAssistantsSuggestPanel from "./CourseAssistantsSuggestPanel";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
@@ -907,6 +908,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                         {/* NELC Compliance Scorecard */}
                         <NELCScorecardPanel courseId={courseId} />
+
+                        {/* Teaching Assistants */}
+                        <CourseAssistantsSuggestPanel courseId={courseId} />
                       </div>
                     )}
 

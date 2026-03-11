@@ -132,6 +132,24 @@ export class SessionsController {
   }
 
   /**
+   * GET /sessions/my-assigned — Sessions assigned to the current TA
+   */
+  @Roles('TEACHING_ASSISTANT' as UserRole)
+  @Get('my-assigned')
+  async getMyAssignedSessions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('dateRange') dateRange?: string,
+    @Query('status') status?: string,
+    @Query('courseId') courseId?: string,
+  ) {
+    return this.sessionsService.getAssignedSessions(user.id, {
+      dateRange,
+      status,
+      courseId,
+    });
+  }
+
+  /**
    * GET /sessions/:id — Session detail
    */
   @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

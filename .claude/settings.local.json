@@ -142,7 +142,20 @@
       "Bash(while read f)",
       "Bash(do if ! grep -q '<main' \"$f\")",
       "Bash(then echo \"$f\" fi done)",
-      "Bash(then echo \"NO MAIN: $f\" fi done)"
+      "Bash(then echo \"NO MAIN: $f\" fi done)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\) -path *detail* -o -path *edit*)",
+      "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/'\\(dashboards\\)'/dashboard/instructor/sessions/)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\) -type d)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -maxdepth 1 -type d)",
+      "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/instructor/)",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/*/\\\\\\(dashboards\\\\\\)/dashboard/)",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/*/\\\\\\(dashboards\\\\\\)/dashboard/instructor/)",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/*/\\\\\\(dashboards\\\\\\)/)",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/*/\\\\\\(dashboards\\\\\\)/dashboard/manager/)",
+      "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta/)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/student -name \"page.tsx\" -o -name \"layout.tsx\")",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/student/)",
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/instructor/)"
     ]
   }
 }

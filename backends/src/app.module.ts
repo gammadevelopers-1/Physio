@@ -22,6 +22,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { ZoomModule } from './modules/zoom/zoom.module';
 import { NelcAuditModule } from './modules/nelc-audit/nelc-audit.module';
 import { SessionAssistantsModule } from './modules/session-assistants/session-assistants.module';
+import { CourseAssistantsModule } from './modules/course-assistants/course-assistants.module';
 import { NelcComplianceModule } from './modules/nelc-compliance/nelc-compliance.module';
 import { ProcessingModule } from './modules/processing/processing.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
@@ -98,6 +99,7 @@ import processingConfig from './config/processing.config';
     ReportsModule,
     ZoomModule,
     SessionAssistantsModule,
+    CourseAssistantsModule,
     NelcComplianceModule,
     ProcessingModule,
     PreferencesModule,

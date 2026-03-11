@@ -1,0 +1,159 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import { ArrowLeft, Info, FileText } from "lucide-react";
+import { taApi } from "@/lib/api";
+
+interface Submission {
+  id: string;
+  assessmentId: string;
+  studentId: string;
+  score: number | null;
+  totalMarks: number | null;
+  percentage: number | null;
+  startedAt: string | null;
+  submittedAt: string | null;
+  status: string;
+  answers: unknown;
+  submissionFiles: unknown;
+  instructorComment: string | null;
+  studentFirstName: string | null;
+  studentLastName: string | null;
+  studentEmail: string;
+}
+
+interface TAAssessmentSubmissionsViewProps {
+  assessmentId: string;
+  onBack: () => void;
+}
+
+const TAAssessmentSubmissionsView = ({
+  assessmentId,
+  onBack,
+}: TAAssessmentSubmissionsViewProps) => {
+  const t = useTranslations("taDashboard");
+  const locale = useLocale();
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSubmissions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await taApi.getSessionSubmissions(assessmentId);
+      setSubmissions(data);
+    } catch {
+      setSubmissions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [assessmentId]);
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, [fetchSubmissions]);
+
+  const formatDateTime = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onBack}
+          className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-[#4B5563]" />
+        </button>
+        <h1 className="text-2xl font-bold text-[#1F2937]">
+          {t("submissions.title")}
+        </h1>
+      </div>
+
+      {/* Read-only notice */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <Info className="w-5 h-5 text-blue-600 shrink-0" />
+        <p className="text-sm text-blue-700">{t("submissions.readOnly")}</p>
+      </div>
+
+      {/* Submissions Table */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : submissions.length === 0 ? (
+        <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+          <FileText className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
+          <p className="text-[#6B7280]">{t("submissions.noSubmissions")}</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                    {t("submissions.studentName")}
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                    {t("submissions.studentId")}
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                    {t("submissions.submittedAt")}
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
+                    {t("submissions.score")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {submissions.map((submission) => (
+                  <tr
+                    key={submission.id}
+                    className="border-b border-[#E5E7EB] last:border-b-0"
+                  >
+                    <td className="px-4 py-3 text-sm text-[#1F2937]">
+                      {submission.studentFirstName} {submission.studentLastName}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[#6B7280]">
+                      {submission.studentEmail}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-[#6B7280]">
+                      {formatDateTime(submission.submittedAt)}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {submission.score !== null ? (
+                        <span className="font-medium text-[#1F2937]">
+                          {submission.score}/{submission.totalMarks}
+                          {submission.percentage !== null && (
+                            <span className="text-[#6B7280] ml-1">
+                              ({submission.percentage}%)
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-[#9CA3AF] italic">
+                          {t("submissions.scoreHidden")}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TAAssessmentSubmissionsView;

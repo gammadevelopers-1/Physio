@@ -168,7 +168,12 @@
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -maxdepth 2 -type f -name \"page.tsx\")",
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -maxdepth 1 -type f)",
       "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard)",
-      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\) -maxdepth 2 -type f -name \"layout.tsx\")"
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\) -maxdepth 2 -type f -name \"layout.tsx\")",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -name \"page.tsx\")",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -maxdepth 1 -name \"page.tsx\" -o -maxdepth 1 -name \"layout.tsx\")",
+      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/page.tsx)",
+      "Bash(ls -la \"/home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\(dashboards\\)/dashboard/\")",
+      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta/sessions/page.tsx)"
     ]
   }
 }

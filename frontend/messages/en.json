@@ -4421,19 +4421,24 @@
     "coursesPage": {
       "title": "All Courses",
       "subtitle": "Manage all platform courses",
-      "createCourse": "Create Course",
       "searchPlaceholder": "Search courses...",
       "noCourses": "No courses found",
+      "loading": "Loading courses...",
+      "error": "Failed to load courses",
+      "retry": "Retry",
+      "showing": "Showing {from} to {to} of {total} courses",
       "stats": {
         "total": "Total Courses",
         "active": "Active",
         "enrollments": "Enrollments",
-        "revenue": "Revenue (SAR)"
+        "pendingReview": "Pending Review"
       },
       "filters": {
         "allStatus": "All Status",
         "active": "Active",
         "draft": "Draft",
+        "pendingReview": "Pending Review",
+        "changesRequested": "Changes Requested",
         "completed": "Completed",
         "archived": "Archived"
       },
@@ -4442,34 +4447,13 @@
         "instructor": "Instructor",
         "status": "Status",
         "enrolled": "Enrolled",
-        "rating": "Rating",
-        "revenue": "Revenue"
+        "completion": "Completion",
+        "price": "Price"
       },
       "actions": {
         "view": "View",
         "edit": "Edit",
         "archive": "Archive"
-      },
-      "sampleCourses": {
-        "acls": "ACLS Training",
-        "firstAid": "First Aid Certification",
-        "cpr": "CPR Certification",
-        "emergency": "Emergency Response",
-        "infection": "Infection Control",
-        "patientSafety": "Patient Safety"
-      },
-      "sampleInstructors": {
-        "drFaisal": "Dr. Faisal Ahmed",
-        "drSara": "Dr. Sara Al-Rashid",
-        "drKhalid": "Dr. Khalid Hassan",
-        "drFatima": "Dr. Fatima Noor",
-        "drMohammed": "Dr. Mohammed Ali",
-        "drAisha": "Dr. Aisha Khan"
-      },
-      "categories": {
-        "emergency": "Emergency Care",
-        "safety": "Safety",
-        "healthcare": "Healthcare"
       }
     },
     "financePage": {
@@ -5974,10 +5958,36 @@
       "noSessions": "No sessions assigned for today",
       "myCourses": "My Courses",
       "noCourses": "No courses assigned yet",
-      "upcomingSessions": "Upcoming Sessions",
       "weeklyCalendar": "This Week",
       "session": "session",
-      "sessionPlural": "sessions"
+      "sessionPlural": "sessions",
+      "kpi": {
+        "assignedCourses": "Assigned Courses",
+        "todaysSessions": "Today's Sessions",
+        "thisWeek": "This Week",
+        "upcoming": "Upcoming"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "markAllRead": "Mark all read",
+        "clearAll": "Clear all",
+        "noNotificationsTitle": "No notifications",
+        "noNotificationsDescription": "You're all caught up! New notifications will appear here.",
+        "refresh": "Refresh"
+      },
+      "upcomingSessions": {
+        "title": "Upcoming Sessions",
+        "viewAll": "View All",
+        "noUpcoming": "No upcoming sessions scheduled"
+      },
+      "coursesOverview": {
+        "title": "My Courses",
+        "viewAll": "View All",
+        "approved": "Active",
+        "pre_assigned": "Pre-assigned",
+        "suggested": "Pending",
+        "noCourses": "No courses assigned yet"
+      }
     },
     "courses": {
       "title": "My Courses",

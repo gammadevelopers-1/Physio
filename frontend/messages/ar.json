@@ -4630,19 +4630,24 @@
     "coursesPage": {
       "title": "جميع الدورات",
       "subtitle": "إدارة جميع دورات المنصة",
-      "createCourse": "إنشاء دورة",
       "searchPlaceholder": "البحث في الدورات...",
       "noCourses": "لم يتم العثور على دورات",
+      "loading": "جاري تحميل الدورات...",
+      "error": "فشل تحميل الدورات",
+      "retry": "إعادة المحاولة",
+      "showing": "عرض {from} إلى {to} من {total} دورة",
       "stats": {
         "total": "إجمالي الدورات",
         "active": "نشطة",
         "enrollments": "التسجيلات",
-        "revenue": "الإيرادات (ريال)"
+        "pendingReview": "بانتظار المراجعة"
       },
       "filters": {
         "allStatus": "جميع الحالات",
         "active": "نشط",
         "draft": "مسودة",
+        "pendingReview": "بانتظار المراجعة",
+        "changesRequested": "مطلوب تعديلات",
         "completed": "مكتمل",
         "archived": "مؤرشف"
       },
@@ -4651,34 +4656,13 @@
         "instructor": "المدرب",
         "status": "الحالة",
         "enrolled": "المسجلون",
-        "rating": "التقييم",
-        "revenue": "الإيرادات"
+        "completion": "نسبة الإكمال",
+        "price": "السعر"
       },
       "actions": {
         "view": "عرض",
         "edit": "تعديل",
         "archive": "أرشفة"
-      },
-      "sampleCourses": {
-        "acls": "تدريب ACLS",
-        "firstAid": "شهادة الإسعافات الأولية",
-        "cpr": "شهادة الإنعاش القلبي الرئوي",
-        "emergency": "الاستجابة للطوارئ",
-        "infection": "مكافحة العدوى",
-        "patientSafety": "سلامة المرضى"
-      },
-      "sampleInstructors": {
-        "drFaisal": "د. فيصل أحمد",
-        "drSara": "د. سارة الراشد",
-        "drKhalid": "د. خالد حسن",
-        "drFatima": "د. فاطمة نور",
-        "drMohammed": "د. محمد علي",
-        "drAisha": "د. عائشة خان"
-      },
-      "categories": {
-        "emergency": "رعاية الطوارئ",
-        "safety": "السلامة",
-        "healthcare": "الرعاية الصحية"
       }
     },
     "financePage": {
@@ -6192,10 +6176,36 @@
       "noSessions": "لا توجد جلسات مخصصة لليوم",
       "myCourses": "دوراتي",
       "noCourses": "لا توجد دورات مخصصة بعد",
-      "upcomingSessions": "الجلسات القادمة",
       "weeklyCalendar": "هذا الأسبوع",
       "session": "جلسة",
-      "sessionPlural": "جلسات"
+      "sessionPlural": "جلسات",
+      "kpi": {
+        "assignedCourses": "الدورات المعيّنة",
+        "todaysSessions": "جلسات اليوم",
+        "thisWeek": "هذا الأسبوع",
+        "upcoming": "القادمة"
+      },
+      "notifications": {
+        "title": "الإشعارات",
+        "markAllRead": "تحديد الكل كمقروء",
+        "clearAll": "مسح الكل",
+        "noNotificationsTitle": "لا توجد إشعارات",
+        "noNotificationsDescription": "أنت على اطلاع! ستظهر الإشعارات الجديدة هنا.",
+        "refresh": "تحديث"
+      },
+      "upcomingSessions": {
+        "title": "الجلسات القادمة",
+        "viewAll": "عرض الكل",
+        "noUpcoming": "لا توجد جلسات قادمة مجدولة"
+      },
+      "coursesOverview": {
+        "title": "دوراتي",
+        "viewAll": "عرض الكل",
+        "approved": "نشط",
+        "pre_assigned": "معيّن مسبقاً",
+        "suggested": "بانتظار",
+        "noCourses": "لا توجد دورات مخصصة بعد"
+      }
     },
     "courses": {
       "title": "دوراتي",

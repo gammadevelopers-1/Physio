@@ -545,6 +545,19 @@ export const adminApi = {
 
   revokeAllUserDevices: (userId: string) =>
     api.delete<{ message: string }>(`/auth/users/${userId}/trusted-devices`),
+
+  // Get all courses (admin sees all)
+  getCourses: (params?: InstructorCoursesParams) => {
+    const sp = new URLSearchParams();
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.delivery && params.delivery !== 'all') sp.set('delivery', params.delivery);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.sort) sp.set('sort', params.sort);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<InstructorCoursesResponse>(`/courses${qs ? `?${qs}` : ''}`);
+  },
 };
 
 export interface RoleWithCount {

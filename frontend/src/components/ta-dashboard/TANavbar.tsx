@@ -52,11 +52,6 @@ const TANavbar = () => {
       href: `/${locale}/dashboard/ta/sessions`,
       icon: Calendar,
     },
-    {
-      label: tDashboard("sidebar.settings"),
-      href: `/${locale}/dashboard/ta/settings`,
-      icon: Settings,
-    },
   ];
 
   const isActiveRoute = (href: string) => pathname === href;

@@ -2,13 +2,25 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Video, Eye, Clock, Calendar, MapPin, Monitor, Users, BookOpen, AlertTriangle, FileText } from "lucide-react";
+import Link from "next/link";
+import {
+  Video,
+  Eye,
+  Clock,
+  Calendar,
+  CalendarDays,
+  MapPin,
+  Monitor,
+  BookOpen,
+  Bell,
+} from "lucide-react";
 import TASidebar from "./TASidebar";
 import TANavbar from "./TANavbar";
 import TASessionsContent from "./TASessionsContent";
 import TAAttendanceView from "./TAAttendanceView";
 import TAAssessmentSubmissionsView from "./TAAssessmentSubmissionsView";
-import { taApi, type TAAssignedCourse } from "@/lib/api";
+import { taApi, userNotificationsApi } from "@/lib/api";
+import type { TAAssignedCourse, UserNotification } from "@/lib/api";
 
 type TAView = "home" | "sessions" | "attendance" | "submissions";
 
@@ -33,24 +45,65 @@ interface AssignedSession {
   assessmentId?: string | null;
 }
 
-const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) => {
+function formatRelativeDate(isoString: string): string {
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
+
+const TADashboardContent = ({
+  initialView = "home",
+}: TADashboardContentProps) => {
   const t = useTranslations("taDashboard");
   const locale = useLocale();
   const [currentView, setCurrentView] = useState<TAView>(initialView);
   const [todaySessions, setTodaySessions] = useState<AssignedSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
-  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
-  const [myCourses, setMyCourses] = useState<TAAssignedCourse[]>([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<
+    string | null
+  >(null);
   const [weekSessions, setWeekSessions] = useState<AssignedSession[]>([]);
+  const [courses, setCourses] = useState<TAAssignedCourse[]>([]);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [upcomingSessions, setUpcomingSessions] = useState<AssignedSession[]>(
+    []
+  );
 
   const fetchTodaySessions = useCallback(async () => {
     try {
       setLoading(true);
       const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+      const startOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      ).toISOString();
+      const endOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + 1
+      ).toISOString();
       const data = await taApi.getMyAssignedSessions({
         dateRange: `${startOfDay},${endOfDay}`,
       });
@@ -62,24 +115,20 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
     }
   }, []);
 
-  const fetchMyCourses = useCallback(async () => {
-    try {
-      setCoursesLoading(true);
-      const data = await taApi.getMyAssignedCourses();
-      setMyCourses(data.filter((c) => c.status !== "rejected"));
-    } catch {
-      setMyCourses([]);
-    } finally {
-      setCoursesLoading(false);
-    }
-  }, []);
-
   const fetchWeekSessions = useCallback(async () => {
     try {
       const today = new Date();
       const dayOfWeek = today.getDay();
-      const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek);
-      const endOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (7 - dayOfWeek));
+      const startOfWeek = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() - dayOfWeek
+      );
+      const endOfWeek = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate() + (7 - dayOfWeek)
+      );
       const data = await taApi.getMyAssignedSessions({
         dateRange: `${startOfWeek.toISOString()},${endOfWeek.toISOString()}`,
       });
@@ -89,13 +138,81 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
     }
   }, []);
 
+  const fetchCourses = useCallback(async () => {
+    try {
+      const data = await taApi.getMyAssignedCourses();
+      setCourses(data);
+    } catch {
+      setCourses([]);
+    }
+  }, []);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const { data, unreadCount: count } = await userNotificationsApi.getAll({
+        limit: 10,
+      });
+      setNotifications(data);
+      setUnreadCount(count);
+    } catch {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, []);
+
+  const fetchUpcomingSessions = useCallback(async () => {
+    try {
+      const data = await taApi.getMyAssignedSessions({ status: "scheduled" });
+      const now = new Date();
+      const future = data
+        .filter((s) => new Date(s.scheduledAt) > now)
+        .sort(
+          (a, b) =>
+            new Date(a.scheduledAt).getTime() -
+            new Date(b.scheduledAt).getTime()
+        );
+      setUpcomingSessions(future);
+    } catch {
+      setUpcomingSessions([]);
+    }
+  }, []);
+
   useEffect(() => {
     if (currentView === "home") {
       fetchTodaySessions();
-      fetchMyCourses();
       fetchWeekSessions();
+      fetchCourses();
+      fetchNotifications();
+      fetchUpcomingSessions();
     }
-  }, [currentView, fetchTodaySessions, fetchMyCourses, fetchWeekSessions]);
+  }, [
+    currentView,
+    fetchTodaySessions,
+    fetchWeekSessions,
+    fetchCourses,
+    fetchNotifications,
+    fetchUpcomingSessions,
+  ]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await userNotificationsApi.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await userNotificationsApi.clearAll();
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch {
+      /* ignore */
+    }
+  };
 
   const handleViewAttendance = (sessionId: string) => {
     setSelectedSessionId(sessionId);
@@ -111,12 +228,6 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
     setSelectedSessionId(null);
     setSelectedAssessmentId(null);
     setCurrentView("sessions");
-  };
-
-  const handleBackToHome = () => {
-    setSelectedSessionId(null);
-    setSelectedAssessmentId(null);
-    setCurrentView("home");
   };
 
   const getStatusBadge = (status: string) => {
@@ -136,260 +247,449 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
     return <Monitor className="w-4 h-4" />;
   };
 
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString(locale === "ar" ? "ar-SA" : "en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
   const getCourseStatusBadge = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-50 text-green-700 border border-green-200";
-      case "pre_assigned":
-        return "bg-amber-50 text-amber-700 border border-amber-200";
-      case "suggested":
-        return "bg-orange-50 text-orange-700 border border-orange-200";
-      default:
-        return "bg-gray-50 text-gray-700 border border-gray-200";
-    }
+    const map: Record<string, string> = {
+      approved: "bg-green-50 text-green-700",
+      pre_assigned: "bg-amber-50 text-amber-700",
+      suggested: "bg-blue-50 text-blue-700",
+      rejected: "bg-red-50 text-red-700",
+    };
+    return map[status] || "bg-gray-50 text-gray-600";
   };
 
   const getCourseStatusLabel = (status: string) => {
-    switch (status) {
-      case "approved":
-        return t("courses.active");
-      case "pre_assigned":
-        return t("courses.preAssigned");
-      case "suggested":
-        return t("courses.pendingApproval");
-      default:
-        return status;
-    }
+    const map: Record<string, string> = {
+      approved: t("home.coursesOverview.approved"),
+      pre_assigned: t("home.coursesOverview.pre_assigned"),
+      suggested: t("home.coursesOverview.suggested"),
+    };
+    return map[status] || status;
   };
+
+  const formatTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleTimeString(
+      locale === "ar" ? "ar-SA" : "en-US",
+      { hour: "2-digit", minute: "2-digit" }
+    );
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString(
+      locale === "ar" ? "ar-SA" : "en-US",
+      { weekday: "short", month: "short", day: "numeric" }
+    );
+  };
+
+  const kpiCards = [
+    {
+      label: t("home.kpi.assignedCourses"),
+      value: courses.filter((c) => c.status === "approved").length,
+      icon: BookOpen,
+      iconBg: "bg-[#FEF3C7]",
+      iconColor: "text-[#D4A520]",
+    },
+    {
+      label: t("home.kpi.todaysSessions"),
+      value: todaySessions.length,
+      icon: Calendar,
+      iconBg: "bg-[#DBEAFE]",
+      iconColor: "text-[#3B82F6]",
+    },
+    {
+      label: t("home.kpi.thisWeek"),
+      value: weekSessions.length,
+      icon: CalendarDays,
+      iconBg: "bg-[#CCFBF1]",
+      iconColor: "text-[#0D9488]",
+    },
+    {
+      label: t("home.kpi.upcoming"),
+      value: upcomingSessions.length,
+      icon: Clock,
+      iconBg: "bg-[#E0E7FF]",
+      iconColor: "text-[#6366F1]",
+    },
+  ];
 
   const renderHome = () => (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-[#1F2937]">{t("home.title")}</h1>
 
-      {/* My Courses */}
-      <div>
-        <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-          {t("home.myCourses")}
-        </h2>
-
-        {coursesLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : myCourses.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
-            <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
-            <p className="text-[#6B7280]">{t("home.noCourses")}</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {myCourses.map((course) => (
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {kpiCards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={i}
+              className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3"
+            >
               <div
-                key={course.id}
-                className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
+                className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-base font-semibold text-[#1F2937] flex-1 min-w-0 truncate">
-                    {course.courseTitle}
-                  </h3>
-                  <span
-                    className={`ml-2 px-2.5 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getCourseStatusBadge(course.status)}`}
-                  >
-                    {getCourseStatusLabel(course.status)}
-                  </span>
-                </div>
-
-                {(course.instructorFirstName || course.instructorLastName) && (
-                  <p className="text-sm text-[#6B7280] mb-2">
-                    <span className="font-medium">{t("courses.instructor")}:</span>{" "}
-                    {course.instructorFirstName} {course.instructorLastName}
-                  </p>
-                )}
-
-                <p className="text-xs text-[#9CA3AF]">
-                  {t("courses.assignedOn")}{" "}
-                  {new Date(course.assignedAt).toLocaleDateString(
-                    locale === "ar" ? "ar-SA" : "en-US",
-                    { year: "numeric", month: "short", day: "numeric" }
-                  )}
+                <Icon className={`w-6 h-6 ${card.iconColor}`} />
+              </div>
+              <div>
+                <p className="text-sm text-[#6B7280]">{card.label}</p>
+                <p className="text-2xl font-bold text-[#1F2937]">
+                  {loading ? "—" : card.value}
                 </p>
-
-                {course.status === "pre_assigned" && (
-                  <p className="text-xs text-amber-600 mt-2">
-                    {t("courses.activatesAtThreshold")}
-                  </p>
-                )}
-
-                {course.deactivationScheduledAt && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1 mt-2">
-                    <AlertTriangle className="w-3 h-3" />
-                    {t("courses.deactivationPending")}
-                  </p>
-                )}
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Today's Sessions */}
-      <div>
-        <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-          {t("home.todaysSessions")}
-        </h2>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : todaySessions.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
-            <Calendar className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
-            <p className="text-[#6B7280]">{t("home.noSessions")}</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {todaySessions.map((session) => (
-              <div
-                key={session.id}
-                className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="text-base font-semibold text-[#1F2937]">
-                      {session.title}
-                    </h3>
-                    <p className="text-sm text-[#6B7280] mt-0.5">
-                      {session.courseName}
-                    </p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(session.status)}`}>
-                    {session.status === "live" && (
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse mr-1.5" />
-                    )}
-                    {t(`sessions.${session.status}`)}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-4">
-                  <span className="flex items-center gap-1.5">
-                    {getTypeIcon(session.type)}
-                    {session.type}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" />
-                    {formatTime(session.scheduledAt)} ({session.durationMinutes} {t("sessions.minutes")})
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {(session.status === "live") && session.zoomLink && (
-                    <a
-                      href={session.zoomLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:bg-[#001d5e] transition-colors"
-                    >
-                      <Video className="w-4 h-4" />
-                      {t("sessions.joinZoom")}
-                    </a>
-                  )}
-                  {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
-                    <button
-                      onClick={() => handleViewAttendance(session.id)}
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      {t("sessions.viewAttendance")}
-                    </button>
-                  )}
-                  {session.assessmentId && (
-                    <button
-                      onClick={() => handleViewSubmissions(session.assessmentId!)}
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
-                    >
-                      <FileText className="w-4 h-4" />
-                      {t("sessions.viewSubmissions")}
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Weekly Calendar */}
-      {weekSessions.length > 0 && (() => {
-        const today = new Date();
-        const dayOfWeek = today.getDay();
-        const weekDays = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek + i);
-          return d;
-        });
-        const dayNames = weekDays.map((d) =>
-          d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { weekday: "short" })
-        );
-        const sessionsByDay = weekDays.map((d) => {
-          const dayStr = d.toISOString().slice(0, 10);
-          return weekSessions.filter((s) => s.scheduledAt.slice(0, 10) === dayStr);
-        });
-
-        return (
+      {/* Two-column layout: Main + Right Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Today's Sessions */}
           <div>
             <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-              {t("home.weeklyCalendar")}
+              {t("home.todaysSessions")}
             </h2>
-            <div className="grid grid-cols-7 gap-2">
-              {weekDays.map((d, i) => {
-                const isToday = d.toDateString() === today.toDateString();
-                const count = sessionsByDay[i].length;
-                return (
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : todaySessions.length === 0 ? (
+              <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                <Calendar className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
+                <p className="text-[#6B7280]">{t("home.noSessions")}</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {todaySessions.map((session) => (
                   <div
-                    key={i}
-                    className={`rounded-xl border p-3 text-center ${
-                      isToday
-                        ? "bg-[#002D87] text-white border-[#002D87]"
-                        : "bg-white border-[#E5E7EB]"
+                    key={session.id}
+                    className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-base font-semibold text-[#1F2937]">
+                          {session.title}
+                        </h3>
+                        <p className="text-sm text-[#6B7280] mt-0.5">
+                          {session.courseName}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(session.status)}`}
+                      >
+                        {session.status === "live" && (
+                          <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse mr-1.5" />
+                        )}
+                        {t(`sessions.${session.status}`)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-4">
+                      <span className="flex items-center gap-1.5">
+                        {getTypeIcon(session.type)}
+                        {session.type}
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        {formatTime(session.scheduledAt)} (
+                        {session.durationMinutes} {t("sessions.minutes")})
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {session.status === "live" && session.zoomLink && (
+                        <a
+                          href={session.zoomLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:bg-[#001d5e] transition-colors"
+                        >
+                          <Video className="w-4 h-4" />
+                          {t("sessions.joinZoom")}
+                        </a>
+                      )}
+                      {(session.status === "live" ||
+                        session.status === "ended" ||
+                        session.status === "completed") && (
+                        <button
+                          onClick={() => handleViewAttendance(session.id)}
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          {t("sessions.viewAttendance")}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Weekly Calendar */}
+          {(() => {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const weekDays = Array.from({ length: 7 }, (_, i) => {
+              const d = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate() - dayOfWeek + i
+              );
+              return d;
+            });
+            const dayNames = weekDays.map((d) =>
+              d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+                weekday: "short",
+              })
+            );
+            const sessionsByDay = weekDays.map((d) => {
+              const dayStr = d.toISOString().slice(0, 10);
+              return weekSessions.filter(
+                (s) => s.scheduledAt.slice(0, 10) === dayStr
+              );
+            });
+
+            return (
+              <div>
+                <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                  {t("home.weeklyCalendar")}
+                </h2>
+                <div className="grid grid-cols-7 gap-2">
+                  {weekDays.map((d, i) => {
+                    const isToday = d.toDateString() === today.toDateString();
+                    const count = sessionsByDay[i].length;
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-xl border p-3 text-center ${
+                          isToday
+                            ? "bg-[#002D87] text-white border-[#002D87]"
+                            : "bg-white border-[#E5E7EB]"
+                        }`}
+                      >
+                        <p
+                          className={`text-xs font-medium ${isToday ? "text-white/80" : "text-[#6B7280]"}`}
+                        >
+                          {dayNames[i]}
+                        </p>
+                        <p
+                          className={`text-lg font-bold mt-1 ${isToday ? "text-white" : "text-[#1F2937]"}`}
+                        >
+                          {d.getDate()}
+                        </p>
+                        {count > 0 && (
+                          <div
+                            className={`mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                              isToday
+                                ? "bg-white/20 text-white"
+                                : "bg-[#EFF6FF] text-[#3B82F6]"
+                            }`}
+                          >
+                            {count}{" "}
+                            {count === 1
+                              ? t("home.session")
+                              : t("home.sessionPlural")}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Right Sidebar Widgets */}
+        <div className="space-y-4">
+          {/* Notifications Widget */}
+          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-semibold text-[#1F2937]">
+                  {t("home.notifications.title")}
+                </h3>
+                {unreadCount > 0 && (
+                  <span className="text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] px-2 py-0.5 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              {notifications.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      className="text-[11px] text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+                    >
+                      {t("home.notifications.markAllRead")}
+                    </button>
+                  )}
+                  <button
+                    onClick={handleClearAll}
+                    className="text-[11px] text-[#6B7280] hover:text-[#EF4444] font-medium transition-colors"
+                  >
+                    {t("home.notifications.clearAll")}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+                  <Bell className="w-6 h-6 text-[#9CA3AF]" />
+                </div>
+                <h4 className="text-sm font-medium text-[#1F2937] mb-1">
+                  {t("home.notifications.noNotificationsTitle")}
+                </h4>
+                <p className="text-xs text-[#6B7280] text-center max-w-[200px]">
+                  {t("home.notifications.noNotificationsDescription")}
+                </p>
+              </div>
+            ) : (
+              <div className="max-h-[320px] overflow-y-auto space-y-2 scrollbar-thin">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-3 rounded-lg border transition-colors ${
+                      !notification.isRead
+                        ? "bg-[#EFF6FF] border-[#DBEAFE]"
+                        : "bg-[#F9FAFB] border-transparent hover:border-[#E5E7EB]"
                     }`}
                   >
-                    <p className={`text-xs font-medium ${isToday ? "text-white/80" : "text-[#6B7280]"}`}>
-                      {dayNames[i]}
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
+                        {notification.title}
+                      </h4>
+                      {!notification.isRead && (
+                        <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0 mt-1.5" />
+                      )}
+                    </div>
+                    <p className="text-xs text-[#6B7280] leading-relaxed line-clamp-2">
+                      {notification.message}
                     </p>
-                    <p className={`text-lg font-bold mt-1 ${isToday ? "text-white" : "text-[#1F2937]"}`}>
-                      {d.getDate()}
+                    <div className="flex items-center gap-1 mt-1.5">
+                      <Clock className="w-3 h-3 text-[#9CA3AF]" />
+                      <span className="text-[11px] text-[#9CA3AF]">
+                        {formatRelativeDate(notification.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Sessions Widget */}
+          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-[#1F2937]">
+                {t("home.upcomingSessions.title")}
+              </h3>
+              <Link
+                href={`/${locale}/dashboard/ta/sessions`}
+                className="text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+              >
+                {t("home.upcomingSessions.viewAll")} &rarr;
+              </Link>
+            </div>
+
+            {upcomingSessions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+                  <Calendar className="w-6 h-6 text-[#9CA3AF]" />
+                </div>
+                <p className="text-xs text-[#6B7280] text-center">
+                  {t("home.upcomingSessions.noUpcoming")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {upcomingSessions.slice(0, 3).map((session) => (
+                  <div
+                    key={session.id}
+                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[#E5E7EB] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
+                        {session.title}
+                      </h4>
+                      <span className="flex-shrink-0">
+                        {getTypeIcon(session.type)}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#6B7280] mb-1.5">
+                      {session.courseName}
                     </p>
-                    {count > 0 && (
-                      <div className={`mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        isToday
-                          ? "bg-white/20 text-white"
-                          : "bg-[#EFF6FF] text-[#3B82F6]"
-                      }`}>
-                        {count} {count === 1 ? t("home.session") : t("home.sessionPlural")}
-                      </div>
+                    <div className="flex items-center gap-1 text-xs text-[#9CA3AF]">
+                      <Calendar className="w-3 h-3" />
+                      <span>
+                        {formatDate(session.scheduledAt)} &middot;{" "}
+                        {formatTime(session.scheduledAt)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* My Courses Quick View */}
+          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-[#1F2937]">
+                {t("home.coursesOverview.title")}
+              </h3>
+              <Link
+                href={`/${locale}/dashboard/ta/courses`}
+                className="text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
+              >
+                {t("home.coursesOverview.viewAll")} &rarr;
+              </Link>
+            </div>
+
+            {courses.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <div className="w-12 h-12 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3">
+                  <BookOpen className="w-6 h-6 text-[#9CA3AF]" />
+                </div>
+                <p className="text-xs text-[#6B7280] text-center">
+                  {t("home.coursesOverview.noCourses")}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {courses.slice(0, 5).map((course) => (
+                  <div
+                    key={course.id}
+                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[#E5E7EB] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
+                        {course.courseTitle}
+                      </h4>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getCourseStatusBadge(course.status)}`}
+                      >
+                        {getCourseStatusLabel(course.status)}
+                      </span>
+                    </div>
+                    {(course.instructorFirstName ||
+                      course.instructorLastName) && (
+                      <p className="text-xs text-[#9CA3AF]">
+                        {`${course.instructorFirstName || ""} ${course.instructorLastName || ""}`.trim()}
+                      </p>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-        );
-      })()}
+        </div>
+      </div>
     </div>
   );
 

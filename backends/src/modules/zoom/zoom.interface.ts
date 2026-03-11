@@ -68,4 +68,5 @@ export interface IZoomService {
   getRecordings(meetingId: string): Promise<ZoomRecordingFile[]>;
   getRecordingShareUrl(meetingId: string): Promise<string | null>;
   removeRecordingPasscode(meetingId: string): Promise<boolean>;
+  promoteToCohost(meetingId: string, participantId: string): Promise<void>;
 }

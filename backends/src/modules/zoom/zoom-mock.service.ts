@@ -120,6 +120,15 @@ export class ZoomMockService implements IZoomService {
     return true;
   }
 
+  async promoteToCohost(
+    meetingId: string,
+    participantId: string,
+  ): Promise<void> {
+    this.logger.log(
+      `[MOCK] Promoted participant ${participantId} to co-host in meeting ${meetingId}`,
+    );
+  }
+
   /**
    * Seed mock participant data for a meeting (used by mock webhook endpoint).
    */

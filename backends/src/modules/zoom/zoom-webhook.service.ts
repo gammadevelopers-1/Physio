@@ -1,10 +1,12 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
   attendance,
   attendanceLogs,
+  sessionAssistants,
+  users,
   ATTENDANCE_LOG_EVENT,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
@@ -135,6 +137,9 @@ export class ZoomWebhookService {
         `Unmatched Zoom participant: ${participantEmail} in meeting ${meetingId}`,
       );
     }
+
+    // 6. Promote TA to co-host if assigned with 'co_host' role
+    await this.promoteIfTA(session.id, meetingId, participantId, participantEmail);
   }
 
   /**
@@ -277,5 +282,78 @@ export class ZoomWebhookService {
     }
 
     return Math.round(totalMs / 60000); // Convert ms to minutes
+  }
+
+  /**
+   * Check if a Zoom participant is a TA assigned to this session with 'co_host' role.
+   * If so, promote them to co-host via the Zoom API.
+   */
+  private async promoteIfTA(
+    sessionId: string,
+    meetingId: string,
+    participantId: string,
+    participantEmail: string,
+  ): Promise<void> {
+    if (!participantEmail && !participantId) return;
+
+    try {
+      // Match participant email to a system user
+      const normalizedEmail = participantEmail?.toLowerCase();
+      if (!normalizedEmail) return;
+
+      // Find user by email
+      const [user] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
+        .limit(1);
+
+      if (!user) {
+        // Try zoomEmail
+        const [byZoom] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(sql`LOWER(${users.zoomEmail}) = ${normalizedEmail}`)
+          .limit(1);
+        if (!byZoom) return;
+        return this.tryPromoteUser(byZoom.id, sessionId, meetingId, participantId);
+      }
+
+      await this.tryPromoteUser(user.id, sessionId, meetingId, participantId);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to check/promote TA co-host: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  /**
+   * If the user is a session assistant with 'co_host' role, promote them.
+   */
+  private async tryPromoteUser(
+    userId: string,
+    sessionId: string,
+    meetingId: string,
+    participantId: string,
+  ): Promise<void> {
+    const [assistant] = await db
+      .select({ role: sessionAssistants.role })
+      .from(sessionAssistants)
+      .where(
+        and(
+          eq(sessionAssistants.sessionId, sessionId),
+          eq(sessionAssistants.userId, userId),
+          eq(sessionAssistants.role, 'co_host'),
+        ),
+      )
+      .limit(1);
+
+    if (!assistant) return;
+
+    this.logger.log(
+      `TA ${userId} is a co_host for session ${sessionId} — promoting in Zoom meeting ${meetingId}`,
+    );
+
+    await this.zoomService.promoteToCohost(meetingId, participantId);
   }
 }

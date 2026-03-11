@@ -20,6 +20,7 @@ import {
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { StorageService } from '../storage/storage.service';
 import { EmailService } from '../email/email.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
@@ -42,12 +43,17 @@ export class CertificatesService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Eligibility Computation ────────────────────────────────
@@ -315,15 +321,17 @@ export class CertificatesService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own courses only
-    if (!this.isAdmin(user)) {
-      const instructorCourseIds = await this.getInstructorCourseIds(user.id);
-      if (instructorCourseIds.length === 0) {
+    // Scope by role
+    if (!isGlobalAdmin(user)) {
+      const scopedCourseIds = isManager(user)
+        ? await this.getManagedCourseIds(user.id)
+        : await this.getInstructorCourseIds(user.id);
+      if (scopedCourseIds.length === 0) {
         return { data: [], total: 0, page, limit, totalPages: 0 };
       }
       conditions.push(
         sql`${certificateRequests.courseId} IN (${sql.join(
-          instructorCourseIds.map((id) => sql`${id}`),
+          scopedCourseIds.map((id) => sql`${id}`),
           sql`, `,
         )})` as any,
       );
@@ -858,16 +866,27 @@ export class CertificatesService {
   }
 
   /**
+   * Get course IDs managed by a course manager.
+   */
+  private async getManagedCourseIds(
+    managerId: string,
+  ): Promise<string[]> {
+    const managedCourses = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(eq(courses.managerId, managerId));
+    return managedCourses.map((c) => c.id);
+  }
+
+  /**
    * Verify the user can access the course.
    */
   private async verifyCourseAccess(
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id, instructorId: courses.instructorId })
@@ -919,17 +938,19 @@ export class CertificatesService {
       throw new NotFoundException('Certificate request not found');
     }
 
-    // Instructor: verify course belongs to them
-    if (!this.isAdmin(user)) {
+    // Verify course access
+    if (!isGlobalAdmin(user)) {
+      const courseConditions: any[] = [eq(courses.id, request.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(eq(courses.managerId, user.id));
+      } else {
+        courseConditions.push(eq(courses.instructorId, user.id));
+      }
+
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.id, request.courseId),
-            eq(courses.instructorId, user.id),
-          ),
-        )
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {

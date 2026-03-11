@@ -25,6 +25,7 @@ import {
 } from '../../database/schema';
 import type { AssessmentFile } from '../../database/schema/assessments';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -59,12 +60,17 @@ export class AssessmentsService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Assessment CRUD ──────────────────────────────────────
@@ -125,15 +131,17 @@ export class AssessmentsService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own courses only
-    if (!this.isAdmin(user)) {
-      const instructorCourseIds = await this.getInstructorCourseIds(user.id);
-      if (instructorCourseIds.length === 0) {
+    // Scope by role
+    if (!isGlobalAdmin(user)) {
+      const scopedCourseIds = isManager(user)
+        ? await this.getManagedCourseIds(user.id)
+        : await this.getInstructorCourseIds(user.id);
+      if (scopedCourseIds.length === 0) {
         return { data: [], total: 0, page, limit, totalPages: 0 };
       }
       conditions.push(
         sql`${assessments.courseId} IN (${sql.join(
-          instructorCourseIds.map((id) => sql`${id}`),
+          scopedCourseIds.map((id) => sql`${id}`),
           sql`, `,
         )})` as any,
       );
@@ -686,7 +694,7 @@ export class AssessmentsService {
       .orderBy(desc(submissions.submittedAt));
 
     // For TAs: strip scores/grades unless assessment is closed (results published)
-    if (user.roles.includes('TEACHING_ASSISTANT') && !this.isAdmin(user)) {
+    if (user.roles.includes('TEACHING_ASSISTANT') && !isGlobalAdmin(user)) {
       const gradesPublished = assessment.status === 'closed';
       return data.map((row) => ({
         ...row,
@@ -1345,6 +1353,16 @@ export class AssessmentsService {
     return instructorCourses.map((c) => c.id);
   }
 
+  private async getManagedCourseIds(
+    managerId: string,
+  ): Promise<string[]> {
+    const managedCourses = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(eq(courses.managerId, managerId));
+    return managedCourses.map((c) => c.id);
+  }
+
   /**
    * Verify the user can access the course.
    */
@@ -1352,10 +1370,8 @@ export class AssessmentsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id, instructorId: courses.instructorId })
@@ -1389,17 +1405,18 @@ export class AssessmentsService {
     }
 
     // Verify course access
-    if (!this.isAdmin(user)) {
-      // Check if user is the course instructor
+    if (!isGlobalAdmin(user)) {
+      const courseConditions: any[] = [eq(courses.id, assessment.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(eq(courses.managerId, user.id));
+      } else {
+        courseConditions.push(eq(courses.instructorId, user.id));
+      }
+
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.id, assessment.courseId),
-            eq(courses.instructorId, user.id),
-          ),
-        )
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {
@@ -1463,16 +1480,18 @@ export class AssessmentsService {
     }
 
     // Verify course access
-    if (!this.isAdmin(user)) {
+    if (!isGlobalAdmin(user)) {
+      const courseConditions: any[] = [eq(courses.id, question.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(eq(courses.managerId, user.id));
+      } else {
+        courseConditions.push(eq(courses.instructorId, user.id));
+      }
+
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.id, question.courseId),
-            eq(courses.instructorId, user.id),
-          ),
-        )
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {

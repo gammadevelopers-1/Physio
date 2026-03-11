@@ -162,7 +162,8 @@
       "Bash(/tmp/pdfgen/bin/pip install:*)",
       "Bash(/tmp/pdfgen/bin/python3 /tmp/generate_ta_edge_cases_pdf.py)",
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta -type f)",
-      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta/)"
+      "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta/)",
+      "Bash(git stash:*)"
     ]
   }
 }

@@ -40,6 +40,7 @@ export const NELC_EVENT_TYPE = {
   ATTENDANCE_ZOOM_JOIN: 'attendance_zoom_join',
   ATTENDANCE_ZOOM_LEAVE: 'attendance_zoom_leave',
   ENROLLMENT_CREATED: 'enrollment_created',
+  ENROLLMENT_DROPPED: 'enrollment_dropped',
   ENROLLMENT_LIMIT_ENFORCED: 'enrollment_limit_enforced',
   ASSISTANT_ALLOCATED: 'assistant_allocated',
   ASSISTANT_DEALLOCATED: 'assistant_deallocated',

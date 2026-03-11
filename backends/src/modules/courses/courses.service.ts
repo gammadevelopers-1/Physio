@@ -20,6 +20,7 @@ import {
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isManagerOrAbove } from '../../common/role-helpers';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
@@ -42,12 +43,23 @@ export class CoursesService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  /**
+   * Add ownership condition to a conditions array based on user role:
+   * - Global admin: no filter (sees all)
+   * - Manager: filter by courses.managerId
+   * - Instructor: filter by courses.instructorId
+   */
+  private addOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter — sees everything
+    } else if (isManager(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Course CRUD ────────────────────────────────────────────
@@ -59,14 +71,23 @@ export class CoursesService {
    */
   async create(user: AuthenticatedUser, dto: CreateCourseDto) {
     const instructorId =
-      this.isAdmin(user) && dto.instructorId
+      isManagerOrAbove(user) && dto.instructorId
         ? dto.instructorId
         : user.id;
+
+    // Auto-set managerId based on role
+    let managerId: string | null = null;
+    if (isManager(user)) {
+      managerId = user.id;
+    } else if (isGlobalAdmin(user) && dto.managerId) {
+      managerId = dto.managerId;
+    }
 
     const [course] = await db
       .insert(courses)
       .values({
         instructorId,
+        managerId,
         title: dto.title,
         titleAr: dto.titleAr,
         description: dto.description,
@@ -112,10 +133,8 @@ export class CoursesService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own courses only
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    // Scope by role: admin sees all, manager sees their courses, instructor sees own
+    this.addOwnershipCondition(conditions, user);
 
     if (
       params.status &&
@@ -458,9 +477,7 @@ export class CoursesService {
    */
   async findOne(courseId: string, user: AuthenticatedUser) {
     const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    this.addOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select()
@@ -495,7 +512,7 @@ export class CoursesService {
 
     // Instructors can only edit courses in draft or changes_requested status
     if (
-      !this.isAdmin(user) &&
+      !isManagerOrAbove(user) &&
       existing.status !== COURSE_STATUS.DRAFT &&
       existing.status !== COURSE_STATUS.CHANGES_REQUESTED
     ) {
@@ -529,14 +546,20 @@ export class CoursesService {
    * Delete a course — only draft courses, only MANAGER/ADMIN.
    */
   async remove(courseId: string, user: AuthenticatedUser) {
-    if (!this.isAdmin(user)) {
+    if (!isManagerOrAbove(user)) {
       throw new ForbiddenException('Only managers and admins can delete courses');
+    }
+
+    // Managers can only delete their own courses
+    const conditions = [eq(courses.id, courseId)];
+    if (isManager(user)) {
+      conditions.push(eq(courses.managerId, user.id));
     }
 
     const [existing] = await db
       .select({ id: courses.id, status: courses.status })
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(...conditions))
       .limit(1);
 
     if (!existing) {
@@ -566,6 +589,7 @@ export class CoursesService {
         status: courses.status,
         title: courses.title,
         instructorId: courses.instructorId,
+        managerId: courses.managerId,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -575,9 +599,13 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    // Verify the user is the course's instructor
-    if (course.instructorId !== user.id && !this.isAdmin(user)) {
+    // Verify the user has access to this course
+    if (course.instructorId !== user.id && !isManagerOrAbove(user)) {
       throw new ForbiddenException('You are not the instructor of this course');
+    }
+    // Managers must also own the course
+    if (isManager(user) && course.managerId !== user.id) {
+      throw new ForbiddenException('You do not manage this course');
     }
 
     if (
@@ -1225,9 +1253,7 @@ export class CoursesService {
     user: AuthenticatedUser,
   ) {
     const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    this.addOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id, status: courses.status })
@@ -1251,11 +1277,16 @@ export class CoursesService {
     newInstructorId: string,
     user: AuthenticatedUser,
   ) {
-    // Verify the course exists
+    // Verify the course exists and user has access
+    const conditions: any[] = [eq(courses.id, courseId)];
+    if (isManager(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    }
+
     const [course] = await db
       .select({ id: courses.id, title: courses.title, instructorId: courses.instructorId })
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(...conditions))
       .limit(1);
 
     if (!course) {

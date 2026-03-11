@@ -16,6 +16,7 @@ import {
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
@@ -43,12 +44,17 @@ export class EnrollmentsService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Enrollment Creation with NELC Limit Enforcement ──────
@@ -683,10 +689,8 @@ export class EnrollmentsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id })
@@ -710,8 +714,14 @@ export class EnrollmentsService {
     sessionId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(sessions.id, sessionId)];
-    if (!this.isAdmin(user)) {
+    const conditions: any[] = [eq(sessions.id, sessionId)];
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+      );
+    } else {
       conditions.push(eq(sessions.instructorId, user.id));
     }
 
@@ -752,17 +762,21 @@ export class EnrollmentsService {
       throw new NotFoundException('Attendance record not found');
     }
 
-    // Verify session access (instructor can only update their own sessions)
-    if (!this.isAdmin(user)) {
+    // Verify session access
+    if (!isGlobalAdmin(user)) {
+      const sessionConditions: any[] = [eq(sessions.id, record.sessionId)];
+      if (isManager(user)) {
+        sessionConditions.push(
+          sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+        );
+      } else {
+        sessionConditions.push(eq(sessions.instructorId, user.id));
+      }
+
       const [session] = await db
         .select({ id: sessions.id })
         .from(sessions)
-        .where(
-          and(
-            eq(sessions.id, record.sessionId),
-            eq(sessions.instructorId, user.id),
-          ),
-        )
+        .where(and(...sessionConditions))
         .limit(1);
 
       if (!session) {

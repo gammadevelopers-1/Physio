@@ -20,6 +20,7 @@ import {
   courseRatings,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -180,13 +181,12 @@ export class NelcComplianceService {
   async getComplianceSummary(
     user: AuthenticatedUser,
   ): Promise<ComplianceSummary> {
-    const isAdmin =
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER');
-
-    // Get courses
-    const conditions = isAdmin ? [] : [eq(courses.instructorId, user.id)];
+    // Get courses scoped by role
+    const conditions: any[] = isGlobalAdmin(user)
+      ? []
+      : isManager(user)
+        ? [eq(courses.managerId, user.id)]
+        : [eq(courses.instructorId, user.id)];
     const userCourses = await db
       .select({ id: courses.id })
       .from(courses)
@@ -229,12 +229,11 @@ export class NelcComplianceService {
       summary: { passed: number; review: number; failed: number; total: number };
     }>
   > {
-    const isAdmin =
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER');
-
-    const conditions = isAdmin ? [] : [eq(courses.instructorId, user.id)];
+    const conditions: any[] = isGlobalAdmin(user)
+      ? []
+      : isManager(user)
+        ? [eq(courses.managerId, user.id)]
+        : [eq(courses.instructorId, user.id)];
 
     const allCourses = await db
       .select({
@@ -1154,15 +1153,16 @@ export class NelcComplianceService {
       checks: ComplianceCheck[];
     }>
   > {
-    const isAdmin =
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER');
-
-    const conditions = [
+    const conditions: any[] = [
       sql`${sessions.type} IN ('zoom', 'hybrid')`,
     ];
-    if (!isAdmin) {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+      );
+    } else {
       conditions.push(eq(sessions.instructorId, user.id));
     }
 

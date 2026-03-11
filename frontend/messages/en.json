@@ -1715,7 +1715,15 @@
       "passed": "Passed",
       "failed": "Failed",
       "missed": "Missed",
-      "deadline": "Deadline"
+      "deadline": "Deadline",
+      "dropCourse": "Drop Course",
+      "dropConfirmTitle": "Drop This Course?",
+      "dropConfirmMessage": "Are you sure you want to drop this course? Your progress will be saved, but you will lose access to course materials. You can re-enroll later if seats are available.",
+      "confirmDrop": "Yes, Drop Course",
+      "dropping": "Dropping...",
+      "cancel": "Cancel",
+      "dropSuccess": "You have successfully dropped the course",
+      "dropError": "Failed to drop the course. Please try again."
     },
     "learning": {
       "courseContent": "Course Content",

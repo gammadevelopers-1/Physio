@@ -491,6 +491,7 @@ const CreateCourseContent = () => {
                               <AlertTriangle className="w-3 h-3" />
                               {t("createCourse.nelcCapacityWarning", {
                                 limit: nelcCapacityLimit,
+                                type: deliveryType,
                               })}
                             </p>
                           )}

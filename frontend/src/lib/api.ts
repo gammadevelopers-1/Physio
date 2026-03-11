@@ -2086,6 +2086,9 @@ export const studentApi = {
   selfEnroll: (courseId: string) =>
     api.post<EnrollmentResponse>(`/student/enroll/${courseId}`, {}),
 
+  dropCourse: (courseId: string) =>
+    api.delete<EnrollmentResponse>(`/student/courses/${courseId}/drop`),
+
   getCertificates: () =>
     api.get<StudentCertificate[]>('/student/certificates'),
 

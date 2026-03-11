@@ -47,8 +47,8 @@ export class InstructorController {
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get('roster')
-  async getInstructorRoster() {
-    return this.instructorService.getInstructorRoster();
+  async getInstructorRoster(@CurrentUser() user: AuthenticatedUser) {
+    return this.instructorService.getInstructorRoster(user);
   }
 
   /**
@@ -56,8 +56,8 @@ export class InstructorController {
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get('suggestions')
-  async suggestInstructor() {
-    return this.instructorService.suggestInstructor();
+  async suggestInstructor(@CurrentUser() user: AuthenticatedUser) {
+    return this.instructorService.suggestInstructor(user);
   }
 
   /**

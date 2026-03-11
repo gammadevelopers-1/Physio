@@ -21,6 +21,7 @@ export const courses = pgTable(
     instructorId: uuid('instructor_id')
       .notNull()
       .references(() => users.id),
+    managerId: uuid('manager_id').references(() => users.id),
     title: varchar('title', { length: 255 }).notNull(),
     titleAr: varchar('title_ar', { length: 255 }),
     description: text('description'),
@@ -42,8 +43,6 @@ export const courses = pgTable(
     atRiskInactivityDays: integer('at_risk_inactivity_days').default(7),
     // Cohort
     cohort: varchar('cohort', { length: 100 }),
-    // Manager assignment (for notification isolation — EC-26)
-    managerId: uuid('manager_id').references(() => users.id),
     // Review workflow
     reviewNote: varchar('review_note', { length: 1000 }),
     reviewedBy: uuid('reviewed_by').references(() => users.id),
@@ -54,8 +53,8 @@ export const courses = pgTable(
   },
   (table) => [
     index('courses_instructor_id_idx').on(table.instructorId),
-    index('courses_status_idx').on(table.status),
     index('courses_manager_id_idx').on(table.managerId),
+    index('courses_status_idx').on(table.status),
     check(
       'courses_delivery_type_check',
       sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended')`,

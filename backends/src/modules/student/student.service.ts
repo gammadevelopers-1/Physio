@@ -1165,6 +1165,58 @@ export class StudentService {
     return enrollment;
   }
 
+  // ─── Drop Course ──────────────────────────────────────
+
+  async dropCourse(studentId: string, courseId: string) {
+    // 1. Verify enrollment exists and is active
+    const [enrollment] = await db
+      .select({ id: enrollments.id, status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new NotFoundException('You are not enrolled in this course');
+    }
+
+    if (enrollment.status === 'dropped') {
+      throw new BadRequestException('You have already dropped this course');
+    }
+
+    if (enrollment.status === 'completed') {
+      throw new BadRequestException(
+        'Cannot drop a completed course',
+      );
+    }
+
+    // 2. Update status to dropped
+    const [updated] = await db
+      .update(enrollments)
+      .set({ status: 'dropped' })
+      .where(eq(enrollments.id, enrollment.id))
+      .returning();
+
+    // 3. Audit log
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.ENROLLMENT_DROPPED,
+      entityType: 'enrollment',
+      entityId: updated.id,
+      userId: studentId,
+      metadata: {
+        courseId,
+        studentId,
+        previousStatus: enrollment.status,
+      },
+    });
+
+    return updated;
+  }
+
   // ─── Assessment Taking ─────────────────────────────────
 
   async getAssessmentForStudent(studentId: string, assessmentId: string) {

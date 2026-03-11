@@ -21,6 +21,7 @@ import {
   SESSION_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isManagerOrAbove } from '../../common/role-helpers';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
@@ -48,12 +49,25 @@ export class SessionsService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  /**
+   * Add ownership condition for sessions based on user role:
+   * - Global admin: no filter
+   * - Manager: session must belong to a course they manage
+   * - Instructor: session must belong to them
+   */
+  private addSessionOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+      );
+    } else {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
   }
 
   // ─── Session CRUD ───────────────────────────────────────────
@@ -92,8 +106,13 @@ export class SessionsService {
       }
     }
 
-    if (this.isAdmin(user)) {
-      // Admin: verify course exists (any course)
+    if (isManagerOrAbove(user)) {
+      // Admin/Manager: verify course exists and user has access
+      const courseConditions: any[] = [eq(courses.id, dto.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(eq(courses.managerId, user.id));
+      }
+
       const [course] = await db
         .select({
           id: courses.id,
@@ -102,7 +121,7 @@ export class SessionsService {
           endDate: courses.endDate,
         })
         .from(courses)
-        .where(eq(courses.id, dto.courseId))
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {
@@ -303,10 +322,8 @@ export class SessionsService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own sessions only
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    // Scope by role
+    this.addSessionOwnershipCondition(conditions, user);
 
     // dateRange filter — format: "YYYY-MM-DD,YYYY-MM-DD"
     if (params.dateRange) {
@@ -424,9 +441,7 @@ export class SessionsService {
       sql`DATE(${sessions.scheduledAt}) = CURRENT_DATE` as any,
     ];
 
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const data = await db
       .select()
@@ -447,9 +462,7 @@ export class SessionsService {
       sql`${sessions.scheduledAt} > NOW()` as any,
     ];
 
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const data = await db
       .select()
@@ -467,9 +480,7 @@ export class SessionsService {
    */
   async findOne(sessionId: string, user: AuthenticatedUser) {
     const conditions = [eq(sessions.id, sessionId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const [session] = await db
       .select()
@@ -1232,9 +1243,7 @@ export class SessionsService {
     user: AuthenticatedUser,
   ) {
     const conditions = [eq(sessions.id, sessionId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const [session] = await db
       .select()

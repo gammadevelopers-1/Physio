@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   Heart,
   Clock,
@@ -13,7 +14,9 @@ import {
   Award,
   UserCheck,
   Upload,
+  XCircle,
 } from "lucide-react";
+import { studentApi } from "@/lib/api";
 import DashboardSidebar from "./DashboardSidebar";
 import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
@@ -89,6 +92,8 @@ const MyCoursesContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
+  const [dropCourseId, setDropCourseId] = useState<string | null>(null);
+  const [dropping, setDropping] = useState(false);
   const { isFavourite, toggleFavourite } = useFavourites();
   const userData = useStudentProfile();
 
@@ -135,6 +140,21 @@ const MyCoursesContent = () => {
         );
       default:
         return null;
+    }
+  };
+
+  const handleDropCourse = async () => {
+    if (!dropCourseId) return;
+    setDropping(true);
+    try {
+      await studentApi.dropCourse(dropCourseId);
+      toast.success(t("courseDetail.dropSuccess"));
+      refetch();
+    } catch {
+      toast.error(t("courseDetail.dropError"));
+    } finally {
+      setDropping(false);
+      setDropCourseId(null);
     }
   };
 
@@ -424,6 +444,15 @@ const MyCoursesContent = () => {
                                   {t("myCourses.viewCertificate")}
                                 </Link>
                               )}
+                              {course.enrollmentStatus === "active" && (
+                                <button
+                                  onClick={() => setDropCourseId(course.id)}
+                                  className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-red-300 text-red-600 hover:bg-red-50 cursor-pointer"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  {t("courseDetail.dropCourse")}
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -436,6 +465,43 @@ const MyCoursesContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Drop Course Confirmation Modal */}
+      {dropCourseId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("courseDetail.dropConfirmTitle")}
+                </h3>
+              </div>
+              <p className="text-sm text-[#6B7280] mb-6">
+                {t("courseDetail.dropConfirmMessage")}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setDropCourseId(null)}
+                  disabled={dropping}
+                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                >
+                  {t("courseDetail.cancel")}
+                </button>
+                <button
+                  onClick={handleDropCourse}
+                  disabled={dropping}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {dropping ? t("courseDetail.dropping") : t("courseDetail.confirmDrop")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -114,6 +115,20 @@ export class StudentController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.studentService.selfEnroll(user.id, courseId, user);
+  }
+
+  // ─── Drop Course ─────────────────────────────────────────
+
+  /**
+   * DELETE /student/courses/:id/drop — Student drops a course
+   */
+  @Delete('courses/:id/drop')
+  @HttpCode(HttpStatus.OK)
+  async dropCourse(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.studentService.dropCourse(user.id, courseId);
   }
 
   // ─── Module Materials ──────────────────────────────────

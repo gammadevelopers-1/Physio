@@ -918,6 +918,7 @@ export class CoursesService {
         status: courses.status,
         title: courses.title,
         instructorId: courses.instructorId,
+        managerId: courses.managerId,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -975,6 +976,8 @@ export class CoursesService {
         reviewedBy: user.id,
         reviewedAt: new Date(),
         reviewNote: null,
+        // EC-26: Set managerId if not already set (manager who activates becomes the course manager)
+        ...(course.managerId ? {} : { managerId: user.id }),
         updatedAt: new Date(),
       })
       .where(eq(courses.id, courseId))

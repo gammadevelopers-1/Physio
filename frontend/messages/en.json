@@ -1900,6 +1900,7 @@
         "onsite": "On-site",
         "blended": "Blended"
       },
+      "student": "student",
       "students": "students",
       "sessions": "sessions",
       "completion": "Completion",
@@ -4129,6 +4130,25 @@
         "connect": "Connect",
         "disconnect": "Disconnect"
       }
+    },
+    "taManagement": {
+      "title": "Teaching Assistants",
+      "preAssigned": "Pre-assigned",
+      "waitingActivation": "Waiting for activation",
+      "activatesAt": "Activates at {count} students",
+      "activeTA": "Active",
+      "deficit": "{required} TA(s) required, {active} active",
+      "noDeficit": "TA requirements met",
+      "priority": "Priority",
+      "movePriorityUp": "Move priority up",
+      "movePriorityDown": "Move priority down",
+      "workloadWarning": "{name} is currently active in {count} course(s)",
+      "assignTA": "Assign TA",
+      "replaceTA": "Replace TA",
+      "deactivationPending": "Deactivation scheduled (24h grace)",
+      "thresholdInfo": "{enrolled} enrolled, {required} TA(s) required",
+      "assignSuccess": "TA assigned successfully",
+      "assignError": "Failed to assign TA"
     }
   },
   "adminDashboard": {

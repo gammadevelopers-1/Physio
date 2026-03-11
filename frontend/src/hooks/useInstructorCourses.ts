@@ -93,6 +93,23 @@ export function useInstructorCourses(
     fetchCourses();
   }, [fetchCourses]);
 
+  // Refetch when tab becomes visible (e.g. after enrolling students in another tab)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchCourses();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [fetchCourses]);
+
+  // Poll every 60s to keep data fresh
+  useEffect(() => {
+    const interval = setInterval(fetchCourses, 60_000);
+    return () => clearInterval(interval);
+  }, [fetchCourses]);
+
   return {
     courses,
     total,

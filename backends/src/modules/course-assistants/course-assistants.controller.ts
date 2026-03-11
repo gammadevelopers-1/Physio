@@ -105,4 +105,30 @@ export class CourseAssistantsController {
   ) {
     return this.courseAssistantsService.removeTA(courseId, userId);
   }
+
+  /**
+   * PATCH /courses/:courseId/assistants/:userId/priority — Update TA priority
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':userId/priority')
+  async updatePriority(
+    @Param('courseId') courseId: string,
+    @Param('userId') userId: string,
+    @Body() body: { priority: number },
+  ) {
+    return this.courseAssistantsService.updatePriority(
+      courseId,
+      userId,
+      body.priority,
+    );
+  }
+
+  /**
+   * GET /courses/:courseId/assistants/threshold-status — Get threshold status
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('threshold-status')
+  async getThresholdStatus(@Param('courseId') courseId: string) {
+    return this.courseAssistantsService.getThresholdStatus(courseId);
+  }
 }

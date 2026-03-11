@@ -6,6 +6,7 @@ import {
   uniqueIndex,
   index,
   check,
+  integer,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { courses } from './courses';
@@ -22,10 +23,13 @@ export const courseAssistants = pgTable(
       .notNull()
       .references(() => users.id),
     status: varchar('status', { length: 20 }).notNull().default('approved'),
+    priority: integer('priority').notNull().default(1),
     suggestedBy: uuid('suggested_by').references(() => users.id),
     approvedBy: uuid('approved_by').references(() => users.id),
+    assignedBy: uuid('assigned_by').references(() => users.id),
     assignedAt: timestamp('assigned_at').defaultNow().notNull(),
     approvedAt: timestamp('approved_at'),
+    deactivationScheduledAt: timestamp('deactivation_scheduled_at'),
   },
   (table) => [
     uniqueIndex('course_assistants_course_user_unique').on(
@@ -36,7 +40,7 @@ export const courseAssistants = pgTable(
     index('course_assistants_user_id_idx').on(table.userId),
     check(
       'course_assistants_status_check',
-      sql`${table.status} IN ('suggested', 'approved', 'rejected')`,
+      sql`${table.status} IN ('suggested', 'pre_assigned', 'approved', 'rejected')`,
     ),
   ],
 );
@@ -58,6 +62,10 @@ export const courseAssistantsRelations = relations(
     }),
     approver: one(users, {
       fields: [courseAssistants.approvedBy],
+      references: [users.id],
+    }),
+    assigner: one(users, {
+      fields: [courseAssistants.assignedBy],
       references: [users.id],
     }),
   }),

@@ -2237,19 +2237,35 @@ export const publicApi = {
 // ===========================================
 // Course Assistants API (Course-level TA management)
 // ===========================================
+export interface CourseAssistantTA {
+  id: string;
+  courseId: string;
+  userId: string;
+  status: 'suggested' | 'pre_assigned' | 'approved' | 'rejected';
+  priority: number;
+  assignedAt: string;
+  approvedAt: string | null;
+  deactivationScheduledAt: string | null;
+  assignedBy: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  otherCourseCount: number;
+}
+
+export interface ThresholdStatus {
+  enrolledCount: number;
+  requiredTAs: number;
+  activeTAs: number;
+  preAssignedTAs: number;
+  suggestedTAs: number;
+  deficit: number;
+  thresholds: { low: number; mid: number };
+}
+
 export const courseAssistantsApi = {
   getCourseTAs: (courseId: string) =>
-    api.get<Array<{
-      id: string;
-      courseId: string;
-      userId: string;
-      status: 'suggested' | 'approved' | 'rejected';
-      assignedAt: string;
-      approvedAt: string | null;
-      firstName: string | null;
-      lastName: string | null;
-      email: string;
-    }>>(`/courses/${courseId}/assistants`),
+    api.get<CourseAssistantTA[]>(`/courses/${courseId}/assistants`),
 
   assignTA: (courseId: string, data: { userId: string }) =>
     api.post<{ id: string; courseId: string; userId: string; status: string }>(
@@ -2275,6 +2291,15 @@ export const courseAssistantsApi = {
 
   removeTA: (courseId: string, userId: string) =>
     api.delete<{ message: string }>(`/courses/${courseId}/assistants/${userId}`),
+
+  updatePriority: (courseId: string, userId: string, priority: number) =>
+    api.patch<{ id: string; priority: number }>(
+      `/courses/${courseId}/assistants/${userId}/priority`,
+      { priority },
+    ),
+
+  getThresholdStatus: (courseId: string) =>
+    api.get<ThresholdStatus>(`/courses/${courseId}/assistants/threshold-status`),
 };
 
 // ===========================================

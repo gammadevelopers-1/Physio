@@ -10,12 +10,15 @@ interface CourseTA {
   id: string;
   courseId: string;
   userId: string;
-  status: "suggested" | "approved" | "rejected";
+  status: "suggested" | "pre_assigned" | "approved" | "rejected";
+  priority: number;
   assignedAt: string;
   approvedAt: string | null;
+  deactivationScheduledAt: string | null;
   firstName: string | null;
   lastName: string | null;
   email: string;
+  otherCourseCount: number;
 }
 
 interface AvailableTA {
@@ -86,6 +89,8 @@ const CourseAssistantsSuggestPanel = ({
     switch (status) {
       case "approved":
         return "bg-green-50 text-green-700 border-green-200";
+      case "pre_assigned":
+        return "bg-amber-50 text-amber-700 border-amber-200";
       case "suggested":
         return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "rejected":
@@ -98,7 +103,9 @@ const CourseAssistantsSuggestPanel = ({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "approved":
-        return "Approved";
+        return "Active";
+      case "pre_assigned":
+        return "Pre-assigned (Waiting)";
       case "suggested":
         return "Pending Approval";
       case "rejected":

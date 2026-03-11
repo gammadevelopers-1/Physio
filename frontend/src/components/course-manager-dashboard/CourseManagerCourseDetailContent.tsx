@@ -16,6 +16,7 @@ import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
+import CourseAssistantsManagePanel from "./CourseAssistantsManagePanel";
 import {
   ArrowLeft,
   ArrowRight,
@@ -577,6 +578,13 @@ const CourseManagerCourseDetailContent = ({
                 {(course.status === "pending_review" || course.status === "active" || course.status === "changes_requested") && (
                   <div className="mb-6">
                     <NELCScorecardPanel courseId={course.id} />
+                  </div>
+                )}
+
+                {/* Teaching Assistants Management */}
+                {(course.status === "active" || course.status === "pending_review") && (
+                  <div className="mb-6">
+                    <CourseAssistantsManagePanel courseId={course.id} />
                   </div>
                 )}
 

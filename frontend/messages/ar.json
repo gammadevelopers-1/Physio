@@ -2112,7 +2112,8 @@
         "onsite": "حضوري",
         "blended": "مختلط"
       },
-      "students": "طالب",
+      "student": "طالب",
+      "students": "طلاب",
       "sessions": "جلسات",
       "completion": "الإكمال",
       "nextSession": "الجلسة القادمة",
@@ -4338,6 +4339,25 @@
         "connect": "ربط",
         "disconnect": "قطع الاتصال"
       }
+    },
+    "taManagement": {
+      "title": "مساعدو التدريس",
+      "preAssigned": "معين مسبقاً",
+      "waitingActivation": "في انتظار التفعيل",
+      "activatesAt": "يُفعّل عند {count} طالب",
+      "activeTA": "نشط",
+      "deficit": "مطلوب {required} مساعد(ين)، {active} نشط",
+      "noDeficit": "متطلبات المساعدين مستوفاة",
+      "priority": "الأولوية",
+      "movePriorityUp": "رفع الأولوية",
+      "movePriorityDown": "خفض الأولوية",
+      "workloadWarning": "{name} نشط حالياً في {count} مقرر(ات)",
+      "assignTA": "تعيين مساعد",
+      "replaceTA": "استبدال مساعد",
+      "deactivationPending": "إلغاء التفعيل مجدول (فترة سماح 24 ساعة)",
+      "thresholdInfo": "{enrolled} مسجل، مطلوب {required} مساعد(ين)",
+      "assignSuccess": "تم تعيين المساعد بنجاح",
+      "assignError": "فشل تعيين المساعد"
     }
   },
   "adminDashboard": {

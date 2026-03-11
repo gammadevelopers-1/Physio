@@ -21,6 +21,7 @@ import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
 import {
@@ -35,6 +36,7 @@ export class EnrollmentsService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly assistantsService: SessionAssistantsService,
+    private readonly thresholdEvaluationService: ThresholdEvaluationService,
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
   ) {}
@@ -660,6 +662,9 @@ export class EnrollmentsService {
           `TA re-allocation triggered for ${upcomingSessions.length} sessions in course ${courseId}`,
         );
       }
+
+      // Threshold-based pre-assignment activation/deactivation (EC-3, EC-4, EC-5, EC-18)
+      await this.thresholdEvaluationService.evaluateAndAct(courseId);
     } catch (error) {
       this.logger.warn(
         `TA re-allocation failed for course ${courseId}: ${(error as Error).message}`,

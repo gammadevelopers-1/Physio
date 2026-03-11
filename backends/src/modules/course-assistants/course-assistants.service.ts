@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, count, sql, max } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courseAssistants,
@@ -14,12 +14,14 @@ import {
   users,
   userRoles,
   roles,
+  enrollments,
   ROLE_NAMES,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { ThresholdEvaluationService } from './threshold-evaluation.service';
 
 @Injectable()
 export class CourseAssistantsService {
@@ -29,6 +31,7 @@ export class CourseAssistantsService {
     private readonly auditService: NelcAuditService,
     private readonly emailService: EmailService,
     private readonly notificationsService: UserNotificationsService,
+    private readonly thresholdService: ThresholdEvaluationService,
   ) {}
 
   /**
@@ -63,6 +66,7 @@ export class CourseAssistantsService {
         id: courses.id,
         title: courses.title,
         instructorId: courses.instructorId,
+        managerId: courses.managerId,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -92,7 +96,17 @@ export class CourseAssistantsService {
   }
 
   /**
-   * Get all user IDs with MANAGER role (for notifications).
+   * Get notification recipients for a course (EC-26 — Manager Isolation).
+   * Uses the course's managerId if set, otherwise falls back to all managers.
+   */
+  private async getNotificationRecipients(
+    courseId: string,
+  ): Promise<string[]> {
+    return this.thresholdService.getNotificationRecipients(courseId);
+  }
+
+  /**
+   * Get all user IDs with MANAGER role (legacy fallback).
    */
   private async getManagerIds(): Promise<string[]> {
     const managers = await db
@@ -110,8 +124,36 @@ export class CourseAssistantsService {
   }
 
   /**
-   * Manager/Admin directly assigns a TA to a course (status = 'approved').
-   * Auto-propagates to all existing sessions.
+   * Get the current active enrollment count for a course.
+   */
+  private async getEnrollmentCount(courseId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+    return Number(result?.count || 0);
+  }
+
+  /**
+   * Get the next priority number for a course.
+   */
+  private async getNextPriority(courseId: string): Promise<number> {
+    const [result] = await db
+      .select({ maxPriority: max(courseAssistants.priority) })
+      .from(courseAssistants)
+      .where(eq(courseAssistants.courseId, courseId));
+    return (Number(result?.maxPriority) || 0) + 1;
+  }
+
+  /**
+   * Manager/Admin directly assigns a TA to a course.
+   * EC-1, EC-2: Pre-assigns if below threshold, activates if above.
+   * Priority auto-increments.
    */
   async assignTA(courseId: string, userId: string, assignedBy: string) {
     const course = await this.getCourse(courseId);
@@ -135,48 +177,126 @@ export class CourseAssistantsService {
       );
     }
 
+    // Calculate threshold-based status (EC-1, EC-2)
+    const enrolledCount = await this.getEnrollmentCount(courseId);
+    const requiredTAs = this.thresholdService.calculateRequiredTAs(enrolledCount);
+    const priority = await this.getNextPriority(courseId);
+
+    // Count currently approved TAs
+    const [activeResult] = await db
+      .select({ count: count() })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.courseId, courseId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+    const currentActive = Number(activeResult?.count || 0);
+
+    // Determine if this TA should be immediately activated or pre-assigned
+    const shouldActivate = currentActive < requiredTAs;
+    const status = shouldActivate ? 'approved' : 'pre_assigned';
+
     const [assignment] = await db
       .insert(courseAssistants)
       .values({
         courseId,
         userId,
-        status: 'approved',
-        approvedBy: assignedBy,
-        approvedAt: new Date(),
+        status,
+        priority,
+        approvedBy: shouldActivate ? assignedBy : null,
+        approvedAt: shouldActivate ? new Date() : null,
+        assignedBy,
       })
       .returning();
 
-    // Propagate to all existing sessions
-    await this.propagateToAllSessions(courseId, userId, assignedBy);
+    if (shouldActivate) {
+      // Propagate to all existing sessions
+      await this.propagateToAllSessions(courseId, userId, assignedBy);
 
-    // Audit log
-    await this.auditService.log({
-      eventType: NELC_EVENT_TYPE.ASSISTANT_ALLOCATED,
-      entityType: 'course',
-      entityId: courseId,
-      userId,
-      metadata: {
-        assistantId: userId,
-        courseId,
-        reason: 'manual',
-        assignedBy,
-      },
-    });
-
-    // Email TA
-    await this.sendAssignmentEmail(userId, course);
-
-    // Notify course instructor in-app
-    const taUser = await this.getUser(userId);
-    if (course.instructorId) {
-      await this.notificationsService.create({
-        recipientId: course.instructorId,
-        type: 'ta_assigned',
-        title: 'Teaching Assistant Assigned',
-        message: `TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} has been assigned to your course "${course.title}"`,
-        link: `/dashboard/instructor/courses/${courseId}`,
+      // Audit log
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ASSISTANT_ALLOCATED,
         entityType: 'course',
         entityId: courseId,
+        userId,
+        metadata: {
+          assistantId: userId,
+          courseId,
+          reason: 'manual',
+          assignedBy,
+        },
+      });
+
+      // Email TA (activation)
+      await this.sendAssignmentEmail(userId, course);
+
+      // Notify course instructor
+      const taUser = await this.getUser(userId);
+      if (course.instructorId) {
+        await this.notificationsService.create({
+          recipientId: course.instructorId,
+          type: 'ta_assigned',
+          title: 'Teaching Assistant Assigned',
+          message: `TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} has been assigned to your course "${course.title}"`,
+          link: `/dashboard/instructor/courses/${courseId}`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+    } else {
+      // Pre-assigned — send pre-assignment email and notification (EC-1)
+      const taUser = await this.getUser(userId);
+
+      // Email TA about pre-assignment
+      if (taUser) {
+        await this.emailService.sendGenericNotification(taUser.email, {
+          recipientName: `${taUser.firstName} ${taUser.lastName}`,
+          subject: `Pre-assigned to ${course.title}`,
+          message: `You have been pre-assigned as a Teaching Assistant for "${course.title}". You will be automatically activated when the enrollment reaches the required threshold. No action is needed from you at this time.`,
+        });
+      }
+
+      // Notify TA in-app
+      if (taUser) {
+        await this.notificationsService.create({
+          recipientId: userId,
+          type: 'ta_pre_assigned',
+          title: 'Pre-assigned to Course',
+          message: `You have been pre-assigned as a TA for "${course.title}". You will be activated when enrollment reaches the threshold.`,
+          link: `/dashboard/ta`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+
+      // Notify instructor
+      if (course.instructorId) {
+        await this.notificationsService.create({
+          recipientId: course.instructorId,
+          type: 'ta_pre_assigned',
+          title: 'Teaching Assistant Pre-assigned',
+          message: `TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} has been pre-assigned to "${course.title}" (will activate at threshold)`,
+          link: `/dashboard/instructor/courses/${courseId}`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+
+      // Audit log
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ASSISTANT_ALLOCATED,
+        entityType: 'course',
+        entityId: courseId,
+        userId,
+        metadata: {
+          assistantId: userId,
+          courseId,
+          reason: 'pre_assigned',
+          assignedBy,
+          priority,
+        },
       });
     }
 
@@ -184,7 +304,9 @@ export class CourseAssistantsService {
   }
 
   /**
-   * Instructor suggests a TA (status = 'suggested'). Managers get notified.
+   * Instructor suggests a TA (status = 'suggested'). Course manager gets notified.
+   * EC-10: Includes other course count in notification.
+   * EC-26: Notification routed to course's manager.
    */
   async suggestTA(courseId: string, userId: string, suggestedBy: string) {
     const course = await this.getCourse(courseId);
@@ -218,16 +340,34 @@ export class CourseAssistantsService {
       })
       .returning();
 
-    // Notify all managers
-    const managerIds = await this.getManagerIds();
+    // EC-10: Count how many other courses this TA is assigned to
+    const [otherCoursesResult] = await db
+      .select({ count: count() })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.userId, userId),
+          sql`${courseAssistants.courseId} != ${courseId}`,
+          sql`${courseAssistants.status} IN ('approved', 'pre_assigned')`,
+        ),
+      );
+    const otherCourseCount = Number(otherCoursesResult?.count || 0);
+
+    // Notify course manager (EC-26 — manager isolation)
+    const recipientIds = await this.getNotificationRecipients(courseId);
     const suggester = await this.getUser(suggestedBy);
     const taUser = await this.getUser(userId);
 
-    if (managerIds.length > 0) {
-      await this.notificationsService.createBulk(managerIds, {
+    const workloadNote =
+      otherCourseCount > 0
+        ? ` (Note: This TA is currently assigned to ${otherCourseCount} other course(s))`
+        : '';
+
+    if (recipientIds.length > 0) {
+      await this.notificationsService.createBulk(recipientIds, {
         type: 'ta_suggestion',
         title: 'TA Suggestion',
-        message: `${suggester?.firstName || 'Instructor'} ${suggester?.lastName || ''} suggested TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} for Course "${course.title}"`,
+        message: `${suggester?.firstName || 'Instructor'} ${suggester?.lastName || ''} suggested TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} for Course "${course.title}"${workloadNote}`,
         link: `/dashboard/manager/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
@@ -238,7 +378,8 @@ export class CourseAssistantsService {
   }
 
   /**
-   * Manager/Admin approves a suggestion. Propagates to sessions, emails TA.
+   * Manager/Admin approves a suggestion.
+   * EC-24: Checks enrollment threshold — goes to pre_assigned or approved.
    */
   async approveTA(courseId: string, userId: string, approvedBy: string) {
     const course = await this.getCourse(courseId);
@@ -266,48 +407,96 @@ export class CourseAssistantsService {
       throw new BadRequestException('TA is already approved');
     }
 
+    // EC-24: Check enrollment threshold to decide status
+    const enrolledCount = await this.getEnrollmentCount(courseId);
+    const requiredTAs = this.thresholdService.calculateRequiredTAs(enrolledCount);
+    const priority = await this.getNextPriority(courseId);
+
+    // Count currently approved TAs
+    const [activeResult] = await db
+      .select({ count: count() })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.courseId, courseId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+    const currentActive = Number(activeResult?.count || 0);
+
+    const shouldActivate = currentActive < requiredTAs;
+    const newStatus = shouldActivate ? 'approved' : 'pre_assigned';
+
     const [updated] = await db
       .update(courseAssistants)
       .set({
-        status: 'approved',
-        approvedBy,
-        approvedAt: new Date(),
+        status: newStatus,
+        priority,
+        approvedBy: shouldActivate ? approvedBy : null,
+        approvedAt: shouldActivate ? new Date() : null,
+        assignedBy: approvedBy,
       })
       .where(eq(courseAssistants.id, existing.id))
       .returning();
 
-    // Propagate to all sessions
-    await this.propagateToAllSessions(courseId, userId, approvedBy);
+    if (shouldActivate) {
+      // Propagate to all sessions
+      await this.propagateToAllSessions(courseId, userId, approvedBy);
 
-    // Audit log
-    await this.auditService.log({
-      eventType: NELC_EVENT_TYPE.ASSISTANT_ALLOCATED,
-      entityType: 'course',
-      entityId: courseId,
-      userId,
-      metadata: {
-        assistantId: userId,
-        courseId,
-        reason: 'approved_suggestion',
-        approvedBy,
-      },
-    });
-
-    // Email TA
-    await this.sendAssignmentEmail(userId, course);
-
-    // Notify the suggesting instructor
-    if (existing.suggestedBy) {
-      const taUser = await this.getUser(userId);
-      await this.notificationsService.create({
-        recipientId: existing.suggestedBy,
-        type: 'ta_suggestion_approved',
-        title: 'TA Suggestion Approved',
-        message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was approved`,
-        link: `/dashboard/instructor/courses/${courseId}`,
+      // Audit log
+      await this.auditService.log({
+        eventType: NELC_EVENT_TYPE.ASSISTANT_ALLOCATED,
         entityType: 'course',
         entityId: courseId,
+        userId,
+        metadata: {
+          assistantId: userId,
+          courseId,
+          reason: 'approved_suggestion',
+          approvedBy,
+        },
       });
+
+      // Email TA
+      await this.sendAssignmentEmail(userId, course);
+
+      // Notify the suggesting instructor
+      if (existing.suggestedBy) {
+        const taUser = await this.getUser(userId);
+        await this.notificationsService.create({
+          recipientId: existing.suggestedBy,
+          type: 'ta_suggestion_approved',
+          title: 'TA Suggestion Approved',
+          message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was approved and activated`,
+          link: `/dashboard/instructor/courses/${courseId}`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+    } else {
+      // Pre-assigned — notify instructor
+      const taUser = await this.getUser(userId);
+
+      if (existing.suggestedBy) {
+        await this.notificationsService.create({
+          recipientId: existing.suggestedBy,
+          type: 'ta_suggestion_approved',
+          title: 'TA Suggestion Approved (Pre-assigned)',
+          message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was approved and pre-assigned (will activate at enrollment threshold)`,
+          link: `/dashboard/instructor/courses/${courseId}`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+
+      // Email TA about pre-assignment
+      if (taUser) {
+        await this.emailService.sendGenericNotification(taUser.email, {
+          recipientName: `${taUser.firstName} ${taUser.lastName}`,
+          subject: `Pre-assigned to ${course.title}`,
+          message: `Your TA suggestion for "${course.title}" has been approved. You have been pre-assigned and will be automatically activated when enrollment reaches the required threshold.`,
+        });
+      }
     }
 
     return updated;
@@ -363,21 +552,34 @@ export class CourseAssistantsService {
 
   /**
    * Remove a TA from a course + all its session assignments.
+   * EC-12: Re-number priorities for remaining TAs after removal.
    */
   async removeTA(courseId: string, userId: string) {
-    const [deleted] = await db
-      .delete(courseAssistants)
+    // Get priority before deletion for re-numbering
+    const [existing] = await db
+      .select({
+        id: courseAssistants.id,
+        priority: courseAssistants.priority,
+      })
+      .from(courseAssistants)
       .where(
         and(
           eq(courseAssistants.courseId, courseId),
           eq(courseAssistants.userId, userId),
         ),
       )
-      .returning();
+      .limit(1);
 
-    if (!deleted) {
+    if (!existing) {
       throw new NotFoundException('Course assistant not found');
     }
+
+    const removedPriority = existing.priority;
+
+    const [deleted] = await db
+      .delete(courseAssistants)
+      .where(eq(courseAssistants.id, existing.id))
+      .returning();
 
     // Remove from all sessions of this course
     const courseSessions = await db
@@ -397,6 +599,15 @@ export class CourseAssistantsService {
         );
     }
 
+    // EC-12: Re-number priorities for remaining TAs
+    await db.execute(sql`
+      UPDATE course_assistants
+      SET priority = priority - 1
+      WHERE course_id = ${courseId}
+        AND priority > ${removedPriority}
+        AND status IN ('pre_assigned', 'approved')
+    `);
+
     // Audit log
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.ASSISTANT_DEALLOCATED,
@@ -406,11 +617,14 @@ export class CourseAssistantsService {
       metadata: { assistantId: userId, courseId },
     });
 
+    // After removal, re-evaluate thresholds (may need to activate a pre-assigned TA)
+    await this.thresholdService.evaluateAndAct(courseId);
+
     return { message: 'Teaching assistant removed from course and all sessions' };
   }
 
   /**
-   * Get all TAs for a course with user info and status.
+   * Get all TAs for a course with user info, status, priority, and other course count (EC-9).
    */
   async getCourseTAs(courseId: string) {
     const data = await db
@@ -419,8 +633,11 @@ export class CourseAssistantsService {
         courseId: courseAssistants.courseId,
         userId: courseAssistants.userId,
         status: courseAssistants.status,
+        priority: courseAssistants.priority,
         assignedAt: courseAssistants.assignedAt,
         approvedAt: courseAssistants.approvedAt,
+        deactivationScheduledAt: courseAssistants.deactivationScheduledAt,
+        assignedBy: courseAssistants.assignedBy,
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
@@ -429,7 +646,125 @@ export class CourseAssistantsService {
       .innerJoin(users, eq(courseAssistants.userId, users.id))
       .where(eq(courseAssistants.courseId, courseId));
 
-    return data;
+    // EC-9: Add other course count for each TA
+    const enriched = await Promise.all(
+      data.map(async (ta) => {
+        const [otherResult] = await db
+          .select({ count: count() })
+          .from(courseAssistants)
+          .where(
+            and(
+              eq(courseAssistants.userId, ta.userId),
+              sql`${courseAssistants.courseId} != ${courseId}`,
+              sql`${courseAssistants.status} IN ('approved', 'pre_assigned')`,
+            ),
+          );
+        return {
+          ...ta,
+          otherCourseCount: Number(otherResult?.count || 0),
+        };
+      }),
+    );
+
+    return enriched;
+  }
+
+  /**
+   * Update TA priority (for drag-and-drop reordering).
+   */
+  async updatePriority(
+    courseId: string,
+    userId: string,
+    newPriority: number,
+  ) {
+    const [existing] = await db
+      .select({
+        id: courseAssistants.id,
+        priority: courseAssistants.priority,
+      })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.courseId, courseId),
+          eq(courseAssistants.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!existing) {
+      throw new NotFoundException('Course assistant not found');
+    }
+
+    const oldPriority = existing.priority;
+
+    if (oldPriority === newPriority) return existing;
+
+    // Shift other priorities
+    if (newPriority < oldPriority) {
+      // Moving up: shift others down
+      await db.execute(sql`
+        UPDATE course_assistants
+        SET priority = priority + 1
+        WHERE course_id = ${courseId}
+          AND priority >= ${newPriority}
+          AND priority < ${oldPriority}
+          AND status IN ('pre_assigned', 'approved')
+      `);
+    } else {
+      // Moving down: shift others up
+      await db.execute(sql`
+        UPDATE course_assistants
+        SET priority = priority - 1
+        WHERE course_id = ${courseId}
+          AND priority > ${oldPriority}
+          AND priority <= ${newPriority}
+          AND status IN ('pre_assigned', 'approved')
+      `);
+    }
+
+    const [updated] = await db
+      .update(courseAssistants)
+      .set({ priority: newPriority })
+      .where(eq(courseAssistants.id, existing.id))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Get threshold status for a course (for UI display).
+   */
+  async getThresholdStatus(courseId: string) {
+    const enrolledCount = await this.getEnrollmentCount(courseId);
+    const requiredTAs = this.thresholdService.calculateRequiredTAs(enrolledCount);
+
+    const allAssistants = await db
+      .select({
+        status: courseAssistants.status,
+      })
+      .from(courseAssistants)
+      .where(eq(courseAssistants.courseId, courseId));
+
+    const activeTAs = allAssistants.filter((a) => a.status === 'approved').length;
+    const preAssignedTAs = allAssistants.filter(
+      (a) => a.status === 'pre_assigned',
+    ).length;
+    const suggestedTAs = allAssistants.filter(
+      (a) => a.status === 'suggested',
+    ).length;
+
+    return {
+      enrolledCount,
+      requiredTAs,
+      activeTAs,
+      preAssignedTAs,
+      suggestedTAs,
+      deficit: Math.max(0, requiredTAs - activeTAs),
+      thresholds: {
+        low: 1, // Testing values
+        mid: 3,
+      },
+    };
   }
 
   /**
@@ -519,7 +854,7 @@ export class CourseAssistantsService {
       if (taUser && instructor) {
         await this.emailService.sendTaAssignment(taUser.email, {
           recipientName: `${taUser.firstName} ${taUser.lastName}`,
-          sessionTitle: `All sessions — ${course.title}`,
+          sessionTitle: `All sessions - ${course.title}`,
           courseName: course.title,
           scheduledAt: new Date().toISOString(),
           durationMinutes: 0,

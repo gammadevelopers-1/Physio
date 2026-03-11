@@ -17,6 +17,7 @@ import {
   sessionMaterials,
   courseMaterials,
   sessionAssistants,
+  assessments,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
@@ -275,6 +276,17 @@ export class SessionsService {
       if (endStr) conditions.push(lte(sessions.scheduledAt, new Date(endStr)));
     }
 
+    const assessmentIdSubquery = db
+      .select({ id: assessments.id })
+      .from(assessments)
+      .where(
+        and(
+          sql`${assessments.courseId} = ${sessions.courseId}`,
+          sql`${assessments.status} != 'draft'`,
+        ),
+      )
+      .limit(1);
+
     const data = await db
       .select({
         id: sessions.id,
@@ -290,6 +302,9 @@ export class SessionsService {
         roomName: sessions.roomName,
         venueAddress: sessions.venueAddress,
         assistantRole: sessionAssistants.role,
+        assessmentId: sql<string | null>`(${assessmentIdSubquery})`.as(
+          'assessment_id',
+        ),
       })
       .from(sessionAssistants)
       .innerJoin(sessions, eq(sessionAssistants.sessionId, sessions.id))

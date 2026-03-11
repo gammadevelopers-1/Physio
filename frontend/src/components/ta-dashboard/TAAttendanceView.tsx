@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Info, Clock } from "lucide-react";
+import { ArrowLeft, Info, Clock, Search } from "lucide-react";
 import api from "@/lib/api";
 
 interface AttendanceRecord {
@@ -27,6 +27,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
   const locale = useLocale();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchAttendance = useCallback(async () => {
     try {
@@ -64,6 +65,14 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
     });
   };
 
+  const filteredRecords = searchQuery
+    ? records.filter((r) => {
+        const q = searchQuery.toLowerCase();
+        const name = `${r.firstName || ""} ${r.lastName || ""}`.toLowerCase();
+        return name.includes(q) || r.email.toLowerCase().includes(q);
+      })
+    : records;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -85,12 +94,26 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
         <p className="text-sm text-blue-700">{t("attendance.readOnly")}</p>
       </div>
 
+      {/* Search */}
+      {records.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t("attendance.searchPlaceholder")}
+            className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#002D87]/20"
+          />
+        </div>
+      )}
+
       {/* Attendance Table */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
         </div>
-      ) : records.length === 0 ? (
+      ) : filteredRecords.length === 0 ? (
         <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
           <p className="text-[#6B7280]">{t("attendance.noRecords")}</p>
         </div>
@@ -118,7 +141,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
                 </tr>
               </thead>
               <tbody>
-                {records.map((record) => (
+                {filteredRecords.map((record) => (
                   <tr
                     key={record.id}
                     className="border-b border-[#E5E7EB] last:border-b-0"

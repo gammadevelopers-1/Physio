@@ -1,9 +1,23 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { ArrowLeft, Info, FileText } from "lucide-react";
+import { ArrowLeft, Info, FileText, ChevronDown, ChevronUp, Paperclip } from "lucide-react";
 import { taApi } from "@/lib/api";
+
+interface SubmissionAnswer {
+  questionId: string;
+  answer: string;
+  isCorrect: boolean | null;
+  marksAwarded: number | null;
+}
+
+interface SubmissionFile {
+  name: string;
+  url: string;
+  size?: number;
+  type?: string;
+}
 
 interface Submission {
   id: string;
@@ -15,8 +29,8 @@ interface Submission {
   startedAt: string | null;
   submittedAt: string | null;
   status: string;
-  answers: unknown;
-  submissionFiles: unknown;
+  answers: SubmissionAnswer[] | null;
+  submissionFiles: SubmissionFile[] | null;
   instructorComment: string | null;
   studentFirstName: string | null;
   studentLastName: string | null;
@@ -36,12 +50,13 @@ const TAAssessmentSubmissionsView = ({
   const locale = useLocale();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchSubmissions = useCallback(async () => {
     try {
       setLoading(true);
       const data = await taApi.getSessionSubmissions(assessmentId);
-      setSubmissions(data);
+      setSubmissions(data as Submission[]);
     } catch {
       setSubmissions([]);
     } finally {
@@ -115,38 +130,89 @@ const TAAssessmentSubmissionsView = ({
                 </tr>
               </thead>
               <tbody>
-                {submissions.map((submission) => (
-                  <tr
-                    key={submission.id}
-                    className="border-b border-[#E5E7EB] last:border-b-0"
-                  >
-                    <td className="px-4 py-3 text-sm text-[#1F2937]">
-                      {submission.studentFirstName} {submission.studentLastName}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[#6B7280]">
-                      {submission.studentEmail}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-[#6B7280]">
-                      {formatDateTime(submission.submittedAt)}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {submission.score !== null ? (
-                        <span className="font-medium text-[#1F2937]">
-                          {submission.score}/{submission.totalMarks}
-                          {submission.percentage !== null && (
-                            <span className="text-[#6B7280] ml-1">
-                              ({submission.percentage}%)
+                {submissions.map((submission) => {
+                  const isExpanded = expandedId === submission.id;
+                  const hasContent = (submission.answers && submission.answers.length > 0) || (submission.submissionFiles && submission.submissionFiles.length > 0);
+                  return (
+                    <React.Fragment key={submission.id}>
+                      <tr
+                        className={`border-b border-[#E5E7EB] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[#F9FAFB]" : ""}`}
+                        onClick={() => hasContent && setExpandedId(isExpanded ? null : submission.id)}
+                      >
+                        <td className="px-4 py-3 text-sm text-[#1F2937]">
+                          <span className="flex items-center gap-2">
+                            {hasContent && (
+                              isExpanded ? <ChevronUp className="w-4 h-4 text-[#6B7280]" /> : <ChevronDown className="w-4 h-4 text-[#6B7280]" />
+                            )}
+                            {submission.studentFirstName} {submission.studentLastName}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-[#6B7280]">
+                          {submission.studentEmail}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-[#6B7280]">
+                          {formatDateTime(submission.submittedAt)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {submission.score !== null ? (
+                            <span className="font-medium text-[#1F2937]">
+                              {submission.score}/{submission.totalMarks}
+                              {submission.percentage !== null && (
+                                <span className="text-[#6B7280] ml-1">
+                                  ({submission.percentage}%)
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-[#9CA3AF] italic">
+                              {t("submissions.scoreHidden")}
                             </span>
                           )}
-                        </span>
-                      ) : (
-                        <span className="text-[#9CA3AF] italic">
-                          {t("submissions.scoreHidden")}
-                        </span>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-4 bg-[#F9FAFB]">
+                            <div className="space-y-3">
+                              {submission.answers && submission.answers.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-medium text-[#4B5563] mb-2">{t("submissions.answers")}</p>
+                                  <div className="space-y-2">
+                                    {submission.answers.map((a, idx) => (
+                                      <div key={idx} className="bg-white rounded-lg border border-[#E5E7EB] px-3 py-2">
+                                        <p className="text-xs text-[#6B7280] mb-1">Q{idx + 1}</p>
+                                        <p className="text-sm text-[#1F2937]">{a.answer || "—"}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {submission.submissionFiles && submission.submissionFiles.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-medium text-[#4B5563] mb-2">{t("submissions.files")}</p>
+                                  <div className="space-y-1">
+                                    {submission.submissionFiles.map((f, idx) => (
+                                      <a
+                                        key={idx}
+                                        href={f.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-sm text-[#3B82F6] hover:underline"
+                                      >
+                                        <Paperclip className="w-3.5 h-3.5" />
+                                        {f.name}
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                  </tr>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

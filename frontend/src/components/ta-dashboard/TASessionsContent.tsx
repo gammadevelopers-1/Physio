@@ -18,6 +18,7 @@ interface AssignedSession {
   roomName: string | null;
   venueAddress: string | null;
   assistantRole: string;
+  assessmentId?: string | null;
 }
 
 interface TASessionsContentProps {
@@ -25,20 +26,27 @@ interface TASessionsContentProps {
   onViewSubmissions: (assessmentId: string) => void;
 }
 
-const TASessionsContent = ({ onViewAttendance }: TASessionsContentProps) => {
+const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsContentProps) => {
   const t = useTranslations("taDashboard");
   const locale = useLocale();
   const [sessions, setSessions] = useState<AssignedSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
   const [courseFilter, setCourseFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   const fetchSessions = useCallback(async () => {
     try {
       setLoading(true);
-      const params: { status?: string; courseId?: string } = {};
+      const params: { status?: string; courseId?: string; dateRange?: string } = {};
       if (statusFilter) params.status = statusFilter;
       if (courseFilter) params.courseId = courseFilter;
+      if (dateFilter) {
+        const start = new Date(dateFilter);
+        const end = new Date(dateFilter);
+        end.setDate(end.getDate() + 1);
+        params.dateRange = `${start.toISOString()},${end.toISOString()}`;
+      }
       const data = await taApi.getMyAssignedSessions(params);
       setSessions(data);
     } catch {
@@ -46,7 +54,7 @@ const TASessionsContent = ({ onViewAttendance }: TASessionsContentProps) => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, courseFilter]);
+  }, [statusFilter, courseFilter, dateFilter]);
 
   useEffect(() => {
     fetchSessions();
@@ -117,6 +125,21 @@ const TASessionsContent = ({ onViewAttendance }: TASessionsContentProps) => {
               <option key={id} value={id}>{name}</option>
             ))}
           </select>
+        )}
+
+        <input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#002D87]/20"
+        />
+        {dateFilter && (
+          <button
+            onClick={() => setDateFilter("")}
+            className="px-3 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors"
+          >
+            {t("sessions.clearDate")}
+          </button>
         )}
       </div>
 
@@ -190,6 +213,15 @@ const TASessionsContent = ({ onViewAttendance }: TASessionsContentProps) => {
                     >
                       <Eye className="w-4 h-4" />
                       {t("sessions.viewAttendance")}
+                    </button>
+                  )}
+                  {session.assessmentId && (
+                    <button
+                      onClick={() => onViewSubmissions(session.assessmentId!)}
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
+                    >
+                      <FileText className="w-4 h-4" />
+                      {t("sessions.viewSubmissions")}
                     </button>
                   )}
                 </div>

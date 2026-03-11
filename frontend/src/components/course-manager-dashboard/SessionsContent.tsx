@@ -7,7 +7,7 @@ import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerSessions } from "@/hooks/useCourseManagerSessions";
-import { courseManagerApi } from "@/lib/api";
+import { courseManagerApi, courseAssistantsApi, type ThresholdStatus } from "@/lib/api";
 import {
   Calendar,
   List,
@@ -156,6 +156,25 @@ const SessionsContent = () => {
     if (!typeFilter) return all;
     return all.filter((s) => s.type === typeFilter);
   }, [rawSessions, typeFilter]);
+
+  // TA threshold status per course
+  const [taThresholds, setTaThresholds] = useState<Record<string, ThresholdStatus>>({});
+
+  useEffect(() => {
+    if (sessions.length === 0) return;
+    const courseIds = [...new Set(sessions.map((s) => s.courseId))];
+    Promise.all(
+      courseIds.map((id) =>
+        courseAssistantsApi.getThresholdStatus(id).then((status) => [id, status] as const).catch(() => null)
+      )
+    ).then((results) => {
+      const map: Record<string, ThresholdStatus> = {};
+      for (const r of results) {
+        if (r) map[r[0]] = r[1];
+      }
+      setTaThresholds(map);
+    });
+  }, [sessions]);
 
   // Fetch instructors and courses for filter dropdowns
   useEffect(() => {
@@ -339,6 +358,16 @@ const SessionsContent = () => {
                 {isConflict && (
                   <span className="px-1.5 py-0.5 bg-[#FEE2E2] text-[#EF4444] text-[10px] font-semibold rounded">
                     CONFLICT
+                  </span>
+                )}
+                {taThresholds[session.courseId] && taThresholds[session.courseId].requiredTAs > 0 && (
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    taThresholds[session.courseId].deficit > 0
+                      ? "bg-[#FEF2F2] text-[#EF4444]"
+                      : "bg-[#DCFCE7] text-[#22C55E]"
+                  }`}>
+                    <Users className="w-3 h-3" />
+                    {taThresholds[session.courseId].activeTAs}/{taThresholds[session.courseId].requiredTAs} TA
                   </span>
                 )}
               </div>

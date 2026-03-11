@@ -6193,7 +6193,9 @@
       "myCourses": "دوراتي",
       "noCourses": "لا توجد دورات مخصصة بعد",
       "upcomingSessions": "الجلسات القادمة",
-      "weeklyCalendar": "التقويم الأسبوعي"
+      "weeklyCalendar": "هذا الأسبوع",
+      "session": "جلسة",
+      "sessionPlural": "جلسات"
     },
     "courses": {
       "title": "دوراتي",
@@ -6274,6 +6276,7 @@
       "ended": "انتهت",
       "completed": "مكتملة",
       "cancelled": "ملغاة",
+      "clearDate": "مسح",
       "noSessions": "لم يتم العثور على جلسات مخصصة",
       "course": "الدورة",
       "type": "النوع",
@@ -6295,6 +6298,7 @@
       "excused": "معذور",
       "noRecords": "لم يتم العثور على سجلات حضور",
       "readOnly": "عرض فقط — تسجيل الحضور غير متاح لمساعدي التدريس",
+      "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
       "backToSessions": "العودة إلى الجلسات"
     },
     "submissions": {
@@ -6307,7 +6311,9 @@
       "scoreHidden": "لم تُنشر بعد",
       "noSubmissions": "لم يتم العثور على تسليمات",
       "readOnly": "عرض فقط — التقييم غير متاح لمساعدي التدريس",
-      "backToSessions": "العودة إلى الجلسات"
+      "backToSessions": "العودة إلى الجلسات",
+      "answers": "الإجابات",
+      "files": "الملفات المرفقة"
     }
   }
 }

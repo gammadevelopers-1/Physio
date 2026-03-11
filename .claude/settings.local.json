@@ -163,7 +163,12 @@
       "Bash(/tmp/pdfgen/bin/python3 /tmp/generate_ta_edge_cases_pdf.py)",
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta -type f)",
       "Bash(ls /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ta/)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -maxdepth 2 -type f -name \"page.tsx\")",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -maxdepth 1 -type f)",
+      "Bash(ls -la /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\) -maxdepth 2 -type f -name \"layout.tsx\")"
     ]
   }
 }

@@ -5975,7 +5975,9 @@
       "myCourses": "My Courses",
       "noCourses": "No courses assigned yet",
       "upcomingSessions": "Upcoming Sessions",
-      "weeklyCalendar": "Weekly Calendar"
+      "weeklyCalendar": "This Week",
+      "session": "session",
+      "sessionPlural": "sessions"
     },
     "courses": {
       "title": "My Courses",
@@ -6056,6 +6058,7 @@
       "ended": "Ended",
       "completed": "Completed",
       "cancelled": "Cancelled",
+      "clearDate": "Clear",
       "noSessions": "No assigned sessions found",
       "course": "Course",
       "type": "Type",
@@ -6077,6 +6080,7 @@
       "excused": "Excused",
       "noRecords": "No attendance records found",
       "readOnly": "View only — attendance marking is not available for teaching assistants",
+      "searchPlaceholder": "Search by name or email...",
       "backToSessions": "Back to Sessions"
     },
     "submissions": {
@@ -6089,6 +6093,8 @@
       "scoreHidden": "Not yet published",
       "noSubmissions": "No submissions found",
       "readOnly": "View only — grading is not available for teaching assistants",
+      "answers": "Answers",
+      "files": "Attached Files",
       "backToSessions": "Back to Sessions"
     }
   }

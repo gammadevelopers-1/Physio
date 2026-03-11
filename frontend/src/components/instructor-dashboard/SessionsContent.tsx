@@ -7,7 +7,7 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
-import { instructorApi, reportsApi, zoomAttendanceApi } from "@/lib/api";
+import { instructorApi, reportsApi, zoomAttendanceApi, courseAssistantsApi, type ThresholdStatus } from "@/lib/api";
 import type {
   CourseSession,
   InstructorCourse,
@@ -1440,6 +1440,7 @@ function SessionCard({
   onEdit,
   onDelete,
   actionLoading,
+  taThreshold,
   t,
   locale,
 }: {
@@ -1454,6 +1455,7 @@ function SessionCard({
   onEdit: () => void;
   onDelete: () => void;
   actionLoading: boolean;
+  taThreshold?: ThresholdStatus;
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
@@ -1512,6 +1514,16 @@ function SessionCard({
               {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />}
               {badge.label}
             </span>
+            {taThreshold && taThreshold.requiredTAs > 0 && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
+                taThreshold.deficit > 0
+                  ? "bg-[#FEF2F2] text-[#EF4444]"
+                  : "bg-[#DCFCE7] text-[#22C55E]"
+              }`}>
+                <Users className="w-3 h-3" />
+                {taThreshold.activeTAs}/{taThreshold.requiredTAs} TA
+              </span>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-[#6B7280]">
             <span className="flex items-center gap-1">
@@ -1933,6 +1945,25 @@ const SessionsContent = () => {
     fetchData();
   }, [fetchData]);
 
+  // TA threshold status per course
+  const [taThresholds, setTaThresholds] = useState<Record<string, ThresholdStatus>>({});
+
+  useEffect(() => {
+    if (sessions.length === 0) return;
+    const courseIds = [...new Set(sessions.map((s) => s.courseId))];
+    Promise.all(
+      courseIds.map((id) =>
+        courseAssistantsApi.getThresholdStatus(id).then((status) => [id, status] as const).catch(() => null)
+      )
+    ).then((results) => {
+      const map: Record<string, ThresholdStatus> = {};
+      for (const r of results) {
+        if (r) map[r[0]] = r[1];
+      }
+      setTaThresholds(map);
+    });
+  }, [sessions]);
+
   // Poll for status changes when there are live sessions
   // This detects when a Zoom meeting ends (via webhook) and auto-updates the UI
   const hasLiveSessions = useMemo(
@@ -2168,6 +2199,7 @@ const SessionsContent = () => {
               onFinalize={() => handleFinalize(session)}
               onDelete={() => handleDelete(session)}
               actionLoading={actionLoadingId === session.id}
+              taThreshold={taThresholds[session.courseId]}
               t={t}
               locale={locale}
             />

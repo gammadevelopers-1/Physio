@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { UserPlus, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { courseAssistantsApi, sessionAssistantsApi } from "@/lib/api";
+import { courseAssistantsApi } from "@/lib/api";
 
 interface CourseTA {
   id: string;
@@ -30,12 +30,10 @@ interface AvailableTA {
 
 interface CourseAssistantsSuggestPanelProps {
   courseId: string;
-  sessionId?: string;
 }
 
 const CourseAssistantsSuggestPanel = ({
   courseId,
-  sessionId,
 }: CourseAssistantsSuggestPanelProps) => {
   const t = useTranslations("instructorDashboard");
   const [tas, setTAs] = useState<CourseTA[]>([]);
@@ -57,14 +55,13 @@ const CourseAssistantsSuggestPanel = ({
   }, [courseId]);
 
   const fetchAvailableTAs = useCallback(async () => {
-    if (!sessionId) return;
     try {
-      const data = await sessionAssistantsApi.listAvailableTAs(sessionId);
+      const data = await courseAssistantsApi.listAvailableTAs(courseId);
       setAvailableTAs(data);
     } catch {
       setAvailableTAs([]);
     }
-  }, [sessionId]);
+  }, [courseId]);
 
   useEffect(() => {
     fetchTAs();

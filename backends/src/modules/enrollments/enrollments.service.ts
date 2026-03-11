@@ -13,6 +13,8 @@ import {
   courses,
   users,
   waitlists,
+  sessionAssistants,
+  courseAssistants,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -713,6 +715,55 @@ export class EnrollmentsService {
     sessionId: string,
     user: AuthenticatedUser,
   ) {
+    // TAs: verify assignment rather than ownership
+    if (user.roles.includes('TEACHING_ASSISTANT' as any)) {
+      const [session] = await db
+        .select({
+          id: sessions.id,
+          status: sessions.status,
+          actualEndedAt: sessions.actualEndedAt,
+          courseId: sessions.courseId,
+        })
+        .from(sessions)
+        .where(eq(sessions.id, sessionId))
+        .limit(1);
+
+      if (!session) {
+        throw new NotFoundException('Session not found');
+      }
+
+      // Check session-level assignment
+      const [sessionTA] = await db
+        .select({ id: sessionAssistants.id })
+        .from(sessionAssistants)
+        .where(
+          and(
+            eq(sessionAssistants.sessionId, sessionId),
+            eq(sessionAssistants.userId, user.id),
+          ),
+        )
+        .limit(1);
+
+      if (sessionTA) return session;
+
+      // Fallback: check course-level assignment
+      const [courseTA] = await db
+        .select({ id: courseAssistants.id })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, session.courseId),
+            eq(courseAssistants.userId, user.id),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+
+      if (courseTA) return session;
+
+      throw new NotFoundException('Session not found');
+    }
+
     const conditions: any[] = [eq(sessions.id, sessionId)];
     if (isGlobalAdmin(user)) {
       // No filter

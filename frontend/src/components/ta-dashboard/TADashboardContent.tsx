@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { Video, Eye, Clock, Calendar, MapPin, Monitor, Users, BookOpen, AlertTriangle } from "lucide-react";
+import { Video, Eye, Clock, Calendar, MapPin, Monitor, Users, BookOpen, AlertTriangle, FileText } from "lucide-react";
 import TASidebar from "./TASidebar";
 import TANavbar from "./TANavbar";
 import TASessionsContent from "./TASessionsContent";
@@ -30,6 +30,7 @@ interface AssignedSession {
   roomName: string | null;
   venueAddress: string | null;
   assistantRole: string;
+  assessmentId?: string | null;
 }
 
 const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) => {
@@ -42,6 +43,7 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
   const [myCourses, setMyCourses] = useState<TAAssignedCourse[]>([]);
   const [coursesLoading, setCoursesLoading] = useState(true);
+  const [weekSessions, setWeekSessions] = useState<AssignedSession[]>([]);
 
   const fetchTodaySessions = useCallback(async () => {
     try {
@@ -72,12 +74,28 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
     }
   }, []);
 
+  const fetchWeekSessions = useCallback(async () => {
+    try {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const startOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek);
+      const endOfWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (7 - dayOfWeek));
+      const data = await taApi.getMyAssignedSessions({
+        dateRange: `${startOfWeek.toISOString()},${endOfWeek.toISOString()}`,
+      });
+      setWeekSessions(data);
+    } catch {
+      setWeekSessions([]);
+    }
+  }, []);
+
   useEffect(() => {
     if (currentView === "home") {
       fetchTodaySessions();
       fetchMyCourses();
+      fetchWeekSessions();
     }
-  }, [currentView, fetchTodaySessions, fetchMyCourses]);
+  }, [currentView, fetchTodaySessions, fetchMyCourses, fetchWeekSessions]);
 
   const handleViewAttendance = (sessionId: string) => {
     setSelectedSessionId(sessionId);
@@ -300,12 +318,78 @@ const TADashboardContent = ({ initialView = "home" }: TADashboardContentProps) =
                       {t("sessions.viewAttendance")}
                     </button>
                   )}
+                  {session.assessmentId && (
+                    <button
+                      onClick={() => handleViewSubmissions(session.assessmentId!)}
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
+                    >
+                      <FileText className="w-4 h-4" />
+                      {t("sessions.viewSubmissions")}
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Weekly Calendar */}
+      {weekSessions.length > 0 && (() => {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const weekDays = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - dayOfWeek + i);
+          return d;
+        });
+        const dayNames = weekDays.map((d) =>
+          d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { weekday: "short" })
+        );
+        const sessionsByDay = weekDays.map((d) => {
+          const dayStr = d.toISOString().slice(0, 10);
+          return weekSessions.filter((s) => s.scheduledAt.slice(0, 10) === dayStr);
+        });
+
+        return (
+          <div>
+            <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+              {t("home.weeklyCalendar")}
+            </h2>
+            <div className="grid grid-cols-7 gap-2">
+              {weekDays.map((d, i) => {
+                const isToday = d.toDateString() === today.toDateString();
+                const count = sessionsByDay[i].length;
+                return (
+                  <div
+                    key={i}
+                    className={`rounded-xl border p-3 text-center ${
+                      isToday
+                        ? "bg-[#002D87] text-white border-[#002D87]"
+                        : "bg-white border-[#E5E7EB]"
+                    }`}
+                  >
+                    <p className={`text-xs font-medium ${isToday ? "text-white/80" : "text-[#6B7280]"}`}>
+                      {dayNames[i]}
+                    </p>
+                    <p className={`text-lg font-bold mt-1 ${isToday ? "text-white" : "text-[#1F2937]"}`}>
+                      {d.getDate()}
+                    </p>
+                    {count > 0 && (
+                      <div className={`mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        isToday
+                          ? "bg-white/20 text-white"
+                          : "bg-[#EFF6FF] text-[#3B82F6]"
+                      }`}>
+                        {count} {count === 1 ? t("home.session") : t("home.sessionPlural")}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 

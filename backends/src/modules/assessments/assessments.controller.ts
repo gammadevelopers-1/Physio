@@ -50,7 +50,7 @@ export class AssessmentsController {
   /**
    * GET /assessments — List assessments with filters
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,

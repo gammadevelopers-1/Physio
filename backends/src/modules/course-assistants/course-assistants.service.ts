@@ -245,6 +245,17 @@ export class CourseAssistantsService {
           entityId: courseId,
         });
       }
+
+      // Notify the TA themselves
+      await this.notificationsService.create({
+        recipientId: userId,
+        type: 'ta_assigned',
+        title: 'Assigned as Teaching Assistant',
+        message: `You have been assigned as a Teaching Assistant for "${course.title}"`,
+        link: `/dashboard/ta`,
+        entityType: 'course',
+        entityId: courseId,
+      });
     } else {
       // Pre-assigned — send pre-assignment email and notification (EC-1)
       const taUser = await this.getUser(userId);
@@ -374,6 +385,17 @@ export class CourseAssistantsService {
       });
     }
 
+    // Notify the TA that they have been suggested
+    await this.notificationsService.create({
+      recipientId: userId,
+      type: 'ta_suggestion',
+      title: 'Suggested as Teaching Assistant',
+      message: `You have been suggested as a Teaching Assistant for "${course.title}". Awaiting manager approval.`,
+      link: `/dashboard/ta`,
+      entityType: 'course',
+      entityId: courseId,
+    });
+
     return suggestion;
   }
 
@@ -461,8 +483,8 @@ export class CourseAssistantsService {
       await this.sendAssignmentEmail(userId, course);
 
       // Notify the suggesting instructor
+      const taUser = await this.getUser(userId);
       if (existing.suggestedBy) {
-        const taUser = await this.getUser(userId);
         await this.notificationsService.create({
           recipientId: existing.suggestedBy,
           type: 'ta_suggestion_approved',
@@ -473,6 +495,17 @@ export class CourseAssistantsService {
           entityId: courseId,
         });
       }
+
+      // Notify the TA that their assignment has been approved
+      await this.notificationsService.create({
+        recipientId: userId,
+        type: 'ta_suggestion_approved',
+        title: 'TA Assignment Approved',
+        message: `Your TA assignment for "${course.title}" has been approved. You are now active.`,
+        link: `/dashboard/ta`,
+        entityType: 'course',
+        entityId: courseId,
+      });
     } else {
       // Pre-assigned — notify instructor
       const taUser = await this.getUser(userId);
@@ -497,6 +530,17 @@ export class CourseAssistantsService {
           message: `Your TA suggestion for "${course.title}" has been approved. You have been pre-assigned and will be automatically activated when enrollment reaches the required threshold.`,
         });
       }
+
+      // Notify the TA in-app about pre-assigned approval
+      await this.notificationsService.create({
+        recipientId: userId,
+        type: 'ta_suggestion_approved',
+        title: 'TA Suggestion Approved (Pre-assigned)',
+        message: `Your TA suggestion for "${course.title}" has been approved. You are pre-assigned and will be activated when enrollment reaches the threshold.`,
+        link: `/dashboard/ta`,
+        entityType: 'course',
+        entityId: courseId,
+      });
     }
 
     return updated;
@@ -534,8 +578,8 @@ export class CourseAssistantsService {
       .returning();
 
     // Notify the suggesting instructor
+    const taUser = await this.getUser(userId);
     if (existing.suggestedBy) {
-      const taUser = await this.getUser(userId);
       await this.notificationsService.create({
         recipientId: existing.suggestedBy,
         type: 'ta_suggestion_rejected',
@@ -546,6 +590,17 @@ export class CourseAssistantsService {
         entityId: courseId,
       });
     }
+
+    // Notify the TA that their suggestion was not approved
+    await this.notificationsService.create({
+      recipientId: userId,
+      type: 'ta_suggestion_rejected',
+      title: 'TA Suggestion Not Approved',
+      message: `Your TA suggestion for "${course.title}" was not approved`,
+      link: `/dashboard/ta`,
+      entityType: 'course',
+      entityId: courseId,
+    });
 
     return updated;
   }

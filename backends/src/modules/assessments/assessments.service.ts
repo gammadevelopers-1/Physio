@@ -25,7 +25,7 @@ import {
 } from '../../database/schema';
 import type { AssessmentFile } from '../../database/schema/assessments';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { isGlobalAdmin, isManager } from '../../common/role-helpers';
+import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -133,9 +133,14 @@ export class AssessmentsService {
 
     // Scope by role
     if (!isGlobalAdmin(user)) {
-      const scopedCourseIds = isManager(user)
-        ? await this.getManagedCourseIds(user.id)
-        : await this.getInstructorCourseIds(user.id);
+      let scopedCourseIds: string[];
+      if (isManager(user)) {
+        scopedCourseIds = await this.getManagedCourseIds(user.id);
+      } else if (isTA(user)) {
+        scopedCourseIds = await this.getTACourseIds(user.id);
+      } else {
+        scopedCourseIds = await this.getInstructorCourseIds(user.id);
+      }
       if (scopedCourseIds.length === 0) {
         return { data: [], total: 0, page, limit, totalPages: 0 };
       }
@@ -145,6 +150,10 @@ export class AssessmentsService {
           sql`, `,
         )})` as any,
       );
+      // TAs should only see published/closed assessments (not drafts)
+      if (isTA(user)) {
+        conditions.push(sql`${assessments.status} != 'draft'` as any);
+      }
     }
 
     if (params.courseId) {
@@ -1361,6 +1370,22 @@ export class AssessmentsService {
       .from(courses)
       .where(eq(courses.managerId, managerId));
     return managedCourses.map((c) => c.id);
+  }
+
+  /**
+   * Get course IDs for a TA (approved assignments only).
+   */
+  private async getTACourseIds(userId: string): Promise<string[]> {
+    const taCourses = await db
+      .select({ courseId: courseAssistants.courseId })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.userId, userId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+    return taCourses.map((c) => c.courseId);
   }
 
   /**

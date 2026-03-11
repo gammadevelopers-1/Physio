@@ -1393,4 +1393,40 @@ export class SessionsService {
 
     return shared;
   }
+
+  /**
+   * Update the role of a session assistant (co_host / assistant).
+   */
+  async updateAssistantRole(
+    sessionId: string,
+    userId: string,
+    role: 'co_host' | 'assistant',
+  ) {
+    if (!['co_host', 'assistant'].includes(role)) {
+      throw new BadRequestException('Role must be "co_host" or "assistant"');
+    }
+
+    const [existing] = await db
+      .select({ id: sessionAssistants.id })
+      .from(sessionAssistants)
+      .where(
+        and(
+          eq(sessionAssistants.sessionId, sessionId),
+          eq(sessionAssistants.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!existing) {
+      throw new NotFoundException('Session assistant not found');
+    }
+
+    const [updated] = await db
+      .update(sessionAssistants)
+      .set({ role })
+      .where(eq(sessionAssistants.id, existing.id))
+      .returning();
+
+    return updated;
+  }
 }

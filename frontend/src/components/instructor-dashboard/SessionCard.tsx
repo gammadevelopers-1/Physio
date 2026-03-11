@@ -26,8 +26,15 @@ interface Session {
   zoomLink?: string;
 }
 
+interface TAThreshold {
+  requiredTAs: number;
+  activeTAs: number;
+  deficit: number;
+}
+
 interface SessionCardProps {
   session: Session;
+  taThreshold?: TAThreshold | null;
   onStart?: () => void;
   onEnd?: () => void;
   onAttendance?: () => void;
@@ -36,6 +43,7 @@ interface SessionCardProps {
 
 const SessionCard = ({
   session,
+  taThreshold,
   onStart,
   onEnd,
   onAttendance,
@@ -93,6 +101,16 @@ const SessionCard = ({
               {isLive && <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444] animate-pulse" />}
               {badge.label}
             </span>
+            {taThreshold && taThreshold.requiredTAs > 0 && (
+              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
+                taThreshold.deficit > 0
+                  ? "bg-[#FEF2F2] text-[#EF4444]"
+                  : "bg-[#DCFCE7] text-[#22C55E]"
+              }`}>
+                <Users className="w-3 h-3" />
+                {taThreshold.activeTAs}/{taThreshold.requiredTAs} TA
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3 text-xs text-[#6B7280]">
             <span className="flex items-center gap-1">

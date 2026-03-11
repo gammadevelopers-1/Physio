@@ -6089,9 +6089,16 @@
       "late": "Late",
       "excused": "Excused",
       "noRecords": "No attendance records found",
-      "readOnly": "View only — attendance marking is not available for teaching assistants",
       "searchPlaceholder": "Search by name or email...",
-      "backToSessions": "Back to Sessions"
+      "backToSessions": "Back to Sessions",
+      "summary": "Summary",
+      "markAll": "Mark all",
+      "save": "Save Attendance",
+      "saved": "Attendance saved successfully",
+      "saveError": "Failed to save attendance",
+      "noChanges": "No changes to save",
+      "noteRequired": "Please add a note for all late/excused students",
+      "notePlaceholder": "Add reason for late/excused..."
     },
     "submissions": {
       "title": "Assessment Submissions",

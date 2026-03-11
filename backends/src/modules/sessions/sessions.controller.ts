@@ -394,4 +394,19 @@ export class SessionsController {
   async getSharedMaterials(@Param('id') sessionId: string) {
     return this.sessionsService.getSharedMaterials(sessionId);
   }
+
+  // ─── Session Assistant Management ──────────────────────
+
+  /**
+   * PATCH /sessions/:id/assistants/:userId/role — Update TA session role (co_host / assistant)
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole, 'INSTRUCTOR' as UserRole)
+  @Patch(':id/assistants/:userId/role')
+  async updateAssistantRole(
+    @Param('id') sessionId: string,
+    @Param('userId') userId: string,
+    @Body() body: { role: 'co_host' | 'assistant' },
+  ) {
+    return this.sessionsService.updateAssistantRole(sessionId, userId, body.role);
+  }
 }

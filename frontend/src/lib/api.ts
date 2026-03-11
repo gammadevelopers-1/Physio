@@ -2369,6 +2369,7 @@ export const taApi = {
       roomName: string | null;
       venueAddress: string | null;
       assistantRole: string;
+      assessmentId: string | null;
     }>>(`/sessions/my-assigned${qs ? `?${qs}` : ''}`);
   },
 
@@ -2393,6 +2394,18 @@ export const taApi = {
 
   getMyAssignedCourses: () =>
     api.get<TAAssignedCourse[]>('/course-assistants/my-courses'),
+
+  getCourseAssessments: (courseId: string) =>
+    api.get<{ data: Array<{
+      id: string;
+      courseId: string;
+      title: string;
+      type: string;
+      status: string;
+      totalMarks: number | null;
+      passingScore: number | null;
+      createdAt: string;
+    }>; total: number }>(`/assessments?courseId=${courseId}`),
 };
 
 export default api;

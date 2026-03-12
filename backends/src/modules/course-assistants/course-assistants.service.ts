@@ -22,7 +22,7 @@ import {
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
-import { ThresholdEvaluationService } from './threshold-evaluation.service';
+import { ThresholdEvaluationService, ASSISTANT_THRESHOLDS } from './threshold-evaluation.service';
 
 @Injectable()
 export class CourseAssistantsService {
@@ -212,6 +212,34 @@ export class CourseAssistantsService {
       })
       .returning();
 
+    // EC-9: Check workload — warn manager if TA is assigned to other courses
+    const [otherCoursesResult] = await db
+      .select({ count: count() })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.userId, userId),
+          inArray(courseAssistants.status, ['approved', 'pre_assigned']),
+          sql`${courseAssistants.courseId} != ${courseId}`,
+        ),
+      );
+    const otherCourseCount = Number(otherCoursesResult?.count || 0);
+
+    if (otherCourseCount > 0) {
+      const recipientIds = await this.getNotificationRecipients(courseId);
+      const taUser = await this.getUser(userId);
+      if (recipientIds.length > 0) {
+        await this.notificationsService.createBulk(recipientIds, {
+          type: 'ta_workload_warning',
+          title: 'TA Workload Notice',
+          message: `TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} assigned to "${course.title}" is also assigned to ${otherCourseCount} other course(s)`,
+          link: `/dashboard/manager/courses/${courseId}`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+    }
+
     if (shouldActivate) {
       // Propagate to all existing sessions
       await this.propagateToAllSessions(courseId, userId, assignedBy);
@@ -253,7 +281,7 @@ export class CourseAssistantsService {
         type: 'ta_assigned',
         title: 'Assigned as Teaching Assistant',
         message: `You have been assigned as a Teaching Assistant for "${course.title}"`,
-        link: `/dashboard/ta`,
+        link: `/dashboard/teaching-assistant`,
         entityType: 'course',
         entityId: courseId,
       });
@@ -277,7 +305,7 @@ export class CourseAssistantsService {
           type: 'ta_pre_assigned',
           title: 'Pre-assigned to Course',
           message: `You have been pre-assigned as a TA for "${course.title}". You will be activated when enrollment reaches the threshold.`,
-          link: `/dashboard/ta`,
+          link: `/dashboard/teaching-assistant`,
           entityType: 'course',
           entityId: courseId,
         });
@@ -398,7 +426,7 @@ export class CourseAssistantsService {
       type: 'ta_suggestion',
       title: 'Suggested as Teaching Assistant',
       message: `You have been suggested as a Teaching Assistant for "${course.title}". Awaiting manager approval.`,
-      link: `/dashboard/ta`,
+      link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
     });
@@ -432,8 +460,8 @@ export class CourseAssistantsService {
       throw new NotFoundException('TA suggestion not found');
     }
 
-    if (existing.status === 'approved') {
-      throw new BadRequestException('TA is already approved');
+    if (existing.status !== 'suggested' && existing.status !== 'pre_assigned') {
+      throw new BadRequestException('TA suggestion has already been processed');
     }
 
     // EC-24: Check enrollment threshold to decide status
@@ -456,6 +484,7 @@ export class CourseAssistantsService {
     const shouldActivate = currentActive < requiredTAs;
     const newStatus = shouldActivate ? 'approved' : 'pre_assigned';
 
+    // EC-25: Optimistic locking — only update if status is still 'suggested'
     const [updated] = await db
       .update(courseAssistants)
       .set({
@@ -465,8 +494,17 @@ export class CourseAssistantsService {
         approvedAt: shouldActivate ? new Date() : null,
         assignedBy: approvedBy,
       })
-      .where(eq(courseAssistants.id, existing.id))
+      .where(
+        and(
+          eq(courseAssistants.id, existing.id),
+          eq(courseAssistants.status, existing.status),
+        ),
+      )
       .returning();
+
+    if (!updated) {
+      throw new BadRequestException('TA suggestion has already been processed by another manager');
+    }
 
     if (shouldActivate) {
       // Propagate to all sessions
@@ -509,7 +547,7 @@ export class CourseAssistantsService {
         type: 'ta_suggestion_approved',
         title: 'TA Assignment Approved',
         message: `Your TA assignment for "${course.title}" has been approved. You are now active.`,
-        link: `/dashboard/ta`,
+        link: `/dashboard/teaching-assistant`,
         entityType: 'course',
         entityId: courseId,
       });
@@ -544,7 +582,7 @@ export class CourseAssistantsService {
         type: 'ta_suggestion_approved',
         title: 'TA Suggestion Approved (Pre-assigned)',
         message: `Your TA suggestion for "${course.title}" has been approved. You are pre-assigned and will be activated when enrollment reaches the threshold.`,
-        link: `/dashboard/ta`,
+        link: `/dashboard/teaching-assistant`,
         entityType: 'course',
         entityId: courseId,
       });
@@ -556,7 +594,7 @@ export class CourseAssistantsService {
   /**
    * Manager/Admin rejects a suggestion. Notifies the instructor.
    */
-  async rejectTA(courseId: string, userId: string) {
+  async rejectTA(courseId: string, userId: string, reason: string) {
     const course = await this.getCourse(courseId);
 
     const [existing] = await db
@@ -578,11 +616,29 @@ export class CourseAssistantsService {
       throw new NotFoundException('TA suggestion not found');
     }
 
+    if (existing.status === 'rejected') {
+      throw new BadRequestException('TA suggestion has already been rejected');
+    }
+
+    // EC-25: Optimistic locking — only update if status hasn't changed
     const [updated] = await db
       .update(courseAssistants)
-      .set({ status: 'rejected' })
-      .where(eq(courseAssistants.id, existing.id))
+      .set({
+        status: 'rejected',
+        rejectionReason: reason,
+        rejectedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(courseAssistants.id, existing.id),
+          eq(courseAssistants.status, existing.status),
+        ),
+      )
       .returning();
+
+    if (!updated) {
+      throw new BadRequestException('TA suggestion has already been processed by another manager');
+    }
 
     // Notify the suggesting instructor
     const taUser = await this.getUser(userId);
@@ -591,11 +647,26 @@ export class CourseAssistantsService {
         recipientId: existing.suggestedBy,
         type: 'ta_suggestion_rejected',
         title: 'TA Suggestion Rejected',
-        message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was rejected`,
+        message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was rejected. Reason: ${reason}`,
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
       });
+
+      // Send rejection email to the suggesting instructor
+      const suggester = await this.getUser(existing.suggestedBy);
+      if (suggester) {
+        try {
+          await this.emailService.sendTaRejection(suggester.email, {
+            recipientName: `${suggester.firstName} ${suggester.lastName}`,
+            courseName: course.title,
+            taName: `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim(),
+            rejectionReason: reason,
+          });
+        } catch (err) {
+          this.logger.warn('Failed to send TA rejection email', err);
+        }
+      }
     }
 
     // Notify the TA that their suggestion was not approved
@@ -603,8 +674,8 @@ export class CourseAssistantsService {
       recipientId: userId,
       type: 'ta_suggestion_rejected',
       title: 'TA Suggestion Not Approved',
-      message: `Your TA suggestion for "${course.title}" was not approved`,
-      link: `/dashboard/ta`,
+      message: `Your TA suggestion for "${course.title}" was not approved. Reason: ${reason}`,
+      link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
     });
@@ -683,6 +754,118 @@ export class CourseAssistantsService {
     await this.thresholdService.evaluateAndAct(courseId);
 
     return { message: 'Teaching assistant removed from course and all sessions' };
+  }
+
+  /**
+   * EC-15: Handle TA account deactivation cascade.
+   * When admin deactivates a TA's user account, reject all their active/pre-assigned
+   * course assignments, remove from future sessions, and warn managers.
+   */
+  async handleTAAccountDeactivation(userId: string): Promise<void> {
+    try {
+      // Get all active course assignments for this user
+      const activeAssignments = await db
+        .select({
+          id: courseAssistants.id,
+          courseId: courseAssistants.courseId,
+          status: courseAssistants.status,
+        })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.userId, userId),
+            inArray(courseAssistants.status, ['approved', 'pre_assigned', 'suggested']),
+          ),
+        );
+
+      if (activeAssignments.length === 0) return;
+
+      const taUser = await this.getUser(userId);
+      const taName = taUser
+        ? `${taUser.firstName || ''} ${taUser.lastName || ''}`.trim()
+        : 'Unknown TA';
+
+      for (const assignment of activeAssignments) {
+        // Set status to rejected
+        await db
+          .update(courseAssistants)
+          .set({
+            status: 'rejected',
+            rejectionReason: 'TA account deactivated by administrator',
+            rejectedAt: new Date(),
+          })
+          .where(eq(courseAssistants.id, assignment.id));
+
+        // Remove from future scheduled sessions (auto-assigned only)
+        const futureSessions = await db
+          .select({ id: sessions.id })
+          .from(sessions)
+          .where(
+            and(
+              eq(sessions.courseId, assignment.courseId),
+              eq(sessions.status, 'scheduled'),
+            ),
+          );
+
+        for (const session of futureSessions) {
+          await db
+            .delete(sessionAssistants)
+            .where(
+              and(
+                eq(sessionAssistants.sessionId, session.id),
+                eq(sessionAssistants.userId, userId),
+                eq(sessionAssistants.isAutoAssigned, true),
+              ),
+            );
+        }
+
+        // NELC audit log
+        await this.auditService.log({
+          eventType: NELC_EVENT_TYPE.ASSISTANT_DEALLOCATED,
+          entityType: 'course',
+          entityId: assignment.courseId,
+          userId,
+          metadata: {
+            assistantId: userId,
+            courseId: assignment.courseId,
+            reason: 'account_deactivated',
+          },
+        });
+
+        // Warn course manager
+        const recipientIds = await this.getNotificationRecipients(assignment.courseId);
+        const [course] = await db
+          .select({ title: courses.title })
+          .from(courses)
+          .where(eq(courses.id, assignment.courseId))
+          .limit(1);
+
+        if (recipientIds.length > 0 && course) {
+          await this.notificationsService.createBulk(recipientIds, {
+            type: 'ta_account_deactivated',
+            title: 'TA Account Deactivated',
+            message: `TA ${taName}'s account has been deactivated. They have been removed from "${course.title}". A replacement may be needed.`,
+            link: `/dashboard/manager/courses/${assignment.courseId}`,
+            entityType: 'course',
+            entityId: assignment.courseId,
+          });
+        }
+
+        // Re-evaluate thresholds — may activate a backup pre-assigned TA
+        if (assignment.status === 'approved') {
+          await this.thresholdService.evaluateAndAct(assignment.courseId);
+        }
+      }
+
+      this.logger.log(
+        `EC-15: Deactivation cascade completed for TA ${userId} — ${activeAssignments.length} course assignment(s) affected`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `EC-15: TA deactivation cascade failed for user ${userId}: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
+    }
   }
 
   /**
@@ -823,8 +1006,8 @@ export class CourseAssistantsService {
       suggestedTAs,
       deficit: Math.max(0, requiredTAs - activeTAs),
       thresholds: {
-        low: 1, // Testing values
-        mid: 3,
+        low: ASSISTANT_THRESHOLDS.LOW,
+        mid: ASSISTANT_THRESHOLDS.MID,
       },
     };
   }
@@ -957,9 +1140,10 @@ export class CourseAssistantsService {
   }
 
   /**
-   * List all users with the TEACHING_ASSISTANT role (for assignment dropdown).
+   * List users with the TEACHING_ASSISTANT role available for assignment.
+   * When a valid courseId is provided, excludes TAs already assigned to that course (any status).
    */
-  async listAvailableTAs() {
+  async listAvailableTAs(courseId?: string) {
     const tas = await db
       .select({
         id: users.id,
@@ -976,6 +1160,18 @@ export class CourseAssistantsService {
           eq(users.isActive, true),
         ),
       );
+
+    // Filter out TAs already assigned to this course (any status)
+    if (courseId && courseId !== '_') {
+      const assigned = await db
+        .select({ userId: courseAssistants.userId })
+        .from(courseAssistants)
+        .where(eq(courseAssistants.courseId, courseId));
+
+      const assignedIds = new Set(assigned.map((a) => a.userId));
+      return tas.filter((ta) => !assignedIds.has(ta.id));
+    }
+
     return tas;
   }
 }

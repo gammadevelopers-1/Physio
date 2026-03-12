@@ -18,9 +18,10 @@ import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 
 // NELC thresholds — TESTING VALUES (production: LOW=25, MID=35)
-const ASSISTANT_THRESHOLDS = {
-  LOW: 1, // <=1: no assistant needed
-  MID: 2, // 2: 1 assistant, >=3: 2 assistants
+// <=LOW: 0 TAs | LOW+1 to MID: 1 TA | >MID: 2 TAs
+export const ASSISTANT_THRESHOLDS = {
+  LOW: 1, // <=1: no assistant needed  (production: 25)
+  MID: 3, // 2-3: 1 assistant, >=4: 2 assistants  (production: 35)
 } as const;
 
 @Injectable()
@@ -225,7 +226,7 @@ export class ThresholdEvaluationService {
         type: 'ta_activated',
         title: 'You Have Been Activated',
         message: `You are now an active Teaching Assistant for "${course?.title}". You have access to all sessions.`,
-        link: `/dashboard/ta/courses/${courseId}`,
+        link: `/dashboard/teaching-assistant/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
       });
@@ -414,7 +415,7 @@ export class ThresholdEvaluationService {
         type: 'ta_deactivated',
         title: 'TA Assignment Paused',
         message: `Your active assignment for "${course?.title}" has been paused due to reduced enrollment. You remain pre-assigned and will be reactivated if enrollment increases.`,
-        link: `/dashboard/ta/courses/${courseId}`,
+        link: `/dashboard/teaching-assistant/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
       });

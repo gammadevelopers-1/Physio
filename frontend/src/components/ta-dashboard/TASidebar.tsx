@@ -72,22 +72,22 @@ const TASidebar = () => {
   const navItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/dashboard/ta`,
+      href: `/${locale}/dashboard/teaching-assistant`,
       icon: LayoutDashboard,
     },
     {
       label: t("sidebar.courses"),
-      href: `/${locale}/dashboard/ta/courses`,
+      href: `/${locale}/dashboard/teaching-assistant/courses`,
       icon: BookOpen,
     },
     {
       label: t("sidebar.sessions"),
-      href: `/${locale}/dashboard/ta/sessions`,
+      href: `/${locale}/dashboard/teaching-assistant/sessions`,
       icon: Calendar,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/dashboard/ta/settings`,
+      href: `/${locale}/dashboard/teaching-assistant/settings`,
       icon: Settings,
     },
   ];
@@ -121,7 +121,7 @@ const TASidebar = () => {
             <div ref={avatarMenuRef}>
               <button
                 onClick={() => setAvatarMenuOpen((v) => !v)}
-                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-gradient-to-r from-[#a37f49] to-[#6b4e24] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:from-[#8e6d3d] hover:to-[#5a411e] transition-colors`}
                 aria-label={t("sidebar.editProfile")}
                 aria-haspopup="true"
                 aria-expanded={avatarMenuOpen}
@@ -158,8 +158,8 @@ const TASidebar = () => {
           <p className="text-sm text-[#6B7280] mb-2">{email}</p>
 
           {/* Role Badge */}
-          <div className="px-3 py-1 bg-teal-100 rounded-full">
-            <span className="text-sm font-medium text-teal-700">
+          <div className="px-3 py-1 bg-[#FFF8E6] rounded-full">
+            <span className="text-sm font-medium text-[#6b4e24]">
               Teaching Assistant
             </span>
           </div>
@@ -167,7 +167,7 @@ const TASidebar = () => {
 
         {/* View Profile Button */}
         <Link
-          href={`/${locale}/dashboard/ta/settings`}
+          href={`/${locale}/dashboard/teaching-assistant/settings`}
           className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
         >
           {t("sidebar.viewProfile")}
@@ -188,12 +188,12 @@ const TASidebar = () => {
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
-                    ? "bg-[#F0F7FF] text-[#002D87]"
+                    ? "bg-[#FFF8E6] text-[#6b4e24]"
                     : "text-[#4B5563] hover:bg-[#F9FAFB]"
                 }`}
               >
                 <Icon
-                  className={`w-5 h-5 ${active ? "text-[#002D87]" : "text-[#6B7280]"}`}
+                  className={`w-5 h-5 ${active ? "text-[#6b4e24]" : "text-[#6B7280]"}`}
                 />
                 <span className={`text-sm ${active ? "font-medium" : ""}`}>
                   {item.label}

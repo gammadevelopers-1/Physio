@@ -1447,6 +1447,15 @@ export const courseManagerApi = {
   getInstructors: () =>
     api.get<InstructorListItem[]>('/auth/instructors'),
 
+  // Get list of available TAs for dropdown (uses course-assistants available endpoint)
+  getAvailableTAs: () =>
+    api.get<Array<{
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    }>>('/courses/_/assistants/available'),
+
   // Sessions
   getSessions: (params?: SessionsParams & { instructorId?: string }) => {
     const sp = new URLSearchParams();
@@ -2315,9 +2324,10 @@ export const courseAssistantsApi = {
       `/courses/${courseId}/assistants/${userId}/approve`,
     ),
 
-  rejectTA: (courseId: string, userId: string) =>
+  rejectTA: (courseId: string, userId: string, data: { reason: string }) =>
     api.patch<{ id: string; status: string }>(
       `/courses/${courseId}/assistants/${userId}/reject`,
+      data,
     ),
 
   removeTA: (courseId: string, userId: string) =>

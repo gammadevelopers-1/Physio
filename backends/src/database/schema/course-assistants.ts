@@ -30,6 +30,8 @@ export const courseAssistants = pgTable(
     assignedAt: timestamp('assigned_at').defaultNow().notNull(),
     approvedAt: timestamp('approved_at'),
     deactivationScheduledAt: timestamp('deactivation_scheduled_at'),
+    rejectionReason: varchar('rejection_reason', { length: 500 }),
+    rejectedAt: timestamp('rejected_at'),
   },
   (table) => [
     uniqueIndex('course_assistants_course_user_unique').on(

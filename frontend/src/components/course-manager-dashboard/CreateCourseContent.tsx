@@ -9,7 +9,7 @@ import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
-import { courseManagerApi } from "@/lib/api";
+import { courseManagerApi, courseAssistantsApi } from "@/lib/api";
 import type { InstructorListItem, CreateCourseManagerData } from "@/lib/api";
 import {
   ArrowLeft,
@@ -21,9 +21,10 @@ import {
   X,
   ShieldCheck,
   AlertTriangle,
+  Users,
 } from "lucide-react";
 
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3 | 4 | 5;
 
 function StepIndicator({
   currentStep,
@@ -37,6 +38,7 @@ function StepIndicator({
     { number: 2, label: t("createCourse.wizardStep2") },
     { number: 3, label: t("createCourse.wizardStep3") },
     { number: 4, label: t("createCourse.wizardStep4") },
+    { number: 5, label: t("createCourse.wizardStep5") },
   ];
 
   return (
@@ -129,6 +131,13 @@ const CreateCourseContent = () => {
   // Step 3: Instructor Assignment
   const [instructorId, setInstructorId] = useState("");
 
+  // Step 4: TA Assignment (optional)
+  const [availableTAs, setAvailableTAs] = useState<
+    Array<{ id: string; firstName: string | null; lastName: string | null; email: string }>
+  >([]);
+  const [loadingTAs, setLoadingTAs] = useState(true);
+  const [selectedTAId, setSelectedTAId] = useState("");
+
   // Submit
   const [submitting, setSubmitting] = useState(false);
 
@@ -146,13 +155,19 @@ const CreateCourseContent = () => {
     return courseClassification === "long" ? 40 : 50;
   }, [courseClassification]);
 
-  // Fetch instructors on mount
+  // Fetch instructors and TAs on mount
   useEffect(() => {
     courseManagerApi
       .getInstructors()
       .then((data) => setInstructors(data))
       .catch(() => toast.error("Failed to load instructors"))
       .finally(() => setLoadingInstructors(false));
+
+    courseManagerApi
+      .getAvailableTAs()
+      .then((data) => setAvailableTAs(data))
+      .catch(() => setAvailableTAs([]))
+      .finally(() => setLoadingTAs(false));
   }, []);
 
   const handleThumbnailSelect = async (
@@ -205,7 +220,7 @@ const CreateCourseContent = () => {
   };
 
   const goNext = () => {
-    if (validateStep(currentStep) && currentStep < 4) {
+    if (validateStep(currentStep) && currentStep < 5) {
       setCurrentStep((currentStep + 1) as WizardStep);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -238,6 +253,16 @@ const CreateCourseContent = () => {
       if (cohort.trim()) payload.cohort = cohort.trim();
 
       const created = await courseManagerApi.createCourse(payload);
+
+      // Assign TA if selected
+      if (selectedTAId) {
+        try {
+          await courseAssistantsApi.assignTA(created.id, { userId: selectedTAId });
+        } catch {
+          toast.error(t("createCourse.taAssignError"));
+        }
+      }
+
       toast.success(t("createCourse.success"));
       router.push(`/${locale}/dashboard/manager/courses/${created.id}`);
     } catch (err) {
@@ -250,6 +275,7 @@ const CreateCourseContent = () => {
   };
 
   const selectedInstructor = instructors.find((i) => i.id === instructorId);
+  const selectedTA = availableTAs.find((ta) => ta.id === selectedTAId);
 
   const inputClass =
     "w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]";
@@ -533,7 +559,7 @@ const CreateCourseContent = () => {
                   {/* NELC Configuration */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <div className="flex items-center gap-2 mb-4">
-                      <ShieldCheck className="w-5 h-5 text-[#002D87]" />
+                      <ShieldCheck className="w-5 h-5 text-[#6b4e24]" />
                       <h2 className="text-lg font-semibold text-[#1F2937]">
                         {t("createCourse.nelcConfig")}
                       </h2>
@@ -541,7 +567,7 @@ const CreateCourseContent = () => {
 
                     {/* Auto-computed NELC info */}
                     {courseClassification && (
-                      <div className="mb-4 p-3 bg-[#F0F7FF] border border-[#BFDBFE] rounded-lg">
+                      <div className="mb-4 p-3 bg-[#FFF8E6] border border-[#BFDBFE] rounded-lg">
                         <div className="flex items-center gap-4 text-sm">
                           <div>
                             <span className="text-[#6B7280]">
@@ -583,7 +609,7 @@ const CreateCourseContent = () => {
                           onChange={(e) =>
                             setNelcAccreditation(e.target.checked)
                           }
-                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#002D87] focus:ring-[#002D87]"
+                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#a37f49] focus:ring-[#d4a520]"
                         />
                       </label>
 
@@ -603,7 +629,7 @@ const CreateCourseContent = () => {
                           onChange={(e) =>
                             setBilingualContent(e.target.checked)
                           }
-                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#002D87] focus:ring-[#002D87]"
+                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#a37f49] focus:ring-[#d4a520]"
                         />
                       </label>
 
@@ -621,7 +647,7 @@ const CreateCourseContent = () => {
                           type="checkbox"
                           checked={wcagCompliant}
                           onChange={(e) => setWcagCompliant(e.target.checked)}
-                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#002D87] focus:ring-[#002D87]"
+                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#a37f49] focus:ring-[#d4a520]"
                         />
                       </label>
                     </div>
@@ -680,8 +706,78 @@ const CreateCourseContent = () => {
                 </div>
               )}
 
-              {/* Step 4: Review & Submit */}
+              {/* Step 4: TA Assignment (Optional) */}
               {currentStep === 4 && (
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="w-5 h-5 text-[#6b4e24]" />
+                    <h2 className="text-lg font-semibold text-[#1F2937]">
+                      {t("createCourse.taAssignment")}
+                    </h2>
+                  </div>
+                  <p className="text-sm text-[#6B7280] mb-4">
+                    {t("createCourse.taAssignmentDesc")}
+                  </p>
+
+                  <div>
+                    <label htmlFor="ta-select" className="block text-sm font-medium text-[#374151] mb-1">
+                      {t("createCourse.selectTA")}
+                    </label>
+                    <select
+                      id="ta-select"
+                      value={selectedTAId}
+                      onChange={(e) => setSelectedTAId(e.target.value)}
+                      className={`max-w-md ${selectClass}`}
+                    >
+                      <option value="">
+                        {loadingTAs
+                          ? t("createCourse.loadingTAs")
+                          : t("createCourse.chooseTA")}
+                      </option>
+                      {availableTAs.map((ta) => (
+                        <option key={ta.id} value={ta.id}>
+                          {[ta.firstName, ta.lastName]
+                            .filter(Boolean)
+                            .join(" ") || ta.email}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Selected TA preview */}
+                  {selectedTA && (
+                    <div className="mt-4 p-4 bg-[#FFF8E6] border border-[#E5E7EB] rounded-lg max-w-md flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-[#1F2937]">
+                          {[selectedTA.firstName, selectedTA.lastName]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </p>
+                        <p className="text-xs text-[#6B7280] mt-0.5">
+                          {selectedTA.email}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTAId("")}
+                        className="p-1 text-[#6B7280] hover:text-red-500 transition-colors"
+                        aria-label={tA("removeImage")}
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {!selectedTAId && (
+                    <p className="mt-3 text-xs text-[#9CA3AF]">
+                      {t("createCourse.taSkipNote")}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Step 5: Review & Submit */}
+              {currentStep === 5 && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
@@ -822,6 +918,25 @@ const CreateCourseContent = () => {
                           <p className="text-sm text-[#6B7280]">—</p>
                         )}
                       </div>
+
+                      {/* Teaching Assistant */}
+                      <div className="border border-[#E5E7EB] rounded-lg p-4">
+                        <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                          {t("createCourse.taAssignment")}
+                        </h3>
+                        {selectedTA ? (
+                          <p className="text-sm font-medium text-[#1F2937]">
+                            {[selectedTA.firstName, selectedTA.lastName]
+                              .filter(Boolean)
+                              .join(" ")}{" "}
+                            ({selectedTA.email})
+                          </p>
+                        ) : (
+                          <p className="text-sm text-[#6B7280]">
+                            {t("createCourse.noTASelected")}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -840,11 +955,11 @@ const CreateCourseContent = () => {
                     : t("createCourse.back")}
                 </button>
 
-                {currentStep < 4 ? (
+                {currentStep < 5 ? (
                   <button
                     type="button"
                     onClick={goNext}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     {t("createCourse.next")}
                     <ArrowRight className="w-4 h-4" />

@@ -174,7 +174,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:bg-[#001d5c] transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -224,7 +224,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("attendance.searchPlaceholder")}
-            className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#002D87]/20"
+            className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
           />
         </div>
       )}
@@ -232,7 +232,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
       {/* Student list */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredRecords.length === 0 ? (
         <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
@@ -277,7 +277,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
                       setHasChanges(true);
                     }}
                     placeholder={t("attendance.notePlaceholder")}
-                    className="w-full px-3 py-1.5 text-xs border border-[#E5E7EB] rounded-lg bg-[#F9FAFB] focus:outline-none focus:ring-1 focus:ring-[#002D87]/20"
+                    className="w-full px-3 py-1.5 text-xs border border-[#E5E7EB] rounded-lg bg-[#F9FAFB] focus:outline-none focus:ring-1 focus:ring-[#d4a520]/20"
                   />
                 )}
                 {(record.joinedAt || record.leftAt) && (
@@ -311,7 +311,7 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:bg-[#001d5c] transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />

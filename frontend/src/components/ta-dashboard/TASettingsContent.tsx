@@ -329,7 +329,7 @@ const TASettingsContent = () => {
                         <div ref={avatarMenuRef}>
                           <button
                             onClick={() => setAvatarMenuOpen((v) => !v)}
-                            className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#002D87] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#001d5e] transition-colors`}
+                            className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 btn-gold rounded-full flex items-center justify-center border-2 border-white cursor-pointer transition-colors`}
                           >
                             <Pencil className="w-3.5 h-3.5 text-white" />
                           </button>

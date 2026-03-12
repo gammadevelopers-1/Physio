@@ -352,7 +352,7 @@ const TADashboardContent = ({
 
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="w-8 h-8 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : todaySessions.length === 0 ? (
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
@@ -403,7 +403,7 @@ const TADashboardContent = ({
                           href={session.zoomLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:bg-[#001d5e] transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors"
                         >
                           <Video className="w-4 h-4" />
                           {t("sessions.joinZoom")}
@@ -465,7 +465,7 @@ const TADashboardContent = ({
                         key={i}
                         className={`rounded-xl border p-3 text-center ${
                           isToday
-                            ? "bg-[#002D87] text-white border-[#002D87]"
+                            ? "btn-gold text-white border-[#a37f49]"
                             : "bg-white border-[#E5E7EB]"
                         }`}
                       >
@@ -590,7 +590,7 @@ const TADashboardContent = ({
                 {t("home.upcomingSessions.title")}
               </h3>
               <Link
-                href={`/${locale}/dashboard/ta/sessions`}
+                href={`/${locale}/dashboard/teaching-assistant/sessions`}
                 className="text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
               >
                 {t("home.upcomingSessions.viewAll")} &rarr;
@@ -644,7 +644,7 @@ const TADashboardContent = ({
                 {t("home.coursesOverview.title")}
               </h3>
               <Link
-                href={`/${locale}/dashboard/ta/courses`}
+                href={`/${locale}/dashboard/teaching-assistant/courses`}
                 className="text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium transition-colors"
               >
                 {t("home.coursesOverview.viewAll")} &rarr;

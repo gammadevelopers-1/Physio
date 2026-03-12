@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { UserPlus, X, Loader2 } from "lucide-react";
+import { UserPlus, X, Loader2, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { courseAssistantsApi } from "@/lib/api";
 
@@ -28,6 +28,16 @@ interface AvailableTA {
   email: string;
 }
 
+interface ThresholdStatus {
+  enrolledCount: number;
+  requiredTAs: number;
+  activeTAs: number;
+  preAssignedTAs: number;
+  suggestedTAs: number;
+  deficit: number;
+  thresholds: { low: number; mid: number };
+}
+
 interface CourseAssistantsSuggestPanelProps {
   courseId: string;
 }
@@ -38,6 +48,8 @@ const CourseAssistantsSuggestPanel = ({
   const t = useTranslations("instructorDashboard");
   const [tas, setTAs] = useState<CourseTA[]>([]);
   const [availableTAs, setAvailableTAs] = useState<AvailableTA[]>([]);
+  const [thresholdStatus, setThresholdStatus] =
+    useState<ThresholdStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [suggesting, setSuggesting] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -63,10 +75,20 @@ const CourseAssistantsSuggestPanel = ({
     }
   }, [courseId]);
 
+  const fetchThresholdStatus = useCallback(async () => {
+    try {
+      const data = await courseAssistantsApi.getThresholdStatus(courseId);
+      setThresholdStatus(data);
+    } catch {
+      setThresholdStatus(null);
+    }
+  }, [courseId]);
+
   useEffect(() => {
     fetchTAs();
     fetchAvailableTAs();
-  }, [fetchTAs, fetchAvailableTAs]);
+    fetchThresholdStatus();
+  }, [fetchTAs, fetchAvailableTAs, fetchThresholdStatus]);
 
   const handleSuggest = async (userId: string) => {
     try {
@@ -75,6 +97,8 @@ const CourseAssistantsSuggestPanel = ({
       toast.success("TA suggestion sent to managers for approval");
       setShowDropdown(false);
       await fetchTAs();
+      await fetchAvailableTAs();
+      await fetchThresholdStatus();
     } catch {
       toast.error("Failed to suggest TA");
     } finally {
@@ -82,8 +106,12 @@ const CourseAssistantsSuggestPanel = ({
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (ta: CourseTA) => {
+    // Deactivation pending takes precedence for approved TAs
+    if (ta.status === "approved" && ta.deactivationScheduledAt) {
+      return "bg-orange-50 text-orange-700 border-orange-200";
+    }
+    switch (ta.status) {
       case "approved":
         return "bg-green-50 text-green-700 border-green-200";
       case "pre_assigned":
@@ -97,8 +125,11 @@ const CourseAssistantsSuggestPanel = ({
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
+  const getStatusLabel = (ta: CourseTA) => {
+    if (ta.status === "approved" && ta.deactivationScheduledAt) {
+      return "Deactivation Pending";
+    }
+    switch (ta.status) {
       case "approved":
         return "Active";
       case "pre_assigned":
@@ -108,7 +139,7 @@ const CourseAssistantsSuggestPanel = ({
       case "rejected":
         return "Rejected";
       default:
-        return status;
+        return ta.status;
     }
   };
 
@@ -127,13 +158,41 @@ const CourseAssistantsSuggestPanel = ({
         {unassignedTAs.length > 0 && (
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F7FF] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6b4e24] border border-[#a37f49] rounded-lg hover:bg-[#FFF8E6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             Suggest TA
           </button>
         )}
       </div>
+
+      {/* Threshold Status Info */}
+      {thresholdStatus && (
+        <div
+          className={`mb-4 p-3 rounded-lg border text-sm ${
+            thresholdStatus.deficit > 0
+              ? "bg-red-50 border-red-200 text-red-700"
+              : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563]"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {thresholdStatus.deficit > 0 && (
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            )}
+            <span>
+              {thresholdStatus.enrolledCount} enrolled &middot;{" "}
+              {thresholdStatus.requiredTAs} TA(s) required &middot;{" "}
+              {thresholdStatus.activeTAs} active
+              {thresholdStatus.deficit > 0 && (
+                <span className="font-medium">
+                  {" "}
+                  &middot; {thresholdStatus.deficit} TA(s) needed
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Suggest TA Dropdown */}
       {showDropdown && (
@@ -159,7 +218,7 @@ const CourseAssistantsSuggestPanel = ({
                   <span className="text-[#6B7280]">({ta.email})</span>
                 </span>
                 {suggesting && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#002D87]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#6b4e24]" />
                 )}
               </button>
             ))}
@@ -170,7 +229,7 @@ const CourseAssistantsSuggestPanel = ({
       {/* Current TAs List */}
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <div className="w-6 h-6 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tas.length === 0 ? (
         <p className="text-sm text-[#6B7280] text-center py-4">
@@ -189,11 +248,18 @@ const CourseAssistantsSuggestPanel = ({
                 </p>
                 <p className="text-xs text-[#6B7280]">{ta.email}</p>
               </div>
-              <span
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(ta.status)}`}
-              >
-                {getStatusLabel(ta.status)}
-              </span>
+              <div className="flex items-center gap-2">
+                {ta.status === "approved" && ta.deactivationScheduledAt && (
+                  <span title="Will be deactivated if enrollment stays below threshold">
+                    <Clock className="w-3.5 h-3.5 text-orange-500" />
+                  </span>
+                )}
+                <span
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(ta)}`}
+                >
+                  {getStatusLabel(ta)}
+                </span>
+              </div>
             </div>
           ))}
         </div>

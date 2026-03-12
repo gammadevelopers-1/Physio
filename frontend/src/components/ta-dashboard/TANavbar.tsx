@@ -44,12 +44,12 @@ const TANavbar = () => {
   const dashboardNavItems = [
     {
       label: tDashboard("sidebar.dashboard"),
-      href: `/${locale}/dashboard/ta`,
+      href: `/${locale}/dashboard/teaching-assistant`,
       icon: LayoutDashboard,
     },
     {
       label: tDashboard("sidebar.sessions"),
-      href: `/${locale}/dashboard/ta/sessions`,
+      href: `/${locale}/dashboard/teaching-assistant/sessions`,
       icon: Calendar,
     },
   ];
@@ -143,11 +143,11 @@ const TANavbar = () => {
 
             {isUserMenuOpen && (
               <div className={`absolute top-full mt-2 bg-white rounded-lg shadow-lg border border-[var(--outline-subtle)] py-2 min-w-[180px] z-50 ${isRTL ? "left-0" : "right-0"}`} role="menu">
-                <Link href={`/${locale}/dashboard/ta`} className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors" onClick={() => setIsUserMenuOpen(false)} role="menuitem">
+                <Link href={`/${locale}/dashboard/teaching-assistant`} className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors" onClick={() => setIsUserMenuOpen(false)} role="menuitem">
                   <User className="w-4 h-4" />
                   {tDashboard("sidebar.dashboard")}
                 </Link>
-                <Link href={`/${locale}/dashboard/ta/settings`} className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors" onClick={() => setIsUserMenuOpen(false)} role="menuitem">
+                <Link href={`/${locale}/dashboard/teaching-assistant/settings`} className="flex items-center gap-2 px-4 py-2 text-[var(--on-surface-variant)] text-sm hover:bg-[var(--surface-container-low)] hover:text-[var(--on-surface-default)] transition-colors" onClick={() => setIsUserMenuOpen(false)} role="menuitem">
                   <Settings className="w-4 h-4" />
                   {tDashboard("sidebar.settings")}
                 </Link>
@@ -194,8 +194,8 @@ const TANavbar = () => {
                 const isActive = isActiveRoute(item.href);
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#F0F7FF] text-[#002D87]" : "text-[#4B5563] hover:bg-[#F9FAFB]"}`}>
-                    <Icon className={`w-5 h-5 ${isActive ? "text-[#002D87]" : "text-[#6B7280]"}`} />
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#FFF8E6] text-[#6b4e24]" : "text-[#4B5563] hover:bg-[#F9FAFB]"}`}>
+                    <Icon className={`w-5 h-5 ${isActive ? "text-[#6b4e24]" : "text-[#6B7280]"}`} />
                     <span className={`text-sm ${isActive ? "font-medium" : ""}`}>{item.label}</span>
                   </Link>
                 );

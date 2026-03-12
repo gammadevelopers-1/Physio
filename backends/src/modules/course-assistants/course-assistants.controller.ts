@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CourseAssistantsService } from './course-assistants.service';
 import { AssignCourseTADto } from './dto/assign-course-ta.dto';
+import { RejectCourseTADto } from './dto/reject-course-ta.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -25,12 +26,51 @@ export class CourseAssistantsController {
   ) {}
 
   /**
+   * GET /courses/:courseId/assistants/threshold-status — Get threshold status
+   * (Must be before generic @Get() to avoid route conflict)
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('threshold-status')
+  async getThresholdStatus(@Param('courseId') courseId: string) {
+    return this.courseAssistantsService.getThresholdStatus(courseId);
+  }
+
+  /**
+   * GET /courses/:courseId/assistants/available — List all users with TA role
+   * (Must be before generic @Get() to avoid route conflict)
+   */
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('available')
+  async listAvailableTAs(@Param('courseId') courseId: string) {
+    return this.courseAssistantsService.listAvailableTAs(courseId);
+  }
+
+  /**
    * GET /courses/:courseId/assistants — List course TAs with status
    */
   @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get()
   async getCourseTAs(@Param('courseId') courseId: string) {
     return this.courseAssistantsService.getCourseTAs(courseId);
+  }
+
+  /**
+   * POST /courses/:courseId/assistants/suggest — Instructor suggests a TA
+   * (Must be before generic @Post() to avoid route conflict)
+   */
+  @Roles('INSTRUCTOR' as UserRole)
+  @Post('suggest')
+  @HttpCode(HttpStatus.CREATED)
+  async suggestTA(
+    @Param('courseId') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: AssignCourseTADto,
+  ) {
+    return this.courseAssistantsService.suggestTA(
+      courseId,
+      dto.userId,
+      user.id,
+    );
   }
 
   /**
@@ -45,24 +85,6 @@ export class CourseAssistantsController {
     @Body() dto: AssignCourseTADto,
   ) {
     return this.courseAssistantsService.assignTA(
-      courseId,
-      dto.userId,
-      user.id,
-    );
-  }
-
-  /**
-   * POST /courses/:courseId/assistants/suggest — Instructor suggests a TA
-   */
-  @Roles('INSTRUCTOR' as UserRole)
-  @Post('suggest')
-  @HttpCode(HttpStatus.CREATED)
-  async suggestTA(
-    @Param('courseId') courseId: string,
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: AssignCourseTADto,
-  ) {
-    return this.courseAssistantsService.suggestTA(
       courseId,
       dto.userId,
       user.id,
@@ -90,8 +112,9 @@ export class CourseAssistantsController {
   async rejectTA(
     @Param('courseId') courseId: string,
     @Param('userId') userId: string,
+    @Body() dto: RejectCourseTADto,
   ) {
-    return this.courseAssistantsService.rejectTA(courseId, userId);
+    return this.courseAssistantsService.rejectTA(courseId, userId, dto.reason);
   }
 
   /**
@@ -121,23 +144,5 @@ export class CourseAssistantsController {
       userId,
       body.priority,
     );
-  }
-
-  /**
-   * GET /courses/:courseId/assistants/threshold-status — Get threshold status
-   */
-  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
-  @Get('threshold-status')
-  async getThresholdStatus(@Param('courseId') courseId: string) {
-    return this.courseAssistantsService.getThresholdStatus(courseId);
-  }
-
-  /**
-   * GET /courses/:courseId/assistants/available — List all users with TA role
-   */
-  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
-  @Get('available')
-  async listAvailableTAs() {
-    return this.courseAssistantsService.listAvailableTAs();
   }
 }

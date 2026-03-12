@@ -26,6 +26,7 @@ import {
 import { RegisterDto, LoginDto, CreateUserDto, UpdateUserDto, UpdateProfileDto } from './dto';
 import { EmailService } from '../email/email.service';
 import { JwtPayload } from './strategies/jwt.strategy';
+import { CourseAssistantsService } from '../course-assistants/course-assistants.service';
 
 @Injectable()
 export class AuthService {
@@ -36,6 +37,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private emailService: EmailService,
+    private courseAssistantsService: CourseAssistantsService,
   ) {}
 
   // ===========================================
@@ -893,9 +895,13 @@ export class AuthService {
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 
-    // If user was suspended, revoke all sessions
+    // If user was suspended, revoke all sessions and cascade TA deactivation (EC-15)
     if (dto.isActive === false && user.isActive === true) {
       await this.revokeAllUserSessions(userId);
+      // EC-15: Cascade TA deactivation — reject all course assignments, warn managers
+      this.courseAssistantsService
+        .handleTAAccountDeactivation(userId)
+        .catch((err) => console.error('TA deactivation cascade failed', err));
     }
 
     // If active role changed, revoke all sessions

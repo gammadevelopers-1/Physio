@@ -44,6 +44,10 @@ import {
   getTaAssignmentText,
 } from './templates/ta-assignment.template';
 import {
+  getTaRejectionHtml,
+  getTaRejectionText,
+} from './templates/ta-rejection.template';
+import {
   getSessionStartedHtml,
   getSessionStartedText,
 } from './templates/session-started.template';
@@ -528,6 +532,36 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send TA assignment email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send TA rejection notification email to the suggesting instructor
+   */
+  async sendTaRejection(
+    to: string,
+    params: {
+      recipientName: string;
+      courseName: string;
+      taName: string;
+      rejectionReason: string;
+    },
+  ): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `TA Suggestion Rejected: ${params.courseName}`,
+        html: getTaRejectionHtml(params),
+        text: getTaRejectionText(params),
+      });
+      this.logger.log(
+        `TA rejection email sent to ${to} for "${params.courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send TA rejection email to ${to}`,
         error,
       );
     }

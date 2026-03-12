@@ -131,7 +131,7 @@ const CatalogOverviewWidget = ({
     });
   })();
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     active:
       "bg-[var(--functional-green-400)]/10 text-[var(--functional-green-600)]",
     preparing:
@@ -139,6 +139,9 @@ const CatalogOverviewWidget = ({
     completed:
       "bg-[var(--functional-blue-400)]/10 text-[var(--functional-blue-600)]",
     archived: "bg-[#F3F4F6] text-[var(--on-surface-variant)]",
+    draft: "bg-[#F3F4F6] text-[var(--on-surface-variant)]",
+    pending_review:
+      "bg-[var(--functional-amber-500)]/10 text-[var(--functional-amber-600)]",
   };
 
   const renderDropdown = (course: Course) => (

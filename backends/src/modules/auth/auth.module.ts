@@ -8,6 +8,7 @@ import { TwoFactorService } from './two-factor.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { CourseAssistantsModule } from '../course-assistants/course-assistants.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RolesGuard } from './guards/roles.guard';
         },
       }),
     }),
+    CourseAssistantsModule,
   ],
   controllers: [AuthController],
   providers: [

@@ -44,6 +44,9 @@ const CourseAssistantsManagePanel = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [rejectingUserId, setRejectingUserId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectingLoading, setRejectingLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -101,12 +104,21 @@ const CourseAssistantsManagePanel = ({
   };
 
   const handleReject = async (userId: string) => {
+    if (!rejectionReason.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
     try {
-      await courseAssistantsApi.rejectTA(courseId, userId);
+      setRejectingLoading(true);
+      await courseAssistantsApi.rejectTA(courseId, userId, { reason: rejectionReason.trim() });
       toast.success("TA suggestion rejected");
+      setRejectingUserId(null);
+      setRejectionReason("");
       await fetchData();
     } catch {
       toast.error("Failed to reject TA");
+    } finally {
+      setRejectingLoading(false);
     }
   };
 
@@ -143,8 +155,11 @@ const CourseAssistantsManagePanel = ({
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (ta: CourseAssistantTA) => {
+    if (ta.status === "approved" && ta.deactivationScheduledAt) {
+      return "bg-orange-50 text-orange-700 border-orange-200";
+    }
+    switch (ta.status) {
       case "approved":
         return "bg-green-50 text-green-700 border-green-200";
       case "pre_assigned":
@@ -158,8 +173,11 @@ const CourseAssistantsManagePanel = ({
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
+  const getStatusLabel = (ta: CourseAssistantTA) => {
+    if (ta.status === "approved" && ta.deactivationScheduledAt) {
+      return "Deactivation Pending";
+    }
+    switch (ta.status) {
       case "approved":
         return t("taManagement.activeTA") || "Active";
       case "pre_assigned":
@@ -169,7 +187,7 @@ const CourseAssistantsManagePanel = ({
       case "rejected":
         return "Rejected";
       default:
-        return status;
+        return ta.status;
     }
   };
 
@@ -208,7 +226,7 @@ const CourseAssistantsManagePanel = ({
         {unassignedTAs.length > 0 && (
           <button
             onClick={() => setShowDropdown(!showDropdown)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F7FF] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6b4e24] border border-[#a37f49] rounded-lg hover:bg-[#FFF8E6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
             {t("taManagement.assignTA") || "Assign TA"}
@@ -271,7 +289,7 @@ const CourseAssistantsManagePanel = ({
                   <span className="text-[#6B7280]">({ta.email})</span>
                 </span>
                 {assigning && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#002D87]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#6b4e24]" />
                 )}
               </button>
             ))}
@@ -282,7 +300,7 @@ const CourseAssistantsManagePanel = ({
       {/* TAs List */}
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <div className="w-6 h-6 border-2 border-[#002D87] border-t-transparent rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[#a37f49] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : sortedTAs.length === 0 ? (
         <p className="text-sm text-[#6B7280] text-center py-4">
@@ -305,7 +323,7 @@ const CourseAssistantsManagePanel = ({
                         handlePriorityChange(ta.userId, "up")
                       }
                       disabled={ta.priority <= minPriority}
-                      className="p-0.5 text-[#6B7280] hover:text-[#002D87] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-0.5 text-[#6B7280] hover:text-[#6b4e24] disabled:opacity-30 disabled:cursor-not-allowed"
                       title={t("taManagement.movePriorityUp") || "Move priority up"}
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
@@ -315,7 +333,7 @@ const CourseAssistantsManagePanel = ({
                         handlePriorityChange(ta.userId, "down")
                       }
                       disabled={ta.priority >= maxPriority}
-                      className="p-0.5 text-[#6B7280] hover:text-[#002D87] disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="p-0.5 text-[#6B7280] hover:text-[#6b4e24] disabled:opacity-30 disabled:cursor-not-allowed"
                       title={t("taManagement.movePriorityDown") || "Move priority down"}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
@@ -351,9 +369,9 @@ const CourseAssistantsManagePanel = ({
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(ta.status)}`}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(ta)}`}
                 >
-                  {getStatusLabel(ta.status)}
+                  {getStatusLabel(ta)}
                 </span>
 
                 {/* Approve/Reject for suggested TAs */}
@@ -367,7 +385,7 @@ const CourseAssistantsManagePanel = ({
                       <CheckCircle className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleReject(ta.userId)}
+                      onClick={() => setRejectingUserId(ta.userId)}
                       className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       title="Reject"
                     >
@@ -413,6 +431,68 @@ const CourseAssistantsManagePanel = ({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Rejection Reason Modal */}
+      {rejectingUserId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              if (!rejectingLoading) {
+                setRejectingUserId(null);
+                setRejectionReason("");
+              }
+            }}
+          />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-[#1F2937] mb-1">
+              Reject TA Suggestion
+            </h3>
+            <p className="text-sm text-[#6B7280] mb-4">
+              Please provide a reason for rejecting this TA suggestion.
+            </p>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                  setRejectionReason(e.target.value);
+                }
+              }}
+              placeholder="Enter rejection reason..."
+              rows={4}
+              className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
+              disabled={rejectingLoading}
+            />
+            <div className="flex items-center justify-between mt-2 mb-4">
+              <span className="text-xs text-[#9CA3AF]">
+                {rejectionReason.length}/500 characters
+              </span>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  setRejectingUserId(null);
+                  setRejectionReason("");
+                }}
+                disabled={rejectingLoading}
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleReject(rejectingUserId)}
+                disabled={rejectingLoading || !rejectionReason.trim()}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#a37f49] rounded-lg hover:bg-[#8b6a3d] transition-colors disabled:opacity-50"
+              >
+                {rejectingLoading && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+                Confirm Reject
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

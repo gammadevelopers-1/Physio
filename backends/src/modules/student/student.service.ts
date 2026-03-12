@@ -1140,6 +1140,11 @@ export class StudentService {
         },
       });
 
+      // Trigger TA threshold evaluation (auto-activate pre-assigned TAs)
+      this.thresholdEvaluationService
+        .evaluateAndAct(courseId)
+        .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
+
       return reactivated;
     }
 
@@ -1163,6 +1168,11 @@ export class StudentService {
         selfEnroll: true,
       },
     });
+
+    // Trigger TA threshold evaluation (auto-activate pre-assigned TAs)
+    this.thresholdEvaluationService
+      .evaluateAndAct(courseId)
+      .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
 
     return enrollment;
   }

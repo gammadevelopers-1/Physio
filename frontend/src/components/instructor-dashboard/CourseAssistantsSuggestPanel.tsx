@@ -143,8 +143,10 @@ const CourseAssistantsSuggestPanel = ({
     }
   };
 
-  // Filter out TAs that are already assigned
-  const assignedUserIds = new Set(tas.map((ta) => ta.userId));
+  // Filter out TAs that are already assigned (rejected TAs can be re-suggested)
+  const assignedUserIds = new Set(
+    tas.filter((ta) => ta.status !== "rejected").map((ta) => ta.userId)
+  );
   const unassignedTAs = availableTAs.filter(
     (ta) => !assignedUserIds.has(ta.id)
   );

@@ -83,13 +83,24 @@ const CourseManagerDashboardContent = () => {
     rating: ratingsMap[c.id]?.avgRating ?? null,
   }));
 
-  // Handle status change from CatalogOverviewWidget
+  // Handle status change from CatalogOverviewWidget using dedicated endpoints
   const handleCatalogStatusChange = useCallback(
     async (courseId: string, newStatus: string) => {
-      // Map widget status "preparing" back to backend "draft"
-      const backendStatus = newStatus === "preparing" ? "draft" : newStatus;
       try {
-        await courseManagerApi.updateCourse(courseId, { status: backendStatus });
+        switch (newStatus) {
+          case "active":
+            await courseManagerApi.activateCourse(courseId);
+            break;
+          case "archived":
+            await courseManagerApi.deactivateCourse(courseId);
+            break;
+          case "completed":
+            await courseManagerApi.completeCourse(courseId);
+            break;
+          default:
+            toast.error("Unsupported status transition");
+            return;
+        }
         toast.success(t("catalog.statusChanged"));
         silentRefetch();
       } catch (err) {

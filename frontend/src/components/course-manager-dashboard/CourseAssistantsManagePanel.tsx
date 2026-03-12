@@ -205,7 +205,9 @@ const CourseAssistantsManagePanel = ({
     return a.priority - b.priority;
   });
 
-  const assignedUserIds = new Set(tas.map((ta) => ta.userId));
+  const assignedUserIds = new Set(
+    tas.filter((ta) => ta.status !== "rejected").map((ta) => ta.userId)
+  );
   const unassignedTAs = availableTAs.filter(
     (ta) => !assignedUserIds.has(ta.id)
   );

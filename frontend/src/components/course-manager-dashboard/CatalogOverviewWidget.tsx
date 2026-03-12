@@ -10,7 +10,6 @@ import {
   BookOpen,
   Loader2,
   Play,
-  FileText,
   CheckCircle,
   Archive,
 } from "lucide-react";
@@ -36,7 +35,6 @@ interface CatalogOverviewWidgetProps {
 
 const STATUS_OPTIONS = [
   { value: "active", icon: <Play className="w-3.5 h-3.5" /> },
-  { value: "preparing", icon: <FileText className="w-3.5 h-3.5" /> },
   { value: "completed", icon: <CheckCircle className="w-3.5 h-3.5" /> },
   { value: "archived", icon: <Archive className="w-3.5 h-3.5" /> },
 ] as const;

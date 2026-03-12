@@ -162,7 +162,7 @@ export class CourseAssistantsService {
 
     // Check not already assigned
     const [existing] = await db
-      .select({ id: courseAssistants.id })
+      .select({ id: courseAssistants.id, status: courseAssistants.status })
       .from(courseAssistants)
       .where(
         and(
@@ -172,7 +172,7 @@ export class CourseAssistantsService {
       )
       .limit(1);
 
-    if (existing) {
+    if (existing && existing.status !== 'rejected') {
       throw new BadRequestException(
         'User is already assigned to this course',
       );
@@ -181,7 +181,9 @@ export class CourseAssistantsService {
     // Calculate threshold-based status (EC-1, EC-2)
     const enrolledCount = await this.getEnrollmentCount(courseId);
     const requiredTAs = this.thresholdService.calculateRequiredTAs(enrolledCount);
-    const priority = await this.getNextPriority(courseId);
+    const priority = existing
+      ? (await this.getNextPriority(courseId))
+      : (await this.getNextPriority(courseId));
 
     // Count currently approved TAs
     const [activeResult] = await db
@@ -199,18 +201,35 @@ export class CourseAssistantsService {
     const shouldActivate = currentActive < requiredTAs;
     const status = shouldActivate ? 'approved' : 'pre_assigned';
 
-    const [assignment] = await db
-      .insert(courseAssistants)
-      .values({
-        courseId,
-        userId,
-        status,
-        priority,
-        approvedBy: shouldActivate ? assignedBy : null,
-        approvedAt: shouldActivate ? new Date() : null,
-        assignedBy,
-      })
-      .returning();
+    let assignment;
+    if (existing && existing.status === 'rejected') {
+      // Re-assign: update the rejected record
+      [assignment] = await db
+        .update(courseAssistants)
+        .set({
+          status,
+          priority,
+          approvedBy: shouldActivate ? assignedBy : null,
+          approvedAt: shouldActivate ? new Date() : null,
+          assignedBy,
+          deactivationScheduledAt: null,
+        })
+        .where(eq(courseAssistants.id, existing.id))
+        .returning();
+    } else {
+      [assignment] = await db
+        .insert(courseAssistants)
+        .values({
+          courseId,
+          userId,
+          status,
+          priority,
+          approvedBy: shouldActivate ? assignedBy : null,
+          approvedAt: shouldActivate ? new Date() : null,
+          assignedBy,
+        })
+        .returning();
+    }
 
     // EC-9: Check workload — warn manager if TA is assigned to other courses
     const [otherCoursesResult] = await db
@@ -360,7 +379,7 @@ export class CourseAssistantsService {
 
     // Check not already assigned
     const [existing] = await db
-      .select({ id: courseAssistants.id })
+      .select({ id: courseAssistants.id, status: courseAssistants.status })
       .from(courseAssistants)
       .where(
         and(
@@ -370,21 +389,37 @@ export class CourseAssistantsService {
       )
       .limit(1);
 
-    if (existing) {
+    if (existing && existing.status !== 'rejected') {
       throw new BadRequestException(
         'User is already assigned or suggested for this course',
       );
     }
 
-    const [suggestion] = await db
-      .insert(courseAssistants)
-      .values({
-        courseId,
-        userId,
-        status: 'suggested',
-        suggestedBy,
-      })
-      .returning();
+    let suggestion;
+    if (existing && existing.status === 'rejected') {
+      // Re-suggest: update the rejected record back to suggested
+      [suggestion] = await db
+        .update(courseAssistants)
+        .set({
+          status: 'suggested',
+          suggestedBy,
+          approvedBy: null,
+          approvedAt: null,
+          deactivationScheduledAt: null,
+        })
+        .where(eq(courseAssistants.id, existing.id))
+        .returning();
+    } else {
+      [suggestion] = await db
+        .insert(courseAssistants)
+        .values({
+          courseId,
+          userId,
+          status: 'suggested',
+          suggestedBy,
+        })
+        .returning();
+    }
 
     // EC-10: Count how many other courses this TA is assigned to
     const [otherCoursesResult] = await db
@@ -1161,12 +1196,17 @@ export class CourseAssistantsService {
         ),
       );
 
-    // Filter out TAs already assigned to this course (any status)
+    // Filter out TAs already assigned to this course (exclude rejected — they can be re-suggested)
     if (courseId && courseId !== '_') {
       const assigned = await db
         .select({ userId: courseAssistants.userId })
         .from(courseAssistants)
-        .where(eq(courseAssistants.courseId, courseId));
+        .where(
+          and(
+            eq(courseAssistants.courseId, courseId),
+            sql`${courseAssistants.status} != 'rejected'`,
+          ),
+        );
 
       const assignedIds = new Set(assigned.map((a) => a.userId));
       return tas.filter((ta) => !assignedIds.has(ta.id));

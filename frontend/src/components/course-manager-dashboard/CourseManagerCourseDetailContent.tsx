@@ -456,6 +456,16 @@ const CourseManagerCourseDetailContent = ({
                             {t("courseDetail.archive")}
                           </button>
                         )}
+                        {(course.status === "archived" || course.status === "completed") && (
+                          <button
+                            onClick={handleActivate}
+                            disabled={updatingStatus}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] text-white text-sm font-medium rounded-lg hover:bg-[#15803D] transition-colors disabled:opacity-50"
+                          >
+                            <Play className="w-4 h-4" />
+                            {t("courseDetail.activate")}
+                          </button>
+                        )}
                         <Link
                           href={`/${locale}/dashboard/manager/courses/${course.id}/edit`}
                           className="inline-flex items-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"

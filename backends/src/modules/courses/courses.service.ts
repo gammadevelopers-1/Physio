@@ -965,41 +965,52 @@ export class CoursesService {
       throw new BadRequestException('Course is already active');
     }
 
-    if (
-      course.status !== COURSE_STATUS.PENDING_REVIEW &&
-      course.status !== COURSE_STATUS.DRAFT
-    ) {
+    const allowedStatuses = [
+      COURSE_STATUS.PENDING_REVIEW,
+      COURSE_STATUS.DRAFT,
+      COURSE_STATUS.ARCHIVED,
+      COURSE_STATUS.COMPLETED,
+    ];
+
+    if (!allowedStatuses.includes(course.status as any)) {
       throw new BadRequestException(
-        'Only draft or pending-review courses can be activated',
+        'Course cannot be activated from its current status',
       );
     }
 
-    // Validate course readiness (modules, sessions, dates, CME hours)
-    await this.validateCourseReadiness(courseId, 'activation');
+    const isReactivation =
+      course.status === COURSE_STATUS.ARCHIVED ||
+      course.status === COURSE_STATUS.COMPLETED;
 
-    // Check all materials have been reviewed (status = 'live')
-    const pendingMaterials = await db
-      .select({
-        id: courseMaterials.id,
-        title: courseMaterials.title,
-        status: courseMaterials.status,
-      })
-      .from(courseMaterials)
-      .where(
-        and(
-          eq(courseMaterials.courseId, courseId),
-          sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
-        ),
-      );
+    // Only validate readiness and materials for first-time activation (not reactivation)
+    if (!isReactivation) {
+      // Validate course readiness (modules, sessions, dates, CME hours)
+      await this.validateCourseReadiness(courseId, 'activation');
 
-    if (pendingMaterials.length > 0) {
-      const pendingList = pendingMaterials.map(
-        (m) => `${m.title || m.id} (${m.status})`,
-      );
-      throw new BadRequestException({
-        message: 'Cannot activate course: some materials have not been reviewed',
-        pendingMaterials: pendingList,
-      });
+      // Check all materials have been reviewed (status = 'live')
+      const pendingMaterials = await db
+        .select({
+          id: courseMaterials.id,
+          title: courseMaterials.title,
+          status: courseMaterials.status,
+        })
+        .from(courseMaterials)
+        .where(
+          and(
+            eq(courseMaterials.courseId, courseId),
+            sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+          ),
+        );
+
+      if (pendingMaterials.length > 0) {
+        const pendingList = pendingMaterials.map(
+          (m) => `${m.title || m.id} (${m.status})`,
+        );
+        throw new BadRequestException({
+          message: 'Cannot activate course: some materials have not been reviewed',
+          pendingMaterials: pendingList,
+        });
+      }
     }
 
     const [updated] = await db

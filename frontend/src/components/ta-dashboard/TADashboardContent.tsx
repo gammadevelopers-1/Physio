@@ -19,6 +19,7 @@ import TANavbar from "./TANavbar";
 import TASessionsContent from "./TASessionsContent";
 import TAAttendanceView from "./TAAttendanceView";
 import TAAssessmentSubmissionsView from "./TAAssessmentSubmissionsView";
+import SessionsCalendarWidget from "../instructor-dashboard/SessionsCalendarWidget";
 import { taApi, userNotificationsApi } from "@/lib/api";
 import type { TAAssignedCourse, UserNotification } from "@/lib/api";
 
@@ -427,79 +428,29 @@ const TADashboardContent = ({
             )}
           </div>
 
-          {/* Weekly Calendar */}
-          {(() => {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const weekDays = Array.from({ length: 7 }, (_, i) => {
-              const d = new Date(
-                today.getFullYear(),
-                today.getMonth(),
-                today.getDate() - dayOfWeek + i
-              );
-              return d;
-            });
-            const dayNames = weekDays.map((d) =>
-              d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-                weekday: "short",
-              })
-            );
-            const sessionsByDay = weekDays.map((d) => {
-              const dayStr = d.toISOString().slice(0, 10);
-              return weekSessions.filter(
-                (s) => s.scheduledAt.slice(0, 10) === dayStr
-              );
-            });
-
-            return (
-              <div>
-                <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-                  {t("home.weeklyCalendar")}
-                </h2>
-                <div className="grid grid-cols-7 gap-2">
-                  {weekDays.map((d, i) => {
-                    const isToday = d.toDateString() === today.toDateString();
-                    const count = sessionsByDay[i].length;
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded-xl border p-3 text-center ${
-                          isToday
-                            ? "btn-gold text-white border-[#a37f49]"
-                            : "bg-white border-[#E5E7EB]"
-                        }`}
-                      >
-                        <p
-                          className={`text-xs font-medium ${isToday ? "text-white/80" : "text-[#6B7280]"}`}
-                        >
-                          {dayNames[i]}
-                        </p>
-                        <p
-                          className={`text-lg font-bold mt-1 ${isToday ? "text-white" : "text-[#1F2937]"}`}
-                        >
-                          {d.getDate()}
-                        </p>
-                        {count > 0 && (
-                          <div
-                            className={`mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                              isToday
-                                ? "bg-white/20 text-white"
-                                : "bg-[#EFF6FF] text-[#3B82F6]"
-                            }`}
-                          >
-                            {count}{" "}
-                            {count === 1
-                              ? t("home.session")
-                              : t("home.sessionPlural")}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+          {/* Weekly Calendar - same widget as instructor dashboard */}
+          <SessionsCalendarWidget
+            sessions={[...todaySessions, ...weekSessions, ...upcomingSessions]
+              .filter((s, i, arr) => arr.findIndex((x) => x.id === s.id) === i)
+              .map((s) => {
+                const scheduledDate = new Date(s.scheduledAt);
+                const endDate = new Date(scheduledDate.getTime() + s.durationMinutes * 60 * 1000);
+                const formatTime = (d: Date) =>
+                  d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+                return {
+                  id: s.id,
+                  title: s.title,
+                  time: `${formatTime(scheduledDate)} - ${formatTime(endDate)}`,
+                  duration: `${s.durationMinutes} mins`,
+                  type: s.type as "zoom" | "onsite" | "hybrid",
+                  status: s.status as "scheduled" | "live" | "ended" | "completed" | "cancelled",
+                  venue: s.roomName || s.venueAddress || undefined,
+                  enrolled: 0,
+                  dayIndex: scheduledDate.getDay(),
+                  date: scheduledDate.toLocaleDateString("en-CA"),
+                };
+              })}
+          />
         </div>
 
         {/* Right Sidebar Widgets */}

@@ -178,7 +178,9 @@
       "Bash(grep -rn \"instructor\\\\|manager\" /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/ --include=\"page.tsx\")",
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard -type d)",
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\) -name \"layout.tsx\")",
-      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/layout.tsx)"
+      "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/layout.tsx)",
+      "Bash(ls -la \"/home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\(dashboards\\)/dashboard/teaching-assistant/\")",
+      "Bash(docker rm:*)"
     ]
   }
 }

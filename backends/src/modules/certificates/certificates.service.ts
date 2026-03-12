@@ -5,7 +5,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, count, sql, inArray } from 'drizzle-orm';
+import { eq, and, desc, count, sql, inArray, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   certificateRequests,
@@ -50,7 +50,7 @@ export class CertificatesService {
     if (isGlobalAdmin(user)) {
       // No filter
     } else if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     } else {
       conditions.push(eq(courses.instructorId, user.id));
     }
@@ -874,7 +874,7 @@ export class CertificatesService {
     const managedCourses = await db
       .select({ id: courses.id })
       .from(courses)
-      .where(eq(courses.managerId, managerId));
+      .where(or(eq(courses.managerId, managerId), sql`${courses.managerId} IS NULL`));
     return managedCourses.map((c) => c.id);
   }
 
@@ -942,7 +942,7 @@ export class CertificatesService {
     if (!isGlobalAdmin(user)) {
       const courseConditions: any[] = [eq(courses.id, request.courseId)];
       if (isManager(user)) {
-        courseConditions.push(eq(courses.managerId, user.id));
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
       } else {
         courseConditions.push(eq(courses.instructorId, user.id));
       }

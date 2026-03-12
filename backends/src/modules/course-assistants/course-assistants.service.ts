@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { eq, and, inArray, count, sql, max } from 'drizzle-orm';
@@ -321,6 +322,12 @@ export class CourseAssistantsService {
    */
   async suggestTA(courseId: string, userId: string, suggestedBy: string) {
     const course = await this.getCourse(courseId);
+
+    // Verify the instructor owns this course
+    if (course.instructorId !== suggestedBy) {
+      throw new ForbiddenException('You can only suggest TAs for your own courses');
+    }
+
     await this.verifyTARole(userId);
 
     // Check not already assigned

@@ -5,7 +5,7 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, isNull, sql, count, inArray, sum } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull, sql, count, inArray, sum, or } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
@@ -84,7 +84,7 @@ export class MaterialsService {
     if (isGlobalAdmin(user)) {
       // No filter
     } else if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     } else {
       conditions.push(eq(courses.instructorId, user.id));
     }
@@ -529,7 +529,7 @@ export class MaterialsService {
     // For managers, scope to materials in courses they manage
     if (isManager(user)) {
       conditions.push(
-        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
       );
     }
 
@@ -1020,7 +1020,7 @@ export class MaterialsService {
     if (!isGlobalAdmin(user)) {
       const courseConditions: any[] = [eq(courses.id, material.courseId)];
       if (isManager(user)) {
-        courseConditions.push(eq(courses.managerId, user.id));
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
       } else {
         courseConditions.push(eq(courses.instructorId, user.id));
       }

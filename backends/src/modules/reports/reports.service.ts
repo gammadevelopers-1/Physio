@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, gte, lte, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, gte, lte, inArray, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -60,7 +60,7 @@ export class ReportsService {
     if (isGlobalAdmin(user)) {
       // No filter
     } else if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     } else {
       conditions.push(eq(courses.instructorId, user.id));
     }
@@ -1797,7 +1797,7 @@ export class ReportsService {
       const managedCourses = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(eq(courses.managerId, user.id));
+        .where(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`));
       return managedCourses.map((c) => c.id);
     }
 

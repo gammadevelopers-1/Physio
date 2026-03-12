@@ -83,9 +83,9 @@ const AdminCoursesContent = () => {
       .slice(0, 2)
       .toUpperCase();
 
-  // Stats from current page data
+  // Stats from current page (note: these are approximate for the visible page only)
   const activeCount = courses.filter((c) => c.status === "active").length;
-  const enrollmentsCount = courses.reduce((acc, c) => acc + c.enrolledCount, 0);
+  const enrollmentsCount = courses.reduce((acc, c) => acc + (c.enrolledCount || 0), 0);
   const pendingCount = courses.filter((c) => c.status === "pending_review").length;
 
   return (

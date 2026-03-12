@@ -56,7 +56,12 @@ export class CoursesService {
     if (isGlobalAdmin(user)) {
       // No filter — sees everything
     } else if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(
+        or(
+          eq(courses.managerId, user.id),
+          sql`${courses.managerId} IS NULL`,
+        )!,
+      );
     } else {
       conditions.push(eq(courses.instructorId, user.id));
     }
@@ -550,10 +555,10 @@ export class CoursesService {
       throw new ForbiddenException('Only managers and admins can delete courses');
     }
 
-    // Managers can only delete their own courses
+    // Managers can only delete their own courses (or unassigned ones)
     const conditions = [eq(courses.id, courseId)];
     if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     }
 
     const [existing] = await db
@@ -603,8 +608,8 @@ export class CoursesService {
     if (course.instructorId !== user.id && !isManagerOrAbove(user)) {
       throw new ForbiddenException('You are not the instructor of this course');
     }
-    // Managers must also own the course
-    if (isManager(user) && course.managerId !== user.id) {
+    // Managers must own the course (or course is unassigned)
+    if (isManager(user) && course.managerId !== null && course.managerId !== user.id) {
       throw new ForbiddenException('You do not manage this course');
     }
 
@@ -1280,7 +1285,7 @@ export class CoursesService {
     // Verify the course exists and user has access
     const conditions: any[] = [eq(courses.id, courseId)];
     if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     }
 
     const [course] = await db

@@ -3,7 +3,7 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, sql, inArray, count, asc, desc, gte, lte } from 'drizzle-orm';
+import { eq, and, sql, inArray, count, asc, desc, gte, lte, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -55,7 +55,7 @@ export class InstructorService {
    */
   private getCourseOwnershipConditions(user: AuthenticatedUser): any[] {
     if (isGlobalAdmin(user)) return [];
-    if (isManager(user)) return [eq(courses.managerId, user.id)];
+    if (isManager(user)) return [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!];
     return [eq(courses.instructorId, user.id)];
   }
 
@@ -1817,7 +1817,7 @@ export class InstructorService {
       const managedCourses = await db
         .select({ instructorId: courses.instructorId })
         .from(courses)
-        .where(eq(courses.managerId, user.id));
+        .where(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`));
       managedInstructorIds = [...new Set(managedCourses.map((c) => c.instructorId))];
       if (managedInstructorIds.length === 0) return [];
     }

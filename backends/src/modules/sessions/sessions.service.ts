@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, gte, lte, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -64,7 +64,7 @@ export class SessionsService {
       // No filter
     } else if (isManager(user)) {
       conditions.push(
-        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
       );
     } else {
       conditions.push(eq(sessions.instructorId, user.id));
@@ -111,7 +111,7 @@ export class SessionsService {
       // Admin/Manager: verify course exists and user has access
       const courseConditions: any[] = [eq(courses.id, dto.courseId)];
       if (isManager(user)) {
-        courseConditions.push(eq(courses.managerId, user.id));
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
       }
 
       const [course] = await db
@@ -1401,10 +1401,14 @@ export class SessionsService {
     sessionId: string,
     userId: string,
     role: 'co_host' | 'assistant',
+    user: AuthenticatedUser,
   ) {
     if (!['co_host', 'assistant'].includes(role)) {
       throw new BadRequestException('Role must be "co_host" or "assistant"');
     }
+
+    // Verify the user has access to this session
+    await this.verifySessionAccess(sessionId, user);
 
     const [existing] = await db
       .select({ id: sessionAssistants.id })

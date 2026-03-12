@@ -405,8 +405,9 @@ export class SessionsController {
   async updateAssistantRole(
     @Param('id') sessionId: string,
     @Param('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() body: { role: 'co_host' | 'assistant' },
   ) {
-    return this.sessionsService.updateAssistantRole(sessionId, userId, body.role);
+    return this.sessionsService.updateAssistantRole(sessionId, userId, body.role, user);
   }
 }

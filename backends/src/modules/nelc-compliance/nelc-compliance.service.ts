@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger, StreamableFile } from '@nestjs/common';
-import { eq, and, count, isNotNull, isNull, sql } from 'drizzle-orm';
+import { eq, and, count, isNotNull, isNull, sql, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -65,10 +65,9 @@ export interface ComplianceSummary {
 export class NelcComplianceService {
   private readonly logger = new Logger(NelcComplianceService.name);
 
-  // ─── NELC thresholds for assistant allocation ───
-  // NOTE: Thresholds lowered for testing (production: LOW=25, MID=35)
+  // ─── NELC thresholds for assistant allocation — TESTING VALUES (production: 25/35) ───
   private readonly ASSISTANT_THRESHOLD_LOW = 1;
-  private readonly ASSISTANT_THRESHOLD_MID = 3;
+  private readonly ASSISTANT_THRESHOLD_MID = 2;
 
   /**
    * Validate session compliance against NELC rules.
@@ -185,7 +184,7 @@ export class NelcComplianceService {
     const conditions: any[] = isGlobalAdmin(user)
       ? []
       : isManager(user)
-        ? [eq(courses.managerId, user.id)]
+        ? [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!]
         : [eq(courses.instructorId, user.id)];
     const userCourses = await db
       .select({ id: courses.id })
@@ -232,7 +231,7 @@ export class NelcComplianceService {
     const conditions: any[] = isGlobalAdmin(user)
       ? []
       : isManager(user)
-        ? [eq(courses.managerId, user.id)]
+        ? [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!]
         : [eq(courses.instructorId, user.id)];
 
     const allCourses = await db
@@ -1160,7 +1159,7 @@ export class NelcComplianceService {
       // No filter
     } else if (isManager(user)) {
       conditions.push(
-        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
       );
     } else {
       conditions.push(eq(sessions.instructorId, user.id));

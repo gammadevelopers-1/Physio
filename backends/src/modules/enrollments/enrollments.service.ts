@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ne, desc, count, sql } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -53,7 +53,7 @@ export class EnrollmentsService {
     if (isGlobalAdmin(user)) {
       // No filter
     } else if (isManager(user)) {
-      conditions.push(eq(courses.managerId, user.id));
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     } else {
       conditions.push(eq(courses.instructorId, user.id));
     }
@@ -769,7 +769,7 @@ export class EnrollmentsService {
       // No filter
     } else if (isManager(user)) {
       conditions.push(
-        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
       );
     } else {
       conditions.push(eq(sessions.instructorId, user.id));
@@ -817,7 +817,7 @@ export class EnrollmentsService {
       const sessionConditions: any[] = [eq(sessions.id, record.sessionId)];
       if (isManager(user)) {
         sessionConditions.push(
-          sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
+          sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
         );
       } else {
         sessionConditions.push(eq(sessions.instructorId, user.id));

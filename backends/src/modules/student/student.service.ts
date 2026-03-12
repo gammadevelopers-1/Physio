@@ -27,6 +27,7 @@ import {
   videoWatchEvents,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
+import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import type { AssessmentFile } from '../../database/schema/assessments';
 import { randomUUID } from 'crypto';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -73,6 +74,7 @@ export class StudentService {
     private readonly storageService: StorageService,
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
+    private readonly thresholdEvaluationService: ThresholdEvaluationService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -1213,6 +1215,11 @@ export class StudentService {
         previousStatus: enrollment.status,
       },
     });
+
+    // 4. Re-evaluate TA thresholds (enrollment count decreased)
+    this.thresholdEvaluationService
+      .evaluateAndAct(courseId)
+      .catch((err) => this.logger.warn('TA threshold re-evaluation failed after drop', err));
 
     return updated;
   }

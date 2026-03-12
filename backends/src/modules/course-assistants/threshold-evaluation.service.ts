@@ -17,11 +17,10 @@ import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 
-// NELC thresholds (same as session-assistants.service.ts)
-// NOTE: Lowered for testing (production: LOW=25, MID=35)
+// NELC thresholds — TESTING VALUES (production: LOW=25, MID=35)
 const ASSISTANT_THRESHOLDS = {
   LOW: 1, // <=1: no assistant needed
-  MID: 3, // 2-3: 1 assistant, >3: 2 assistants
+  MID: 2, // 2: 1 assistant, >=3: 2 assistants
 } as const;
 
 @Injectable()

@@ -361,6 +361,21 @@ export class EnrollmentsService {
   ) {
     await this.verifyCourseAccess(courseId, user);
 
+    // Get TA user IDs to exclude from enrollment list (TAs are not students)
+    const tas = await db
+      .select({ userId: courseAssistants.userId })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.courseId, courseId),
+          or(
+            eq(courseAssistants.status, 'approved'),
+            eq(courseAssistants.status, 'pre_assigned'),
+          ),
+        ),
+      );
+    const taUserIds = new Set(tas.map((t) => t.userId));
+
     const data = await db
       .select({
         id: enrollments.id,
@@ -386,7 +401,10 @@ export class EnrollmentsService {
       )
       .orderBy(desc(enrollments.enrolledAt));
 
-    return data;
+    // Filter out TAs from enrollment list
+    return taUserIds.size > 0
+      ? data.filter((d) => !taUserIds.has(d.studentId))
+      : data;
   }
 
   // ─── Session Attendance ───────────────────────────────────
@@ -411,6 +429,8 @@ export class EnrollmentsService {
       .limit(1);
 
     let instructorId: string | null = null;
+    // Collect TA user IDs to exclude from attendance
+    const taUserIds = new Set<string>();
     if (session?.courseId) {
       const [course] = await db
         .select({ instructorId: courses.instructorId })
@@ -418,11 +438,29 @@ export class EnrollmentsService {
         .where(eq(courses.id, session.courseId))
         .limit(1);
       instructorId = course?.instructorId || null;
+
+      const tas = await db
+        .select({ userId: courseAssistants.userId })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, session.courseId),
+            or(
+              eq(courseAssistants.status, 'approved'),
+              eq(courseAssistants.status, 'pre_assigned'),
+            ),
+          ),
+        );
+      for (const ta of tas) taUserIds.add(ta.userId);
     }
 
     const conditions = [eq(attendance.sessionId, sessionId)];
     if (instructorId) {
       conditions.push(ne(attendance.studentId, instructorId));
+    }
+    // Exclude TAs from attendance records
+    for (const taId of taUserIds) {
+      conditions.push(ne(attendance.studentId, taId));
     }
 
     const data = await db

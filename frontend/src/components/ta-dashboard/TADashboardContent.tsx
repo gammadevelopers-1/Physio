@@ -430,6 +430,7 @@ const TADashboardContent = ({
 
           {/* Weekly Calendar - same widget as instructor dashboard */}
           <SessionsCalendarWidget
+            readOnly
             sessions={[...todaySessions, ...weekSessions, ...upcomingSessions]
               .filter((s, i, arr) => arr.findIndex((x) => x.id === s.id) === i)
               .map((s) => {

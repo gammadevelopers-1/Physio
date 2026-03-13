@@ -36,6 +36,8 @@ interface SessionsCalendarWidgetProps {
   onEndSession?: (sessionId: string) => void;
   onAttendance?: (sessionId: string) => void;
   onShareMaterials?: (sessionId: string) => void;
+  /** When true, hides all action buttons on hover (view-only mode) */
+  readOnly?: boolean;
 }
 
 const SessionsCalendarWidget = ({
@@ -44,6 +46,7 @@ const SessionsCalendarWidget = ({
   onEndSession,
   onAttendance,
   onShareMaterials,
+  readOnly = false,
 }: SessionsCalendarWidgetProps) => {
   const t = useTranslations("instructorDashboard");
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
@@ -217,8 +220,8 @@ const SessionsCalendarWidget = ({
           </div>
         </div>
 
-        {/* Action overlay on hover */}
-        {hoveredSession === session.id && !isCancelled && (
+        {/* Action overlay on hover — hidden in readOnly mode */}
+        {!readOnly && hoveredSession === session.id && !isCancelled && (
           <div className={`${isMobile ? "flex items-center justify-center gap-1 px-2 pb-2" : "absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-[#E5E7EB] p-1 flex items-center justify-center gap-1"}`}>
             {isScheduled && (
               <button

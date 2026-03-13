@@ -1597,6 +1597,8 @@
       "viewCourses": "عرض الدورات",
       "viewCertificate": "عرض الشهادة",
       "downloadCertificate": "تحميل الشهادة",
+      "shareCertificate": "مشاركة الشهادة",
+      "linkCopied": "تم نسخ رابط الشهادة!",
       "issuedOn": "صدرت في {date}",
       "pendingReview": "قيد المراجعة",
       "courseCertificate": "شهادة الدورة",

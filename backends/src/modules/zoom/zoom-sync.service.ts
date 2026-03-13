@@ -14,6 +14,7 @@ import {
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId } from './zoom.helpers';
+import { courseAssistants } from '../../database/schema/course-assistants';
 
 @Injectable()
 export class ZoomSyncService {
@@ -166,6 +167,31 @@ export class ZoomSyncService {
     // Get course instructor to exclude from attendance (Zoom host)
     const instructorId = await getSessionInstructorId(sessionId);
 
+    // Get Teaching Assistants assigned to this course — they should not appear in student attendance
+    const taUserIds = new Set<string>();
+    if (session.courseId) {
+      const tas = await db
+        .select({ userId: courseAssistants.userId })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, session.courseId),
+            or(
+              eq(courseAssistants.status, 'approved'),
+              eq(courseAssistants.status, 'pre_assigned'),
+            ),
+          ),
+        );
+      for (const ta of tas) {
+        taUserIds.add(ta.userId);
+      }
+      if (taUserIds.size > 0) {
+        this.logger.debug(
+          `Found ${taUserIds.size} TAs for course ${session.courseId} — will exclude from attendance`,
+        );
+      }
+    }
+
     // Get the Zoom meeting host email to exclude from attendance
     // The Reports API often returns the host with role='participant', so role check alone is not enough
     let hostEmail: string | null = null;
@@ -270,6 +296,24 @@ export class ZoomSyncService {
           matchedUser = emailMatch;
           matchMethod = 'email';
         }
+      }
+
+      // Skip Teaching Assistants — they join sessions but are not students
+      if (matchedUser && taUserIds.has(matchedUser.id)) {
+        this.logger.debug(
+          `Skipping TA: ${participant.name} (userId=${matchedUser.id}) in session ${sessionId}`,
+        );
+        skipped++;
+        details.push({
+          name: participant.name,
+          email: participant.userEmail,
+          joinTime: participant.joinTime,
+          leaveTime: participant.leaveTime,
+          durationMinutes: Math.round(participant.duration / 60),
+          action: 'skipped',
+          reason: 'teaching_assistant',
+        });
+        continue;
       }
 
       if (!matchedUser) {

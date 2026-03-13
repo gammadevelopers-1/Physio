@@ -1385,6 +1385,8 @@
       "viewCourses": "View Courses",
       "viewCertificate": "View Certificate",
       "downloadCertificate": "Download Certificate",
+      "shareCertificate": "Share Certificate",
+      "linkCopied": "Certificate link copied to clipboard!",
       "issuedOn": "Issued on {date}",
       "pendingReview": "Pending Review",
       "courseCertificate": "Course Certificate",

@@ -731,9 +731,9 @@ export class CertificatesService {
     const issuedDate = new Date().toISOString().split('T')[0];
     const certificateId = `PG-${requestId.slice(0, 8).toUpperCase()}`;
 
-    // Generate QR code as PNG buffer pointing to verification endpoint
-    const appUrl = process.env.APP_URL || 'http://localhost:3000';
-    const verifyUrl = `${appUrl}/certificates/verify/${requestId}`;
+    // Generate QR code as PNG buffer pointing to public verification page
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const verifyUrl = `${frontendUrl}/en/verify/${requestId}`;
     const qrBuffer = await QRCode.toBuffer(verifyUrl, {
       width: 120,
       margin: 1,

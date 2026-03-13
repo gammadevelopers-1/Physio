@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Clock,
   Download,
+  Link2,
   PauseCircle,
   ShieldOff,
   XCircle,
@@ -242,15 +243,29 @@ function CertificateCard({
               </div>
             </div>
 
-            {/* Download */}
-            <button
-              onClick={() => onDownload(certificate.id)}
-              disabled={downloading}
-              className="flex items-center justify-center gap-2 w-full py-2 sm:py-2.5 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
-            >
-              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {t("certifications.downloadCertificate")}
-            </button>
+            {/* Download + Share */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => onDownload(certificate.id)}
+                disabled={downloading}
+                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+              >
+                {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {t("certifications.downloadCertificate")}
+              </button>
+              <button
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/${locale}/verify/${certificate.id}`;
+                  navigator.clipboard.writeText(shareUrl).then(() => {
+                    toast.success(t("certifications.linkCopied"));
+                  });
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+                title={t("certifications.shareCertificate")}
+              >
+                <Link2 className="w-4 h-4" />
+              </button>
+            </div>
           </>
         )}
 

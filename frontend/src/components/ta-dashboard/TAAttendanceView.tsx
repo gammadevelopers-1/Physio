@@ -13,10 +13,10 @@ interface AttendanceRecord {
   status: string;
   joinedAt: string | null;
   leftAt: string | null;
-  minutesPresent: number;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
+  durationMinutes: number | null;
+  studentFirstName: string | null;
+  studentLastName: string | null;
+  studentEmail: string;
   note?: string | null;
 }
 
@@ -71,8 +71,8 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
   const filteredRecords = searchQuery
     ? records.filter((r) => {
         const q = searchQuery.toLowerCase();
-        const name = `${r.firstName || ""} ${r.lastName || ""}`.toLowerCase();
-        return name.includes(q) || r.email.toLowerCase().includes(q);
+        const name = `${r.studentFirstName || ""} ${r.studentLastName || ""}`.toLowerCase();
+        return name.includes(q) || r.studentEmail.toLowerCase().includes(q);
       })
     : records;
 
@@ -85,12 +85,12 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
     if (records.length === 0) return;
     const headers = ["Name", "Email", "Status", "Join Time", "Leave Time", "Duration (min)"];
     const rows = records.map((r) => [
-      `${r.firstName || ""} ${r.lastName || ""}`.trim(),
-      r.email,
+      `${r.studentFirstName || ""} ${r.studentLastName || ""}`.trim(),
+      r.studentEmail,
       r.status,
       r.joinedAt ? formatTime(r.joinedAt) : "",
       r.leftAt ? formatTime(r.leftAt) : "",
-      r.minutesPresent > 0 ? String(r.minutesPresent) : "",
+      r.durationMinutes && r.durationMinutes > 0 ? String(r.durationMinutes) : "",
     ]);
     const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -126,13 +126,6 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
             Export CSV
           </button>
         )}
-      </div>
-
-      {/* Read-only notice */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg">
-        <p className="text-sm text-[#1E40AF]">
-          View-only — attendance is managed by the instructor
-        </p>
       </div>
 
       {/* Summary bar */}
@@ -180,9 +173,9 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[#1F2937]">
-                      {record.firstName} {record.lastName}
+                      {record.studentFirstName} {record.studentLastName}
                     </p>
-                    <p className="text-xs text-[#6B7280]">{record.email}</p>
+                    <p className="text-xs text-[#6B7280]">{record.studentEmail}</p>
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}
@@ -207,8 +200,8 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
                         {t("attendance.leaveTime")}: {formatTime(record.leftAt)}
                       </span>
                     )}
-                    {record.minutesPresent > 0 && (
-                      <span>({record.minutesPresent} min)</span>
+                    {record.durationMinutes && record.durationMinutes > 0 && (
+                      <span>({record.durationMinutes} min)</span>
                     )}
                   </div>
                 )}

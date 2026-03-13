@@ -15,6 +15,7 @@ import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId } from './zoom.helpers';
 import { courseAssistants } from '../../database/schema/course-assistants';
+import { users } from '../../database/schema';
 
 @Injectable()
 export class ZoomSyncService {
@@ -169,10 +170,15 @@ export class ZoomSyncService {
 
     // Get Teaching Assistants assigned to this course — they should not appear in student attendance
     const taUserIds = new Set<string>();
+    const taEmails = new Set<string>();
     if (session.courseId) {
       const tas = await db
-        .select({ userId: courseAssistants.userId })
+        .select({
+          userId: courseAssistants.userId,
+          email: users.email,
+        })
         .from(courseAssistants)
+        .innerJoin(users, eq(courseAssistants.userId, users.id))
         .where(
           and(
             eq(courseAssistants.courseId, session.courseId),
@@ -184,10 +190,11 @@ export class ZoomSyncService {
         );
       for (const ta of tas) {
         taUserIds.add(ta.userId);
+        if (ta.email) taEmails.add(ta.email.toLowerCase());
       }
       if (taUserIds.size > 0) {
         this.logger.debug(
-          `Found ${taUserIds.size} TAs for course ${session.courseId} — will exclude from attendance`,
+          `Found ${taUserIds.size} TAs for course ${session.courseId} — will exclude from attendance (emails: ${[...taEmails].join(', ')})`,
         );
       }
     }
@@ -202,6 +209,10 @@ export class ZoomSyncService {
       this.logger.warn(`Could not fetch host email for meeting ${session.meetingId}: ${(e as Error).message}`);
     }
     const excludeEmails = hostEmail ? [hostEmail.toLowerCase()] : [];
+    // Also exclude TA emails from the email-matching path
+    for (const taEmail of taEmails) {
+      excludeEmails.push(taEmail);
+    }
 
     // ── Pre-aggregate participants ──────────────────────────
     // Zoom creates separate entries per join/leave. Consolidate by
@@ -267,6 +278,24 @@ export class ZoomSyncService {
           durationMinutes: Math.round(participant.duration / 60),
           action: 'skipped',
           reason: 'host',
+        });
+        continue;
+      }
+
+      // Skip Teaching Assistants by Zoom email (catches TAs before user matching)
+      if (participant.userEmail && taEmails.has(participant.userEmail.toLowerCase())) {
+        this.logger.debug(
+          `Skipping TA by email: ${participant.userEmail} in session ${sessionId}`,
+        );
+        skipped++;
+        details.push({
+          name: participant.name,
+          email: participant.userEmail,
+          joinTime: participant.joinTime,
+          leaveTime: participant.leaveTime,
+          durationMinutes: Math.round(participant.duration / 60),
+          action: 'skipped',
+          reason: 'teaching_assistant',
         });
         continue;
       }

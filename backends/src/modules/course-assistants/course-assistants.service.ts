@@ -1161,6 +1161,7 @@ export class CourseAssistantsService {
         approvedAt: courseAssistants.approvedAt,
         deactivationScheduledAt: courseAssistants.deactivationScheduledAt,
         courseTitle: courses.title,
+        courseThumbnail: courses.thumbnail,
         courseStatus: courses.status,
         instructorId: courses.instructorId,
         instructorFirstName: users.firstName,

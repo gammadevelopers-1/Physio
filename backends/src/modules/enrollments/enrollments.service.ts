@@ -18,7 +18,7 @@ import {
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { isGlobalAdmin, isManager } from '../../common/role-helpers';
+import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
@@ -690,6 +690,25 @@ export class EnrollmentsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
+    // TAs: verify via course_assistants assignment
+    if (isTA(user)) {
+      const [assignment] = await db
+        .select({ id: courseAssistants.id })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, courseId),
+            eq(courseAssistants.userId, user.id),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+      if (!assignment) {
+        throw new NotFoundException('Course not found');
+      }
+      return { id: courseId };
+    }
+
     const conditions: any[] = [eq(courses.id, courseId)];
     this.addCourseOwnershipCondition(conditions, user);
 

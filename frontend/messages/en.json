@@ -6015,7 +6015,8 @@
       "searchPlaceholder": "Search courses...",
       "sortNewest": "Newest First",
       "sortOldest": "Oldest First",
-      "sortAlphabetical": "Alphabetical"
+      "sortAlphabetical": "Alphabetical",
+      "viewDetails": "View Details"
     },
     "settings": {
       "title": "Settings",

@@ -11,6 +11,7 @@ import {
   courses,
   courseModules,
   courseMaterials,
+  courseAssistants,
   enrollments,
   sessions,
   courseRatings,
@@ -20,7 +21,7 @@ import {
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { isGlobalAdmin, isManager, isManagerOrAbove } from '../../common/role-helpers';
+import { isGlobalAdmin, isManager, isManagerOrAbove, isTA } from '../../common/role-helpers';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
@@ -481,8 +482,28 @@ export class CoursesService {
    * - Admin: any course.
    */
   async findOne(courseId: string, user: AuthenticatedUser) {
+    // TAs access courses via their assignment, not ownership
+    if (isTA(user)) {
+      const [assignment] = await db
+        .select()
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, courseId),
+            eq(courseAssistants.userId, user.id),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+      if (!assignment) {
+        throw new NotFoundException('Course not found');
+      }
+    }
+
     const conditions = [eq(courses.id, courseId)];
-    this.addOwnershipCondition(conditions, user);
+    if (!isTA(user)) {
+      this.addOwnershipCondition(conditions, user);
+    }
 
     const [course] = await db
       .select()
@@ -1240,6 +1261,7 @@ export class CoursesService {
       .where(
         and(
           eq(sessions.courseId, courseId),
+          sql`${sessions.status} != 'cancelled'`,
           or(
             sql`${sessions.scheduledAt}::date < ${courseDetail.startDate}::date`,
             sql`${sessions.scheduledAt}::date > ${courseDetail.endDate}::date`,

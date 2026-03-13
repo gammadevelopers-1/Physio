@@ -6233,7 +6233,8 @@
       "searchPlaceholder": "البحث في الدورات...",
       "sortNewest": "الأحدث أولاً",
       "sortOldest": "الأقدم أولاً",
-      "sortAlphabetical": "أبجدياً"
+      "sortAlphabetical": "أبجدياً",
+      "viewDetails": "عرض التفاصيل"
     },
     "settings": {
       "title": "الإعدادات",

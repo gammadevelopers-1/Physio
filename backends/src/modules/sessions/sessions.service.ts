@@ -22,7 +22,7 @@ import {
   SESSION_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { isGlobalAdmin, isManager, isManagerOrAbove } from '../../common/role-helpers';
+import { isGlobalAdmin, isManager, isManagerOrAbove, isTA } from '../../common/role-helpers';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
@@ -65,6 +65,11 @@ export class SessionsService {
     } else if (isManager(user)) {
       conditions.push(
         sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+      );
+    } else if (isTA(user)) {
+      // TAs see sessions for courses they're actively assigned to
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT course_id FROM course_assistants WHERE user_id = ${user.id} AND status = 'approved')`,
       );
     } else {
       conditions.push(eq(sessions.instructorId, user.id));
@@ -609,9 +614,17 @@ export class SessionsService {
     const scheduledAt = new Date(session.scheduledAt);
     const fifteenMinBefore = new Date(scheduledAt.getTime() - 15 * 60 * 1000);
     if (now < fifteenMinBefore) {
-      const diffMin = Math.ceil((fifteenMinBefore.getTime() - now.getTime()) / 60000);
+      const diffMs = scheduledAt.getTime() - now.getTime();
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffMins = Math.ceil((diffMs % 3600000) / 60000);
+      const timeStr = diffHours > 0
+        ? `${diffHours}h ${diffMins}m`
+        : `${diffMins} minute(s)`;
+      const scheduledStr = scheduledAt.toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
       throw new BadRequestException(
-        `Cannot start session yet. You can start it ${diffMin} minute(s) before the scheduled time.`,
+        `Cannot start session yet. The session is scheduled for ${scheduledStr}. You can start it up to 15 minutes before (in ${timeStr}).`,
       );
     }
 
@@ -1225,24 +1238,23 @@ export class SessionsService {
     courseStartDate: string | null,
     courseEndDate: string | null,
   ) {
-    const sessionDate = new Date(scheduledAt);
+    // Compare date portions only (YYYY-MM-DD) to avoid timezone issues.
+    // The session datetime from the frontend represents the user's local date,
+    // so we extract just the date part for comparison.
+    const sessionDateStr = scheduledAt.slice(0, 10); // "YYYY-MM-DD"
     if (courseStartDate) {
-      const start = new Date(courseStartDate);
-      start.setHours(0, 0, 0, 0);
-      const sessionDay = new Date(sessionDate);
-      sessionDay.setHours(0, 0, 0, 0);
-      if (sessionDay < start) {
+      const startStr = new Date(courseStartDate).toISOString().slice(0, 10);
+      if (sessionDateStr < startStr) {
         throw new BadRequestException(
-          `Session date cannot be before the course start date (${courseStartDate})`,
+          `Session date cannot be before the course start date (${startStr})`,
         );
       }
     }
     if (courseEndDate) {
-      const end = new Date(courseEndDate);
-      end.setHours(23, 59, 59, 999);
-      if (sessionDate > end) {
+      const endStr = new Date(courseEndDate).toISOString().slice(0, 10);
+      if (sessionDateStr > endStr) {
         throw new BadRequestException(
-          `Session date cannot be after the course end date (${courseEndDate})`,
+          `Session date cannot be after the course end date (${endStr})`,
         );
       }
     }

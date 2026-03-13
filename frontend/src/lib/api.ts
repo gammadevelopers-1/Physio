@@ -2297,6 +2297,7 @@ export interface TAAssignedCourse {
   approvedAt: string | null;
   deactivationScheduledAt: string | null;
   courseTitle: string;
+  courseThumbnail: string | null;
   courseStatus: string;
   instructorId: string;
   instructorFirstName: string | null;
@@ -2416,6 +2417,16 @@ export const taApi = {
       passingScore: number | null;
       createdAt: string;
     }>; total: number }>(`/assessments?courseId=${courseId}`),
+
+  // Reuse the same course detail endpoint (TA role is now allowed)
+  getCourseDetail: (courseId: string) =>
+    api.get<CourseDetailResponse>(`/courses/${courseId}`),
+
+  getCourseEnrollments: (courseId: string) =>
+    api.get<CourseEnrollment[]>(`/courses/${courseId}/enrollments`),
+
+  getCourseSessions: (courseId: string) =>
+    api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
 };
 
 export default api;

@@ -179,8 +179,13 @@ export class ZoomService implements IZoomService, OnModuleInit {
       },
     };
 
-    const response = await this.zoomFetch(
-      'https://api.zoom.us/v2/users/me/meetings',
+    // Try creating under the instructor's Zoom account first (if licensed),
+    // fall back to app owner (users/me) if not licensed or fails
+    let response: Response;
+    const userId = params.hostEmail ? encodeURIComponent(params.hostEmail) : 'me';
+
+    response = await this.zoomFetch(
+      `https://api.zoom.us/v2/users/${userId}/meetings`,
       {
         method: 'POST',
         headers: {
@@ -190,6 +195,24 @@ export class ZoomService implements IZoomService, OnModuleInit {
         body: JSON.stringify(body),
       },
     );
+
+    // If instructor email failed (not licensed/not found), fall back to app owner
+    if (!response.ok && userId !== 'me') {
+      this.logger.warn(
+        `Zoom: instructor ${params.hostEmail} not a licensed user, falling back to app owner`,
+      );
+      response = await this.zoomFetch(
+        'https://api.zoom.us/v2/users/me/meetings',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        },
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

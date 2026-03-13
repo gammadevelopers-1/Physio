@@ -11,6 +11,8 @@ export interface CreateZoomMeetingParams {
   startTime: Date;
   durationMinutes: number;
   recordingEnabled?: boolean;
+  /** Instructor's email — if licensed on Zoom, meeting is created under their account */
+  hostEmail?: string;
 }
 
 export interface CreateZoomMeetingResult {

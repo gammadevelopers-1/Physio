@@ -93,11 +93,20 @@ export class SessionsService {
       !dto.zoomLink
     ) {
       try {
+        // Look up instructor email to create meeting under their Zoom account
+        const [instructor] = await db
+          .select({ email: users.email, zoomEmail: users.zoomEmail })
+          .from(users)
+          .where(eq(users.id, user.id))
+          .limit(1);
+        const hostEmail = instructor?.zoomEmail || instructor?.email || undefined;
+
         const zoomMeeting = await this.zoomService.createMeeting({
           topic: dto.title,
           startTime: new Date(dto.scheduledAt),
           durationMinutes: dto.durationMinutes || 60,
           recordingEnabled: dto.recordingEnabled !== false,
+          hostEmail,
         });
         zoomLink = zoomMeeting.joinUrl;
         meetingId = zoomMeeting.meetingId;

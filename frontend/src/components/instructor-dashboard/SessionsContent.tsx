@@ -195,9 +195,15 @@ function AttendanceModal({
           const name = ((participant?.user_name as string) || (payload?.name as string))?.toLowerCase();
           if (email && matchedIdentifiers.has(email)) return false;
           if (name && matchedIdentifiers.has(name)) return false;
-          // Skip TA platform IDs (TA-xxxxxxxx in display name or zoomUserEmail)
-          const displayStr = l.zoomUserEmail || (payload?.name as string) || "";
-          if (/\|\s*TA-[0-9a-f]{8}/i.test(displayStr)) return false;
+          // Skip TA platform IDs (TA-xxxxxxxx anywhere in log data)
+          const allFields = [
+            l.zoomUserEmail,
+            payload?.name as string,
+            participant?.user_name as string,
+            payload?.email as string,
+            JSON.stringify(payload),
+          ].filter(Boolean).join(" ");
+          if (/TA-[0-9a-f]{8}/i.test(allFields)) return false;
           return true;
         });
         // Deduplicate by email or participant name
@@ -211,16 +217,23 @@ function AttendanceModal({
           return true;
         });
         setUnmatchedParticipants(
-          unique.map((l) => {
-            const payload = l.rawPayload as Record<string, unknown> | null;
-            const participant = payload?.participant as Record<string, unknown> | undefined;
-            const displayName = l.zoomUserEmail || (participant?.user_name as string) || (payload?.name as string) || "Unknown Participant";
-            return {
-              zoomUserEmail: displayName,
-              eventType: l.eventType,
-              timestamp: l.timestamp,
-            };
-          })
+          unique
+            .filter((l) => {
+              // Final safety: exclude any TA platform IDs that slipped through
+              const payload = l.rawPayload as Record<string, unknown> | null;
+              const allText = [l.zoomUserEmail, payload?.name as string, JSON.stringify(payload)].filter(Boolean).join(" ");
+              return !/TA-[0-9a-f]{8}/i.test(allText);
+            })
+            .map((l) => {
+              const payload = l.rawPayload as Record<string, unknown> | null;
+              const participant = payload?.participant as Record<string, unknown> | undefined;
+              const displayName = l.zoomUserEmail || (participant?.user_name as string) || (payload?.name as string) || "Unknown Participant";
+              return {
+                zoomUserEmail: displayName,
+                eventType: l.eventType,
+                timestamp: l.timestamp,
+              };
+            })
         );
         // Auto-lock if post-session Zoom with no unmatched participants
         if ((session.status === "ended" || session.status === "completed") && unique.length === 0) {

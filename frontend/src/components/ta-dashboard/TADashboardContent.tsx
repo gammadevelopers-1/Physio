@@ -20,6 +20,7 @@ import TASessionsContent from "./TASessionsContent";
 import TAAttendanceView from "./TAAttendanceView";
 import TAAssessmentSubmissionsView from "./TAAssessmentSubmissionsView";
 import SessionsCalendarWidget from "../instructor-dashboard/SessionsCalendarWidget";
+import api from "@/lib/api";
 import { taApi, userNotificationsApi } from "@/lib/api";
 import type { TAAssignedCourse, UserNotification } from "@/lib/api";
 
@@ -400,15 +401,20 @@ const TADashboardContent = ({
 
                     <div className="flex items-center gap-2">
                       {session.status === "live" && session.zoomLink && (
-                        <a
-                          href={session.zoomLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={async () => {
+                            try {
+                              const { joinUrl } = await api.get<{ joinUrl: string }>(`/sessions/${session.id}/ta-join`);
+                              window.open(joinUrl, "_blank");
+                            } catch {
+                              window.open(session.zoomLink!, "_blank");
+                            }
+                          }}
                           className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white rounded-lg text-sm font-medium transition-colors"
                         >
                           <Video className="w-4 h-4" />
                           {t("sessions.joinZoom")}
-                        </a>
+                        </button>
                       )}
                       {(session.status === "live" ||
                         session.status === "ended" ||

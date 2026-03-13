@@ -94,6 +94,16 @@ export function parsePlatformId(displayName: string): string | null {
 }
 
 /**
+ * Parse a TA platform ID from a Zoom display name.
+ * Expects format: "Full Name | TA-xxxxxxxx" (8-char hex UUID prefix)
+ * Returns the 8-char hex prefix, or null if format not found.
+ */
+export function parseTAId(displayName: string): string | null {
+  const match = displayName.match(/\|\s*TA-([0-9a-f]{8})\s*$/i);
+  return match ? match[1].toLowerCase() : null;
+}
+
+/**
  * Match a Zoom participant to a system user by platform ID (UUID prefix).
  * Used when the student joined via the platform-controlled join flow.
  * Returns user id, or null if no match.

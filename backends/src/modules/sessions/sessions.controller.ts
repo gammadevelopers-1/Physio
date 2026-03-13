@@ -150,6 +150,19 @@ export class SessionsController {
   }
 
   /**
+   * GET /sessions/:id/ta-join — Generate a Zoom join URL for TA with platform ID
+   * Returns { joinUrl, displayName } where displayName = "Full Name | TA-xxxxxxxx"
+   */
+  @Roles('TEACHING_ASSISTANT' as UserRole)
+  @Get(':id/ta-join')
+  async getTAJoinUrl(
+    @Param('id') sessionId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.sessionsService.getTAJoinUrl(user.id, sessionId);
+  }
+
+  /**
    * GET /sessions/:id — Session detail
    */
   @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)

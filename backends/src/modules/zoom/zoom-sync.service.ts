@@ -13,7 +13,7 @@ import {
 } from '../../database/schema';
 import { ZOOM_SERVICE, IZoomService } from './zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
-import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId } from './zoom.helpers';
+import { matchParticipantToUser, matchParticipantByPlatformId, getSessionInstructorId, parseTAId } from './zoom.helpers';
 import { courseAssistants } from '../../database/schema/course-assistants';
 import { users } from '../../database/schema';
 
@@ -278,6 +278,25 @@ export class ZoomSyncService {
           durationMinutes: Math.round(participant.duration / 60),
           action: 'skipped',
           reason: 'host',
+        });
+        continue;
+      }
+
+      // Skip Teaching Assistants by platform ID prefix (TA-xxxxxxxx in display name)
+      const taPrefix = parseTAId(participant.name || '');
+      if (taPrefix) {
+        this.logger.debug(
+          `Skipping TA by platform ID: name="${participant.name}" (TA-${taPrefix}) in session ${sessionId}`,
+        );
+        skipped++;
+        details.push({
+          name: participant.name,
+          email: participant.userEmail,
+          joinTime: participant.joinTime,
+          leaveTime: participant.leaveTime,
+          durationMinutes: Math.round(participant.duration / 60),
+          action: 'skipped',
+          reason: 'teaching_assistant',
         });
         continue;
       }

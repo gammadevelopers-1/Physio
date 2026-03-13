@@ -321,6 +321,56 @@ export class SessionsService {
   }
 
   /**
+   * Generate a Zoom join URL for a TA with their name pre-filled as
+   * "Full Name | TA-xxxxxxxx" (platform ID = first 8 chars of user UUID).
+   * This allows Zoom sync to identify and skip TAs automatically.
+   */
+  async getTAJoinUrl(userId: string, sessionId: string) {
+    // Verify TA is assigned to this session
+    const [assignment] = await db
+      .select({ id: sessionAssistants.id })
+      .from(sessionAssistants)
+      .where(
+        and(
+          eq(sessionAssistants.sessionId, sessionId),
+          eq(sessionAssistants.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!assignment) {
+      throw new BadRequestException('You are not assigned to this session');
+    }
+
+    const [session] = await db
+      .select({ zoomLink: sessions.zoomLink, status: sessions.status })
+      .from(sessions)
+      .where(eq(sessions.id, sessionId))
+      .limit(1);
+
+    if (!session) throw new NotFoundException('Session not found');
+    if (!session.zoomLink) {
+      throw new BadRequestException('This session has no Zoom link');
+    }
+
+    const [user] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const fullName =
+      [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Teaching Assistant';
+    const platformId = `TA-${userId.substring(0, 8)}`;
+    const displayName = `${fullName} | ${platformId}`;
+
+    const separator = session.zoomLink.includes('?') ? '&' : '?';
+    const joinUrl = `${session.zoomLink}${separator}uname=${encodeURIComponent(displayName)}`;
+
+    return { joinUrl, displayName };
+  }
+
+  /**
    * List sessions with filtering and pagination.
    * - Instructor: only their own sessions.
    * - Admin: all sessions across all instructors.

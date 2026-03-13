@@ -19,6 +19,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
+import api from "@/lib/api";
 import { taApi } from "@/lib/api";
 
 interface AssignedSession {
@@ -244,15 +245,20 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
         <div className="flex items-center gap-2 flex-shrink-0">
           {session.status === "live" && session.zoomLink && (
-            <a
-              href={session.zoomLink}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={async () => {
+                try {
+                  const { joinUrl } = await api.get<{ joinUrl: string }>(`/sessions/${session.id}/ta-join`);
+                  window.open(joinUrl, "_blank");
+                } catch {
+                  window.open(session.zoomLink!, "_blank");
+                }
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 btn-gold text-white rounded-lg text-xs font-medium transition-colors"
             >
               <Video className="w-3.5 h-3.5" />
               {t("sessions.joinZoom")}
-            </a>
+            </button>
           )}
           {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
             <button

@@ -195,6 +195,9 @@ function AttendanceModal({
           const name = ((participant?.user_name as string) || (payload?.name as string))?.toLowerCase();
           if (email && matchedIdentifiers.has(email)) return false;
           if (name && matchedIdentifiers.has(name)) return false;
+          // Skip TA platform IDs (TA-xxxxxxxx in display name or zoomUserEmail)
+          const displayStr = l.zoomUserEmail || (payload?.name as string) || "";
+          if (/\|\s*TA-[0-9a-f]{8}/i.test(displayStr)) return false;
           return true;
         });
         // Deduplicate by email or participant name

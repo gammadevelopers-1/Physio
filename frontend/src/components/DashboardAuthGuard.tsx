@@ -8,6 +8,7 @@ const DASHBOARD_ROLE_MAP: Record<string, string[]> = {
   admin: ['ADMIN', 'SUPER_ADMIN'],
   student: ['STUDENT'],
   instructor: ['INSTRUCTOR'],
+  ta: ['TEACHING_ASSISTANT'],
   manager: ['MANAGER'],
   finance: ['FINANCE'],
   support: ['SUPPORT'],

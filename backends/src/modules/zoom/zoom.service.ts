@@ -170,6 +170,8 @@ export class ZoomService implements IZoomService, OnModuleInit {
         waiting_room: true,
         mute_upon_entry: true,
         auto_recording: params.recordingEnabled !== false ? 'cloud' : 'none',
+        // Enable cohost so TAs can be promoted to co-host on join
+        co_host: true,
         // Do NOT require Zoom account sign-in — students join as guests so
         // the ?uname= platform ID pre-fill is respected by Zoom's web client.
         // Access is controlled by the waiting room (instructor admits each person).
@@ -566,5 +568,41 @@ export class ZoomService implements IZoomService, OnModuleInit {
 
     this.logger.log(`Removed recording passcode for meeting ${meetingId}`);
     return true;
+  }
+
+  /**
+   * Promote a live meeting participant to co-host.
+   * Uses PUT /meetings/{meetingId}/participants/{participantId}
+   * Requires `co_host: true` in meeting settings (set at creation time).
+   */
+  async promoteToCohost(
+    meetingId: string,
+    participantId: string,
+  ): Promise<void> {
+    const token = await this.getAccessToken();
+
+    const response = await this.zoomFetch(
+      `https://api.zoom.us/v2/live_meetings/${meetingId}/participants/${participantId}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'set_role', role: 'co-host' }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.warn(
+        `Failed to promote participant ${participantId} to co-host in meeting ${meetingId}: ${response.status} - ${errorText}`,
+      );
+      return;
+    }
+
+    this.logger.log(
+      `Promoted participant ${participantId} to co-host in meeting ${meetingId}`,
+    );
   }
 }

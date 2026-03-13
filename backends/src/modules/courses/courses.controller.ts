@@ -191,7 +191,7 @@ export class CoursesController {
   /**
    * GET /courses/:id — Course detail with modules
    */
-  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole, 'TEACHING_ASSISTANT' as UserRole)
   @Get(':id')
   async findOne(
     @Param('id') id: string,

@@ -9,19 +9,22 @@ import {
   BookOpen,
   Search,
   Plus,
-  Filter,
   Grid,
   List,
-  Star,
   Users,
-  Clock,
   MoreVertical,
   Eye,
   Edit,
   Archive,
-  Trash2,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import { useAdminProfile } from "@/hooks/useAdminProfile";
+import { useAdminCourses } from "@/hooks/useAdminCourses";
+
+const ITEMS_PER_PAGE = 12;
 
 const AdminCoursesContent = () => {
   const t = useTranslations("adminDashboard");
@@ -29,92 +32,29 @@ const AdminCoursesContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Mock Courses Data with translations
-  const mockCourses = [
-    {
-      id: "1",
-      title: t("coursesPage.sampleCourses.acls"),
-      instructor: t("coursesPage.sampleInstructors.drFaisal"),
-      category: t("coursesPage.categories.emergency"),
-      status: "active",
-      enrolled: 45,
-      capacity: 50,
-      rating: 4.8,
-      revenue: 45000,
-      completionRate: 85,
-      thumbnail: "AC",
-    },
-    {
-      id: "2",
-      title: t("coursesPage.sampleCourses.firstAid"),
-      instructor: t("coursesPage.sampleInstructors.drSara"),
-      category: t("coursesPage.categories.safety"),
-      status: "active",
-      enrolled: 32,
-      capacity: 40,
-      rating: 4.5,
-      revenue: 32000,
-      completionRate: 72,
-      thumbnail: "FA",
-    },
-    {
-      id: "3",
-      title: t("coursesPage.sampleCourses.cpr"),
-      instructor: t("coursesPage.sampleInstructors.drKhalid"),
-      category: t("coursesPage.categories.emergency"),
-      status: "draft",
-      enrolled: 0,
-      capacity: 30,
-      rating: null,
-      revenue: 0,
-      completionRate: null,
-      thumbnail: "CP",
-    },
-    {
-      id: "4",
-      title: t("coursesPage.sampleCourses.emergency"),
-      instructor: t("coursesPage.sampleInstructors.drFatima"),
-      category: t("coursesPage.categories.emergency"),
-      status: "completed",
-      enrolled: 50,
-      capacity: 50,
-      rating: 4.9,
-      revenue: 50000,
-      completionRate: 91,
-      thumbnail: "ER",
-    },
-    {
-      id: "5",
-      title: t("coursesPage.sampleCourses.infection"),
-      instructor: t("coursesPage.sampleInstructors.drMohammed"),
-      category: t("coursesPage.categories.healthcare"),
-      status: "active",
-      enrolled: 28,
-      capacity: 35,
-      rating: 4.6,
-      revenue: 28000,
-      completionRate: 78,
-      thumbnail: "IC",
-    },
-    {
-      id: "6",
-      title: t("coursesPage.sampleCourses.patientSafety"),
-      instructor: t("coursesPage.sampleInstructors.drAisha"),
-      category: t("coursesPage.categories.healthcare"),
-      status: "archived",
-      enrolled: 40,
-      capacity: 40,
-      rating: 4.7,
-      revenue: 40000,
-      completionRate: 88,
-      thumbnail: "PS",
-    },
-  ];
-
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { courses, total, totalPages, loading, error, refetch } = useAdminCourses({
+    status: statusFilter,
+    search: searchQuery,
+    sort: "newest",
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+  });
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
 
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
@@ -126,25 +66,27 @@ const AdminCoursesContent = () => {
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "archived":
         return "bg-[#FEF3C7] text-[#D97706]";
+      case "pending_review":
+        return "bg-[#FEF3C7] text-[#D97706]";
+      case "changes_requested":
+        return "bg-[#FEE2E2] text-[#DC2626]";
       default:
         return "bg-[#F3F4F6] text-[#6B7280]";
     }
   };
 
-  const filteredCourses = mockCourses.filter((course) => {
-    const matchesSearch = course.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || course.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const getInitials = (title: string) =>
+    title
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
 
-  const stats = {
-    total: mockCourses.length,
-    active: mockCourses.filter((c) => c.status === "active").length,
-    totalEnrollments: mockCourses.reduce((acc, c) => acc + c.enrolled, 0),
-    totalRevenue: mockCourses.reduce((acc, c) => acc + c.revenue, 0),
-  };
+  // Stats from current page (note: these are approximate for the visible page only)
+  const activeCount = courses.filter((c) => c.status === "active").length;
+  const enrollmentsCount = courses.reduce((acc, c) => acc + (c.enrolledCount || 0), 0);
+  const pendingCount = courses.filter((c) => c.status === "pending_review").length;
 
   return (
     <>
@@ -172,31 +114,25 @@ const AdminCoursesContent = () => {
                     {t("coursesPage.subtitle")}
                   </p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2.5 btn-gold text-white rounded-lg transition-colors">
-                  <Plus className="w-5 h-5" />
-                  <span className="text-sm font-medium">{t("coursesPage.createCourse")}</span>
-                </button>
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
+                  <p className="text-2xl font-bold text-[#1F2937]">{total}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.total")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-2xl font-bold text-[#16A34A]">{stats.active}</p>
+                  <p className="text-2xl font-bold text-[#16A34A]">{activeCount}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.active")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-2xl font-bold text-[#3B82F6]">{stats.totalEnrollments}</p>
+                  <p className="text-2xl font-bold text-[#3B82F6]">{enrollmentsCount}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.enrollments")}</p>
                 </div>
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-2xl font-bold text-[#D4A520]">
-                    {(stats.totalRevenue / 1000).toFixed(0)}K
-                  </p>
-                  <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.revenue")}</p>
+                  <p className="text-2xl font-bold text-[#D97706]">{pendingCount}</p>
+                  <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.pendingReview")}</p>
                 </div>
               </div>
 
@@ -210,7 +146,7 @@ const AdminCoursesContent = () => {
                       type="text"
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                       className={`w-full h-10 border border-[#E5E7EB] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
@@ -218,12 +154,14 @@ const AdminCoursesContent = () => {
                   {/* Status Filter */}
                   <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    onChange={(e) => handleStatusChange(e.target.value)}
                     className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("coursesPage.filters.allStatus")}</option>
                     <option value="active">{t("coursesPage.filters.active")}</option>
                     <option value="draft">{t("coursesPage.filters.draft")}</option>
+                    <option value="pending_review">{t("coursesPage.filters.pendingReview")}</option>
+                    <option value="changes_requested">{t("coursesPage.filters.changesRequested")}</option>
                     <option value="completed">{t("coursesPage.filters.completed")}</option>
                     <option value="archived">{t("coursesPage.filters.archived")}</option>
                   </select>
@@ -246,165 +184,221 @@ const AdminCoursesContent = () => {
                 </div>
               </div>
 
-              {/* Courses Grid/List */}
-              {viewMode === "grid" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredCourses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden"
-                    >
-                      {/* Thumbnail */}
-                      <div className="h-32 bg-gradient-to-r from-[#002D87] to-[#0066FF] flex items-center justify-center">
-                        <span className="text-3xl font-bold text-white">
-                          {course.thumbnail}
-                        </span>
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1">
-                            {course.title}
-                          </h3>
-                          <span
-                            className={`px-2 py-0.5 text-xs font-medium rounded ${getStatusBadgeStyle(course.status)}`}
-                          >
-                            {t(`coursesPage.filters.${course.status}`)}
-                          </span>
-                        </div>
-
-                        <p className="text-sm text-[#6B7280] mb-3">
-                          {course.instructor}
-                        </p>
-
-                        <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            <span>
-                              {course.enrolled}/{course.capacity}
-                            </span>
-                          </div>
-                          {course.rating && (
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 text-[#D4A520] fill-current" />
-                              <span>{course.rating}</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
-                          <span className="text-sm font-medium text-[#1F2937]">
-                            SAR {course.revenue.toLocaleString()}
-                          </span>
-                          <div className="relative">
-                            <button
-                              onClick={() =>
-                                setOpenDropdownId(
-                                  openDropdownId === course.id ? null : course.id
-                                )
-                              }
-                              className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
-                            >
-                              <MoreVertical className="w-4 h-4 text-[#6B7280]" />
-                            </button>
-
-                            {openDropdownId === course.id && (
-                              <div
-                                className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
-                              >
-                                <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
-                                  <Eye className="w-4 h-4" />
-                                  {t("coursesPage.actions.view")}
-                                </button>
-                                <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
-                                  <Edit className="w-4 h-4" />
-                                  {t("coursesPage.actions.edit")}
-                                </button>
-                                <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
-                                  <Archive className="w-4 h-4" />
-                                  {t("coursesPage.actions.archive")}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                      <tr>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                          {t("coursesPage.table.course")}
-                        </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                          {t("coursesPage.table.instructor")}
-                        </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                          {t("coursesPage.table.status")}
-                        </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                          {t("coursesPage.table.enrolled")}
-                        </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                          {t("coursesPage.table.rating")}
-                        </th>
-                        <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                          {t("coursesPage.table.revenue")}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredCourses.map((course) => (
-                        <tr
-                          key={course.id}
-                          className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
-                        >
-                          <td className="px-4 py-4">
-                            <span className="text-sm font-medium text-[#1F2937]">
-                              {course.title}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-[#6B7280]">
-                            {course.instructor}
-                          </td>
-                          <td className="px-4 py-4">
-                            <span
-                              className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeStyle(course.status)}`}
-                            >
-                              {t(`coursesPage.filters.${course.status}`)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-[#6B7280]">
-                            {course.enrolled}/{course.capacity}
-                          </td>
-                          <td className="px-4 py-4">
-                            {course.rating ? (
-                              <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 text-[#D4A520] fill-current" />
-                                <span className="text-sm text-[#1F2937]">
-                                  {course.rating}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-sm text-[#9CA3AF]">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-4 text-sm font-medium text-[#1F2937]">
-                            SAR {course.revenue.toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Loading State */}
+              {loading && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-[#002D87] animate-spin" />
                 </div>
               )}
 
-              {filteredCourses.length === 0 && (
+              {/* Error State */}
+              {error && !loading && (
+                <div className="bg-white rounded-xl border border-red-200 py-12 text-center">
+                  <p className="text-red-600 mb-4">{t("coursesPage.error")}</p>
+                  <button
+                    onClick={refetch}
+                    className="px-4 py-2 btn-gold text-white rounded-lg"
+                  >
+                    {t("coursesPage.retry")}
+                  </button>
+                </div>
+              )}
+
+              {/* Courses Grid/List */}
+              {!loading && !error && courses.length > 0 && (
+                <>
+                  {viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {courses.map((course) => (
+                        <div
+                          key={course.id}
+                          className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden"
+                        >
+                          {/* Thumbnail */}
+                          <div className="h-32 bg-gradient-to-r from-[#002D87] to-[#0066FF] flex items-center justify-center overflow-hidden">
+                            {course.thumbnail ? (
+                              <img
+                                src={course.thumbnail}
+                                alt={course.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-3xl font-bold text-white">
+                                {getInitials(course.title)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          <div className="p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1">
+                                {locale === "ar" && course.titleAr ? course.titleAr : course.title}
+                              </h3>
+                              <span
+                                className={`px-2 py-0.5 text-xs font-medium rounded shrink-0 ml-2 ${getStatusBadgeStyle(course.status)}`}
+                              >
+                                {t(`coursesPage.filters.${course.status === "pending_review" ? "pendingReview" : course.status === "changes_requested" ? "changesRequested" : course.status}`)}
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-[#6B7280] mb-3">
+                              {course.instructorName || "—"}
+                            </p>
+
+                            <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
+                              <div className="flex items-center gap-1">
+                                <Users className="w-4 h-4" />
+                                <span>
+                                  {course.enrolledCount}/{course.maxEnrollment ?? "∞"}
+                                </span>
+                              </div>
+                              {course.completionRate > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <BarChart3 className="w-4 h-4" />
+                                  <span>{course.completionRate}%</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
+                              <span className="text-sm font-medium text-[#1F2937]">
+                                SAR {(course.price ?? 0).toLocaleString()}
+                              </span>
+                              <div className="relative">
+                                <button
+                                  onClick={() =>
+                                    setOpenDropdownId(
+                                      openDropdownId === course.id ? null : course.id
+                                    )
+                                  }
+                                  className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
+                                >
+                                  <MoreVertical className="w-4 h-4 text-[#6B7280]" />
+                                </button>
+
+                                {openDropdownId === course.id && (
+                                  <div
+                                    className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
+                                  >
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                                      <Eye className="w-4 h-4" />
+                                      {t("coursesPage.actions.view")}
+                                    </button>
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                                      <Edit className="w-4 h-4" />
+                                      {t("coursesPage.actions.edit")}
+                                    </button>
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                                      <Archive className="w-4 h-4" />
+                                      {t("coursesPage.actions.archive")}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                      <table className="w-full">
+                        <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                          <tr>
+                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              {t("coursesPage.table.course")}
+                            </th>
+                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              {t("coursesPage.table.instructor")}
+                            </th>
+                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              {t("coursesPage.table.status")}
+                            </th>
+                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              {t("coursesPage.table.enrolled")}
+                            </th>
+                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              {t("coursesPage.table.completion")}
+                            </th>
+                            <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
+                              {t("coursesPage.table.price")}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {courses.map((course) => (
+                            <tr
+                              key={course.id}
+                              className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
+                            >
+                              <td className="px-4 py-4">
+                                <span className="text-sm font-medium text-[#1F2937]">
+                                  {locale === "ar" && course.titleAr ? course.titleAr : course.title}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-sm text-[#6B7280]">
+                                {course.instructorName || "—"}
+                              </td>
+                              <td className="px-4 py-4">
+                                <span
+                                  className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusBadgeStyle(course.status)}`}
+                                >
+                                  {t(`coursesPage.filters.${course.status === "pending_review" ? "pendingReview" : course.status === "changes_requested" ? "changesRequested" : course.status}`)}
+                                </span>
+                              </td>
+                              <td className="px-4 py-4 text-sm text-[#6B7280]">
+                                {course.enrolledCount}/{course.maxEnrollment ?? "∞"}
+                              </td>
+                              <td className="px-4 py-4 text-sm text-[#6B7280]">
+                                {course.completionRate}%
+                              </td>
+                              <td className="px-4 py-4 text-sm font-medium text-[#1F2937]">
+                                SAR {(course.price ?? 0).toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6">
+                      <p className="text-sm text-[#6B7280]">
+                        {t("coursesPage.showing", {
+                          from: (currentPage - 1) * ITEMS_PER_PAGE + 1,
+                          to: Math.min(currentPage * ITEMS_PER_PAGE, total),
+                          total,
+                        })}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="p-2 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm text-[#4B5563] px-2">
+                          {currentPage} / {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="p-2 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Empty State */}
+              {!loading && !error && courses.length === 0 && (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] py-12 text-center">
                   <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-4" />
                   <p className="text-[#6B7280]">{t("coursesPage.noCourses")}</p>

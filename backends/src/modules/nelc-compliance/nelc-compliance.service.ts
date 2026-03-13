@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger, StreamableFile } from '@nestjs/common';
-import { eq, and, count, isNotNull, isNull, sql } from 'drizzle-orm';
+import { eq, and, count, isNotNull, isNull, sql, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -20,6 +20,7 @@ import {
   courseRatings,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import {
   classifyCourse,
   getNelcMaxEnrollment,
@@ -64,9 +65,9 @@ export interface ComplianceSummary {
 export class NelcComplianceService {
   private readonly logger = new Logger(NelcComplianceService.name);
 
-  // ─── NELC thresholds for assistant allocation ───
-  private readonly ASSISTANT_THRESHOLD_LOW = 25;
-  private readonly ASSISTANT_THRESHOLD_MID = 35;
+  // ─── NELC thresholds for assistant allocation — TESTING VALUES (production: 25/35) ───
+  private readonly ASSISTANT_THRESHOLD_LOW = 1;
+  private readonly ASSISTANT_THRESHOLD_MID = 2;
 
   /**
    * Validate session compliance against NELC rules.
@@ -179,13 +180,12 @@ export class NelcComplianceService {
   async getComplianceSummary(
     user: AuthenticatedUser,
   ): Promise<ComplianceSummary> {
-    const isAdmin =
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER');
-
-    // Get courses
-    const conditions = isAdmin ? [] : [eq(courses.instructorId, user.id)];
+    // Get courses scoped by role
+    const conditions: any[] = isGlobalAdmin(user)
+      ? []
+      : isManager(user)
+        ? [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!]
+        : [eq(courses.instructorId, user.id)];
     const userCourses = await db
       .select({ id: courses.id })
       .from(courses)
@@ -228,12 +228,11 @@ export class NelcComplianceService {
       summary: { passed: number; review: number; failed: number; total: number };
     }>
   > {
-    const isAdmin =
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER');
-
-    const conditions = isAdmin ? [] : [eq(courses.instructorId, user.id)];
+    const conditions: any[] = isGlobalAdmin(user)
+      ? []
+      : isManager(user)
+        ? [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!]
+        : [eq(courses.instructorId, user.id)];
 
     const allCourses = await db
       .select({
@@ -1153,15 +1152,16 @@ export class NelcComplianceService {
       checks: ComplianceCheck[];
     }>
   > {
-    const isAdmin =
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER');
-
-    const conditions = [
+    const conditions: any[] = [
       sql`${sessions.type} IN ('zoom', 'hybrid')`,
     ];
-    if (!isAdmin) {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+      );
+    } else {
       conditions.push(eq(sessions.instructorId, user.id));
     }
 

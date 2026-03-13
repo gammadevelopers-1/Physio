@@ -5,7 +5,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, gte, lte } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, gte, lte, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -16,16 +16,20 @@ import {
   sessionRecordings,
   sessionMaterials,
   courseMaterials,
+  sessionAssistants,
+  assessments,
   SESSION_STATUS,
   SESSION_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isManagerOrAbove, isTA } from '../../common/role-helpers';
 import { CreateSessionDto } from './dto/create-session.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
 import { CancelSessionDto } from './dto/cancel-session.dto';
 import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { CourseAssistantsService } from '../course-assistants/course-assistants.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { SessionNotificationService } from './session-notification.service';
 import { NELC_EVENT_TYPE } from '../../database/schema';
@@ -41,16 +45,35 @@ export class SessionsService {
     private readonly assistantsService: SessionAssistantsService,
     private readonly auditLogService: AuditLogService,
     private readonly sessionNotificationService: SessionNotificationService,
+    private readonly courseAssistantsService: CourseAssistantsService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  /**
+   * Add ownership condition for sessions based on user role:
+   * - Global admin: no filter
+   * - Manager: session must belong to a course they manage
+   * - Instructor: session must belong to them
+   */
+  private addSessionOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+      );
+    } else if (isTA(user)) {
+      // TAs see sessions for courses they're actively assigned to
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT course_id FROM course_assistants WHERE user_id = ${user.id} AND status = 'approved')`,
+      );
+    } else {
+      conditions.push(eq(sessions.instructorId, user.id));
+    }
   }
 
   // ─── Session CRUD ───────────────────────────────────────────
@@ -89,8 +112,13 @@ export class SessionsService {
       }
     }
 
-    if (this.isAdmin(user)) {
-      // Admin: verify course exists (any course)
+    if (isManagerOrAbove(user)) {
+      // Admin/Manager: verify course exists and user has access
+      const courseConditions: any[] = [eq(courses.id, dto.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+      }
+
       const [course] = await db
         .select({
           id: courses.id,
@@ -99,7 +127,7 @@ export class SessionsService {
           endDate: courses.endDate,
         })
         .from(courses)
-        .where(eq(courses.id, dto.courseId))
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {
@@ -134,6 +162,11 @@ export class SessionsService {
       // Auto-allocate assistants based on NELC rules
       await this.assistantsService.checkAndAllocate(session.id).catch((err) => {
         this.logger.warn('Auto-allocation failed for session', err);
+      });
+
+      // Propagate course-level TAs to this new session
+      await this.courseAssistantsService.propagateToSession(dto.courseId, session.id).catch((err) => {
+        this.logger.warn('Course TA propagation failed for session', err);
       });
 
       // Audit log
@@ -201,6 +234,11 @@ export class SessionsService {
       this.logger.warn('Auto-allocation failed for session', err);
     });
 
+    // Propagate course-level TAs to this new session
+    await this.courseAssistantsService.propagateToSession(dto.courseId, session.id).catch((err) => {
+      this.logger.warn('Course TA propagation failed for session', err);
+    });
+
     // Audit log
     await this.auditLogService.log({
       entityType: 'session',
@@ -216,6 +254,70 @@ export class SessionsService {
       .catch(() => {});
 
     return session;
+  }
+
+  /**
+   * Get sessions assigned to a Teaching Assistant via session_assistants.
+   */
+  async getAssignedSessions(
+    userId: string,
+    params: {
+      dateRange?: string;
+      status?: string;
+      courseId?: string;
+    } = {},
+  ) {
+    const conditions = [eq(sessionAssistants.userId, userId)];
+
+    if (params.status) {
+      conditions.push(eq(sessions.status, params.status));
+    }
+    if (params.courseId) {
+      conditions.push(eq(sessions.courseId, params.courseId));
+    }
+    if (params.dateRange) {
+      const [startStr, endStr] = params.dateRange.split(',');
+      if (startStr) conditions.push(gte(sessions.scheduledAt, new Date(startStr)));
+      if (endStr) conditions.push(lte(sessions.scheduledAt, new Date(endStr)));
+    }
+
+    const assessmentIdSubquery = db
+      .select({ id: assessments.id })
+      .from(assessments)
+      .where(
+        and(
+          sql`${assessments.courseId} = ${sessions.courseId}`,
+          sql`${assessments.status} != 'draft'`,
+        ),
+      )
+      .limit(1);
+
+    const data = await db
+      .select({
+        id: sessions.id,
+        courseId: sessions.courseId,
+        courseName: courses.title,
+        instructorId: sessions.instructorId,
+        title: sessions.title,
+        type: sessions.type,
+        scheduledAt: sessions.scheduledAt,
+        durationMinutes: sessions.durationMinutes,
+        zoomLink: sessions.zoomLink,
+        status: sessions.status,
+        roomName: sessions.roomName,
+        venueAddress: sessions.venueAddress,
+        assistantRole: sessionAssistants.role,
+        assessmentId: sql<string | null>`(${assessmentIdSubquery})`.as(
+          'assessment_id',
+        ),
+      })
+      .from(sessionAssistants)
+      .innerJoin(sessions, eq(sessionAssistants.sessionId, sessions.id))
+      .innerJoin(courses, eq(sessions.courseId, courses.id))
+      .where(and(...conditions))
+      .orderBy(desc(sessions.scheduledAt));
+
+    return data;
   }
 
   /**
@@ -240,10 +342,8 @@ export class SessionsService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own sessions only
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    // Scope by role
+    this.addSessionOwnershipCondition(conditions, user);
 
     // dateRange filter — format: "YYYY-MM-DD,YYYY-MM-DD"
     if (params.dateRange) {
@@ -361,9 +461,7 @@ export class SessionsService {
       sql`DATE(${sessions.scheduledAt}) = CURRENT_DATE` as any,
     ];
 
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const data = await db
       .select()
@@ -384,9 +482,7 @@ export class SessionsService {
       sql`${sessions.scheduledAt} > NOW()` as any,
     ];
 
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const data = await db
       .select()
@@ -404,9 +500,7 @@ export class SessionsService {
    */
   async findOne(sessionId: string, user: AuthenticatedUser) {
     const conditions = [eq(sessions.id, sessionId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const [session] = await db
       .select()
@@ -520,9 +614,17 @@ export class SessionsService {
     const scheduledAt = new Date(session.scheduledAt);
     const fifteenMinBefore = new Date(scheduledAt.getTime() - 15 * 60 * 1000);
     if (now < fifteenMinBefore) {
-      const diffMin = Math.ceil((fifteenMinBefore.getTime() - now.getTime()) / 60000);
+      const diffMs = scheduledAt.getTime() - now.getTime();
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffMins = Math.ceil((diffMs % 3600000) / 60000);
+      const timeStr = diffHours > 0
+        ? `${diffHours}h ${diffMins}m`
+        : `${diffMins} minute(s)`;
+      const scheduledStr = scheduledAt.toLocaleString('en-US', {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
       throw new BadRequestException(
-        `Cannot start session yet. You can start it ${diffMin} minute(s) before the scheduled time.`,
+        `Cannot start session yet. The session is scheduled for ${scheduledStr}. You can start it up to 15 minutes before (in ${timeStr}).`,
       );
     }
 
@@ -1136,24 +1238,23 @@ export class SessionsService {
     courseStartDate: string | null,
     courseEndDate: string | null,
   ) {
-    const sessionDate = new Date(scheduledAt);
+    // Compare date portions only (YYYY-MM-DD) to avoid timezone issues.
+    // The session datetime from the frontend represents the user's local date,
+    // so we extract just the date part for comparison.
+    const sessionDateStr = scheduledAt.slice(0, 10); // "YYYY-MM-DD"
     if (courseStartDate) {
-      const start = new Date(courseStartDate);
-      start.setHours(0, 0, 0, 0);
-      const sessionDay = new Date(sessionDate);
-      sessionDay.setHours(0, 0, 0, 0);
-      if (sessionDay < start) {
+      const startStr = new Date(courseStartDate).toISOString().slice(0, 10);
+      if (sessionDateStr < startStr) {
         throw new BadRequestException(
-          `Session date cannot be before the course start date (${courseStartDate})`,
+          `Session date cannot be before the course start date (${startStr})`,
         );
       }
     }
     if (courseEndDate) {
-      const end = new Date(courseEndDate);
-      end.setHours(23, 59, 59, 999);
-      if (sessionDate > end) {
+      const endStr = new Date(courseEndDate).toISOString().slice(0, 10);
+      if (sessionDateStr > endStr) {
         throw new BadRequestException(
-          `Session date cannot be after the course end date (${courseEndDate})`,
+          `Session date cannot be after the course end date (${endStr})`,
         );
       }
     }
@@ -1169,9 +1270,7 @@ export class SessionsService {
     user: AuthenticatedUser,
   ) {
     const conditions = [eq(sessions.id, sessionId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(sessions.instructorId, user.id));
-    }
+    this.addSessionOwnershipCondition(conditions, user);
 
     const [session] = await db
       .select()
@@ -1305,5 +1404,45 @@ export class SessionsService {
       .orderBy(desc(sessionMaterials.sharedAt));
 
     return shared;
+  }
+
+  /**
+   * Update the role of a session assistant (co_host / assistant).
+   */
+  async updateAssistantRole(
+    sessionId: string,
+    userId: string,
+    role: 'co_host' | 'assistant',
+    user: AuthenticatedUser,
+  ) {
+    if (!['co_host', 'assistant'].includes(role)) {
+      throw new BadRequestException('Role must be "co_host" or "assistant"');
+    }
+
+    // Verify the user has access to this session
+    await this.verifySessionAccess(sessionId, user);
+
+    const [existing] = await db
+      .select({ id: sessionAssistants.id })
+      .from(sessionAssistants)
+      .where(
+        and(
+          eq(sessionAssistants.sessionId, sessionId),
+          eq(sessionAssistants.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    if (!existing) {
+      throw new NotFoundException('Session assistant not found');
+    }
+
+    const [updated] = await db
+      .update(sessionAssistants)
+      .set({ role })
+      .where(eq(sessionAssistants.id, existing.id))
+      .returning();
+
+    return updated;
   }
 }

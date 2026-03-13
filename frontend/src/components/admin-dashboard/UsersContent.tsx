@@ -74,7 +74,7 @@ function formatRelativeTime(dateStr: string | undefined | null): string {
   return formatDate(dateStr);
 }
 
-const ALL_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "MANAGER", "FINANCE", "SUPPORT"] as const;
+const ALL_ROLES = ["ADMIN", "INSTRUCTOR", "STUDENT", "TEACHING_ASSISTANT", "MANAGER", "FINANCE", "SUPPORT"] as const;
 
 // ============================================
 // Modal Backdrop Component
@@ -598,6 +598,8 @@ function ManageRolesModal({
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "student":
         return "bg-[#DCFCE7] text-[#16A34A]";
+      case "teaching_assistant":
+        return "bg-[#CCFBF1] text-[#0D9488]";
       case "manager":
         return "bg-[#EDE9FE] text-[#7C3AED]";
       case "finance":
@@ -822,6 +824,8 @@ const UsersContent = () => {
         return "bg-[#DBEAFE] text-[#1D4ED8]";
       case "student":
         return "bg-[#DCFCE7] text-[#16A34A]";
+      case "teaching_assistant":
+        return "bg-[#CCFBF1] text-[#0D9488]";
       case "manager":
         return "bg-[#EDE9FE] text-[#7C3AED]";
       case "finance":
@@ -857,6 +861,8 @@ const UsersContent = () => {
         return "bg-[#3B82F6]";
       case "student":
         return "bg-[#22C55E]";
+      case "teaching_assistant":
+        return "bg-[#0D9488]";
       case "manager":
         return "bg-[#8B5CF6]";
       case "finance":
@@ -957,6 +963,7 @@ const UsersContent = () => {
                     <option value="admin">{t("userManagement.roles.admin")}</option>
                     <option value="instructor">{t("userManagement.roles.instructor")}</option>
                     <option value="student">{t("userManagement.roles.student")}</option>
+                    <option value="teaching_assistant">{t("userManagement.roles.teaching_assistant")}</option>
                     <option value="manager">{t("userManagement.roles.manager")}</option>
                     <option value="finance">{t("userManagement.roles.finance")}</option>
                     <option value="support">{t("userManagement.roles.support")}</option>

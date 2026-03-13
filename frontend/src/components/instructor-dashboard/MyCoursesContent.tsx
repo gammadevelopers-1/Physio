@@ -367,7 +367,7 @@ const MyCoursesContent = () => {
                               <div className="flex items-center gap-4 text-sm text-[#6B7280] mb-3">
                                 <span className="flex items-center gap-1">
                                   <Users className="w-4 h-4" />
-                                  {course.enrolledCount} {t("courses.students")}
+                                  {course.enrolledCount} {course.enrolledCount === 1 ? t("courses.student") : t("courses.students")}
                                 </span>
                                 <span className="flex items-center gap-1">
                                   <Calendar className="w-4 h-4" />

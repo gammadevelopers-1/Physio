@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, isNull, inArray, aliasedTable } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, isNull, inArray, aliasedTable, or } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
@@ -15,6 +15,9 @@ import {
   users,
   assessmentOverrides,
   enrollments,
+  courseAssistants,
+  sessionAssistants,
+  sessions,
   ASSESSMENT_STATUS,
   QUESTION_TYPE,
   QuestionOption,
@@ -22,6 +25,7 @@ import {
 } from '../../database/schema';
 import type { AssessmentFile } from '../../database/schema/assessments';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
 import { CreateAssessmentDto } from './dto/create-assessment.dto';
 import { UpdateAssessmentDto } from './dto/update-assessment.dto';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -56,12 +60,17 @@ export class AssessmentsService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Assessment CRUD ──────────────────────────────────────
@@ -122,18 +131,29 @@ export class AssessmentsService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own courses only
-    if (!this.isAdmin(user)) {
-      const instructorCourseIds = await this.getInstructorCourseIds(user.id);
-      if (instructorCourseIds.length === 0) {
+    // Scope by role
+    if (!isGlobalAdmin(user)) {
+      let scopedCourseIds: string[];
+      if (isManager(user)) {
+        scopedCourseIds = await this.getManagedCourseIds(user.id);
+      } else if (isTA(user)) {
+        scopedCourseIds = await this.getTACourseIds(user.id);
+      } else {
+        scopedCourseIds = await this.getInstructorCourseIds(user.id);
+      }
+      if (scopedCourseIds.length === 0) {
         return { data: [], total: 0, page, limit, totalPages: 0 };
       }
       conditions.push(
         sql`${assessments.courseId} IN (${sql.join(
-          instructorCourseIds.map((id) => sql`${id}`),
+          scopedCourseIds.map((id) => sql`${id}`),
           sql`, `,
         )})` as any,
       );
+      // TAs should only see published/closed assessments (not drafts)
+      if (isTA(user)) {
+        conditions.push(sql`${assessments.status} != 'draft'` as any);
+      }
     }
 
     if (params.courseId) {
@@ -657,7 +677,7 @@ export class AssessmentsService {
    * - Admin: any assessment.
    */
   async getSubmissions(assessmentId: string, user: AuthenticatedUser) {
-    await this.verifyAssessmentAccess(assessmentId, user);
+    const assessment = await this.verifyAssessmentAccess(assessmentId, user);
 
     const data = await db
       .select({
@@ -681,6 +701,18 @@ export class AssessmentsService {
       .innerJoin(users, eq(submissions.studentId, users.id))
       .where(eq(submissions.assessmentId, assessmentId))
       .orderBy(desc(submissions.submittedAt));
+
+    // For TAs: strip scores/grades unless assessment is closed (results published)
+    if (user.roles.includes('TEACHING_ASSISTANT') && !isGlobalAdmin(user)) {
+      const gradesPublished = assessment.status === 'closed';
+      return data.map((row) => ({
+        ...row,
+        score: gradesPublished ? row.score : null,
+        totalMarks: gradesPublished ? row.totalMarks : null,
+        percentage: gradesPublished ? row.percentage : null,
+        instructorComment: gradesPublished ? row.instructorComment : null,
+      }));
+    }
 
     return data;
   }
@@ -1330,6 +1362,32 @@ export class AssessmentsService {
     return instructorCourses.map((c) => c.id);
   }
 
+  private async getManagedCourseIds(
+    managerId: string,
+  ): Promise<string[]> {
+    const managedCourses = await db
+      .select({ id: courses.id })
+      .from(courses)
+      .where(or(eq(courses.managerId, managerId), sql`${courses.managerId} IS NULL`));
+    return managedCourses.map((c) => c.id);
+  }
+
+  /**
+   * Get course IDs for a TA (approved assignments only).
+   */
+  private async getTACourseIds(userId: string): Promise<string[]> {
+    const taCourses = await db
+      .select({ courseId: courseAssistants.courseId })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.userId, userId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+    return taCourses.map((c) => c.courseId);
+  }
+
   /**
    * Verify the user can access the course.
    */
@@ -1337,10 +1395,8 @@ export class AssessmentsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id, instructorId: courses.instructorId })
@@ -1374,20 +1430,56 @@ export class AssessmentsService {
     }
 
     // Verify course access
-    if (!this.isAdmin(user)) {
+    if (!isGlobalAdmin(user)) {
+      const courseConditions: any[] = [eq(courses.id, assessment.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+      } else {
+        courseConditions.push(eq(courses.instructorId, user.id));
+      }
+
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.id, assessment.courseId),
-            eq(courses.instructorId, user.id),
-          ),
-        )
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {
-        throw new NotFoundException('Assessment not found');
+        // Check if user is a TA assigned to this course
+        if (user.roles.includes('TEACHING_ASSISTANT')) {
+          const [courseTA] = await db
+            .select({ id: courseAssistants.id })
+            .from(courseAssistants)
+            .where(
+              and(
+                eq(courseAssistants.courseId, assessment.courseId),
+                eq(courseAssistants.userId, user.id),
+                eq(courseAssistants.status, 'approved'),
+              ),
+            )
+            .limit(1);
+
+          if (!courseTA) {
+            // Also check session-level assignment
+            const [sessionTA] = await db
+              .select({ id: sessionAssistants.id })
+              .from(sessionAssistants)
+              .innerJoin(sessions, eq(sessionAssistants.sessionId, sessions.id))
+              .where(
+                and(
+                  eq(sessions.courseId, assessment.courseId),
+                  eq(sessionAssistants.userId, user.id),
+                ),
+              )
+              .limit(1);
+
+            if (!sessionTA) {
+              throw new NotFoundException('Assessment not found');
+            }
+          }
+        } else {
+          throw new NotFoundException('Assessment not found');
+        }
       }
     }
 
@@ -1413,16 +1505,18 @@ export class AssessmentsService {
     }
 
     // Verify course access
-    if (!this.isAdmin(user)) {
+    if (!isGlobalAdmin(user)) {
+      const courseConditions: any[] = [eq(courses.id, question.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+      } else {
+        courseConditions.push(eq(courses.instructorId, user.id));
+      }
+
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.id, question.courseId),
-            eq(courses.instructorId, user.id),
-          ),
-        )
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {

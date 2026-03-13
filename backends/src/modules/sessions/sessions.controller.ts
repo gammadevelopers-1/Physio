@@ -132,6 +132,24 @@ export class SessionsController {
   }
 
   /**
+   * GET /sessions/my-assigned — Sessions assigned to the current TA
+   */
+  @Roles('TEACHING_ASSISTANT' as UserRole)
+  @Get('my-assigned')
+  async getMyAssignedSessions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('dateRange') dateRange?: string,
+    @Query('status') status?: string,
+    @Query('courseId') courseId?: string,
+  ) {
+    return this.sessionsService.getAssignedSessions(user.id, {
+      dateRange,
+      status,
+      courseId,
+    });
+  }
+
+  /**
    * GET /sessions/:id — Session detail
    */
   @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
@@ -375,5 +393,21 @@ export class SessionsController {
   @Get(':id/shared-materials')
   async getSharedMaterials(@Param('id') sessionId: string) {
     return this.sessionsService.getSharedMaterials(sessionId);
+  }
+
+  // ─── Session Assistant Management ──────────────────────
+
+  /**
+   * PATCH /sessions/:id/assistants/:userId/role — Update TA session role (co_host / assistant)
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole, 'INSTRUCTOR' as UserRole)
+  @Patch(':id/assistants/:userId/role')
+  async updateAssistantRole(
+    @Param('id') sessionId: string,
+    @Param('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { role: 'co_host' | 'assistant' },
+  ) {
+    return this.sessionsService.updateAssistantRole(sessionId, userId, body.role, user);
   }
 }

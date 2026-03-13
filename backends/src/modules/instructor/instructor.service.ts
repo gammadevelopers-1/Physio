@@ -3,7 +3,7 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, sql, inArray, count, asc, desc, gte, lte } from 'drizzle-orm';
+import { eq, and, sql, inArray, count, asc, desc, gte, lte, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -25,6 +25,7 @@ import {
   INTERVENTION_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { CoursesService } from '../courses/courses.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { CertificatesService } from '../certificates/certificates.service';
@@ -46,12 +47,16 @@ export class InstructorService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  /**
+   * Returns course ownership conditions based on user role:
+   * - Global admin: [] (no filter)
+   * - Manager: [eq(courses.managerId, user.id)]
+   * - Instructor: [eq(courses.instructorId, user.id)]
+   */
+  private getCourseOwnershipConditions(user: AuthenticatedUser): any[] {
+    if (isGlobalAdmin(user)) return [];
+    if (isManager(user)) return [or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!];
+    return [eq(courses.instructorId, user.id)];
   }
 
   // ─── Dashboard Summary ──────────────────────────────────────
@@ -721,9 +726,7 @@ export class InstructorService {
    */
   async getCoursePerformance(user: AuthenticatedUser, courseId?: string) {
     // Get instructor's courses to validate access
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourses = await db
       .select({ id: courses.id })
@@ -910,9 +913,7 @@ export class InstructorService {
    * Return distinct delivery types and cohorts for filter dropdowns.
    */
   async getFilterOptions(user: AuthenticatedUser) {
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourses = await db
       .select({
@@ -939,9 +940,7 @@ export class InstructorService {
    */
   async getStudents(user: AuthenticatedUser, courseId?: string) {
     // Get the instructor's course IDs (or all courses for admin)
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourses = await db
       .select({ id: courses.id })
@@ -1099,9 +1098,7 @@ export class InstructorService {
     }
 
     // Get the instructor's course IDs (or all for admin)
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourses = await db
       .select({ id: courses.id })
@@ -1318,9 +1315,7 @@ export class InstructorService {
    */
   async getAtRiskStudents(user: AuthenticatedUser) {
     // Get the instructor's course IDs (or all for admin) with thresholds
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourses = await db
       .select({
@@ -1549,16 +1544,17 @@ export class InstructorService {
     },
   ) {
     // Verify course access
+    const accessConditions: any[] = [eq(courses.id, courseId)];
+    const ownershipConds = this.getCourseOwnershipConditions(user);
+    accessConditions.push(...ownershipConds);
+
     const [course] = await db
-      .select({ id: courses.id, instructorId: courses.instructorId })
+      .select({ id: courses.id })
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(...accessConditions))
       .limit(1);
 
     if (!course) throw new NotFoundException('Course not found');
-    if (!this.isAdmin(user) && course.instructorId !== user.id) {
-      throw new NotFoundException('Course not found');
-    }
 
     const updateData: Record<string, unknown> = {};
     if (data.atRiskAttendanceThreshold !== undefined) {
@@ -1604,9 +1600,7 @@ export class InstructorService {
     }
 
     // 2. Verify instructor has access to this student
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourses = await db
       .select({ id: courses.id, title: courses.title })
@@ -1751,9 +1745,7 @@ export class InstructorService {
    */
   async getStudentInterventions(user: AuthenticatedUser, studentId: string) {
     // Verify instructor has access to student's courses
-    const courseConditions = this.isAdmin(user)
-      ? []
-      : [eq(courses.instructorId, user.id)];
+    const courseConditions = this.getCourseOwnershipConditions(user);
 
     const instructorCourseIds = (
       await db
@@ -1762,13 +1754,13 @@ export class InstructorService {
         .where(courseConditions.length > 0 ? and(...courseConditions) : undefined)
     ).map((c) => c.id);
 
-    if (!this.isAdmin(user) && instructorCourseIds.length === 0) {
+    if (!isGlobalAdmin(user) && instructorCourseIds.length === 0) {
       return [];
     }
 
     // Build where conditions
     const conditions = [eq(interventions.studentId, studentId)];
-    if (!this.isAdmin(user) && instructorCourseIds.length > 0) {
+    if (!isGlobalAdmin(user) && instructorCourseIds.length > 0) {
       conditions.push(inArray(interventions.courseId, instructorCourseIds));
     }
 
@@ -1818,8 +1810,24 @@ export class InstructorService {
    * Enriched instructor list with workload metrics.
    * Only available to MANAGER and ADMIN roles.
    */
-  async getInstructorRoster() {
-    // Get all instructors via user_roles junction table
+  async getInstructorRoster(user: AuthenticatedUser) {
+    // For managers, only show instructors teaching their managed courses
+    let managedInstructorIds: string[] | null = null;
+    if (isManager(user)) {
+      const managedCourses = await db
+        .select({ instructorId: courses.instructorId })
+        .from(courses)
+        .where(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`));
+      managedInstructorIds = [...new Set(managedCourses.map((c) => c.instructorId))];
+      if (managedInstructorIds.length === 0) return [];
+    }
+
+    // Get instructors via user_roles junction table
+    const baseConditions: any[] = [eq(roles.name, 'INSTRUCTOR')];
+    if (managedInstructorIds) {
+      baseConditions.push(inArray(users.id, managedInstructorIds));
+    }
+
     const instructorsList = await db
       .selectDistinct({
         id: users.id,
@@ -1834,7 +1842,7 @@ export class InstructorService {
       .from(users)
       .innerJoin(userRoles, eq(users.id, userRoles.userId))
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
-      .where(eq(roles.name, 'INSTRUCTOR'))
+      .where(and(...baseConditions))
       .orderBy(asc(users.firstName));
 
     if (instructorsList.length === 0) return [];
@@ -1968,8 +1976,8 @@ export class InstructorService {
   /**
    * Get instructor suggestions sorted by availability (least loaded first).
    */
-  async suggestInstructor() {
-    const roster = await this.getInstructorRoster();
+  async suggestInstructor(user: AuthenticatedUser) {
+    const roster = await this.getInstructorRoster(user);
     const sorted = [...roster].sort((a, b) => a.hoursThisWeek - b.hoursThisWeek);
     return sorted.map((inst, idx) => ({
       ...inst,

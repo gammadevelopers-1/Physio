@@ -27,6 +27,7 @@ import {
   videoWatchEvents,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
+import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import type { AssessmentFile } from '../../database/schema/assessments';
 import { randomUUID } from 'crypto';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -73,6 +74,7 @@ export class StudentService {
     private readonly storageService: StorageService,
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
+    private readonly thresholdEvaluationService: ThresholdEvaluationService,
   ) {}
 
   // ─── Dashboard Stats ────────────────────────────────────
@@ -1138,6 +1140,11 @@ export class StudentService {
         },
       });
 
+      // Trigger TA threshold evaluation (auto-activate pre-assigned TAs)
+      this.thresholdEvaluationService
+        .evaluateAndAct(courseId)
+        .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
+
       return reactivated;
     }
 
@@ -1162,7 +1169,69 @@ export class StudentService {
       },
     });
 
+    // Trigger TA threshold evaluation (auto-activate pre-assigned TAs)
+    this.thresholdEvaluationService
+      .evaluateAndAct(courseId)
+      .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
+
     return enrollment;
+  }
+
+  // ─── Drop Course ──────────────────────────────────────
+
+  async dropCourse(studentId: string, courseId: string) {
+    // 1. Verify enrollment exists and is active
+    const [enrollment] = await db
+      .select({ id: enrollments.id, status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new NotFoundException('You are not enrolled in this course');
+    }
+
+    if (enrollment.status === 'dropped') {
+      throw new BadRequestException('You have already dropped this course');
+    }
+
+    if (enrollment.status === 'completed') {
+      throw new BadRequestException(
+        'Cannot drop a completed course',
+      );
+    }
+
+    // 2. Update status to dropped
+    const [updated] = await db
+      .update(enrollments)
+      .set({ status: 'dropped' })
+      .where(eq(enrollments.id, enrollment.id))
+      .returning();
+
+    // 3. Audit log
+    await this.auditService.log({
+      eventType: NELC_EVENT_TYPE.ENROLLMENT_DROPPED,
+      entityType: 'enrollment',
+      entityId: updated.id,
+      userId: studentId,
+      metadata: {
+        courseId,
+        studentId,
+        previousStatus: enrollment.status,
+      },
+    });
+
+    // 4. Re-evaluate TA thresholds (enrollment count decreased)
+    this.thresholdEvaluationService
+      .evaluateAndAct(courseId)
+      .catch((err) => this.logger.warn('TA threshold re-evaluation failed after drop', err));
+
+    return updated;
   }
 
   // ─── Assessment Taking ─────────────────────────────────

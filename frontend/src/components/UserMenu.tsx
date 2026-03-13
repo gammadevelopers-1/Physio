@@ -19,6 +19,7 @@ import {
   Check,
   Loader2,
   LayoutDashboard,
+  UserCheck,
 } from 'lucide-react';
 
 // ===========================================
@@ -39,6 +40,12 @@ const ROLE_CONFIG: Record<
     label: 'Instructor',
     color: 'text-green-600',
     bgColor: 'bg-green-100',
+  },
+  TEACHING_ASSISTANT: {
+    icon: UserCheck,
+    label: 'Teaching Assistant',
+    color: 'text-teal-600',
+    bgColor: 'bg-teal-100',
   },
   MANAGER: {
     icon: Briefcase,
@@ -87,6 +94,7 @@ function getRoleConfig(role: string) {
 const ROLE_DASHBOARD_PATHS: Record<string, string> = {
   STUDENT: '/dashboard/student',
   INSTRUCTOR: '/dashboard/instructor',
+  TEACHING_ASSISTANT: '/dashboard/teaching-assistant',
   MANAGER: '/dashboard/manager',
   ADMIN: '/dashboard/admin',
   FINANCE: '/dashboard/finance',

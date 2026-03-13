@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 const ROLE_DASHBOARD_PATHS: Record<string, string> = {
   STUDENT: '/dashboard/student',
   INSTRUCTOR: '/dashboard/instructor',
+  TEACHING_ASSISTANT: '/dashboard/teaching-assistant',
   MANAGER: '/dashboard/manager',
   ADMIN: '/dashboard/admin',
   FINANCE: '/dashboard/finance',

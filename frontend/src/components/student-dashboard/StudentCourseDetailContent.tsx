@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
@@ -41,10 +42,13 @@ const StudentCourseDetailContent = () => {
   const isRTL = locale === "ar";
   const params = useParams();
   const courseId = params.id as string;
+  const router = useRouter();
   const userData = useStudentProfile();
 
   const { data, loading, error } = useStudentCourseDetail(courseId);
 
+  const [showDropConfirm, setShowDropConfirm] = useState(false);
+  const [dropping, setDropping] = useState(false);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [showAttendanceHistory, setShowAttendanceHistory] = useState(false);
   const [recordingsModalSession, setRecordingsModalSession] = useState<string | null>(null);
@@ -96,6 +100,20 @@ const StudentCourseDetailContent = () => {
       setRecordings([]);
     } finally {
       setRecordingsLoading(false);
+    }
+  };
+
+  const handleDropCourse = async () => {
+    setDropping(true);
+    try {
+      await studentApi.dropCourse(courseId);
+      toast.success(t("courseDetail.dropSuccess"));
+      router.push(`/${locale}/dashboard/student/courses`);
+    } catch {
+      toast.error(t("courseDetail.dropError"));
+    } finally {
+      setDropping(false);
+      setShowDropConfirm(false);
     }
   };
 
@@ -249,7 +267,7 @@ const StudentCourseDetailContent = () => {
                       </div>
                     </div>
 
-                    {/* Start Learning Button */}
+                    {/* Start Learning Button + Drop */}
                     <div className="mt-4 flex flex-col sm:flex-row gap-3">
                       <Link
                         href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
@@ -260,6 +278,15 @@ const StudentCourseDetailContent = () => {
                           ? t("courseDetail.continueLearning")
                           : t("courseDetail.startLearning")}
                       </Link>
+                      {data.enrollment.status === "active" && (
+                        <button
+                          onClick={() => setShowDropConfirm(true)}
+                          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-red-300 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          {t("courseDetail.dropCourse")}
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -864,6 +891,43 @@ const StudentCourseDetailContent = () => {
               >
                 {t("courseDetail.backToCourses").includes("Back") ? "Close" : "إغلاق"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drop Course Confirmation Modal */}
+      {showDropConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("courseDetail.dropConfirmTitle")}
+                </h3>
+              </div>
+              <p className="text-sm text-[#6B7280] mb-6">
+                {t("courseDetail.dropConfirmMessage")}
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowDropConfirm(false)}
+                  disabled={dropping}
+                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                >
+                  {t("courseDetail.cancel")}
+                </button>
+                <button
+                  onClick={handleDropCourse}
+                  disabled={dropping}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {dropping ? t("courseDetail.dropping") : t("courseDetail.confirmDrop")}
+                </button>
+              </div>
             </div>
           </div>
         </div>

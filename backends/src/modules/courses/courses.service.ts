@@ -11,6 +11,7 @@ import {
   courses,
   courseModules,
   courseMaterials,
+  courseAssistants,
   enrollments,
   sessions,
   courseRatings,
@@ -20,6 +21,7 @@ import {
 } from '../../database/schema';
 import { getTableColumns } from 'drizzle-orm';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isManagerOrAbove, isTA } from '../../common/role-helpers';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
@@ -42,12 +44,28 @@ export class CoursesService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  /**
+   * Add ownership condition to a conditions array based on user role:
+   * - Global admin: no filter (sees all)
+   * - Manager: filter by courses.managerId
+   * - Instructor: filter by courses.instructorId
+   */
+  private addOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter — sees everything
+    } else if (isManager(user)) {
+      conditions.push(
+        or(
+          eq(courses.managerId, user.id),
+          sql`${courses.managerId} IS NULL`,
+        )!,
+      );
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Course CRUD ────────────────────────────────────────────
@@ -59,14 +77,23 @@ export class CoursesService {
    */
   async create(user: AuthenticatedUser, dto: CreateCourseDto) {
     const instructorId =
-      this.isAdmin(user) && dto.instructorId
+      isManagerOrAbove(user) && dto.instructorId
         ? dto.instructorId
         : user.id;
+
+    // Auto-set managerId based on role
+    let managerId: string | null = null;
+    if (isManager(user)) {
+      managerId = user.id;
+    } else if (isGlobalAdmin(user) && dto.managerId) {
+      managerId = dto.managerId;
+    }
 
     const [course] = await db
       .insert(courses)
       .values({
         instructorId,
+        managerId,
         title: dto.title,
         titleAr: dto.titleAr,
         description: dto.description,
@@ -112,10 +139,8 @@ export class CoursesService {
 
     const conditions: ReturnType<typeof eq>[] = [];
 
-    // Instructor: scope to own courses only
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    // Scope by role: admin sees all, manager sees their courses, instructor sees own
+    this.addOwnershipCondition(conditions, user);
 
     if (
       params.status &&
@@ -167,7 +192,7 @@ export class CoursesService {
       .select({
         ...getTableColumns(courses),
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         completionRate: sql<number>`(
           SELECT COALESCE(ROUND(AVG(e.progress)), 0) FROM enrollments e WHERE e.course_id = "courses"."id"
@@ -300,7 +325,7 @@ export class CoursesService {
         startDate: courses.startDate,
         endDate: courses.endDate,
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         totalHours: sql<number>`(
           SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
@@ -399,7 +424,7 @@ export class CoursesService {
         startDate: courses.startDate,
         endDate: courses.endDate,
         enrolledCount: sql<number>`(
-          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id"
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         totalHours: sql<number>`(
           SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
@@ -457,9 +482,27 @@ export class CoursesService {
    * - Admin: any course.
    */
   async findOne(courseId: string, user: AuthenticatedUser) {
+    // TAs access courses via their assignment, not ownership
+    if (isTA(user)) {
+      const [assignment] = await db
+        .select()
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, courseId),
+            eq(courseAssistants.userId, user.id),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+      if (!assignment) {
+        throw new NotFoundException('Course not found');
+      }
+    }
+
     const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
+    if (!isTA(user)) {
+      this.addOwnershipCondition(conditions, user);
     }
 
     const [course] = await db
@@ -495,7 +538,7 @@ export class CoursesService {
 
     // Instructors can only edit courses in draft or changes_requested status
     if (
-      !this.isAdmin(user) &&
+      !isManagerOrAbove(user) &&
       existing.status !== COURSE_STATUS.DRAFT &&
       existing.status !== COURSE_STATUS.CHANGES_REQUESTED
     ) {
@@ -529,14 +572,20 @@ export class CoursesService {
    * Delete a course — only draft courses, only MANAGER/ADMIN.
    */
   async remove(courseId: string, user: AuthenticatedUser) {
-    if (!this.isAdmin(user)) {
+    if (!isManagerOrAbove(user)) {
       throw new ForbiddenException('Only managers and admins can delete courses');
+    }
+
+    // Managers can only delete their own courses (or unassigned ones)
+    const conditions = [eq(courses.id, courseId)];
+    if (isManager(user)) {
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
     }
 
     const [existing] = await db
       .select({ id: courses.id, status: courses.status })
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(...conditions))
       .limit(1);
 
     if (!existing) {
@@ -566,6 +615,7 @@ export class CoursesService {
         status: courses.status,
         title: courses.title,
         instructorId: courses.instructorId,
+        managerId: courses.managerId,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -575,9 +625,13 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    // Verify the user is the course's instructor
-    if (course.instructorId !== user.id && !this.isAdmin(user)) {
+    // Verify the user has access to this course
+    if (course.instructorId !== user.id && !isManagerOrAbove(user)) {
       throw new ForbiddenException('You are not the instructor of this course');
+    }
+    // Managers must own the course (or course is unassigned)
+    if (isManager(user) && course.managerId !== null && course.managerId !== user.id) {
+      throw new ForbiddenException('You do not manage this course');
     }
 
     if (
@@ -918,6 +972,7 @@ export class CoursesService {
         status: courses.status,
         title: courses.title,
         instructorId: courses.instructorId,
+        managerId: courses.managerId,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
@@ -931,41 +986,52 @@ export class CoursesService {
       throw new BadRequestException('Course is already active');
     }
 
-    if (
-      course.status !== COURSE_STATUS.PENDING_REVIEW &&
-      course.status !== COURSE_STATUS.DRAFT
-    ) {
+    const allowedStatuses = [
+      COURSE_STATUS.PENDING_REVIEW,
+      COURSE_STATUS.DRAFT,
+      COURSE_STATUS.ARCHIVED,
+      COURSE_STATUS.COMPLETED,
+    ];
+
+    if (!allowedStatuses.includes(course.status as any)) {
       throw new BadRequestException(
-        'Only draft or pending-review courses can be activated',
+        'Course cannot be activated from its current status',
       );
     }
 
-    // Validate course readiness (modules, sessions, dates, CME hours)
-    await this.validateCourseReadiness(courseId, 'activation');
+    const isReactivation =
+      course.status === COURSE_STATUS.ARCHIVED ||
+      course.status === COURSE_STATUS.COMPLETED;
 
-    // Check all materials have been reviewed (status = 'live')
-    const pendingMaterials = await db
-      .select({
-        id: courseMaterials.id,
-        title: courseMaterials.title,
-        status: courseMaterials.status,
-      })
-      .from(courseMaterials)
-      .where(
-        and(
-          eq(courseMaterials.courseId, courseId),
-          sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
-        ),
-      );
+    // Only validate readiness and materials for first-time activation (not reactivation)
+    if (!isReactivation) {
+      // Validate course readiness (modules, sessions, dates, CME hours)
+      await this.validateCourseReadiness(courseId, 'activation');
 
-    if (pendingMaterials.length > 0) {
-      const pendingList = pendingMaterials.map(
-        (m) => `${m.title || m.id} (${m.status})`,
-      );
-      throw new BadRequestException({
-        message: 'Cannot activate course: some materials have not been reviewed',
-        pendingMaterials: pendingList,
-      });
+      // Check all materials have been reviewed (status = 'live')
+      const pendingMaterials = await db
+        .select({
+          id: courseMaterials.id,
+          title: courseMaterials.title,
+          status: courseMaterials.status,
+        })
+        .from(courseMaterials)
+        .where(
+          and(
+            eq(courseMaterials.courseId, courseId),
+            sql`${courseMaterials.status} NOT IN ('live', 'archived')`,
+          ),
+        );
+
+      if (pendingMaterials.length > 0) {
+        const pendingList = pendingMaterials.map(
+          (m) => `${m.title || m.id} (${m.status})`,
+        );
+        throw new BadRequestException({
+          message: 'Cannot activate course: some materials have not been reviewed',
+          pendingMaterials: pendingList,
+        });
+      }
     }
 
     const [updated] = await db
@@ -975,6 +1041,8 @@ export class CoursesService {
         reviewedBy: user.id,
         reviewedAt: new Date(),
         reviewNote: null,
+        // EC-26: Set managerId if not already set (manager who activates becomes the course manager)
+        ...(course.managerId ? {} : { managerId: user.id }),
         updatedAt: new Date(),
       })
       .where(eq(courses.id, courseId))
@@ -1193,6 +1261,7 @@ export class CoursesService {
       .where(
         and(
           eq(sessions.courseId, courseId),
+          sql`${sessions.status} != 'cancelled'`,
           or(
             sql`${sessions.scheduledAt}::date < ${courseDetail.startDate}::date`,
             sql`${sessions.scheduledAt}::date > ${courseDetail.endDate}::date`,
@@ -1222,9 +1291,7 @@ export class CoursesService {
     user: AuthenticatedUser,
   ) {
     const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    this.addOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id, status: courses.status })
@@ -1248,11 +1315,16 @@ export class CoursesService {
     newInstructorId: string,
     user: AuthenticatedUser,
   ) {
-    // Verify the course exists
+    // Verify the course exists and user has access
+    const conditions: any[] = [eq(courses.id, courseId)];
+    if (isManager(user)) {
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+    }
+
     const [course] = await db
       .select({ id: courses.id, title: courses.title, instructorId: courses.instructorId })
       .from(courses)
-      .where(eq(courses.id, courseId))
+      .where(and(...conditions))
       .limit(1);
 
     if (!course) {

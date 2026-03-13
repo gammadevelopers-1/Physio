@@ -21,6 +21,7 @@ export const courses = pgTable(
     instructorId: uuid('instructor_id')
       .notNull()
       .references(() => users.id),
+    managerId: uuid('manager_id').references(() => users.id),
     title: varchar('title', { length: 255 }).notNull(),
     titleAr: varchar('title_ar', { length: 255 }),
     description: text('description'),
@@ -52,6 +53,7 @@ export const courses = pgTable(
   },
   (table) => [
     index('courses_instructor_id_idx').on(table.instructorId),
+    index('courses_manager_id_idx').on(table.managerId),
     index('courses_status_idx').on(table.status),
     check(
       'courses_delivery_type_check',
@@ -68,6 +70,12 @@ export const coursesRelations = relations(courses, ({ one }) => ({
   instructor: one(users, {
     fields: [courses.instructorId],
     references: [users.id],
+    relationName: 'courseInstructor',
+  }),
+  manager: one(users, {
+    fields: [courses.managerId],
+    references: [users.id],
+    relationName: 'courseManager',
   }),
 }));
 

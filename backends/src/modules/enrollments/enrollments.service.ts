@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ne, desc, count, sql } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -13,14 +13,18 @@ import {
   courses,
   users,
   waitlists,
+  sessionAssistants,
+  courseAssistants,
   NELC_EVENT_TYPE,
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
 import { MarkAttendanceDto } from './dto/mark-attendance.dto';
 import { BulkMarkAttendanceDto } from './dto/bulk-mark-attendance.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { SessionAssistantsService } from '../session-assistants/session-assistants.service';
+import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
 import {
@@ -35,18 +39,24 @@ export class EnrollmentsService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly assistantsService: SessionAssistantsService,
+    private readonly thresholdEvaluationService: ThresholdEvaluationService,
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Enrollment Creation with NELC Limit Enforcement ──────
@@ -370,9 +380,8 @@ export class EnrollmentsService {
       .where(
         and(
           eq(enrollments.courseId, courseId),
-          // Only active students — completed/dropped/suspended should not appear
-          // in attendance dialogs or session management
-          eq(enrollments.status, 'active'),
+          // Active + completed students — dropped/suspended excluded
+          sql`${enrollments.status} IN ('active', 'completed')`,
         ),
       )
       .orderBy(desc(enrollments.enrolledAt));
@@ -660,6 +669,9 @@ export class EnrollmentsService {
           `TA re-allocation triggered for ${upcomingSessions.length} sessions in course ${courseId}`,
         );
       }
+
+      // Threshold-based pre-assignment activation/deactivation (EC-3, EC-4, EC-5, EC-18)
+      await this.thresholdEvaluationService.evaluateAndAct(courseId);
     } catch (error) {
       this.logger.warn(
         `TA re-allocation failed for course ${courseId}: ${(error as Error).message}`,
@@ -678,10 +690,27 @@ export class EnrollmentsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
+    // TAs: verify via course_assistants assignment
+    if (isTA(user)) {
+      const [assignment] = await db
+        .select({ id: courseAssistants.id })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, courseId),
+            eq(courseAssistants.userId, user.id),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+      if (!assignment) {
+        throw new NotFoundException('Course not found');
+      }
+      return { id: courseId };
     }
+
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id })
@@ -705,8 +734,63 @@ export class EnrollmentsService {
     sessionId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(sessions.id, sessionId)];
-    if (!this.isAdmin(user)) {
+    // TAs: verify assignment rather than ownership
+    if (user.roles.includes('TEACHING_ASSISTANT' as any)) {
+      const [session] = await db
+        .select({
+          id: sessions.id,
+          status: sessions.status,
+          actualEndedAt: sessions.actualEndedAt,
+          courseId: sessions.courseId,
+        })
+        .from(sessions)
+        .where(eq(sessions.id, sessionId))
+        .limit(1);
+
+      if (!session) {
+        throw new NotFoundException('Session not found');
+      }
+
+      // Check session-level assignment
+      const [sessionTA] = await db
+        .select({ id: sessionAssistants.id })
+        .from(sessionAssistants)
+        .where(
+          and(
+            eq(sessionAssistants.sessionId, sessionId),
+            eq(sessionAssistants.userId, user.id),
+          ),
+        )
+        .limit(1);
+
+      if (sessionTA) return session;
+
+      // Fallback: check course-level assignment
+      const [courseTA] = await db
+        .select({ id: courseAssistants.id })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, session.courseId),
+            eq(courseAssistants.userId, user.id),
+            eq(courseAssistants.status, 'approved'),
+          ),
+        )
+        .limit(1);
+
+      if (courseTA) return session;
+
+      throw new NotFoundException('Session not found');
+    }
+
+    const conditions: any[] = [eq(sessions.id, sessionId)];
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(
+        sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+      );
+    } else {
       conditions.push(eq(sessions.instructorId, user.id));
     }
 
@@ -747,17 +831,21 @@ export class EnrollmentsService {
       throw new NotFoundException('Attendance record not found');
     }
 
-    // Verify session access (instructor can only update their own sessions)
-    if (!this.isAdmin(user)) {
+    // Verify session access
+    if (!isGlobalAdmin(user)) {
+      const sessionConditions: any[] = [eq(sessions.id, record.sessionId)];
+      if (isManager(user)) {
+        sessionConditions.push(
+          sql`${sessions.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+        );
+      } else {
+        sessionConditions.push(eq(sessions.instructorId, user.id));
+      }
+
       const [session] = await db
         .select({ id: sessions.id })
         .from(sessions)
-        .where(
-          and(
-            eq(sessions.id, record.sessionId),
-            eq(sessions.instructorId, user.id),
-          ),
-        )
+        .where(and(...sessionConditions))
         .limit(1);
 
       if (!session) {

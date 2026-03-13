@@ -27,6 +27,10 @@ export class CreateCourseDto {
   @IsUUID('4', { message: 'Instructor ID must be a valid UUID' })
   instructorId?: string;
 
+  @IsOptional()
+  @IsUUID('4', { message: 'Manager ID must be a valid UUID' })
+  managerId?: string;
+
   @IsString()
   @IsNotEmpty({ message: 'Title is required' })
   @MaxLength(255)

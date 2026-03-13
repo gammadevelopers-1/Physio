@@ -5,7 +5,7 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, isNull, sql, count, inArray, sum } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull, sql, count, inArray, sum, or } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
@@ -26,6 +26,7 @@ import { ConfigService } from '@nestjs/config';
 import { StorageService } from '../storage/storage.service';
 import { ProcessingService } from '../processing/processing.service';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager, isManagerOrAbove } from '../../common/role-helpers';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
@@ -76,12 +77,17 @@ export class MaterialsService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   // ─── Upload ───────────────────────────────────────────────
@@ -517,8 +523,14 @@ export class MaterialsService {
 
     const conditions: ReturnType<typeof eq>[] = [statusCondition as any];
 
-    if (!this.isAdmin(user)) {
+    if (!isManagerOrAbove(user)) {
       conditions.push(eq(courseMaterials.uploadedBy, user.id));
+    }
+    // For managers, scope to materials in courses they manage
+    if (isManager(user)) {
+      conditions.push(
+        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+      );
     }
 
     const data = await db
@@ -970,10 +982,8 @@ export class MaterialsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id })
@@ -1007,16 +1017,18 @@ export class MaterialsService {
     }
 
     // Verify course access
-    if (!this.isAdmin(user)) {
+    if (!isGlobalAdmin(user)) {
+      const courseConditions: any[] = [eq(courses.id, material.courseId)];
+      if (isManager(user)) {
+        courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+      } else {
+        courseConditions.push(eq(courses.instructorId, user.id));
+      }
+
       const [course] = await db
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.id, material.courseId),
-            eq(courses.instructorId, user.id),
-          ),
-        )
+        .where(and(...courseConditions))
         .limit(1);
 
       if (!course) {

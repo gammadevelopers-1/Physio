@@ -50,6 +50,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [instructorId, setInstructorId] = useState("");
+  const [originalInstructorId, setOriginalInstructorId] = useState("");
   const [cohort, setCohort] = useState("");
 
   // Thumbnail
@@ -78,6 +79,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setDeliveryType(courseData.deliveryType as "zoom" | "onsite" | "blended");
         setMaxEnrollment(courseData.maxEnrollment?.toString() || "");
         setInstructorId(courseData.instructorId);
+        setOriginalInstructorId(courseData.instructorId);
         setCohort(courseData.cohort || "");
         if (courseData.startDate) {
           setStartDate(courseData.startDate.split("T")[0]);
@@ -158,6 +160,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (cohort.trim()) payload.cohort = cohort.trim();
 
       await courseManagerApi.updateCourse(courseId, payload);
+
+      // If instructor changed, reassign (also updates all scheduled sessions)
+      if (instructorId !== originalInstructorId) {
+        await courseManagerApi.assignInstructor(courseId, instructorId);
+      }
+
       toast.success(t("editCourse.success"));
       router.push(`/${locale}/dashboard/manager/courses/${courseId}`);
     } catch (err) {

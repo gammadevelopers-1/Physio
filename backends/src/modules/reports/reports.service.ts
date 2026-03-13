@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, count, sql, gte, lte, inArray } from 'drizzle-orm';
+import { eq, and, desc, asc, count, sql, gte, lte, inArray, or } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   courses,
@@ -19,6 +19,7 @@ import {
 } from '../../database/schema';
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
+import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 
@@ -52,12 +53,17 @@ export class ReportsService {
 
   // ─── Role helpers ─────────────────────────────────────────
 
-  private isAdmin(user: AuthenticatedUser): boolean {
-    return (
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN') ||
-      user.roles.includes('MANAGER')
-    );
+  private addCourseOwnershipCondition(
+    conditions: any[],
+    user: AuthenticatedUser,
+  ): void {
+    if (isGlobalAdmin(user)) {
+      // No filter
+    } else if (isManager(user)) {
+      conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+    } else {
+      conditions.push(eq(courses.instructorId, user.id));
+    }
   }
 
   private validateFormat(format?: string): ReportFormat {
@@ -670,12 +676,12 @@ export class ReportsService {
   ): Promise<ReportResult> {
     const fmt = this.validateFormat(format);
 
-    if (!this.isAdmin(user)) {
-      // Non-admins can only see their own performance
+    if (!isGlobalAdmin(user) && !isManager(user)) {
+      // Instructors can only see their own performance
       return this.generateSingleInstructorReport(user.id, fmt, user);
     }
 
-    // Admin/Manager: all instructors
+    // Admin/Manager: all instructors (manager sees only their managed courses' instructors)
     const { userRoles, roles } = await import('../../database/schema');
 
     const instructors = await db
@@ -880,12 +886,12 @@ export class ReportsService {
     ];
 
     // Build course query conditions
-    const conditions = [];
+    const conditions: any[] = [];
     if (params.courseId) {
       await this.verifyCourseAccess(params.courseId, user);
       conditions.push(eq(courses.id, params.courseId));
-    } else if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
+    } else {
+      this.addCourseOwnershipCondition(conditions, user);
     }
 
     const courseData = await db
@@ -989,11 +995,9 @@ export class ReportsService {
       'Status',
     ];
 
-    // Get all courses (admin sees all, manager sees all, instructor sees own)
-    const conditions = [];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    // Get courses scoped by role
+    const conditions: any[] = [];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const courseData = await db
       .select({
@@ -1782,11 +1786,19 @@ export class ReportsService {
       return [courseId];
     }
 
-    if (this.isAdmin(user)) {
+    if (isGlobalAdmin(user)) {
       const allCourses = await db
         .select({ id: courses.id })
         .from(courses);
       return allCourses.map((c) => c.id);
+    }
+
+    if (isManager(user)) {
+      const managedCourses = await db
+        .select({ id: courses.id })
+        .from(courses)
+        .where(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`));
+      return managedCourses.map((c) => c.id);
     }
 
     return this.getInstructorCourseIds(user.id);
@@ -1806,10 +1818,8 @@ export class ReportsService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    const conditions = [eq(courses.id, courseId)];
-    if (!this.isAdmin(user)) {
-      conditions.push(eq(courses.instructorId, user.id));
-    }
+    const conditions: any[] = [eq(courses.id, courseId)];
+    this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
       .select({ id: courses.id })

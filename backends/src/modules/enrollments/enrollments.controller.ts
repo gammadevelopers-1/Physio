@@ -70,7 +70,7 @@ export class EnrollmentsController {
   /**
    * POST /sessions/:id/attendance — Mark single student attendance
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post('sessions/:id/attendance')
   @HttpCode(HttpStatus.CREATED)
   async markAttendance(
@@ -85,7 +85,7 @@ export class EnrollmentsController {
    * POST /sessions/:id/attendance/bulk — Bulk mark attendance
    * NOTE: Must be defined BEFORE any parameterized attendance routes
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post('sessions/:id/attendance/bulk')
   @HttpCode(HttpStatus.CREATED)
   async bulkMarkAttendance(
@@ -101,7 +101,7 @@ export class EnrollmentsController {
   /**
    * PATCH /attendance/:id — Update an attendance record
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Patch('attendance/:id')
   async updateAttendance(
     @Param('id') attendanceId: string,

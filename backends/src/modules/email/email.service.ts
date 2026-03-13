@@ -44,6 +44,10 @@ import {
   getTaAssignmentText,
 } from './templates/ta-assignment.template';
 import {
+  getTaRejectionHtml,
+  getTaRejectionText,
+} from './templates/ta-rejection.template';
+import {
   getSessionStartedHtml,
   getSessionStartedText,
 } from './templates/session-started.template';
@@ -534,6 +538,36 @@ export class EmailService {
   }
 
   /**
+   * Send TA rejection notification email to the suggesting instructor
+   */
+  async sendTaRejection(
+    to: string,
+    params: {
+      recipientName: string;
+      courseName: string;
+      taName: string;
+      rejectionReason: string;
+    },
+  ): Promise<void> {
+    try {
+      await this.send({
+        to,
+        subject: `TA Suggestion Rejected: ${params.courseName}`,
+        html: getTaRejectionHtml(params),
+        text: getTaRejectionText(params),
+      });
+      this.logger.log(
+        `TA rejection email sent to ${to} for "${params.courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send TA rejection email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
    * Send content review notification email to instructor
    */
   async sendContentReview(
@@ -682,6 +716,60 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send enrollment confirmation email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Send a generic notification email (used for TA deactivation, pre-assignment, etc.)
+   */
+  async sendGenericNotification(
+    to: string,
+    params: {
+      recipientName: string;
+      subject: string;
+      message: string;
+    },
+  ): Promise<void> {
+    try {
+      const html = `<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+        <tr><td style="background:linear-gradient(135deg,#a37f49,#6b4e24);border-radius:16px 16px 0 0;padding:28px 32px;text-align:center;">
+          <h1 style="margin:0;font-size:22px;font-weight:700;"><span style="color:#ffffff;">Physio</span><span style="color:#f5f0e8;">Guidance</span></h1>
+          <p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.7);">NELC Accredited Training Platform</p>
+        </td></tr>
+        <tr><td style="background-color:#ffffff;padding:28px 32px;">
+          <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#1a1a1a;">Hi ${params.recipientName},</h2>
+          <p style="margin:0;font-size:14px;color:#4b5563;line-height:1.6;">${params.message}</p>
+        </td></tr>
+        <tr><td style="background-color:#ffffff;padding:0 32px 28px;text-align:center;">
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;" />
+          <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      const text = `Hi ${params.recipientName},\n\n${params.message}\n\n© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.`;
+
+      await this.send({
+        to,
+        subject: params.subject,
+        html,
+        text,
+      });
+      this.logger.log(`Generic notification email sent to ${to}: ${params.subject}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send generic notification email to ${to}`,
         error,
       );
     }

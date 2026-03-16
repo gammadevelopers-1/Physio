@@ -148,9 +148,9 @@ export class CertificatesService {
       }
     }
 
-    // 3. Course completed — enrollment progress === 100
+    // 3. Course completed — enrollment status is 'completed' (set by instructor or end-date cron)
     const [enrollment] = await db
-      .select({ progress: enrollments.progress })
+      .select({ status: enrollments.status, progress: enrollments.progress })
       .from(enrollments)
       .where(
         and(
@@ -160,7 +160,7 @@ export class CertificatesService {
       )
       .limit(1);
 
-    const courseCompleted = enrollment ? enrollment.progress === 100 : false;
+    const courseCompleted = enrollment ? enrollment.status === 'completed' : false;
 
     return { attendancePercent, assessmentPassed, courseCompleted };
   }

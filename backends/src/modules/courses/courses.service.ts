@@ -1157,6 +1157,9 @@ export class CoursesService {
       .where(eq(courses.id, courseId))
       .returning();
 
+    // Finalize all active enrollments → completed
+    await this.finalizeEnrollments(courseId);
+
     // Log NELC audit event
     await this.auditService.log({
       eventType: NELC_EVENT_TYPE.COURSE_DEACTIVATED,
@@ -1180,6 +1183,33 @@ export class CoursesService {
     this.logger.log(`Course "${course.title}" marked as completed by ${user.id}`);
 
     return updated;
+  }
+
+  /**
+   * Finalize all active enrollments for a course.
+   * Called when course is completed (manually by instructor or auto by end date).
+   * Sets enrollment status to 'completed' with current timestamp.
+   * Students' progress and grades are frozen at whatever they submitted.
+   */
+  private async finalizeEnrollments(courseId: string): Promise<number> {
+    const result = await db
+      .update(enrollments)
+      .set({
+        status: 'completed',
+        completedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      )
+      .returning({ id: enrollments.id });
+
+    this.logger.log(
+      `Finalized ${result.length} enrollment(s) for course ${courseId}`,
+    );
+    return result.length;
   }
 
   // ─── Validation ────────────────────────────────────────────

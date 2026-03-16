@@ -1010,36 +1010,16 @@ export class StudentService {
       100,
     );
 
-    const updateData: Record<string, unknown> = {
-      progress: newProgress,
-      lastAccessedAt: new Date(),
-    };
-
-    // If progress reaches 100, mark as completed
-    if (newProgress >= 100) {
-      updateData.status = 'completed';
-      updateData.completedAt = new Date();
-    }
-
+    // Update progress only — enrollment stays 'active' until instructor
+    // or system (end date) marks the course as completed
     const [updated] = await db
       .update(enrollments)
-      .set(updateData)
+      .set({
+        progress: newProgress,
+        lastAccessedAt: new Date(),
+      })
       .where(eq(enrollments.id, enrollment.id))
       .returning();
-
-    // Auto-trigger certificate request when course is completed
-    if (newProgress >= 100) {
-      try {
-        await this.certificatesService.createRequest(courseId, studentId);
-        this.logger.log(
-          `Auto-created certificate request for student ${studentId} in course ${courseId}`,
-        );
-      } catch (error) {
-        this.logger.warn(
-          `Auto-certificate request skipped for student ${studentId} in course ${courseId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
-      }
-    }
 
     return updated;
   }

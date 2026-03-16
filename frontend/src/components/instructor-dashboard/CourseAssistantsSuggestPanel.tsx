@@ -10,11 +10,10 @@ interface CourseTA {
   id: string;
   courseId: string;
   userId: string;
-  status: "suggested" | "pre_assigned" | "approved" | "rejected";
+  status: "suggested" | "approved" | "rejected";
   priority: number;
   assignedAt: string;
   approvedAt: string | null;
-  deactivationScheduledAt: string | null;
   firstName: string | null;
   lastName: string | null;
   email: string;
@@ -32,7 +31,6 @@ interface ThresholdStatus {
   enrolledCount: number;
   requiredTAs: number;
   activeTAs: number;
-  preAssignedTAs: number;
   suggestedTAs: number;
   deficit: number;
   thresholds: { low: number; mid: number };
@@ -107,15 +105,9 @@ const CourseAssistantsSuggestPanel = ({
   };
 
   const getStatusBadge = (ta: CourseTA) => {
-    // Deactivation pending takes precedence for approved TAs
-    if (ta.status === "approved" && ta.deactivationScheduledAt) {
-      return "bg-orange-50 text-orange-700 border-orange-200";
-    }
     switch (ta.status) {
       case "approved":
         return "bg-green-50 text-green-700 border-green-200";
-      case "pre_assigned":
-        return "bg-amber-50 text-amber-700 border-amber-200";
       case "suggested":
         return "bg-yellow-50 text-yellow-700 border-yellow-200";
       case "rejected":
@@ -126,14 +118,9 @@ const CourseAssistantsSuggestPanel = ({
   };
 
   const getStatusLabel = (ta: CourseTA) => {
-    if (ta.status === "approved" && ta.deactivationScheduledAt) {
-      return "Deactivation Pending";
-    }
     switch (ta.status) {
       case "approved":
         return "Active";
-      case "pre_assigned":
-        return "Pre-assigned (Waiting)";
       case "suggested":
         return "Pending Approval";
       case "rejected":

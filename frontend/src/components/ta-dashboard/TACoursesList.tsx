@@ -7,7 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { BookOpen, AlertTriangle, Clock, Search, ArrowUpDown, Users, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { taApi, type TAAssignedCourse } from "@/lib/api";
 
-type StatusFilter = "all" | "approved" | "pre_assigned" | "suggested";
+type StatusFilter = "all" | "approved" | "suggested";
 type SortOption = "newest" | "oldest" | "alphabetical";
 
 const TACoursesList = () => {
@@ -66,8 +66,6 @@ const TACoursesList = () => {
     switch (status) {
       case "approved":
         return "bg-green-50 text-green-700 border border-green-200";
-      case "pre_assigned":
-        return "bg-amber-50 text-amber-700 border border-amber-200";
       case "suggested":
         return "bg-orange-50 text-orange-700 border border-orange-200";
       default:
@@ -79,8 +77,6 @@ const TACoursesList = () => {
     switch (status) {
       case "approved":
         return t("courses.active");
-      case "pre_assigned":
-        return t("courses.preAssigned");
       case "suggested":
         return t("courses.pendingApproval");
       default:
@@ -91,7 +87,6 @@ const TACoursesList = () => {
   const filters: { key: StatusFilter; label: string }[] = [
     { key: "all", label: t("courses.all") },
     { key: "approved", label: t("courses.active") },
-    { key: "pre_assigned", label: t("courses.preAssigned") },
     { key: "suggested", label: t("courses.pendingApproval") },
   ];
 
@@ -211,19 +206,6 @@ const TACoursesList = () => {
                       { year: "numeric", month: "short", day: "numeric" },
                     )}
                   </div>
-
-                  {course.status === "pre_assigned" && (
-                    <p className="text-xs text-amber-600 mb-3">
-                      {t("courses.activatesAtThreshold")}
-                    </p>
-                  )}
-
-                  {course.deactivationScheduledAt && (
-                    <p className="text-xs text-amber-600 flex items-center gap-1 mb-3">
-                      <AlertTriangle className="w-3 h-3" />
-                      {t("courses.deactivationPending")}
-                    </p>
-                  )}
 
                   {/* View Details button — only for approved TAs */}
                   {course.status === "approved" && (

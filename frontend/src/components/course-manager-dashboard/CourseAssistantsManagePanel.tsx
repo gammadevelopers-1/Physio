@@ -156,14 +156,9 @@ const CourseAssistantsManagePanel = ({
   };
 
   const getStatusBadge = (ta: CourseAssistantTA) => {
-    if (ta.status === "approved" && ta.deactivationScheduledAt) {
-      return "bg-orange-50 text-orange-700 border-orange-200";
-    }
     switch (ta.status) {
       case "approved":
         return "bg-green-50 text-green-700 border-green-200";
-      case "pre_assigned":
-        return "bg-amber-50 text-amber-700 border-amber-200";
       case "suggested":
         return "bg-orange-50 text-orange-700 border-orange-200";
       case "rejected":
@@ -174,14 +169,9 @@ const CourseAssistantsManagePanel = ({
   };
 
   const getStatusLabel = (ta: CourseAssistantTA) => {
-    if (ta.status === "approved" && ta.deactivationScheduledAt) {
-      return "Deactivation Pending";
-    }
     switch (ta.status) {
       case "approved":
         return t("taManagement.activeTA") || "Active";
-      case "pre_assigned":
-        return t("taManagement.preAssigned") || "Pre-assigned";
       case "suggested":
         return "Pending Approval";
       case "rejected":
@@ -191,16 +181,15 @@ const CourseAssistantsManagePanel = ({
     }
   };
 
-  // Sort TAs: approved first, then pre_assigned, then suggested, then rejected; within same status by priority
+  // Sort TAs: approved first, then suggested, then rejected; within same status by priority
   const sortedTAs = [...tas].sort((a, b) => {
     const statusOrder: Record<string, number> = {
       approved: 0,
-      pre_assigned: 1,
-      suggested: 2,
-      rejected: 3,
+      suggested: 1,
+      rejected: 2,
     };
     const statusDiff =
-      (statusOrder[a.status] ?? 4) - (statusOrder[b.status] ?? 4);
+      (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3);
     if (statusDiff !== 0) return statusDiff;
     return a.priority - b.priority;
   });
@@ -213,7 +202,7 @@ const CourseAssistantsManagePanel = ({
   );
 
   const activeTAs = sortedTAs.filter(
-    (ta) => ta.status === "approved" || ta.status === "pre_assigned"
+    (ta) => ta.status === "approved"
   );
   const minPriority = Math.min(...activeTAs.map((ta) => ta.priority), Infinity);
   const maxPriority = Math.max(...activeTAs.map((ta) => ta.priority), 0);
@@ -316,9 +305,8 @@ const CourseAssistantsManagePanel = ({
               className="flex items-center justify-between px-3 py-2.5 bg-[#F9FAFB] rounded-lg"
             >
               <div className="flex items-center gap-3 min-w-0">
-                {/* Priority controls (for approved and pre_assigned only) */}
-                {(ta.status === "approved" ||
-                  ta.status === "pre_assigned") && (
+                {/* Priority controls (for approved only) */}
+                {ta.status === "approved" && (
                   <div className="flex flex-col gap-0.5">
                     <button
                       onClick={() =>
@@ -360,12 +348,6 @@ const CourseAssistantsManagePanel = ({
                     )}
                   </p>
                   <p className="text-xs text-[#6B7280] truncate">{ta.email}</p>
-                  {ta.deactivationScheduledAt && (
-                    <p className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
-                      <Clock className="w-3 h-3" />
-                      {t("taManagement.deactivationPending") || "Deactivation scheduled (24h grace)"}
-                    </p>
-                  )}
                 </div>
               </div>
 

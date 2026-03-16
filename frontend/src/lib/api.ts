@@ -2266,11 +2266,10 @@ export interface CourseAssistantTA {
   id: string;
   courseId: string;
   userId: string;
-  status: 'suggested' | 'pre_assigned' | 'approved' | 'rejected';
+  status: 'suggested' | 'approved' | 'rejected';
   priority: number;
   assignedAt: string;
   approvedAt: string | null;
-  deactivationScheduledAt: string | null;
   assignedBy: string | null;
   firstName: string | null;
   lastName: string | null;
@@ -2282,7 +2281,6 @@ export interface ThresholdStatus {
   enrolledCount: number;
   requiredTAs: number;
   activeTAs: number;
-  preAssignedTAs: number;
   suggestedTAs: number;
   deficit: number;
   thresholds: { low: number; mid: number };
@@ -2291,11 +2289,10 @@ export interface ThresholdStatus {
 export interface TAAssignedCourse {
   id: string;
   courseId: string;
-  status: 'approved' | 'pre_assigned' | 'suggested' | 'rejected';
+  status: 'approved' | 'suggested' | 'rejected';
   priority: number;
   assignedAt: string;
   approvedAt: string | null;
-  deactivationScheduledAt: string | null;
   courseTitle: string;
   courseThumbnail: string | null;
   courseStatus: string;

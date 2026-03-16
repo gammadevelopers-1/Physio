@@ -1142,7 +1142,7 @@ export class StudentService {
 
       // Trigger TA threshold evaluation (auto-activate pre-assigned TAs)
       this.thresholdEvaluationService
-        .evaluateAndAct(courseId)
+        .checkAndNotify(courseId)
         .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
 
       return reactivated;
@@ -1171,7 +1171,7 @@ export class StudentService {
 
     // Trigger TA threshold evaluation (auto-activate pre-assigned TAs)
     this.thresholdEvaluationService
-      .evaluateAndAct(courseId)
+      .checkAndNotify(courseId)
       .catch((err) => this.logger.warn('TA threshold evaluation failed after self-enrollment', err));
 
     return enrollment;
@@ -1228,7 +1228,7 @@ export class StudentService {
 
     // 4. Re-evaluate TA thresholds (enrollment count decreased)
     this.thresholdEvaluationService
-      .evaluateAndAct(courseId)
+      .checkAndNotify(courseId)
       .catch((err) => this.logger.warn('TA threshold re-evaluation failed after drop', err));
 
     return updated;

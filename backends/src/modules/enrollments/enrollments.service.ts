@@ -708,8 +708,8 @@ export class EnrollmentsService {
         );
       }
 
-      // Threshold-based pre-assignment activation/deactivation (EC-3, EC-4, EC-5, EC-18)
-      await this.thresholdEvaluationService.evaluateAndAct(courseId);
+      // Advisory notification — warn if TA assignment is below NELC recommendation
+      await this.thresholdEvaluationService.checkAndNotify(courseId);
     } catch (error) {
       this.logger.warn(
         `TA re-allocation failed for course ${courseId}: ${(error as Error).message}`,

@@ -2417,6 +2417,13 @@
       "moduleUpdateError": "فشل في تحديث الوحدة",
       "moduleDeleteSuccess": "تم حذف الوحدة بنجاح",
       "moduleDeleteError": "فشل في حذف الوحدة",
+      "sessionStatus": {
+        "scheduled": "مجدول",
+        "live": "مباشر",
+        "ended": "منتهي",
+        "completed": "مكتمل",
+        "cancelled": "ملغي"
+      },
       "scheduleSession": "جدولة جلسة",
       "startSession": "بدء الجلسة",
       "endSession": "إنهاء الجلسة",

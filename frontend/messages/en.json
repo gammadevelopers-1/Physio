@@ -2202,6 +2202,13 @@
       "moduleUpdateError": "Failed to update module",
       "moduleDeleteSuccess": "Module deleted successfully",
       "moduleDeleteError": "Failed to delete module",
+      "sessionStatus": {
+        "scheduled": "Scheduled",
+        "live": "Live",
+        "ended": "Ended",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
       "scheduleSession": "Schedule Session",
       "startSession": "Start Session",
       "endSession": "End Session",

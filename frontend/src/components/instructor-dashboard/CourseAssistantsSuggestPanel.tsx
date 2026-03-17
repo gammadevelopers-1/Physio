@@ -238,11 +238,6 @@ const CourseAssistantsSuggestPanel = ({
                 <p className="text-xs text-[#6B7280]">{ta.email}</p>
               </div>
               <div className="flex items-center gap-2">
-                {ta.status === "approved" && ta.deactivationScheduledAt && (
-                  <span title="Will be deactivated if enrollment stays below threshold">
-                    <Clock className="w-3.5 h-3.5 text-orange-500" />
-                  </span>
-                )}
                 <span
                   className={`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusBadge(ta)}`}
                 >

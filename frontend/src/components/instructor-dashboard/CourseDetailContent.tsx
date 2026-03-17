@@ -179,6 +179,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const { course, enrollments, sessions, loading, error, refetch } =
     useInstructorCourseDetail(courseId);
 
+  const isCourseReadOnly = course?.status === "completed" || course?.status === "archived";
+
   const searchParams = useSearchParams();
   const validTabs = ["overview", "modules", "students", "sessions", "analytics", "settings"] as const;
   type TabId = (typeof validTabs)[number];
@@ -898,19 +900,21 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                           </div>
                         </div>
-                        <button
-                          onClick={() => setActiveTab("settings")}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                          {t("courseDetail.editCourse")}
-                        </button>
+                        {!isCourseReadOnly && (
+                          <button
+                            onClick={() => setActiveTab("settings")}
+                            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                            {t("courseDetail.editCourse")}
+                          </button>
+                        )}
 
                         {/* NELC Compliance Scorecard */}
                         <NELCScorecardPanel courseId={courseId} />
 
                         {/* Teaching Assistants */}
-                        <CourseAssistantsSuggestPanel courseId={courseId} />
+                        {!isCourseReadOnly && <CourseAssistantsSuggestPanel courseId={courseId} />}
                       </div>
                     )}
 
@@ -952,39 +956,41 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     }`}
                                   />
                                 </button>
-                                <div className="flex items-center gap-1 ml-2">
-                                  <button
-                                    onClick={() => handleReorderModule(mod.id, "up")}
-                                    disabled={idx === 0}
-                                    className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                                    aria-label={t("courseDetail.moveUp")}
-                                  >
-                                    <ArrowUp className="w-3.5 h-3.5 text-[#6B7280]" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleReorderModule(mod.id, "down")}
-                                    disabled={idx === course.modules.length - 1}
-                                    className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                                    aria-label={t("courseDetail.moveDown")}
-                                  >
-                                    <ArrowDown className="w-3.5 h-3.5 text-[#6B7280]" />
-                                  </button>
-                                  <button
-                                    onClick={() => openEditModule(mod)}
-                                    className="p-1 hover:bg-[#E5E7EB] rounded"
-                                    aria-label={t("courseDetail.editModule")}
-                                  >
-                                    <Edit className="w-3.5 h-3.5 text-[#6B7280]" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteModule(mod.id)}
-                                    disabled={deletingModuleId === mod.id}
-                                    className="p-1 hover:bg-[#FEE2E2] rounded disabled:opacity-50"
-                                    aria-label={t("courseDetail.deleteModule")}
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" />
-                                  </button>
-                                </div>
+                                {!isCourseReadOnly && (
+                                  <div className="flex items-center gap-1 ml-2">
+                                    <button
+                                      onClick={() => handleReorderModule(mod.id, "up")}
+                                      disabled={idx === 0}
+                                      className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                      aria-label={t("courseDetail.moveUp")}
+                                    >
+                                      <ArrowUp className="w-3.5 h-3.5 text-[#6B7280]" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleReorderModule(mod.id, "down")}
+                                      disabled={idx === course.modules.length - 1}
+                                      className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                      aria-label={t("courseDetail.moveDown")}
+                                    >
+                                      <ArrowDown className="w-3.5 h-3.5 text-[#6B7280]" />
+                                    </button>
+                                    <button
+                                      onClick={() => openEditModule(mod)}
+                                      className="p-1 hover:bg-[#E5E7EB] rounded"
+                                      aria-label={t("courseDetail.editModule")}
+                                    >
+                                      <Edit className="w-3.5 h-3.5 text-[#6B7280]" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteModule(mod.id)}
+                                      disabled={deletingModuleId === mod.id}
+                                      className="p-1 hover:bg-[#FEE2E2] rounded disabled:opacity-50"
+                                      aria-label={t("courseDetail.deleteModule")}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" />
+                                    </button>
+                                  </div>
+                                )}
                               </div>
                               {expandedModules.includes(mod.id) && (
                                 <div className="border-t border-[#E5E7EB]">
@@ -1133,13 +1139,15 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               )}
                             </div>
                           ))}
-                        <button
-                          onClick={openAddModule}
-                          className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                          {t("courseDetail.addModule")}
-                        </button>
+                        {!isCourseReadOnly && (
+                          <button
+                            onClick={openAddModule}
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            {t("courseDetail.addModule")}
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -1342,13 +1350,15 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                           ))
                         )}
-                        <button
-                          onClick={openAddSession}
-                          className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
-                        >
-                          <Plus className="w-4 h-4" />
-                          {t("courseDetail.scheduleSession")}
-                        </button>
+                        {!isCourseReadOnly && (
+                          <button
+                            onClick={openAddSession}
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                            {t("courseDetail.scheduleSession")}
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -1476,7 +1486,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
                     {/* ═══ SETTINGS ═══ */}
                     {activeTab === "settings" && (
-                      <div className="space-y-8">
+                      <div className={`space-y-8 ${isCourseReadOnly ? "pointer-events-none opacity-60" : ""}`}>
                         <div>
                           <h3 className="text-base font-semibold text-[#1F2937] mb-4">{t("courseDetail.editCourse")}</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

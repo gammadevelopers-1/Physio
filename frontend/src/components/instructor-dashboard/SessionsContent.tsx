@@ -1263,7 +1263,7 @@ function ScheduleSessionModal({
             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
           >
             <option value="">{t("sessionsPage.form.selectCourse")}</option>
-            {courses.map((c) => (
+            {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
               <option key={c.id} value={c.id}>{c.title}</option>
             ))}
           </select>

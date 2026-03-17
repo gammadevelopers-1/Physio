@@ -158,7 +158,7 @@ const CreateAssessmentModal = ({
               className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               required
             >
-              {courses.map((c) => (
+              {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
                 <option key={c.id} value={c.id}>
                   {locale === "ar" && c.titleAr ? c.titleAr : c.title}
                 </option>

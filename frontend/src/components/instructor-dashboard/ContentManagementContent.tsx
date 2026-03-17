@@ -325,7 +325,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               onChange={(e) => setSelectedCourseId(e.target.value)}
               className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             >
-              {courses.map((c) => (
+              {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
             </select>

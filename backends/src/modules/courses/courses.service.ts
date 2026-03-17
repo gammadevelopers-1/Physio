@@ -534,7 +534,12 @@ export class CoursesService {
     user: AuthenticatedUser,
     dto: UpdateCourseDto,
   ) {
-    const existing = await this.verifyCourseAccess(courseId, user);
+    const existing = await this.verifyCourseAccess(courseId, user, { allowCompleted: true });
+
+    // Block all edits for completed/archived courses
+    if (existing.status === COURSE_STATUS.COMPLETED || existing.status === COURSE_STATUS.ARCHIVED) {
+      throw new BadRequestException('Cannot edit a completed or archived course');
+    }
 
     // Instructors can only edit courses in draft or changes_requested status
     if (
@@ -1319,6 +1324,7 @@ export class CoursesService {
   private async verifyCourseAccess(
     courseId: string,
     user: AuthenticatedUser,
+    options?: { allowCompleted?: boolean },
   ) {
     const conditions = [eq(courses.id, courseId)];
     this.addOwnershipCondition(conditions, user);
@@ -1331,6 +1337,10 @@ export class CoursesService {
 
     if (!course) {
       throw new NotFoundException('Course not found');
+    }
+
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed or archived course');
     }
 
     return course;

@@ -462,7 +462,7 @@ export class AssessmentsService {
    * List course-level bank questions (assessmentId IS NULL).
    */
   async getCourseBankQuestions(courseId: string, user: AuthenticatedUser) {
-    await this.verifyCourseAccess(courseId, user);
+    await this.verifyCourseAccess(courseId, user, { allowCompleted: true });
 
     const data = await db
       .select()
@@ -1113,7 +1113,7 @@ export class AssessmentsService {
    * Shows which modules have assessment coverage and identifies gaps.
    */
   async getBlueprint(courseId: string, user: AuthenticatedUser) {
-    await this.verifyCourseAccess(courseId, user);
+    await this.verifyCourseAccess(courseId, user, { allowCompleted: true });
 
     const { courseModules } = await import('../../database/schema');
 
@@ -1394,18 +1394,23 @@ export class AssessmentsService {
   private async verifyCourseAccess(
     courseId: string,
     user: AuthenticatedUser,
+    options?: { allowCompleted?: boolean },
   ) {
     const conditions: any[] = [eq(courses.id, courseId)];
     this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
-      .select({ id: courses.id, instructorId: courses.instructorId })
+      .select({ id: courses.id, instructorId: courses.instructorId, status: courses.status })
       .from(courses)
       .where(and(...conditions))
       .limit(1);
 
     if (!course) {
       throw new NotFoundException('Course not found');
+    }
+
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed or archived course');
     }
 
     return course;

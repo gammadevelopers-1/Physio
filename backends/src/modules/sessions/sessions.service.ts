@@ -132,6 +132,7 @@ export class SessionsService {
         .select({
           id: courses.id,
           instructorId: courses.instructorId,
+          status: courses.status,
           startDate: courses.startDate,
           endDate: courses.endDate,
         })
@@ -141,6 +142,10 @@ export class SessionsService {
 
       if (!course) {
         throw new NotFoundException('Course not found');
+      }
+
+      if (course.status === 'completed' || course.status === 'archived') {
+        throw new BadRequestException('Cannot create sessions for a completed or archived course');
       }
 
       // Validate session date is within course date range
@@ -199,6 +204,7 @@ export class SessionsService {
     const [course] = await db
       .select({
         id: courses.id,
+        status: courses.status,
         startDate: courses.startDate,
         endDate: courses.endDate,
       })
@@ -213,6 +219,10 @@ export class SessionsService {
 
     if (!course) {
       throw new NotFoundException('Course not found');
+    }
+
+    if (course.status === 'completed' || course.status === 'archived') {
+      throw new BadRequestException('Cannot create sessions for a completed or archived course');
     }
 
     // Validate session date is within course date range

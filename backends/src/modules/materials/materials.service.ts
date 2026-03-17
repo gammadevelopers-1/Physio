@@ -479,7 +479,7 @@ export class MaterialsService {
    * Lightweight status check for frontend polling.
    */
   async getProcessingStatus(materialId: string, user: AuthenticatedUser) {
-    const material = await this.verifyMaterialAccess(materialId, user);
+    const material = await this.verifyMaterialAccess(materialId, user, { allowCompleted: true });
     return {
       id: material.id,
       status: material.status,
@@ -499,7 +499,7 @@ export class MaterialsService {
    * Returns the transcoded video variants (resolutions).
    */
   async getVariants(materialId: string, user: AuthenticatedUser) {
-    await this.verifyMaterialAccess(materialId, user);
+    await this.verifyMaterialAccess(materialId, user, { allowCompleted: true });
 
     const variants = await db
       .select()
@@ -737,7 +737,7 @@ export class MaterialsService {
    * 5. NELC Checklist (mandatory fields filled, bilingual content)
    */
   async getComplianceChecklist(materialId: string, user: AuthenticatedUser) {
-    const material = await this.verifyMaterialAccess(materialId, user);
+    const material = await this.verifyMaterialAccess(materialId, user, { allowCompleted: true });
 
     const [course] = await db
       .select()
@@ -981,18 +981,23 @@ export class MaterialsService {
   private async verifyCourseAccess(
     courseId: string,
     user: AuthenticatedUser,
+    options?: { allowCompleted?: boolean },
   ) {
     const conditions: any[] = [eq(courses.id, courseId)];
     this.addCourseOwnershipCondition(conditions, user);
 
     const [course] = await db
-      .select({ id: courses.id })
+      .select({ id: courses.id, status: courses.status })
       .from(courses)
       .where(and(...conditions))
       .limit(1);
 
     if (!course) {
       throw new NotFoundException('Course not found');
+    }
+
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed or archived course');
     }
 
     return course;
@@ -1005,6 +1010,7 @@ export class MaterialsService {
   private async verifyMaterialAccess(
     materialId: string,
     user: AuthenticatedUser,
+    options?: { allowCompleted?: boolean },
   ) {
     const [material] = await db
       .select()
@@ -1016,24 +1022,28 @@ export class MaterialsService {
       throw new NotFoundException('Material not found');
     }
 
-    // Verify course access
+    // Verify course access and status
+    const courseConditions: any[] = [eq(courses.id, material.courseId)];
     if (!isGlobalAdmin(user)) {
-      const courseConditions: any[] = [eq(courses.id, material.courseId)];
       if (isManager(user)) {
         courseConditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
       } else {
         courseConditions.push(eq(courses.instructorId, user.id));
       }
+    }
 
-      const [course] = await db
-        .select({ id: courses.id })
-        .from(courses)
-        .where(and(...courseConditions))
-        .limit(1);
+    const [course] = await db
+      .select({ id: courses.id, status: courses.status })
+      .from(courses)
+      .where(and(...courseConditions))
+      .limit(1);
 
-      if (!course) {
-        throw new NotFoundException('Material not found');
-      }
+    if (!course) {
+      throw new NotFoundException('Material not found');
+    }
+
+    if (!options?.allowCompleted && (course.status === 'completed' || course.status === 'archived')) {
+      throw new BadRequestException('Cannot modify a completed or archived course');
     }
 
     return material;
@@ -1076,7 +1086,7 @@ export class MaterialsService {
     materialId: string,
     user: AuthenticatedUser,
   ): Promise<{ entries: import('./vtt-utils').CaptionEntry[]; raw: string }> {
-    const material = await this.verifyMaterialAccess(materialId, user);
+    const material = await this.verifyMaterialAccess(materialId, user, { allowCompleted: true });
 
     if (!material.captionsUrl) {
       return { entries: [], raw: '' };
@@ -1169,7 +1179,7 @@ export class MaterialsService {
    * Walk the previousVersionId chain to build full version history.
    */
   async getVersionHistory(materialId: string, user: AuthenticatedUser) {
-    const material = await this.verifyMaterialAccess(materialId, user);
+    const material = await this.verifyMaterialAccess(materialId, user, { allowCompleted: true });
 
     // Collect all versions by walking backward then forward
     const versions: Array<{
@@ -1299,7 +1309,7 @@ export class MaterialsService {
    * Bucket heartbeat events into ~50 segments, compute retention curve.
    */
   async getWatchAnalytics(materialId: string, user: AuthenticatedUser) {
-    await this.verifyMaterialAccess(materialId, user);
+    await this.verifyMaterialAccess(materialId, user, { allowCompleted: true });
 
     // Get total unique viewers
     const [viewerResult] = await db

@@ -5,11 +5,12 @@ import { db } from '../../database';
 import { courses, enrollments, NELC_EVENT_TYPE } from '../../database/schema';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { CertificatesService } from '../certificates/certificates.service';
 
 /**
  * Auto-completes courses whose end date has passed.
- * Runs daily at midnight. Finalizes all active enrollments
- * and generates reports based on submitted work up to that point.
+ * Runs daily at midnight. Finalizes all active enrollments,
+ * creates certificate requests, and notifies instructor + manager.
  */
 @Injectable()
 export class CourseCompletionCronService {
@@ -18,6 +19,7 @@ export class CourseCompletionCronService {
   constructor(
     private readonly auditService: NelcAuditService,
     private readonly notificationsService: UserNotificationsService,
+    private readonly certificatesService: CertificatesService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -55,20 +57,41 @@ export class CourseCompletionCronService {
             .set({ status: 'completed', updatedAt: new Date() })
             .where(eq(courses.id, course.id));
 
-          // Finalize all active enrollments
-          const finalized = await db
-            .update(enrollments)
-            .set({
-              status: 'completed',
-              completedAt: new Date(),
-            })
+          // Get active students before finalizing
+          const activeStudents = await db
+            .select({ id: enrollments.id, studentId: enrollments.studentId })
+            .from(enrollments)
             .where(
               and(
                 eq(enrollments.courseId, course.id),
                 eq(enrollments.status, 'active'),
               ),
-            )
-            .returning({ id: enrollments.id });
+            );
+
+          // Finalize all active enrollments
+          if (activeStudents.length > 0) {
+            await db
+              .update(enrollments)
+              .set({
+                status: 'completed',
+                completedAt: new Date(),
+              })
+              .where(
+                and(
+                  eq(enrollments.courseId, course.id),
+                  eq(enrollments.status, 'active'),
+                ),
+              );
+
+            // Auto-create certificate requests for all students
+            for (const student of activeStudents) {
+              try {
+                await this.certificatesService.createRequest(course.id, student.studentId);
+              } catch {
+                // Skip duplicates silently
+              }
+            }
+          }
 
           // Audit log
           await this.auditService.log({
@@ -79,7 +102,7 @@ export class CourseCompletionCronService {
             metadata: {
               courseTitle: course.title,
               action: 'auto_completed_end_date',
-              finalizedEnrollments: finalized.length,
+              finalizedEnrollments: activeStudents.length,
             },
           });
 
@@ -89,7 +112,7 @@ export class CourseCompletionCronService {
               recipientId: course.instructorId,
               type: 'course_auto_completed',
               title: 'Course Auto-Completed',
-              message: `Your course "${course.title}" has been automatically completed as the end date has passed. ${finalized.length} enrollment(s) were finalized.`,
+              message: `Your course "${course.title}" has been automatically completed as the end date has passed. ${activeStudents.length} enrollment(s) were finalized.`,
               link: '/dashboard/instructor/courses',
               entityType: 'course',
               entityId: course.id,
@@ -102,7 +125,7 @@ export class CourseCompletionCronService {
               recipientId: course.managerId,
               type: 'course_auto_completed',
               title: 'Course Auto-Completed',
-              message: `Course "${course.title}" has been automatically completed (end date reached). ${finalized.length} enrollment(s) were finalized.`,
+              message: `Course "${course.title}" has been automatically completed (end date reached). ${activeStudents.length} enrollment(s) were finalized.`,
               link: '/dashboard/manager/courses',
               entityType: 'course',
               entityId: course.id,
@@ -110,7 +133,7 @@ export class CourseCompletionCronService {
           }
 
           this.logger.log(
-            `Auto-completed course "${course.title}" (${course.id}): ${finalized.length} enrollments finalized`,
+            `Auto-completed course "${course.title}" (${course.id}): ${activeStudents.length} enrollments finalized`,
           );
         } catch (error) {
           this.logger.error(

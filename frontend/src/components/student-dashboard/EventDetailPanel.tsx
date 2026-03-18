@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -42,8 +43,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
       const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
       window.open(joinUrl, "_blank", "noopener,noreferrer");
     } catch {
-      // Fallback: show error via alert (simple, no toast dependency)
-      alert(t("calendarPage.joinZoomError") || "Failed to generate join link. Please try again.");
+      toast.error(t("calendarPage.joinZoomError") || "Unable to join this session. The course may have ended.");
     } finally {
       setJoiningSessionId(null);
     }

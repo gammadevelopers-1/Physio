@@ -1566,6 +1566,8 @@
       "overdue": "متأخر",
       "missingItems": "{count} مهام مفقودة",
       "joinSession": "انضم للجلسة",
+      "joinSessionError": "تعذر الانضمام لهذه الجلسة. ربما انتهت الدورة.",
+      "courseCompletedNoAccess": "تم إكمال هذه الدورة. لم يعد بإمكانك الانضمام للجلسات.",
       "takeAssessment": "ابدأ التقييم",
       "continueLearning": "تابع التعلم",
       "startCourse": "ابدأ الدورة",

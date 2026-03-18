@@ -79,12 +79,16 @@ const StudentCourseDetailContent = () => {
 
   const handleJoinZoom = async (sessionId: string) => {
     if (joiningSessionId) return;
+    if (data?.enrollment?.status === "completed") {
+      toast.error(t("courseDetail.courseCompletedNoAccess") || "This course has been completed. You can no longer join sessions.");
+      return;
+    }
     setJoiningSessionId(sessionId);
     try {
       const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
       window.open(joinUrl, "_blank", "noopener,noreferrer");
     } catch {
-      alert(t("calendarPage.joinZoomError") || "Failed to generate join link. Please try again.");
+      toast.error(t("courseDetail.joinSessionError") || "Unable to join this session. The course may have ended.");
     } finally {
       setJoiningSessionId(null);
     }

@@ -579,7 +579,7 @@ const CourseLearningContent = () => {
 
               {/* Mark Complete + Module Navigation */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                {!currentModule.isCompleted ? (
+                {!currentModule.isCompleted && data?.enrollment?.status !== "completed" ? (
                   <button
                     onClick={() => handleMarkComplete(currentModule.id)}
                     disabled={completingModule === currentModule.id}

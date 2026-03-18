@@ -31,6 +31,7 @@ import { classifyCourse, getNelcMaxEnrollment } from './nelc-config';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { EmailService } from '../email/email.service';
+import { CertificatesService } from '../certificates/certificates.service';
 
 @Injectable()
 export class CoursesService {
@@ -40,6 +41,7 @@ export class CoursesService {
     private readonly auditService: NelcAuditService,
     private readonly userNotificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
+    private readonly certificatesService: CertificatesService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -1197,7 +1199,21 @@ export class CoursesService {
    * Students' progress and grades are frozen at whatever they submitted.
    */
   private async finalizeEnrollments(courseId: string): Promise<number> {
-    const result = await db
+    // Get all active students before finalizing (need studentId for certificates)
+    const activeStudents = await db
+      .select({ id: enrollments.id, studentId: enrollments.studentId })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+
+    if (activeStudents.length === 0) return 0;
+
+    // Finalize all active enrollments
+    await db
       .update(enrollments)
       .set({
         status: 'completed',
@@ -1208,13 +1224,27 @@ export class CoursesService {
           eq(enrollments.courseId, courseId),
           eq(enrollments.status, 'active'),
         ),
-      )
-      .returning({ id: enrollments.id });
+      );
+
+    // Auto-create certificate requests for all finalized students
+    for (const student of activeStudents) {
+      try {
+        await this.certificatesService.createRequest(courseId, student.studentId);
+        this.logger.log(
+          `Auto-created certificate request for student ${student.studentId} in course ${courseId}`,
+        );
+      } catch (error) {
+        // Skip duplicates or other errors silently
+        this.logger.debug(
+          `Certificate request skipped for student ${student.studentId}: ${error instanceof Error ? error.message : 'unknown'}`,
+        );
+      }
+    }
 
     this.logger.log(
-      `Finalized ${result.length} enrollment(s) for course ${courseId}`,
+      `Finalized ${activeStudents.length} enrollment(s) for course ${courseId}`,
     );
-    return result.length;
+    return activeStudents.length;
   }
 
   // ─── Validation ────────────────────────────────────────────

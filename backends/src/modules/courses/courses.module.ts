@@ -4,9 +4,10 @@ import { CoursesService } from './courses.service';
 import { CourseCompletionCronService } from './course-completion.cron';
 import { AuthModule } from '../auth/auth.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
+import { CertificatesModule } from '../certificates/certificates.module';
 
 @Module({
-  imports: [AuthModule, UserNotificationsModule],
+  imports: [AuthModule, UserNotificationsModule, CertificatesModule],
   controllers: [CoursesController],
   providers: [CoursesService, CourseCompletionCronService],
   exports: [CoursesService],

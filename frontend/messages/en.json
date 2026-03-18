@@ -1354,6 +1354,8 @@
       "overdue": "Overdue",
       "missingItems": "{count} missing tasks",
       "joinSession": "Join Session",
+      "joinSessionError": "Unable to join this session. The course may have ended.",
+      "courseCompletedNoAccess": "This course has been completed. You can no longer join sessions.",
       "takeAssessment": "Take Assessment",
       "continueLearning": "Continue Learning",
       "startCourse": "Start Course",

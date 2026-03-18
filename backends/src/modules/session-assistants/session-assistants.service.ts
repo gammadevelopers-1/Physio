@@ -19,11 +19,10 @@ import {
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
 import { EmailService } from '../email/email.service';
 
-// NELC allocation rules
+// NELC allocation rules — TESTING VALUES (production: LOW=25, MID=35)
 const ASSISTANT_THRESHOLDS = {
-  LOW: 25,  // ≤25: no assistant needed
-  MID: 35,  // 26-35: 1 assistant
-  // >35: 2 assistants
+  LOW: 0,   // >0: 1 assistant recommended
+  MID: 1,   // >1: 2 assistants recommended
 } as const;
 
 @Injectable()

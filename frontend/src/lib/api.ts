@@ -2283,6 +2283,7 @@ export interface ThresholdStatus {
   activeTAs: number;
   suggestedTAs: number;
   deficit: number;
+  warning: string | null;
   thresholds: { low: number; mid: number };
 }
 

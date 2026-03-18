@@ -13,10 +13,10 @@ import {
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 
 // NELC thresholds (advisory only — Course Manager has full control)
-// <=LOW: 0 TAs recommended | LOW+1 to MID: 1 TA recommended | >MID: 2 TAs recommended
+// TESTING VALUES (production: LOW=25, MID=35)
 export const ASSISTANT_THRESHOLDS = {
-  LOW: 25,
-  MID: 35,
+  LOW: 0, // >0 (i.e. ≥1): 1 TA recommended
+  MID: 1, // >1 (i.e. ≥2): 2 TAs recommended
 } as const;
 
 @Injectable()
@@ -37,81 +37,100 @@ export class ThresholdEvaluationService {
   }
 
   /**
-   * Advisory notification — called after enrollment changes.
+   * Advisory notification — called after enrollment changes or TA removal.
    * Sends a notification to the course manager ONLY if the number of
    * active TAs is below the NELC recommendation.
-   * Does NOT auto-assign or auto-activate any TAs.
+   * Messages are specific: tells exactly how many TAs are needed.
    */
   async checkAndNotify(courseId: string): Promise<void> {
     try {
-      // Count active enrollments
-      const [enrollmentCount] = await db
-        .select({ count: count() })
-        .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.courseId, courseId),
-            eq(enrollments.status, 'active'),
-          ),
-        );
-      const enrolledCount = Number(enrollmentCount?.count || 0);
-
-      // Calculate recommended TAs
-      const recommendedTAs = this.calculateRequiredTAs(enrolledCount);
-      if (recommendedTAs === 0) return; // No TAs needed
-
-      // Count currently active TAs
-      const [activeResult] = await db
-        .select({ count: count() })
-        .from(courseAssistants)
-        .where(
-          and(
-            eq(courseAssistants.courseId, courseId),
-            eq(courseAssistants.status, 'approved'),
-          ),
-        );
-      const activeTAs = Number(activeResult?.count || 0);
-
-      // Only notify if TAs are insufficient
-      if (activeTAs >= recommendedTAs) return;
-
-      // Get course info
-      const [course] = await db
-        .select({
-          title: courses.title,
-          managerId: courses.managerId,
-        })
-        .from(courses)
-        .where(eq(courses.id, courseId))
-        .limit(1);
-
-      if (!course) return;
+      const { warning } = await this.getWarning(courseId);
+      if (!warning) return;
 
       const recipientIds = await this.getNotificationRecipients(courseId);
       if (recipientIds.length === 0) return;
 
-      const message =
-        recommendedTAs === 1
-          ? `Course "${course.title}" has ${enrolledCount} students. NELC recommends assigning at least 1 Teaching Assistant.`
-          : `Course "${course.title}" has ${enrolledCount} students. NELC recommends assigning ${recommendedTAs} Teaching Assistants (currently ${activeTAs}).`;
-
       await this.notificationsService.createBulk(recipientIds, {
         type: 'ta_recommendation',
         title: 'NELC TA Recommendation',
-        message,
+        message: warning,
         link: `/dashboard/manager/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
       });
 
-      this.logger.log(
-        `TA recommendation sent for course ${courseId}: ${enrolledCount} enrolled, ${recommendedTAs} recommended, ${activeTAs} active`,
-      );
+      this.logger.log(`TA recommendation sent for course ${courseId}: ${warning}`);
     } catch (error) {
       this.logger.warn(
         `TA threshold check failed for course ${courseId}: ${(error as Error).message}`,
       );
     }
+  }
+
+  /**
+   * Get the current warning message for a course (if any).
+   * Returns null if TAs are sufficient or no TAs are needed.
+   * Used by both checkAndNotify (for push notifications) and
+   * getThresholdStatus (for inline UI warnings).
+   */
+  async getWarning(courseId: string): Promise<{
+    warning: string | null;
+    enrolledCount: number;
+    recommendedTAs: number;
+    activeTAs: number;
+  }> {
+    // Count active enrollments
+    const [enrollmentCount] = await db
+      .select({ count: count() })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.status, 'active'),
+        ),
+      );
+    const enrolledCount = Number(enrollmentCount?.count || 0);
+    const recommendedTAs = this.calculateRequiredTAs(enrolledCount);
+
+    // Count currently active TAs
+    const [activeResult] = await db
+      .select({ count: count() })
+      .from(courseAssistants)
+      .where(
+        and(
+          eq(courseAssistants.courseId, courseId),
+          eq(courseAssistants.status, 'approved'),
+        ),
+      );
+    const activeTAs = Number(activeResult?.count || 0);
+
+    // No TAs needed or requirement fulfilled
+    if (recommendedTAs === 0 || activeTAs >= recommendedTAs) {
+      return { warning: null, enrolledCount, recommendedTAs, activeTAs };
+    }
+
+    // Get course title for the message
+    const [course] = await db
+      .select({ title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    const courseTitle = course?.title || 'this course';
+    const deficit = recommendedTAs - activeTAs;
+
+    let warning: string;
+    if (activeTAs === 0 && recommendedTAs === 1) {
+      warning = `"${courseTitle}" has ${enrolledCount} student(s). NELC recommends assigning 1 Teaching Assistant.`;
+    } else if (activeTAs === 0 && recommendedTAs === 2) {
+      warning = `"${courseTitle}" has ${enrolledCount} student(s). NELC recommends assigning 2 Teaching Assistants — none are currently assigned.`;
+    } else if (activeTAs === 1 && recommendedTAs === 2) {
+      warning = `"${courseTitle}" has ${enrolledCount} student(s). NELC recommends 2 Teaching Assistants — please assign 1 more.`;
+    } else {
+      warning = `"${courseTitle}" has ${enrolledCount} student(s). NELC recommends ${recommendedTAs} TA(s) but only ${activeTAs} assigned. Please assign ${deficit} more.`;
+    }
+
+    return { warning, enrolledCount, recommendedTAs, activeTAs };
   }
 
   /**

@@ -887,8 +887,8 @@ export class CourseAssistantsService {
    * Get threshold status for a course (for UI display).
    */
   async getThresholdStatus(courseId: string) {
-    const enrolledCount = await this.getEnrollmentCount(courseId);
-    const requiredTAs = this.thresholdService.calculateRequiredTAs(enrolledCount);
+    const { warning, enrolledCount, recommendedTAs, activeTAs } =
+      await this.thresholdService.getWarning(courseId);
 
     const allAssistants = await db
       .select({
@@ -897,17 +897,17 @@ export class CourseAssistantsService {
       .from(courseAssistants)
       .where(eq(courseAssistants.courseId, courseId));
 
-    const activeTAs = allAssistants.filter((a) => a.status === 'approved').length;
     const suggestedTAs = allAssistants.filter(
       (a) => a.status === 'suggested',
     ).length;
 
     return {
       enrolledCount,
-      requiredTAs,
+      requiredTAs: recommendedTAs,
       activeTAs,
       suggestedTAs,
-      deficit: Math.max(0, requiredTAs - activeTAs),
+      deficit: Math.max(0, recommendedTAs - activeTAs),
+      warning,
       thresholds: {
         low: ASSISTANT_THRESHOLDS.LOW,
         mid: ASSISTANT_THRESHOLDS.MID,

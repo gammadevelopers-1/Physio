@@ -33,6 +33,7 @@ interface ThresholdStatus {
   activeTAs: number;
   suggestedTAs: number;
   deficit: number;
+  warning: string | null;
   thresholds: { low: number; mid: number };
 }
 
@@ -159,26 +160,24 @@ const CourseAssistantsSuggestPanel = ({
       {thresholdStatus && (
         <div
           className={`mb-4 p-3 rounded-lg border text-sm ${
-            thresholdStatus.deficit > 0
-              ? "bg-red-50 border-red-200 text-red-700"
-              : "bg-[#F9FAFB] border-[#E5E7EB] text-[#4B5563]"
+            thresholdStatus.warning
+              ? "bg-amber-50 border-amber-200 text-amber-800"
+              : "bg-[#F0FDF4] border-[#BBF7D0] text-[#166534]"
           }`}
         >
-          <div className="flex items-center gap-2">
-            {thresholdStatus.deficit > 0 && (
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <div className="flex items-start gap-2">
+            {thresholdStatus.warning ? (
+              <>
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{thresholdStatus.warning}</span>
+              </>
+            ) : (
+              <span>
+                {thresholdStatus.enrolledCount} enrolled &middot;{" "}
+                {thresholdStatus.activeTAs} TA(s) active &middot;{" "}
+                NELC requirement met
+              </span>
             )}
-            <span>
-              {thresholdStatus.enrolledCount} enrolled &middot;{" "}
-              {thresholdStatus.requiredTAs} TA(s) required &middot;{" "}
-              {thresholdStatus.activeTAs} active
-              {thresholdStatus.deficit > 0 && (
-                <span className="font-medium">
-                  {" "}
-                  &middot; {thresholdStatus.deficit} TA(s) needed
-                </span>
-              )}
-            </span>
           </div>
         </div>
       )}

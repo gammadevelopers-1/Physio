@@ -228,30 +228,21 @@ const CourseAssistantsManagePanel = ({
       {/* NELC Compliance Indicator */}
       {thresholdStatus && (
         <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg mb-4 text-sm ${
-            thresholdStatus.deficit > 0
-              ? "bg-red-50 text-red-700 border border-red-200"
+          className={`flex items-start gap-2 px-3 py-2.5 rounded-lg mb-4 text-sm ${
+            thresholdStatus.warning
+              ? "bg-amber-50 text-amber-800 border border-amber-200"
               : "bg-green-50 text-green-700 border border-green-200"
           }`}
         >
-          {thresholdStatus.deficit > 0 ? (
-            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          {thresholdStatus.warning ? (
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           ) : (
-            <CheckCircle className="w-4 h-4 flex-shrink-0" />
+            <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           )}
           <span>
-            {thresholdStatus.deficit > 0
-              ? t("taManagement.deficit", {
-                  required: thresholdStatus.requiredTAs,
-                  active: thresholdStatus.activeTAs,
-                })
-              : t("taManagement.noDeficit")}
-          </span>
-          <span className="text-xs opacity-75 ml-auto">
-            {t("taManagement.thresholdInfo", {
-              enrolled: thresholdStatus.enrolledCount,
-              required: thresholdStatus.requiredTAs,
-            })}
+            {thresholdStatus.warning
+              ? thresholdStatus.warning
+              : `${thresholdStatus.enrolledCount} enrolled · ${thresholdStatus.activeTAs} TA(s) active · NELC requirement met`}
           </span>
         </div>
       )}

@@ -16,9 +16,13 @@ import { useStudentRecentActivity } from "@/hooks/useStudentRecentActivity";
 import StudentDashboardHomeSkeleton from "./StudentDashboardHomeSkeleton";
 import StudentDashboardError from "./StudentDashboardError";
 import OfflineBanner from "./OfflineBanner";
+import Link from "next/link";
+import { useLocale } from "next-intl";
+import { AlertTriangle } from "lucide-react";
 
 const DashboardHomeContent = () => {
   const t = useTranslations("studentDashboard");
+  const locale = useLocale();
   const userData = useStudentProfile();
 
   const {
@@ -90,6 +94,22 @@ const DashboardHomeContent = () => {
               </h1>
 
               <OfflineBanner />
+
+              {!userData.scfhsNumber && (
+                <div className="mb-4 flex items-start gap-3 p-4 bg-[#FEF3C7] border border-[#F59E0B]/30 rounded-xl">
+                  <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-[#92400E]">{t("scfhsBanner.title")}</p>
+                    <p className="text-xs text-[#A16207] mt-0.5">{t("scfhsBanner.description")}</p>
+                  </div>
+                  <Link
+                    href={`/${locale}/dashboard/student/settings`}
+                    className="flex-shrink-0 px-3 py-1.5 bg-[#D97706] text-white text-xs font-medium rounded-lg hover:bg-[#B45309] transition-colors"
+                  >
+                    {t("scfhsBanner.addNow")}
+                  </Link>
+                </div>
+              )}
 
               {isLoading ? (
                 <StudentDashboardHomeSkeleton />

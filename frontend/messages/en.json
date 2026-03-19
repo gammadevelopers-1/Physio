@@ -1138,6 +1138,11 @@
   },
   "studentDashboard": {
     "title": "Student Dashboard",
+    "scfhsBanner": {
+      "title": "SCFHS Registration Number Missing",
+      "description": "Add your Mumaris+ registration number to receive CPD certificates. You won't be able to get certificates for accredited courses without it.",
+      "addNow": "Add Now"
+    },
     "sidebar": {
       "studentDashboard": "Student Dashboard",
       "dashboard": "Dashboard",

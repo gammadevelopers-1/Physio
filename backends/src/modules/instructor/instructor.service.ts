@@ -971,7 +971,6 @@ export class InstructorService {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
-        scfhsNumber: users.scfhsNumber,
         totalEnrollments: sql<number>`COUNT(DISTINCT ${enrollments.courseId})`.as(
           'total_enrollments',
         ),
@@ -990,7 +989,6 @@ export class InstructorService {
         users.firstName,
         users.lastName,
         users.email,
-        users.scfhsNumber,
       )
       .orderBy(users.firstName);
 
@@ -1090,7 +1088,6 @@ export class InstructorService {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
-        scfhsNumber: users.scfhsNumber,
       })
       .from(users)
       .where(eq(users.id, studentId))

@@ -264,6 +264,27 @@ export class CertificatesService {
       );
     }
 
+    // For CPD/CME courses, SCFHS number is required
+    const [courseInfo] = await db
+      .select({ isCmeAccredited: courses.isCmeAccredited })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (courseInfo?.isCmeAccredited) {
+      const [student] = await db
+        .select({ scfhsNumber: users.scfhsNumber })
+        .from(users)
+        .where(eq(users.id, studentId))
+        .limit(1);
+
+      if (!student?.scfhsNumber?.trim()) {
+        throw new BadRequestException(
+          'SCFHS Registration Number is required for CPD certificate issuance. Please update your profile with your Mumaris+ number.',
+        );
+      }
+    }
+
     // Check for duplicate request
     const [existing] = await db
       .select({ id: certificateRequests.id, status: certificateRequests.status })

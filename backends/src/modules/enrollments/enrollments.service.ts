@@ -389,7 +389,6 @@ export class EnrollmentsService {
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
-        studentScfhsNumber: users.scfhsNumber,
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
@@ -478,7 +477,6 @@ export class EnrollmentsService {
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
-        studentScfhsNumber: users.scfhsNumber,
       })
       .from(attendance)
       .innerJoin(users, eq(attendance.studentId, users.id))

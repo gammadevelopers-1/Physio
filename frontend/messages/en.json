@@ -401,7 +401,10 @@
       "privacyPolicy": "Privacy Policy",
       "register": "Register",
       "signInWithGoogle": "Sign in with Google",
-      "scfhsNumber": "SCFHS Registration Number"
+      "scfhsNumber": "SCFHS Registration Number",
+      "optional": "Optional",
+      "scfhsPlaceholder": "Enter your Mumaris+ number",
+      "scfhsHint": "You can add this later from your profile. Required for CPD certificate issuance."
     },
     "footer": {
       "hasAccount": "Already have an account?",

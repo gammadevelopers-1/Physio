@@ -26,4 +26,9 @@ export class RegisterDto {
   @IsString()
   @MaxLength(20)
   phone?: string;
+
+  @IsString({ message: 'SCFHS Registration Number is required' })
+  @MinLength(1, { message: 'SCFHS Registration Number is required' })
+  @MaxLength(50)
+  scfhsNumber: string;
 }

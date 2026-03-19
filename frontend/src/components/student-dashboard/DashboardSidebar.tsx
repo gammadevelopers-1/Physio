@@ -205,7 +205,10 @@ const DashboardSidebar = ({ user }: DashboardSidebarProps) => {
             </div>
           </div>
 
-          {/* Name and Email */}
+          {/* Registration Number, Name and Email */}
+          {user.scfhsNumber && (
+            <p className="text-xs text-[#9CA3AF] font-mono mb-0.5">{user.scfhsNumber}</p>
+          )}
           <h3 className="text-lg font-semibold text-[#1F2937]">{user.name}</h3>
           <p className="text-sm text-[#6B7280] mb-2">{user.email}</p>
 

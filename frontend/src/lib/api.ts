@@ -385,6 +385,7 @@ export const authApi = {
     password: string;
     firstName?: string;
     lastName?: string;
+    scfhsNumber?: string;
   }) => api.post<RegisterResponse>('/auth/register', data, { skipAuth: true }),
 
   login: (data: { email: string; password: string }) =>

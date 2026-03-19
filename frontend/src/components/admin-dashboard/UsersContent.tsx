@@ -1055,6 +1055,9 @@ const UsersContent = () => {
                                   <div className="min-w-0">
                                     <p className="text-sm font-medium text-[#1F2937] truncate">{getUserName(user)}</p>
                                     <p className="text-xs text-[#6B7280] truncate">{user.email}</p>
+                                    {user.scfhsNumber && (
+                                      <p className="text-[10px] text-[#9CA3AF] font-mono truncate">{user.scfhsNumber}</p>
+                                    )}
                                   </div>
                                 </div>
                               </td>

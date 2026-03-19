@@ -1170,6 +1170,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <table className="w-full">
                                 <thead>
                                   <tr className="text-left border-b border-[#E5E7EB]">
+                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.regNumber")}</th>
                                     <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.name")}</th>
                                     <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.email")}</th>
                                     <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.enrolledDate")}</th>
@@ -1190,6 +1191,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     };
                                     return (
                                       <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                                        <td className="py-3 text-xs text-[#9CA3AF] font-mono">{enrollment.studentScfhsNumber || "—"}</td>
                                         <td className="py-3 text-sm font-medium text-[#1F2937]">
                                           {enrollment.studentFirstName} {enrollment.studentLastName}
                                         </td>

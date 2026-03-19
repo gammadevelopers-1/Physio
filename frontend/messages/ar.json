@@ -400,7 +400,8 @@
       "and": "و",
       "privacyPolicy": "سياسة الخصوصية",
       "register": "يسجل",
-      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل"
+      "signInWithGoogle": "قم بتسجيل الدخول باستخدام جوجل",
+      "scfhsNumber": "رقم التصنيف المهني"
     },
     "footer": {
       "hasAccount": "هل لديك حساب بالفعل؟",
@@ -1366,6 +1367,7 @@
       "contactInformation": "معلومات الاتصال",
       "viewProfile": "عرض الملف الشخصي",
       "editProfile": "تعديل الملف الشخصي",
+      "scfhsNumber": "رقم الهيئة",
       "logout": "تسجيل الخروج"
     },
     "applicationsPage": {
@@ -2379,6 +2381,7 @@
       "startDate": "تاريخ البدء",
       "endDate": "تاريخ الانتهاء",
       "minutes": "دقيقة",
+      "regNumber": "رقم التسجيل",
       "name": "الاسم",
       "email": "البريد الإلكتروني",
       "enrolledDate": "تاريخ التسجيل",

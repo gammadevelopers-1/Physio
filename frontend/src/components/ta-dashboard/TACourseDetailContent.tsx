@@ -375,6 +375,9 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             <thead>
                               <tr className="border-b border-[#E5E7EB]">
                                 <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
+                                  {t("courseDetail.regNumber")}
+                                </th>
+                                <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
                                   {t("courseDetail.name")}
                                 </th>
                                 <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
@@ -391,6 +394,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             <tbody>
                               {enrollments.map((e) => (
                                 <tr key={e.id} className="border-b border-[#F3F4F6]">
+                                  <td className="px-4 py-3 text-xs text-[#9CA3AF] font-mono">{(e as any).studentScfhsNumber || "—"}</td>
                                   <td className="px-4 py-3 text-sm text-[#1F2937]">
                                     {[e.studentFirstName, e.studentLastName].filter(Boolean).join(" ") || "—"}
                                   </td>

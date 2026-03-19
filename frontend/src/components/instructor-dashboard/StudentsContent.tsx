@@ -568,6 +568,9 @@ const StudentsContent = () => {
                                         <p className="text-xs text-[#6B7280]">
                                           {student.email}
                                         </p>
+                                        {student.scfhsNumber && (
+                                          <p className="text-[10px] text-[#9CA3AF] font-mono">{student.scfhsNumber}</p>
+                                        )}
                                       </div>
                                     </div>
                                   </td>
@@ -735,6 +738,9 @@ const StudentsContent = () => {
                                   <p className="text-xs text-[#6B7280]">
                                     {student.email}
                                   </p>
+                                  {student.scfhsNumber && (
+                                    <p className="text-[10px] text-[#9CA3AF] font-mono">{student.scfhsNumber}</p>
+                                  )}
                                 </div>
                               </div>
                               <span

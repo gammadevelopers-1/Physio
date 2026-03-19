@@ -135,6 +135,7 @@ export class ReportsService {
     };
 
     const headers = [
+      'RegistrationClassificationNumber',
       'Student Name',
       'Email',
       'Session Date',
@@ -185,6 +186,7 @@ export class ReportsService {
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
+        studentScfhsNumber: users.scfhsNumber,
         courseId: sessions.courseId,
         sessionDate: sessions.scheduledAt,
         sessionTitle: sessions.title,
@@ -252,6 +254,7 @@ export class ReportsService {
           : 'Incomplete';
 
       return [
+        row.studentScfhsNumber || '',
         `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
         row.studentEmail || '',
         this.formatDate(row.sessionDate),
@@ -279,6 +282,7 @@ export class ReportsService {
           firstName: users.firstName,
           lastName: users.lastName,
           email: users.email,
+          scfhsNumber: users.scfhsNumber,
         })
         .from(enrollments)
         .innerJoin(users, eq(enrollments.studentId, users.id))
@@ -302,6 +306,7 @@ export class ReportsService {
 
         const pct = attendancePctMap.get(`${student.studentId}:${sess.courseId}`) || '0.00%';
         rows.push([
+          student.scfhsNumber || '',
           `${student.firstName || ''} ${student.lastName || ''}`.trim(),
           student.email || '',
           this.formatDate(sess.scheduledAt),

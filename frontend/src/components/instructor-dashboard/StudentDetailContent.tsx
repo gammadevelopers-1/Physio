@@ -353,6 +353,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               <Mail className="w-4 h-4" />
                               {student.email}
                             </span>
+                            {student.scfhsNumber && (
+                              <span className="text-xs text-[#9CA3AF] font-mono">{student.scfhsNumber}</span>
+                            )}
                           </div>
                           <div className="flex items-center gap-4 mt-2 text-xs text-[#9CA3AF]">
                             {enrolledSince && (

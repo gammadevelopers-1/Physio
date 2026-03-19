@@ -400,7 +400,8 @@
       "and": "and",
       "privacyPolicy": "Privacy Policy",
       "register": "Register",
-      "signInWithGoogle": "Sign in with Google"
+      "signInWithGoogle": "Sign in with Google",
+      "scfhsNumber": "SCFHS Registration Number"
     },
     "footer": {
       "hasAccount": "Already have an account?",
@@ -1154,6 +1155,7 @@
       "contactInformation": "Contact Information",
       "viewProfile": "View Profile",
       "editProfile": "Edit Profile",
+      "scfhsNumber": "SCFHS No.",
       "logout": "Logout"
     },
     "applicationsPage": {
@@ -2164,6 +2166,7 @@
       "startDate": "Start Date",
       "endDate": "End Date",
       "minutes": "min",
+      "regNumber": "Reg. No.",
       "name": "Name",
       "email": "Email",
       "enrolledDate": "Enrolled",

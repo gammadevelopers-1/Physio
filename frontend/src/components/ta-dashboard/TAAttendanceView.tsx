@@ -17,6 +17,7 @@ interface AttendanceRecord {
   studentFirstName: string | null;
   studentLastName: string | null;
   studentEmail: string;
+  studentScfhsNumber?: string | null;
   note?: string | null;
 }
 
@@ -83,8 +84,9 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
 
   const handleExport = () => {
     if (records.length === 0) return;
-    const headers = ["Name", "Email", "Status", "Join Time", "Leave Time", "Duration (min)"];
+    const headers = ["RegistrationClassificationNumber", "Name", "Email", "Status", "Join Time", "Leave Time", "Duration (min)"];
     const rows = records.map((r) => [
+      r.studentScfhsNumber || "",
       `${r.studentFirstName || ""} ${r.studentLastName || ""}`.trim(),
       r.studentEmail,
       r.status,
@@ -176,6 +178,9 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
                       {record.studentFirstName} {record.studentLastName}
                     </p>
                     <p className="text-xs text-[#6B7280]">{record.studentEmail}</p>
+                    {record.studentScfhsNumber && (
+                      <p className="text-[10px] text-[#9CA3AF] font-mono">{record.studentScfhsNumber}</p>
+                    )}
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}

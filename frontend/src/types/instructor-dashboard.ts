@@ -168,6 +168,7 @@ export interface CourseEnrollment {
   studentFirstName: string;
   studentLastName: string;
   studentEmail: string;
+  studentScfhsNumber?: string | null;
 }
 
 // ─── Assessment Files ────────────────────────────────────────
@@ -441,6 +442,7 @@ export interface AttendanceRecord {
   studentFirstName: string | null;
   studentLastName: string | null;
   studentEmail: string;
+  studentScfhsNumber?: string | null;
 }
 
 // ─── Instructor Students ────────────────────────────────────
@@ -450,6 +452,7 @@ export interface InstructorStudent {
   firstName: string | null;
   lastName: string | null;
   email: string;
+  scfhsNumber?: string | null;
   totalEnrollments: number;
   averageProgress: number;
   lastAccessedAt: string | null;
@@ -511,6 +514,7 @@ export interface StudentDetailResponse {
   firstName: string | null;
   lastName: string | null;
   email: string;
+  scfhsNumber?: string | null;
   enrollments: StudentDetailEnrollment[];
   attendanceSummary: StudentAttendanceSummary;
   assessmentScores: StudentAssessmentScore[];

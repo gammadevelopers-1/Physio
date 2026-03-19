@@ -24,6 +24,7 @@ function SignUpForm() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [scfhsNumber, setScfhsNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -39,7 +40,7 @@ function SignUpForm() {
     setError(null);
 
     // Validation
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!firstName || !lastName || !scfhsNumber || !email || !password || !confirmPassword) {
       const msg = "Please fill in all required fields";
       setError(msg);
       toast.error(msg);
@@ -88,6 +89,7 @@ function SignUpForm() {
         password,
         firstName,
         lastName,
+        scfhsNumber,
       });
       setSuccess(true);
       toast.success("Account created successfully! Redirecting to sign in...");
@@ -217,6 +219,31 @@ function SignUpForm() {
                         required
                       />
                     </div>
+                  </div>
+
+                  {/* SCFHS Registration Number */}
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <label
+                      htmlFor="scfhsNumber"
+                      className="font-medium text-[#0a0a0a]"
+                      style={{ fontSize: "14px", lineHeight: "20px" }}
+                    >
+                      {t("form.scfhsNumber")} *
+                    </label>
+                    <input
+                      type="text"
+                      id="scfhsNumber"
+                      value={scfhsNumber}
+                      onChange={(e) => setScfhsNumber(e.target.value)}
+                      disabled={loading}
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50"
+                      style={{
+                        boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
+                        fontSize: "14px"
+                      }}
+                      placeholder=""
+                      required
+                    />
                   </div>
 
                   {/* Email Field */}

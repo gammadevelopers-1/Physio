@@ -565,6 +565,9 @@ function AttendanceModal({
                             {e.studentFirstName} {e.studentLastName}
                           </p>
                           <p className="text-xs text-[#6B7280]">{e.studentEmail}</p>
+                          {(e as any).studentScfhsNumber && (
+                            <p className="text-[10px] text-[#9CA3AF] font-mono">{(e as any).studentScfhsNumber}</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           {statusOptions.map((status) => (

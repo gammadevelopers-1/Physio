@@ -45,7 +45,6 @@ interface RegisterData {
   password: string;
   firstName?: string;
   lastName?: string;
-  scfhsNumber?: string;
 }
 
 // ===========================================
@@ -272,7 +271,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
-        scfhsNumber: data.scfhsNumber,
       });
       setState((prev) => ({ ...prev, isLoading: false }));
     } catch (error) {

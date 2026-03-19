@@ -69,6 +69,22 @@ export class AuthService {
       throw new BadRequestException('System roles not initialized. Run db:seed:roles');
     }
 
+    // Auto-generate platform registration number (PG-YYYY-NNNNN)
+    const year = new Date().getFullYear();
+    const prefix = `PG-${year}-`;
+    const [existing] = await db
+      .select({ scfhsNumber: users.scfhsNumber })
+      .from(users)
+      .where(sql`${users.scfhsNumber} LIKE ${prefix + '%'}`)
+      .orderBy(sql`${users.scfhsNumber} DESC`)
+      .limit(1);
+    let counter = 1;
+    if (existing?.scfhsNumber) {
+      const num = parseInt(existing.scfhsNumber.replace(prefix, ''), 10);
+      if (!isNaN(num)) counter = num + 1;
+    }
+    const scfhsNumber = `${prefix}${String(counter).padStart(5, '0')}`;
+
     // Create user with default STUDENT active role
     const [newUser] = await db
       .insert(users)
@@ -78,7 +94,7 @@ export class AuthService {
         firstName: dto.firstName,
         lastName: dto.lastName,
         phone: dto.phone,
-        scfhsNumber: dto.scfhsNumber,
+        scfhsNumber,
         activeRole: ROLE_NAMES.STUDENT,
       })
       .returning({

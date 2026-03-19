@@ -730,10 +730,10 @@ const SettingsContent = () => {
                       type="text"
                       name="scfhsNumber"
                       value={formData.scfhsNumber}
-                      readOnly
-                      disabled
+                      onChange={handleInputChange}
                       aria-label={t("settings.scfhsNumber")}
-                      className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] bg-[#F3F4F6] cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+                      placeholder={t("settings.scfhsPlaceholder")}
+                      className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 

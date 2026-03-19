@@ -684,7 +684,7 @@ export class AuthService {
     if (dto.location !== undefined) updateData.location = dto.location;
     if (dto.language !== undefined) updateData.language = dto.language;
     if (dto.department !== undefined) updateData.department = dto.department;
-    if (dto.scfhsNumber !== undefined && !user.scfhsNumber) updateData.scfhsNumber = dto.scfhsNumber;
+    if (dto.scfhsNumber !== undefined) updateData.scfhsNumber = dto.scfhsNumber;
     if (dto.nationalId !== undefined) updateData.nationalId = dto.nationalId;
     if (dto.nationality !== undefined) updateData.nationality = dto.nationality;
     if (dto.gender !== undefined) updateData.gender = dto.gender;

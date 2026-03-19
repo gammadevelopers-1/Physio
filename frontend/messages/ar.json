@@ -1815,6 +1815,7 @@
       "lastName": "اسم العائلة",
       "email": "البريد الإلكتروني",
       "scfhsNumber": "رقم الهيئة السعودية:",
+      "scfhsPlaceholder": "أدخل رقم ممارس بلس الخاص بك",
       "nationalId": "رقم الهوية الوطنية:",
       "nationality": "الجنسية:",
       "selectNationality": "اختر الجنسية",

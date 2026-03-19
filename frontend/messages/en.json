@@ -1603,6 +1603,7 @@
       "lastName": "Last Name",
       "email": "Email",
       "scfhsNumber": "SCFHS Number:",
+      "scfhsPlaceholder": "Enter your Mumaris+ registration number",
       "nationalId": "National ID:",
       "nationality": "Nationality:",
       "selectNationality": "Select nationality",

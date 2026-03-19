@@ -2,8 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { SessionsContent } from "@/components/course-manager-dashboard";
 
 export const metadata = {
-  title: "Sessions | Course Manager Dashboard | PhysioGuidance",
-  description: "Manage all training sessions",
+  title: "Lectures | Course Manager Dashboard | PhysioGuidance",
+  description: "Manage all training lectures",
 };
 
 export default async function CourseManagerSessionsPage({

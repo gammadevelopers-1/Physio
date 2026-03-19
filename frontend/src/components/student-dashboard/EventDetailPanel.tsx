@@ -43,7 +43,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
       const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
       window.open(joinUrl, "_blank", "noopener,noreferrer");
     } catch {
-      toast.error(t("calendarPage.joinZoomError") || "Unable to join this session. The course may have ended.");
+      toast.error(t("calendarPage.joinZoomError") || "Unable to join this lecture. The course may have ended.");
     } finally {
       setJoiningSessionId(null);
     }

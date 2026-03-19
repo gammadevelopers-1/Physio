@@ -92,7 +92,7 @@ const CalendarContent = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "my-sessions.ics";
+      a.download = "my-lectures.ics";
       a.click();
       URL.revokeObjectURL(url);
       toast.success(t("calendarPage.exportSuccess"));

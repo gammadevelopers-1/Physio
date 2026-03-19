@@ -2,8 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import TADashboardContent from "@/components/ta-dashboard/TADashboardContent";
 
 export const metadata = {
-  title: "My Sessions | Teaching Assistant Dashboard",
-  description: "View your assigned sessions",
+  title: "My Lectures | Teaching Assistant Dashboard",
+  description: "View your assigned lectures",
 };
 
 export default async function TASessionsPage({

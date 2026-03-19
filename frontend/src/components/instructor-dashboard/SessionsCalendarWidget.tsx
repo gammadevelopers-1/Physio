@@ -236,7 +236,7 @@ const SessionsCalendarWidget = ({
               <button
                 onClick={(e) => { e.stopPropagation(); onEndSession?.(session.id); }}
                 className="p-1 bg-[#EF4444] text-white rounded hover:bg-[#DC2626] transition-colors"
-                title="End Session"
+                title="End Lecture"
               >
                 <Square className="w-3 h-3" />
               </button>

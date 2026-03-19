@@ -33,26 +33,26 @@ const EVENT_CONFIG: Record<
   }
 > = {
   session_scheduled: {
-    title: 'New Session Scheduled',
+    title: 'New Lecture Scheduled',
     messageFn: (t, extra) =>
       extra
-        ? `A new session "${t}" has been scheduled for ${extra}.`
-        : `A new session "${t}" has been scheduled.`,
+        ? `A new lecture "${t}" has been scheduled for ${extra}.`
+        : `A new lecture "${t}" has been scheduled.`,
   },
   session_started: {
-    title: 'Session Started',
+    title: 'Lecture Started',
     messageFn: (t) => `"${t}" is now live. Join now!`,
   },
   session_ended: {
-    title: 'Session Ended',
+    title: 'Lecture Ended',
     messageFn: (t) => `"${t}" has ended.`,
   },
   session_cancelled: {
-    title: 'Session Cancelled',
+    title: 'Lecture Cancelled',
     messageFn: (t) => `"${t}" has been cancelled.`,
   },
   session_rescheduled: {
-    title: 'Session Rescheduled',
+    title: 'Lecture Rescheduled',
     messageFn: (t) => `"${t}" has been rescheduled.`,
   },
 };

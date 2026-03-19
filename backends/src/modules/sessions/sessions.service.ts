@@ -145,7 +145,7 @@ export class SessionsService {
       }
 
       if (course.status === 'completed' || course.status === 'archived') {
-        throw new BadRequestException('Cannot create sessions for a completed or archived course');
+        throw new BadRequestException('Cannot create lectures for a completed or archived course');
       }
 
       // Validate session date is within course date range
@@ -222,7 +222,7 @@ export class SessionsService {
     }
 
     if (course.status === 'completed' || course.status === 'archived') {
-      throw new BadRequestException('Cannot create sessions for a completed or archived course');
+      throw new BadRequestException('Cannot create lectures for a completed or archived course');
     }
 
     // Validate session date is within course date range
@@ -358,7 +358,7 @@ export class SessionsService {
       .limit(1);
 
     if (!assignment) {
-      throw new BadRequestException('You are not assigned to this session');
+      throw new BadRequestException('You are not assigned to this lecture');
     }
 
     const [session] = await db
@@ -367,9 +367,9 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
-    if (!session) throw new NotFoundException('Session not found');
+    if (!session) throw new NotFoundException('Lecture not found');
     if (!session.zoomLink) {
-      throw new BadRequestException('This session has no Zoom link');
+      throw new BadRequestException('This lecture has no Zoom link');
     }
 
     const [user] = await db
@@ -578,7 +578,7 @@ export class SessionsService {
       .limit(1);
 
     if (!session) {
-      throw new NotFoundException('Session not found');
+      throw new NotFoundException('Lecture not found');
     }
 
     return session;
@@ -599,7 +599,7 @@ export class SessionsService {
     // Prevent modifications to live, completed, or cancelled sessions
     if (session.status !== SESSION_STATUS.SCHEDULED) {
       throw new BadRequestException(
-        `Cannot update a ${session.status} session. Only scheduled sessions can be modified.`,
+        `Cannot update a ${session.status} lecture. Only scheduled lectures can be modified.`,
       );
     }
 
@@ -650,7 +650,7 @@ export class SessionsService {
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
         this.logger.warn(`Failed to sync Zoom meeting ${updated.meetingId} on session update: ${msg}`);
-        zoomSyncError = `Session updated but Zoom meeting sync failed: ${msg}`;
+        zoomSyncError = `Lecture updated but Zoom meeting sync failed: ${msg}`;
       }
     }
 
@@ -668,13 +668,13 @@ export class SessionsService {
 
     if (session.status === SESSION_STATUS.LIVE) {
       throw new BadRequestException(
-        'Cannot start an already live session',
+        'Cannot start an already live lecture',
       );
     }
 
     if (session.status !== SESSION_STATUS.SCHEDULED) {
       throw new BadRequestException(
-        'Only scheduled sessions can be started',
+        'Only scheduled lectures can be started',
       );
     }
 
@@ -693,7 +693,7 @@ export class SessionsService {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
       });
       throw new BadRequestException(
-        `Cannot start session yet. The session is scheduled for ${scheduledStr}. You can start it up to 15 minutes before (in ${timeStr}).`,
+        `Cannot start lecture yet. The lecture is scheduled for ${scheduledStr}. You can start it up to 15 minutes before (in ${timeStr}).`,
       );
     }
 
@@ -764,7 +764,7 @@ export class SessionsService {
     const session = await this.verifySessionAccess(sessionId, user);
 
     if (session.status !== SESSION_STATUS.LIVE) {
-      throw new BadRequestException('Cannot end a non-live session');
+      throw new BadRequestException('Cannot end a non-live lecture');
     }
 
     // End the Zoom meeting if this is a zoom/hybrid session
@@ -847,7 +847,7 @@ export class SessionsService {
 
     if (session.status !== SESSION_STATUS.ENDED) {
       throw new BadRequestException(
-        `Cannot finalize a ${session.status} session. Only ended sessions can be finalized.`,
+        `Cannot finalize a ${session.status} lecture. Only ended lectures can be finalized.`,
       );
     }
 
@@ -897,7 +897,7 @@ export class SessionsService {
       session.status === SESSION_STATUS.CANCELLED
     ) {
       throw new BadRequestException(
-        `Cannot cancel a ${session.status} session`,
+        `Cannot cancel a ${session.status} lecture`,
       );
     }
 
@@ -967,13 +967,13 @@ export class SessionsService {
       session.status !== SESSION_STATUS.CANCELLED
     ) {
       throw new BadRequestException(
-        'Only completed or cancelled sessions can be deleted',
+        'Only completed or cancelled lectures can be deleted',
       );
     }
 
     await db.delete(sessions).where(eq(sessions.id, sessionId));
 
-    return { message: 'Session deleted successfully' };
+    return { message: 'Lecture deleted successfully' };
   }
 
   // ─── Manager Oversight Actions ─────────────────────────────────
@@ -988,10 +988,10 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
-    if (!session) throw new NotFoundException('Session not found');
+    if (!session) throw new NotFoundException('Lecture not found');
 
     if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
-      throw new BadRequestException(`Cannot cancel a ${session.status} session`);
+      throw new BadRequestException(`Cannot cancel a ${session.status} lecture`);
     }
 
     // Delete Zoom meeting
@@ -1052,10 +1052,10 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
-    if (!session) throw new NotFoundException('Session not found');
+    if (!session) throw new NotFoundException('Lecture not found');
 
     if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
-      throw new BadRequestException(`Cannot reschedule a ${session.status} session`);
+      throw new BadRequestException(`Cannot reschedule a ${session.status} lecture`);
     }
 
     const updateData: Record<string, unknown> = {
@@ -1087,7 +1087,7 @@ export class SessionsService {
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
         this.logger.warn(`Failed to reschedule Zoom meeting ${session.meetingId}: ${msg}`);
-        zoomSyncError = `Session rescheduled but Zoom meeting sync failed: ${msg}`;
+        zoomSyncError = `Lecture rescheduled but Zoom meeting sync failed: ${msg}`;
       }
     }
 
@@ -1117,10 +1117,10 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
-    if (!session) throw new NotFoundException('Session not found');
+    if (!session) throw new NotFoundException('Lecture not found');
 
     if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
-      throw new BadRequestException(`Cannot reassign a ${session.status} session`);
+      throw new BadRequestException(`Cannot reassign a ${session.status} lecture`);
     }
 
     const [updated] = await db
@@ -1315,7 +1315,7 @@ export class SessionsService {
       const startStr = new Date(courseStartDate).toISOString().slice(0, 10);
       if (sessionDateStr < startStr) {
         throw new BadRequestException(
-          `Session date cannot be before the course start date (${startStr})`,
+          `Lecture date cannot be before the course start date (${startStr})`,
         );
       }
     }
@@ -1323,7 +1323,7 @@ export class SessionsService {
       const endStr = new Date(courseEndDate).toISOString().slice(0, 10);
       if (sessionDateStr > endStr) {
         throw new BadRequestException(
-          `Session date cannot be after the course end date (${endStr})`,
+          `Lecture date cannot be after the course end date (${endStr})`,
         );
       }
     }
@@ -1348,7 +1348,7 @@ export class SessionsService {
       .limit(1);
 
     if (!session) {
-      throw new NotFoundException('Session not found');
+      throw new NotFoundException('Lecture not found');
     }
 
     return session;
@@ -1503,7 +1503,7 @@ export class SessionsService {
       .limit(1);
 
     if (!existing) {
-      throw new NotFoundException('Session assistant not found');
+      throw new NotFoundException('Lecture assistant not found');
     }
 
     const [updated] = await db

@@ -178,9 +178,9 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 )}
               </div>
 
-              {/* Sessions */}
+              {/* Lectures */}
               <div className="bg-[#F9FAFB] rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-2">Sessions</h4>
+                <h4 className="text-sm font-semibold text-[#1F2937] mb-2">Lectures</h4>
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-[#6B7280]">
                     {data.sessions.completed} completed / {data.sessions.total} total

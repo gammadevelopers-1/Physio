@@ -32,7 +32,7 @@ export function getSessionCancelledHtml(params: {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Session Cancelled - PhysioGuidance</title>
+  <title>Lecture Cancelled - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -68,7 +68,7 @@ export function getSessionCancelledHtml(params: {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Session Cancelled</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Lecture Cancelled</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
                 Hi ${recipientName},
               </p>
@@ -81,10 +81,10 @@ export function getSessionCancelledHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Session Details</p>
+                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Lecture Details</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">Session</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">Lecture</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${sessionTitle}</td>
                       </tr>
                       <tr>
@@ -142,13 +142,13 @@ export function getSessionCancelledText(params: {
 }): string {
   const { recipientName, sessionTitle, courseName, cancelReason } = params;
 
-  let text = `PhysioGuidance - Session Cancelled
+  let text = `PhysioGuidance - Lecture Cancelled
 
 Hi ${recipientName},
 
-The following session has been cancelled:
+The following lecture has been cancelled:
 
-Session: ${sessionTitle}
+Lecture: ${sessionTitle}
 Course: ${courseName}`;
 
   if (cancelReason) {

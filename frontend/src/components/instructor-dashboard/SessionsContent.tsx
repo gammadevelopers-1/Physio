@@ -439,7 +439,7 @@ function AttendanceModal({
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E5E7EB] bg-[#EFF6FF]">
               <div className="flex items-center gap-2 text-xs text-[#3B82F6]">
                 <Video className="w-3.5 h-3.5" />
-                <span>Zoom Session</span>
+                <span>Zoom Lecture</span>
               </div>
               <button
                 onClick={handleSyncZoom}

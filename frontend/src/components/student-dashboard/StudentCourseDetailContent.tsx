@@ -80,7 +80,7 @@ const StudentCourseDetailContent = () => {
   const handleJoinZoom = async (sessionId: string) => {
     if (joiningSessionId) return;
     if (data?.enrollment?.status === "completed") {
-      toast.error(t("courseDetail.courseCompletedNoAccess") || "This course has been completed. You can no longer join sessions.");
+      toast.error(t("courseDetail.courseCompletedNoAccess") || "This course has been completed. You can no longer join lectures.");
       return;
     }
     setJoiningSessionId(sessionId);
@@ -88,7 +88,7 @@ const StudentCourseDetailContent = () => {
       const { joinUrl } = await studentApi.getSessionJoinUrl(sessionId);
       window.open(joinUrl, "_blank", "noopener,noreferrer");
     } catch {
-      toast.error(t("courseDetail.joinSessionError") || "Unable to join this session. The course may have ended.");
+      toast.error(t("courseDetail.joinSessionError") || "Unable to join this lecture. The course may have ended.");
     } finally {
       setJoiningSessionId(null);
     }

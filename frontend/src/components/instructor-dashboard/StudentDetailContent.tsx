@@ -592,7 +592,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               </p>
                               <p className="text-xs text-[#6B7280]">
                                 {t("studentDetail.totalSessions") ||
-                                  "Total Sessions"}
+                                  "Total Lectures"}
                               </p>
                             </div>
                             <div className="bg-[#DCFCE7] rounded-lg p-3 text-center">

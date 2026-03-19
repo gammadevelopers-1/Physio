@@ -310,7 +310,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[#1F2937]">{t("sessions.title")}</h1>
-          <p className="text-sm text-[#6B7280] mt-1">{t("sessions.subtitle") || "View your assigned training sessions"}</p>
+          <p className="text-sm text-[#6B7280] mt-1">{t("sessions.subtitle") || "View your assigned training lectures"}</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}

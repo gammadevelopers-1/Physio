@@ -7,6 +7,7 @@ export interface StudentProfile {
   points: number;
   profileCompletion: number;
   avatar?: string;
+  scfhsNumber?: string;
 }
 
 /**
@@ -34,6 +35,7 @@ export function useStudentProfile(): StudentProfile {
       points: 0,
       profileCompletion,
       avatar: user?.avatar || undefined,
+      scfhsNumber: user?.scfhsNumber || undefined,
     };
   }, [user]);
 }

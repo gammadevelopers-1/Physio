@@ -249,6 +249,8 @@ export class StudentService {
           eq(enrollments.status, 'active'),
           or(eq(sessions.status, 'scheduled'), eq(sessions.status, 'live')),
           gte(sessions.scheduledAt, new Date()),
+          // Exclude make-up lectures not assigned to this student
+          sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
       )
       .orderBy(asc(sessions.scheduledAt))
@@ -598,6 +600,8 @@ export class StudentService {
             eq(sessions.status, 'live'),
             eq(sessions.status, 'completed'),
           ),
+          // Exclude make-up lectures not assigned to this student
+          sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
       )
       .orderBy(asc(sessions.scheduledAt));
@@ -2039,6 +2043,8 @@ export class StudentService {
           ...conditions,
           or(eq(sessions.status, 'scheduled'), eq(sessions.status, 'live')),
           ...sessionConditions,
+          // Exclude make-up lectures not assigned to this student
+          sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
       )
       .orderBy(asc(sessions.scheduledAt));

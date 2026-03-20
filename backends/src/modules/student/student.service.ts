@@ -658,7 +658,7 @@ export class StudentService {
       .select({
         totalSessions: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
-          AND s.status IN ('completed', 'live', 'scheduled')
+          AND s.status IN ('completed', 'ended', 'live')
         )`.mapWith(Number),
         attendedSessions: sql<number>`(
           SELECT COUNT(*) FROM attendance a
@@ -812,7 +812,7 @@ export class StudentService {
       .select({
         totalSessions: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
-          AND s.status IN ('completed', 'live', 'scheduled')
+          AND s.status IN ('completed', 'ended', 'live')
         )`.mapWith(Number),
         attendedSessions: sql<number>`(
           SELECT COUNT(*) FROM attendance a

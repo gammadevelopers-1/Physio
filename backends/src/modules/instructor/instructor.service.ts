@@ -1006,10 +1006,11 @@ export class InstructorService {
 
     const attendanceRateMap = new Map<string, number>();
     if (sIds.length > 0) {
+      const totalSessionCount = sIds.length;
+
       const attendanceData = await db
         .select({
           studentId: attendance.studentId,
-          totalSessions: sql<number>`COUNT(*)`.as('total_sessions'),
           presentCount:
             sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
               'present_count',
@@ -1025,11 +1026,10 @@ export class InstructorService {
         .groupBy(attendance.studentId);
 
       for (const a of attendanceData) {
-        const total = Number(a.totalSessions);
         const present = Number(a.presentCount);
         attendanceRateMap.set(
           a.studentId,
-          total > 0 ? Math.round((present / total) * 100) : 0,
+          Math.round((present / totalSessionCount) * 100),
         );
       }
     }
@@ -1194,11 +1194,14 @@ export class InstructorService {
         }
       }
 
-      attendanceSummary.totalSessions =
-        attendanceSummary.present +
-        attendanceSummary.absent +
-        attendanceSummary.late +
-        attendanceSummary.excused;
+      // Use total course sessions as denominator (not just records that exist)
+      attendanceSummary.totalSessions = sIds.length;
+
+      // Fill in absent count for sessions with no record
+      const recordedSessions = attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late + attendanceSummary.excused;
+      if (recordedSessions < sIds.length) {
+        attendanceSummary.absent += (sIds.length - recordedSessions);
+      }
 
       attendanceSummary.attendanceRate =
         attendanceSummary.totalSessions > 0
@@ -1396,13 +1399,14 @@ export class InstructorService {
 
     const sIds = sessionIds.map((s) => s.id);
 
-    // Get attendance data per student
+    // Get attendance data per student — use total course sessions as denominator
+    const totalSessionCount = sIds.length;
+
     const attendanceData =
       sIds.length > 0
         ? await db
             .select({
               studentId: attendance.studentId,
-              totalSessions: sql<number>`COUNT(*)`.as('total_sessions'),
               presentCount:
                 sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
                   'present_count',
@@ -1422,12 +1426,12 @@ export class InstructorService {
       attendanceData.map((a) => [
         a.studentId,
         {
-          totalSessions: Number(a.totalSessions),
+          totalSessions: totalSessionCount,
           presentCount: Number(a.presentCount),
           rate:
-            Number(a.totalSessions) > 0
+            totalSessionCount > 0
               ? Math.round(
-                  (Number(a.presentCount) / Number(a.totalSessions)) * 100,
+                  (Number(a.presentCount) / totalSessionCount) * 100,
                 )
               : 0,
         },
@@ -1469,7 +1473,7 @@ export class InstructorService {
 
       // Criterion 1: Attendance rate below threshold
       const attendanceRate = attnData?.rate ?? 0;
-      if (attnData && attnData.totalSessions > 0 && attendanceRate < minAttThreshold) {
+      if (totalSessionCount > 0 && attendanceRate < minAttThreshold) {
         riskReasons.push(
           `Attendance rate ${attendanceRate}% (below ${minAttThreshold}%)`,
         );

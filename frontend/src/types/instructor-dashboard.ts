@@ -509,6 +509,20 @@ export interface StudentAttendanceRecord {
   courseTitle: string;
 }
 
+export interface CoursePerformance {
+  courseId: string;
+  courseTitle: string;
+  courseTitleAr?: string | null;
+  enrollmentStatus: string;
+  progress: number;
+  enrolledAt: string;
+  completedAt?: string | null;
+  attendance: StudentAttendanceSummary;
+  assessments: StudentAssessmentScore[];
+  assessmentAverage: number | null;
+  attendanceRecords: StudentAttendanceRecord[];
+}
+
 export interface StudentDetailResponse {
   id: string;
   firstName: string | null;
@@ -516,6 +530,7 @@ export interface StudentDetailResponse {
   email: string;
   scfhsNumber?: string | null;
   enrollments: StudentDetailEnrollment[];
+  coursePerformance?: CoursePerformance[];
   attendanceSummary: StudentAttendanceSummary;
   assessmentScores: StudentAssessmentScore[];
   attendanceRecords: StudentAttendanceRecord[];

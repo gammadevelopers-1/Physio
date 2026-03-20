@@ -1177,84 +1177,56 @@ export class InstructorService {
       throw new NotFoundException('Student not found');
     }
 
-    // Get attendance summary — only for courses this student is enrolled in
+    // ─── Per-Course Breakdown ─────────────────────────────────
     const studentCourseIds = studentEnrollments.map((e) => e.courseId);
-    const sessionIds = await db
-      .select({ id: sessions.id })
+
+    // Get all sessions grouped by course
+    const allSessions = await db
+      .select({ id: sessions.id, courseId: sessions.courseId })
       .from(sessions)
       .where(inArray(sessions.courseId, studentCourseIds));
 
-    const sIds = sessionIds.map((s) => s.id);
-
-    let attendanceSummary = {
-      totalSessions: 0,
-      present: 0,
-      absent: 0,
-      late: 0,
-      excused: 0,
-      attendanceRate: 0,
-    };
-
-    if (sIds.length > 0) {
-      const attendanceRecords = await db
-        .select({
-          status: attendance.status,
-          count: sql<number>`COUNT(*)`.as('count'),
-        })
-        .from(attendance)
-        .where(
-          and(
-            eq(attendance.studentId, studentId),
-            inArray(attendance.sessionId, sIds),
-          ),
-        )
-        .groupBy(attendance.status);
-
-      let totalAttended = 0;
-      for (const record of attendanceRecords) {
-        const cnt = Number(record.count);
-        switch (record.status) {
-          case ATTENDANCE_STATUS.PRESENT:
-            attendanceSummary.present = cnt;
-            totalAttended += cnt;
-            break;
-          case ATTENDANCE_STATUS.ABSENT:
-            attendanceSummary.absent = cnt;
-            break;
-          case ATTENDANCE_STATUS.LATE:
-            attendanceSummary.late = cnt;
-            totalAttended += cnt;
-            break;
-          case ATTENDANCE_STATUS.EXCUSED:
-            attendanceSummary.excused = cnt;
-            break;
-        }
-      }
-
-      // Use total course sessions as denominator (not just records that exist)
-      attendanceSummary.totalSessions = sIds.length;
-
-      // Fill in absent count for sessions with no record
-      const recordedSessions = attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late + attendanceSummary.excused;
-      if (recordedSessions < sIds.length) {
-        attendanceSummary.absent += (sIds.length - recordedSessions);
-      }
-
-      attendanceSummary.attendanceRate =
-        attendanceSummary.totalSessions > 0
-          ? Math.round(
-              (totalAttended / attendanceSummary.totalSessions) * 100,
-            )
-          : 0;
+    const sessionsByCourse = new Map<string, string[]>();
+    for (const s of allSessions) {
+      const list = sessionsByCourse.get(s.courseId) || [];
+      list.push(s.id);
+      sessionsByCourse.set(s.courseId, list);
     }
 
-    // Assessment scores — fetch from submissions + assessments
+    const allSIds = allSessions.map((s) => s.id);
+
+    // Get all attendance records for this student across enrolled courses
+    const allAttendanceRecords = allSIds.length > 0
+      ? await db
+          .select({
+            sessionId: attendance.sessionId,
+            status: attendance.status,
+            sessionTitle: sessions.title,
+            scheduledAt: sessions.scheduledAt,
+            courseId: sessions.courseId,
+            courseTitle: courses.title,
+          })
+          .from(attendance)
+          .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+          .innerJoin(courses, eq(sessions.courseId, courses.id))
+          .where(
+            and(
+              eq(attendance.studentId, studentId),
+              inArray(attendance.sessionId, allSIds),
+            ),
+          )
+          .orderBy(desc(sessions.scheduledAt))
+      : [];
+
+    // Get all assessment scores
     const studentScores = await db
       .select({
         assessmentId: assessments.id,
+        courseId: assessments.courseId,
         title: assessments.title,
         maxScore: assessments.totalMarks,
         score: submissions.score,
+        percentage: submissions.percentage,
         submittedAt: submissions.submittedAt,
       })
       .from(submissions)
@@ -1262,7 +1234,7 @@ export class InstructorService {
       .where(
         and(
           eq(submissions.studentId, studentId),
-          inArray(assessments.courseId, courseIds),
+          inArray(assessments.courseId, studentCourseIds),
           eq(submissions.status, 'graded'),
         ),
       )
@@ -1276,18 +1248,15 @@ export class InstructorService {
       return true;
     });
 
-    // Batch-fetch class averages for each assessment
+    // Batch-fetch class averages
     const assessmentIds = dedupedScores.map((s) => s.assessmentId);
     const classAvgMap = new Map<string, number>();
-
     if (assessmentIds.length > 0) {
       const classAvgData = await db
         .select({
           assessmentId: submissions.assessmentId,
           classAverage:
-            sql<number>`ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)))`.as(
-              'class_avg',
-            ),
+            sql<number>`ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)))`.as('class_avg'),
         })
         .from(submissions)
         .where(
@@ -1297,50 +1266,101 @@ export class InstructorService {
           ),
         )
         .groupBy(submissions.assessmentId);
-
       for (const c of classAvgData) {
         classAvgMap.set(c.assessmentId, Number(c.classAverage) || 0);
       }
     }
 
-    const assessmentScores = dedupedScores.map((s) => ({
-      assessmentId: s.assessmentId,
-      title: s.title,
-      score: Number(s.score) || 0,
-      maxScore: Number(s.maxScore) || 0,
-      classAverage: classAvgMap.get(s.assessmentId) ?? 0,
-    }));
+    // Build per-course performance
+    const coursePerformance = studentEnrollments.map((enrollment) => {
+      const courseSIds = sessionsByCourse.get(enrollment.courseId) || [];
+      const courseAttendance = allAttendanceRecords.filter(
+        (r) => r.courseId === enrollment.courseId,
+      );
 
-    // Session-by-session attendance records
-    const attendanceRecordsList =
-      sIds.length > 0
-        ? await db
-            .select({
-              sessionId: attendance.sessionId,
-              status: attendance.status,
-              sessionTitle: sessions.title,
-              scheduledAt: sessions.scheduledAt,
-              courseId: sessions.courseId,
-              courseTitle: courses.title,
-            })
-            .from(attendance)
-            .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
-            .innerJoin(courses, eq(sessions.courseId, courses.id))
-            .where(
-              and(
-                eq(attendance.studentId, studentId),
-                inArray(attendance.sessionId, sIds),
-              ),
-            )
-            .orderBy(desc(sessions.scheduledAt))
-        : [];
+      // Attendance stats for this course
+      let present = 0, absent = 0, late = 0, excused = 0;
+      for (const r of courseAttendance) {
+        switch (r.status) {
+          case 'present': present++; break;
+          case 'absent': absent++; break;
+          case 'late': late++; break;
+          case 'excused': excused++; break;
+        }
+      }
+      const totalSessions = courseSIds.length;
+      const recorded = present + absent + late + excused;
+      if (recorded < totalSessions) absent += (totalSessions - recorded);
+      const attended = present + late;
+      const attendanceRate = totalSessions > 0
+        ? Math.round((attended / totalSessions) * 100)
+        : 0;
+
+      // Assessment scores for this course
+      const courseScores = dedupedScores
+        .filter((s) => s.courseId === enrollment.courseId)
+        .map((s) => ({
+          assessmentId: s.assessmentId,
+          title: s.title,
+          score: Number(s.score) || 0,
+          maxScore: Number(s.maxScore) || 0,
+          percentage: Number(s.percentage) || 0,
+          classAverage: classAvgMap.get(s.assessmentId) ?? 0,
+        }));
+
+      const assessmentAverage = courseScores.length > 0
+        ? Math.round(courseScores.reduce((sum, s) => sum + s.percentage, 0) / courseScores.length)
+        : null;
+
+      return {
+        courseId: enrollment.courseId,
+        courseTitle: enrollment.courseTitle,
+        courseTitleAr: enrollment.courseTitleAr,
+        enrollmentStatus: enrollment.status,
+        progress: enrollment.progress,
+        enrolledAt: enrollment.enrolledAt,
+        completedAt: enrollment.completedAt,
+        attendance: {
+          totalSessions,
+          present,
+          absent,
+          late,
+          excused,
+          attendanceRate,
+        },
+        assessments: courseScores,
+        assessmentAverage,
+        attendanceRecords: courseAttendance,
+      };
+    });
+
+    // Overall summary (aggregated across all enrolled courses)
+    const overallAttendance = {
+      totalSessions: coursePerformance.reduce((sum, c) => sum + c.attendance.totalSessions, 0),
+      present: coursePerformance.reduce((sum, c) => sum + c.attendance.present, 0),
+      absent: coursePerformance.reduce((sum, c) => sum + c.attendance.absent, 0),
+      late: coursePerformance.reduce((sum, c) => sum + c.attendance.late, 0),
+      excused: coursePerformance.reduce((sum, c) => sum + c.attendance.excused, 0),
+      attendanceRate: 0,
+    };
+    const totalAttended = overallAttendance.present + overallAttendance.late;
+    overallAttendance.attendanceRate = overallAttendance.totalSessions > 0
+      ? Math.round((totalAttended / overallAttendance.totalSessions) * 100)
+      : 0;
 
     return {
       ...student,
       enrollments: studentEnrollments,
-      attendanceSummary,
-      assessmentScores,
-      attendanceRecords: attendanceRecordsList,
+      coursePerformance,
+      attendanceSummary: overallAttendance,
+      assessmentScores: dedupedScores.map((s) => ({
+        assessmentId: s.assessmentId,
+        title: s.title,
+        score: Number(s.score) || 0,
+        maxScore: Number(s.maxScore) || 0,
+        classAverage: classAvgMap.get(s.assessmentId) ?? 0,
+      })),
+      attendanceRecords: allAttendanceRecords,
     };
   }
 

@@ -575,170 +575,146 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         </div>
                       )}
 
-                      {/* Attendance Tab */}
+                      {/* Attendance Tab — Per-Course Breakdown */}
                       {activeTab === "attendance" && (
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-base font-semibold text-[#1F2937]">
-                              {t("studentDetail.attendanceHistory")}
-                            </h3>
-                          </div>
-
-                          {/* Attendance Summary Cards */}
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                            <div className="bg-[#F9FAFB] rounded-lg p-3 text-center">
-                              <p className="text-lg font-bold text-[#1F2937]">
-                                {student.attendanceSummary.totalSessions}
-                              </p>
-                              <p className="text-xs text-[#6B7280]">
-                                {t("studentDetail.totalSessions") ||
-                                  "Total Lectures"}
-                              </p>
-                            </div>
-                            <div className="bg-[#DCFCE7] rounded-lg p-3 text-center">
-                              <p className="text-lg font-bold text-[#22C55E]">
-                                {student.attendanceSummary.present}
-                              </p>
-                              <p className="text-xs text-[#166534]">
-                                {t("studentDetail.present")}
-                              </p>
-                            </div>
-                            <div className="bg-[#FEE2E2] rounded-lg p-3 text-center">
-                              <p className="text-lg font-bold text-[#EF4444]">
-                                {student.attendanceSummary.absent}
-                              </p>
-                              <p className="text-xs text-[#991B1B]">
-                                {t("studentDetail.absent")}
-                              </p>
-                            </div>
-                            <div className="bg-[#FEF9C3] rounded-lg p-3 text-center">
-                              <p className="text-lg font-bold text-[#EAB308]">
-                                {student.attendanceSummary.late}
-                              </p>
-                              <p className="text-xs text-[#854D0E]">
-                                {t("studentDetail.late") || "Late"}
-                              </p>
-                            </div>
-                            <div className="bg-[#F3F4F6] rounded-lg p-3 text-center">
-                              <p className="text-lg font-bold text-[#6B7280]">
-                                {student.attendanceSummary.excused}
-                              </p>
-                              <p className="text-xs text-[#4B5563]">
-                                {t("studentDetail.excused") || "Excused"}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Attendance Rate Bar */}
-                          <div className="bg-[#F9FAFB] rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-[#374151]">
-                                {t("studentDetail.attendanceRate") ||
-                                  "Attendance Rate"}
-                              </span>
-                              <span
-                                className={`text-lg font-bold ${
-                                  student.attendanceSummary.attendanceRate >= 80
-                                    ? "text-[#22C55E]"
-                                    : student.attendanceSummary.attendanceRate >=
-                                        60
-                                      ? "text-[#EAB308]"
-                                      : "text-[#EF4444]"
-                                }`}
-                              >
-                                {student.attendanceSummary.attendanceRate}%
-                              </span>
-                            </div>
-                            <div className="h-3 bg-[#E5E7EB] rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all ${
-                                  student.attendanceSummary.attendanceRate >= 80
-                                    ? "bg-[#22C55E]"
-                                    : student.attendanceSummary.attendanceRate >=
-                                        60
-                                      ? "bg-[#EAB308]"
-                                      : "bg-[#EF4444]"
-                                }`}
-                                style={{
-                                  width: `${student.attendanceSummary.attendanceRate}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Session-by-Session Breakdown */}
-                          {student.attendanceRecords && student.attendanceRecords.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
-                                {t("studentDetail.sessionBreakdown")}
-                              </h4>
-                              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                                <div className="overflow-x-auto">
-                                  <table className="w-full">
-                                    <thead>
-                                      <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
-                                          {t("studentDetail.session")}
-                                        </th>
-                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
-                                          {t("studentDetail.course") || "Course"}
-                                        </th>
-                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
-                                          {t("studentDetail.dateLabel")}
-                                        </th>
-                                        <th className="px-4 py-2 text-left text-xs font-semibold text-[#6B7280] uppercase">
-                                          {t("studentDetail.status")}
-                                        </th>
-                                      </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-[#E5E7EB]">
-                                      {student.attendanceRecords.map((record) => {
-                                        const statusStyles: Record<string, string> = {
-                                          present: "bg-[#DCFCE7] text-[#166534]",
-                                          absent: "bg-[#FEE2E2] text-[#991B1B]",
-                                          late: "bg-[#FEF9C3] text-[#854D0E]",
-                                          excused: "bg-[#F3F4F6] text-[#4B5563]",
-                                        };
-                                        const statusLabels: Record<string, string> = {
-                                          present: t("studentDetail.statusPresent") || "Present",
-                                          absent: t("studentDetail.statusAbsent") || "Absent",
-                                          late: t("studentDetail.statusLate") || "Late",
-                                          excused: t("studentDetail.statusExcused") || "Excused",
-                                        };
-                                        return (
-                                          <tr key={record.sessionId} className="hover:bg-[#F9FAFB]">
-                                            <td className="px-4 py-2.5 text-sm text-[#1F2937]">
-                                              {record.sessionTitle}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-sm text-[#6B7280]">
-                                              {record.courseTitle}
-                                            </td>
-                                            <td className="px-4 py-2.5 text-sm text-[#6B7280]">
-                                              {formatDate(record.scheduledAt)}
-                                            </td>
-                                            <td className="px-4 py-2.5">
-                                              <span
-                                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[record.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}
-                                              >
-                                                {statusLabels[record.status] || record.status}
-                                              </span>
-                                            </td>
-                                          </tr>
-                                        );
-                                      })}
-                                    </tbody>
-                                  </table>
+                        <div className="space-y-6">
+                          {(student.coursePerformance || []).map((cp: any) => (
+                            <div key={cp.courseId} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                              {/* Course Header */}
+                              <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <BookOpen className="w-4 h-4 text-[#D4A520]" />
+                                  <h4 className="text-sm font-semibold text-[#1F2937]">
+                                    {locale === "ar" && cp.courseTitleAr ? cp.courseTitleAr : cp.courseTitle}
+                                  </h4>
                                 </div>
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  cp.enrollmentStatus === "completed" ? "bg-[#DCFCE7] text-[#166534]"
+                                  : cp.enrollmentStatus === "active" ? "bg-[#EFF6FF] text-[#3B82F6]"
+                                  : "bg-[#F3F4F6] text-[#6B7280]"
+                                }`}>
+                                  {cp.enrollmentStatus === "completed" ? "Completed" : cp.enrollmentStatus === "active" ? "In Progress" : cp.enrollmentStatus}
+                                </span>
+                              </div>
+
+                              <div className="p-4 space-y-4">
+                                {/* Attendance Stats */}
+                                <div className="grid grid-cols-5 gap-2">
+                                  <div className="bg-[#F9FAFB] rounded-lg p-2.5 text-center">
+                                    <p className="text-base font-bold text-[#1F2937]">{cp.attendance.totalSessions}</p>
+                                    <p className="text-[10px] text-[#6B7280]">Total</p>
+                                  </div>
+                                  <div className="bg-[#DCFCE7] rounded-lg p-2.5 text-center">
+                                    <p className="text-base font-bold text-[#22C55E]">{cp.attendance.present}</p>
+                                    <p className="text-[10px] text-[#166534]">Present</p>
+                                  </div>
+                                  <div className="bg-[#FEE2E2] rounded-lg p-2.5 text-center">
+                                    <p className="text-base font-bold text-[#EF4444]">{cp.attendance.absent}</p>
+                                    <p className="text-[10px] text-[#991B1B]">Absent</p>
+                                  </div>
+                                  <div className="bg-[#FEF9C3] rounded-lg p-2.5 text-center">
+                                    <p className="text-base font-bold text-[#EAB308]">{cp.attendance.late}</p>
+                                    <p className="text-[10px] text-[#854D0E]">Late</p>
+                                  </div>
+                                  <div className="bg-[#F3F4F6] rounded-lg p-2.5 text-center">
+                                    <p className="text-base font-bold text-[#6B7280]">{cp.attendance.excused}</p>
+                                    <p className="text-[10px] text-[#4B5563]">Excused</p>
+                                  </div>
+                                </div>
+
+                                {/* Attendance Rate Bar */}
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">Attendance</span>
+                                  <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full rounded-full transition-all ${
+                                        cp.attendance.attendanceRate >= 80 ? "bg-[#22C55E]"
+                                        : cp.attendance.attendanceRate >= 60 ? "bg-[#EAB308]"
+                                        : "bg-[#EF4444]"
+                                      }`}
+                                      style={{ width: `${cp.attendance.attendanceRate}%` }}
+                                    />
+                                  </div>
+                                  <span className={`text-sm font-bold w-12 text-right ${
+                                    cp.attendance.attendanceRate >= 80 ? "text-[#22C55E]"
+                                    : cp.attendance.attendanceRate >= 60 ? "text-[#EAB308]"
+                                    : "text-[#EF4444]"
+                                  }`}>
+                                    {cp.attendance.attendanceRate}%
+                                  </span>
+                                </div>
+
+                                {/* Assessment Average (if available) */}
+                                {cp.assessmentAverage !== null && (
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">Assessment</span>
+                                    <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full transition-all ${
+                                          cp.assessmentAverage >= 70 ? "bg-[#3B82F6]"
+                                          : cp.assessmentAverage >= 50 ? "bg-[#EAB308]"
+                                          : "bg-[#EF4444]"
+                                        }`}
+                                        style={{ width: `${cp.assessmentAverage}%` }}
+                                      />
+                                    </div>
+                                    <span className={`text-sm font-bold w-12 text-right ${
+                                      cp.assessmentAverage >= 70 ? "text-[#3B82F6]"
+                                      : cp.assessmentAverage >= 50 ? "text-[#EAB308]"
+                                      : "text-[#EF4444]"
+                                    }`}>
+                                      {cp.assessmentAverage}%
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Lecture Breakdown */}
+                                {cp.attendanceRecords && cp.attendanceRecords.length > 0 && (
+                                  <details className="group">
+                                    <summary className="text-xs font-medium text-[#6B7280] cursor-pointer hover:text-[#1F2937] flex items-center gap-1">
+                                      <ChevronRight className="w-3.5 h-3.5 group-open:rotate-90 transition-transform" />
+                                      Lecture-by-Lecture ({cp.attendanceRecords.length})
+                                    </summary>
+                                    <div className="mt-2 overflow-x-auto">
+                                      <table className="w-full">
+                                        <thead>
+                                          <tr className="bg-[#F9FAFB]">
+                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">Lecture</th>
+                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">Date</th>
+                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">Status</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#F3F4F6]">
+                                          {cp.attendanceRecords.map((r: any) => (
+                                            <tr key={r.sessionId} className="hover:bg-[#F9FAFB]">
+                                              <td className="px-3 py-1.5 text-xs text-[#1F2937]">{r.sessionTitle}</td>
+                                              <td className="px-3 py-1.5 text-xs text-[#6B7280]">{formatDate(r.scheduledAt)}</td>
+                                              <td className="px-3 py-1.5">
+                                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                                  r.status === "present" ? "bg-[#DCFCE7] text-[#166534]"
+                                                  : r.status === "absent" ? "bg-[#FEE2E2] text-[#991B1B]"
+                                                  : r.status === "late" ? "bg-[#FEF9C3] text-[#854D0E]"
+                                                  : "bg-[#F3F4F6] text-[#4B5563]"
+                                                }`}>
+                                                  {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                                                </span>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </details>
+                                )}
                               </div>
                             </div>
-                          )}
+                          ))}
 
-                          {student.attendanceSummary.totalSessions === 0 && (
+                          {(!student.coursePerformance || student.coursePerformance.length === 0) && (
                             <div className="text-center py-8">
                               <Calendar className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
                               <p className="text-sm text-[#6B7280]">
-                                {t("studentDetail.noAttendanceRecords") ||
-                                  "No attendance records found."}
+                                {t("studentDetail.noAttendanceRecords") || "No attendance records found."}
                               </p>
                             </div>
                           )}

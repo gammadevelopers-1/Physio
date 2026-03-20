@@ -11,9 +11,6 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Skip Puppeteer's bundled Chromium download (we use system chromium)
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-
 # Install all dependencies (including dev for build)
 RUN npm ci
 
@@ -34,13 +31,8 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV=production
 
-# Install FFmpeg for video processing + Chromium for certificate PDF generation
-RUN apk add --no-cache ffmpeg chromium nss freetype harfbuzz ca-certificates ttf-freefont
-
-# Tell Puppeteer to use installed Chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-ENV CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage"
+# Install FFmpeg for video processing
+RUN apk add --no-cache ffmpeg
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \

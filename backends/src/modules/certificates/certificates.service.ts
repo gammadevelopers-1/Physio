@@ -785,8 +785,52 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Logo URL
-    const logoUrl = `${frontendUrl}/images/logo.png`;
+    // Fetch logo from frontend
+    let logoBuffer: Buffer | null = null;
+    if (!(this as any)._logoCacheBuffer) {
+      try {
+        const https = require('https');
+        logoBuffer = await new Promise<Buffer>((res, rej) => {
+          https.get(`${frontendUrl}/images/logo.png`, (resp: any) => {
+            if (resp.statusCode !== 200) { rej(new Error(`Logo HTTP ${resp.statusCode}`)); return; }
+            const chunks: Buffer[] = [];
+            resp.on('data', (c: Buffer) => chunks.push(c));
+            resp.on('end', () => res(Buffer.concat(chunks)));
+            resp.on('error', rej);
+          }).on('error', rej);
+        });
+        (this as any)._logoCacheBuffer = logoBuffer;
+      } catch { /* logo is optional */ }
+    } else {
+      logoBuffer = (this as any)._logoCacheBuffer;
+    }
+
+    // Load Arabic font for SVG path rendering
+    let arabicFont: any = null;
+    if (displayName !== studentNameEn) {
+      if (!(this as any)._arabicOpentype) {
+        try {
+          const https = require('https');
+          const fontBuf: Buffer = await new Promise((res, rej) => {
+            https.get(`${frontendUrl}/fonts/Amiri-Bold.ttf`, (resp: any) => {
+              if (resp.statusCode !== 200) { rej(new Error(`Font HTTP ${resp.statusCode}`)); return; }
+              const chunks: Buffer[] = [];
+              resp.on('data', (c: Buffer) => chunks.push(c));
+              resp.on('end', () => res(Buffer.concat(chunks)));
+              resp.on('error', rej);
+            }).on('error', rej);
+          });
+          const opentype = require('opentype.js');
+          arabicFont = opentype.parse(fontBuf.buffer);
+          (this as any)._arabicOpentype = arabicFont;
+          this.logger.log('Arabic font loaded via opentype.js');
+        } catch (err) {
+          this.logger.warn(`Arabic font load failed: ${err?.message}`);
+        }
+      } else {
+        arabicFont = (this as any)._arabicOpentype;
+      }
+    }
 
     // Fetch logo for header and watermark (cached in memory)
     let logoBuffer: Buffer | null = null;
@@ -811,94 +855,122 @@ export class CertificatesService {
       logoBuffer = (this as any)._logoCacheBuffer;
     }
 
-    // Build certificate as HTML and convert to PDF via Puppeteer
-    const html = `<!DOCTYPE html>
-<html><head>
-<meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4 landscape; margin: 0; }
-  body { width: 297mm; height: 210mm; font-family: 'Inter', sans-serif; background: #fff; position: relative; overflow: hidden; }
-  .outer-border { position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; border: 3px solid #002D87; }
-  .inner-border { position: absolute; top: 14px; left: 14px; right: 14px; bottom: 14px; border: 1px solid #D4A520; }
-  .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 300px; pointer-events: none; }
-  .content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 30px 60px 20px; height: 100%; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: 10px; }
-  .logo { height: 45px; }
-  .cme-badge { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #002D87; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-  .cme-badge::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1px solid #D4A520; }
-  .cme-num { font-size: 24px; font-weight: 800; color: #002D87; line-height: 1; }
-  .cme-label { font-size: 6px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-  .title { font-size: 42px; font-weight: 800; color: #002D87; letter-spacing: 2px; margin-top: 8px; }
-  .subtitle { font-size: 22px; font-weight: 700; color: #D4A520; letter-spacing: 3px; margin-top: 2px; }
-  .pill { display: inline-block; padding: 8px 32px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1.5px; margin-top: 18px; }
-  .pill-gold { background: #D4A520; }
-  .pill-navy { background: #002D87; }
-  .student-name { font-size: 34px; font-weight: 700; color: #1F2937; margin-top: 16px; font-family: ${studentNameAr ? "'Amiri', serif" : "'Inter', sans-serif"}; direction: ${studentNameAr ? 'rtl' : 'ltr'}; }
-  .course-title { font-size: 22px; font-weight: 700; color: #1F2937; margin-top: 14px; }
-  .accreditation { text-align: center; margin-top: 18px; color: #4B5563; font-size: 11px; line-height: 1.6; }
-  .accreditation strong { color: #002D87; }
-  .qr-section { position: absolute; bottom: 22px; right: 22px; text-align: center; }
-  .qr-section img { width: 60px; height: 60px; }
-  .qr-section p { font-size: 5.5px; color: #9CA3AF; margin-top: 2px; }
-</style>
-</head><body>
-  <div class="outer-border"></div>
-  <div class="inner-border"></div>
-  <img src="${logoUrl}" class="watermark" />
-  <div class="content">
-    <div class="header">
-      <img src="${logoUrl}" class="logo" />
-      ${cmeHours > 0 ? `<div class="cme-badge"><span class="cme-num">${cmeHours}</span><span class="cme-label">CME Hours</span></div>` : '<div></div>'}
-    </div>
-    <div class="title">CERTIFICATE</div>
-    <div class="subtitle">OF ATTENDANCE</div>
-    <div class="pill pill-gold">PROUDLY AWARDED TO</div>
-    <div class="student-name">${displayName}</div>
-    <div class="pill pill-navy">FOR ATTENDING</div>
-    <div class="course-title">${courseTitle}</div>
-    <div class="pill pill-gold">${dateFormatted}</div>
-    <div class="accreditation">
-      This activity has been accredited by the Saudi Commission for Health Specialties<br>
-      Accreditation number: ${certificateId} &nbsp; Date: ${issuedDate.toLocaleDateString('en-GB')}
-      ${cmeHours > 0 ? `<br><strong>${cmeHours} CME/PD Credit Hours</strong>` : ''}
-    </div>
-  </div>
-  <div class="qr-section">
-    <img src="${qrDataUrl}" />
-    <p>Scan to verify</p>
-  </div>
-</body></html>`;
+    // Generate QR as buffer for PDFKit
+    const qrBuffer = await QRCode.toBuffer(verifyUrl, {
+      width: 140,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    });
 
-    // Render HTML to PDF using Puppeteer
-    const puppeteer = require('puppeteer-core');
-    let browser;
-    try {
-      const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser';
-      browser = await puppeteer.launch({
-        headless: true,
-        executablePath: execPath,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--no-zygote',
-          '--single-process',
-        ],
-      });
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle2', timeout: 30000 });
-      var pdfBuffer = Buffer.from(await page.pdf({
-        width: '297mm',
-        height: '210mm',
-        printBackground: true,
-        margin: { top: 0, right: 0, bottom: 0, left: 0 },
-      }));
-    } finally {
-      if (browser) await browser.close().catch(() => {});
-    }
+    // Build PDF with PDFKit
+    const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+      try {
+        const chunks: Buffer[] = [];
+        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 0 });
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        const W = doc.page.width, H = doc.page.height, cx = W / 2;
+        const navy = '#002D87', gold = '#D4A520', gray = '#4B5563', lightGray = '#9CA3AF', dark = '#1F2937';
+
+        // Background + borders
+        doc.rect(0, 0, W, H).fill('#FFFFFF');
+        doc.rect(24, 24, W - 48, H - 48).lineWidth(2.5).stroke(navy);
+        doc.rect(30, 30, W - 60, H - 60).lineWidth(0.8).stroke(gold);
+
+        // Watermark
+        doc.save();
+        doc.opacity(0.05);
+        if (logoBuffer) { doc.image(logoBuffer, cx - 160, H / 2 - 110, { width: 320 }); }
+        else { doc.font('Helvetica-Bold').fontSize(100).fillColor(navy).text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' }); }
+        doc.restore();
+
+        // Logo top-left
+        if (logoBuffer) { doc.image(logoBuffer, 45, 40, { height: 45 }); }
+        else { doc.font('Helvetica-Bold').fontSize(14).fillColor(navy).text('PHYSIOGUIDANCE', 50, 48); }
+
+        // CME badge top-right
+        if (cmeHours > 0) {
+          const bx = W - 130, by = 42, br = 32;
+          doc.circle(bx + br, by + br, br).lineWidth(2.5).stroke(navy);
+          doc.circle(bx + br, by + br, br - 4).lineWidth(0.8).stroke(gold);
+          doc.font('Helvetica-Bold').fontSize(24).fillColor(navy).text(String(cmeHours), bx, by + 12, { width: br * 2, align: 'center' });
+          doc.font('Helvetica').fontSize(6.5).fillColor(gray).text('CME HOURS', bx, by + 38, { width: br * 2, align: 'center' });
+        }
+
+        // Title
+        let y = 105;
+        doc.font('Helvetica-Bold').fontSize(38).fillColor(navy).text('CERTIFICATE', 0, y, { align: 'center' });
+        y += 40;
+        doc.font('Helvetica-Bold').fontSize(20).fillColor(gold).text('OF ATTENDANCE', 0, y, { align: 'center' });
+
+        // Pills + name
+        y += 38;
+        doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text('PROUDLY AWARDED TO', cx - 120, y + 8, { width: 240, align: 'center' });
+
+        // Student name — Arabic as SVG path or English as text
+        y += 40;
+        if (arabicFont && displayName !== studentNameEn) {
+          // Render Arabic name as SVG path via opentype.js
+          const fontSize = 30;
+          const path = arabicFont.getPath(displayName, 0, 0, fontSize);
+          const bbox = path.getBoundingBox();
+          const textWidth = bbox.x2 - bbox.x1;
+          const offsetX = cx - textWidth / 2 - bbox.x1;
+          const offsetY = y + fontSize * 0.8;
+
+          // Convert opentype path commands to PDFKit path
+          doc.save();
+          doc.translate(offsetX, offsetY);
+          doc.fillColor(dark);
+          for (const cmd of path.commands) {
+            switch (cmd.type) {
+              case 'M': doc.moveTo(cmd.x, cmd.y); break;
+              case 'L': doc.lineTo(cmd.x, cmd.y); break;
+              case 'Q': doc.quadraticCurveTo(cmd.x1, cmd.y1, cmd.x, cmd.y); break;
+              case 'C': doc.bezierCurveTo(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.x, cmd.y); break;
+              case 'Z': doc.closePath(); break;
+            }
+          }
+          doc.fill(dark);
+          doc.restore();
+        } else {
+          doc.font('Helvetica-Bold').fontSize(30).fillColor(dark).text(displayName, 0, y, { align: 'center' });
+        }
+
+        // FOR ATTENDING pill
+        y += 44;
+        doc.roundedRect(cx - 90, y, 180, 28, 14).fill(navy);
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text('FOR ATTENDING', cx - 90, y + 8, { width: 180, align: 'center' });
+
+        // Course title
+        y += 38;
+        doc.font('Helvetica-Bold').fontSize(20).fillColor(dark).text(courseTitle, 80, y, { align: 'center', width: W - 160 });
+
+        // Date pill
+        y += 36;
+        doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
+        doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF').text(dateFormatted, cx - 120, y + 8, { width: 240, align: 'center' });
+
+        // Accreditation
+        y += 42;
+        doc.font('Helvetica').fontSize(11).fillColor(gray).text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
+        y += 16;
+        doc.font('Helvetica').fontSize(10).fillColor(gray).text(`Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
+        if (cmeHours > 0) {
+          y += 16;
+          doc.font('Helvetica-Bold').fontSize(11).fillColor(navy).text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
+        }
+
+        // QR code
+        doc.image(qrBuffer, W - 95, H - 105, { width: 55 });
+        doc.font('Helvetica').fontSize(5).fillColor(lightGray).text('Scan to verify', W - 95, H - 105 + 57, { width: 55, align: 'center' });
+
+        doc.end();
+      } catch (err) { reject(err); }
+    });
 
     const filename = `certificates/${requestId}.pdf`;
 

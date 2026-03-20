@@ -744,6 +744,7 @@ export class CertificatesService {
         firstNameAr: users.firstNameAr,
         lastNameAr: users.lastNameAr,
         email: users.email,
+        scfhsNumber: users.scfhsNumber,
       })
       .from(users)
       .where(eq(users.id, studentId))
@@ -903,7 +904,8 @@ export class CertificatesService {
         y += 42;
         doc.font('Helvetica').fontSize(11).fillColor(gray).text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
         y += 16;
-        doc.font('Helvetica').fontSize(10).fillColor(gray).text(`Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
+        const regNumber = student?.scfhsNumber || certificateId;
+        doc.font('Helvetica').fontSize(10).fillColor(gray).text(`with accreditation number ${regNumber}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
         if (cmeHours > 0) {
           y += 16;
           doc.font('Helvetica-Bold').fontSize(11).fillColor(navy).text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });

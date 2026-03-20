@@ -805,25 +805,17 @@ export class CertificatesService {
       logoBuffer = (this as any)._logoCacheBuffer;
     }
 
-    // Load Arabic font for SVG path rendering
+    // Load Arabic font for SVG path rendering (embedded base64 — zero network dependency)
     let arabicFont: any = null;
     if (displayName !== studentNameEn) {
       if (!(this as any)._arabicOpentype) {
         try {
-          const https = require('https');
-          const fontBuf: Buffer = await new Promise((res, rej) => {
-            https.get(`${frontendUrl}/fonts/Amiri-Bold.ttf`, (resp: any) => {
-              if (resp.statusCode !== 200) { rej(new Error(`Font HTTP ${resp.statusCode}`)); return; }
-              const chunks: Buffer[] = [];
-              resp.on('data', (c: Buffer) => chunks.push(c));
-              resp.on('end', () => res(Buffer.concat(chunks)));
-              resp.on('error', rej);
-            }).on('error', rej);
-          });
+          const { AMIRI_BOLD_BASE64 } = require('./amiri-bold-font');
           const opentype = require('opentype.js');
-          arabicFont = opentype.parse(fontBuf.buffer);
+          const fontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
+          arabicFont = opentype.parse(fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength));
           (this as any)._arabicOpentype = arabicFont;
-          this.logger.log('Arabic font loaded via opentype.js');
+          this.logger.log(`Arabic font loaded from embedded base64 (${fontBuf.length} bytes)`);
         } catch (err) {
           this.logger.warn(`Arabic font load failed: ${err?.message}`);
         }

@@ -1379,82 +1379,44 @@ export class InstructorService {
    * - Admin: all students.
    */
   async getAtRiskStudents(user: AuthenticatedUser) {
-    // Get the instructor's course IDs (or all for admin) with thresholds
+    // Get the instructor's courses with thresholds
     const courseConditions = this.getCourseOwnershipConditions(user);
-
     const instructorCourses = await db
       .select({
         id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
         atRiskAttendanceThreshold: courses.atRiskAttendanceThreshold,
         atRiskScoreThreshold: courses.atRiskScoreThreshold,
         atRiskInactivityDays: courses.atRiskInactivityDays,
       })
       .from(courses)
-      .where(
-        courseConditions.length > 0
-          ? and(...courseConditions)
-          : undefined,
-      );
+      .where(courseConditions.length > 0 ? and(...courseConditions) : undefined);
 
     const courseIds = instructorCourses.map((c) => c.id);
+    if (courseIds.length === 0) return [];
 
-    // Build per-course threshold map (with defaults)
-    const courseThresholds = new Map(
-      instructorCourses.map((c) => [
-        c.id,
-        {
-          attendance: c.atRiskAttendanceThreshold ?? 70,
-          score: c.atRiskScoreThreshold ?? 60,
-          inactivityDays: c.atRiskInactivityDays ?? 7,
-        },
-      ]),
-    );
+    const courseMap = new Map(instructorCourses.map((c) => [c.id, c]));
 
-    // Compute the most strict thresholds across all courses for global evaluation
-    const minAttThreshold = Math.min(...[...courseThresholds.values()].map((t) => t.attendance));
-    const minScoreThreshold = Math.min(...[...courseThresholds.values()].map((t) => t.score));
-    const maxInactivityDays = Math.max(...[...courseThresholds.values()].map((t) => t.inactivityDays));
-
-    if (courseIds.length === 0) {
-      return [];
-    }
-
-    // Get all unique student IDs enrolled in instructor's courses
-    const enrolledStudents = await db
-      .select({
-        studentId: enrollments.studentId,
-        lastAccessedAt: sql<string>`MAX(${enrollments.lastAccessedAt})`.as(
-          'last_accessed_at',
-        ),
-      })
-      .from(enrollments)
-      .where(inArray(enrollments.courseId, courseIds))
-      .groupBy(enrollments.studentId);
-
-    if (enrolledStudents.length === 0) {
-      return [];
-    }
-
-    const studentIds = enrolledStudents.map((s) => s.studentId);
-
-    // Get per-student course enrollments (for intervention context)
-    const studentCourseEnrollments = await db
+    // Get all enrollments with last access
+    const allEnrollments = await db
       .select({
         studentId: enrollments.studentId,
         courseId: enrollments.courseId,
+        lastAccessedAt: enrollments.lastAccessedAt,
       })
       .from(enrollments)
-      .where(inArray(enrollments.courseId, courseIds));
+      .where(
+        and(
+          inArray(enrollments.courseId, courseIds),
+          sql`${enrollments.status} IN ('active', 'completed')`,
+        ),
+      );
 
-    const studentCoursesMap = new Map<string, string[]>();
-    for (const e of studentCourseEnrollments) {
-      const existing = studentCoursesMap.get(e.studentId) || [];
-      existing.push(e.courseId);
-      studentCoursesMap.set(e.studentId, existing);
-    }
+    if (allEnrollments.length === 0) return [];
 
-    // Get session counts per course for per-student denominator
-    const sessionCountByCourse = await db
+    // Get session counts per course
+    const sessionCounts = await db
       .select({
         courseId: sessions.courseId,
         count: sql<number>`COUNT(*)`.mapWith(Number),
@@ -1462,155 +1424,131 @@ export class InstructorService {
       .from(sessions)
       .where(inArray(sessions.courseId, courseIds))
       .groupBy(sessions.courseId);
+    const sessionCountMap = new Map(sessionCounts.map((s) => [s.courseId, s.count]));
 
-    const sessionCountPerCourse = new Map(
-      sessionCountByCourse.map((s) => [s.courseId, s.count]),
-    );
-
-    // Per-student total sessions (sum of sessions in their enrolled courses only)
-    const studentSessionTotals = new Map<string, number>();
-    for (const [studentId, studentCourses] of studentCoursesMap) {
-      let total = 0;
-      for (const cid of studentCourses) {
-        total += sessionCountPerCourse.get(cid) || 0;
-      }
-      studentSessionTotals.set(studentId, total);
-    }
-
-    // Get all session IDs for attendance query
-    const sessionIds = await db
-      .select({ id: sessions.id })
+    // Get all session IDs per course
+    const allSessions = await db
+      .select({ id: sessions.id, courseId: sessions.courseId })
       .from(sessions)
       .where(inArray(sessions.courseId, courseIds));
-    const sIds = sessionIds.map((s) => s.id);
+    const sessionIdsByCourse = new Map<string, string[]>();
+    for (const s of allSessions) {
+      const list = sessionIdsByCourse.get(s.courseId) || [];
+      list.push(s.id);
+      sessionIdsByCourse.set(s.courseId, list);
+    }
+    const allSIds = allSessions.map((s) => s.id);
 
-    const attendanceData =
-      sIds.length > 0
-        ? await db
-            .select({
-              studentId: attendance.studentId,
-              presentCount:
-                sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.as(
-                  'present_count',
-                ),
-            })
-            .from(attendance)
-            .where(
-              and(
-                inArray(attendance.studentId, studentIds),
-                inArray(attendance.sessionId, sIds),
-              ),
-            )
-            .groupBy(attendance.studentId)
-        : [];
-
-    const attendanceMap = new Map(
-      attendanceData.map((a) => {
-        const studentTotal = studentSessionTotals.get(a.studentId) || 1;
-        const present = Number(a.presentCount);
-        return [
-          a.studentId,
-          {
-            totalSessions: studentTotal,
-            presentCount: present,
-            rate: studentTotal > 0
-              ? Math.round((present / studentTotal) * 100)
-              : 0,
-          },
-        ];
-      }),
-    );
-
-    // Get student details
-    const studentDetails = await db
-      .select({
-        id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-      })
-      .from(users)
-      .where(inArray(users.id, studentIds));
-
-    const studentMap = new Map(studentDetails.map((s) => [s.id, s]));
-
-    // Build last-access map
-    const lastAccessMap = new Map(
-      enrolledStudents.map((s) => [s.studentId, s.lastAccessedAt]),
-    );
-
-    const inactivityCutoff = new Date();
-    inactivityCutoff.setDate(inactivityCutoff.getDate() - maxInactivityDays);
-
-    // Evaluate at-risk criteria for each student
-    const atRiskStudents = [];
-
-    for (const studentId of studentIds) {
-      const student = studentMap.get(studentId);
-      if (!student) continue;
-
-      const attnData = attendanceMap.get(studentId);
-      const lastAccess = lastAccessMap.get(studentId);
-
-      const riskReasons: string[] = [];
-
-      // Criterion 1: Attendance rate below threshold
-      const attendanceRate = attnData?.rate ?? 0;
-      const studentTotal = studentSessionTotals.get(studentId) || 0;
-      if (studentTotal > 0 && attendanceRate < minAttThreshold) {
-        riskReasons.push(
-          `Attendance rate ${attendanceRate}% (below ${minAttThreshold}%)`,
-        );
-      }
-
-      // Criterion 2: Assessment average below threshold
-      const studentCourseIds = studentCoursesMap.get(studentId) || [];
-      if (studentCourseIds.length > 0) {
-        const studentSubmissions = await db
+    // Get attendance per student per course
+    const allStudentIds = [...new Set(allEnrollments.map((e) => e.studentId))];
+    const attendancePerStudentCourse = allSIds.length > 0
+      ? await db
           .select({
-            percentage: submissions.percentage,
+            studentId: attendance.studentId,
+            courseId: sessions.courseId,
+            presentCount: sql<number>`SUM(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 ELSE 0 END)`.mapWith(Number),
+          })
+          .from(attendance)
+          .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+          .where(
+            and(
+              inArray(attendance.studentId, allStudentIds),
+              inArray(sessions.courseId, courseIds),
+            ),
+          )
+          .groupBy(attendance.studentId, sessions.courseId)
+      : [];
+
+    const attMap = new Map<string, number>(); // key: `studentId:courseId`
+    for (const a of attendancePerStudentCourse) {
+      attMap.set(`${a.studentId}:${a.courseId}`, a.presentCount);
+    }
+
+    // Get assessment averages per student per course
+    const assessmentData = allStudentIds.length > 0
+      ? await db
+          .select({
+            studentId: submissions.studentId,
+            courseId: assessments.courseId,
+            avgPercentage: sql<number>`ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)))`.mapWith(Number),
           })
           .from(submissions)
           .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
           .where(
             and(
-              eq(submissions.studentId, studentId),
+              inArray(submissions.studentId, allStudentIds),
+              inArray(assessments.courseId, courseIds),
               eq(submissions.status, 'graded'),
-              inArray(assessments.courseId, studentCourseIds),
             ),
-          );
+          )
+          .groupBy(submissions.studentId, assessments.courseId)
+      : [];
 
-        if (studentSubmissions.length > 0) {
-          const avgPercentage =
-            studentSubmissions.reduce(
-              (sum, s) => sum + parseFloat(s.percentage || '0'),
-              0,
-            ) / studentSubmissions.length;
+    const assessMap = new Map<string, number>();
+    for (const a of assessmentData) {
+      assessMap.set(`${a.studentId}:${a.courseId}`, a.avgPercentage);
+    }
 
-          if (avgPercentage < minScoreThreshold) {
-            riskReasons.push(
-              `Assessment average ${avgPercentage.toFixed(1)}% (below ${minScoreThreshold}%)`,
-            );
-          }
-        }
+    // Get student details
+    const studentDetails = await db
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .from(users)
+      .where(inArray(users.id, allStudentIds));
+    const studentMap = new Map(studentDetails.map((s) => [s.id, s]));
+
+    // Evaluate at-risk PER COURSE
+    const atRiskStudents: any[] = [];
+
+    for (const enrollment of allEnrollments) {
+      const { studentId, courseId, lastAccessedAt } = enrollment;
+      const student = studentMap.get(studentId);
+      const course = courseMap.get(courseId);
+      if (!student || !course) continue;
+
+      const threshold = {
+        attendance: course.atRiskAttendanceThreshold ?? 70,
+        score: course.atRiskScoreThreshold ?? 60,
+        inactivityDays: course.atRiskInactivityDays ?? 7,
+      };
+
+      const totalSessions = sessionCountMap.get(courseId) || 0;
+      const presentCount = attMap.get(`${studentId}:${courseId}`) || 0;
+      const attendanceRate = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
+      const assessmentAvg = assessMap.get(`${studentId}:${courseId}`) ?? null;
+
+      const riskReasons: string[] = [];
+
+      // Criterion 1: Attendance below course threshold
+      if (totalSessions > 0 && attendanceRate < threshold.attendance) {
+        riskReasons.push(`Attendance rate ${attendanceRate}% (below ${threshold.attendance}%)`);
       }
 
-      // Criterion 3: No activity in configured days
-      if (!lastAccess || new Date(lastAccess) < inactivityCutoff) {
+      // Criterion 2: Assessment average below course threshold
+      if (assessmentAvg !== null && assessmentAvg < threshold.score) {
+        riskReasons.push(`Assessment average ${assessmentAvg}% (below ${threshold.score}%)`);
+      }
+
+      // Criterion 3: Inactivity in this course
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - threshold.inactivityDays);
+      if (!lastAccessedAt || new Date(lastAccessedAt) < cutoff) {
         riskReasons.push(
-          lastAccess
-            ? `Last activity on ${new Date(lastAccess).toISOString().split('T')[0]}`
-            : 'No recent activity recorded',
+          lastAccessedAt
+            ? `Last activity on ${new Date(lastAccessedAt).toISOString().split('T')[0]}`
+            : 'No recent activity',
         );
       }
 
       if (riskReasons.length > 0) {
         atRiskStudents.push({
           ...student,
+          courseId,
+          courseTitle: course.title,
+          courseTitleAr: course.titleAr,
           attendanceRate,
-          lastAccessedAt: lastAccess || null,
+          assessmentAverage: assessmentAvg,
+          lastAccessedAt: lastAccessedAt || null,
           riskReasons,
-          enrolledCourseIds: studentCoursesMap.get(studentId) || [],
         });
       }
     }

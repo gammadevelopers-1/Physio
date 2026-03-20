@@ -73,10 +73,13 @@ const StudentsContent = () => {
       ]);
       setCourses(coursesRes.data);
 
-      // Build a set of at-risk student IDs with their risk reasons
+      // Build a set of at-risk student IDs with their risk reasons (per-course, merged)
       const atRiskMap = new Map<string, string[]>();
       (atRiskData as AtRiskStudent[]).forEach((s) => {
-        atRiskMap.set(s.id, s.riskReasons);
+        const existing = atRiskMap.get(s.id) || [];
+        const courseLabel = (s as any).courseTitle ? `[${(s as any).courseTitle}] ` : '';
+        const prefixed = s.riskReasons.map((r) => `${courseLabel}${r}`);
+        atRiskMap.set(s.id, [...existing, ...prefixed]);
       });
 
       // Enrich students with risk status

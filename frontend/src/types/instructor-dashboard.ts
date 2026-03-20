@@ -382,6 +382,8 @@ export interface CourseDetailResponse {
   reviewNote?: string | null;
   thumbnail: string | null;
   maxEnrollment: number | null;
+  cmeHours: number | null;
+  isCmeAccredited: boolean;
   startDate: string | null;
   endDate: string | null;
   cohort: string | null;

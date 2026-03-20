@@ -832,29 +832,6 @@ export class CertificatesService {
       }
     }
 
-    // Fetch logo for header and watermark (cached in memory)
-    let logoBuffer: Buffer | null = null;
-    if (!(this as any)._logoCacheBuffer) {
-      try {
-        const https = require('https');
-        const logoUrl = `${frontendUrl}/images/logo.png`;
-        logoBuffer = await new Promise<Buffer>((res, rej) => {
-          https.get(logoUrl, (resp: any) => {
-            const chunks: Buffer[] = [];
-            resp.on('data', (c: Buffer) => chunks.push(c));
-            resp.on('end', () => res(Buffer.concat(chunks)));
-            resp.on('error', rej);
-          }).on('error', rej);
-        });
-        (this as any)._logoCacheBuffer = logoBuffer;
-        this.logger.log('Logo fetched and cached for certificates');
-      } catch (err) {
-        this.logger.warn('Failed to fetch logo, using text fallback');
-      }
-    } else {
-      logoBuffer = (this as any)._logoCacheBuffer;
-    }
-
     // Generate QR as buffer for PDFKit
     const qrBuffer = await QRCode.toBuffer(verifyUrl, {
       width: 140,

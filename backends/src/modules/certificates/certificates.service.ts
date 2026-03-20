@@ -764,8 +764,11 @@ export class CertificatesService {
       `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
     const studentNameAr =
       `${student?.firstNameAr || ''} ${student?.lastNameAr || ''}`.trim() || '';
-    // Show Arabic name if available, otherwise English
+    // Check if the English name actually contains Arabic characters
+    const hasArabicChars = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+    // Show Arabic name if available, or English name if it contains Arabic chars
     const displayName = studentNameAr || studentNameEn;
+    const nameIsArabic = !!(studentNameAr) || hasArabicChars(studentNameEn);
     const courseTitle = course?.title || 'Course';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();
@@ -807,7 +810,7 @@ export class CertificatesService {
 
     // Load Arabic font for SVG path rendering (embedded base64 — zero network dependency)
     let arabicFont: any = null;
-    if (displayName !== studentNameEn) {
+    if (nameIsArabic) {
       if (!(this as any)._arabicOpentype) {
         const { AMIRI_BOLD_BASE64 } = require('./amiri-bold-font');
         const opentype = require('opentype.js');
@@ -876,7 +879,7 @@ export class CertificatesService {
 
         // Student name — Arabic as SVG path or English as text
         y += 40;
-        if (arabicFont && displayName !== studentNameEn) {
+        if (arabicFont && nameIsArabic) {
           // Render Arabic name as SVG path via opentype.js
           const fontSize = 30;
           const path = arabicFont.getPath(displayName, 0, 0, fontSize);

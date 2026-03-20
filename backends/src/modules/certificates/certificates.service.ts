@@ -970,10 +970,10 @@ export class CertificatesService {
         }
 
         // QR Code — well inside borders
-        const qrSize = 60, qrX = W - 100, qrY = H - 95;
+        const qrSize = 55, qrX = W - 95, qrY = H - 105;
         doc.image(qrBuffer, qrX, qrY, { width: qrSize });
-        doc.font('Helvetica').fontSize(5.5).fillColor(lightGray)
-          .text('Scan to verify', qrX, qrY + qrSize + 2, { width: qrSize, align: 'center' });
+        doc.font('Helvetica').fontSize(5).fillColor(lightGray)
+          .text('Scan to verify', qrX, qrY + qrSize + 1, { width: qrSize, align: 'center' });
 
         // Watermark (center logo large or text)
         doc.save();

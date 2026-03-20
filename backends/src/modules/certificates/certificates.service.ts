@@ -811,6 +811,29 @@ export class CertificatesService {
       }
     }
 
+    // Fetch logo for header and watermark (cached in memory)
+    let logoBuffer: Buffer | null = null;
+    if (!(this as any)._logoCacheBuffer) {
+      try {
+        const https = require('https');
+        const logoUrl = `${frontendUrl}/images/logo.png`;
+        logoBuffer = await new Promise<Buffer>((res, rej) => {
+          https.get(logoUrl, (resp: any) => {
+            const chunks: Buffer[] = [];
+            resp.on('data', (c: Buffer) => chunks.push(c));
+            resp.on('end', () => res(Buffer.concat(chunks)));
+            resp.on('error', rej);
+          }).on('error', rej);
+        });
+        (this as any)._logoCacheBuffer = logoBuffer;
+        this.logger.log('Logo fetched and cached for certificates');
+      } catch (err) {
+        this.logger.warn('Failed to fetch logo, using text fallback');
+      }
+    } else {
+      logoBuffer = (this as any)._logoCacheBuffer;
+    }
+
     // Build the PDF
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
@@ -858,11 +881,15 @@ export class CertificatesService {
             .text('CME HOURS', bx, by + 38, { width: br * 2, align: 'center' });
         }
 
-        // Organization name (top-left)
-        doc.font('Helvetica-Bold').fontSize(14).fillColor(navy)
-          .text('PHYSIOGUIDANCE', 50, 48);
-        doc.font('Helvetica').fontSize(8).fillColor(lightGray)
-          .text('Professional Medical Education', 50, 66);
+        // Organization logo (top-left)
+        if (logoBuffer) {
+          doc.image(logoBuffer, 45, 40, { height: 45 });
+        } else {
+          doc.font('Helvetica-Bold').fontSize(14).fillColor(navy)
+            .text('PHYSIOGUIDANCE', 50, 48);
+          doc.font('Helvetica').fontSize(8).fillColor(lightGray)
+            .text('Professional Medical Education', 50, 66);
+        }
 
         // Certificate Title
         let y = 105;
@@ -924,11 +951,15 @@ export class CertificatesService {
         doc.font('Helvetica').fontSize(5.5).fillColor(lightGray)
           .text(certificateId, qrX, qrY + qrSize + 10, { width: qrSize, align: 'center' });
 
-        // Watermark
+        // Watermark (center logo or text)
         doc.save();
-        doc.opacity(0.025);
-        doc.font('Helvetica-Bold').fontSize(85).fillColor(navy)
-          .text('PHYSIOGUIDANCE', 0, H / 2 - 45, { align: 'center' });
+        doc.opacity(0.06);
+        if (logoBuffer) {
+          doc.image(logoBuffer, cx - 120, H / 2 - 80, { width: 240 });
+        } else {
+          doc.font('Helvetica-Bold').fontSize(85).fillColor(navy)
+            .text('PHYSIOGUIDANCE', 0, H / 2 - 45, { align: 'center' });
+        }
         doc.restore();
 
         doc.end();

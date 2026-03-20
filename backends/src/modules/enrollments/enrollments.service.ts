@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, ne, desc, count, sql, or } from 'drizzle-orm';
+import { eq, and, ne, desc, count, sql, or, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   enrollments,
@@ -423,7 +423,7 @@ export class EnrollmentsService {
 
     // Look up the course instructor to exclude them from attendance
     const [session] = await db
-      .select({ courseId: sessions.courseId })
+      .select({ courseId: sessions.courseId, isMakeup: sessions.isMakeup, assignedStudents: sessions.assignedStudents })
       .from(sessions)
       .where(eq(sessions.id, sessionId))
       .limit(1);
@@ -490,6 +490,23 @@ export class EnrollmentsService {
       if (instructorId) excludeIds.add(instructorId);
       for (const taId of taUserIds) excludeIds.add(taId);
 
+      // For make-up lectures: only show assigned students
+      const isMakeup = session.isMakeup && session.assignedStudents;
+      let assignedIds: string[] | null = null;
+      if (isMakeup) {
+        assignedIds = typeof session.assignedStudents === 'string'
+          ? JSON.parse(session.assignedStudents)
+          : session.assignedStudents;
+      }
+
+      const enrolledConditions: any[] = [
+        eq(enrollments.courseId, session.courseId),
+        sql`${enrollments.status} IN ('active', 'completed')`,
+      ];
+      if (assignedIds && assignedIds.length > 0) {
+        enrolledConditions.push(inArray(enrollments.studentId, assignedIds));
+      }
+
       const enrolledStudents = await db
         .select({
           studentId: enrollments.studentId,
@@ -500,10 +517,7 @@ export class EnrollmentsService {
         .from(enrollments)
         .innerJoin(users, eq(enrollments.studentId, users.id))
         .where(
-          and(
-            eq(enrollments.courseId, session.courseId),
-            sql`${enrollments.status} IN ('active', 'completed')`,
-          ),
+          and(...enrolledConditions),
         );
 
       for (const student of enrolledStudents) {

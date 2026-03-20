@@ -710,6 +710,17 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     </div>
                                   </details>
                                 )}
+
+                                {/* Schedule Make-up Lecture — only for at-risk active courses */}
+                                {cp.enrollmentStatus === "active" && riskReasons.some(r => r.includes(`[${cp.courseTitle}]`)) && (
+                                  <Link
+                                    href={`/${locale}/dashboard/instructor/sessions?openSchedule=true&courseId=${cp.courseId}&isMakeup=true&studentId=${studentId}`}
+                                    className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
+                                  >
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    Schedule Make-up Lecture
+                                  </Link>
+                                )}
                               </div>
                             </div>
                           ))}

@@ -901,6 +901,13 @@ export class SessionsService {
   ): Promise<void> {
     this.logger.log(`[autoAbsent] Starting for session=${sessionId} course=${courseId}`);
     try {
+      // Check if this is a make-up lecture with assigned students
+      const [sessionInfo] = await db
+        .select({ isMakeup: sessions.isMakeup, assignedStudents: sessions.assignedStudents })
+        .from(sessions)
+        .where(eq(sessions.id, sessionId))
+        .limit(1);
+
       // Get instructor + TA IDs to exclude
       const [course] = await db
         .select({ instructorId: courses.instructorId })
@@ -922,16 +929,24 @@ export class SessionsService {
         );
       for (const ta of tas) excludeIds.add(ta.userId);
 
-      // Get all actively enrolled students
-      const enrolled = await db
-        .select({ studentId: enrollments.studentId })
-        .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.courseId, courseId),
-            sql`${enrollments.status} IN ('active', 'completed')`,
-          ),
-        );
+      // For make-up lectures: only assigned students. For regular: all enrolled.
+      let enrolled: { studentId: string }[];
+      if (sessionInfo?.isMakeup && sessionInfo.assignedStudents) {
+        const assignedIds: string[] = typeof sessionInfo.assignedStudents === 'string'
+          ? JSON.parse(sessionInfo.assignedStudents)
+          : sessionInfo.assignedStudents;
+        enrolled = assignedIds.map((id) => ({ studentId: id }));
+      } else {
+        enrolled = await db
+          .select({ studentId: enrollments.studentId })
+          .from(enrollments)
+          .where(
+            and(
+              eq(enrollments.courseId, courseId),
+              sql`${enrollments.status} IN ('active', 'completed')`,
+            ),
+          );
+      }
 
       // Get students who already have an attendance record
       const existing = await db

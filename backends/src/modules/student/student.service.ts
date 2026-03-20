@@ -367,6 +367,13 @@ export class StudentService {
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
       .where(whereClause)
       .orderBy(
+        sql`CASE ${enrollments.status}
+          WHEN 'active' THEN 1
+          WHEN 'completed' THEN 2
+          WHEN 'dropped' THEN 3
+          WHEN 'suspended' THEN 4
+          ELSE 5
+        END`,
         params.sort === 'recent'
           ? desc(enrollments.lastAccessedAt)
           : params.sort === 'completed_date'

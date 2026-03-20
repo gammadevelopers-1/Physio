@@ -899,6 +899,7 @@ export class SessionsService {
     sessionId: string,
     courseId: string,
   ): Promise<void> {
+    this.logger.log(`[autoAbsent] Starting for session=${sessionId} course=${courseId}`);
     try {
       // Get instructor + TA IDs to exclude
       const [course] = await db
@@ -945,6 +946,7 @@ export class SessionsService {
         (e) => !existingIds.has(e.studentId) && !excludeIds.has(e.studentId),
       );
 
+      this.logger.log(`[autoAbsent] session=${sessionId}: enrolled=${enrolled.length} existing=${existing.length} excluded=${excludeIds.size} missing=${missingStudents.length}`);
       if (missingStudents.length === 0) return;
 
       // Bulk insert absent records
@@ -964,10 +966,10 @@ export class SessionsService {
       );
     } catch (error) {
       this.logger.error(
-        `Failed to auto-create absent records for session ${sessionId}`,
-        error,
+        `Failed to auto-create absent records for session ${sessionId}: ${error?.message || error}`,
       );
-      // Don't throw — this is best-effort, shouldn't block end/finalize
+      // Log full error stack for debugging
+      if (error?.stack) this.logger.error(error.stack);
     }
   }
 

@@ -484,49 +484,43 @@ const StudentsContent = () => {
                       {/* Desktop Table */}
                       <div className="hidden md:block bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                         <div className="overflow-x-auto">
-                          <table className="w-full">
+                          <table className="w-full table-fixed">
                             <thead>
                               <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider min-w-[200px]">
+                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "28%" }}>
                                   <button onClick={() => toggleSort("name")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableStudent")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-16">
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "8%" }}>
                                   <button onClick={() => toggleSort("enrollments")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableCourse") || "Courses"}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-28">
+                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "18%" }}>
                                   <button onClick={() => toggleSort("progress")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableProgress") || "Progress"}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-24">
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "12%" }}>
                                   <button onClick={() => toggleSort("attendance")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableAttendance")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">
-                                  <button onClick={() => toggleSort("assessmentAverage")} className="flex items-center gap-1 hover:text-[#374151]">
-                                    {t("students.tableScore")}
-                                    <ArrowUpDown className="w-3 h-3" />
-                                  </button>
-                                </th>
-                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "12%" }}>
                                   {t("students.tableStatus")}
                                 </th>
-                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-24">
+                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "14%" }}>
                                   <button onClick={() => toggleSort("lastActive")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableLastActivity")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-2 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-12">
+                                <th className="px-2 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "5%" }}>
                                 </th>
                               </tr>
                             </thead>
@@ -537,19 +531,14 @@ const StudentsContent = () => {
                                   className="hover:bg-[#F9FAFB] transition-colors"
                                 >
                                   <td className="px-3 py-3">
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center text-xs font-semibold text-[#6B7280] flex-shrink-0">
-                                        {getInitials(student.firstName, student.lastName)}
-                                      </div>
-                                      <div className="min-w-0">
-                                        <p className="text-sm font-medium text-[#1F2937] truncate">
-                                          {student.firstName || ""}{" "}
-                                          {student.lastName || ""}
-                                        </p>
-                                        <p className="text-[11px] text-[#9CA3AF] truncate">
-                                          {student.email}
-                                        </p>
-                                      </div>
+                                    <div className="max-w-[200px]">
+                                      <p className="text-sm font-medium text-[#1F2937] truncate">
+                                        {student.firstName || ""}{" "}
+                                        {student.lastName || ""}
+                                      </p>
+                                      <p className="text-[11px] text-[#9CA3AF] truncate">
+                                        {student.email}
+                                      </p>
                                     </div>
                                   </td>
                                   <td className="px-3 py-3 text-center">
@@ -585,18 +574,7 @@ const StudentsContent = () => {
                                     </span>
                                   </td>
                                   <td className="px-3 py-3 text-center">
-                                    <span className={`text-xs font-semibold ${
-                                      student.assessmentAverage == null ? "text-[#9CA3AF]"
-                                      : student.assessmentAverage >= 70 ? "text-[#22C55E]"
-                                      : student.assessmentAverage >= 50 ? "text-[#EAB308]"
-                                      : "text-[#EF4444]"
-                                    }`}>
-                                      {student.assessmentAverage != null ? `${student.assessmentAverage}%` : "–"}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-3 text-center">
-                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusStyle(student.riskStatus)}`}>
-                                      {getStatusIcon(student.riskStatus)}
+                                    <span className={`inline-block whitespace-nowrap px-2.5 py-1 rounded-full text-[10px] font-medium ${getStatusStyle(student.riskStatus)}`}>
                                       {getStatusLabel(student.riskStatus)}
                                     </span>
                                   </td>

@@ -169,21 +169,32 @@ export class CoursesService {
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Determine sort order
-    let orderByExpr;
+    // Status lifecycle priority: draft first, archived last
+    const statusPriority = sql`CASE ${courses.status}
+      WHEN 'draft' THEN 1
+      WHEN 'pending_review' THEN 2
+      WHEN 'changes_requested' THEN 3
+      WHEN 'active' THEN 4
+      WHEN 'completed' THEN 5
+      WHEN 'archived' THEN 6
+      ELSE 7
+    END`;
+
+    // Determine secondary sort order
+    let secondarySort;
     switch (params.sort) {
       case 'oldest':
-        orderByExpr = asc(courses.createdAt);
+        secondarySort = asc(courses.createdAt);
         break;
       case 'alphabetical':
-        orderByExpr = asc(courses.title);
+        secondarySort = asc(courses.title);
         break;
       case 'students':
-        orderByExpr = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
+        secondarySort = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
         break;
       case 'newest':
       default:
-        orderByExpr = desc(courses.createdAt);
+        secondarySort = desc(courses.createdAt);
         break;
     }
 
@@ -216,7 +227,7 @@ export class CoursesService {
       })
       .from(courses)
       .where(whereClause)
-      .orderBy(orderByExpr)
+      .orderBy(statusPriority, secondarySort)
       .limit(limit)
       .offset(offset);
 

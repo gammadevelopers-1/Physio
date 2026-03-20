@@ -764,8 +764,10 @@ export class CertificatesService {
       `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
     const studentNameAr =
       `${student?.firstNameAr || ''} ${student?.lastNameAr || ''}`.trim() || '';
+    // Show Arabic name if available, otherwise English
+    const displayName = studentNameAr || studentNameEn;
+    const isArabicName = !!studentNameAr;
     const courseTitle = course?.title || 'Course';
-    const courseTitleAr = course?.titleAr || '';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();
     const dateFormatted = issuedDate.toLocaleDateString('en-US', {
@@ -784,7 +786,32 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Build the PDF using only built-in PDFKit fonts (no external dependencies)
+    // Fetch Cairo font for Arabic support (cached in memory)
+    let cairoFontBuffer: Buffer | null = null;
+    if (isArabicName) {
+      if (!(this as any)._cairoFontCache) {
+        try {
+          const https = require('https');
+          const fontUrl = 'https://fonts.gstatic.com/s/cairo/v28/SLXVc1nY6HkvangtZmpWWmhzfH5lWWgcQyyS4J0.ttf';
+          cairoFontBuffer = await new Promise<Buffer>((res, rej) => {
+            https.get(fontUrl, (resp: any) => {
+              const chunks: Buffer[] = [];
+              resp.on('data', (c: Buffer) => chunks.push(c));
+              resp.on('end', () => res(Buffer.concat(chunks)));
+              resp.on('error', rej);
+            }).on('error', rej);
+          });
+          (this as any)._cairoFontCache = cairoFontBuffer;
+          this.logger.log('Cairo font fetched and cached for Arabic support');
+        } catch (err) {
+          this.logger.warn('Failed to fetch Cairo font, falling back to Helvetica');
+        }
+      } else {
+        cairoFontBuffer = (this as any)._cairoFontCache;
+      }
+    }
+
+    // Build the PDF
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
         const chunks: Buffer[] = [];
@@ -797,6 +824,12 @@ export class CertificatesService {
         doc.on('data', (chunk: Buffer) => chunks.push(chunk));
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
+
+        // Register Cairo font if available
+        if (cairoFontBuffer) {
+          doc.registerFont('Cairo', cairoFontBuffer);
+        }
+        const nameFont = cairoFontBuffer ? 'Cairo' : 'Helvetica-Bold';
 
         const W = doc.page.width;
         const H = doc.page.height;
@@ -846,10 +879,10 @@ export class CertificatesService {
         doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF')
           .text('PROUDLY AWARDED TO', cx - pillW / 2, y + 8, { width: pillW, align: 'center' });
 
-        // Student Name
+        // Student Name (Arabic if available, otherwise English)
         y += 40;
-        doc.font('Helvetica-Bold').fontSize(30).fillColor(darkText)
-          .text(studentNameEn, 0, y, { align: 'center' });
+        doc.font(nameFont).fontSize(30).fillColor(darkText)
+          .text(displayName, 0, y, { align: 'center' });
 
         // "FOR ATTENDING" pill
         y += 44;

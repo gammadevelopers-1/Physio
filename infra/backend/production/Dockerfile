@@ -43,6 +43,9 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/package.json ./
 
+# Copy certificate assets (fonts, logos) for PDF generation
+COPY --from=builder --chown=nestjs:nodejs /app/src/modules/certificates/assets ./dist/src/modules/certificates/assets
+
 # Switch to non-root user
 USER nestjs
 

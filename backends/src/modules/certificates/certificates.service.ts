@@ -733,6 +733,8 @@ export class CertificatesService {
       .select({
         firstName: users.firstName,
         lastName: users.lastName,
+        firstNameAr: users.firstNameAr,
+        lastNameAr: users.lastNameAr,
         email: users.email,
       })
       .from(users)
@@ -740,117 +742,223 @@ export class CertificatesService {
       .limit(1);
 
     const [course] = await db
-      .select({ title: courses.title, cmeHours: courses.cmeHours })
+      .select({
+        title: courses.title,
+        titleAr: courses.titleAr,
+        cmeHours: courses.cmeHours,
+        isCmeAccredited: courses.isCmeAccredited,
+      })
       .from(courses)
       .where(eq(courses.id, courseId))
       .limit(1);
 
-    const studentName =
-      `${student?.firstName || ''} ${student?.lastName || ''}`.trim() ||
-      'Student';
+    const studentNameEn =
+      `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
+    const studentNameAr =
+      `${student?.firstNameAr || ''} ${student?.lastNameAr || ''}`.trim() || '';
     const courseTitle = course?.title || 'Course';
-    const issuedDate = new Date().toISOString().split('T')[0];
+    const courseTitleAr = course?.titleAr || '';
+    const cmeHours = course?.cmeHours || 0;
+    const issuedDate = new Date();
+    const dateFormatted = issuedDate.toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    }).toUpperCase();
     const certificateId = `PG-${requestId.slice(0, 8).toUpperCase()}`;
 
-    // Generate QR code as PNG buffer pointing to public verification page
+    // Generate QR code
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const verifyUrl = `${frontendUrl}/en/verify/${requestId}`;
     const qrBuffer = await QRCode.toBuffer(verifyUrl, {
-      width: 120,
+      width: 140,
       margin: 1,
       errorCorrectionLevel: 'M',
     });
 
-    // Build the PDF using PDFKit
+    // Load fonts and assets
+    const path = require('path');
+    const fs = require('fs');
+    const assetsDir = path.join(__dirname, 'assets');
+    const cairoBold = path.join(assetsDir, 'Cairo-Bold.ttf');
+    const cairoRegular = path.join(assetsDir, 'Cairo-Regular.ttf');
+    const cairoSemiBold = path.join(assetsDir, 'Cairo-SemiBold.ttf');
+    const logoPath = path.join(assetsDir, 'logo.png');
+    const scfhsLogoPath = path.join(assetsDir, 'scfhs-logo.png');
+
+    // Build the PDF
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       const chunks: Buffer[] = [];
       const doc = new PDFDocument({
         size: 'A4',
         layout: 'landscape',
-        margin: 50,
+        margin: 0,
       });
 
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      const pageWidth = doc.page.width;
-      const centerX = pageWidth / 2;
+      const W = doc.page.width;   // 841.89
+      const H = doc.page.height;  // 595.28
+      const cx = W / 2;
 
-      // Border
-      doc
-        .rect(30, 30, pageWidth - 60, doc.page.height - 60)
-        .lineWidth(2)
-        .stroke('#002D87');
+      // Register fonts
+      if (fs.existsSync(cairoBold)) doc.registerFont('Cairo-Bold', cairoBold);
+      if (fs.existsSync(cairoRegular)) doc.registerFont('Cairo-Regular', cairoRegular);
+      if (fs.existsSync(cairoSemiBold)) doc.registerFont('Cairo-SemiBold', cairoSemiBold);
 
-      doc
-        .rect(40, 40, pageWidth - 80, doc.page.height - 80)
-        .lineWidth(0.5)
-        .stroke('#C9A84C');
+      const fontBold = fs.existsSync(cairoBold) ? 'Cairo-Bold' : 'Helvetica-Bold';
+      const fontRegular = fs.existsSync(cairoRegular) ? 'Cairo-Regular' : 'Helvetica';
+      const fontSemiBold = fs.existsSync(cairoSemiBold) ? 'Cairo-SemiBold' : 'Helvetica-Bold';
 
-      // Header
-      doc
-        .fontSize(14)
-        .fillColor('#6B7280')
-        .text('PHYSIOGUIDANCE', 0, 70, { align: 'center' });
+      // Colors
+      const navy = '#002D87';
+      const gold = '#D4A520';
+      const goldLight = '#C9A84C';
+      const gray = '#6B7280';
+      const darkText = '#1F2937';
 
-      doc
-        .fontSize(32)
-        .fillColor('#002D87')
-        .text('CERTIFICATE OF COMPLETION', 0, 100, { align: 'center' });
+      // ─── Background & Borders ─────────────────────────────
+      doc.rect(0, 0, W, H).fill('#FAFAFA');
 
-      // Decorative line
-      doc
-        .moveTo(centerX - 100, 145)
-        .lineTo(centerX + 100, 145)
-        .lineWidth(1)
-        .stroke('#C9A84C');
+      // Outer border (navy)
+      doc.rect(20, 20, W - 40, H - 40).lineWidth(2.5).stroke(navy);
+      // Inner border (gold)
+      doc.rect(28, 28, W - 56, H - 56).lineWidth(0.8).stroke(goldLight);
 
-      // Body text
-      doc
-        .fontSize(14)
-        .fillColor('#4B5563')
-        .text('This is to certify that', 0, 170, { align: 'center' });
-
-      doc
-        .fontSize(26)
-        .fillColor('#1F2937')
-        .text(studentName, 0, 200, { align: 'center' });
-
-      doc
-        .fontSize(14)
-        .fillColor('#4B5563')
-        .text('has successfully completed the course', 0, 245, {
-          align: 'center',
-        });
-
-      doc
-        .fontSize(20)
-        .fillColor('#002D87')
-        .text(courseTitle, 0, 275, { align: 'center' });
-
-      if (course?.cmeHours) {
-        doc
-          .fontSize(12)
-          .fillColor('#6B7280')
-          .text(`CME Hours: ${course.cmeHours}`, 0, 310, { align: 'center' });
+      // ─── Header Logos ─────────────────────────────────────
+      // Organization logo (top-left)
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 50, 40, { height: 50 });
       }
 
-      // Footer info
-      const footerY = 370;
-      doc.fontSize(10).fillColor('#6B7280');
-      doc.text(`Issued on: ${issuedDate}`, 80, footerY);
-      doc.text(`Certificate ID: ${certificateId}`, 80, footerY + 16);
+      // SCFHS logo (top-center)
+      if (fs.existsSync(scfhsLogoPath)) {
+        doc.image(scfhsLogoPath, cx - 30, 38, { height: 45 });
+      }
 
-      // QR Code (bottom right)
-      doc.image(qrBuffer, pageWidth - 200, footerY - 20, { width: 100 });
-      doc
-        .fontSize(8)
-        .fillColor('#9CA3AF')
-        .text('Scan to verify', pageWidth - 200, footerY + 85, {
-          width: 100,
-          align: 'center',
-        });
+      // CME hours badge (top-right)
+      if (cmeHours > 0) {
+        const badgeX = W - 120;
+        const badgeY = 38;
+        const badgeR = 30;
+        doc.circle(badgeX + badgeR, badgeY + badgeR, badgeR).lineWidth(2).stroke(navy);
+        doc.circle(badgeX + badgeR, badgeY + badgeR, badgeR - 4).lineWidth(0.5).stroke(goldLight);
+        doc.font(fontBold).fontSize(22).fillColor(navy)
+          .text(String(cmeHours), badgeX, badgeY + 12, { width: badgeR * 2, align: 'center' });
+        doc.font(fontRegular).fontSize(6).fillColor(gray)
+          .text('CME HOURS', badgeX, badgeY + 36, { width: badgeR * 2, align: 'center' });
+      }
+
+      // ─── Certificate Title ────────────────────────────────
+      let y = 110;
+      doc.font(fontBold).fontSize(36).fillColor(navy)
+        .text('CERTIFICATE', 0, y, { align: 'center' });
+      y += 38;
+      doc.font(fontSemiBold).fontSize(20).fillColor(navy)
+        .text('OF ATTENDANCE', 0, y, { align: 'center' });
+
+      // "PROUDLY AWARDED TO" pill
+      y += 35;
+      const pillText = 'PROUDLY AWARDED TO';
+      const pillW = 200;
+      const pillH = 22;
+      doc.roundedRect(cx - pillW / 2, y, pillW, pillH, 11).fill(goldLight);
+      doc.font(fontSemiBold).fontSize(9).fillColor('#FFFFFF')
+        .text(pillText, cx - pillW / 2, y + 6, { width: pillW, align: 'center' });
+
+      // ─── Student Name ─────────────────────────────────────
+      y += 35;
+      // Arabic name (if available)
+      if (studentNameAr) {
+        doc.font(fontBold).fontSize(28).fillColor(darkText)
+          .text(studentNameAr, 0, y, { align: 'center', features: ['rtla'] });
+        y += 36;
+      }
+      // English name
+      doc.font(fontSemiBold).fontSize(studentNameAr ? 16 : 28).fillColor(studentNameAr ? gray : darkText)
+        .text(studentNameEn, 0, y, { align: 'center' });
+
+      // "FOR ATTENDING" pill
+      y += (studentNameAr ? 28 : 38);
+      const forPillText = 'FOR ATTENDING';
+      const forPillW = 150;
+      doc.roundedRect(cx - forPillW / 2, y, forPillW, pillH, 11).fill(goldLight);
+      doc.font(fontSemiBold).fontSize(9).fillColor('#FFFFFF')
+        .text(forPillText, cx - forPillW / 2, y + 6, { width: forPillW, align: 'center' });
+
+      // ─── Course Title ─────────────────────────────────────
+      y += 32;
+      doc.font(fontBold).fontSize(18).fillColor(darkText)
+        .text(courseTitle, 60, y, { align: 'center', width: W - 120 });
+      if (courseTitleAr) {
+        y += 24;
+        doc.font(fontSemiBold).fontSize(14).fillColor(gray)
+          .text(courseTitleAr, 60, y, { align: 'center', width: W - 120, features: ['rtla'] });
+      }
+
+      // Date pill
+      y += 30;
+      const datePillW = 220;
+      const datePillH = 24;
+      doc.roundedRect(cx - datePillW / 2, y, datePillW, datePillH, 12).fill(goldLight);
+      doc.font(fontSemiBold).fontSize(10).fillColor('#FFFFFF')
+        .text(dateFormatted, cx - datePillW / 2, y + 7, { width: datePillW, align: 'center' });
+
+      // ─── SCFHS Accreditation Section ──────────────────────
+      y += 38;
+      doc.font(fontRegular).fontSize(9).fillColor(gray)
+        .text(
+          'This activity has been accredited by the Saudi Commission for Health Specialties',
+          0, y, { align: 'center' },
+        );
+      y += 14;
+      doc.font(fontRegular).fontSize(8).fillColor(gray)
+        .text(
+          `Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`,
+          0, y, { align: 'center' },
+        );
+      if (cmeHours > 0) {
+        y += 13;
+        doc.font(fontSemiBold).fontSize(9).fillColor(navy)
+          .text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
+      }
+
+      // ─── Signature Section ────────────────────────────────
+      y += 30;
+      // Organization logo (small, left of signature)
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, cx - 120, y, { height: 35 });
+      }
+
+      // Signature text (right side)
+      doc.font(fontRegular).fontSize(8).fillColor(gray)
+        .text('Professional Development Manager', cx - 10, y, { width: 200 });
+      doc.font(fontSemiBold).fontSize(9).fillColor(darkText)
+        .text('PhysioGuidance', cx - 10, y + 12, { width: 200 });
+
+      // Signature line
+      doc.moveTo(cx - 10, y + 30).lineTo(cx + 100, y + 30).lineWidth(0.5).stroke(gray);
+      doc.font(fontRegular).fontSize(7).fillColor(gray)
+        .text('Authorized Signature', cx - 10, y + 33, { width: 120 });
+
+      // ─── QR Code & Verification ───────────────────────────
+      const qrSize = 70;
+      const qrX = W - 110;
+      const qrY = H - 110;
+      doc.image(qrBuffer, qrX, qrY, { width: qrSize });
+      doc.font(fontRegular).fontSize(6).fillColor(gray)
+        .text('Scan to verify', qrX, qrY + qrSize + 3, { width: qrSize, align: 'center' });
+      doc.font(fontRegular).fontSize(5).fillColor(gray)
+        .text(certificateId, qrX, qrY + qrSize + 12, { width: qrSize, align: 'center' });
+
+      // ─── Watermark ────────────────────────────────────────
+      doc.save();
+      doc.opacity(0.03);
+      doc.font(fontBold).fontSize(90).fillColor(navy)
+        .text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' });
+      doc.restore();
 
       doc.end();
     });

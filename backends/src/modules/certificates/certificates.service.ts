@@ -736,7 +736,6 @@ export class CertificatesService {
     courseId: string,
     studentId: string,
   ): Promise<string> {
-    // Get student and course info for the certificate
     const [student] = await db
       .select({
         firstName: users.firstName,
@@ -762,20 +761,10 @@ export class CertificatesService {
 
     const studentNameEn =
       `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
-    const studentNameArRaw =
+    const studentNameAr =
       `${student?.firstNameAr || ''} ${student?.lastNameAr || ''}`.trim() || '';
-    // Reshape Arabic text for PDFKit (connect letters + reverse for RTL)
-    let studentNameAr = '';
-    const isArabicName = !!studentNameArRaw;
-    if (isArabicName) {
-      try {
-        const ArabicReshaper = require('arabic-reshaper');
-        const reshaped = ArabicReshaper.convertArabic(studentNameArRaw);
-        studentNameAr = reshaped.split('').reverse().join('');
-      } catch {
-        studentNameAr = studentNameArRaw;
-      }
-    }
+    // Show Arabic name if available, otherwise English
+    const displayName = studentNameAr || studentNameEn;
     const courseTitle = course?.title || 'Course';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();
@@ -786,79 +775,17 @@ export class CertificatesService {
     }).toUpperCase();
     const certificateId = `PG-${requestId.slice(0, 8).toUpperCase()}`;
 
-    // Generate QR code
+    // Generate QR code as base64 data URL
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const verifyUrl = `${frontendUrl}/en/verify/${requestId}`;
-    const qrBuffer = await QRCode.toBuffer(verifyUrl, {
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
       width: 140,
       margin: 1,
       errorCorrectionLevel: 'M',
     });
 
-    // Load Arabic font — try filesystem first, then URL fetch, then fallback to English
-    let arabicFontBuffer: Buffer | null = null;
-    if (isArabicName) {
-      if (!(this as any)._arabicFontCache) {
-        const fs = require('fs');
-        const path = require('path');
-
-        // Try 1: Filesystem (Docker container has assets copied)
-        const localPaths = [
-          path.join(__dirname, 'assets', 'Cairo-Bold.ttf'),
-          path.join(process.cwd(), 'dist', 'src', 'modules', 'certificates', 'assets', 'Cairo-Bold.ttf'),
-          path.join(process.cwd(), 'src', 'modules', 'certificates', 'assets', 'Cairo-Bold.ttf'),
-        ];
-
-        for (const p of localPaths) {
-          try {
-            if (fs.existsSync(p)) {
-              arabicFontBuffer = fs.readFileSync(p);
-              this.logger.log(`Arabic font loaded from filesystem: ${p} (${arabicFontBuffer.length} bytes)`);
-              break;
-            }
-          } catch {}
-        }
-
-        // Try 2: Fetch from frontend URL
-        if (!arabicFontBuffer) {
-          try {
-            const https = require('https');
-            const fontUrl = 'https://physioguidance.org/fonts/Amiri-Bold.ttf';
-            arabicFontBuffer = await new Promise<Buffer>((res, rej) => {
-              const req = https.get(fontUrl, (resp: any) => {
-                if (resp.statusCode !== 200) {
-                  rej(new Error(`Font HTTP ${resp.statusCode}`));
-                  return;
-                }
-                const chunks: Buffer[] = [];
-                resp.on('data', (c: Buffer) => chunks.push(c));
-                resp.on('end', () => {
-                  const buf = Buffer.concat(chunks);
-                  if (buf.length > 10000) res(buf);
-                  else rej(new Error(`Font too small: ${buf.length}`));
-                });
-                resp.on('error', rej);
-              });
-              req.on('error', rej);
-              req.setTimeout(10000, () => { req.destroy(); rej(new Error('Timeout')); });
-            });
-            this.logger.log(`Arabic font fetched from URL: ${arabicFontBuffer.length} bytes`);
-          } catch (err) {
-            this.logger.warn(`Arabic font fetch failed: ${err?.message}`);
-          }
-        }
-
-        if (arabicFontBuffer) {
-          (this as any)._arabicFontCache = arabicFontBuffer;
-        }
-      } else {
-        arabicFontBuffer = (this as any)._arabicFontCache;
-      }
-    }
-
-    // If Arabic font failed, fall back to English name
-    const finalDisplayName = (isArabicName && arabicFontBuffer) ? studentNameAr : studentNameEn;
-    const useArabicFont = !!(isArabicName && arabicFontBuffer);
+    // Logo URL
+    const logoUrl = `${frontendUrl}/images/logo.png`;
 
     // Fetch logo for header and watermark (cached in memory)
     let logoBuffer: Buffer | null = null;
@@ -883,142 +810,85 @@ export class CertificatesService {
       logoBuffer = (this as any)._logoCacheBuffer;
     }
 
-    // Build the PDF
-    const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
-      try {
-        const chunks: Buffer[] = [];
-        const doc = new PDFDocument({
-          size: 'A4',
-          layout: 'landscape',
-          margin: 0,
-        });
+    // Build certificate as HTML and convert to PDF via Puppeteer
+    const html = `<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: A4 landscape; margin: 0; }
+  body { width: 297mm; height: 210mm; font-family: 'Inter', sans-serif; background: #fff; position: relative; overflow: hidden; }
+  .outer-border { position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px; border: 3px solid #002D87; }
+  .inner-border { position: absolute; top: 14px; left: 14px; right: 14px; bottom: 14px; border: 1px solid #D4A520; }
+  .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.04; width: 300px; pointer-events: none; }
+  .content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding: 30px 60px 20px; height: 100%; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; margin-bottom: 10px; }
+  .logo { height: 45px; }
+  .cme-badge { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #002D87; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+  .cme-badge::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; border: 1px solid #D4A520; }
+  .cme-num { font-size: 24px; font-weight: 800; color: #002D87; line-height: 1; }
+  .cme-label { font-size: 6px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .title { font-size: 42px; font-weight: 800; color: #002D87; letter-spacing: 2px; margin-top: 8px; }
+  .subtitle { font-size: 22px; font-weight: 700; color: #D4A520; letter-spacing: 3px; margin-top: 2px; }
+  .pill { display: inline-block; padding: 8px 32px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1.5px; margin-top: 18px; }
+  .pill-gold { background: #D4A520; }
+  .pill-navy { background: #002D87; }
+  .student-name { font-size: 34px; font-weight: 700; color: #1F2937; margin-top: 16px; font-family: ${studentNameAr ? "'Amiri', serif" : "'Inter', sans-serif"}; direction: ${studentNameAr ? 'rtl' : 'ltr'}; }
+  .course-title { font-size: 22px; font-weight: 700; color: #1F2937; margin-top: 14px; }
+  .accreditation { text-align: center; margin-top: 18px; color: #4B5563; font-size: 11px; line-height: 1.6; }
+  .accreditation strong { color: #002D87; }
+  .qr-section { position: absolute; bottom: 22px; right: 22px; text-align: center; }
+  .qr-section img { width: 60px; height: 60px; }
+  .qr-section p { font-size: 5.5px; color: #9CA3AF; margin-top: 2px; }
+</style>
+</head><body>
+  <div class="outer-border"></div>
+  <div class="inner-border"></div>
+  <img src="${logoUrl}" class="watermark" />
+  <div class="content">
+    <div class="header">
+      <img src="${logoUrl}" class="logo" />
+      ${cmeHours > 0 ? `<div class="cme-badge"><span class="cme-num">${cmeHours}</span><span class="cme-label">CME Hours</span></div>` : '<div></div>'}
+    </div>
+    <div class="title">CERTIFICATE</div>
+    <div class="subtitle">OF ATTENDANCE</div>
+    <div class="pill pill-gold">PROUDLY AWARDED TO</div>
+    <div class="student-name">${displayName}</div>
+    <div class="pill pill-navy">FOR ATTENDING</div>
+    <div class="course-title">${courseTitle}</div>
+    <div class="pill pill-gold">${dateFormatted}</div>
+    <div class="accreditation">
+      This activity has been accredited by the Saudi Commission for Health Specialties<br>
+      Accreditation number: ${certificateId} &nbsp; Date: ${issuedDate.toLocaleDateString('en-GB')}
+      ${cmeHours > 0 ? `<br><strong>${cmeHours} CME/PD Credit Hours</strong>` : ''}
+    </div>
+  </div>
+  <div class="qr-section">
+    <img src="${qrDataUrl}" />
+    <p>Scan to verify</p>
+  </div>
+</body></html>`;
 
-        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-        doc.on('end', () => resolve(Buffer.concat(chunks)));
-        doc.on('error', reject);
-
-        // Register Arabic font if available
-        let nameFont = 'Helvetica-Bold';
-        if (useArabicFont && arabicFontBuffer) {
-          try {
-            doc.registerFont('ArabicFont', arabicFontBuffer);
-            nameFont = 'ArabicFont';
-          } catch (fontErr) {
-            this.logger.warn(`Failed to register Arabic font: ${fontErr?.message}`);
-          }
-        }
-
-        const W = doc.page.width;
-        const H = doc.page.height;
-        const cx = W / 2;
-
-        // Colors — brand contrast
-        const navy = '#002D87';
-        const gold = '#D4A520';
-        const gray = '#4B5563';
-        const lightGray = '#9CA3AF';
-        const darkText = '#1F2937';
-
-        // Background & Borders
-        doc.rect(0, 0, W, H).fill('#FFFFFF');
-        doc.rect(24, 24, W - 48, H - 48).lineWidth(2.5).stroke(navy);
-        doc.rect(30, 30, W - 60, H - 60).lineWidth(0.8).stroke(gold);
-
-        // CME hours badge (top-right)
-        if (cmeHours > 0) {
-          const bx = W - 130, by = 42, br = 32;
-          doc.circle(bx + br, by + br, br).lineWidth(2.5).stroke(navy);
-          doc.circle(bx + br, by + br, br - 4).lineWidth(0.8).stroke(gold);
-          doc.font('Helvetica-Bold').fontSize(24).fillColor(navy)
-            .text(String(cmeHours), bx, by + 12, { width: br * 2, align: 'center' });
-          doc.font('Helvetica').fontSize(6.5).fillColor(gray)
-            .text('CME HOURS', bx, by + 38, { width: br * 2, align: 'center' });
-        }
-
-        // Organization logo (top-left)
-        if (logoBuffer) {
-          doc.image(logoBuffer, 45, 40, { height: 45 });
-        } else {
-          doc.font('Helvetica-Bold').fontSize(14).fillColor(navy)
-            .text('PHYSIOGUIDANCE', 50, 48);
-          doc.font('Helvetica').fontSize(8).fillColor(lightGray)
-            .text('Professional Medical Education', 50, 66);
-        }
-
-        // Certificate Title
-        let y = 105;
-        doc.font('Helvetica-Bold').fontSize(38).fillColor(navy)
-          .text('CERTIFICATE', 0, y, { align: 'center' });
-        y += 40;
-        doc.font('Helvetica-Bold').fontSize(20).fillColor(gold)
-          .text('OF ATTENDANCE', 0, y, { align: 'center' });
-
-        // "PROUDLY AWARDED TO" pill
-        y += 38;
-        const pillW = 240, pillH = 28;
-        doc.roundedRect(cx - pillW / 2, y, pillW, pillH, 14).fill(gold);
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF')
-          .text('PROUDLY AWARDED TO', cx - pillW / 2, y + 8, { width: pillW, align: 'center' });
-
-        // Student Name (Arabic if available, otherwise English)
-        y += 40;
-        doc.font(nameFont).fontSize(30).fillColor(darkText)
-          .text(finalDisplayName, 0, y, { align: 'center' });
-
-        // "FOR ATTENDING" pill
-        y += 44;
-        const fpW = 180;
-        doc.roundedRect(cx - fpW / 2, y, fpW, pillH, 14).fill(navy);
-        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF')
-          .text('FOR ATTENDING', cx - fpW / 2, y + 8, { width: fpW, align: 'center' });
-
-        // Course Title
-        y += 38;
-        doc.font('Helvetica-Bold').fontSize(20).fillColor(darkText)
-          .text(courseTitle, 80, y, { align: 'center', width: W - 160 });
-
-        // Date pill
-        y += 36;
-        const dpW = 240, dpH = 28;
-        doc.roundedRect(cx - dpW / 2, y, dpW, dpH, 14).fill(gold);
-        doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF')
-          .text(dateFormatted, cx - dpW / 2, y + 8, { width: dpW, align: 'center' });
-
-        // SCFHS Accreditation
-        y += 42;
-        doc.font('Helvetica').fontSize(11).fillColor(gray)
-          .text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
-        y += 16;
-        doc.font('Helvetica').fontSize(10).fillColor(gray)
-          .text(`Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
-        if (cmeHours > 0) {
-          y += 16;
-          doc.font('Helvetica-Bold').fontSize(11).fillColor(navy)
-            .text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
-        }
-
-        // QR Code — well inside borders
-        const qrSize = 55, qrX = W - 95, qrY = H - 105;
-        doc.image(qrBuffer, qrX, qrY, { width: qrSize });
-        doc.font('Helvetica').fontSize(5).fillColor(lightGray)
-          .text('Scan to verify', qrX, qrY + qrSize + 1, { width: qrSize, align: 'center' });
-
-        // Watermark (center logo large or text)
-        doc.save();
-        doc.opacity(0.05);
-        if (logoBuffer) {
-          doc.image(logoBuffer, cx - 160, H / 2 - 110, { width: 320 });
-        } else {
-          doc.font('Helvetica-Bold').fontSize(100).fillColor(navy)
-            .text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' });
-        }
-        doc.restore();
-
-        doc.end();
-      } catch (err) {
-        reject(err);
-      }
-    });
+    // Render HTML to PDF using Puppeteer
+    const puppeteer = require('puppeteer');
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
+      var pdfBuffer = await page.pdf({
+        width: '297mm',
+        height: '210mm',
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+      });
+    } finally {
+      if (browser) await browser.close().catch(() => {});
+    }
 
     const filename = `certificates/${requestId}.pdf`;
 

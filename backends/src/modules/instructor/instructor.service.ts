@@ -997,17 +997,52 @@ export class InstructorService {
     const studentIds = studentsData.map((s) => s.studentId);
 
     // Batch-fetch attendance rates per student
-    const sessionIds = await db
+    // Count sessions per course so we can calculate per-student totals
+    const sessionCountByCourse = await db
+      .select({
+        courseId: sessions.courseId,
+        count: sql<number>`COUNT(*)`.mapWith(Number),
+      })
+      .from(sessions)
+      .where(inArray(sessions.courseId, courseIds))
+      .groupBy(sessions.courseId);
+
+    const sessionCountMap = new Map(
+      sessionCountByCourse.map((s) => [s.courseId, s.count]),
+    );
+
+    // Get each student's enrolled course IDs for per-student session count
+    const studentEnrollmentData = await db
+      .select({
+        studentId: enrollments.studentId,
+        courseId: enrollments.courseId,
+      })
+      .from(enrollments)
+      .where(
+        and(
+          inArray(enrollments.studentId, studentIds),
+          inArray(enrollments.courseId, courseIds),
+        ),
+      );
+
+    const studentSessionCountMap = new Map<string, number>();
+    for (const se of studentEnrollmentData) {
+      const current = studentSessionCountMap.get(se.studentId) || 0;
+      studentSessionCountMap.set(
+        se.studentId,
+        current + (sessionCountMap.get(se.courseId) || 0),
+      );
+    }
+
+    // Get all session IDs for attendance query
+    const allSessionIds = await db
       .select({ id: sessions.id })
       .from(sessions)
       .where(inArray(sessions.courseId, courseIds));
-
-    const sIds = sessionIds.map((s) => s.id);
+    const sIds = allSessionIds.map((s) => s.id);
 
     const attendanceRateMap = new Map<string, number>();
     if (sIds.length > 0) {
-      const totalSessionCount = sIds.length;
-
       const attendanceData = await db
         .select({
           studentId: attendance.studentId,
@@ -1027,9 +1062,10 @@ export class InstructorService {
 
       for (const a of attendanceData) {
         const present = Number(a.presentCount);
+        const studentTotal = studentSessionCountMap.get(a.studentId) || 1;
         attendanceRateMap.set(
           a.studentId,
-          Math.round((present / totalSessionCount) * 100),
+          Math.round((present / studentTotal) * 100),
         );
       }
     }
@@ -1141,11 +1177,12 @@ export class InstructorService {
       throw new NotFoundException('Student not found');
     }
 
-    // Get attendance summary for this student in instructor's sessions
+    // Get attendance summary — only for courses this student is enrolled in
+    const studentCourseIds = studentEnrollments.map((e) => e.courseId);
     const sessionIds = await db
       .select({ id: sessions.id })
       .from(sessions)
-      .where(inArray(sessions.courseId, courseIds));
+      .where(inArray(sessions.courseId, studentCourseIds));
 
     const sIds = sessionIds.map((s) => s.id);
 
@@ -1391,16 +1428,36 @@ export class InstructorService {
       studentCoursesMap.set(e.studentId, existing);
     }
 
-    // Get all session IDs for instructor's courses
+    // Get session counts per course for per-student denominator
+    const sessionCountByCourse = await db
+      .select({
+        courseId: sessions.courseId,
+        count: sql<number>`COUNT(*)`.mapWith(Number),
+      })
+      .from(sessions)
+      .where(inArray(sessions.courseId, courseIds))
+      .groupBy(sessions.courseId);
+
+    const sessionCountPerCourse = new Map(
+      sessionCountByCourse.map((s) => [s.courseId, s.count]),
+    );
+
+    // Per-student total sessions (sum of sessions in their enrolled courses only)
+    const studentSessionTotals = new Map<string, number>();
+    for (const [studentId, studentCourses] of studentCoursesMap) {
+      let total = 0;
+      for (const cid of studentCourses) {
+        total += sessionCountPerCourse.get(cid) || 0;
+      }
+      studentSessionTotals.set(studentId, total);
+    }
+
+    // Get all session IDs for attendance query
     const sessionIds = await db
       .select({ id: sessions.id })
       .from(sessions)
       .where(inArray(sessions.courseId, courseIds));
-
     const sIds = sessionIds.map((s) => s.id);
-
-    // Get attendance data per student — use total course sessions as denominator
-    const totalSessionCount = sIds.length;
 
     const attendanceData =
       sIds.length > 0
@@ -1423,19 +1480,20 @@ export class InstructorService {
         : [];
 
     const attendanceMap = new Map(
-      attendanceData.map((a) => [
-        a.studentId,
-        {
-          totalSessions: totalSessionCount,
-          presentCount: Number(a.presentCount),
-          rate:
-            totalSessionCount > 0
-              ? Math.round(
-                  (Number(a.presentCount) / totalSessionCount) * 100,
-                )
+      attendanceData.map((a) => {
+        const studentTotal = studentSessionTotals.get(a.studentId) || 1;
+        const present = Number(a.presentCount);
+        return [
+          a.studentId,
+          {
+            totalSessions: studentTotal,
+            presentCount: present,
+            rate: studentTotal > 0
+              ? Math.round((present / studentTotal) * 100)
               : 0,
-        },
-      ]),
+          },
+        ];
+      }),
     );
 
     // Get student details
@@ -1473,7 +1531,8 @@ export class InstructorService {
 
       // Criterion 1: Attendance rate below threshold
       const attendanceRate = attnData?.rate ?? 0;
-      if (totalSessionCount > 0 && attendanceRate < minAttThreshold) {
+      const studentTotal = studentSessionTotals.get(studentId) || 0;
+      if (studentTotal > 0 && attendanceRate < minAttThreshold) {
         riskReasons.push(
           `Attendance rate ${attendanceRate}% (below ${minAttThreshold}%)`,
         );

@@ -792,8 +792,8 @@ export class CertificatesService {
       if (!(this as any)._arabicFontCache) {
         try {
           const https = require('https');
-          // Amiri Bold — high quality Arabic font from Google Fonts
-          const fontUrl = 'https://fonts.gstatic.com/s/amiri/v30/J7acnpd8CGxBHp2VkZY4.ttf';
+          // Amiri Bold — served from our own frontend
+          const fontUrl = `${frontendUrl}/fonts/Amiri-Bold.ttf`;
           arabicFontBuffer = await new Promise<Buffer>((res, rej) => {
             const req = https.get(fontUrl, (resp: any) => {
               // Follow redirects

@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import {
   CheckCircle2,
   XCircle,
-  Award,
+  Shield,
   Calendar,
   Clock,
   User,
   BookOpen,
   Loader2,
-  ArrowLeft,
+  Award,
+  BadgeCheck,
 } from "lucide-react";
 
 interface VerificationResult {
@@ -61,12 +63,10 @@ export default function CertificateVerifyContent({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mx-auto mb-3" />
-          <p className="text-sm text-[#6B7280]">
-            {t("verify.verifying")}
-          </p>
+          <p className="text-sm text-[#6B7280]">{t("verify.verifying")}</p>
         </div>
       </div>
     );
@@ -74,24 +74,25 @@ export default function CertificateVerifyContent({
 
   if (notFound || !result) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl border border-[#E5E7EB] shadow-sm p-8 text-center">
-          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <XCircle className="w-8 h-8 text-red-500" />
+      <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center p-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-lg p-10">
+            <div className="w-20 h-20 bg-[#FEF2F2] rounded-full flex items-center justify-center mx-auto mb-5">
+              <XCircle className="w-10 h-10 text-[#EF4444]" />
+            </div>
+            <h1 className="text-2xl font-bold text-[#1F2937] mb-2">
+              {t("verify.notFoundTitle")}
+            </h1>
+            <p className="text-sm text-[#6B7280] mb-8">
+              {t("verify.notFoundDescription")}
+            </p>
+            <Link
+              href={`/${locale}`}
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-[#002D87] rounded-lg hover:bg-[#001E5C] transition-colors"
+            >
+              {t("verify.backToHome")}
+            </Link>
           </div>
-          <h1 className="text-xl font-bold text-[#1F2937] mb-2">
-            {t("verify.notFoundTitle")}
-          </h1>
-          <p className="text-sm text-[#6B7280] mb-6">
-            {t("verify.notFoundDescription")}
-          </p>
-          <Link
-            href={`/${locale}`}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-[#002D87] border border-[#002D87] rounded-lg hover:bg-[#F0F4FF] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t("verify.backToHome")}
-          </Link>
         </div>
       </div>
     );
@@ -108,126 +109,124 @@ export default function CertificateVerifyContent({
     : "—";
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4">
-      <div className="max-w-lg w-full bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-        {/* Verification Status Banner */}
-        {result.verified ? (
-          <div className="bg-green-500 px-6 py-4 flex items-center gap-3">
-            <CheckCircle2 className="w-8 h-8 text-white flex-shrink-0" />
-            <div>
-              <h1 className="text-lg font-bold text-white">
-                {t("verify.verifiedTitle")}
-              </h1>
-              <p className="text-sm text-green-100">
-                {t("verify.verifiedDescription")}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-yellow-500 px-6 py-4 flex items-center gap-3">
-            <XCircle className="w-8 h-8 text-white flex-shrink-0" />
-            <div>
-              <h1 className="text-lg font-bold text-white">
-                {t("verify.pendingTitle")}
-              </h1>
-              <p className="text-sm text-yellow-100">
-                {t("verify.pendingDescription")}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Certificate Details */}
-        <div className="p-6 space-y-5">
-          {/* Certificate ID */}
-          <div className="text-center">
-            <span className="inline-block px-4 py-1.5 bg-[#F0F7FF] text-[#002D87] font-mono text-sm font-semibold rounded-full border border-[#DBEAFE]">
-              {result.certificateId}
-            </span>
-          </div>
-
-          {/* Details Grid */}
-          <div className="space-y-4">
-            {/* Student Name */}
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
-                <User className="w-4.5 h-4.5 text-[#6B7280]" />
-              </div>
-              <div>
-                <p className="text-xs text-[#9CA3AF] mb-0.5">
-                  {t("verify.studentName")}
-                </p>
-                <p className="text-sm font-medium text-[#1F2937]">
-                  {result.studentName}
-                </p>
-              </div>
-            </div>
-
-            {/* Course Name */}
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-4.5 h-4.5 text-[#6B7280]" />
-              </div>
-              <div>
-                <p className="text-xs text-[#9CA3AF] mb-0.5">
-                  {t("verify.courseName")}
-                </p>
-                <p className="text-sm font-medium text-[#1F2937]">
-                  {courseName}
-                </p>
-              </div>
-            </div>
-
-            {/* Issue Date */}
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
-                <Calendar className="w-4.5 h-4.5 text-[#6B7280]" />
-              </div>
-              <div>
-                <p className="text-xs text-[#9CA3AF] mb-0.5">
-                  {t("verify.issuedDate")}
-                </p>
-                <p className="text-sm font-medium text-[#1F2937]">
-                  {formattedDate}
-                </p>
-              </div>
-            </div>
-
-            {/* Total Hours */}
-            {result.totalHours && result.totalHours > 0 && (
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-4.5 h-4.5 text-[#6B7280]" />
-                </div>
-                <div>
-                  <p className="text-xs text-[#9CA3AF] mb-0.5">
-                    {t("verify.totalHours")}
-                  </p>
-                  <p className="text-sm font-medium text-[#1F2937]">
-                    {result.totalHours} {t("verify.hours")}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Issuer Info */}
-          <div className="border-t border-[#E5E7EB] pt-4 flex items-center gap-2">
-            <Award className="w-4 h-4 text-[#D4A520]" />
-            <p className="text-xs text-[#6B7280]">
-              {t("verify.issuedBy")}
-            </p>
-          </div>
+    <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center p-4">
+      <div className="max-w-xl w-full">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <Image
+            src="/images/logo.png"
+            alt="PhysioGuidance"
+            width={60}
+            height={60}
+            className="mx-auto"
+          />
         </div>
 
-        {/* Footer */}
-        <div className="bg-[#F9FAFB] px-6 py-3 text-center">
-          <Link
-            href={`/${locale}`}
-            className="text-xs text-[#6B7280] hover:text-[#002D87] transition-colors"
-          >
-            {t("verify.backToHome")}
-          </Link>
+        {/* Certificate Card */}
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-lg overflow-hidden">
+          {/* Status Banner */}
+          {result.verified ? (
+            <div className="bg-gradient-to-r from-[#002D87] to-[#0046D4] px-8 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/15 rounded-full flex items-center justify-center flex-shrink-0">
+                  <BadgeCheck className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white tracking-wide">
+                    {t("verify.verifiedTitle")}
+                  </h1>
+                  <p className="text-sm text-blue-200 mt-0.5">
+                    {t("verify.verifiedDescription")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-r from-[#D97706] to-[#F59E0B] px-8 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white/15 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-7 h-7 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white tracking-wide">
+                    {t("verify.pendingTitle")}
+                  </h1>
+                  <p className="text-sm text-yellow-100 mt-0.5">
+                    {t("verify.pendingDescription")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Certificate Content */}
+          <div className="px-8 py-7">
+            {/* Certificate ID */}
+            <div className="text-center mb-6">
+              <span className="inline-block px-5 py-2 bg-[#F0F4FF] text-[#002D87] font-mono text-sm font-bold rounded-full border border-[#D6E0F5]">
+                {result.certificateId}
+              </span>
+            </div>
+
+            {/* Decorative divider */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-px bg-[#E5E7EB]" />
+              <Award className="w-5 h-5 text-[#D4A520]" />
+              <div className="flex-1 h-px bg-[#E5E7EB]" />
+            </div>
+
+            {/* Certificate Title */}
+            <div className="text-center mb-6">
+              <p className="text-xs text-[#9CA3AF] uppercase tracking-widest mb-1">Certificate of Attendance</p>
+              <p className="text-lg font-bold text-[#1F2937]">{result.studentName}</p>
+              <p className="text-sm text-[#6B7280] mt-1">for completing</p>
+              <p className="text-base font-semibold text-[#002D87] mt-1">{courseName}</p>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
+                <Calendar className="w-5 h-5 text-[#002D87] mx-auto mb-2" />
+                <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">Date Issued</p>
+                <p className="text-sm font-semibold text-[#1F2937]">{formattedDate}</p>
+              </div>
+
+              {result.totalHours && result.totalHours > 0 ? (
+                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
+                  <Clock className="w-5 h-5 text-[#D4A520] mx-auto mb-2" />
+                  <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">CME Hours</p>
+                  <p className="text-sm font-semibold text-[#1F2937]">{result.totalHours} Hours</p>
+                </div>
+              ) : (
+                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
+                  <Shield className="w-5 h-5 text-[#22C55E] mx-auto mb-2" />
+                  <p className="text-[10px] text-[#9CA3AF] uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-sm font-semibold text-[#22C55E]">Verified</p>
+                </div>
+              )}
+            </div>
+
+            {/* SCFHS Accreditation */}
+            <div className="mt-6 text-center">
+              <p className="text-[11px] text-[#9CA3AF]">
+                Accredited by the Saudi Commission for Health Specialties (SCFHS)
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="border-t border-[#E5E7EB] bg-[#FAFBFC] px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Image src="/images/logo.png" alt="" width={20} height={20} />
+              <span className="text-xs text-[#9CA3AF]">Issued by PhysioGuidance</span>
+            </div>
+            <Link
+              href={`/${locale}`}
+              className="text-xs text-[#002D87] font-medium hover:underline transition-colors"
+            >
+              {t("verify.backToHome")}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

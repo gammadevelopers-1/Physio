@@ -35,11 +35,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Install FFmpeg for video processing + Chromium for certificate PDF generation
-RUN apk add --no-cache ffmpeg chromium
+RUN apk add --no-cache ffmpeg chromium nss freetype harfbuzz ca-certificates ttf-freefont
 
 # Tell Puppeteer to use installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage"
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \

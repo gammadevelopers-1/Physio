@@ -470,9 +470,10 @@ export class CertificatesService {
         request.studentId,
       );
     } catch (error) {
-      this.logger.error(`Failed to generate certificate PDF for request ${id}`, error);
+      const errMsg = error?.message || String(error);
+      this.logger.error(`Failed to generate certificate PDF for request ${id}: ${errMsg}`);
       throw new BadRequestException(
-        'Failed to generate certificate PDF. Please try again.',
+        `Certificate PDF generation failed: ${errMsg}`,
       );
     }
 

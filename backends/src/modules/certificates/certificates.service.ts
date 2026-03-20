@@ -769,10 +769,7 @@ export class CertificatesService {
     // Show Arabic name if available, or English name if it contains Arabic chars
     const rawDisplayName = studentNameAr || studentNameEn;
     const nameIsArabic = !!(studentNameAr) || hasArabicChars(studentNameEn);
-    // PDFKit doesn't handle RTL word order — reverse words for Arabic
-    const displayName = nameIsArabic
-      ? rawDisplayName.split(' ').reverse().join(' ')
-      : rawDisplayName;
+    const displayName = rawDisplayName;
     const courseTitle = course?.title || 'Course';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();

@@ -12,11 +12,13 @@ import {
   courses,
   users,
   enrollments,
+  attendance,
   attendanceLogs,
   sessionRecordings,
   sessionMaterials,
   courseMaterials,
   sessionAssistants,
+  courseAssistants,
   assessments,
   SESSION_STATUS,
   SESSION_TYPE,
@@ -831,6 +833,9 @@ export class SessionsService {
       metadata: { courseId: updated.courseId },
     }).catch(() => {});
 
+    // Auto-create absent records for enrolled students with no attendance
+    await this.autoCreateAbsentRecords(sessionId, updated.courseId);
+
     // Notify enrolled students
     this.sessionNotificationService
       .notifySessionEvent(updated, 'session_ended')
@@ -871,6 +876,9 @@ export class SessionsService {
       },
     });
 
+    // Auto-create absent records for any enrolled students still missing
+    await this.autoCreateAbsentRecords(sessionId, updated.courseId);
+
     await this.auditLogService.log({
       entityType: 'session',
       entityId: updated.id,
@@ -880,6 +888,87 @@ export class SessionsService {
     }).catch(() => {});
 
     return updated;
+  }
+
+  /**
+   * Auto-create 'absent' attendance records for enrolled students
+   * who have no attendance record for this session.
+   * This ensures consistent attendance data across all dashboards.
+   */
+  private async autoCreateAbsentRecords(
+    sessionId: string,
+    courseId: string,
+  ): Promise<void> {
+    try {
+      // Get instructor + TA IDs to exclude
+      const [course] = await db
+        .select({ instructorId: courses.instructorId })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+
+      const excludeIds = new Set<string>();
+      if (course?.instructorId) excludeIds.add(course.instructorId);
+
+      const tas = await db
+        .select({ userId: courseAssistants.userId })
+        .from(courseAssistants)
+        .where(
+          and(
+            eq(courseAssistants.courseId, courseId),
+            sql`${courseAssistants.status} IN ('approved', 'pre_assigned')`,
+          ),
+        );
+      for (const ta of tas) excludeIds.add(ta.userId);
+
+      // Get all actively enrolled students
+      const enrolled = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, courseId),
+            sql`${enrollments.status} IN ('active', 'completed')`,
+          ),
+        );
+
+      // Get students who already have an attendance record
+      const existing = await db
+        .select({ studentId: attendance.studentId })
+        .from(attendance)
+        .where(eq(attendance.sessionId, sessionId));
+
+      const existingIds = new Set(existing.map((e) => e.studentId));
+
+      // Find enrolled students with no attendance record (excluding instructor/TAs)
+      const missingStudents = enrolled.filter(
+        (e) => !existingIds.has(e.studentId) && !excludeIds.has(e.studentId),
+      );
+
+      if (missingStudents.length === 0) return;
+
+      // Bulk insert absent records
+      await db
+        .insert(attendance)
+        .values(
+          missingStudents.map((s) => ({
+            sessionId,
+            studentId: s.studentId,
+            status: 'absent',
+          })),
+        )
+        .onConflictDoNothing();
+
+      this.logger.log(
+        `Auto-created ${missingStudents.length} absent record(s) for session ${sessionId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to auto-create absent records for session ${sessionId}`,
+        error,
+      );
+      // Don't throw — this is best-effort, shouldn't block end/finalize
+    }
   }
 
   /**

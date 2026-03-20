@@ -16,6 +16,7 @@ import {
   certificateRequests,
   users,
   scheduledReports,
+  courseAssistants,
 } from '../../database/schema';
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -201,9 +202,22 @@ export class ReportsService {
       .where(and(...sessionConditions))
       .orderBy(users.lastName, sessions.scheduledAt);
 
-    // Filter out instructor/host from attendance data
-    const filteredData = instructorIds.size > 0
-      ? data.filter((row) => !instructorIds.has(row.studentId))
+    // Get TA user IDs to exclude from attendance
+    const taRecords = await db
+      .select({ userId: courseAssistants.userId })
+      .from(courseAssistants)
+      .where(
+        and(
+          inArray(courseAssistants.courseId, courseIds),
+          sql`${courseAssistants.status} IN ('approved', 'pre_assigned')`,
+        ),
+      );
+    const taIds = new Set(taRecords.map((t) => t.userId));
+
+    // Filter out instructor/host and TAs from attendance data
+    const excludeIds = new Set([...instructorIds, ...taIds]);
+    const filteredData = excludeIds.size > 0
+      ? data.filter((row) => !excludeIds.has(row.studentId))
       : data;
 
     // Compute total attendance % per student (across ALL sessions, not date-filtered)
@@ -302,7 +316,7 @@ export class ReportsService {
 
       for (const student of enrolledStudents) {
         if (existingStudentIds.has(student.studentId)) continue;
-        if (instructorIds.has(student.studentId)) continue;
+        if (excludeIds.has(student.studentId)) continue;
 
         const pct = attendancePctMap.get(`${student.studentId}:${sess.courseId}`) || '0.00%';
         rows.push([

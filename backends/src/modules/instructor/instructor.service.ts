@@ -1391,7 +1391,10 @@ export class InstructorService {
         atRiskInactivityDays: courses.atRiskInactivityDays,
       })
       .from(courses)
-      .where(courseConditions.length > 0 ? and(...courseConditions) : undefined);
+      .where(and(
+        ...(courseConditions.length > 0 ? courseConditions : []),
+        sql`${courses.status} IN ('active', 'draft', 'pending_review')`,
+      ));
 
     const courseIds = instructorCourses.map((c) => c.id);
     if (courseIds.length === 0) return [];
@@ -1409,7 +1412,7 @@ export class InstructorService {
       .where(
         and(
           inArray(enrollments.courseId, courseIds),
-          sql`${enrollments.status} IN ('active', 'completed')`,
+          eq(enrollments.status, 'active'),
         ),
       );
 

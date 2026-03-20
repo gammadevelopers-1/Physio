@@ -569,7 +569,12 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                       {/* Attendance Tab — Per-Course Breakdown */}
                       {activeTab === "attendance" && (
                         <div className="space-y-6">
-                          {(student.coursePerformance || []).map((cp: any) => (
+                          {(student.coursePerformance || [])
+                            .sort((a: any, b: any) => {
+                              const order: Record<string, number> = { active: 0, completed: 1, dropped: 2 };
+                              return (order[a.enrollmentStatus] ?? 3) - (order[b.enrollmentStatus] ?? 3);
+                            })
+                            .map((cp: any) => (
                             <div key={cp.courseId} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                               {/* Course Header */}
                               <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] flex items-center justify-between">
@@ -723,7 +728,12 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                       {/* Assessments Tab — Per Course */}
                       {activeTab === "assessments" && (
                         <div className="space-y-6">
-                          {(student.coursePerformance || []).map((cp: any) => {
+                          {(student.coursePerformance || [])
+                            .sort((a: any, b: any) => {
+                              const order: Record<string, number> = { active: 0, completed: 1, dropped: 2 };
+                              return (order[a.enrollmentStatus] ?? 3) - (order[b.enrollmentStatus] ?? 3);
+                            })
+                            .map((cp: any) => {
                             const courseAssessments = cp.assessments || [];
                             if (courseAssessments.length === 0) return null;
                             return (

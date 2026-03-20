@@ -877,25 +877,15 @@ export class CertificatesService {
     try {
       const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser';
       browser = await puppeteer.launch({
-        headless: 'shell',
+        headless: true,
         executablePath: execPath,
-        pipe: true,
-        protocolTimeout: 30000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--single-process',
           '--no-zygote',
-          '--disable-extensions',
-          '--disable-background-networking',
-          '--disable-default-apps',
-          '--disable-translate',
-          '--disable-sync',
-          '--headless=new',
-          '--hide-scrollbars',
-          '--mute-audio',
+          '--single-process',
         ],
       });
       const page = await browser.newPage();

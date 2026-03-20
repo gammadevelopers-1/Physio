@@ -767,8 +767,12 @@ export class CertificatesService {
     // Check if the English name actually contains Arabic characters
     const hasArabicChars = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
     // Show Arabic name if available, or English name if it contains Arabic chars
-    const displayName = studentNameAr || studentNameEn;
+    const rawDisplayName = studentNameAr || studentNameEn;
     const nameIsArabic = !!(studentNameAr) || hasArabicChars(studentNameEn);
+    // PDFKit doesn't handle RTL word order — reverse words for Arabic
+    const displayName = nameIsArabic
+      ? rawDisplayName.split(' ').reverse().join(' ')
+      : rawDisplayName;
     const courseTitle = course?.title || 'Course';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();

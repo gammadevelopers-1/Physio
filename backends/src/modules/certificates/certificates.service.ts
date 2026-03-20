@@ -784,196 +784,130 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Load fonts and assets
-    const path = require('path');
-    const fs = require('fs');
-    const assetsDir = path.join(__dirname, 'assets');
-    this.logger.log(`Certificate assets dir: ${assetsDir}, exists: ${fs.existsSync(assetsDir)}`);
-    if (fs.existsSync(assetsDir)) {
-      this.logger.log(`Assets contents: ${fs.readdirSync(assetsDir).join(', ')}`);
-    }
-    const cairoBold = path.join(assetsDir, 'Cairo-Bold.ttf');
-    const cairoRegular = path.join(assetsDir, 'Cairo-Regular.ttf');
-    const cairoSemiBold = path.join(assetsDir, 'Cairo-SemiBold.ttf');
-    const logoPath = path.join(assetsDir, 'logo.png');
-    const scfhsLogoPath = path.join(assetsDir, 'scfhs-logo.png');
-
-    // Build the PDF
+    // Build the PDF using only built-in PDFKit fonts (no external dependencies)
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
-      const chunks: Buffer[] = [];
-      const doc = new PDFDocument({
-        size: 'A4',
-        layout: 'landscape',
-        margin: 0,
-      });
+        const chunks: Buffer[] = [];
+        const doc = new PDFDocument({
+          size: 'A4',
+          layout: 'landscape',
+          margin: 0,
+        });
 
-      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
 
-      const W = doc.page.width;   // 841.89
-      const H = doc.page.height;  // 595.28
-      const cx = W / 2;
+        const W = doc.page.width;
+        const H = doc.page.height;
+        const cx = W / 2;
 
-      // Register fonts
-      if (fs.existsSync(cairoBold)) doc.registerFont('Cairo-Bold', cairoBold);
-      if (fs.existsSync(cairoRegular)) doc.registerFont('Cairo-Regular', cairoRegular);
-      if (fs.existsSync(cairoSemiBold)) doc.registerFont('Cairo-SemiBold', cairoSemiBold);
+        // Colors
+        const navy = '#002D87';
+        const goldLight = '#C9A84C';
+        const gray = '#6B7280';
+        const darkText = '#1F2937';
 
-      const fontBold = fs.existsSync(cairoBold) ? 'Cairo-Bold' : 'Helvetica-Bold';
-      const fontRegular = fs.existsSync(cairoRegular) ? 'Cairo-Regular' : 'Helvetica';
-      const fontSemiBold = fs.existsSync(cairoSemiBold) ? 'Cairo-SemiBold' : 'Helvetica-Bold';
+        // Background & Borders
+        doc.rect(0, 0, W, H).fill('#FAFAFA');
+        doc.rect(20, 20, W - 40, H - 40).lineWidth(2.5).stroke(navy);
+        doc.rect(28, 28, W - 56, H - 56).lineWidth(0.8).stroke(goldLight);
 
-      // Colors
-      const navy = '#002D87';
-      const gold = '#D4A520';
-      const goldLight = '#C9A84C';
-      const gray = '#6B7280';
-      const darkText = '#1F2937';
+        // CME hours badge (top-right)
+        if (cmeHours > 0) {
+          const bx = W - 120, by = 38, br = 30;
+          doc.circle(bx + br, by + br, br).lineWidth(2).stroke(navy);
+          doc.circle(bx + br, by + br, br - 4).lineWidth(0.5).stroke(goldLight);
+          doc.font('Helvetica-Bold').fontSize(22).fillColor(navy)
+            .text(String(cmeHours), bx, by + 12, { width: br * 2, align: 'center' });
+          doc.font('Helvetica').fontSize(6).fillColor(gray)
+            .text('CME HOURS', bx, by + 36, { width: br * 2, align: 'center' });
+        }
 
-      // ─── Background & Borders ─────────────────────────────
-      doc.rect(0, 0, W, H).fill('#FAFAFA');
+        // Organization name (top-left)
+        doc.font('Helvetica-Bold').fontSize(12).fillColor(navy)
+          .text('PHYSIOGUIDANCE', 50, 50);
+        doc.font('Helvetica').fontSize(7).fillColor(gray)
+          .text('Professional Medical Education', 50, 65);
 
-      // Outer border (navy)
-      doc.rect(20, 20, W - 40, H - 40).lineWidth(2.5).stroke(navy);
-      // Inner border (gold)
-      doc.rect(28, 28, W - 56, H - 56).lineWidth(0.8).stroke(goldLight);
+        // Certificate Title
+        let y = 100;
+        doc.font('Helvetica-Bold').fontSize(36).fillColor(navy)
+          .text('CERTIFICATE', 0, y, { align: 'center' });
+        y += 38;
+        doc.font('Helvetica-Bold').fontSize(18).fillColor(navy)
+          .text('OF ATTENDANCE', 0, y, { align: 'center' });
 
-      // ─── Header Logos ─────────────────────────────────────
-      // Organization logo (top-left)
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 50, 40, { height: 50 });
-      }
+        // "PROUDLY AWARDED TO" pill
+        y += 35;
+        const pillW = 200, pillH = 22;
+        doc.roundedRect(cx - pillW / 2, y, pillW, pillH, 11).fill(goldLight);
+        doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF')
+          .text('PROUDLY AWARDED TO', cx - pillW / 2, y + 6, { width: pillW, align: 'center' });
 
-      // SCFHS logo (top-center)
-      if (fs.existsSync(scfhsLogoPath)) {
-        doc.image(scfhsLogoPath, cx - 30, 38, { height: 45 });
-      }
+        // Student Name
+        y += 35;
+        doc.font('Helvetica-Bold').fontSize(28).fillColor(darkText)
+          .text(studentNameEn, 0, y, { align: 'center' });
 
-      // CME hours badge (top-right)
-      if (cmeHours > 0) {
-        const badgeX = W - 120;
-        const badgeY = 38;
-        const badgeR = 30;
-        doc.circle(badgeX + badgeR, badgeY + badgeR, badgeR).lineWidth(2).stroke(navy);
-        doc.circle(badgeX + badgeR, badgeY + badgeR, badgeR - 4).lineWidth(0.5).stroke(goldLight);
-        doc.font(fontBold).fontSize(22).fillColor(navy)
-          .text(String(cmeHours), badgeX, badgeY + 12, { width: badgeR * 2, align: 'center' });
-        doc.font(fontRegular).fontSize(6).fillColor(gray)
-          .text('CME HOURS', badgeX, badgeY + 36, { width: badgeR * 2, align: 'center' });
-      }
+        // "FOR ATTENDING" pill
+        y += 40;
+        const fpW = 150;
+        doc.roundedRect(cx - fpW / 2, y, fpW, pillH, 11).fill(goldLight);
+        doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF')
+          .text('FOR ATTENDING', cx - fpW / 2, y + 6, { width: fpW, align: 'center' });
 
-      // ─── Certificate Title ────────────────────────────────
-      let y = 110;
-      doc.font(fontBold).fontSize(36).fillColor(navy)
-        .text('CERTIFICATE', 0, y, { align: 'center' });
-      y += 38;
-      doc.font(fontSemiBold).fontSize(20).fillColor(navy)
-        .text('OF ATTENDANCE', 0, y, { align: 'center' });
+        // Course Title
+        y += 32;
+        doc.font('Helvetica-Bold').fontSize(18).fillColor(darkText)
+          .text(courseTitle, 60, y, { align: 'center', width: W - 120 });
 
-      // "PROUDLY AWARDED TO" pill
-      y += 35;
-      const pillText = 'PROUDLY AWARDED TO';
-      const pillW = 200;
-      const pillH = 22;
-      doc.roundedRect(cx - pillW / 2, y, pillW, pillH, 11).fill(goldLight);
-      doc.font(fontSemiBold).fontSize(9).fillColor('#FFFFFF')
-        .text(pillText, cx - pillW / 2, y + 6, { width: pillW, align: 'center' });
+        // Date pill
+        y += 32;
+        const dpW = 220, dpH = 24;
+        doc.roundedRect(cx - dpW / 2, y, dpW, dpH, 12).fill(goldLight);
+        doc.font('Helvetica-Bold').fontSize(10).fillColor('#FFFFFF')
+          .text(dateFormatted, cx - dpW / 2, y + 7, { width: dpW, align: 'center' });
 
-      // ─── Student Name ─────────────────────────────────────
-      y += 35;
-      // Arabic name (if available)
-      if (studentNameAr) {
-        doc.font(fontBold).fontSize(28).fillColor(darkText)
-          .text(studentNameAr, 0, y, { align: 'center', features: ['rtla'] });
-        y += 36;
-      }
-      // English name
-      doc.font(fontSemiBold).fontSize(studentNameAr ? 16 : 28).fillColor(studentNameAr ? gray : darkText)
-        .text(studentNameEn, 0, y, { align: 'center' });
+        // SCFHS Accreditation
+        y += 38;
+        doc.font('Helvetica').fontSize(9).fillColor(gray)
+          .text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
+        y += 14;
+        doc.font('Helvetica').fontSize(8).fillColor(gray)
+          .text(`Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
+        if (cmeHours > 0) {
+          y += 13;
+          doc.font('Helvetica-Bold').fontSize(9).fillColor(navy)
+            .text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
+        }
 
-      // "FOR ATTENDING" pill
-      y += (studentNameAr ? 28 : 38);
-      const forPillText = 'FOR ATTENDING';
-      const forPillW = 150;
-      doc.roundedRect(cx - forPillW / 2, y, forPillW, pillH, 11).fill(goldLight);
-      doc.font(fontSemiBold).fontSize(9).fillColor('#FFFFFF')
-        .text(forPillText, cx - forPillW / 2, y + 6, { width: forPillW, align: 'center' });
+        // Signature Section
+        y += 35;
+        doc.font('Helvetica').fontSize(8).fillColor(gray)
+          .text('Professional Development Manager', cx - 60, y, { width: 200 });
+        doc.font('Helvetica-Bold').fontSize(9).fillColor(darkText)
+          .text('PhysioGuidance', cx - 60, y + 12, { width: 200 });
+        doc.moveTo(cx - 60, y + 28).lineTo(cx + 60, y + 28).lineWidth(0.5).stroke(gray);
+        doc.font('Helvetica').fontSize(7).fillColor(gray)
+          .text('Authorized Signature', cx - 60, y + 31, { width: 120 });
 
-      // ─── Course Title ─────────────────────────────────────
-      y += 32;
-      doc.font(fontBold).fontSize(18).fillColor(darkText)
-        .text(courseTitle, 60, y, { align: 'center', width: W - 120 });
-      if (courseTitleAr) {
-        y += 24;
-        doc.font(fontSemiBold).fontSize(14).fillColor(gray)
-          .text(courseTitleAr, 60, y, { align: 'center', width: W - 120, features: ['rtla'] });
-      }
+        // QR Code
+        const qrSize = 70, qrX = W - 110, qrY = H - 110;
+        doc.image(qrBuffer, qrX, qrY, { width: qrSize });
+        doc.font('Helvetica').fontSize(6).fillColor(gray)
+          .text('Scan to verify', qrX, qrY + qrSize + 3, { width: qrSize, align: 'center' });
+        doc.font('Helvetica').fontSize(5).fillColor(gray)
+          .text(certificateId, qrX, qrY + qrSize + 12, { width: qrSize, align: 'center' });
 
-      // Date pill
-      y += 30;
-      const datePillW = 220;
-      const datePillH = 24;
-      doc.roundedRect(cx - datePillW / 2, y, datePillW, datePillH, 12).fill(goldLight);
-      doc.font(fontSemiBold).fontSize(10).fillColor('#FFFFFF')
-        .text(dateFormatted, cx - datePillW / 2, y + 7, { width: datePillW, align: 'center' });
+        // Watermark
+        doc.save();
+        doc.opacity(0.03);
+        doc.font('Helvetica-Bold').fontSize(90).fillColor(navy)
+          .text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' });
+        doc.restore();
 
-      // ─── SCFHS Accreditation Section ──────────────────────
-      y += 38;
-      doc.font(fontRegular).fontSize(9).fillColor(gray)
-        .text(
-          'This activity has been accredited by the Saudi Commission for Health Specialties',
-          0, y, { align: 'center' },
-        );
-      y += 14;
-      doc.font(fontRegular).fontSize(8).fillColor(gray)
-        .text(
-          `Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`,
-          0, y, { align: 'center' },
-        );
-      if (cmeHours > 0) {
-        y += 13;
-        doc.font(fontSemiBold).fontSize(9).fillColor(navy)
-          .text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
-      }
-
-      // ─── Signature Section ────────────────────────────────
-      y += 30;
-      // Organization logo (small, left of signature)
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, cx - 120, y, { height: 35 });
-      }
-
-      // Signature text (right side)
-      doc.font(fontRegular).fontSize(8).fillColor(gray)
-        .text('Professional Development Manager', cx - 10, y, { width: 200 });
-      doc.font(fontSemiBold).fontSize(9).fillColor(darkText)
-        .text('PhysioGuidance', cx - 10, y + 12, { width: 200 });
-
-      // Signature line
-      doc.moveTo(cx - 10, y + 30).lineTo(cx + 100, y + 30).lineWidth(0.5).stroke(gray);
-      doc.font(fontRegular).fontSize(7).fillColor(gray)
-        .text('Authorized Signature', cx - 10, y + 33, { width: 120 });
-
-      // ─── QR Code & Verification ───────────────────────────
-      const qrSize = 70;
-      const qrX = W - 110;
-      const qrY = H - 110;
-      doc.image(qrBuffer, qrX, qrY, { width: qrSize });
-      doc.font(fontRegular).fontSize(6).fillColor(gray)
-        .text('Scan to verify', qrX, qrY + qrSize + 3, { width: qrSize, align: 'center' });
-      doc.font(fontRegular).fontSize(5).fillColor(gray)
-        .text(certificateId, qrX, qrY + qrSize + 12, { width: qrSize, align: 'center' });
-
-      // ─── Watermark ────────────────────────────────────────
-      doc.save();
-      doc.opacity(0.03);
-      doc.font(fontBold).fontSize(90).fillColor(navy)
-        .text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' });
-      doc.restore();
-
-      doc.end();
+        doc.end();
       } catch (err) {
         reject(err);
       }

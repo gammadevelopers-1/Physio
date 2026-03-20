@@ -808,18 +808,14 @@ export class CertificatesService {
       logoBuffer = (this as any)._logoCacheBuffer;
     }
 
-    // Load Arabic font for SVG path rendering (embedded base64 — zero network dependency)
-    let arabicFont: any = null;
+    // Load Arabic font buffer from embedded base64
+    let arabicFontBuf: Buffer | null = null;
     if (nameIsArabic) {
-      if (!(this as any)._arabicOpentype) {
+      if (!(this as any)._arabicFontBuf) {
         const { AMIRI_BOLD_BASE64 } = require('./amiri-bold-font');
-        const opentype = require('opentype.js');
-        const fontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
-        arabicFont = opentype.parse(fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength));
-        (this as any)._arabicOpentype = arabicFont;
-      } else {
-        arabicFont = (this as any)._arabicOpentype;
+        (this as any)._arabicFontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
       }
+      arabicFontBuf = (this as any)._arabicFontBuf;
     }
 
     // Generate QR as buffer for PDFKit
@@ -877,32 +873,11 @@ export class CertificatesService {
         doc.roundedRect(cx - 120, y, 240, 28, 14).fill(gold);
         doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF').text('PROUDLY AWARDED TO', cx - 120, y + 8, { width: 240, align: 'center' });
 
-        // Student name — Arabic as SVG path or English as text
+        // Student name — register Arabic font if needed
         y += 40;
-        if (arabicFont && nameIsArabic) {
-          // Render Arabic name as SVG path via opentype.js
-          const fontSize = 30;
-          const path = arabicFont.getPath(displayName, 0, 0, fontSize);
-          const bbox = path.getBoundingBox();
-          const textWidth = bbox.x2 - bbox.x1;
-          const offsetX = cx - textWidth / 2 - bbox.x1;
-          const offsetY = y + fontSize * 0.8;
-
-          // Convert opentype path commands to PDFKit path
-          doc.save();
-          doc.translate(offsetX, offsetY);
-          doc.fillColor(dark);
-          for (const cmd of path.commands) {
-            switch (cmd.type) {
-              case 'M': doc.moveTo(cmd.x, cmd.y); break;
-              case 'L': doc.lineTo(cmd.x, cmd.y); break;
-              case 'Q': doc.quadraticCurveTo(cmd.x1, cmd.y1, cmd.x, cmd.y); break;
-              case 'C': doc.bezierCurveTo(cmd.x1, cmd.y1, cmd.x2, cmd.y2, cmd.x, cmd.y); break;
-              case 'Z': doc.closePath(); break;
-            }
-          }
-          doc.fill(dark);
-          doc.restore();
+        if (arabicFontBuf && nameIsArabic) {
+          doc.registerFont('Amiri-Bold', arabicFontBuf);
+          doc.font('Amiri-Bold').fontSize(30).fillColor(dark).text(displayName, 0, y, { align: 'center' });
         } else {
           doc.font('Helvetica-Bold').fontSize(30).fillColor(dark).text(displayName, 0, y, { align: 'center' });
         }

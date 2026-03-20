@@ -1381,6 +1381,8 @@ export interface CreateCourseManagerData {
   deliveryType: 'zoom' | 'onsite' | 'blended';
   thumbnail?: string;
   maxEnrollment?: number;
+  cmeHours?: number;
+  isCmeAccredited?: boolean;
   startDate?: string;
   endDate?: string;
   instructorId: string;

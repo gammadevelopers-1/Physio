@@ -122,7 +122,7 @@ const CreateCourseContent = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [maxEnrollment, setMaxEnrollment] = useState("");
-  const [minimumHours, setMinimumHours] = useState("");
+  const [cmeHours, setCmeHours] = useState("");
   const [cohort, setCohort] = useState("");
   const [nelcAccreditation, setNelcAccreditation] = useState(true);
   const [bilingualContent, setBilingualContent] = useState(true);
@@ -248,6 +248,10 @@ const CreateCourseContent = () => {
       if (descriptionAr.trim()) payload.descriptionAr = descriptionAr.trim();
       if (thumbnailUrl) payload.thumbnail = thumbnailUrl;
       if (maxEnrollment) payload.maxEnrollment = Number(maxEnrollment);
+      if (cmeHours) {
+        payload.cmeHours = Number(cmeHours);
+        payload.isCmeAccredited = true;
+      }
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
       if (cohort.trim()) payload.cohort = cohort.trim();
@@ -523,18 +527,20 @@ const CreateCourseContent = () => {
                           )}
                       </div>
                       <div>
-                        <label htmlFor="minimum-hours" className="block text-sm font-medium text-[#374151] mb-1">
-                          {t("createCourse.minimumHours")}
+                        <label htmlFor="cme-hours" className="block text-sm font-medium text-[#374151] mb-1">
+                          {t("createCourse.cmeHours")} *
                         </label>
                         <input
-                          id="minimum-hours"
+                          id="cme-hours"
                           type="number"
-                          value={minimumHours}
-                          onChange={(e) => setMinimumHours(e.target.value)}
-                          placeholder="20"
+                          value={cmeHours}
+                          onChange={(e) => setCmeHours(e.target.value)}
+                          placeholder="5"
                           min={1}
+                          required
                           className={inputClass}
                         />
+                        <p className="text-xs text-[#9CA3AF] mt-1">{t("createCourse.cmeHoursHint")}</p>
                       </div>
                       <div>
                         <label htmlFor="cohort" className="block text-sm font-medium text-[#374151] mb-1">

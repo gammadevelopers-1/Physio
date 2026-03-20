@@ -792,8 +792,8 @@ export class CertificatesService {
       if (!(this as any)._arabicFontCache) {
         try {
           const https = require('https');
-          // Amiri Bold — served from our own frontend
-          const fontUrl = `${frontendUrl}/fonts/Amiri-Bold.ttf`;
+          // Amiri Bold — served from our own frontend (hardcoded to avoid env var issues)
+          const fontUrl = 'https://physioguidance.org/fonts/Amiri-Bold.ttf';
           arabicFontBuffer = await new Promise<Buffer>((res, rej) => {
             const req = https.get(fontUrl, (resp: any) => {
               // Follow redirects
@@ -826,7 +826,7 @@ export class CertificatesService {
           this.logger.log(`Arabic font fetched and cached: ${arabicFontBuffer.length} bytes`);
         } catch (err) {
           this.logger.warn(`Failed to fetch Arabic font: ${err?.message || err}`);
-          // If Arabic font fails, fall back to English name
+          (this as any)._arabicFontCache = null;
         }
       } else {
         arabicFontBuffer = (this as any)._arabicFontCache;

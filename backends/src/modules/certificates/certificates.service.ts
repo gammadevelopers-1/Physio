@@ -877,8 +877,10 @@ export class CertificatesService {
     try {
       const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser';
       browser = await puppeteer.launch({
-        headless: true,
+        headless: 'shell',
         executablePath: execPath,
+        pipe: true,
+        protocolTimeout: 30000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -891,6 +893,9 @@ export class CertificatesService {
           '--disable-default-apps',
           '--disable-translate',
           '--disable-sync',
+          '--headless=new',
+          '--hide-scrollbars',
+          '--mute-audio',
         ],
       });
       const page = await browser.newPage();

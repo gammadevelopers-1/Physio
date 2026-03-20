@@ -786,30 +786,56 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Fetch Cairo font for Arabic support (cached in memory)
-    let cairoFontBuffer: Buffer | null = null;
+    // Fetch Arabic font for Arabic name support (cached in memory)
+    let arabicFontBuffer: Buffer | null = null;
     if (isArabicName) {
-      if (!(this as any)._cairoFontCache) {
+      if (!(this as any)._arabicFontCache) {
         try {
           const https = require('https');
-          const fontUrl = 'https://fonts.gstatic.com/s/cairo/v28/SLXVc1nY6HkvangtZmpWWmhzfH5lWWgcQyyS4J0.ttf';
-          cairoFontBuffer = await new Promise<Buffer>((res, rej) => {
-            https.get(fontUrl, (resp: any) => {
+          // Amiri font — high quality Arabic font from Google Fonts
+          const fontUrl = 'https://fonts.gstatic.com/s/amiri/v27/J7aRnpd8CGxBHpUrtLMA7w.ttf';
+          arabicFontBuffer = await new Promise<Buffer>((res, rej) => {
+            const req = https.get(fontUrl, (resp: any) => {
+              // Follow redirects
+              if (resp.statusCode === 301 || resp.statusCode === 302) {
+                https.get(resp.headers.location, (resp2: any) => {
+                  const chunks: Buffer[] = [];
+                  resp2.on('data', (c: Buffer) => chunks.push(c));
+                  resp2.on('end', () => res(Buffer.concat(chunks)));
+                  resp2.on('error', rej);
+                }).on('error', rej);
+                return;
+              }
               const chunks: Buffer[] = [];
               resp.on('data', (c: Buffer) => chunks.push(c));
-              resp.on('end', () => res(Buffer.concat(chunks)));
+              resp.on('end', () => {
+                const buf = Buffer.concat(chunks);
+                // Verify it's a valid font (TTF starts with 0x00010000 or 'true')
+                if (buf.length > 1000) {
+                  res(buf);
+                } else {
+                  rej(new Error(`Font response too small: ${buf.length} bytes`));
+                }
+              });
               resp.on('error', rej);
-            }).on('error', rej);
+            });
+            req.on('error', rej);
+            req.setTimeout(10000, () => { req.destroy(); rej(new Error('Font fetch timeout')); });
           });
-          (this as any)._cairoFontCache = cairoFontBuffer;
-          this.logger.log('Cairo font fetched and cached for Arabic support');
+          (this as any)._arabicFontCache = arabicFontBuffer;
+          this.logger.log(`Arabic font fetched and cached: ${arabicFontBuffer.length} bytes`);
         } catch (err) {
-          this.logger.warn('Failed to fetch Cairo font, falling back to Helvetica');
+          this.logger.warn(`Failed to fetch Arabic font: ${err?.message || err}`);
+          // If Arabic font fails, fall back to English name
         }
       } else {
-        cairoFontBuffer = (this as any)._cairoFontCache;
+        arabicFontBuffer = (this as any)._arabicFontCache;
       }
     }
+
+    // If Arabic font failed, fall back to English name
+    const finalDisplayName = (isArabicName && arabicFontBuffer) ? studentNameAr : studentNameEn;
+    const useArabicFont = !!(isArabicName && arabicFontBuffer);
 
     // Fetch logo for header and watermark (cached in memory)
     let logoBuffer: Buffer | null = null;
@@ -848,11 +874,11 @@ export class CertificatesService {
         doc.on('end', () => resolve(Buffer.concat(chunks)));
         doc.on('error', reject);
 
-        // Register Cairo font if available
-        if (cairoFontBuffer) {
-          doc.registerFont('Cairo', cairoFontBuffer);
+        // Register Arabic font if available
+        if (arabicFontBuffer) {
+          doc.registerFont('ArabicFont', arabicFontBuffer);
         }
-        const nameFont = cairoFontBuffer ? 'Cairo' : 'Helvetica-Bold';
+        const nameFont = useArabicFont ? 'ArabicFont' : 'Helvetica-Bold';
 
         const W = doc.page.width;
         const H = doc.page.height;
@@ -909,7 +935,7 @@ export class CertificatesService {
         // Student Name (Arabic if available, otherwise English)
         y += 40;
         doc.font(nameFont).fontSize(30).fillColor(darkText)
-          .text(displayName, 0, y, { align: 'center' });
+          .text(finalDisplayName, 0, y, { align: 'center' });
 
         // "FOR ATTENDING" pill
         y += 44;
@@ -943,22 +969,20 @@ export class CertificatesService {
             .text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
         }
 
-        // QR Code — inside borders with padding
-        const qrSize = 65, qrX = W - 105, qrY = H - 100;
+        // QR Code — well inside borders
+        const qrSize = 60, qrX = W - 100, qrY = H - 95;
         doc.image(qrBuffer, qrX, qrY, { width: qrSize });
-        doc.font('Helvetica').fontSize(6).fillColor(lightGray)
-          .text('Scan to verify', qrX, qrY + qrSize + 2, { width: qrSize, align: 'center' });
         doc.font('Helvetica').fontSize(5.5).fillColor(lightGray)
-          .text(certificateId, qrX, qrY + qrSize + 10, { width: qrSize, align: 'center' });
+          .text('Scan to verify', qrX, qrY + qrSize + 2, { width: qrSize, align: 'center' });
 
-        // Watermark (center logo or text)
+        // Watermark (center logo large or text)
         doc.save();
-        doc.opacity(0.06);
+        doc.opacity(0.05);
         if (logoBuffer) {
-          doc.image(logoBuffer, cx - 120, H / 2 - 80, { width: 240 });
+          doc.image(logoBuffer, cx - 160, H / 2 - 110, { width: 320 });
         } else {
-          doc.font('Helvetica-Bold').fontSize(85).fillColor(navy)
-            .text('PHYSIOGUIDANCE', 0, H / 2 - 45, { align: 'center' });
+          doc.font('Helvetica-Bold').fontSize(100).fillColor(navy)
+            .text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' });
         }
         doc.restore();
 

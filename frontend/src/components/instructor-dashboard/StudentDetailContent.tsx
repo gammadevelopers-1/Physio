@@ -80,24 +80,22 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
       setStudent(detail as StudentDetailResponse);
       setInterventions(interventionData as InterventionRecord[]);
 
-      // Determine risk status
-      const atRiskEntry = (atRiskData as AtRiskStudent[]).find(
+      // Determine risk status — per course
+      const atRiskEntries = (atRiskData as any[]).filter(
         (s) => s.id === studentId
       );
-      if (atRiskEntry) {
-        setRiskReasons(atRiskEntry.riskReasons);
-        const hasInactivity = atRiskEntry.riskReasons.some(
-          (r) =>
-            r.includes("No recent activity") || r.includes("Last activity on")
-        );
-        const hasLowAttendance = atRiskEntry.riskReasons.some((r) =>
-          r.includes("Attendance rate")
-        );
-        if (hasInactivity && !hasLowAttendance) {
-          setRiskStatus("inactive");
-        } else {
-          setRiskStatus("at-risk");
+      if (atRiskEntries.length > 0) {
+        const allReasons: string[] = [];
+        for (const entry of atRiskEntries) {
+          const courseLabel = entry.courseTitle ? `[${entry.courseTitle}] ` : '';
+          for (const reason of entry.riskReasons) {
+            allReasons.push(`${courseLabel}${reason}`);
+          }
         }
+        setRiskReasons(allReasons);
+        const hasLowAttendance = allReasons.some((r) => r.includes("Attendance rate"));
+        const hasInactivityOnly = allReasons.every((r) => r.includes("activity"));
+        setRiskStatus(hasInactivityOnly ? "inactive" : "at-risk");
       } else {
         setRiskStatus("good");
         setRiskReasons([]);
@@ -721,115 +719,74 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         </div>
                       )}
 
-                      {/* Assessments Tab */}
+                      {/* Assessments Tab — Per Course */}
                       {activeTab === "assessments" && (
-                        <div className="space-y-4">
-                          <h3 className="text-base font-semibold text-[#1F2937]">
-                            {t("studentDetail.assessmentResults")}
-                          </h3>
+                        <div className="space-y-6">
+                          {(student.coursePerformance || []).map((cp: any) => {
+                            const courseAssessments = cp.assessments || [];
+                            if (courseAssessments.length === 0) return null;
+                            return (
+                              <div key={cp.courseId} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                                <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <BookOpen className="w-4 h-4 text-[#D4A520]" />
+                                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                                      {locale === "ar" && cp.courseTitleAr ? cp.courseTitleAr : cp.courseTitle}
+                                    </h4>
+                                  </div>
+                                  {cp.assessmentAverage !== null && (
+                                    <span className={`text-xs font-bold ${
+                                      cp.assessmentAverage >= 70 ? "text-[#22C55E]"
+                                      : cp.assessmentAverage >= 50 ? "text-[#EAB308]"
+                                      : "text-[#EF4444]"
+                                    }`}>
+                                      Avg: {cp.assessmentAverage}%
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full">
+                                    <thead>
+                                      <tr className="text-left">
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Assessment</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Score</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Class Avg</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-[#F3F4F6]">
+                                      {courseAssessments.map((a: any) => {
+                                        const pct = a.maxScore > 0 ? Math.round((a.score / a.maxScore) * 100) : 0;
+                                        const passed = pct >= 60;
+                                        return (
+                                          <tr key={a.assessmentId} className="hover:bg-[#F9FAFB]">
+                                            <td className="px-4 py-2.5 text-sm text-[#1F2937]">{a.title}</td>
+                                            <td className="px-4 py-2.5">
+                                              <span className={`text-sm font-semibold ${pct >= 80 ? "text-[#22C55E]" : pct >= 60 ? "text-[#EAB308]" : "text-[#EF4444]"}`}>
+                                                {a.score}/{a.maxScore}
+                                              </span>
+                                            </td>
+                                            <td className="px-4 py-2.5 text-sm text-[#6B7280]">{a.classAverage}%</td>
+                                            <td className="px-4 py-2.5">
+                                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${passed ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
+                                                {passed ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                                                {passed ? "Passed" : "Failed"}
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })}
 
-                          {student.assessmentScores.length === 0 ? (
+                          {(!student.coursePerformance || student.coursePerformance.every((cp: any) => !(cp.assessments?.length))) && (
                             <div className="text-center py-8">
                               <FileText className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
-                              <p className="text-sm text-[#6B7280]">
-                                {t("studentDetail.noAssessments") ||
-                                  "No assessment scores available yet."}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="overflow-x-auto">
-                              <table className="w-full">
-                                <thead>
-                                  <tr className="text-left">
-                                    <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
-                                      {t("studentDetail.assessmentName")}
-                                    </th>
-                                    <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
-                                      {t("studentDetail.score")}
-                                    </th>
-                                    <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
-                                      {t("studentDetail.classAverage")}
-                                    </th>
-                                    <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
-                                      {t("studentDetail.status")}
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-[#E5E7EB]">
-                                  {student.assessmentScores.map((assessment) => {
-                                    const percentage =
-                                      assessment.maxScore > 0
-                                        ? Math.round(
-                                            (assessment.score /
-                                              assessment.maxScore) *
-                                              100
-                                          )
-                                        : 0;
-                                    const passed = percentage >= 60;
-                                    return (
-                                      <tr
-                                        key={assessment.assessmentId}
-                                        className="hover:bg-[#F9FAFB]"
-                                      >
-                                        <td className="py-3 text-sm text-[#1F2937]">
-                                          {assessment.title}
-                                        </td>
-                                        <td className="py-3">
-                                          <span
-                                            className={`text-sm font-semibold ${
-                                              percentage >= 80
-                                                ? "text-[#22C55E]"
-                                                : percentage >= 60
-                                                  ? "text-[#EAB308]"
-                                                  : "text-[#EF4444]"
-                                            }`}
-                                          >
-                                            {assessment.score}/
-                                            {assessment.maxScore}
-                                          </span>
-                                        </td>
-                                        <td className="py-3">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm text-[#6B7280]">
-                                              {assessment.classAverage}%
-                                            </span>
-                                            {percentage !== 0 && (
-                                              <span
-                                                className={`text-xs font-medium ${
-                                                  percentage >= assessment.classAverage
-                                                    ? "text-[#22C55E]"
-                                                    : "text-[#EF4444]"
-                                                }`}
-                                              >
-                                                {percentage >= assessment.classAverage ? "+" : ""}
-                                                {percentage - assessment.classAverage}%
-                                              </span>
-                                            )}
-                                          </div>
-                                        </td>
-                                        <td className="py-3">
-                                          <span
-                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                              passed
-                                                ? "bg-[#DCFCE7] text-[#22C55E]"
-                                                : "bg-[#FEE2E2] text-[#EF4444]"
-                                            }`}
-                                          >
-                                            {passed ? (
-                                              <CheckCircle className="w-3 h-3" />
-                                            ) : (
-                                              <AlertTriangle className="w-3 h-3" />
-                                            )}
-                                            {passed
-                                              ? t("studentDetail.passed")
-                                              : t("studentDetail.failed")}
-                                          </span>
-                                        </td>
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
+                              <p className="text-sm text-[#6B7280]">No assessment scores available yet.</p>
                             </div>
                           )}
                         </div>

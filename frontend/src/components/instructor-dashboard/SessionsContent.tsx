@@ -154,8 +154,11 @@ function AttendanceModal({
       setEnrollments(enr);
       setAttendanceRecords(att);
 
-      // Initialize local statuses and notes from existing attendance records
+      // Initialize local statuses: start with all enrolled as "absent", then overlay actual records
       const existing: Record<string, AttendanceStatus> = {};
+      for (const e of enr) {
+        existing[e.studentId] = "absent";
+      }
       const existingNotes: Record<string, string> = {};
       for (const a of att) {
         existing[a.studentId] = a.status;

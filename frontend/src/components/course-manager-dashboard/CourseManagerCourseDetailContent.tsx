@@ -43,6 +43,7 @@ import {
   X,
   Eye,
   ClipboardCheck,
+  Award,
 } from "lucide-react";
 
 interface CourseManagerCourseDetailContentProps {
@@ -556,6 +557,17 @@ const CourseManagerCourseDetailContent = ({
                     </div>
                     <p className="text-sm font-semibold text-[#1F2937]">
                       {formatDate(course.endDate)}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Award className="w-4 h-4 text-[#D4A520]" />
+                      <span className="text-xs text-[#6B7280]">
+                        CME/CPD Hours
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#1F2937]">
+                      {course.cmeHours || "—"}
                     </p>
                   </div>
                 </div>

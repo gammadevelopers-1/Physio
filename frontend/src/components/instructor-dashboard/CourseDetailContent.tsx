@@ -894,6 +894,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <p className="text-sm font-medium text-[#1F2937]">{formatDate(course.endDate)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                              <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.cmeHoursLabel") || "CME/CPD Hours"}</p>
+                              <p className="text-sm font-medium text-[#1F2937]">{course.cmeHours || "—"}</p>
+                            </div>
+                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.enrollmentCount")}</p>
                               <p className="text-sm font-medium text-[#1F2937]">
                                 {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}

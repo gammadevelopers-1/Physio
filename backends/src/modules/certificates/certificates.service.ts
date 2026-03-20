@@ -802,109 +802,100 @@ export class CertificatesService {
         const H = doc.page.height;
         const cx = W / 2;
 
-        // Colors
+        // Colors — brand contrast
         const navy = '#002D87';
-        const goldLight = '#C9A84C';
-        const gray = '#6B7280';
+        const gold = '#D4A520';
+        const gray = '#4B5563';
+        const lightGray = '#9CA3AF';
         const darkText = '#1F2937';
 
         // Background & Borders
-        doc.rect(0, 0, W, H).fill('#FAFAFA');
-        doc.rect(20, 20, W - 40, H - 40).lineWidth(2.5).stroke(navy);
-        doc.rect(28, 28, W - 56, H - 56).lineWidth(0.8).stroke(goldLight);
+        doc.rect(0, 0, W, H).fill('#FFFFFF');
+        doc.rect(24, 24, W - 48, H - 48).lineWidth(2.5).stroke(navy);
+        doc.rect(30, 30, W - 60, H - 60).lineWidth(0.8).stroke(gold);
 
         // CME hours badge (top-right)
         if (cmeHours > 0) {
-          const bx = W - 120, by = 38, br = 30;
-          doc.circle(bx + br, by + br, br).lineWidth(2).stroke(navy);
-          doc.circle(bx + br, by + br, br - 4).lineWidth(0.5).stroke(goldLight);
-          doc.font('Helvetica-Bold').fontSize(22).fillColor(navy)
+          const bx = W - 130, by = 42, br = 32;
+          doc.circle(bx + br, by + br, br).lineWidth(2.5).stroke(navy);
+          doc.circle(bx + br, by + br, br - 4).lineWidth(0.8).stroke(gold);
+          doc.font('Helvetica-Bold').fontSize(24).fillColor(navy)
             .text(String(cmeHours), bx, by + 12, { width: br * 2, align: 'center' });
-          doc.font('Helvetica').fontSize(6).fillColor(gray)
-            .text('CME HOURS', bx, by + 36, { width: br * 2, align: 'center' });
+          doc.font('Helvetica').fontSize(6.5).fillColor(gray)
+            .text('CME HOURS', bx, by + 38, { width: br * 2, align: 'center' });
         }
 
         // Organization name (top-left)
-        doc.font('Helvetica-Bold').fontSize(12).fillColor(navy)
-          .text('PHYSIOGUIDANCE', 50, 50);
-        doc.font('Helvetica').fontSize(7).fillColor(gray)
-          .text('Professional Medical Education', 50, 65);
+        doc.font('Helvetica-Bold').fontSize(14).fillColor(navy)
+          .text('PHYSIOGUIDANCE', 50, 48);
+        doc.font('Helvetica').fontSize(8).fillColor(lightGray)
+          .text('Professional Medical Education', 50, 66);
 
         // Certificate Title
-        let y = 100;
-        doc.font('Helvetica-Bold').fontSize(36).fillColor(navy)
+        let y = 105;
+        doc.font('Helvetica-Bold').fontSize(38).fillColor(navy)
           .text('CERTIFICATE', 0, y, { align: 'center' });
-        y += 38;
-        doc.font('Helvetica-Bold').fontSize(18).fillColor(navy)
+        y += 40;
+        doc.font('Helvetica-Bold').fontSize(20).fillColor(gold)
           .text('OF ATTENDANCE', 0, y, { align: 'center' });
 
         // "PROUDLY AWARDED TO" pill
-        y += 35;
-        const pillW = 200, pillH = 22;
-        doc.roundedRect(cx - pillW / 2, y, pillW, pillH, 11).fill(goldLight);
-        doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF')
-          .text('PROUDLY AWARDED TO', cx - pillW / 2, y + 6, { width: pillW, align: 'center' });
+        y += 38;
+        const pillW = 240, pillH = 28;
+        doc.roundedRect(cx - pillW / 2, y, pillW, pillH, 14).fill(gold);
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF')
+          .text('PROUDLY AWARDED TO', cx - pillW / 2, y + 8, { width: pillW, align: 'center' });
 
         // Student Name
-        y += 35;
-        doc.font('Helvetica-Bold').fontSize(28).fillColor(darkText)
+        y += 40;
+        doc.font('Helvetica-Bold').fontSize(30).fillColor(darkText)
           .text(studentNameEn, 0, y, { align: 'center' });
 
         // "FOR ATTENDING" pill
-        y += 40;
-        const fpW = 150;
-        doc.roundedRect(cx - fpW / 2, y, fpW, pillH, 11).fill(goldLight);
-        doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF')
-          .text('FOR ATTENDING', cx - fpW / 2, y + 6, { width: fpW, align: 'center' });
+        y += 44;
+        const fpW = 180;
+        doc.roundedRect(cx - fpW / 2, y, fpW, pillH, 14).fill(navy);
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF')
+          .text('FOR ATTENDING', cx - fpW / 2, y + 8, { width: fpW, align: 'center' });
 
         // Course Title
-        y += 32;
-        doc.font('Helvetica-Bold').fontSize(18).fillColor(darkText)
-          .text(courseTitle, 60, y, { align: 'center', width: W - 120 });
+        y += 38;
+        doc.font('Helvetica-Bold').fontSize(20).fillColor(darkText)
+          .text(courseTitle, 80, y, { align: 'center', width: W - 160 });
 
         // Date pill
-        y += 32;
-        const dpW = 220, dpH = 24;
-        doc.roundedRect(cx - dpW / 2, y, dpW, dpH, 12).fill(goldLight);
-        doc.font('Helvetica-Bold').fontSize(10).fillColor('#FFFFFF')
-          .text(dateFormatted, cx - dpW / 2, y + 7, { width: dpW, align: 'center' });
+        y += 36;
+        const dpW = 240, dpH = 28;
+        doc.roundedRect(cx - dpW / 2, y, dpW, dpH, 14).fill(gold);
+        doc.font('Helvetica-Bold').fontSize(12).fillColor('#FFFFFF')
+          .text(dateFormatted, cx - dpW / 2, y + 8, { width: dpW, align: 'center' });
 
         // SCFHS Accreditation
-        y += 38;
-        doc.font('Helvetica').fontSize(9).fillColor(gray)
+        y += 42;
+        doc.font('Helvetica').fontSize(11).fillColor(gray)
           .text('This activity has been accredited by the Saudi Commission for Health Specialties', 0, y, { align: 'center' });
-        y += 14;
-        doc.font('Helvetica').fontSize(8).fillColor(gray)
+        y += 16;
+        doc.font('Helvetica').fontSize(10).fillColor(gray)
           .text(`Accreditation number: ${certificateId}   Date: ${issuedDate.toLocaleDateString('en-GB')}`, 0, y, { align: 'center' });
         if (cmeHours > 0) {
-          y += 13;
-          doc.font('Helvetica-Bold').fontSize(9).fillColor(navy)
+          y += 16;
+          doc.font('Helvetica-Bold').fontSize(11).fillColor(navy)
             .text(`${cmeHours} CME/PD Credit Hours`, 0, y, { align: 'center' });
         }
 
-        // Signature Section
-        y += 35;
-        doc.font('Helvetica').fontSize(8).fillColor(gray)
-          .text('Professional Development Manager', cx - 60, y, { width: 200 });
-        doc.font('Helvetica-Bold').fontSize(9).fillColor(darkText)
-          .text('PhysioGuidance', cx - 60, y + 12, { width: 200 });
-        doc.moveTo(cx - 60, y + 28).lineTo(cx + 60, y + 28).lineWidth(0.5).stroke(gray);
-        doc.font('Helvetica').fontSize(7).fillColor(gray)
-          .text('Authorized Signature', cx - 60, y + 31, { width: 120 });
-
-        // QR Code
-        const qrSize = 70, qrX = W - 110, qrY = H - 110;
+        // QR Code — inside borders with padding
+        const qrSize = 65, qrX = W - 105, qrY = H - 100;
         doc.image(qrBuffer, qrX, qrY, { width: qrSize });
-        doc.font('Helvetica').fontSize(6).fillColor(gray)
-          .text('Scan to verify', qrX, qrY + qrSize + 3, { width: qrSize, align: 'center' });
-        doc.font('Helvetica').fontSize(5).fillColor(gray)
-          .text(certificateId, qrX, qrY + qrSize + 12, { width: qrSize, align: 'center' });
+        doc.font('Helvetica').fontSize(6).fillColor(lightGray)
+          .text('Scan to verify', qrX, qrY + qrSize + 2, { width: qrSize, align: 'center' });
+        doc.font('Helvetica').fontSize(5.5).fillColor(lightGray)
+          .text(certificateId, qrX, qrY + qrSize + 10, { width: qrSize, align: 'center' });
 
         // Watermark
         doc.save();
-        doc.opacity(0.03);
-        doc.font('Helvetica-Bold').fontSize(90).fillColor(navy)
-          .text('PHYSIOGUIDANCE', 0, H / 2 - 50, { align: 'center' });
+        doc.opacity(0.025);
+        doc.font('Helvetica-Bold').fontSize(85).fillColor(navy)
+          .text('PHYSIOGUIDANCE', 0, H / 2 - 45, { align: 'center' });
         doc.restore();
 
         doc.end();

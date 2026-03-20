@@ -795,47 +795,61 @@ export class CertificatesService {
       errorCorrectionLevel: 'M',
     });
 
-    // Fetch Arabic font for Arabic name support (cached in memory)
+    // Load Arabic font — try filesystem first, then URL fetch, then fallback to English
     let arabicFontBuffer: Buffer | null = null;
     if (isArabicName) {
       if (!(this as any)._arabicFontCache) {
-        try {
-          const https = require('https');
-          // Amiri Bold — served from our own frontend (hardcoded to avoid env var issues)
-          const fontUrl = 'https://physioguidance.org/fonts/Amiri-Bold.ttf';
-          arabicFontBuffer = await new Promise<Buffer>((res, rej) => {
-            const req = https.get(fontUrl, (resp: any) => {
-              // Follow redirects
-              if (resp.statusCode === 301 || resp.statusCode === 302) {
-                https.get(resp.headers.location, (resp2: any) => {
-                  const chunks: Buffer[] = [];
-                  resp2.on('data', (c: Buffer) => chunks.push(c));
-                  resp2.on('end', () => res(Buffer.concat(chunks)));
-                  resp2.on('error', rej);
-                }).on('error', rej);
-                return;
-              }
-              const chunks: Buffer[] = [];
-              resp.on('data', (c: Buffer) => chunks.push(c));
-              resp.on('end', () => {
-                const buf = Buffer.concat(chunks);
-                // Verify it's a valid font (TTF starts with 0x00010000 or 'true')
-                if (buf.length > 1000) {
-                  res(buf);
-                } else {
-                  rej(new Error(`Font response too small: ${buf.length} bytes`));
+        const fs = require('fs');
+        const path = require('path');
+
+        // Try 1: Filesystem (Docker container has assets copied)
+        const localPaths = [
+          path.join(__dirname, 'assets', 'Cairo-Bold.ttf'),
+          path.join(process.cwd(), 'dist', 'src', 'modules', 'certificates', 'assets', 'Cairo-Bold.ttf'),
+          path.join(process.cwd(), 'src', 'modules', 'certificates', 'assets', 'Cairo-Bold.ttf'),
+        ];
+
+        for (const p of localPaths) {
+          try {
+            if (fs.existsSync(p)) {
+              arabicFontBuffer = fs.readFileSync(p);
+              this.logger.log(`Arabic font loaded from filesystem: ${p} (${arabicFontBuffer.length} bytes)`);
+              break;
+            }
+          } catch {}
+        }
+
+        // Try 2: Fetch from frontend URL
+        if (!arabicFontBuffer) {
+          try {
+            const https = require('https');
+            const fontUrl = 'https://physioguidance.org/fonts/Amiri-Bold.ttf';
+            arabicFontBuffer = await new Promise<Buffer>((res, rej) => {
+              const req = https.get(fontUrl, (resp: any) => {
+                if (resp.statusCode !== 200) {
+                  rej(new Error(`Font HTTP ${resp.statusCode}`));
+                  return;
                 }
+                const chunks: Buffer[] = [];
+                resp.on('data', (c: Buffer) => chunks.push(c));
+                resp.on('end', () => {
+                  const buf = Buffer.concat(chunks);
+                  if (buf.length > 10000) res(buf);
+                  else rej(new Error(`Font too small: ${buf.length}`));
+                });
+                resp.on('error', rej);
               });
-              resp.on('error', rej);
+              req.on('error', rej);
+              req.setTimeout(10000, () => { req.destroy(); rej(new Error('Timeout')); });
             });
-            req.on('error', rej);
-            req.setTimeout(10000, () => { req.destroy(); rej(new Error('Font fetch timeout')); });
-          });
+            this.logger.log(`Arabic font fetched from URL: ${arabicFontBuffer.length} bytes`);
+          } catch (err) {
+            this.logger.warn(`Arabic font fetch failed: ${err?.message}`);
+          }
+        }
+
+        if (arabicFontBuffer) {
           (this as any)._arabicFontCache = arabicFontBuffer;
-          this.logger.log(`Arabic font fetched and cached: ${arabicFontBuffer.length} bytes`);
-        } catch (err) {
-          this.logger.warn(`Failed to fetch Arabic font: ${err?.message || err}`);
-          (this as any)._arabicFontCache = null;
         }
       } else {
         arabicFontBuffer = (this as any)._arabicFontCache;
@@ -884,10 +898,15 @@ export class CertificatesService {
         doc.on('error', reject);
 
         // Register Arabic font if available
-        if (arabicFontBuffer) {
-          doc.registerFont('ArabicFont', arabicFontBuffer);
+        let nameFont = 'Helvetica-Bold';
+        if (useArabicFont && arabicFontBuffer) {
+          try {
+            doc.registerFont('ArabicFont', arabicFontBuffer);
+            nameFont = 'ArabicFont';
+          } catch (fontErr) {
+            this.logger.warn(`Failed to register Arabic font: ${fontErr?.message}`);
+          }
         }
-        const nameFont = useArabicFont ? 'ArabicFont' : 'Helvetica-Bold';
 
         const W = doc.page.width;
         const H = doc.page.height;

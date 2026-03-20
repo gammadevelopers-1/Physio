@@ -762,11 +762,20 @@ export class CertificatesService {
 
     const studentNameEn =
       `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'Student';
-    const studentNameAr =
+    const studentNameArRaw =
       `${student?.firstNameAr || ''} ${student?.lastNameAr || ''}`.trim() || '';
-    // Show Arabic name if available, otherwise English
-    const displayName = studentNameAr || studentNameEn;
-    const isArabicName = !!studentNameAr;
+    // Reshape Arabic text for PDFKit (connect letters + reverse for RTL)
+    let studentNameAr = '';
+    const isArabicName = !!studentNameArRaw;
+    if (isArabicName) {
+      try {
+        const ArabicReshaper = require('arabic-reshaper');
+        const reshaped = ArabicReshaper.convertArabic(studentNameArRaw);
+        studentNameAr = reshaped.split('').reverse().join('');
+      } catch {
+        studentNameAr = studentNameArRaw;
+      }
+    }
     const courseTitle = course?.title || 'Course';
     const cmeHours = course?.cmeHours || 0;
     const issuedDate = new Date();

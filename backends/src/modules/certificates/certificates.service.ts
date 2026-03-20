@@ -788,6 +788,10 @@ export class CertificatesService {
     const path = require('path');
     const fs = require('fs');
     const assetsDir = path.join(__dirname, 'assets');
+    this.logger.log(`Certificate assets dir: ${assetsDir}, exists: ${fs.existsSync(assetsDir)}`);
+    if (fs.existsSync(assetsDir)) {
+      this.logger.log(`Assets contents: ${fs.readdirSync(assetsDir).join(', ')}`);
+    }
     const cairoBold = path.join(assetsDir, 'Cairo-Bold.ttf');
     const cairoRegular = path.join(assetsDir, 'Cairo-Regular.ttf');
     const cairoSemiBold = path.join(assetsDir, 'Cairo-SemiBold.ttf');
@@ -796,6 +800,7 @@ export class CertificatesService {
 
     // Build the PDF
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
+      try {
       const chunks: Buffer[] = [];
       const doc = new PDFDocument({
         size: 'A4',
@@ -969,6 +974,9 @@ export class CertificatesService {
       doc.restore();
 
       doc.end();
+      } catch (err) {
+        reject(err);
+      }
     });
 
     const filename = `certificates/${requestId}.pdf`;

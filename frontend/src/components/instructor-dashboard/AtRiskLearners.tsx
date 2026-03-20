@@ -141,6 +141,7 @@ const AtRiskLearners = ({
   }, [t]);
 
   const displayedLearners = learners.slice(0, visibleCount);
+  const uniqueStudentCount = new Set(learners.map((l) => l.id)).size;
   const totalCount = learners.length;
 
   return (
@@ -161,7 +162,7 @@ const AtRiskLearners = ({
               <Settings className="w-4 h-4" />
             </button>
             <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#FEE2E2] text-[#EF4444] text-xs font-semibold rounded-full">
-              {totalCount}
+              {uniqueStudentCount}
             </span>
           </div>
         </div>

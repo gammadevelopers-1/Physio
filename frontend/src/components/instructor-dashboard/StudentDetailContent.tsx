@@ -367,19 +367,12 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             </span>
                           </div>
 
-                          {/* Risk reasons */}
+                          {/* At-risk course count */}
                           {riskReasons.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {riskReasons.map((reason, i) => (
-                                <span
-                                  key={i}
-                                  className="inline-flex items-center gap-1 px-2 py-1 bg-[#FEF9C3] text-[#92400E] rounded-md text-xs"
-                                >
-                                  <AlertTriangle className="w-3 h-3" />
-                                  {reason}
-                                </span>
-                              ))}
-                            </div>
+                            <p className="mt-2 text-xs text-[#D97706]">
+                              <AlertTriangle className="w-3 h-3 inline mr-1" />
+                              At risk in {new Set(riskReasons.map(r => r.match(/^\[([^\]]+)\]/)?.[1]).filter(Boolean)).size} course(s) — see details in Attendance tab
+                            </p>
                           )}
                         </div>
                       </div>
@@ -586,13 +579,21 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     {locale === "ar" && cp.courseTitleAr ? cp.courseTitleAr : cp.courseTitle}
                                   </h4>
                                 </div>
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  cp.enrollmentStatus === "completed" ? "bg-[#DCFCE7] text-[#166534]"
-                                  : cp.enrollmentStatus === "active" ? "bg-[#EFF6FF] text-[#3B82F6]"
-                                  : "bg-[#F3F4F6] text-[#6B7280]"
-                                }`}>
-                                  {cp.enrollmentStatus === "completed" ? "Completed" : cp.enrollmentStatus === "active" ? "In Progress" : cp.enrollmentStatus}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  {riskReasons.some(r => r.includes(`[${cp.courseTitle}]`)) && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#FEF2F2] text-[#EF4444]">
+                                      <AlertTriangle className="w-3 h-3" />
+                                      At Risk
+                                    </span>
+                                  )}
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    cp.enrollmentStatus === "completed" ? "bg-[#DCFCE7] text-[#166534]"
+                                    : cp.enrollmentStatus === "active" ? "bg-[#EFF6FF] text-[#3B82F6]"
+                                    : "bg-[#F3F4F6] text-[#6B7280]"
+                                  }`}>
+                                    {cp.enrollmentStatus === "completed" ? "Completed" : cp.enrollmentStatus === "active" ? "In Progress" : cp.enrollmentStatus}
+                                  </span>
+                                </div>
                               </div>
 
                               <div className="p-4 space-y-4">

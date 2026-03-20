@@ -182,8 +182,9 @@ export function transformToAtRiskLearners(
       initials,
       riskType,
       riskValue,
+      course: (l as any).courseTitle || undefined,
       email: l.email,
-      enrolledCourseIds: l.enrolledCourseIds || [],
+      enrolledCourseIds: (l as any).courseId ? [(l as any).courseId] : (l.enrolledCourseIds || []),
     };
   });
 }

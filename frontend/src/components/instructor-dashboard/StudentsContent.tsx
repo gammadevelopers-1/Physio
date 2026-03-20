@@ -487,65 +487,46 @@ const StudentsContent = () => {
                           <table className="w-full">
                             <thead>
                               <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  <button
-                                    onClick={() => toggleSort("name")}
-                                    className="flex items-center gap-1 hover:text-[#374151]"
-                                  >
+                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider min-w-[200px]">
+                                  <button onClick={() => toggleSort("name")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableStudent")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  <button
-                                    onClick={() => toggleSort("enrollments")}
-                                    className="flex items-center gap-1 hover:text-[#374151]"
-                                  >
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-16">
+                                  <button onClick={() => toggleSort("enrollments")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableCourse") || "Courses"}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  <button
-                                    onClick={() => toggleSort("progress")}
-                                    className="flex items-center gap-1 hover:text-[#374151]"
-                                  >
+                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-28">
+                                  <button onClick={() => toggleSort("progress")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableProgress") || "Progress"}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  <button
-                                    onClick={() => toggleSort("attendance")}
-                                    className="flex items-center gap-1 hover:text-[#374151]"
-                                  >
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-24">
+                                  <button onClick={() => toggleSort("attendance")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableAttendance")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  <button
-                                    onClick={() => toggleSort("assessmentAverage")}
-                                    className="flex items-center gap-1 hover:text-[#374151]"
-                                  >
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">
+                                  <button onClick={() => toggleSort("assessmentAverage")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableScore")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                                <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">
                                   {t("students.tableStatus")}
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  <button
-                                    onClick={() => toggleSort("lastActive")}
-                                    className="flex items-center gap-1 hover:text-[#374151]"
-                                  >
+                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-24">
+                                  <button onClick={() => toggleSort("lastActive")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableLastActivity")}
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
-                                  {t("students.tableActions")}
+                                <th className="px-2 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-12">
                                 </th>
                               </tr>
                             </thead>
@@ -555,96 +536,82 @@ const StudentsContent = () => {
                                   key={student.studentId}
                                   className="hover:bg-[#F9FAFB] transition-colors"
                                 >
-                                  <td className="px-4 py-4">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+                                  <td className="px-3 py-3">
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-full bg-[#F3F4F6] flex items-center justify-center text-xs font-semibold text-[#6B7280] flex-shrink-0">
                                         {getInitials(student.firstName, student.lastName)}
                                       </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-[#1F2937]">
+                                      <div className="min-w-0">
+                                        <p className="text-sm font-medium text-[#1F2937] truncate">
                                           {student.firstName || ""}{" "}
                                           {student.lastName || ""}
                                         </p>
-                                        <p className="text-xs text-[#6B7280]">
+                                        <p className="text-[11px] text-[#9CA3AF] truncate">
                                           {student.email}
                                         </p>
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td className="px-3 py-3 text-center">
                                     <span className="text-sm text-[#374151] font-medium">
                                       {student.totalEnrollments}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td className="px-3 py-3">
                                     <div className="flex items-center gap-2">
-                                      <div className="w-16 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                      <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                                         <div
                                           className={`h-full rounded-full ${
-                                            student.averageProgress >= 80
-                                              ? "bg-[#22C55E]"
-                                              : student.averageProgress >= 50
-                                                ? "bg-[#EAB308]"
-                                                : "bg-[#EF4444]"
+                                            student.averageProgress >= 80 ? "bg-[#22C55E]"
+                                            : student.averageProgress >= 50 ? "bg-[#EAB308]"
+                                            : "bg-[#EF4444]"
                                           }`}
-                                          style={{
-                                            width: `${student.averageProgress}%`,
-                                          }}
+                                          style={{ width: `${student.averageProgress}%` }}
                                         />
                                       </div>
-                                      <span
-                                        className={`text-sm font-semibold ${getProgressStyle(student.averageProgress)}`}
-                                      >
+                                      <span className={`text-xs font-semibold w-8 text-right ${getProgressStyle(student.averageProgress)}`}>
                                         {student.averageProgress}%
                                       </span>
                                     </div>
                                   </td>
-                                  <td className="px-4 py-4">
-                                    <span
-                                      className={`text-sm font-semibold ${
-                                        student.attendanceRate == null
-                                          ? "text-[#9CA3AF]"
-                                          : getProgressStyle(student.attendanceRate)
-                                      }`}
-                                    >
-                                      {student.attendanceRate != null
-                                        ? `${student.attendanceRate}%`
-                                        : "-"}
+                                  <td className="px-3 py-3 text-center">
+                                    <span className={`text-xs font-semibold ${
+                                      student.attendanceRate == null ? "text-[#9CA3AF]"
+                                      : student.attendanceRate >= 80 ? "text-[#22C55E]"
+                                      : student.attendanceRate >= 60 ? "text-[#EAB308]"
+                                      : "text-[#EF4444]"
+                                    }`}>
+                                      {student.attendanceRate != null ? `${student.attendanceRate}%` : "–"}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
-                                    <span
-                                      className={`text-sm font-semibold ${
-                                        student.assessmentAverage == null
-                                          ? "text-[#9CA3AF]"
-                                          : getProgressStyle(student.assessmentAverage)
-                                      }`}
-                                    >
-                                      {student.assessmentAverage != null
-                                        ? `${student.assessmentAverage}%`
-                                        : "-"}
+                                  <td className="px-3 py-3 text-center">
+                                    <span className={`text-xs font-semibold ${
+                                      student.assessmentAverage == null ? "text-[#9CA3AF]"
+                                      : student.assessmentAverage >= 70 ? "text-[#22C55E]"
+                                      : student.assessmentAverage >= 50 ? "text-[#EAB308]"
+                                      : "text-[#EF4444]"
+                                    }`}>
+                                      {student.assessmentAverage != null ? `${student.assessmentAverage}%` : "–"}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
-                                    <span
-                                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(student.riskStatus)}`}
-                                    >
+                                  <td className="px-3 py-3 text-center">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusStyle(student.riskStatus)}`}>
                                       {getStatusIcon(student.riskStatus)}
                                       {getStatusLabel(student.riskStatus)}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
-                                    <span className="text-sm text-[#6B7280]">
+                                  <td className="px-3 py-3">
+                                    <span className="text-xs text-[#9CA3AF]">
                                       {formatLastActive(student.lastAccessedAt)}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td className="px-2 py-3 text-center">
                                     <Link
                                       href={`/${locale}/dashboard/instructor/students/${student.studentId}`}
-                                      className="p-2 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
+                                      className="p-1.5 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
                                       title={t("students.viewProfile")}
                                     >
-                                      <Eye className="w-4 h-4" />
+                                      <Eye className="w-3.5 h-3.5" />
                                     </Link>
                                   </td>
                                 </tr>

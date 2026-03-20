@@ -50,6 +50,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   ExternalLink,
+  Eye,
 } from "lucide-react";
 
 interface CourseDetailContentProps {
@@ -1169,15 +1170,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <>
                               <table className="w-full">
                                 <thead>
-                                  <tr className="text-left border-b border-[#E5E7EB]">
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.regNumber")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.name")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.email")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.enrolledDate")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.progress")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.status")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.lastActive")}</th>
-                                    <th className="pb-3 text-xs font-medium text-[#6B7280]">{t("courseDetail.actions")}</th>
+                                  <tr className="border-b border-[#E5E7EB]">
+                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.name")}</th>
+                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.enrolledDate")}</th>
+                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
+                                    <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">{t("courseDetail.status")}</th>
+                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.lastActive")}</th>
+                                    <th className="px-2 pb-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-12"></th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -1191,15 +1190,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     };
                                     return (
                                       <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                                        <td className="py-3 text-xs text-[#9CA3AF] font-mono">{enrollment.studentScfhsNumber || "—"}</td>
-                                        <td className="py-3 text-sm font-medium text-[#1F2937]">
-                                          {enrollment.studentFirstName} {enrollment.studentLastName}
+                                        <td className="px-3 py-3">
+                                          <p className="text-sm font-medium text-[#1F2937]">
+                                            {enrollment.studentFirstName} {enrollment.studentLastName}
+                                          </p>
+                                          <p className="text-[11px] text-[#9CA3AF]">{enrollment.studentEmail}</p>
                                         </td>
-                                        <td className="py-3 text-sm text-[#6B7280]">{enrollment.studentEmail}</td>
-                                        <td className="py-3 text-sm text-[#6B7280]">{formatDate(enrollment.enrolledAt)}</td>
-                                        <td className="py-3">
+                                        <td className="px-3 py-3 text-xs text-[#6B7280]">{formatDate(enrollment.enrolledAt)}</td>
+                                        <td className="px-3 py-3">
                                           <div className="flex items-center gap-2">
-                                            <div className="w-20 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                            <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                                               <div
                                                 className={`h-full rounded-full ${
                                                   progress >= 75 ? "bg-[#22C55E]" : progress >= 50 ? "bg-[#3B82F6]" : progress >= 25 ? "bg-[#F59E0B]" : "bg-[#EF4444]"
@@ -1207,23 +1207,23 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                                 style={{ width: `${progress}%` }}
                                               />
                                             </div>
-                                            <span className="text-xs text-[#6B7280]">{progress}%</span>
+                                            <span className="text-xs text-[#6B7280] w-8 text-right">{progress}%</span>
                                           </div>
                                         </td>
-                                        <td className="py-3">
-                                          <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                        <td className="px-3 py-3 text-center">
+                                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${statusColors[enrollment.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
                                             {t(`courseDetail.studentStatus.${enrollment.status}`)}
                                           </span>
                                         </td>
-                                        <td className="py-3 text-sm text-[#6B7280]">
+                                        <td className="px-3 py-3 text-xs text-[#9CA3AF]">
                                           {enrollment.lastAccessedAt ? formatDate(enrollment.lastAccessedAt) : "—"}
                                         </td>
-                                        <td className="py-3">
+                                        <td className="px-2 py-3 text-center">
                                           <Link
                                             href={`/${locale}/dashboard/instructor/students/${enrollment.studentId}`}
-                                            className="text-xs text-[#3B82F6] hover:underline"
+                                            className="p-1.5 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors inline-flex"
                                           >
-                                            {t("courseDetail.viewProfile")}
+                                            <Eye className="w-3.5 h-3.5" />
                                           </Link>
                                         </td>
                                       </tr>

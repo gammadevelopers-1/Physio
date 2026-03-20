@@ -461,12 +461,20 @@ export class CertificatesService {
     //   );
     // }
 
-    // Generate placeholder PDF
-    const certificateUrl = await this.generatePlaceholderPdf(
-      request.id,
-      request.courseId,
-      request.studentId,
-    );
+    // Generate certificate PDF
+    let certificateUrl: string;
+    try {
+      certificateUrl = await this.generatePlaceholderPdf(
+        request.id,
+        request.courseId,
+        request.studentId,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to generate certificate PDF for request ${id}`, error);
+      throw new BadRequestException(
+        'Failed to generate certificate PDF. Please try again.',
+      );
+    }
 
     const [updated] = await db
       .update(certificateRequests)

@@ -881,9 +881,11 @@ export class CertificatesService {
         y += 40;
         if (arabicFontBuf && nameIsArabic) {
           doc.registerFont('Amiri-Bold', arabicFontBuf);
-          doc.font('Amiri-Bold').fontSize(30).fillColor(dark).text(displayName, 0, y, { align: 'center' });
+          doc.font('Amiri-Bold').fontSize(28).fillColor(dark)
+            .text(displayName, 60, y, { align: 'center', width: W - 120, features: ['rtla'] });
         } else {
-          doc.font('Helvetica-Bold').fontSize(30).fillColor(dark).text(displayName, 0, y, { align: 'center' });
+          doc.font('Helvetica-Bold').fontSize(30).fillColor(dark)
+            .text(displayName, 60, y, { align: 'center', width: W - 120 });
         }
 
         // FOR ATTENDING pill

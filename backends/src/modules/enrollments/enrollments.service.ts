@@ -483,6 +483,55 @@ export class EnrollmentsService {
       .where(and(...conditions))
       .orderBy(users.firstName);
 
+    // Include enrolled students without attendance records as "absent"
+    if (session?.courseId) {
+      const existingStudentIds = new Set(data.map((d) => d.studentId));
+      const excludeIds = new Set<string>();
+      if (instructorId) excludeIds.add(instructorId);
+      for (const taId of taUserIds) excludeIds.add(taId);
+
+      const enrolledStudents = await db
+        .select({
+          studentId: enrollments.studentId,
+          studentFirstName: users.firstName,
+          studentLastName: users.lastName,
+          studentEmail: users.email,
+        })
+        .from(enrollments)
+        .innerJoin(users, eq(enrollments.studentId, users.id))
+        .where(
+          and(
+            eq(enrollments.courseId, session.courseId),
+            sql`${enrollments.status} IN ('active', 'completed')`,
+          ),
+        );
+
+      for (const student of enrolledStudents) {
+        if (existingStudentIds.has(student.studentId)) continue;
+        if (excludeIds.has(student.studentId)) continue;
+
+        data.push({
+          id: null as any,
+          sessionId,
+          studentId: student.studentId,
+          status: 'absent',
+          joinedAt: null,
+          leftAt: null,
+          durationMinutes: null,
+          markedBy: null,
+          note: null,
+          studentFirstName: student.studentFirstName,
+          studentLastName: student.studentLastName,
+          studentEmail: student.studentEmail,
+        });
+      }
+
+      // Re-sort by name
+      data.sort((a, b) =>
+        (a.studentFirstName || '').localeCompare(b.studentFirstName || '')
+      );
+    }
+
     return data;
   }
 

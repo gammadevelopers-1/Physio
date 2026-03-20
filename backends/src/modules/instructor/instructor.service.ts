@@ -1467,13 +1467,14 @@ export class InstructorService {
       attMap.set(`${a.studentId}:${a.courseId}`, a.presentCount);
     }
 
-    // Get assessment averages per student per course
+    // Get assessment averages + count per student per course
     const assessmentData = allStudentIds.length > 0
       ? await db
           .select({
             studentId: submissions.studentId,
             courseId: assessments.courseId,
             avgPercentage: sql<number>`ROUND(AVG(CAST(${submissions.percentage} AS NUMERIC)))`.mapWith(Number),
+            assessmentCount: sql<number>`COUNT(DISTINCT ${submissions.assessmentId})`.mapWith(Number),
           })
           .from(submissions)
           .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
@@ -1487,9 +1488,9 @@ export class InstructorService {
           .groupBy(submissions.studentId, assessments.courseId)
       : [];
 
-    const assessMap = new Map<string, number>();
+    const assessMap = new Map<string, { avg: number; count: number }>();
     for (const a of assessmentData) {
-      assessMap.set(`${a.studentId}:${a.courseId}`, a.avgPercentage);
+      assessMap.set(`${a.studentId}:${a.courseId}`, { avg: a.avgPercentage, count: a.assessmentCount });
     }
 
     // Get student details
@@ -1517,17 +1518,24 @@ export class InstructorService {
       const totalSessions = sessionCountMap.get(courseId) || 0;
       const presentCount = attMap.get(`${studentId}:${courseId}`) || 0;
       const attendanceRate = totalSessions > 0 ? Math.round((presentCount / totalSessions) * 100) : 0;
-      const assessmentAvg = assessMap.get(`${studentId}:${courseId}`) ?? null;
+      const assessData = assessMap.get(`${studentId}:${courseId}`);
+      const assessmentAvg = assessData?.avg ?? null;
+      const assessmentCount = assessData?.count ?? 0;
 
       const riskReasons: string[] = [];
 
-      // Criterion 1: Attendance below course threshold
-      if (totalSessions > 0 && attendanceRate < threshold.attendance) {
+      // Minimum 3 sessions before evaluating attendance risk
+      const MIN_SESSIONS_FOR_RISK = 3;
+      // Minimum 2 graded assessments before evaluating assessment risk
+      const MIN_ASSESSMENTS_FOR_RISK = 2;
+
+      // Criterion 1: Attendance below course threshold (only if 3+ sessions)
+      if (totalSessions >= MIN_SESSIONS_FOR_RISK && attendanceRate < threshold.attendance) {
         riskReasons.push(`Attendance rate ${attendanceRate}% (below ${threshold.attendance}%)`);
       }
 
-      // Criterion 2: Assessment average below course threshold
-      if (assessmentAvg !== null && assessmentAvg < threshold.score) {
+      // Criterion 2: Assessment average below course threshold (only if 2+ assessments)
+      if (assessmentCount >= MIN_ASSESSMENTS_FOR_RISK && assessmentAvg !== null && assessmentAvg < threshold.score) {
         riskReasons.push(`Assessment average ${assessmentAvg}% (below ${threshold.score}%)`);
       }
 

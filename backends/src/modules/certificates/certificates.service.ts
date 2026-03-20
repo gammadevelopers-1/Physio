@@ -809,16 +809,11 @@ export class CertificatesService {
     let arabicFont: any = null;
     if (displayName !== studentNameEn) {
       if (!(this as any)._arabicOpentype) {
-        try {
-          const { AMIRI_BOLD_BASE64 } = require('./amiri-bold-font');
-          const opentype = require('opentype.js');
-          const fontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
-          arabicFont = opentype.parse(fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength));
-          (this as any)._arabicOpentype = arabicFont;
-          this.logger.log(`Arabic font loaded from embedded base64 (${fontBuf.length} bytes)`);
-        } catch (err) {
-          this.logger.warn(`Arabic font load failed: ${err?.message}`);
-        }
+        const { AMIRI_BOLD_BASE64 } = require('./amiri-bold-font');
+        const opentype = require('opentype.js');
+        const fontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
+        arabicFont = opentype.parse(fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength));
+        (this as any)._arabicOpentype = arabicFont;
       } else {
         arabicFont = (this as any)._arabicOpentype;
       }

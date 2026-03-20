@@ -1195,27 +1195,32 @@ export class InstructorService {
 
     const allSIds = allSessions.map((s) => s.id);
 
-    // Get all attendance records for this student across enrolled courses
+    // Get all sessions with attendance status (LEFT JOIN so sessions without records show as absent)
     const allAttendanceRecords = allSIds.length > 0
-      ? await db
+      ? (await db
           .select({
-            sessionId: attendance.sessionId,
+            sessionId: sessions.id,
             status: attendance.status,
             sessionTitle: sessions.title,
             scheduledAt: sessions.scheduledAt,
             courseId: sessions.courseId,
             courseTitle: courses.title,
           })
-          .from(attendance)
-          .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+          .from(sessions)
           .innerJoin(courses, eq(sessions.courseId, courses.id))
-          .where(
+          .leftJoin(
+            attendance,
             and(
+              eq(attendance.sessionId, sessions.id),
               eq(attendance.studentId, studentId),
-              inArray(attendance.sessionId, allSIds),
             ),
           )
+          .where(inArray(sessions.id, allSIds))
           .orderBy(desc(sessions.scheduledAt))
+        ).map((r) => ({
+          ...r,
+          status: r.status || 'absent',
+        }))
       : [];
 
     // Get all assessment scores

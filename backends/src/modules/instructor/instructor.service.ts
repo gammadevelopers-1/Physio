@@ -997,14 +997,17 @@ export class InstructorService {
     const studentIds = studentsData.map((s) => s.studentId);
 
     // Batch-fetch attendance rates per student
-    // Count sessions per course so we can calculate per-student totals
+    // Count sessions per course (only completed/ended — exclude cancelled, scheduled)
     const sessionCountByCourse = await db
       .select({
         courseId: sessions.courseId,
         count: sql<number>`COUNT(*)`.mapWith(Number),
       })
       .from(sessions)
-      .where(inArray(sessions.courseId, courseIds))
+      .where(and(
+        inArray(sessions.courseId, courseIds),
+        sql`${sessions.status} IN ('completed', 'ended')`,
+      ))
       .groupBy(sessions.courseId);
 
     const sessionCountMap = new Map(
@@ -1034,11 +1037,14 @@ export class InstructorService {
       );
     }
 
-    // Get all session IDs for attendance query
+    // Get all session IDs for attendance query (only completed/ended)
     const allSessionIds = await db
       .select({ id: sessions.id })
       .from(sessions)
-      .where(inArray(sessions.courseId, courseIds));
+      .where(and(
+        inArray(sessions.courseId, courseIds),
+        sql`${sessions.status} IN ('completed', 'ended')`,
+      ));
     const sIds = allSessionIds.map((s) => s.id);
 
     const attendanceRateMap = new Map<string, number>();
@@ -1180,11 +1186,14 @@ export class InstructorService {
     // ─── Per-Course Breakdown ─────────────────────────────────
     const studentCourseIds = studentEnrollments.map((e) => e.courseId);
 
-    // Get all sessions grouped by course
+    // Get all sessions grouped by course (only completed/ended — exclude cancelled, scheduled, make-up)
     const allSessions = await db
       .select({ id: sessions.id, courseId: sessions.courseId })
       .from(sessions)
-      .where(inArray(sessions.courseId, studentCourseIds));
+      .where(and(
+        inArray(sessions.courseId, studentCourseIds),
+        sql`${sessions.status} IN ('completed', 'ended')`,
+      ));
 
     const sessionsByCourse = new Map<string, string[]>();
     for (const s of allSessions) {

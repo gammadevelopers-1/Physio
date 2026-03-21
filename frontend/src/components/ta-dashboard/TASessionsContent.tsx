@@ -171,6 +171,8 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
       ended: "bg-yellow-50 text-yellow-700",
       completed: "bg-green-50 text-green-700",
       cancelled: "bg-gray-50 text-gray-500",
+      missed: "bg-red-50 text-red-700",
+      rescheduled: "bg-yellow-50 text-yellow-700",
     };
     return styles[status] || styles.scheduled;
   };

@@ -1488,6 +1488,8 @@ function SessionCard({
       ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessionsPage.statusEnded") },
       completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessionsPage.statusCompleted") },
       cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessionsPage.statusCancelled") },
+      missed: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: "Missed" },
+      rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: "Rescheduled" },
     };
     return styles[status] || styles.scheduled;
   };

@@ -67,13 +67,17 @@ const StudentCourseDetailContent = () => {
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
-  // Split sessions into upcoming/live and completed
+  // Split sessions into upcoming/live, completed, and inactive
   const upcomingSessions = useMemo(
     () => data?.sessions.filter((s) => s.status === "scheduled" || s.status === "live") ?? [],
     [data?.sessions]
   );
   const completedSessions = useMemo(
-    () => data?.sessions.filter((s) => s.status === "completed") ?? [],
+    () => data?.sessions.filter((s) => s.status === "completed" || s.status === "ended") ?? [],
+    [data?.sessions]
+  );
+  const inactiveSessions = useMemo(
+    () => data?.sessions.filter((s) => s.status === "cancelled" || s.status === "missed" || s.status === "rescheduled") ?? [],
     [data?.sessions]
   );
 
@@ -653,13 +657,21 @@ const StudentCourseDetailContent = () => {
                       </h2>
 
                       <div className="space-y-3">
-                        {completedSessions.map((session) => (
+                        {completedSessions.map((session) => {
+                          const attRecord = data.attendanceRecords?.find((r) => r.sessionId === session.id);
+                          const wasAbsent = attRecord?.status === "absent";
+                          const wasPresent = attRecord?.status === "present" || attRecord?.status === "late";
+                          return (
                           <div
                             key={session.id}
-                            className="flex items-start gap-3 p-3 rounded-lg border border-[#E5E7EB]"
+                            className={`flex items-start gap-3 p-3 rounded-lg border ${wasAbsent ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[#E5E7EB]"}`}
                           >
-                            <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
-                              <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${wasAbsent ? "bg-[#FEE2E2]" : "bg-[#F3F4F6]"}`}>
+                              {wasAbsent ? (
+                                <XCircle className="w-5 h-5 text-[#EF4444]" />
+                              ) : (
+                                <CheckCircle2 className="w-5 h-5 text-[#16A34A]" />
+                              )}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium text-[#6B7280]">
@@ -687,6 +699,35 @@ const StudentCourseDetailContent = () => {
                               <Film className="w-3 h-3" />
                               {t("courseDetail.viewRecording")}
                             </button>
+                          </div>
+                        )})}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missed/Rescheduled Lectures */}
+                  {inactiveSessions.length > 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                      <h2 className="text-base sm:text-lg font-semibold text-[#6B7280] mb-4">
+                        Cancelled / Rescheduled Lectures
+                      </h2>
+                      <div className="space-y-3">
+                        {inactiveSessions.map((session) => (
+                          <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB]">
+                            <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
+                              <XCircle className="w-5 h-5 text-[#9CA3AF]" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#6B7280]">{session.title}</p>
+                              <div className="flex flex-wrap gap-3 text-xs text-[#9CA3AF] mt-1">
+                                <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{formatDate(session.scheduledAt)}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                  session.status === "cancelled" ? "bg-[#FEE2E2] text-[#EF4444]"
+                                  : session.status === "missed" ? "bg-[#FEE2E2] text-[#EF4444]"
+                                  : "bg-[#FEF3C7] text-[#D97706]"
+                                }`}>{session.status === "cancelled" ? "Cancelled" : session.status === "missed" ? "Missed" : "Rescheduled"}</span>
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>

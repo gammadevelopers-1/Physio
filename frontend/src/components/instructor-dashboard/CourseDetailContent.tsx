@@ -589,11 +589,29 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
   const handleStartSession = async (sessionId: string) => {
     try {
-      await instructorApi.startSession(sessionId);
+      const result = await instructorApi.startSession(sessionId);
       toast.success(t("courseDetail.sessionStartSuccess"));
+      // Open Zoom start URL if available
+      if ((result as any)?.zoomStartUrl) {
+        window.open((result as any).zoomStartUrl, '_blank');
+      } else if ((result as any)?.zoomLink) {
+        window.open((result as any).zoomLink, '_blank');
+      }
       refetch();
     } catch (err: any) {
       toast.error(err?.message || t("courseDetail.sessionStartError"));
+    }
+  };
+
+  const handleRescheduleSession = async (sessionId: string) => {
+    const reason = prompt("Enter reschedule reason (required):");
+    if (!reason?.trim()) return;
+    try {
+      await instructorApi.rescheduleSession(sessionId, reason.trim());
+      toast.success("Lecture marked as rescheduled");
+      refetch();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to reschedule");
     }
   };
 
@@ -1336,21 +1354,35 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     )}
                                   </>
                                 )}
-                                {(session.status === "scheduled" || session.status === "live" || session.status === "missed") && (
+                                {(session.status === "scheduled" || session.status === "live") && (
                                   <>
-                                    {session.status !== "missed" && (
-                                      <button
-                                        onClick={() => openEditSession(session)}
-                                        className="p-1.5 hover:bg-[#F3F4F6] rounded"
-                                        aria-label={t("courseDetail.editSession")}
-                                      >
-                                        <Edit className="w-4 h-4 text-[#6B7280]" />
-                                      </button>
-                                    )}
+                                    <button
+                                      onClick={() => openEditSession(session)}
+                                      className="p-1.5 hover:bg-[#F3F4F6] rounded"
+                                      aria-label={t("courseDetail.editSession")}
+                                    >
+                                      <Edit className="w-4 h-4 text-[#6B7280]" />
+                                    </button>
                                     <button
                                       onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
                                       className="p-1.5 hover:bg-[#FEE2E2] rounded"
                                       aria-label={t("courseDetail.cancelSession")}
+                                    >
+                                      <X className="w-4 h-4 text-[#EF4444]" />
+                                    </button>
+                                  </>
+                                )}
+                                {session.status === "missed" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleRescheduleSession(session.id)}
+                                      className="px-2.5 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
+                                    >
+                                      Reschedule
+                                    </button>
+                                    <button
+                                      onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
+                                      className="p-1.5 hover:bg-[#FEE2E2] rounded"
                                     >
                                       <X className="w-4 h-4 text-[#EF4444]" />
                                     </button>

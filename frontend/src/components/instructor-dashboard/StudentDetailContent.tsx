@@ -713,13 +713,33 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
                                 {/* Schedule Make-up Lecture — only for at-risk active courses */}
                                 {cp.enrollmentStatus === "active" && riskReasons.some(r => r.includes(`[${cp.courseTitle}]`)) && (
-                                  <Link
-                                    href={`/${locale}/dashboard/instructor/sessions?openSchedule=true&courseId=${cp.courseId}&isMakeup=true&studentId=${studentId}`}
+                                  <button
+                                    onClick={async () => {
+                                      const dateTime = prompt("Enter make-up lecture date and time (YYYY-MM-DD HH:MM):");
+                                      if (!dateTime?.trim()) return;
+                                      const title = prompt("Enter lecture title:", `Make-up: ${cp.courseTitle}`) || `Make-up: ${cp.courseTitle}`;
+                                      try {
+                                        const scheduledAt = new Date(dateTime.trim()).toISOString();
+                                        await instructorApi.createSession({
+                                          courseId: cp.courseId,
+                                          title,
+                                          type: "zoom",
+                                          scheduledAt,
+                                          durationMinutes: 60,
+                                          isMakeup: true,
+                                          assignedStudents: [studentId],
+                                        });
+                                        toast.success("Make-up lecture scheduled successfully");
+                                        window.location.reload();
+                                      } catch (err: any) {
+                                        toast.error(err?.message || "Failed to schedule make-up lecture");
+                                      }
+                                    }}
                                     className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
                                   >
                                     <Calendar className="w-3.5 h-3.5" />
                                     Schedule Make-up Lecture
-                                  </Link>
+                                  </button>
                                 )}
                               </div>
                             </div>

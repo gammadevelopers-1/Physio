@@ -2566,7 +2566,7 @@ const SessionsContent = () => {
                     await instructorApi.rescheduleSession(rescheduleSession.id, { reason: rescheduleForm.reason.trim(), newScheduledAt, newDurationMinutes: Number(rescheduleForm.duration) || 60 });
                     toast.success("Lecture rescheduled");
                     setRescheduleSession(null);
-                    loadData();
+                    fetchData();
                   } catch (err: any) { toast.error(err?.message || "Failed"); } finally { setRescheduleSaving(false); }
                 }}
                 disabled={rescheduleSaving || !rescheduleForm.reason.trim() || !rescheduleForm.date || !rescheduleForm.time}

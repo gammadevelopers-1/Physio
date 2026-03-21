@@ -136,7 +136,7 @@ export class StudentService {
             eq(certificateRequests.status, 'approved'),
           ),
         ),
-      // Upcoming sessions (from enrolled courses)
+      // Upcoming sessions (from enrolled courses — exclude unassigned make-ups)
       db
         .select({ count: count() })
         .from(sessions)
@@ -147,6 +147,7 @@ export class StudentService {
             eq(enrollments.status, 'active'),
             eq(sessions.status, 'scheduled'),
             gte(sessions.scheduledAt, new Date()),
+            sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
           ),
         ),
       // Average progress across active enrollments
@@ -161,7 +162,7 @@ export class StudentService {
             eq(enrollments.status, 'active'),
           ),
         ),
-      // Attendance stats (across all enrolled courses)
+      // Attendance stats (across all enrolled courses — only completed/ended sessions, exclude unassigned make-ups)
       db
         .select({
           totalSessions: sql<number>`COUNT(DISTINCT ${sessions.id})`.mapWith(Number),
@@ -180,10 +181,8 @@ export class StudentService {
           and(
             eq(enrollments.studentId, studentId),
             eq(enrollments.status, 'active'),
-            or(
-              eq(sessions.status, 'completed'),
-              eq(sessions.status, 'live'),
-            ),
+            sql`${sessions.status} IN ('completed', 'ended')`,
+            sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
           ),
         ),
       // Certificates pending
@@ -423,7 +422,7 @@ export class StudentService {
         missingTasks.map((r) => [r.courseId, { count: Number(r.cnt), assignmentCount: Number(r.assignmentCnt) }]),
       );
 
-      // Next upcoming session per course
+      // Next upcoming session per course (exclude unassigned make-ups)
       const nextSessions = await db.execute(sql`
         SELECT DISTINCT ON (s.course_id)
           s.course_id AS "courseId",
@@ -434,6 +433,7 @@ export class StudentService {
         WHERE s.course_id IN (${sql.join(courseIds.map((id) => sql`${id}`), sql`, `)})
           AND s.status IN ('scheduled', 'live')
           AND s.scheduled_at >= NOW()
+          AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         ORDER BY s.course_id, s.scheduled_at ASC
       `);
 
@@ -445,7 +445,7 @@ export class StudentService {
         };
       }
 
-      // Per-course attendance stats
+      // Per-course attendance stats (only completed/ended, exclude cancelled and unassigned make-ups)
       const attendanceStats = await db.execute(sql`
         SELECT s.course_id AS "courseId",
           COUNT(*) AS "total",
@@ -453,7 +453,8 @@ export class StudentService {
         FROM sessions s
         LEFT JOIN attendance a ON a.session_id = s.id AND a.student_id = ${studentId}
         WHERE s.course_id IN (${sql.join(courseIds.map((id) => sql`${id}`), sql`, `)})
-          AND s.status IN ('completed', 'live')
+          AND s.status IN ('completed', 'ended')
+          AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         GROUP BY s.course_id
       `);
 
@@ -664,12 +665,13 @@ export class StudentService {
       submission: submissionMap.get(a.id) || null,
     }));
 
-    // Attendance summary for this course
+    // Attendance summary for this course (only completed/ended, exclude cancelled + unassigned make-ups)
     const [attSummary] = await db
       .select({
         totalSessions: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
-          AND s.status IN ('completed', 'ended', 'live')
+          AND s.status IN ('completed', 'ended')
+          AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
         attendedSessions: sql<number>`(
           SELECT COUNT(*) FROM attendance a
@@ -677,6 +679,8 @@ export class StudentService {
           WHERE a.student_id = ${studentId}
           AND s.course_id = ${courseId}
           AND a.status IN ('present', 'late')
+          AND s.status IN ('completed', 'ended')
+          AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
       })
       .from(sql`(SELECT 1) AS dummy`);
@@ -818,12 +822,13 @@ export class StudentService {
       )
       .orderBy(asc(sessions.scheduledAt));
 
-    // Get total sessions and attended count
+    // Get total sessions and attended count (only completed/ended, exclude cancelled + unassigned make-ups)
     const [sessionStats] = await db
       .select({
         totalSessions: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
-          AND s.status IN ('completed', 'ended', 'live')
+          AND s.status IN ('completed', 'ended')
+          AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
         attendedSessions: sql<number>`(
           SELECT COUNT(*) FROM attendance a
@@ -831,6 +836,8 @@ export class StudentService {
           WHERE a.student_id = ${studentId}
           AND s.course_id = ${courseId}
           AND a.status IN ('present', 'late')
+          AND s.status IN ('completed', 'ended')
+          AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
       })
       .from(sql`(SELECT 1) AS dummy`);

@@ -1393,7 +1393,7 @@ export class InstructorService {
       .from(courses)
       .where(and(
         ...(courseConditions.length > 0 ? courseConditions : []),
-        sql`${courses.status} IN ('active', 'draft', 'pending_review')`,
+        eq(courses.status, 'active'),
       ));
 
     const courseIds = instructorCourses.map((c) => c.id);
@@ -1418,22 +1418,30 @@ export class InstructorService {
 
     if (allEnrollments.length === 0) return [];
 
-    // Get session counts per course
+    // Get session counts per course (only completed/ended — exclude cancelled, scheduled, make-up for others)
     const sessionCounts = await db
       .select({
         courseId: sessions.courseId,
         count: sql<number>`COUNT(*)`.mapWith(Number),
       })
       .from(sessions)
-      .where(inArray(sessions.courseId, courseIds))
+      .where(and(
+        inArray(sessions.courseId, courseIds),
+        sql`${sessions.status} IN ('completed', 'ended')`,
+        eq(sessions.isMakeup, false),
+      ))
       .groupBy(sessions.courseId);
     const sessionCountMap = new Map(sessionCounts.map((s) => [s.courseId, s.count]));
 
-    // Get all session IDs per course
+    // Get all session IDs per course (completed/ended, non-makeup only for at-risk)
     const allSessions = await db
       .select({ id: sessions.id, courseId: sessions.courseId })
       .from(sessions)
-      .where(inArray(sessions.courseId, courseIds));
+      .where(and(
+        inArray(sessions.courseId, courseIds),
+        sql`${sessions.status} IN ('completed', 'ended')`,
+        eq(sessions.isMakeup, false),
+      ));
     const sessionIdsByCourse = new Map<string, string[]>();
     for (const s of allSessions) {
       const list = sessionIdsByCourse.get(s.courseId) || [];

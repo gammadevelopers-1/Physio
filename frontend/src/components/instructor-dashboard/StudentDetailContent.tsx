@@ -59,6 +59,11 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Make-up lecture modal
+  const [makeupModal, setMakeupModal] = useState<{ open: boolean; courseId: string; courseTitle: string } | null>(null);
+  const [makeupData, setMakeupData] = useState({ title: "", date: "", time: "", duration: "60" });
+  const [makeupSaving, setMakeupSaving] = useState(false);
+
   // Interventions state
   const [interventions, setInterventions] = useState<InterventionRecord[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -714,26 +719,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 {/* Schedule Make-up Lecture — only for at-risk active courses */}
                                 {cp.enrollmentStatus === "active" && riskReasons.some(r => r.includes(`[${cp.courseTitle}]`)) && (
                                   <button
-                                    onClick={async () => {
-                                      const dateTime = prompt("Enter make-up lecture date and time (YYYY-MM-DD HH:MM):");
-                                      if (!dateTime?.trim()) return;
-                                      const title = prompt("Enter lecture title:", `Make-up: ${cp.courseTitle}`) || `Make-up: ${cp.courseTitle}`;
-                                      try {
-                                        const scheduledAt = new Date(dateTime.trim()).toISOString();
-                                        await instructorApi.createSession({
-                                          courseId: cp.courseId,
-                                          title,
-                                          type: "zoom",
-                                          scheduledAt,
-                                          durationMinutes: 60,
-                                          isMakeup: true,
-                                          assignedStudents: [studentId],
-                                        });
-                                        toast.success("Make-up lecture scheduled successfully");
-                                        window.location.reload();
-                                      } catch (err: any) {
-                                        toast.error(err?.message || "Failed to schedule make-up lecture");
-                                      }
+                                    onClick={() => {
+                                      setMakeupModal({ open: true, courseId: cp.courseId, courseTitle: cp.courseTitle });
+                                      setMakeupData({ title: `Make-up: ${cp.courseTitle}`, date: "", time: "", duration: "60" });
                                     }}
                                     className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
                                   >
@@ -977,6 +965,98 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
           </div>
         </div>
       </div>
+      {/* Make-up Lecture Modal */}
+      {makeupModal?.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1F2937]">Schedule Make-up Lecture</h3>
+                <button onClick={() => setMakeupModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded">
+                  <UserX className="w-5 h-5 text-[#6B7280]" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">Lecture Title *</label>
+                  <input
+                    type="text"
+                    value={makeupData.title}
+                    onChange={(e) => setMakeupData(d => ({ ...d, title: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-1">Date *</label>
+                    <input
+                      type="date"
+                      value={makeupData.date}
+                      onChange={(e) => setMakeupData(d => ({ ...d, date: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#374151] mb-1">Time *</label>
+                    <input
+                      type="time"
+                      value={makeupData.time}
+                      onChange={(e) => setMakeupData(d => ({ ...d, time: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">Duration (minutes)</label>
+                  <input
+                    type="number"
+                    value={makeupData.duration}
+                    onChange={(e) => setMakeupData(d => ({ ...d, duration: e.target.value }))}
+                    min={15}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  />
+                </div>
+                <p className="text-xs text-[#9CA3AF]">This make-up lecture will only be visible to the assigned at-risk student.</p>
+              </div>
+              <div className="flex justify-end gap-3 mt-5">
+                <button onClick={() => setMakeupModal(null)} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937]">Cancel</button>
+                <button
+                  onClick={async () => {
+                    if (!makeupData.title.trim() || !makeupData.date || !makeupData.time) {
+                      toast.error("Please fill in all required fields");
+                      return;
+                    }
+                    setMakeupSaving(true);
+                    try {
+                      const scheduledAt = new Date(`${makeupData.date}T${makeupData.time}`).toISOString();
+                      await instructorApi.createSession({
+                        courseId: makeupModal.courseId,
+                        title: makeupData.title.trim(),
+                        type: "zoom",
+                        scheduledAt,
+                        durationMinutes: Number(makeupData.duration) || 60,
+                        isMakeup: true,
+                        assignedStudents: [studentId],
+                      });
+                      toast.success("Make-up lecture scheduled");
+                      setMakeupModal(null);
+                      window.location.reload();
+                    } catch (err: any) {
+                      toast.error(err?.message || "Failed to schedule");
+                    } finally {
+                      setMakeupSaving(false);
+                    }
+                  }}
+                  disabled={makeupSaving || !makeupData.title.trim() || !makeupData.date || !makeupData.time}
+                  className="px-4 py-2 bg-[#D97706] text-white text-sm font-medium rounded-lg hover:bg-[#B45309] transition-colors disabled:opacity-50"
+                >
+                  {makeupSaving ? "Scheduling..." : "Schedule Lecture"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

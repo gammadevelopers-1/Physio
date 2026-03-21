@@ -474,6 +474,8 @@ export class SessionsService {
         zoomLink: sessions.zoomLink,
         meetingId: sessions.meetingId,
         cancelReason: sessions.cancelReason,
+        isMakeup: sessions.isMakeup,
+        assignedStudents: sessions.assignedStudents,
         createdAt: sessions.createdAt,
         updatedAt: sessions.updatedAt,
         instructorFirstName: users.firstName,
@@ -498,7 +500,12 @@ export class SessionsService {
     const enrichedData = data.map((row) => {
       const classification = classifyCourse(row.courseStartDate, row.courseEndDate);
       const nelcLimit = row.maxEnrollment || getNelcMaxEnrollment(classification);
-      const enrolled = Number(row.enrolledCount) || 0;
+      // For make-up lectures, show assigned student count instead of total enrolled
+      const isMakeupSession = (row as any).isMakeup && (row as any).assignedStudents;
+      const assignedCount = isMakeupSession
+        ? (typeof (row as any).assignedStudents === 'string' ? JSON.parse((row as any).assignedStudents) : (row as any).assignedStudents).length
+        : 0;
+      const enrolled = isMakeupSession ? assignedCount : (Number(row.enrolledCount) || 0);
       const capacityPercent = nelcLimit > 0 ? Math.round((enrolled / nelcLimit) * 100) : 0;
       return {
         ...row,
@@ -1138,14 +1145,12 @@ export class SessionsService {
       .where(eq(sessions.id, sessionId))
       .returning();
 
-    // Notify students
+    // Notify students about reschedule
     this.sessionNotificationService
-      .notifySessionEvent(updated, 'session_cancelled', {
-        cancelReason: `Lecture rescheduled: ${data.reason.trim()}`,
-      })
+      .notifySessionEvent(updated, 'session_rescheduled')
       .catch(() => {});
 
-    this.logger.log(`Session ${sessionId} marked as rescheduled: ${data.reason}`);
+    this.logger.log(`Session ${sessionId} rescheduled: ${data.reason}`);
 
     return updated;
   }

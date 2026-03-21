@@ -1461,6 +1461,7 @@ function SessionCard({
   onRecordings,
   onEdit,
   onDelete,
+  onReschedule,
   actionLoading,
   taThreshold,
   t,
@@ -1476,6 +1477,7 @@ function SessionCard({
   onRecordings: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onReschedule: () => void;
   actionLoading: boolean;
   taThreshold?: ThresholdStatus;
   t: ReturnType<typeof useTranslations>;
@@ -1653,6 +1655,17 @@ function SessionCard({
             <button onClick={onDelete} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.deleteSession")}>
               <Trash2 className="w-3.5 h-3.5" />
             </button>
+          )}
+
+          {session.status === "missed" && (
+            <>
+              <button onClick={onReschedule} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors">
+                Reschedule
+              </button>
+              <button onClick={onCancel} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors">
+                <Ban className="w-3.5 h-3.5" />
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -1922,6 +1935,9 @@ const SessionsContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [rescheduleSession, setRescheduleSession] = useState<CourseSession | null>(null);
+  const [rescheduleForm, setRescheduleForm] = useState({ reason: "", date: "", time: "", duration: "60" });
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
   // Calendar
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -2222,6 +2238,10 @@ const SessionsContent = () => {
               onEdit={() => setEditSessionData(session)}
               onFinalize={() => handleFinalize(session)}
               onDelete={() => handleDelete(session)}
+              onReschedule={() => {
+                setRescheduleSession(session);
+                setRescheduleForm({ reason: "", date: "", time: "", duration: String(session.durationMinutes || 60) });
+              }}
               actionLoading={actionLoadingId === session.id}
               taThreshold={taThresholds[session.courseId]}
               t={t}
@@ -2509,6 +2529,54 @@ const SessionsContent = () => {
           loading={actionLoadingId === cancelSessionData.id}
           t={t}
         />
+      )}
+
+      {rescheduleSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+            <h3 className="text-lg font-semibold text-[#1F2937] mb-4">Reschedule Lecture</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Reason *</label>
+                <textarea value={rescheduleForm.reason} onChange={(e) => setRescheduleForm(d => ({ ...d, reason: e.target.value }))} rows={2} placeholder="Why is this lecture being rescheduled?" className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">New Date *</label>
+                  <input type="date" value={rescheduleForm.date} onChange={(e) => setRescheduleForm(d => ({ ...d, date: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">New Time *</label>
+                  <input type="time" value={rescheduleForm.time} onChange={(e) => setRescheduleForm(d => ({ ...d, time: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Duration (min)</label>
+                <input type="number" value={rescheduleForm.duration} onChange={(e) => setRescheduleForm(d => ({ ...d, duration: e.target.value }))} min={15} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-5">
+              <button onClick={() => setRescheduleSession(null)} className="px-4 py-2 text-sm text-[#6B7280]">Cancel</button>
+              <button
+                onClick={async () => {
+                  if (!rescheduleForm.reason.trim() || !rescheduleForm.date || !rescheduleForm.time) { toast.error("Please fill all required fields"); return; }
+                  setRescheduleSaving(true);
+                  try {
+                    const newScheduledAt = new Date(`${rescheduleForm.date}T${rescheduleForm.time}`).toISOString();
+                    await instructorApi.rescheduleSession(rescheduleSession.id, { reason: rescheduleForm.reason.trim(), newScheduledAt, newDurationMinutes: Number(rescheduleForm.duration) || 60 });
+                    toast.success("Lecture rescheduled");
+                    setRescheduleSession(null);
+                    loadData();
+                  } catch (err: any) { toast.error(err?.message || "Failed"); } finally { setRescheduleSaving(false); }
+                }}
+                disabled={rescheduleSaving || !rescheduleForm.reason.trim() || !rescheduleForm.date || !rescheduleForm.time}
+                className="px-4 py-2 bg-[#D97706] text-white text-sm font-medium rounded-lg hover:bg-[#B45309] disabled:opacity-50"
+              >
+                {rescheduleSaving ? "Rescheduling..." : "Reschedule"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {deleteSessionData && (

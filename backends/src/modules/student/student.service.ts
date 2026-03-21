@@ -732,7 +732,8 @@ export class StudentService {
     }));
 
     // Per-session attendance records for this student+course
-    const attendanceRecords = await db
+    // LEFT JOIN so sessions without attendance records show as absent
+    const attendanceRecordsRaw = await db
       .select({
         sessionId: sessions.id,
         sessionTitle: sessions.title,
@@ -744,15 +745,27 @@ export class StudentService {
         leftAt: attendance.leftAt,
         durationMinutes: attendance.durationMinutes,
       })
-      .from(attendance)
-      .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
+      .from(sessions)
+      .leftJoin(
+        attendance,
+        and(
+          eq(attendance.sessionId, sessions.id),
+          eq(attendance.studentId, studentId),
+        ),
+      )
       .where(
         and(
-          eq(attendance.studentId, studentId),
           eq(sessions.courseId, courseId),
+          sql`${sessions.status} IN ('completed', 'ended')`,
+          sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
       )
       .orderBy(desc(sessions.scheduledAt));
+
+    const attendanceRecords = attendanceRecordsRaw.map((r) => ({
+      ...r,
+      status: r.status || 'absent',
+    }));
 
     // Update lastAccessedAt
     await db

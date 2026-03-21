@@ -603,15 +603,29 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     }
   };
 
-  const handleRescheduleSession = async (sessionId: string) => {
-    const reason = prompt("Enter reschedule reason (required):");
-    if (!reason?.trim()) return;
+  const [rescheduleModal, setRescheduleModal] = useState<{ open: boolean; sessionId: string | null }>({ open: false, sessionId: null });
+  const [rescheduleData, setRescheduleData] = useState({ reason: "", newDate: "", newTime: "", duration: "60" });
+  const [rescheduleSaving, setRescheduleSaving] = useState(false);
+
+  const handleRescheduleSession = async () => {
+    if (!rescheduleData.reason.trim()) { toast.error("Reason is required"); return; }
+    if (!rescheduleData.newDate || !rescheduleData.newTime) { toast.error("New date and time are required"); return; }
+    setRescheduleSaving(true);
     try {
-      await instructorApi.rescheduleSession(sessionId, reason.trim());
-      toast.success("Lecture marked as rescheduled");
+      const newScheduledAt = new Date(`${rescheduleData.newDate}T${rescheduleData.newTime}`).toISOString();
+      await instructorApi.rescheduleSession(rescheduleModal.sessionId!, {
+        reason: rescheduleData.reason.trim(),
+        newScheduledAt,
+        newDurationMinutes: Number(rescheduleData.duration) || 60,
+      });
+      toast.success("Lecture rescheduled successfully");
+      setRescheduleModal({ open: false, sessionId: null });
+      setRescheduleData({ reason: "", newDate: "", newTime: "", duration: "60" });
       refetch();
     } catch (err: any) {
       toast.error(err?.message || "Failed to reschedule");
+    } finally {
+      setRescheduleSaving(false);
     }
   };
 
@@ -1375,7 +1389,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 {session.status === "missed" && (
                                   <>
                                     <button
-                                      onClick={() => handleRescheduleSession(session.id)}
+                                      onClick={() => {
+                                        setRescheduleModal({ open: true, sessionId: session.id });
+                                        setRescheduleData({ reason: "", newDate: "", newTime: "", duration: String(session.durationMinutes || 60) });
+                                      }}
                                       className="px-2.5 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
                                     >
                                       Reschedule
@@ -1976,6 +1993,74 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 className="px-4 py-2 bg-[#EF4444] text-white text-sm font-medium rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50"
               >
                 {t("courseDetail.confirmCancel")}
+              </button>
+            </div>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ═══ RESCHEDULE MODAL ═══ */}
+      {rescheduleModal.open && (
+        <ModalOverlay onClose={() => setRescheduleModal({ open: false, sessionId: null })}>
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-[#1F2937]">Reschedule Lecture</h3>
+              <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="p-1 hover:bg-[#F3F4F6] rounded">
+                <X className="w-5 h-5 text-[#6B7280]" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Reason *</label>
+                <textarea
+                  value={rescheduleData.reason}
+                  onChange={(e) => setRescheduleData(d => ({ ...d, reason: e.target.value }))}
+                  rows={2}
+                  placeholder="Why is this lecture being rescheduled?"
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">New Date *</label>
+                  <input
+                    type="date"
+                    value={rescheduleData.newDate}
+                    onChange={(e) => setRescheduleData(d => ({ ...d, newDate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">New Time *</label>
+                  <input
+                    type="time"
+                    value={rescheduleData.newTime}
+                    onChange={(e) => setRescheduleData(d => ({ ...d, newTime: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Duration (minutes)</label>
+                <input
+                  type="number"
+                  value={rescheduleData.duration}
+                  onChange={(e) => setRescheduleData(d => ({ ...d, duration: e.target.value }))}
+                  min={15}
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-5">
+              <button onClick={() => setRescheduleModal({ open: false, sessionId: null })} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleRescheduleSession}
+                disabled={rescheduleSaving || !rescheduleData.reason.trim() || !rescheduleData.newDate || !rescheduleData.newTime}
+                className="px-4 py-2 bg-[#D97706] text-white text-sm font-medium rounded-lg hover:bg-[#B45309] transition-colors disabled:opacity-50"
+              >
+                {rescheduleSaving ? "Rescheduling..." : "Reschedule Lecture"}
               </button>
             </div>
           </div>

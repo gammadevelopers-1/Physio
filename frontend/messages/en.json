@@ -6114,6 +6114,8 @@
       "ended": "Ended",
       "completed": "Completed",
       "cancelled": "Cancelled",
+      "missed": "Missed",
+      "rescheduled": "Rescheduled",
       "clearDate": "Clear",
       "noSessions": "No assigned lectures found",
       "course": "Course",

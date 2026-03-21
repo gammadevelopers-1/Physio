@@ -6332,6 +6332,8 @@
       "ended": "انتهت",
       "completed": "مكتملة",
       "cancelled": "ملغاة",
+      "missed": "فائتة",
+      "rescheduled": "معاد جدولتها",
       "clearDate": "مسح",
       "noSessions": "لم يتم العثور على محاضرات مخصصة",
       "course": "الدورة",

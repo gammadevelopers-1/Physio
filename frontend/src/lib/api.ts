@@ -908,8 +908,8 @@ export const instructorApi = {
   cancelSession: (sessionId: string, cancelReason: string) =>
     api.patch<CourseSession>(`/sessions/${sessionId}/cancel`, { cancelReason }),
 
-  rescheduleSession: (sessionId: string, reason: string) =>
-    api.post<CourseSession>(`/sessions/${sessionId}/reschedule`, { reason }),
+  rescheduleSession: (sessionId: string, data: { reason: string; newScheduledAt?: string; newDurationMinutes?: number }) =>
+    api.post<CourseSession>(`/sessions/${sessionId}/reschedule`, data),
 
   deleteSession: (sessionId: string) =>
     api.delete<{ message: string }>(`/sessions/${sessionId}`),

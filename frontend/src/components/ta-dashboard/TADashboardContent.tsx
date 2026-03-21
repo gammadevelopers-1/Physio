@@ -252,16 +252,23 @@ const TADashboardContent = ({
   const getCourseStatusBadge = (status: string) => {
     const map: Record<string, string> = {
       approved: "bg-green-50 text-green-700",
-      suggested: "bg-blue-50 text-blue-700",
+      pre_assigned: "bg-blue-50 text-blue-700",
+      suggested: "bg-yellow-50 text-yellow-700",
       rejected: "bg-red-50 text-red-700",
+      active: "bg-green-50 text-green-700",
+      completed: "bg-blue-50 text-blue-700",
     };
     return map[status] || "bg-gray-50 text-gray-600";
   };
 
   const getCourseStatusLabel = (status: string) => {
     const map: Record<string, string> = {
-      approved: t("home.coursesOverview.approved"),
-      suggested: t("home.coursesOverview.suggested"),
+      approved: "Assigned",
+      pre_assigned: "Pre-assigned",
+      suggested: "Suggested",
+      rejected: "Rejected",
+      active: "Active",
+      completed: "Completed",
     };
     return map[status] || status;
   };

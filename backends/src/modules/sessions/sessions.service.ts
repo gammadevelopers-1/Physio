@@ -1085,14 +1085,13 @@ export class SessionsService {
   async reschedule(
     sessionId: string,
     user: AuthenticatedUser,
-    data: { reason: string },
+    data: { reason: string; newScheduledAt?: string; newDurationMinutes?: number },
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
 
     if (
       session.status === SESSION_STATUS.COMPLETED ||
-      session.status === SESSION_STATUS.CANCELLED ||
-      session.status === SESSION_STATUS.RESCHEDULED
+      session.status === SESSION_STATUS.CANCELLED
     ) {
       throw new BadRequestException(
         `Cannot reschedule a ${session.status} lecture`,
@@ -1103,14 +1102,39 @@ export class SessionsService {
       throw new BadRequestException('Reschedule reason is required');
     }
 
-    // Mark as rescheduled with reason
+    // Update session with new date/time and reset status to scheduled
+    const updateData: Record<string, unknown> = {
+      rescheduleReason: data.reason.trim(),
+      updatedAt: new Date(),
+    };
+
+    if (data.newScheduledAt) {
+      updateData.scheduledAt = new Date(data.newScheduledAt);
+      updateData.status = SESSION_STATUS.SCHEDULED; // Reset to scheduled with new time
+    } else {
+      updateData.status = SESSION_STATUS.RESCHEDULED; // Just mark as rescheduled without new time
+    }
+
+    if (data.newDurationMinutes) {
+      updateData.durationMinutes = data.newDurationMinutes;
+    }
+
+    // Sync Zoom meeting if rescheduling with new time
+    if (data.newScheduledAt && session.meetingId &&
+      (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)) {
+      try {
+        await this.zoomService.updateMeeting(session.meetingId, {
+          startTime: new Date(data.newScheduledAt),
+          durationMinutes: data.newDurationMinutes || undefined,
+        });
+      } catch (err) {
+        this.logger.warn(`Failed to update Zoom meeting: ${err?.message}`);
+      }
+    }
+
     const [updated] = await db
       .update(sessions)
-      .set({
-        status: SESSION_STATUS.RESCHEDULED,
-        rescheduleReason: data.reason.trim(),
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(sessions.id, sessionId))
       .returning();
 

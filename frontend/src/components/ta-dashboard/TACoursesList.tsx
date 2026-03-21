@@ -7,7 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { BookOpen, AlertTriangle, Clock, Search, ArrowUpDown, Users, Calendar, ChevronRight, ChevronLeft } from "lucide-react";
 import { taApi, type TAAssignedCourse } from "@/lib/api";
 
-type StatusFilter = "all" | "approved" | "suggested";
+type StatusFilter = "all" | "approved" | "suggested" | "completed";
 type SortOption = "newest" | "oldest" | "alphabetical";
 
 const TACoursesList = () => {

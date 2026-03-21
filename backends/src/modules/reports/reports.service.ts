@@ -1569,6 +1569,15 @@ export class ReportsService {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const PDFDocument = require('pdfkit');
 
+    // Load Arabic font for PDF reports (embedded base64)
+    let arabicFontBuf: Buffer | null = null;
+    try {
+      const { AMIRI_BOLD_BASE64 } = require('../certificates/amiri-bold-font');
+      arabicFontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
+    } catch { /* font optional */ }
+
+    const hasArabic = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
+
     return new Promise<Buffer>((resolve, reject) => {
       const isLandscape = headers.length > 5;
       const doc = new PDFDocument({
@@ -1576,6 +1585,11 @@ export class ReportsService {
         size: 'A4',
         layout: isLandscape ? 'landscape' : 'portrait',
       });
+
+      // Register Arabic font
+      if (arabicFontBuf) {
+        doc.registerFont('Amiri', arabicFontBuf);
+      }
 
       const chunks: Buffer[] = [];
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -1660,12 +1674,28 @@ export class ReportsService {
         }
 
         row.forEach((cell, i) => {
-          doc.text(String(cell ?? ''), startX + i * colWidth, y, {
-            width: colWidth - 3,
-            lineBreak: false,
-          });
+          const cellText = String(cell ?? '');
+          // Use Arabic font if cell contains Arabic characters
+          if (arabicFontBuf && hasArabic(cellText)) {
+            doc.font('Amiri').fontSize(7);
+            doc.text(cellText, startX + i * colWidth, y, {
+              width: colWidth - 3,
+              lineBreak: true,
+              height: 12,
+              ellipsis: true,
+              features: ['rtla'],
+            });
+            doc.font('Helvetica').fontSize(7);
+          } else {
+            doc.text(cellText, startX + i * colWidth, y, {
+              width: colWidth - 3,
+              lineBreak: true,
+              height: 12,
+              ellipsis: true,
+            });
+          }
         });
-        y += 12;
+        y += 14;
       }
 
       // ── Footer on last page ──

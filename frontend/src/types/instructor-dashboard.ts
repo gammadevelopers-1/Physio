@@ -404,7 +404,7 @@ export interface CourseSession {
   meetingId: string | null;
   roomName: string | null;
   venueAddress: string | null;
-  status: 'scheduled' | 'live' | 'ended' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'live' | 'ended' | 'completed' | 'cancelled' | 'missed' | 'rescheduled';
   actualStartedAt: string | null;
   actualEndedAt: string | null;
   cancelReason: string | null;

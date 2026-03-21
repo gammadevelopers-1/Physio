@@ -174,7 +174,14 @@ export class SessionNotificationService {
               })
               .catch(() => {});
             break;
-          // session_rescheduled — in-app only for now, no dedicated email template
+          case 'session_rescheduled':
+            this.emailService
+              .sendSessionScheduled(student.email, {
+                ...emailParams,
+                isRescheduled: true,
+              } as any)
+              .catch(() => {});
+            break;
         }
       }
 

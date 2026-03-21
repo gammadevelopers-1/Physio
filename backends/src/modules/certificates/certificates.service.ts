@@ -461,6 +461,19 @@ export class CertificatesService {
     //   );
     // }
 
+    // Check SCFHS number before issuing certificate
+    const [studentForScfhs] = await db
+      .select({ scfhsNumber: users.scfhsNumber })
+      .from(users)
+      .where(eq(users.id, request.studentId))
+      .limit(1);
+
+    if (!studentForScfhs?.scfhsNumber?.trim()) {
+      throw new BadRequestException(
+        'Cannot issue certificate: Student has not provided their SCFHS Registration Number. The student must add their Mumaris+ number in their profile settings first.',
+      );
+    }
+
     // Generate certificate PDF
     let certificateUrl: string;
     try {

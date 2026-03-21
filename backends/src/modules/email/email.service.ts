@@ -395,12 +395,16 @@ export class EmailService {
       scheduledDate: string;
       sessionType: string;
       zoomLink: string | null;
+      isRescheduled?: boolean;
     },
   ): Promise<void> {
     try {
+      const subject = params.isRescheduled
+        ? `Lecture Rescheduled: ${params.sessionTitle}`
+        : `New Lecture Scheduled: ${params.sessionTitle}`;
       await this.send({
         to,
-        subject: `New Session Scheduled: ${params.sessionTitle}`,
+        subject,
         html: getSessionScheduledHtml(params),
         text: getSessionScheduledText(params),
       });

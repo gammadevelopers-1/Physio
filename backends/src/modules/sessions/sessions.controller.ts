@@ -266,16 +266,16 @@ export class SessionsController {
   }
 
   /**
-   * PATCH /sessions/:id/reschedule — Reschedule a session
+   * POST /sessions/:id/reschedule — Reschedule a lecture (marks old as rescheduled, creates new)
    */
-  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
-  @Patch(':id/reschedule')
+  @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/reschedule')
   async reschedule(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: { scheduledAt: string; durationMinutes?: number },
+    @Body() body: { reason: string; newScheduledAt: string; newDurationMinutes?: number },
   ) {
-    return this.sessionsService.reschedule(id, user, body.scheduledAt, body.durationMinutes);
+    return this.sessionsService.reschedule(id, user, body);
   }
 
   /**

@@ -680,10 +680,13 @@ export class SessionsService {
       );
     }
 
-    // Block starting more than 15 minutes before scheduled time
+    // Strict scheduling: can only start within ±15 minutes of scheduled time
     const now = new Date();
     const scheduledAt = new Date(session.scheduledAt);
-    const fifteenMinBefore = new Date(scheduledAt.getTime() - 15 * 60 * 1000);
+    const GRACE_MINUTES = 15;
+    const fifteenMinBefore = new Date(scheduledAt.getTime() - GRACE_MINUTES * 60 * 1000);
+    const fifteenMinAfter = new Date(scheduledAt.getTime() + GRACE_MINUTES * 60 * 1000);
+
     if (now < fifteenMinBefore) {
       const diffMs = scheduledAt.getTime() - now.getTime();
       const diffHours = Math.floor(diffMs / 3600000);
@@ -695,7 +698,19 @@ export class SessionsService {
         month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
       });
       throw new BadRequestException(
-        `Cannot start lecture yet. The lecture is scheduled for ${scheduledStr}. You can start it up to 15 minutes before (in ${timeStr}).`,
+        `Cannot start lecture yet. Scheduled for ${scheduledStr}. You can start it ${GRACE_MINUTES} minutes before (in ${timeStr}).`,
+      );
+    }
+
+    if (now > fifteenMinAfter) {
+      // Auto-mark as missed
+      await db
+        .update(sessions)
+        .set({ status: SESSION_STATUS.MISSED, updatedAt: new Date() })
+        .where(eq(sessions.id, sessionId));
+
+      throw new BadRequestException(
+        `The scheduled time has passed by more than ${GRACE_MINUTES} minutes. This lecture has been marked as missed. Please reschedule or cancel it.`,
       );
     }
 
@@ -1000,7 +1015,8 @@ export class SessionsService {
 
     if (
       session.status === SESSION_STATUS.COMPLETED ||
-      session.status === SESSION_STATUS.CANCELLED
+      session.status === SESSION_STATUS.CANCELLED ||
+      session.status === SESSION_STATUS.RESCHEDULED
     ) {
       throw new BadRequestException(
         `Cannot cancel a ${session.status} lecture`,
@@ -1060,6 +1076,69 @@ export class SessionsService {
       .catch(() => {});
 
     return updated;
+  }
+
+  /**
+   * Reschedule a session — marks current as 'rescheduled' and creates a new one.
+   * Requires a reason. Works for scheduled, missed, or ended sessions.
+   */
+  async reschedule(
+    sessionId: string,
+    user: AuthenticatedUser,
+    data: { reason: string; newScheduledAt: string; newDurationMinutes?: number },
+  ) {
+    const session = await this.verifySessionAccess(sessionId, user);
+
+    if (
+      session.status === SESSION_STATUS.COMPLETED ||
+      session.status === SESSION_STATUS.CANCELLED ||
+      session.status === SESSION_STATUS.RESCHEDULED
+    ) {
+      throw new BadRequestException(
+        `Cannot reschedule a ${session.status} lecture`,
+      );
+    }
+
+    if (!data.reason?.trim()) {
+      throw new BadRequestException('Reschedule reason is required');
+    }
+
+    // Create the new session
+    const newSession = await this.create(user, {
+      courseId: session.courseId,
+      title: session.title,
+      type: session.type as any,
+      scheduledAt: data.newScheduledAt,
+      durationMinutes: data.newDurationMinutes || session.durationMinutes,
+      roomName: session.roomName || undefined,
+      venueAddress: session.venueAddress || undefined,
+      recordingEnabled: session.recordingEnabled,
+      isMakeup: session.isMakeup,
+      parentSessionId: session.parentSessionId || undefined,
+      assignedStudents: session.assignedStudents || undefined,
+    });
+
+    // Mark original as rescheduled
+    await db
+      .update(sessions)
+      .set({
+        status: SESSION_STATUS.RESCHEDULED,
+        rescheduleReason: data.reason.trim(),
+        rescheduledToId: newSession.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, sessionId));
+
+    // Notify students
+    this.sessionNotificationService
+      .notifySessionEvent(session, 'session_cancelled', {
+        cancelReason: `Rescheduled: ${data.reason.trim()}. New lecture on ${new Date(data.newScheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}.`,
+      })
+      .catch(() => {});
+
+    this.logger.log(`Session ${sessionId} rescheduled to ${newSession.id}`);
+
+    return { rescheduledSession: session, newSession };
   }
 
   /**
@@ -1151,67 +1230,8 @@ export class SessionsService {
   /**
    * Reschedule a session (Manager action).
    */
-  async reschedule(sessionId: string, user: AuthenticatedUser, newDate: string, newDuration?: number) {
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.id, sessionId))
-      .limit(1);
-
-    if (!session) throw new NotFoundException('Lecture not found');
-
-    if (session.status === SESSION_STATUS.COMPLETED || session.status === SESSION_STATUS.CANCELLED) {
-      throw new BadRequestException(`Cannot reschedule a ${session.status} lecture`);
-    }
-
-    const updateData: Record<string, unknown> = {
-      scheduledAt: new Date(newDate),
-      updatedAt: new Date(),
-    };
-    if (newDuration) {
-      updateData.durationMinutes = newDuration;
-    }
-
-    const [updated] = await db
-      .update(sessions)
-      .set(updateData)
-      .where(eq(sessions.id, sessionId))
-      .returning();
-
-    // Sync Zoom meeting with new schedule
-    let zoomSyncError: string | null = null;
-    if (
-      session.meetingId &&
-      (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
-    ) {
-      try {
-        await this.zoomService.updateMeeting(session.meetingId, {
-          startTime: new Date(newDate),
-          durationMinutes: newDuration || undefined,
-        });
-        this.logger.log(`Zoom meeting ${session.meetingId} rescheduled`);
-      } catch (error) {
-        const msg = error instanceof Error ? error.message : String(error);
-        this.logger.warn(`Failed to reschedule Zoom meeting ${session.meetingId}: ${msg}`);
-        zoomSyncError = `Lecture rescheduled but Zoom meeting sync failed: ${msg}`;
-      }
-    }
-
-    await this.auditLogService.log({
-      entityType: 'session',
-      entityId: updated.id,
-      action: 'session.rescheduled',
-      performedBy: user.id,
-      metadata: { newDate, newDuration, oldDate: session.scheduledAt },
-    }).catch(() => {});
-
-    // Notify enrolled students
-    this.sessionNotificationService
-      .notifySessionEvent(updated, 'session_rescheduled')
-      .catch(() => {});
-
-    return { ...updated, zoomSyncError };
-  }
+  // Old reschedule removed — replaced by new reschedule() at line ~1085
+  // that creates a new session and marks old as rescheduled
 
   /**
    * Assign a substitute instructor (Manager action).

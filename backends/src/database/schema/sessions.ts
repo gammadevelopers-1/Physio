@@ -37,6 +37,8 @@ export const sessions = pgTable(
     actualStartedAt: timestamp('actual_started_at'),
     actualEndedAt: timestamp('actual_ended_at'),
     cancelReason: text('cancel_reason'),
+    rescheduleReason: text('reschedule_reason'),
+    rescheduledToId: uuid('rescheduled_to_id'),
     reminderSentAt: timestamp('reminder_sent_at'),
     recordingEnabled: boolean('recording_enabled').notNull().default(true),
     zoomSyncedAt: timestamp('zoom_synced_at'),
@@ -58,7 +60,7 @@ export const sessions = pgTable(
     ),
     check(
       'sessions_status_check',
-      sql`${table.status} IN ('scheduled', 'live', 'ended', 'completed', 'cancelled')`,
+      sql`${table.status} IN ('scheduled', 'live', 'ended', 'completed', 'cancelled', 'missed', 'rescheduled')`,
     ),
   ],
 );
@@ -83,6 +85,8 @@ export const SESSION_STATUS = {
   ENDED: 'ended',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  MISSED: 'missed',
+  RESCHEDULED: 'rescheduled',
 } as const;
 
 export type SessionStatus =

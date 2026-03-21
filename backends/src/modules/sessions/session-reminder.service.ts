@@ -155,4 +155,39 @@ export class SessionReminderService {
       });
     }
   }
+
+  /**
+   * Auto-mark scheduled sessions as 'missed' if 15+ minutes past scheduled time.
+   * Runs every 5 minutes.
+   */
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async autoMarkMissedSessions() {
+    const GRACE_MINUTES = 15;
+    const cutoff = new Date(Date.now() - GRACE_MINUTES * 60 * 1000);
+
+    const missedSessions = await db
+      .select({ id: sessions.id, title: sessions.title, courseId: sessions.courseId })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.status, SESSION_STATUS.SCHEDULED),
+          lte(sessions.scheduledAt, cutoff),
+        ),
+      );
+
+    if (missedSessions.length === 0) return;
+
+    for (const session of missedSessions) {
+      await db
+        .update(sessions)
+        .set({ status: 'missed' as any, updatedAt: new Date() })
+        .where(eq(sessions.id, session.id));
+
+      this.logger.warn(`Session "${session.title}" (${session.id}) auto-marked as missed`);
+    }
+
+    if (missedSessions.length > 0) {
+      this.logger.log(`Auto-marked ${missedSessions.length} session(s) as missed`);
+    }
+  }
 }

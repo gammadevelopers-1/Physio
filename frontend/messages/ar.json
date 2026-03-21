@@ -2436,7 +2436,9 @@
         "live": "مباشر",
         "ended": "منتهي",
         "completed": "مكتمل",
-        "cancelled": "ملغي"
+        "cancelled": "ملغي",
+        "missed": "فائت",
+        "rescheduled": "معاد جدولته"
       },
       "scheduleSession": "جدولة محاضرة",
       "startSession": "بدء المحاضرة",
@@ -2462,7 +2464,9 @@
         "live": "مباشر",
         "ended": "منتهي",
         "completed": "مكتمل",
-        "cancelled": "ملغي"
+        "cancelled": "ملغي",
+        "missed": "فائت",
+        "rescheduled": "معاد جدولته"
       },
       "saveSession": "حفظ المحاضرة",
       "cancelSessionConfirm": "هل أنت متأكد من إلغاء هذه المحاضرة؟ لا يمكن التراجع عن هذا الإجراء.",

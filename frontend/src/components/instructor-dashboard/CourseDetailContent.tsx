@@ -141,6 +141,8 @@ function getSessionStatusColor(status: string) {
     case "live": return "bg-[#FEF3C7] text-[#D97706]";
     case "completed": return "bg-[#DCFCE7] text-[#22C55E]";
     case "cancelled": return "bg-[#FEE2E2] text-[#EF4444]";
+    case "missed": return "bg-[#FEE2E2] text-[#EF4444]";
+    case "rescheduled": return "bg-[#FEF3C7] text-[#D97706]";
     default: return "bg-[#F3F4F6] text-[#6B7280]";
   }
 }
@@ -1334,15 +1336,17 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     )}
                                   </>
                                 )}
-                                {(session.status === "scheduled" || session.status === "live") && (
+                                {(session.status === "scheduled" || session.status === "live" || session.status === "missed") && (
                                   <>
-                                    <button
-                                      onClick={() => openEditSession(session)}
-                                      className="p-1.5 hover:bg-[#F3F4F6] rounded"
-                                      aria-label={t("courseDetail.editSession")}
-                                    >
-                                      <Edit className="w-4 h-4 text-[#6B7280]" />
-                                    </button>
+                                    {session.status !== "missed" && (
+                                      <button
+                                        onClick={() => openEditSession(session)}
+                                        className="p-1.5 hover:bg-[#F3F4F6] rounded"
+                                        aria-label={t("courseDetail.editSession")}
+                                      >
+                                        <Edit className="w-4 h-4 text-[#6B7280]" />
+                                      </button>
+                                    )}
                                     <button
                                       onClick={() => { setCancelModal({ open: true, sessionId: session.id }); setCancelReason(""); }}
                                       className="p-1.5 hover:bg-[#FEE2E2] rounded"

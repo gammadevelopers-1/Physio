@@ -19,7 +19,7 @@ interface Session {
   title: string;
   thumbnail: string;
   type: "zoom" | "onsite" | "hybrid";
-  status: "scheduled" | "live" | "ended" | "completed" | "cancelled";
+  status: "scheduled" | "live" | "ended" | "completed" | "cancelled" | "missed" | "rescheduled";
   location?: string;
   enrolled: number;
   time: string;
@@ -56,7 +56,9 @@ const SessionCard = ({
     live: { bg: "bg-[#FEE2E2]", text: "text-[#EF4444]", label: t("sessions.statusLive") },
     ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusEnded") },
     completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessions.statusCompleted") },
-    cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessions.statusCancelled") },
+    cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessions.statusCancelled") || "Cancelled" },
+    missed: { bg: "bg-[#FEF2F2]", text: "text-[#EF4444]", label: "Missed" },
+    rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: "Rescheduled" },
   };
 
   const typeIcon = session.type === "zoom" ? <Video className="w-3 h-3" /> :
@@ -74,6 +76,9 @@ const SessionCard = ({
   const badge = statusConfig[session.status] || statusConfig.scheduled;
   const isCompleted = session.status === "completed";
   const isCancelled = session.status === "cancelled";
+  const isMissed = session.status === "missed";
+  const isRescheduled = session.status === "rescheduled";
+  const isInactive = isCancelled || isMissed || isRescheduled;
   const isLive = session.status === "live";
   const isScheduled = session.status === "scheduled";
 
@@ -81,7 +86,7 @@ const SessionCard = ({
     <div className={`rounded-xl border overflow-hidden transition-all duration-200 ${
       isLive
         ? "border-[#EF4444]/30 bg-gradient-to-r from-[#FEF2F2] to-white shadow-sm"
-        : isCompleted || isCancelled
+        : isCompleted || isInactive
         ? "border-[#E5E7EB] bg-[#F9FAFB] opacity-75"
         : "border-[#E5E7EB] bg-white hover:border-[#3B82F6]/40 hover:shadow-sm"
     }`}>
@@ -94,7 +99,7 @@ const SessionCard = ({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className={`text-sm font-semibold truncate ${isCompleted || isCancelled ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
+            <h3 className={`text-sm font-semibold truncate ${isCompleted || isInactive ? "text-[#6B7280]" : "text-[#1F2937]"}`}>
               {session.title}
             </h3>
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${badge.bg} ${badge.text}`}>
@@ -165,7 +170,7 @@ const SessionCard = ({
             </>
           )}
 
-          {!isCancelled && (
+          {!isInactive && (
             <button
               onClick={onAttendance}
               className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"

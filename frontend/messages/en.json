@@ -2221,7 +2221,9 @@
         "live": "Live",
         "ended": "Ended",
         "completed": "Completed",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "missed": "Missed",
+        "rescheduled": "Rescheduled"
       },
       "scheduleSession": "Schedule Lecture",
       "startSession": "Start Lecture",
@@ -2247,7 +2249,9 @@
         "live": "Live",
         "ended": "Ended",
         "completed": "Completed",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "missed": "Missed",
+        "rescheduled": "Rescheduled"
       },
       "saveSession": "Save Lecture",
       "cancelSessionConfirm": "Are you sure you want to cancel this lecture? This action cannot be undone.",

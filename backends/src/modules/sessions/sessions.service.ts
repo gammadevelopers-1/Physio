@@ -1085,7 +1085,7 @@ export class SessionsService {
   async reschedule(
     sessionId: string,
     user: AuthenticatedUser,
-    data: { reason: string; newScheduledAt: string; newDurationMinutes?: number },
+    data: { reason: string },
   ) {
     const session = await this.verifySessionAccess(sessionId, user);
 
@@ -1103,42 +1103,27 @@ export class SessionsService {
       throw new BadRequestException('Reschedule reason is required');
     }
 
-    // Create the new session
-    const newSession = await this.create(user, {
-      courseId: session.courseId,
-      title: session.title,
-      type: session.type as any,
-      scheduledAt: data.newScheduledAt,
-      durationMinutes: data.newDurationMinutes || session.durationMinutes,
-      roomName: session.roomName || undefined,
-      venueAddress: session.venueAddress || undefined,
-      recordingEnabled: session.recordingEnabled,
-      isMakeup: session.isMakeup,
-      parentSessionId: session.parentSessionId || undefined,
-      assignedStudents: session.assignedStudents || undefined,
-    });
-
-    // Mark original as rescheduled
-    await db
+    // Mark as rescheduled with reason
+    const [updated] = await db
       .update(sessions)
       .set({
         status: SESSION_STATUS.RESCHEDULED,
         rescheduleReason: data.reason.trim(),
-        rescheduledToId: newSession.id,
         updatedAt: new Date(),
       })
-      .where(eq(sessions.id, sessionId));
+      .where(eq(sessions.id, sessionId))
+      .returning();
 
     // Notify students
     this.sessionNotificationService
-      .notifySessionEvent(session, 'session_cancelled', {
-        cancelReason: `Rescheduled: ${data.reason.trim()}. New lecture on ${new Date(data.newScheduledAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}.`,
+      .notifySessionEvent(updated, 'session_cancelled', {
+        cancelReason: `Lecture rescheduled: ${data.reason.trim()}`,
       })
       .catch(() => {});
 
-    this.logger.log(`Session ${sessionId} rescheduled to ${newSession.id}`);
+    this.logger.log(`Session ${sessionId} marked as rescheduled: ${data.reason}`);
 
-    return { rescheduledSession: session, newSession };
+    return updated;
   }
 
   /**

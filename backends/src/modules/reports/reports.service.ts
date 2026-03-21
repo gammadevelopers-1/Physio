@@ -1551,7 +1551,9 @@ export class ReportsService {
       ...rows.map((row) => row.map(escape).join(',')),
     ];
 
-    return Buffer.from(lines.join('\r\n'), 'utf-8');
+    // Add UTF-8 BOM so Excel correctly renders Arabic/Unicode characters
+    const BOM = '\uFEFF';
+    return Buffer.from(BOM + lines.join('\r\n'), 'utf-8');
   }
 
   // ═══════════════════════════════════════════════════════════

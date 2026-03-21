@@ -2389,6 +2389,7 @@
       "enrollmentCount": "المسجلون",
       "startDate": "تاريخ البدء",
       "endDate": "تاريخ الانتهاء",
+      "cmeHoursLabel": "ساعات التطوير المهني المستمر",
       "minutes": "دقيقة",
       "regNumber": "رقم التسجيل",
       "name": "الاسم",

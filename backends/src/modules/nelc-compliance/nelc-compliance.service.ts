@@ -65,9 +65,9 @@ export interface ComplianceSummary {
 export class NelcComplianceService {
   private readonly logger = new Logger(NelcComplianceService.name);
 
-  // ─── NELC thresholds for assistant allocation — TESTING VALUES (production: 25/35) ───
-  private readonly ASSISTANT_THRESHOLD_LOW = 0;
-  private readonly ASSISTANT_THRESHOLD_MID = 1;
+  // ─── NELC thresholds for assistant allocation ───
+  private readonly ASSISTANT_THRESHOLD_LOW = 25;  // >25 (≥26): 1 TA
+  private readonly ASSISTANT_THRESHOLD_MID = 35;  // >35 (≥36): 2 TAs
 
   /**
    * Validate session compliance against NELC rules.

@@ -2174,6 +2174,7 @@
       "enrollmentCount": "Enrolled",
       "startDate": "Start Date",
       "endDate": "End Date",
+      "cmeHoursLabel": "CME/CPD Hours",
       "minutes": "min",
       "regNumber": "Reg. No.",
       "name": "Name",

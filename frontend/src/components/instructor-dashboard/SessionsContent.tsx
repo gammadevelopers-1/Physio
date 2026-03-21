@@ -1935,6 +1935,7 @@ const SessionsContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [pastLimit, setPastLimit] = useState(10);
   const [rescheduleSession, setRescheduleSession] = useState<CourseSession | null>(null);
   const [rescheduleForm, setRescheduleForm] = useState({ reason: "", date: "", time: "", duration: "60" });
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
@@ -2211,7 +2212,10 @@ const SessionsContent = () => {
   };
 
   // Session group renderer
-  const renderSessionGroup = (groupTitle: string, groupSessions: CourseSession[], variant: "today" | "upcoming" | "past") => (
+  const renderSessionGroup = (groupTitle: string, groupSessions: CourseSession[], variant: "today" | "upcoming" | "past", limit?: number) => {
+    const displaySessions = limit ? groupSessions.slice(0, limit) : groupSessions;
+    const hasMore = limit ? groupSessions.length > limit : false;
+    return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       <div className="p-4 border-b border-[#E5E7EB]">
         <h2 className="text-base font-semibold text-[#1F2937]">
@@ -2225,7 +2229,7 @@ const SessionsContent = () => {
         </div>
       ) : (
         <div className="divide-y divide-[#E5E7EB]">
-          {groupSessions.map((session) => (
+          {displaySessions.map((session) => (
             <SessionCard
               key={session.id}
               session={session}
@@ -2248,10 +2252,18 @@ const SessionsContent = () => {
               locale={locale}
             />
           ))}
+          {hasMore && (
+            <button
+              onClick={() => setPastLimit(l => l + 10)}
+              className="w-full py-3 text-xs font-medium text-[#3B82F6] hover:bg-[#F0F7FF] transition-colors border-t border-[#E5E7EB]"
+            >
+              Show more ({groupSessions.length - (limit || 0)} remaining)
+            </button>
+          )}
         </div>
       )}
     </div>
-  );
+  );};
 
   return (
     <>
@@ -2394,7 +2406,7 @@ const SessionsContent = () => {
                 <div className="space-y-4">
                   {renderSessionGroup(t("sessionsPage.today"), todaySessions, "today")}
                   {renderSessionGroup(t("sessionsPage.upcoming"), upcomingSessions, "upcoming")}
-                  {renderSessionGroup(t("sessionsPage.past"), pastSessions, "past")}
+                  {renderSessionGroup(t("sessionsPage.past"), pastSessions, "past", pastLimit)}
                 </div>
               )}
 

@@ -635,9 +635,9 @@ const TADashboardContent = ({
                         {course.courseTitle}
                       </h4>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getCourseStatusBadge(course.status)}`}
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getCourseStatusBadge((course as any).courseStatus || course.status)}`}
                       >
-                        {getCourseStatusLabel(course.status)}
+                        {getCourseStatusLabel((course as any).courseStatus || course.status)}
                       </span>
                     </div>
                     {(course.instructorFirstName ||

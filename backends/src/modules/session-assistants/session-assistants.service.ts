@@ -21,8 +21,8 @@ import { EmailService } from '../email/email.service';
 
 // NELC allocation rules — TESTING VALUES (production: LOW=25, MID=35)
 const ASSISTANT_THRESHOLDS = {
-  LOW: 0,   // >0: 1 assistant recommended
-  MID: 1,   // >1: 2 assistants recommended
+  LOW: 25,   // >25 (≥26): 1 assistant recommended
+  MID: 35,   // >35 (≥36): 2 assistants recommended
 } as const;
 
 @Injectable()

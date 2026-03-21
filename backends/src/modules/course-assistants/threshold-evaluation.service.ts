@@ -15,8 +15,8 @@ import { UserNotificationsService } from '../user-notifications/user-notificatio
 // NELC thresholds (advisory only — Course Manager has full control)
 // TESTING VALUES (production: LOW=25, MID=35)
 export const ASSISTANT_THRESHOLDS = {
-  LOW: 0, // >0 (i.e. ≥1): 1 TA recommended
-  MID: 1, // >1 (i.e. ≥2): 2 TAs recommended
+  LOW: 25, // >25 (i.e. ≥26): 1 TA recommended
+  MID: 35, // >35 (i.e. ≥36): 2 TAs recommended
 } as const;
 
 @Injectable()

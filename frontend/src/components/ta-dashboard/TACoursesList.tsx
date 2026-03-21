@@ -36,7 +36,10 @@ const TACoursesList = () => {
   }, [fetchCourses]);
 
   const filteredAndSortedCourses = useMemo(() => {
-    let result = filter === "all" ? courses : courses.filter((c) => c.status === filter);
+    let result = filter === "all" ? courses
+      : filter === "completed" ? courses.filter((c) => (c as any).courseStatus === "completed")
+      : filter === "approved" ? courses.filter((c) => c.status === "approved" && (c as any).courseStatus !== "completed")
+      : courses.filter((c) => c.status === filter);
 
     // Search filter
     if (searchQuery.trim()) {
@@ -64,10 +67,14 @@ const TACoursesList = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "approved":
+      case "active":
         return "bg-green-50 text-green-700 border border-green-200";
+      case "completed":
+        return "bg-blue-50 text-blue-700 border border-blue-200";
       case "suggested":
         return "bg-orange-50 text-orange-700 border border-orange-200";
+      case "pre_assigned":
+        return "bg-blue-50 text-blue-700 border border-blue-200";
       default:
         return "bg-gray-50 text-gray-700 border border-gray-200";
     }
@@ -75,10 +82,14 @@ const TACoursesList = () => {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "approved":
-        return t("courses.active");
+      case "active":
+        return "Active";
+      case "completed":
+        return "Completed";
       case "suggested":
         return t("courses.pendingApproval");
+      case "pre_assigned":
+        return "Pre-assigned";
       default:
         return status;
     }
@@ -86,8 +97,9 @@ const TACoursesList = () => {
 
   const filters: { key: StatusFilter; label: string }[] = [
     { key: "all", label: t("courses.all") },
-    { key: "approved", label: t("courses.active") },
+    { key: "approved", label: "Active" },
     { key: "suggested", label: t("courses.pendingApproval") },
+    { key: "completed" as StatusFilter, label: "Completed" },
   ];
 
   return (
@@ -179,8 +191,8 @@ const TACoursesList = () => {
                     unoptimized={thumbnailSrc.startsWith("http")}
                   />
                   <div className="absolute top-3 left-3 flex gap-2">
-                    <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
-                      {getStatusLabel(course.status)}
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge((course as any).courseStatus || course.status)}`}>
+                      {getStatusLabel((course as any).courseStatus || course.status)}
                     </span>
                   </div>
                 </div>

@@ -67,6 +67,8 @@ const StudentCourseDetailContent = () => {
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
+  const [pastPage, setPastPage] = useState(5);
+
   // Split sessions into upcoming/live, completed, and inactive
   const upcomingSessions = useMemo(
     () => data?.sessions.filter((s) => s.status === "scheduled" || s.status === "live") ?? [],
@@ -653,11 +655,11 @@ const StudentCourseDetailContent = () => {
                   {completedSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
-                        {t("courseDetail.pastSessions")}
+                        {t("courseDetail.pastSessions")} ({completedSessions.length})
                       </h2>
 
                       <div className="space-y-3">
-                        {completedSessions.map((session) => {
+                        {completedSessions.slice(0, pastPage).map((session) => {
                           const attRecord = data.attendanceRecords?.find((r) => r.sessionId === session.id);
                           const wasAbsent = attRecord?.status === "absent";
                           const wasPresent = attRecord?.status === "present" || attRecord?.status === "late";
@@ -702,6 +704,14 @@ const StudentCourseDetailContent = () => {
                           </div>
                         )})}
                       </div>
+                      {completedSessions.length > pastPage && (
+                        <button
+                          onClick={() => setPastPage(p => p + 10)}
+                          className="w-full mt-3 py-2 text-xs font-medium text-[#3B82F6] hover:bg-[#F0F7FF] rounded-lg transition-colors"
+                        >
+                          Show more ({completedSessions.length - pastPage} remaining)
+                        </button>
+                      )}
                     </div>
                   )}
 

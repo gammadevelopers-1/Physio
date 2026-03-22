@@ -139,14 +139,13 @@ export class ReportsService {
       'RegistrationClassificationNumber',
       'Student Name',
       'Email',
-      'Session Date',
+      'Date',
       'Session',
       'Status',
-      'Join Time',
-      'Leave Time',
-      'Total Minutes',
-      'Total Attendance %',
-      'Completion Status',
+      'Join',
+      'Leave',
+      'Min.',
+      'Att. %',
     ];
 
     if (courseIds.length === 0) {
@@ -261,24 +260,18 @@ export class ReportsService {
     // Build rows from existing attendance records
     const rows = filteredData.map((row) => {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
-      const pctNum = parseFloat(pct);
-      const completionStatus =
-        row.status === 'present' || row.status === 'late'
-          ? pctNum >= 75 ? 'Completed' : 'In Progress'
-          : 'Incomplete';
 
       return [
         row.studentScfhsNumber || '',
         `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
         row.studentEmail || '',
-        this.formatDate(row.sessionDate),
+        row.sessionDate ? new Date(row.sessionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
         row.sessionTitle || '',
         row.status || '',
-        row.joinedAt ? this.formatDateTime(row.joinedAt) : '',
-        row.leftAt ? this.formatDateTime(row.leftAt) : '',
+        row.joinedAt ? new Date(row.joinedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
+        row.leftAt ? new Date(row.leftAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
         row.durationMinutes != null ? String(row.durationMinutes) : '',
         pct,
-        completionStatus,
       ];
     });
 
@@ -323,14 +316,13 @@ export class ReportsService {
           student.scfhsNumber || '',
           `${student.firstName || ''} ${student.lastName || ''}`.trim(),
           student.email || '',
-          this.formatDate(sess.scheduledAt),
+          sess.scheduledAt ? new Date(sess.scheduledAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
           sess.title || '',
           'absent',
           '',
           '',
           '',
           pct,
-          'Incomplete',
         ]);
       }
     }
@@ -1669,7 +1661,7 @@ export class ReportsService {
       };
 
       // ── Header row drawing helper ──
-      const centerHeaderColumns = new Set(['Total Minutes', 'Total Attendance %', 'Status', 'Completion Status']);
+      const centerHeaderColumns = new Set(['Min.', 'Att. %', 'Status', 'Total Minutes', 'Total Attendance %']);
       const drawHeaders = () => {
         doc.fontSize(6.5).font('Helvetica-Bold');
         headers.forEach((header, i) => {
@@ -1703,7 +1695,7 @@ export class ReportsService {
         row.forEach((cell, i) => {
           const cellText = String(cell ?? '');
           // Center-align numeric/short columns
-          const centerColumns = new Set(['Total Minutes', 'Total Attendance %', 'Status', 'Completion Status']);
+          const centerColumns = new Set(['Min.', 'Att. %', 'Status', 'Total Minutes', 'Total Attendance %']);
           const align = centerColumns.has(headers[i]) ? 'center' as const : undefined;
           // Use Arabic font if cell contains Arabic characters
           if (arabicFontBuf && hasArabic(cellText)) {

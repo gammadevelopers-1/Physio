@@ -882,7 +882,6 @@ const SessionsContent = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-[#F9FAFB] text-[#6B7280]">
                       <tr>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendRegNumber") || "Reg. No."}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendStudent")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendStatus")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendJoinedAt")}</th>
@@ -901,7 +900,6 @@ const SessionsContent = () => {
                         };
                         return (
                           <tr key={`${record.studentId}-${idx}`} className="hover:bg-[#F9FAFB]">
-                            <td className="px-3 py-2 text-[#6B7280] font-mono text-xs">{(record as any).studentScfhsNumber || "\u2014"}</td>
                             <td className="px-3 py-2 text-[#1F2937]">{name}</td>
                             <td className="px-3 py-2">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>

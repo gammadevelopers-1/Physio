@@ -154,11 +154,8 @@ function AttendanceModal({
       setEnrollments(enr);
       setAttendanceRecords(att);
 
-      // Initialize local statuses: start with all enrolled as "absent", then overlay actual records
+      // Use backend data directly (backend handles unmarked/absent status)
       const existing: Record<string, AttendanceStatus> = {};
-      for (const e of enr) {
-        existing[e.studentId] = "absent";
-      }
       const existingNotes: Record<string, string> = {};
       for (const a of att) {
         existing[a.studentId] = a.status;
@@ -319,6 +316,7 @@ function AttendanceModal({
       case "absent": return "bg-[#FEE2E2] text-[#EF4444]";
       case "late": return "bg-[#FEF3C7] text-[#D97706]";
       case "excused": return "bg-[#EFF6FF] text-[#3B82F6]";
+      case "unmarked": return "bg-[#F3F4F6] text-[#9CA3AF]";
       default: return "bg-[#F3F4F6] text-[#6B7280]";
     }
   };
@@ -414,6 +412,7 @@ function AttendanceModal({
   const absentCount = Object.values(localStatuses).filter((s) => s === "absent").length;
   const lateCount = Object.values(localStatuses).filter((s) => s === "late").length;
   const excusedCount = Object.values(localStatuses).filter((s) => s === "excused").length;
+  const unmarkedCount = Object.values(localStatuses).filter((s) => s === "unmarked").length;
 
   const timeLocale = locale === "ar" ? "ar-SA" : "en-US";
 

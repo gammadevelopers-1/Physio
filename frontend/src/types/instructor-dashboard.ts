@@ -429,7 +429,7 @@ export interface CourseSessionsResponse {
 
 // ─── Attendance ─────────────────────────────────────────────
 
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | 'unmarked';
 
 export interface AttendanceRecord {
   id: string;

@@ -421,12 +421,21 @@ export class EnrollmentsService {
   ) {
     await this.verifySessionAccess(sessionId, user);
 
-    // Look up the course instructor to exclude them from attendance
+    // Look up the session details
     const [session] = await db
-      .select({ courseId: sessions.courseId, isMakeup: sessions.isMakeup, assignedStudents: sessions.assignedStudents })
+      .select({ courseId: sessions.courseId, status: sessions.status, isMakeup: sessions.isMakeup, assignedStudents: sessions.assignedStudents })
       .from(sessions)
       .where(eq(sessions.id, sessionId))
       .limit(1);
+
+    // Non-instructor roles can only see attendance after finalization
+    const isInstructor = user.activeRole === 'INSTRUCTOR';
+    const isFinalized = session?.status === 'completed';
+    if (!isInstructor && !isGlobalAdmin(user) && !isFinalized) {
+      throw new BadRequestException(
+        'Attendance has not been finalized yet. The instructor must complete attendance marking before it can be viewed.',
+      );
+    }
 
     let instructorId: string | null = null;
     // Collect TA user IDs to exclude from attendance
@@ -524,11 +533,14 @@ export class EnrollmentsService {
         if (existingStudentIds.has(student.studentId)) continue;
         if (excludeIds.has(student.studentId)) continue;
 
+        // Before finalization: "unmarked" (no status yet). After finalization: "absent" (confirmed absent)
+        const defaultStatus = isFinalized ? 'absent' : 'unmarked';
+
         data.push({
           id: null as any,
           sessionId,
           studentId: student.studentId,
-          status: 'absent',
+          status: defaultStatus,
           joinedAt: null,
           leftAt: null,
           durationMinutes: null,

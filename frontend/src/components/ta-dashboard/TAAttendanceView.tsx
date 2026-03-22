@@ -43,15 +43,20 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const [notFinalized, setNotFinalized] = useState(false);
   const fetchAttendance = useCallback(async () => {
     try {
       setLoading(true);
+      setNotFinalized(false);
       const data = await api.get<AttendanceRecord[]>(
         `/sessions/${sessionId}/attendance`
       );
       setRecords(data);
-    } catch {
+    } catch (err: any) {
       setRecords([]);
+      if (err?.message?.includes("not been finalized")) {
+        setNotFinalized(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -129,6 +134,16 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
           </button>
         )}
       </div>
+
+      {/* Not finalized message */}
+      {notFinalized && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">
+          <Clock className="w-5 h-5 text-[#D97706] flex-shrink-0" />
+          <p className="text-sm text-[#92400E]">
+            Attendance has not been finalized yet. The instructor must complete attendance marking before it can be viewed.
+          </p>
+        </div>
+      )}
 
       {/* Summary bar */}
       {records.length > 0 && (

@@ -1603,8 +1603,17 @@ export class ReportsService {
 
       const pageWidth =
         doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      const colWidth = pageWidth / headers.length;
       const startX = doc.page.margins.left;
+
+      // Smart column widths — wider for name/email, narrower for status/numbers
+      const wideColumns = new Set(['Student Name', 'Email', 'Instructor', 'Course', 'Session']);
+      const defaultColWidth = pageWidth / headers.length;
+      const wideCount = headers.filter(h => wideColumns.has(h)).length;
+      const narrowCount = headers.length - wideCount;
+      const wideWidth = wideCount > 0 ? (pageWidth * 0.55) / wideCount : defaultColWidth;
+      const narrowWidth = narrowCount > 0 ? (pageWidth * 0.45) / narrowCount : defaultColWidth;
+      const colWidths = headers.map(h => wideColumns.has(h) ? wideWidth : narrowWidth);
+      const getColX = (i: number) => startX + colWidths.slice(0, i).reduce((s, w) => s + w, 0);
 
       // ── Title ──
       doc
@@ -1652,8 +1661,8 @@ export class ReportsService {
       const drawHeaders = () => {
         doc.fontSize(8).font('Helvetica-Bold');
         headers.forEach((header, i) => {
-          doc.text(header, startX + i * colWidth, y, {
-            width: colWidth - 3,
+          doc.text(header, getColX(i), y, {
+            width: colWidths[i] - 3,
             lineBreak: false,
           });
         });
@@ -1683,8 +1692,8 @@ export class ReportsService {
           // Use Arabic font if cell contains Arabic characters
           if (arabicFontBuf && hasArabic(cellText)) {
             doc.font('Amiri').fontSize(7);
-            doc.text(cellText, startX + i * colWidth, y, {
-              width: colWidth - 3,
+            doc.text(cellText, getColX(i), y, {
+              width: colWidths[i] - 3,
               lineBreak: true,
               height: 12,
               ellipsis: true,
@@ -1692,8 +1701,8 @@ export class ReportsService {
             });
             doc.font('Helvetica').fontSize(7);
           } else {
-            doc.text(cellText, startX + i * colWidth, y, {
-              width: colWidth - 3,
+            doc.text(cellText, getColX(i), y, {
+              width: colWidths[i] - 3,
               lineBreak: true,
               height: 12,
               ellipsis: true,

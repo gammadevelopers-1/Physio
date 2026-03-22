@@ -1669,12 +1669,14 @@ export class ReportsService {
       };
 
       // ── Header row drawing helper ──
+      const centerHeaderColumns = new Set(['Total Minutes', 'Total Attendance %', 'Status', 'Completion Status']);
       const drawHeaders = () => {
         doc.fontSize(6.5).font('Helvetica-Bold');
         headers.forEach((header, i) => {
           doc.text(shortHeaders[header] || header, getColX(i), y, {
             width: colWidths[i] - 2,
             lineBreak: false,
+            align: centerHeaderColumns.has(header) ? 'center' : undefined,
           });
         });
         y += 12;
@@ -1700,19 +1702,24 @@ export class ReportsService {
 
         row.forEach((cell, i) => {
           const cellText = String(cell ?? '');
+          // Center-align numeric/short columns
+          const centerColumns = new Set(['Total Minutes', 'Total Attendance %', 'Status', 'Completion Status']);
+          const align = centerColumns.has(headers[i]) ? 'center' as const : undefined;
           // Use Arabic font if cell contains Arabic characters
           if (arabicFontBuf && hasArabic(cellText)) {
             doc.font('Amiri').fontSize(6.5);
             doc.text(cellText, getColX(i), y, {
-              width: colWidths[i] - 3,
+              width: colWidths[i] - 2,
               lineBreak: false,
+              align,
               features: ['rtla'],
             });
             doc.font('Helvetica').fontSize(6.5);
           } else {
             doc.text(cellText, getColX(i), y, {
-              width: colWidths[i] - 3,
+              width: colWidths[i] - 2,
               lineBreak: false,
+              align,
             });
           }
         });

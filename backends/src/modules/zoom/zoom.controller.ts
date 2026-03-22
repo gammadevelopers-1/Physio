@@ -335,14 +335,14 @@ export class ZoomController {
     await db
       .update(sessions)
       .set({
-        status: SESSION_STATUS.COMPLETED,
+        status: SESSION_STATUS.ENDED,
         actualEndedAt: endedAt,
         updatedAt: endedAt,
       })
       .where(eq(sessions.id, session.id));
 
     this.logger.log(
-      `Session ${session.id} marked as completed via Zoom webhook`,
+      `Session ${session.id} marked as ended via Zoom webhook (instructor must finalize after marking attendance)`,
     );
   }
 

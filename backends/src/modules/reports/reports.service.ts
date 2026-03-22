@@ -1584,11 +1584,10 @@ export class ReportsService {
     const hasArabic = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
 
     return new Promise<Buffer>((resolve, reject) => {
-      const isLandscape = headers.length > 5;
       const doc = new PDFDocument({
-        margin: 30,
+        margin: 25,
         size: 'A4',
-        layout: isLandscape ? 'landscape' : 'portrait',
+        layout: 'landscape',
       });
 
       // Register Arabic font
@@ -1657,22 +1656,34 @@ export class ReportsService {
           );
       };
 
+      // Shorten long header names for PDF
+      const shortHeaders: Record<string, string> = {
+        'RegistrationClassificationNumber': 'Reg. No.',
+        'Student Name': 'Student',
+        'Session Date': 'Date',
+        'Total Minutes': 'Min.',
+        'Total Attendance %': 'Att. %',
+        'Completion Status': 'Status',
+        'Join Time': 'Join',
+        'Leave Time': 'Leave',
+      };
+
       // ── Header row drawing helper ──
       const drawHeaders = () => {
-        doc.fontSize(8).font('Helvetica-Bold');
+        doc.fontSize(6.5).font('Helvetica-Bold');
         headers.forEach((header, i) => {
-          doc.text(header, getColX(i), y, {
-            width: colWidths[i] - 3,
+          doc.text(shortHeaders[header] || header, getColX(i), y, {
+            width: colWidths[i] - 2,
             lineBreak: false,
           });
         });
-        y += 14;
+        y += 12;
         doc
           .moveTo(startX, y)
           .lineTo(startX + pageWidth, y)
           .stroke();
-        y += 6;
-        doc.font('Helvetica').fontSize(7);
+        y += 4;
+        doc.font('Helvetica').fontSize(6.5);
       };
 
       drawHeaders();
@@ -1691,13 +1702,13 @@ export class ReportsService {
           const cellText = String(cell ?? '');
           // Use Arabic font if cell contains Arabic characters
           if (arabicFontBuf && hasArabic(cellText)) {
-            doc.font('Amiri').fontSize(7);
+            doc.font('Amiri').fontSize(6.5);
             doc.text(cellText, getColX(i), y, {
               width: colWidths[i] - 3,
               lineBreak: false,
               features: ['rtla'],
             });
-            doc.font('Helvetica').fontSize(7);
+            doc.font('Helvetica').fontSize(6.5);
           } else {
             doc.text(cellText, getColX(i), y, {
               width: colWidths[i] - 3,

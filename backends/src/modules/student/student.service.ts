@@ -665,12 +665,12 @@ export class StudentService {
       submission: submissionMap.get(a.id) || null,
     }));
 
-    // Attendance summary for this course (only completed/ended, exclude cancelled + unassigned make-ups)
+    // Attendance summary — only finalized (completed) sessions visible to students
     const [attSummary] = await db
       .select({
         totalSessions: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
-          AND s.status IN ('completed', 'ended')
+          AND s.status = 'completed'
           AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
         attendedSessions: sql<number>`(
@@ -679,7 +679,7 @@ export class StudentService {
           WHERE a.student_id = ${studentId}
           AND s.course_id = ${courseId}
           AND a.status IN ('present', 'late')
-          AND s.status IN ('completed', 'ended')
+          AND s.status = 'completed'
           AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
       })
@@ -732,7 +732,7 @@ export class StudentService {
     }));
 
     // Per-session attendance records for this student+course
-    // LEFT JOIN so sessions without attendance records show as absent
+    // LEFT JOIN — only show finalized (completed) sessions to students
     const attendanceRecordsRaw = await db
       .select({
         sessionId: sessions.id,
@@ -756,7 +756,7 @@ export class StudentService {
       .where(
         and(
           eq(sessions.courseId, courseId),
-          sql`${sessions.status} IN ('completed', 'ended')`,
+          eq(sessions.status, 'completed'),
           sql`(${sessions.isMakeup} = false OR ${sessions.assignedStudents} IS NULL OR ${sessions.assignedStudents}::jsonb @> ${JSON.stringify([studentId])}::jsonb)`,
         ),
       )
@@ -835,12 +835,12 @@ export class StudentService {
       )
       .orderBy(asc(sessions.scheduledAt));
 
-    // Get total sessions and attended count (only completed/ended, exclude cancelled + unassigned make-ups)
+    // Get total sessions and attended count — only finalized (completed) for students
     const [sessionStats] = await db
       .select({
         totalSessions: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = ${courseId}
-          AND s.status IN ('completed', 'ended')
+          AND s.status = 'completed'
           AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
         attendedSessions: sql<number>`(
@@ -849,7 +849,7 @@ export class StudentService {
           WHERE a.student_id = ${studentId}
           AND s.course_id = ${courseId}
           AND a.status IN ('present', 'late')
-          AND s.status IN ('completed', 'ended')
+          AND s.status = 'completed'
           AND (s.is_makeup = false OR s.assigned_students IS NULL OR s.assigned_students::jsonb @> ${JSON.stringify([studentId])}::jsonb)
         )`.mapWith(Number),
       })

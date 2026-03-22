@@ -1694,22 +1694,18 @@ export class ReportsService {
             doc.font('Amiri').fontSize(7);
             doc.text(cellText, getColX(i), y, {
               width: colWidths[i] - 3,
-              lineBreak: true,
-              height: 12,
-              ellipsis: true,
+              lineBreak: false,
               features: ['rtla'],
             });
             doc.font('Helvetica').fontSize(7);
           } else {
             doc.text(cellText, getColX(i), y, {
               width: colWidths[i] - 3,
-              lineBreak: true,
-              height: 12,
-              ellipsis: true,
+              lineBreak: false,
             });
           }
         });
-        y += 14;
+        y += 12;
       }
 
       // ── Footer on last page ──

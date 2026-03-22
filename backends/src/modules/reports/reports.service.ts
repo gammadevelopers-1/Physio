@@ -1569,12 +1569,17 @@ export class ReportsService {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const PDFDocument = require('pdfkit');
 
-    // Load Arabic font for PDF reports (embedded base64)
+    // Load Arabic font for PDF reports (embedded base64 — same as certificates)
     let arabicFontBuf: Buffer | null = null;
     try {
-      const { AMIRI_BOLD_BASE64 } = require('../certificates/amiri-bold-font');
+      // Use dynamic path resolution to find the font file
+      const path = require('path');
+      const fontPath = path.resolve(__dirname, '..', 'certificates', 'amiri-bold-font');
+      const { AMIRI_BOLD_BASE64 } = require(fontPath);
       arabicFontBuf = Buffer.from(AMIRI_BOLD_BASE64, 'base64');
-    } catch { /* font optional */ }
+    } catch (err) {
+      this.logger.warn(`Failed to load Arabic font for PDF: ${err?.message}`);
+    }
 
     const hasArabic = (text: string) => /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(text);
 

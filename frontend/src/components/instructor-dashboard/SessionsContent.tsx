@@ -140,6 +140,10 @@ function AttendanceModal({
   const isZoomSession = session.type === "zoom" || session.type === "hybrid";
 
   const loadData = useCallback(async () => {
+    // If session is already finalized, lock immediately
+    if (session.status === "completed") {
+      setAttendanceLocked(true);
+    }
     try {
       const promises: Promise<unknown>[] = [
         instructorApi.getSessionAttendance(session.id),
@@ -737,10 +741,10 @@ function AttendanceModal({
                   </select>
                   <button
                     onClick={handleExport}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    {t("sessionsPage.attendance.exportAttendance")}
+                    Export
                   </button>
                 </>
               )}
@@ -772,10 +776,10 @@ function AttendanceModal({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-medium rounded-lg disabled:opacity-50 transition-colors whitespace-nowrap"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                  {locale === "ar" ? "قفل الحضور" : "Lock Attendance"}
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+                  {locale === "ar" ? "قفل" : "Lock"}
                 </button>
               )}
             </div>

@@ -2405,9 +2405,6 @@
       "subtitle": "Schedule and manage your training lectures",
       "scheduleSession": "Schedule Lecture",
       "scheduleSessionTitle": "Schedule New Lecture",
-      "schedule": {
-        "conflict": "A lecture is already scheduled at this time for this course. Please choose a different time."
-      },
       "calendarView": "Calendar",
       "listView": "List",
       "today": "Today",
@@ -2487,7 +2484,7 @@
       "schedule": {
         "success": "Lecture scheduled successfully",
         "error": "Failed to schedule lecture",
-        "conflict": "Schedule conflict: overlaps with \"{lecture}\""
+        "conflict": "Schedule conflict: overlaps with \"{session}\""
       },
       "makeupTitle": "Make-up: {course}",
       "makeupCreated": "Make-up lecture scheduled",

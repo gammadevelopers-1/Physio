@@ -736,7 +736,7 @@ function AttendanceModal({
           {/* Footer */}
           <div className="flex items-center justify-between p-4 border-t border-[#E5E7EB]">
             <div className="flex items-center gap-2">
-              {(session.status === "ended" || session.status === "completed") && (
+              {attendanceLocked && (
                 <>
                   <select
                     value={exportFormat}

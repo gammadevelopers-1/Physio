@@ -219,11 +219,14 @@ export class ReportsService {
       ? data.filter((row) => !excludeIds.has(row.studentId))
       : data;
 
-    // Compute total attendance % per student (across ALL sessions, not date-filtered)
+    // Compute total attendance % per student (only finalized sessions)
     const allCourseSessions = await db
       .select({ id: sessions.id, courseId: sessions.courseId })
       .from(sessions)
-      .where(inArray(sessions.courseId, courseIds));
+      .where(and(
+        inArray(sessions.courseId, courseIds),
+        eq(sessions.status, 'completed'),
+      ));
 
     const totalSessionsPerCourse = new Map<string, number>();
     for (const s of allCourseSessions) {
@@ -233,7 +236,7 @@ export class ReportsService {
       );
     }
 
-    // Count present+late per student per course (from ALL attendance, unfiltered)
+    // Count present+late per student per course (only finalized sessions)
     const attendanceCounts = await db
       .select({
         studentId: attendance.studentId,
@@ -245,6 +248,7 @@ export class ReportsService {
       .where(
         and(
           inArray(sessions.courseId, courseIds),
+          eq(sessions.status, 'completed'),
           sql`${attendance.status} IN ('present', 'late')`,
         ),
       )

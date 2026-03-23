@@ -855,8 +855,8 @@ export class SessionsService {
       metadata: { courseId: updated.courseId },
     }).catch(() => {});
 
-    // Auto-create absent records for enrolled students with no attendance
-    await this.autoCreateAbsentRecords(sessionId, updated.courseId);
+    // Don't auto-create absent records on end — wait for finalization
+    // so instructor has time to sync Zoom and mark attendance first
 
     // Notify enrolled students
     this.sessionNotificationService

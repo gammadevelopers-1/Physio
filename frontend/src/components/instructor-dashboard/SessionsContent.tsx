@@ -384,11 +384,19 @@ function AttendanceModal({
             // Already completed or finalize not applicable — still lock UI
           }
         }
+        // Update UI: convert unmarked → absent so summary and badges reflect immediately
+        setLocalStatuses((prev) => {
+          const updated = { ...prev };
+          for (const key of Object.keys(updated)) {
+            if (updated[key] === "unmarked") updated[key] = "absent";
+          }
+          return updated;
+        });
         toast.success(locale === "ar" ? "تم حفظ وقفل الحضور نهائياً" : "Attendance saved & locked");
         setAttendanceLocked(true);
-        setUnmatchedParticipants([]); // Clear unmatched since they're now assigned
+        setUnmatchedParticipants([]);
         setSaving(false);
-        return; // stay open to show locked state
+        return;
       }
       toast.success(t("sessionsPage.attendance.saved"));
       onClose();

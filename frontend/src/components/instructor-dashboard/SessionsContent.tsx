@@ -299,7 +299,7 @@ function AttendanceModal({
   };
 
   /** Students already marked present who shouldn't appear in the assign dropdown */
-  const markedStudentIds = new Set(attendanceRecords.map((a) => a.studentId));
+  const markedStudentIds = new Set(attendanceRecords.filter((a) => a.status !== "unmarked").map((a) => a.studentId));
 
   const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
   // For ended/completed Zoom sessions: verified students are always read-only,

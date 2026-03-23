@@ -359,11 +359,12 @@ function AttendanceModal({
 
     setSaving(true);
     try {
-      const records = Object.entries(localStatuses).map(([studentId, status]) => ({
-        studentId,
-        status,
-        ...(localNotes[studentId]?.trim() ? { note: localNotes[studentId].trim() } : {}),
-      }));
+      const records = Object.entries(localStatuses)
+        .map(([studentId, status]) => ({
+          studentId,
+          status: status === "unmarked" ? "absent" : status, // Unmarked → absent on save
+          ...(localNotes[studentId]?.trim() ? { note: localNotes[studentId].trim() } : {}),
+        }));
       if (records.length === 0) {
         toast.error(t("sessionsPage.attendance.noChanges"));
         setSaving(false);
@@ -437,7 +438,7 @@ function AttendanceModal({
       ) : (
         <>
           {/* Zoom sync bar */}
-          {isZoomSession && (session.status === "ended" || session.status === "completed") && (
+          {isZoomSession && !attendanceLocked && (session.status === "ended" || session.status === "completed") && (
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#E5E7EB] bg-[#EFF6FF]">
               <div className="flex items-center gap-2 text-xs text-[#3B82F6]">
                 <Video className="w-3.5 h-3.5" />
@@ -459,7 +460,7 @@ function AttendanceModal({
           )}
 
           {/* Zoom sync result panel */}
-          {syncResult && (
+          {syncResult && !attendanceLocked && (
             <div className="border-b border-[#E5E7EB] bg-[#F0FDF4]">
               <div className="flex items-center justify-between px-4 py-2.5">
                 <div className="flex items-center gap-2">
@@ -648,7 +649,7 @@ function AttendanceModal({
 
           {/* Unmatched Zoom participants */}
           {/* Item #17: Unmatched Zoom participants with manual assign */}
-          {isZoomSession && unmatchedParticipants.length > 0 && (
+          {isZoomSession && !attendanceLocked && unmatchedParticipants.length > 0 && (
             <div className="border-t border-[#E5E7EB]">
               <div className="flex items-center gap-2 px-4 py-2.5 bg-[#FEF3C7]">
                 <AlertTriangle className="w-3.5 h-3.5 text-[#D97706]" />
@@ -755,7 +756,7 @@ function AttendanceModal({
                     ? t("sessionsPage.attendance.close")
                     : t("sessionsPage.attendance.cancel")}
               </button>
-              {/* Live session: normal Save */}
+              {/* Save attendance (live sessions) */}
               {!isReadOnly && !isPostSession && (
                 <button
                   onClick={handleSave}
@@ -766,15 +767,15 @@ function AttendanceModal({
                   {t("sessionsPage.attendance.save")}
                 </button>
               )}
-              {/* Post-session with unmatched: Finalize & Lock */}
-              {isPostSession && hasUnmatched && !attendanceLocked && (
+              {/* Lock Attendance (post-session — saves + finalizes) */}
+              {isPostSession && !attendanceLocked && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                  {locale === "ar" ? "حفظ وقفل الحضور" : "Save & Lock Attendance"}
+                  {locale === "ar" ? "قفل الحضور" : "Lock Attendance"}
                 </button>
               )}
             </div>
@@ -1625,15 +1626,10 @@ function SessionCard({
           )}
 
           {session.status === "ended" && (
-            <>
-              <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
-                <ClipboardCheck className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={onFinalize} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-white bg-[#22C55E] rounded-lg hover:bg-[#16A34A] transition-colors">
-                <Lock className="w-3 h-3" />
-                {t("sessionsPage.finalizeSession")}
-              </button>
-            </>
+            <button onClick={onAttendance} className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#16A34A] border border-[#BBF7D0] bg-[#F0FDF4] rounded-lg hover:bg-[#DCFCE7] transition-colors">
+              <ClipboardCheck className="w-3.5 h-3.5" />
+              {locale === "ar" ? "الحضور" : "Attendance"}
+            </button>
           )}
 
           {session.status === "completed" && (

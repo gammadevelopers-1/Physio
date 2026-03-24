@@ -471,11 +471,16 @@ export class ZoomSyncService {
           continue;
         }
 
+        // Auto present/absent based on 70% presence threshold
+        const sessionDuration = session.durationMinutes || 60;
+        const presencePercent = sessionDuration > 0 ? (durationMinutes / sessionDuration) * 100 : 0;
+        const autoStatus = presencePercent >= 70 ? 'present' : 'absent';
+
         // Update auto-tracked record with report data
         await db
           .update(attendance)
           .set({
-            status: 'present',
+            status: autoStatus,
             ...(joinTime && { joinedAt: joinTime }),
             ...(leaveTime && { leftAt: leaveTime }),
             ...(durationMinutes > 0 && { durationMinutes }),
@@ -484,11 +489,16 @@ export class ZoomSyncService {
 
         synced++;
       } else {
+        // Auto present/absent based on 70% presence threshold
+        const sessionDuration = session.durationMinutes || 60;
+        const presencePercent = sessionDuration > 0 ? (durationMinutes / sessionDuration) * 100 : 0;
+        const autoStatus = presencePercent >= 70 ? 'present' : 'absent';
+
         // Insert new attendance record from Zoom data
         await db.insert(attendance).values({
           sessionId,
           studentId: matchedUser.id,
-          status: 'present',
+          status: autoStatus,
           joinedAt: joinTime,
           leftAt: leaveTime,
           durationMinutes: durationMinutes > 0 ? durationMinutes : null,

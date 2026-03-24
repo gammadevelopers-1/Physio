@@ -145,6 +145,7 @@ export class ReportsService {
       'Join',
       'Leave',
       'Min.',
+      'Presence %',
       'Att. %',
     ];
 
@@ -194,6 +195,7 @@ export class ReportsService {
         joinedAt: attendance.joinedAt,
         leftAt: attendance.leftAt,
         durationMinutes: attendance.durationMinutes,
+        sessionDurationMinutes: sessions.durationMinutes,
       })
       .from(attendance)
       .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
@@ -265,6 +267,12 @@ export class ReportsService {
     const rows = filteredData.map((row) => {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
 
+      // Per-lecture presence %
+      const sessDur = Number(row.sessionDurationMinutes) || 60;
+      const presencePercent = row.durationMinutes != null && sessDur > 0
+        ? Math.min(Math.round((Number(row.durationMinutes) / sessDur) * 100), 100)
+        : 0;
+
       return [
         row.studentScfhsNumber || '',
         `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
@@ -275,6 +283,7 @@ export class ReportsService {
         row.joinedAt ? new Date(row.joinedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
         row.leftAt ? new Date(row.leftAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
         row.durationMinutes != null ? String(row.durationMinutes) : '',
+        presencePercent > 0 ? `${presencePercent}%` : '',
         pct,
       ];
     });
@@ -325,7 +334,7 @@ export class ReportsService {
           'absent',
           '',
           '',
-          '',
+          '0%',
           pct,
         ]);
       }

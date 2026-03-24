@@ -641,12 +641,16 @@ function AttendanceModal({
                             if (totalRange <= 0) return null;
                             const leftPct = Math.max(0, Math.min(100, ((joinMs - sessionStart) / totalRange) * 100));
                             const widthPct = Math.max(2, Math.min(100 - leftPct, ((leaveMs - joinMs) / totalRange) * 100));
+                            const presPercent = (rec as any).presencePercent ?? (session.durationMinutes > 0 && rec.durationMinutes ? Math.min(Math.round((rec.durationMinutes / session.durationMinutes) * 100), 100) : 0);
                             return (
-                              <div className="relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden" title={`${Math.round(leftPct)}% – ${Math.round(leftPct + widthPct)}% of session`}>
-                                <div
-                                  className="absolute top-0 h-full rounded-full bg-[#16A34A]"
-                                  style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                                />
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden" title={`${Math.round(leftPct)}% – ${Math.round(leftPct + widthPct)}% of session`}>
+                                  <div
+                                    className="absolute top-0 h-full rounded-full bg-[#16A34A]"
+                                    style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-semibold whitespace-nowrap ${presPercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>{presPercent}%</span>
                               </div>
                             );
                           })()}

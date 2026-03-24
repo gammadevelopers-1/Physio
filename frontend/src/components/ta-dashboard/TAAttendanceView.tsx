@@ -23,6 +23,8 @@ interface AttendanceRecord {
 
 interface TAAttendanceViewProps {
   sessionId: string;
+  sessionScheduledAt?: string;
+  sessionDurationMinutes?: number;
   onBack: () => void;
 }
 
@@ -36,7 +38,7 @@ const getStatusColor = (status: AttendanceStatus) => {
   }
 };
 
-const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
+const TAAttendanceView = ({ sessionId, sessionScheduledAt, sessionDurationMinutes, onBack }: TAAttendanceViewProps) => {
   const t = useTranslations("taDashboard");
   const locale = useLocale();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -214,6 +216,29 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
                     )}
                   </div>
                 )}
+                {/* Timeline bar + presence % */}
+                {record.joinedAt && sessionScheduledAt && sessionDurationMinutes && sessionDurationMinutes > 0 && (() => {
+                  const sessionStart = new Date(sessionScheduledAt).getTime();
+                  const sessionEnd = sessionStart + sessionDurationMinutes * 60000;
+                  const joinMs = new Date(record.joinedAt).getTime();
+                  const leaveMs = record.leftAt ? new Date(record.leftAt).getTime() : sessionEnd;
+                  const totalRange = sessionEnd - sessionStart;
+                  if (totalRange <= 0) return null;
+                  const leftPct = Math.max(0, Math.min(100, ((joinMs - sessionStart) / totalRange) * 100));
+                  const widthPct = Math.max(2, Math.min(100 - leftPct, ((leaveMs - joinMs) / totalRange) * 100));
+                  const presPercent = (record as any).presencePercent ?? (record.durationMinutes ? Math.min(Math.round((record.durationMinutes / sessionDurationMinutes) * 100), 100) : 0);
+                  return (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden" title={`${Math.round(leftPct)}% – ${Math.round(leftPct + widthPct)}% of session`}>
+                        <div
+                          className="absolute top-0 h-full rounded-full bg-[#16A34A]"
+                          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-semibold whitespace-nowrap ${presPercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>{presPercent}%</span>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}

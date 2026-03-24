@@ -39,7 +39,7 @@ interface AssignedSession {
 }
 
 interface TASessionsContentProps {
-  onViewAttendance: (sessionId: string) => void;
+  onViewAttendance: (sessionId: string, sessionInfo?: { scheduledAt: string; durationMinutes: number }) => void;
   onViewSubmissions: (assessmentId: string) => void;
 }
 
@@ -264,7 +264,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           )}
           {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
             <button
-              onClick={() => onViewAttendance(session.id)}
+              onClick={() => onViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes })}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />

@@ -3746,7 +3746,8 @@
       "attendStatus": "Status",
       "attendJoinedAt": "Joined At",
       "attendLeftAt": "Left At",
-      "attendDuration": "Duration"
+      "attendDuration": "Duration",
+      "attendPresence": "Presence"
     },
     "instructorsPage": {
       "title": "Instructors",

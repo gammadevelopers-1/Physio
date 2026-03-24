@@ -118,11 +118,13 @@ export interface StudentAttendanceRecord {
   sessionTitle: string;
   sessionType: string;
   scheduledAt: string;
+  sessionDurationMinutes: number | null;
   sessionStatus: string;
   status: 'present' | 'absent' | 'late' | 'excused';
   joinedAt: string | null;
   leftAt: string | null;
   durationMinutes: number | null;
+  presencePercent: number | null;
 }
 
 export interface StudentCourseDetail {

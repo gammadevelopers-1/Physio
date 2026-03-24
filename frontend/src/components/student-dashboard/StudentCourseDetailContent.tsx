@@ -574,9 +574,16 @@ const StudentCourseDetailContent = () => {
                                     )}
                                   </div>
                                 </div>
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${badge.bg} ${badge.text} flex-shrink-0`}>
-                                  {badge.label}
-                                </span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                  {record.presencePercent != null && (
+                                    <span className={`text-[10px] font-semibold ${record.presencePercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>
+                                      {record.presencePercent}%
+                                    </span>
+                                  )}
+                                  <span className={`px-2 py-1 rounded text-xs font-medium ${badge.bg} ${badge.text}`}>
+                                    {badge.label}
+                                  </span>
+                                </div>
                               </div>
                             );
                           })}

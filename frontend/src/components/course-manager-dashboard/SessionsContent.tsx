@@ -885,6 +885,7 @@ const SessionsContent = () => {
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendJoinedAt")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendLeftAt")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendDuration")}</th>
+                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendPresence")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E5E7EB]">
@@ -896,6 +897,7 @@ const SessionsContent = () => {
                           late: "bg-[#FEF3C7] text-[#92400E]",
                           excused: "bg-[#DBEAFE] text-[#1E40AF]",
                         };
+                        const presPercent = (record as any).presencePercent;
                         return (
                           <tr key={`${record.studentId}-${idx}`} className="hover:bg-[#F9FAFB]">
                             <td className="px-3 py-2 text-[#1F2937]">{name}</td>
@@ -912,6 +914,13 @@ const SessionsContent = () => {
                             </td>
                             <td className="px-3 py-2 text-[#6B7280]">
                               {record.durationMinutes != null ? `${record.durationMinutes}min` : "\u2014"}
+                            </td>
+                            <td className="px-3 py-2">
+                              {presPercent != null ? (
+                                <span className={`text-xs font-semibold ${presPercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>
+                                  {presPercent}%
+                                </span>
+                              ) : "\u2014"}
                             </td>
                           </tr>
                         );

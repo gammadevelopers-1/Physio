@@ -3955,7 +3955,8 @@
       "attendStatus": "الحالة",
       "attendJoinedAt": "وقت الانضمام",
       "attendLeftAt": "وقت المغادرة",
-      "attendDuration": "المدة"
+      "attendDuration": "المدة",
+      "attendPresence": "الحضور %"
     },
     "instructorsPage": {
       "title": "المدربون",

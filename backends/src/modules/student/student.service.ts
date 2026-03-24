@@ -739,6 +739,7 @@ export class StudentService {
         sessionTitle: sessions.title,
         sessionType: sessions.type,
         scheduledAt: sessions.scheduledAt,
+        sessionDurationMinutes: sessions.durationMinutes,
         sessionStatus: sessions.status,
         status: attendance.status,
         joinedAt: attendance.joinedAt,
@@ -765,6 +766,9 @@ export class StudentService {
     const attendanceRecords = attendanceRecordsRaw.map((r) => ({
       ...r,
       status: r.status || 'absent',
+      presencePercent: r.durationMinutes != null && r.sessionDurationMinutes && r.sessionDurationMinutes > 0
+        ? Math.min(Math.round((r.durationMinutes / r.sessionDurationMinutes) * 100), 100)
+        : null,
     }));
 
     // Update lastAccessedAt

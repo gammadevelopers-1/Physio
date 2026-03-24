@@ -153,9 +153,10 @@ export class ReportsService {
       return this.formatReport('Attendance Report', headers, [], format, metadata);
     }
 
-    // Build session filter conditions (with optional date range and sessionId)
+    // Build session filter conditions — only finalized (completed) sessions
     const sessionConditions: any[] = [
       inArray(sessions.courseId, courseIds),
+      eq(sessions.status, 'completed'),
     ];
     if (params.sessionId) {
       sessionConditions.push(eq(sessions.id, params.sessionId));

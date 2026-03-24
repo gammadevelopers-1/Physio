@@ -867,8 +867,6 @@ const SessionsContent = () => {
                     { label: t("sessionsPage.attendTotal"), count: attendanceStats.total, color: "text-[#1F2937]" },
                     { label: t("sessionsPage.attendPresent"), count: attendanceStats.present, color: "text-[#22C55E]" },
                     { label: t("sessionsPage.attendAbsent"), count: attendanceStats.absent, color: "text-[#EF4444]" },
-                    { label: t("sessionsPage.attendLate"), count: attendanceStats.late, color: "text-[#F59E0B]" },
-                    { label: t("sessionsPage.attendExcused"), count: attendanceStats.excused, color: "text-[#3B82F6]" },
                   ].map((s) => (
                     <div key={s.label} className="bg-[#F9FAFB] rounded-lg p-2 text-center">
                       <p className={`text-lg font-bold ${s.color}`}>{s.count}</p>

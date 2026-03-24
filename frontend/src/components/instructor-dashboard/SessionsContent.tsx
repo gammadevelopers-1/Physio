@@ -305,7 +305,7 @@ function AttendanceModal({
   /** Students already marked present who shouldn't appear in the assign dropdown */
   const markedStudentIds = new Set(attendanceRecords.filter((a) => a.status !== "unmarked").map((a) => a.studentId));
 
-  const statusOptions: AttendanceStatus[] = ["present", "absent", "late", "excused"];
+  const statusOptions: AttendanceStatus[] = ["present", "absent"];
   // For ended/completed Zoom sessions: verified students are always read-only,
   // only unmatched assignment is allowed (until finalized)
   const isPostSession = session.status === "ended" || session.status === "completed";
@@ -529,8 +529,6 @@ function AttendanceModal({
             </span>
             <span className="text-xs text-[#16A34A]">{presentCount} {t("sessionsPage.attendance.present")}</span>
             <span className="text-xs text-[#EF4444]">{absentCount} {t("sessionsPage.attendance.absent")}</span>
-            <span className="text-xs text-[#D97706]">{lateCount} {t("sessionsPage.attendance.late")}</span>
-            <span className="text-xs text-[#3B82F6]">{excusedCount} {t("sessionsPage.attendance.excused")}</span>
           </div>
 
           {/* Bulk actions / lock banner */}

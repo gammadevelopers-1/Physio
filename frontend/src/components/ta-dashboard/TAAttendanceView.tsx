@@ -144,8 +144,6 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
           </span>
           <span className="text-xs text-[#16A34A]">{presentCount} {t("attendance.present")}</span>
           <span className="text-xs text-[#EF4444]">{absentCount} {t("attendance.absent")}</span>
-          <span className="text-xs text-[#D97706]">{lateCount} {t("attendance.late")}</span>
-          <span className="text-xs text-[#3B82F6]">{excusedCount} {t("attendance.excused")}</span>
         </div>
       )}
 

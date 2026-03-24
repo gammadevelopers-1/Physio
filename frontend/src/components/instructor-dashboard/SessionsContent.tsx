@@ -630,24 +630,19 @@ function AttendanceModal({
                               <span>{rec.durationMinutes} {t("sessionsPage.form.minutes")}</span>
                             )}
                           </div>
-                          {/* Timeline bar — use actual start/end if available */}
-                          {session.durationMinutes > 0 && (() => {
+                          {/* Presence bar — width reflects presence % */}
+                          {(() => {
                             const sessionStart = session.actualStartedAt ? new Date(session.actualStartedAt).getTime() : new Date(session.scheduledAt).getTime();
                             const sessionEnd = session.actualEndedAt ? new Date(session.actualEndedAt).getTime() : sessionStart + session.durationMinutes * 60000;
-                            const joinMs = new Date(rec.joinedAt).getTime();
-                            const leaveMs = rec.leftAt ? new Date(rec.leftAt).getTime() : sessionEnd;
-                            const totalRange = sessionEnd - sessionStart;
-                            if (totalRange <= 0) return null;
-                            const leftPct = Math.max(0, Math.min(100, ((joinMs - sessionStart) / totalRange) * 100));
-                            const widthPct = Math.max(2, Math.min(100 - leftPct, ((leaveMs - joinMs) / totalRange) * 100));
-                            const actualDurationMin = totalRange / 60000;
+                            const actualDurationMin = (sessionEnd - sessionStart) / 60000;
                             const presPercent = (rec as any).presencePercent ?? (actualDurationMin > 0 && rec.durationMinutes ? Math.min(Math.round((rec.durationMinutes / actualDurationMin) * 100), 100) : 0);
+                            if (presPercent === 0 && !rec.joinedAt) return null;
                             return (
                               <div className="flex items-center gap-2">
-                                <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden" title={`${Math.round(leftPct)}% – ${Math.round(leftPct + widthPct)}% of session`}>
+                                <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
                                   <div
-                                    className="absolute top-0 h-full rounded-full bg-[#16A34A]"
-                                    style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                                    className={`absolute top-0 left-0 h-full rounded-full ${presPercent >= 70 ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
+                                    style={{ width: `${Math.max(2, presPercent)}%` }}
                                   />
                                 </div>
                                 <span className={`text-[10px] font-semibold whitespace-nowrap ${presPercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>{presPercent}%</span>

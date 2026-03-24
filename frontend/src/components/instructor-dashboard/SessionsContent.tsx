@@ -630,17 +630,18 @@ function AttendanceModal({
                               <span>{rec.durationMinutes} {t("sessionsPage.form.minutes")}</span>
                             )}
                           </div>
-                          {/* Timeline bar */}
+                          {/* Timeline bar — use actual start/end if available */}
                           {session.durationMinutes > 0 && (() => {
-                            const sessionStart = new Date(session.scheduledAt).getTime();
-                            const sessionEnd = sessionStart + session.durationMinutes * 60000;
+                            const sessionStart = session.actualStartedAt ? new Date(session.actualStartedAt).getTime() : new Date(session.scheduledAt).getTime();
+                            const sessionEnd = session.actualEndedAt ? new Date(session.actualEndedAt).getTime() : sessionStart + session.durationMinutes * 60000;
                             const joinMs = new Date(rec.joinedAt).getTime();
                             const leaveMs = rec.leftAt ? new Date(rec.leftAt).getTime() : sessionEnd;
                             const totalRange = sessionEnd - sessionStart;
                             if (totalRange <= 0) return null;
                             const leftPct = Math.max(0, Math.min(100, ((joinMs - sessionStart) / totalRange) * 100));
                             const widthPct = Math.max(2, Math.min(100 - leftPct, ((leaveMs - joinMs) / totalRange) * 100));
-                            const presPercent = (rec as any).presencePercent ?? (session.durationMinutes > 0 && rec.durationMinutes ? Math.min(Math.round((rec.durationMinutes / session.durationMinutes) * 100), 100) : 0);
+                            const actualDurationMin = totalRange / 60000;
+                            const presPercent = (rec as any).presencePercent ?? (actualDurationMin > 0 && rec.durationMinutes ? Math.min(Math.round((rec.durationMinutes / actualDurationMin) * 100), 100) : 0);
                             return (
                               <div className="flex items-center gap-2">
                                 <div className="flex-1 relative h-2 bg-[#F3F4F6] rounded-full overflow-hidden" title={`${Math.round(leftPct)}% – ${Math.round(leftPct + widthPct)}% of session`}>

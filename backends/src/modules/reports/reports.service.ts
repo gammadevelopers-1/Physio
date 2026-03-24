@@ -26,6 +26,9 @@ import { AuditLogService } from '../audit-logs/audit-logs.service';
 
 type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
+/** All date/time formatting uses Asia/Riyadh (UTC+3) to match the business timezone */
+const TZ = 'Asia/Riyadh';
+
 interface ReportMetadata {
   instructorName?: string;
   filters?: string;
@@ -162,13 +165,15 @@ export class ReportsService {
       sessionConditions.push(eq(sessions.id, params.sessionId));
     }
     if (params.dateFrom) {
+      // Convert local date (YYYY-MM-DD) to start of day in Riyadh timezone (UTC+3)
       sessionConditions.push(
-        gte(sessions.scheduledAt, new Date(params.dateFrom)),
+        gte(sessions.scheduledAt, new Date(`${params.dateFrom}T00:00:00+03:00`)),
       );
     }
     if (params.dateTo) {
+      // Convert local date to end of day in Riyadh timezone (UTC+3)
       sessionConditions.push(
-        lte(sessions.scheduledAt, new Date(params.dateTo)),
+        lte(sessions.scheduledAt, new Date(`${params.dateTo}T23:59:59+03:00`)),
       );
     }
 
@@ -197,6 +202,8 @@ export class ReportsService {
         leftAt: attendance.leftAt,
         durationMinutes: attendance.durationMinutes,
         sessionDurationMinutes: sessions.durationMinutes,
+        actualStartedAt: sessions.actualStartedAt,
+        actualEndedAt: sessions.actualEndedAt,
       })
       .from(attendance)
       .innerJoin(sessions, eq(attendance.sessionId, sessions.id))
@@ -268,8 +275,11 @@ export class ReportsService {
     const rows = filteredData.map((row) => {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
 
-      // Per-lecture presence %
-      const sessDur = Number(row.sessionDurationMinutes) || 60;
+      // Per-lecture presence % — use actual duration (start→end) if available, else planned
+      const actualDurMin = row.actualStartedAt && row.actualEndedAt
+        ? Math.round((new Date(row.actualEndedAt).getTime() - new Date(row.actualStartedAt).getTime()) / 60000)
+        : null;
+      const sessDur = actualDurMin && actualDurMin > 0 ? actualDurMin : (Number(row.sessionDurationMinutes) || 60);
       const presencePercent = row.durationMinutes != null && sessDur > 0
         ? Math.min(Math.round((Number(row.durationMinutes) / sessDur) * 100), 100)
         : 0;
@@ -278,11 +288,11 @@ export class ReportsService {
         row.studentScfhsNumber || '',
         `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
         row.studentEmail || '',
-        row.sessionDate ? new Date(row.sessionDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+        row.sessionDate ? new Date(row.sessionDate).toLocaleDateString('en-GB', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric' }) : '',
         row.sessionTitle || '',
         row.status || '',
-        row.joinedAt ? new Date(row.joinedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-        row.leftAt ? new Date(row.leftAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
+        row.joinedAt ? new Date(row.joinedAt).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }) : '',
+        row.leftAt ? new Date(row.leftAt).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }) : '',
         row.durationMinutes != null ? String(row.durationMinutes) : '',
         presencePercent > 0 ? `${presencePercent}%` : '',
         pct,
@@ -330,7 +340,7 @@ export class ReportsService {
           student.scfhsNumber || '',
           `${student.firstName || ''} ${student.lastName || ''}`.trim(),
           student.email || '',
-          sess.scheduledAt ? new Date(sess.scheduledAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          sess.scheduledAt ? new Date(sess.scheduledAt).toLocaleDateString('en-GB', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric' }) : '',
           sess.title || '',
           'absent',
           '',
@@ -1044,10 +1054,10 @@ export class ReportsService {
     // Enrollment date filters
     const enrollConditions: any[] = [inArray(enrollments.courseId, courseIds)];
     if (params.dateFrom) {
-      enrollConditions.push(gte(enrollments.enrolledAt, new Date(params.dateFrom)));
+      enrollConditions.push(gte(enrollments.enrolledAt, new Date(`${params.dateFrom}T00:00:00+03:00`)));
     }
     if (params.dateTo) {
-      enrollConditions.push(lte(enrollments.enrolledAt, new Date(params.dateTo)));
+      enrollConditions.push(lte(enrollments.enrolledAt, new Date(`${params.dateTo}T23:59:59+03:00`)));
     }
 
     // Get enrollment counts per course
@@ -1494,7 +1504,7 @@ export class ReportsService {
     format: ReportFormat,
     metadata?: ReportMetadata,
   ): Promise<ReportResult> {
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
     const slug = title.toLowerCase().replace(/\s+/g, '-');
     const ext = format;
     const filename = `${slug}-${date}.${ext}`;
@@ -1844,17 +1854,21 @@ export class ReportsService {
   private formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
-    return `${d.toISOString().split('T')[0]} ${d.toTimeString().split(' ')[0].slice(0, 5)}`;
+    const ymd = d.toLocaleDateString('en-CA', { timeZone: TZ }); // YYYY-MM-DD
+    const hm = d.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+    return `${ymd} ${hm}`;
   }
 
   private formatDateTime(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
-    return d.toISOString().replace('T', ' ').slice(0, 19);
+    return d.toLocaleString('en-CA', { timeZone: TZ, hour12: false }).replace(',', '');
   }
 
   private formatTimestamp(date: Date): string {
-    return date.toISOString().replace('T', ' ').slice(0, 16);
+    const ymd = date.toLocaleDateString('en-CA', { timeZone: TZ });
+    const hm = date.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+    return `${ymd} ${hm}`;
   }
 
   /**

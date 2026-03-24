@@ -472,7 +472,10 @@ export class ZoomSyncService {
         }
 
         // Auto present/absent based on 70% presence threshold
-        const sessionDuration = session.durationMinutes || 60;
+        const actualDurationMin = session.actualStartedAt && session.actualEndedAt
+          ? Math.round((new Date(session.actualEndedAt).getTime() - new Date(session.actualStartedAt).getTime()) / 60000)
+          : null;
+        const sessionDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (session.durationMinutes || 60);
         const presencePercent = sessionDuration > 0 ? (durationMinutes / sessionDuration) * 100 : 0;
         const autoStatus = presencePercent >= 70 ? 'present' : 'absent';
 
@@ -490,7 +493,10 @@ export class ZoomSyncService {
         synced++;
       } else {
         // Auto present/absent based on 70% presence threshold
-        const sessionDuration = session.durationMinutes || 60;
+        const actualDurationMin = session.actualStartedAt && session.actualEndedAt
+          ? Math.round((new Date(session.actualEndedAt).getTime() - new Date(session.actualStartedAt).getTime()) / 60000)
+          : null;
+        const sessionDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (session.durationMinutes || 60);
         const presencePercent = sessionDuration > 0 ? (durationMinutes / sessionDuration) * 100 : 0;
         const autoStatus = presencePercent >= 70 ? 'present' : 'absent';
 

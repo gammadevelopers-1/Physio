@@ -740,6 +740,8 @@ export class StudentService {
         sessionType: sessions.type,
         scheduledAt: sessions.scheduledAt,
         sessionDurationMinutes: sessions.durationMinutes,
+        actualStartedAt: sessions.actualStartedAt,
+        actualEndedAt: sessions.actualEndedAt,
         sessionStatus: sessions.status,
         status: attendance.status,
         joinedAt: attendance.joinedAt,
@@ -763,13 +765,20 @@ export class StudentService {
       )
       .orderBy(desc(sessions.scheduledAt));
 
-    const attendanceRecords = attendanceRecordsRaw.map((r) => ({
-      ...r,
-      status: r.status || 'absent',
-      presencePercent: r.durationMinutes != null && r.sessionDurationMinutes && r.sessionDurationMinutes > 0
-        ? Math.min(Math.round((r.durationMinutes / r.sessionDurationMinutes) * 100), 100)
-        : null,
-    }));
+    const attendanceRecords = attendanceRecordsRaw.map((r) => {
+      const actualDurationMin = r.actualStartedAt && r.actualEndedAt
+        ? Math.round((new Date(r.actualEndedAt).getTime() - new Date(r.actualStartedAt).getTime()) / 60000)
+        : null;
+      const effectiveDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (r.sessionDurationMinutes || 60);
+      return {
+        ...r,
+        sessionDurationMinutes: effectiveDuration,
+        status: r.status || 'absent',
+        presencePercent: r.durationMinutes != null && effectiveDuration > 0
+          ? Math.min(Math.round((r.durationMinutes / effectiveDuration) * 100), 100)
+          : null,
+      };
+    });
 
     // Update lastAccessedAt
     await db

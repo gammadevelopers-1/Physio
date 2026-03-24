@@ -423,7 +423,7 @@ export class EnrollmentsService {
 
     // Look up the session details
     const [session] = await db
-      .select({ courseId: sessions.courseId, status: sessions.status, durationMinutes: sessions.durationMinutes, isMakeup: sessions.isMakeup, assignedStudents: sessions.assignedStudents })
+      .select({ courseId: sessions.courseId, status: sessions.status, durationMinutes: sessions.durationMinutes, actualStartedAt: sessions.actualStartedAt, actualEndedAt: sessions.actualEndedAt, isMakeup: sessions.isMakeup, assignedStudents: sessions.assignedStudents })
       .from(sessions)
       .where(eq(sessions.id, sessionId))
       .limit(1);
@@ -558,8 +558,11 @@ export class EnrollmentsService {
       );
     }
 
-    // Calculate per-lecture presence percentage for each student
-    const sessionDuration = session?.durationMinutes || 60;
+    // Calculate per-lecture presence percentage based on actual duration (start→end), falling back to planned
+    const actualDurationMin = session?.actualStartedAt && session?.actualEndedAt
+      ? Math.round((new Date(session.actualEndedAt).getTime() - new Date(session.actualStartedAt).getTime()) / 60000)
+      : null;
+    const sessionDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (session?.durationMinutes || 60);
     return data.map((record) => ({
       ...record,
       presencePercent: record.durationMinutes != null && sessionDuration > 0

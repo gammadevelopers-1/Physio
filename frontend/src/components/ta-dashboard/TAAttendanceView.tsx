@@ -124,15 +124,6 @@ const TAAttendanceView = ({ sessionId, onBack }: TAAttendanceViewProps) => {
             {t("attendance.title")}
           </h1>
         </div>
-        {records.length > 0 && (
-          <button
-            onClick={handleExport}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-        )}
       </div>
 
       {/* Not finalized message */}

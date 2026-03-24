@@ -239,13 +239,14 @@ function AttendanceModal({
               };
             })
         );
-        // Auto-lock if post-session Zoom with no unmatched participants
-        if ((session.status === "ended" || session.status === "completed") && unique.length === 0) {
+        // Auto-lock if already finalized (completed) with no unmatched participants
+        // "ended" sessions should NOT auto-lock — instructor must click Lock to finalize
+        if (session.status === "completed" && unique.length === 0) {
           setAttendanceLocked(true);
         }
       }
-      // Non-Zoom or no logs: auto-lock post-session
-      if (!isZoomSession && (session.status === "ended" || session.status === "completed")) {
+      // Non-Zoom: auto-lock only if already finalized (completed)
+      if (!isZoomSession && session.status === "completed") {
         setAttendanceLocked(true);
       }
     } catch {

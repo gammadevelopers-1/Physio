@@ -765,17 +765,28 @@ export class StudentService {
       )
       .orderBy(desc(sessions.scheduledAt));
 
+    const LOBBY_GRACE_MS = 2 * 60000; // 2 min grace for lobby admission
     const attendanceRecords = attendanceRecordsRaw.map((r) => {
-      const actualDurationMin = r.actualStartedAt && r.actualEndedAt
-        ? Math.round((new Date(r.actualEndedAt).getTime() - new Date(r.actualStartedAt).getTime()) / 60000)
+      const actualStartMs = r.actualStartedAt ? new Date(r.actualStartedAt).getTime() : null;
+      const actualEndMs = r.actualEndedAt ? new Date(r.actualEndedAt).getTime() : null;
+      const actualDurationMin = actualStartMs && actualEndMs
+        ? Math.round((actualEndMs - actualStartMs) / 60000)
         : null;
-      const effectiveDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (r.sessionDurationMinutes || 60);
+      const sessionDur = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (r.sessionDurationMinutes || 60);
+      // Credit lobby wait: if student joined within 2 min of session start
+      let studentDuration = r.durationMinutes;
+      if (studentDuration != null && actualStartMs && r.joinedAt) {
+        const lobbyDelay = new Date(r.joinedAt).getTime() - actualStartMs;
+        if (lobbyDelay > 0 && lobbyDelay <= LOBBY_GRACE_MS) {
+          studentDuration += Math.round(lobbyDelay / 60000);
+        }
+      }
       return {
         ...r,
-        sessionDurationMinutes: effectiveDuration,
+        sessionDurationMinutes: sessionDur,
         status: r.status || 'absent',
-        presencePercent: r.durationMinutes != null && effectiveDuration > 0
-          ? Math.min(Math.round((r.durationMinutes / effectiveDuration) * 100), 100)
+        presencePercent: studentDuration != null && sessionDur > 0
+          ? Math.min(Math.round((studentDuration / sessionDur) * 100), 100)
           : null,
       };
     });

@@ -276,12 +276,22 @@ export class ReportsService {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
 
       // Per-lecture presence % — use actual duration (start→end) if available, else planned
-      const actualDurMin = row.actualStartedAt && row.actualEndedAt
-        ? Math.round((new Date(row.actualEndedAt).getTime() - new Date(row.actualStartedAt).getTime()) / 60000)
+      // Credit lobby wait: if student joined within 2 min of session start, add the gap
+      const actualStartMs = row.actualStartedAt ? new Date(row.actualStartedAt).getTime() : null;
+      const actualEndMs = row.actualEndedAt ? new Date(row.actualEndedAt).getTime() : null;
+      const actualDurMin = actualStartMs && actualEndMs
+        ? Math.round((actualEndMs - actualStartMs) / 60000)
         : null;
       const sessDur = actualDurMin && actualDurMin > 0 ? actualDurMin : (Number(row.sessionDurationMinutes) || 60);
+      let studentDur = Number(row.durationMinutes);
+      if (row.durationMinutes != null && actualStartMs && row.joinedAt) {
+        const lobbyDelay = new Date(row.joinedAt).getTime() - actualStartMs;
+        if (lobbyDelay > 0 && lobbyDelay <= 2 * 60000) {
+          studentDur += Math.round(lobbyDelay / 60000);
+        }
+      }
       const presencePercent = row.durationMinutes != null && sessDur > 0
-        ? Math.min(Math.round((Number(row.durationMinutes) / sessDur) * 100), 100)
+        ? Math.min(Math.round((studentDur / sessDur) * 100), 100)
         : 0;
 
       return [

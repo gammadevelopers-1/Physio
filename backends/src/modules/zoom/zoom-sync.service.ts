@@ -472,11 +472,19 @@ export class ZoomSyncService {
         }
 
         // Auto present/absent based on 70% presence threshold
+        // Credit lobby wait: if student joined within 2 min of session start, add the gap
         const actualDurationMin = session.actualStartedAt && session.actualEndedAt
           ? Math.round((new Date(session.actualEndedAt).getTime() - new Date(session.actualStartedAt).getTime()) / 60000)
           : null;
         const sessionDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (session.durationMinutes || 60);
-        const presencePercent = sessionDuration > 0 ? (durationMinutes / sessionDuration) * 100 : 0;
+        let effectiveDuration = durationMinutes;
+        if (joinTime && session.actualStartedAt) {
+          const lobbyDelay = joinTime.getTime() - new Date(session.actualStartedAt).getTime();
+          if (lobbyDelay > 0 && lobbyDelay <= 2 * 60000) {
+            effectiveDuration += Math.round(lobbyDelay / 60000);
+          }
+        }
+        const presencePercent = sessionDuration > 0 ? (effectiveDuration / sessionDuration) * 100 : 0;
         const autoStatus = presencePercent >= 70 ? 'present' : 'absent';
 
         // Update auto-tracked record with report data
@@ -493,11 +501,19 @@ export class ZoomSyncService {
         synced++;
       } else {
         // Auto present/absent based on 70% presence threshold
+        // Credit lobby wait: if student joined within 2 min of session start, add the gap
         const actualDurationMin = session.actualStartedAt && session.actualEndedAt
           ? Math.round((new Date(session.actualEndedAt).getTime() - new Date(session.actualStartedAt).getTime()) / 60000)
           : null;
         const sessionDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (session.durationMinutes || 60);
-        const presencePercent = sessionDuration > 0 ? (durationMinutes / sessionDuration) * 100 : 0;
+        let effectiveDuration = durationMinutes;
+        if (joinTime && session.actualStartedAt) {
+          const lobbyDelay = joinTime.getTime() - new Date(session.actualStartedAt).getTime();
+          if (lobbyDelay > 0 && lobbyDelay <= 2 * 60000) {
+            effectiveDuration += Math.round(lobbyDelay / 60000);
+          }
+        }
+        const presencePercent = sessionDuration > 0 ? (effectiveDuration / sessionDuration) * 100 : 0;
         const autoStatus = presencePercent >= 70 ? 'present' : 'absent';
 
         // Insert new attendance record from Zoom data

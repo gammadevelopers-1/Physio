@@ -558,17 +558,34 @@ export class EnrollmentsService {
       );
     }
 
-    // Calculate per-lecture presence percentage based on actual duration (start→end), falling back to planned
-    const actualDurationMin = session?.actualStartedAt && session?.actualEndedAt
-      ? Math.round((new Date(session.actualEndedAt).getTime() - new Date(session.actualStartedAt).getTime()) / 60000)
+    // Calculate per-lecture presence percentage based on actual duration (start→end), falling back to planned.
+    // Grace: if a student joined within 2 min of session start (lobby admission delay),
+    // credit the lobby wait time so they aren't penalized for the instructor admitting them.
+    const actualStartMs = session?.actualStartedAt ? new Date(session.actualStartedAt).getTime() : null;
+    const actualEndMs = session?.actualEndedAt ? new Date(session.actualEndedAt).getTime() : null;
+    const actualDurationMin = actualStartMs && actualEndMs
+      ? Math.round((actualEndMs - actualStartMs) / 60000)
       : null;
     const sessionDuration = actualDurationMin && actualDurationMin > 0 ? actualDurationMin : (session?.durationMinutes || 60);
-    return data.map((record) => ({
-      ...record,
-      presencePercent: record.durationMinutes != null && sessionDuration > 0
-        ? Math.min(Math.round((record.durationMinutes / sessionDuration) * 100), 100)
-        : null,
-    }));
+    const LOBBY_GRACE_MS = 2 * 60000; // 2 minutes grace for lobby admission
+
+    return data.map((record) => {
+      let effectiveDuration = record.durationMinutes;
+      // Credit lobby wait: if student joined within 2 min of session start, add the gap
+      if (effectiveDuration != null && actualStartMs && record.joinedAt) {
+        const joinMs = new Date(record.joinedAt).getTime();
+        const lobbyDelay = joinMs - actualStartMs;
+        if (lobbyDelay > 0 && lobbyDelay <= LOBBY_GRACE_MS) {
+          effectiveDuration += Math.round(lobbyDelay / 60000);
+        }
+      }
+      return {
+        ...record,
+        presencePercent: effectiveDuration != null && sessionDuration > 0
+          ? Math.min(Math.round((effectiveDuration / sessionDuration) * 100), 100)
+          : null,
+      };
+    });
   }
 
   /**

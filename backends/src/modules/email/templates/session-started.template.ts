@@ -10,20 +10,19 @@ export function getSessionStartedHtml(params: {
 }): string {
   const { recipientName, sessionTitle, courseName, zoomLink } = params;
 
-  const joinBlock = zoomLink
-    ? `
-          <!-- Join button -->
+  const platformUrl = process.env.FRONTEND_URL || 'https://physioguidance.org';
+  const joinBlock = `
+          <!-- Join from platform button -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <a href="${zoomLink}" target="_blank" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:15px;font-weight:600;font-family:'DM Sans',Arial,sans-serif;text-decoration:none;border-radius:8px;">
-                Join Now
+              <a href="${platformUrl}/en/dashboard/student" target="_blank" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:15px;font-weight:600;font-family:'DM Sans',Arial,sans-serif;text-decoration:none;border-radius:8px;">
+                Join from Platform
               </a>
               <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                Or copy this link: <a href="${zoomLink}" style="color:#3b82f6;text-decoration:none;word-break:break-all;">${zoomLink}</a>
+                Please join the lecture through your PhysioGuidance dashboard.
               </p>
             </td>
-          </tr>`
-    : '';
+          </tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -151,9 +150,8 @@ Course: ${courseName}
 
 Your lecture has started. Join now to participate!`;
 
-  if (zoomLink) {
-    text += `\n\nJoin the lecture: ${zoomLink}`;
-  }
+  const platformUrl = process.env.FRONTEND_URL || 'https://physioguidance.org';
+  text += `\n\nJoin from your dashboard: ${platformUrl}/en/dashboard/student`;
 
   text += `
 

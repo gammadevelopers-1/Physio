@@ -16,13 +16,7 @@ export function getSessionScheduledHtml(params: {
     sessionType === 'zoom' ? 'Online (Zoom)' :
     sessionType === 'hybrid' ? 'Hybrid' : 'On-Site';
 
-  const zoomBlock = zoomLink
-    ? `
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Meeting Link</td>
-                        <td style="padding:6px 0;font-size:13px;font-family:'DM Sans',Arial,sans-serif;"><a href="${zoomLink}" style="color:#3b82f6;text-decoration:none;word-break:break-all;">${zoomLink}</a></td>
-                      </tr>`
-    : '';
+  const zoomBlock = ''; // Zoom link not shared in emails — students join from platform
 
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -165,9 +159,7 @@ Course: ${courseName}
 Date & Time: ${scheduledDate}
 Type: ${typeLabel}`;
 
-  if (zoomLink) {
-    text += `\nMeeting Link: ${zoomLink}`;
-  }
+  // Zoom link not shared in emails — students join from platform
 
   text += `
 

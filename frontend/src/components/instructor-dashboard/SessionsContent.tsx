@@ -1651,17 +1651,10 @@ function SessionCard({
               <button onClick={onRecordings} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.recordings.title")}>
                 <Film className="w-3.5 h-3.5" />
               </button>
-              <button onClick={onDelete} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.deleteSession")}>
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
             </>
           )}
 
-          {session.status === "cancelled" && (
-            <button onClick={onDelete} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.deleteSession")}>
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
+          {/* Cancelled sessions: no actions — only manager can delete */}
 
           {session.status === "missed" && (
             <>

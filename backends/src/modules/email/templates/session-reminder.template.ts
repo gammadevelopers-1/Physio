@@ -18,21 +18,23 @@ export function getSessionReminderHtml(params: {
   const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
   const roleLabel = isInstructor ? 'You are the instructor for this lecture.' : 'You are enrolled in this lecture.';
+  const platformUrl = process.env.FRONTEND_URL || 'https://physioguidance.org';
 
-  const joinBlock = zoomLink
-    ? `
-          <!-- Join button -->
+  // No Zoom links in emails — everyone joins from platform
+  const dashboardPath = isInstructor ? '/en/dashboard/instructor' : '/en/dashboard/student';
+  const buttonLabel = isInstructor ? 'Start from Platform' : 'Join from Platform';
+  const joinBlock = `
+          <!-- Platform button -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <a href="${zoomLink}" target="_blank" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:15px;font-weight:600;font-family:'DM Sans',Arial,sans-serif;text-decoration:none;border-radius:8px;">
-                ${isInstructor ? 'Start Lecture' : 'Join Lecture'}
+              <a href="${platformUrl}${dashboardPath}" target="_blank" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#a37f49,#6b4e24);color:#ffffff;font-size:15px;font-weight:600;font-family:'DM Sans',Arial,sans-serif;text-decoration:none;border-radius:8px;">
+                ${buttonLabel}
               </a>
               <p style="margin:10px 0 0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                Or copy this link: <a href="${zoomLink}" style="color:#3b82f6;text-decoration:none;word-break:break-all;">${zoomLink}</a>
+                Please ${isInstructor ? 'start' : 'join'} the lecture through your PhysioGuidance dashboard.
               </p>
             </td>
-          </tr>`
-    : '';
+          </tr>`;
 
   return `<!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -182,9 +184,9 @@ Duration: ${durationMinutes} minutes
 
 ${isInstructor ? 'You are the instructor for this lecture.' : 'You are enrolled in this lecture.'}`;
 
-  if (zoomLink) {
-    text += `\n\n${isInstructor ? 'Start' : 'Join'} the lecture: ${zoomLink}`;
-  }
+  const platformUrlText = process.env.FRONTEND_URL || 'https://physioguidance.org';
+  const dashboardPathText = isInstructor ? '/en/dashboard/instructor' : '/en/dashboard/student';
+  text += `\n\n${isInstructor ? 'Start' : 'Join'} from your dashboard: ${platformUrlText}${dashboardPathText}`;
 
   text += `
 

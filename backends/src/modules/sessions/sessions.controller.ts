@@ -239,9 +239,9 @@ export class SessionsController {
   }
 
   /**
-   * DELETE /sessions/:id — Delete a completed or cancelled session
+   * DELETE /sessions/:id — Delete a completed or cancelled session (manager/admin only)
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Delete(':id')
   async delete(
     @Param('id') id: string,

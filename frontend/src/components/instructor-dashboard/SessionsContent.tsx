@@ -612,6 +612,15 @@ function AttendanceModal({
                           className="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded text-xs text-[#374151] placeholder:text-[#9CA3AF] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
                         />
                       )}
+                      {/* Marked by info */}
+                      {rec && (rec as any).markedByName && (
+                        <div className="flex items-center gap-3 text-[10px] text-[#9CA3AF]">
+                          <span>Marked by: <span className="font-medium text-[#6B7280]">{(rec as any).markedByName}</span> ({(rec as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (rec as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (rec as any).markedByRole || "System"})</span>
+                          {(rec as any).updatedAt && (
+                            <span>Updated: {new Date((rec as any).updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
+                          )}
+                        </div>
+                      )}
                       {/* Zoom sync timing data + timeline bar */}
                       {rec?.joinedAt && (
                         <div className="space-y-1.5">

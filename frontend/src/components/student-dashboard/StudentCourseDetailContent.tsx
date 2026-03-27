@@ -547,43 +547,51 @@ const StudentCourseDetailContent = () => {
                           {data.attendanceRecords.map((record) => {
                             const badge = getAttendanceStatusBadge(record.status);
                             return (
-                              <div key={record.sessionId} className="px-4 sm:px-6 py-3 flex items-center gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-[#1F2937] truncate">
-                                    {record.sessionTitle}
-                                  </p>
-                                  <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] mt-1">
-                                    <span className="flex items-center gap-1">
-                                      <Calendar className="w-3 h-3" />
-                                      {formatDate(record.scheduledAt)}
+                              <div key={record.sessionId} className="px-4 sm:px-6 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-[#1F2937] truncate">
+                                      {record.sessionTitle}
+                                    </p>
+                                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] mt-1">
+                                      <span className="flex items-center gap-1">
+                                        <Calendar className="w-3 h-3" />
+                                        {formatDate(record.scheduledAt)}
+                                      </span>
+                                      {record.joinedAt && (
+                                        <span>
+                                          {t("courseDetail.joinedAt")}: {formatTime(record.joinedAt)}
+                                        </span>
+                                      )}
+                                      {record.leftAt && (
+                                        <span>
+                                          {t("courseDetail.leftAt")}: {formatTime(record.leftAt)}
+                                        </span>
+                                      )}
+                                      {record.durationMinutes != null && (
+                                        <span>
+                                          {record.durationMinutes} {t("calendar.mins")}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {record.presencePercent != null && (
+                                      <span className={`text-[10px] font-semibold ${record.presencePercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>
+                                        {record.presencePercent}%
+                                      </span>
+                                    )}
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${badge.bg} ${badge.text}`}>
+                                      {badge.label}
                                     </span>
-                                    {record.joinedAt && (
-                                      <span>
-                                        {t("courseDetail.joinedAt")}: {formatTime(record.joinedAt)}
-                                      </span>
-                                    )}
-                                    {record.leftAt && (
-                                      <span>
-                                        {t("courseDetail.leftAt")}: {formatTime(record.leftAt)}
-                                      </span>
-                                    )}
-                                    {record.durationMinutes != null && (
-                                      <span>
-                                        {record.durationMinutes} {t("calendar.mins")}
-                                      </span>
-                                    )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  {record.presencePercent != null && (
-                                    <span className={`text-[10px] font-semibold ${record.presencePercent >= 70 ? "text-[#16A34A]" : "text-[#EF4444]"}`}>
-                                      {record.presencePercent}%
-                                    </span>
-                                  )}
-                                  <span className={`px-2 py-1 rounded text-xs font-medium ${badge.bg} ${badge.text}`}>
-                                    {badge.label}
-                                  </span>
-                                </div>
+                                {(record as any).markedByName && (
+                                  <div className="text-[10px] text-[#9CA3AF] mt-1">
+                                    Marked by: <span className="font-medium text-[#6B7280]">{(record as any).markedByName}</span>
+                                    {" "}({(record as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (record as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (record as any).markedByRole || "System"})
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

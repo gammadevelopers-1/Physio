@@ -886,6 +886,7 @@ const SessionsContent = () => {
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendLeftAt")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendDuration")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendPresence")}</th>
+                        <th className="text-left px-3 py-2 font-medium">Marked By</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E5E7EB]">
@@ -921,6 +922,11 @@ const SessionsContent = () => {
                                   {presPercent}%
                                 </span>
                               ) : "\u2014"}
+                            </td>
+                            <td className="px-3 py-2 text-[#6B7280] text-[10px]">
+                              {(record as any).markedByName ? (
+                                <span>{(record as any).markedByName} ({(record as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (record as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (record as any).markedByRole || "—"})</span>
+                              ) : "—"}
                             </td>
                           </tr>
                         );

@@ -81,7 +81,10 @@ const TADashboardContent = ({
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null
   );
-  const [selectedSessionInfo, setSelectedSessionInfo] = useState<{ scheduledAt: string; durationMinutes: number } | null>(null);
+  const [selectedSessionInfo, setSelectedSessionInfo] = useState<{
+    scheduledAt: string; durationMinutes: number; title: string; type: string;
+    status: string; courseId: string; zoomLink: string | null;
+  } | null>(null);
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<
     string | null
   >(null);
@@ -217,14 +220,14 @@ const TADashboardContent = ({
     }
   };
 
-  const handleViewAttendance = (sessionId: string, sessionInfo?: { scheduledAt: string; durationMinutes: number }) => {
+  const handleViewAttendance = (sessionId: string, sessionInfo?: { scheduledAt: string; durationMinutes: number; title: string; type: string; status: string; courseId: string; zoomLink: string | null }) => {
     setSelectedSessionId(sessionId);
     if (sessionInfo) {
       setSelectedSessionInfo(sessionInfo);
     } else {
       const allSessions = [...todaySessions, ...weekSessions, ...upcomingSessions];
       const session = allSessions.find((s) => s.id === sessionId);
-      setSelectedSessionInfo(session ? { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes } : null);
+      setSelectedSessionInfo(session ? { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink } : null);
     }
     setCurrentView("attendance");
   };
@@ -433,7 +436,7 @@ const TADashboardContent = ({
                         session.status === "ended" ||
                         session.status === "completed") && (
                         <button
-                          onClick={() => handleViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes })}
+                          onClick={() => handleViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
                           className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
                         >
                           <Eye className="w-4 h-4" />
@@ -679,8 +682,13 @@ const TADashboardContent = ({
         return (
           <TAAttendanceView
             sessionId={selectedSessionId!}
+            sessionTitle={selectedSessionInfo?.title}
+            sessionType={selectedSessionInfo?.type}
+            sessionStatus={selectedSessionInfo?.status}
+            sessionCourseId={selectedSessionInfo?.courseId}
             sessionScheduledAt={selectedSessionInfo?.scheduledAt}
             sessionDurationMinutes={selectedSessionInfo?.durationMinutes}
+            sessionZoomLink={selectedSessionInfo?.zoomLink}
             onBack={handleBackToSessions}
           />
         );

@@ -1,9 +1,10 @@
 "use client";
 
-import Image from "next/image";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -14,7 +15,11 @@ import {
   Settings,
   Pencil,
   Headphones,
+  Upload,
+  Trash2,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
 
 interface SupportProfile {
   name: string;
@@ -35,6 +40,47 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
   const pathname = usePathname();
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
+  const { user, refreshUser } = useAuth();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+
+  const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [avatarMenuOpen, closeAvatarMenu]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+      toast.success("Profile photo updated");
+    } catch {
+      toast.error("Failed to upload photo");
+    }
+    e.target.value = "";
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await profileApi.update({ avatar: null });
+      await refreshUser();
+      toast.success("Profile photo removed");
+    } catch {
+      toast.error("Failed to remove photo");
+    }
+  };
 
   const isSupervisor = supportSubRole === "supervisor";
 
@@ -109,14 +155,13 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
           {/* Avatar with edit button */}
           <div className="relative mb-3">
             <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center relative">
-              {profile.avatar ? (
-                <Image
-                  src={profile.avatar}
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
                   alt={profile.name}
                   width={80}
                   height={80}
                   className="object-cover w-full h-full"
-                  unoptimized
                 />
               ) : (
                 <span className="text-2xl font-bold text-white">
@@ -134,12 +179,46 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
                 <Headphones className="w-3 h-3 text-white" />
               </div>
             </div>
-            <button
-              className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#8B5CF6] rounded-full flex items-center justify-center border-2 border-white`}
-              aria-label={t("sidebar.editProfile")}
-            >
-              <Pencil className="w-3.5 h-3.5 text-white" />
-            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+            <div ref={avatarMenuRef}>
+              <button
+                onClick={() => setAvatarMenuOpen((v) => !v)}
+                className={`absolute bottom-0 ${isRTL ? "left-0" : "right-0"} w-7 h-7 bg-[#8B5CF6] rounded-full flex items-center justify-center border-2 border-white cursor-pointer hover:bg-[#7C3AED] transition-colors`}
+                aria-label={t("sidebar.editProfile")}
+                aria-haspopup="true"
+                aria-expanded={avatarMenuOpen}
+              >
+                <Pencil className="w-3.5 h-3.5 text-white" />
+              </button>
+              {avatarMenuOpen && (
+                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`} role="menu">
+                  <button
+                    onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
+                    role="menuitem"
+                  >
+                    <Upload className="w-4 h-4 text-[#4B5563]" />
+                    Upload Photo
+                  </button>
+                  {user?.avatar && (
+                    <button
+                      onClick={() => { handleRemoveAvatar(); setAvatarMenuOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      role="menuitem"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Remove Photo
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Name and Email */}
@@ -152,7 +231,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
             <Headphones className="w-4 h-4 text-[#8B5CF6]" />
             <span className="text-sm font-medium text-[#8B5CF6]">
-              {t("sidebar.supportLead")}
+              {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
             </span>
           </div>
         </div>
@@ -180,9 +259,12 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
+        <Link
+          href={isSupervisor ? `${basePath}/settings` : `${basePath}/my-tickets`}
+          className="block w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center"
+        >
           {t("sidebar.viewProfile")}
-        </button>
+        </Link>
       </div>
 
       {/* Navigation Card */}

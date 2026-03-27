@@ -1,12 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import {
   ClipboardList,
   MessageSquare,
   CheckCircle,
-  Star,
   AlertTriangle,
   XCircle,
   Plus,
@@ -15,68 +15,114 @@ import {
   MessageCircle,
   Zap,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
+import { supportApi } from "@/lib/api";
+
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDays = Math.floor(diffHr / 24);
+  return `${diffDays}d ago`;
+}
+
+function getActivityStyle(status: string) {
+  switch (status) {
+    case "resolved":
+    case "closed":
+      return { icon: CheckCircle, iconBg: "bg-[#DCFCE7]", iconColor: "text-[#22C55E]" };
+    case "in_progress":
+      return { icon: MessageSquare, iconBg: "bg-[#EDE9FE]", iconColor: "text-[#8B5CF6]" };
+    case "open":
+    default:
+      return { icon: ClipboardList, iconBg: "bg-[#EFF6FF]", iconColor: "text-[#3B82F6]" };
+  }
+}
 
 const SupportRightSidebar = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const activityItems = [
-    {
-      id: "1",
-      icon: ClipboardList,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
-      textKey: "activity.ticketCreated",
-      timeKey: "activity.time.2min",
-    },
-    {
-      id: "2",
-      icon: MessageSquare,
-      iconBg: "bg-[#EDE9FE]",
-      iconColor: "text-[#8B5CF6]",
-      textKey: "activity.hanaReplied",
-      timeKey: "activity.time.15min",
-    },
-    {
-      id: "3",
-      icon: CheckCircle,
-      iconBg: "bg-[#DCFCE7]",
-      iconColor: "text-[#22C55E]",
-      textKey: "activity.ticketResolved",
-      timeKey: "activity.time.32min",
-    },
-    {
-      id: "4",
-      icon: Star,
-      iconBg: "bg-[#FEF3C7]",
-      iconColor: "text-[#D97706]",
-      textKey: "activity.fiveStarRating",
-      timeKey: "activity.time.1hour",
-    },
-  ];
+  const [activityItems, setActivityItems] = useState<
+    { id: string; icon: typeof ClipboardList; iconBg: string; iconColor: string; description: string; time: string }[]
+  >([]);
+  const [alerts, setAlerts] = useState<
+    { id: string; type: "error" | "warning"; titleKey: string; descriptionKey: string }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
 
-  const alerts = [
-    {
-      id: "1",
-      type: "error" as const,
-      titleKey: "alerts.slaBreaches",
-      descriptionKey: "alerts.slaBreachesDesc",
-    },
-    {
-      id: "2",
-      type: "warning" as const,
-      titleKey: "alerts.unassignedTickets",
-      descriptionKey: "alerts.unassignedTicketsDesc",
-    },
-    {
-      id: "3",
-      type: "warning" as const,
-      titleKey: "alerts.highPriorityWaiting",
-      descriptionKey: "alerts.highPriorityWaitingDesc",
-    },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchData() {
+      try {
+        const [ticketsRes, kpisRes] = await Promise.all([
+          supportApi.getTickets({ limit: 5 }),
+          supportApi.getKPIs(),
+        ]);
+
+        if (cancelled) return;
+
+        // Map tickets to activity items
+        const tickets = ticketsRes?.tickets ?? [];
+        const mapped = tickets.map((ticket: any) => {
+          const style = getActivityStyle(ticket.status);
+          return {
+            id: ticket.id,
+            icon: style.icon,
+            iconBg: style.iconBg,
+            iconColor: style.iconColor,
+            description: ticket.subject,
+            time: formatRelativeTime(ticket.createdAt),
+          };
+        });
+        setActivityItems(mapped);
+
+        // Derive alerts from KPIs
+        const derivedAlerts: typeof alerts = [];
+        if (kpisRes?.slaBreaches > 0) {
+          derivedAlerts.push({
+            id: "sla",
+            type: "error",
+            titleKey: "alerts.slaBreaches",
+            descriptionKey: "alerts.slaBreachesDesc",
+          });
+        }
+        const unassigned = kpisRes?.statusBreakdown?.["open"] ?? 0;
+        if (unassigned > 0) {
+          derivedAlerts.push({
+            id: "unassigned",
+            type: "warning",
+            titleKey: "alerts.unassignedTickets",
+            descriptionKey: "alerts.unassignedTicketsDesc",
+          });
+        }
+        if (kpisRes?.highPriorityOpen > 0) {
+          derivedAlerts.push({
+            id: "highPriority",
+            type: "warning",
+            titleKey: "alerts.highPriorityWaiting",
+            descriptionKey: "alerts.highPriorityWaitingDesc",
+          });
+        }
+        setAlerts(derivedAlerts);
+      } catch (err) {
+        console.error("Failed to fetch sidebar data:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchData();
+    return () => { cancelled = true; };
+  }, []);
 
   const quickActions = [
     {
@@ -147,29 +193,39 @@ const SupportRightSidebar = () => {
         </div>
 
         <div className="space-y-0">
-          {activityItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.id}
-                className="flex items-start gap-2.5 py-2.5 border-b border-[#F3F4F6] last:border-b-0"
-              >
+          {loading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 text-[#3B82F6] animate-spin" />
+            </div>
+          ) : activityItems.length === 0 ? (
+            <p className="text-[13px] text-[#9CA3AF] text-center py-4">
+              {t("activity.noRecent", { defaultMessage: "No recent activity" })}
+            </p>
+          ) : (
+            activityItems.map((item) => {
+              const Icon = item.icon;
+              return (
                 <div
-                  className={`w-8 h-8 rounded-full ${item.iconBg} flex items-center justify-center flex-shrink-0`}
+                  key={item.id}
+                  className="flex items-start gap-2.5 py-2.5 border-b border-[#F3F4F6] last:border-b-0"
                 >
-                  <Icon className={`w-3.5 h-3.5 ${item.iconColor}`} />
+                  <div
+                    className={`w-8 h-8 rounded-full ${item.iconBg} flex items-center justify-center flex-shrink-0`}
+                  >
+                    <Icon className={`w-3.5 h-3.5 ${item.iconColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] text-[#374151]">
+                      {item.description}
+                    </p>
+                    <p className="text-[11px] text-[#9CA3AF]">
+                      {item.time}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-[#374151]">
-                    {t(item.textKey)}
-                  </p>
-                  <p className="text-[11px] text-[#9CA3AF]">
-                    {t(item.timeKey)}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
 
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
@@ -193,6 +249,15 @@ const SupportRightSidebar = () => {
         </div>
 
         <div className="space-y-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 text-[#EA580C] animate-spin" />
+            </div>
+          ) : alerts.length === 0 ? (
+            <p className="text-[13px] text-[#9CA3AF] text-center py-4">
+              {t("alerts.noAlerts", { defaultMessage: "No active alerts" })}
+            </p>
+          ) : null}
           {alerts.map((alert) => (
             <div
               key={alert.id}

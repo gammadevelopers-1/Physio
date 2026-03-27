@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -38,6 +38,7 @@ const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarP
   const pathname = usePathname();
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
+  const { user } = useAuth();
 
   const isSupervisor = supportSubRole === "supervisor";
   const basePath = isSupervisor
@@ -131,14 +132,13 @@ const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarP
             <div className="flex flex-col items-center">
               <div className="relative mb-3">
                 <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center relative">
-                  {profile.avatar ? (
-                    <Image
-                      src={profile.avatar}
+                  {user?.avatar ? (
+                    <img
+                      src={user.avatar}
                       alt={profile.name}
                       width={80}
                       height={80}
                       className="object-cover w-full h-full"
-                      unoptimized
                     />
                   ) : (
                     <span className="text-2xl font-bold text-white">
@@ -170,7 +170,7 @@ const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarP
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#EDE9FE] rounded-full">
                 <Headphones className="w-4 h-4 text-[#8B5CF6]" />
                 <span className="text-sm font-medium text-[#8B5CF6]">
-                  {t("sidebar.supportLead")}
+                  {supportSubRole === "supervisor" ? "Supervisor" : "Agent"}
                 </span>
               </div>
             </div>

@@ -5638,7 +5638,8 @@
         "waiting": "في الانتظار",
         "resolved": "تم الحل",
         "closed": "مغلق"
-      }
+      },
+      "noTickets": "لا توجد تذاكر"
     },
     "sla": {
       "title": "اتفاقية الخدمة والفريق",
@@ -5687,6 +5688,7 @@
       "teamChat": "محادثة الفريق"
     },
     "activity": {
+      "noRecent": "لا يوجد نشاط حديث",
       "ticketCreated": "#1234 أنشأها أحمد ك.",
       "repliedTo": "{name} رد على #{id}",
       "ticketResolved": "#1231 تم الحل",
@@ -5703,6 +5705,7 @@
       "viewAll": "عرض كل النشاط"
     },
     "alerts": {
+      "noAlerts": "لا توجد تنبيهات نشطة",
       "slaBreaches": "2 انتهاكات اتفاقية الخدمة",
       "slaBreachTickets": "التذاكر #{ids}",
       "unassignedTickets": "3 تذاكر غير مُسندة",

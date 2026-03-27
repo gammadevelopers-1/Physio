@@ -5420,7 +5420,8 @@
         "waiting": "Waiting",
         "resolved": "Resolved",
         "closed": "Closed"
-      }
+      },
+      "noTickets": "No tickets found"
     },
     "sla": {
       "title": "SLA & Team",
@@ -5469,6 +5470,7 @@
       "teamChat": "Team Chat"
     },
     "activity": {
+      "noRecent": "No recent activity",
       "ticketCreated": "#1234 created by Ahmed K.",
       "repliedTo": "{name} replied to #{id}",
       "ticketResolved": "#1231 resolved",
@@ -5485,6 +5487,7 @@
       "viewAll": "View All Activity"
     },
     "alerts": {
+      "noAlerts": "No active alerts",
       "slaBreaches": "2 SLA Breaches",
       "slaBreachTickets": "Tickets #{ids}",
       "unassignedTickets": "3 Unassigned Tickets",

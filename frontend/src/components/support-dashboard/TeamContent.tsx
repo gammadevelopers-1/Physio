@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
+import { supportApi } from "@/lib/api";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -18,6 +19,7 @@ import {
   BarChart3,
   MoreVertical,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 
 const TeamContent = () => {
@@ -37,100 +39,69 @@ const TeamContent = () => {
     avgFRT: "--",
   };
 
-  const agents = [
-    {
-      id: "1",
-      name: t("names.hanaAlSaud"),
-      initials: "HA",
-      role: t("sidebar.supportLead"),
+  const [apiAgents, setApiAgents] = useState<any[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+
+  useEffect(() => {
+    async function fetchAgents() {
+      try {
+        const data = await supportApi.getAgents();
+        setApiAgents(data || []);
+      } catch {
+        setApiAgents([]);
+      } finally {
+        setIsLoadingAgents(false);
+      }
+    }
+    fetchAgents();
+  }, []);
+
+  const agents = apiAgents.map((a: any) => {
+    const name = [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email;
+    const initials = name
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+    return {
+      id: a.userId,
+      name,
+      initials,
+      role: a.supportSubRole === "supervisor" ? "Supervisor" : "Agent",
       status: "online",
-      openTickets: 8,
-      avgResponse: "1.0h",
-      csat: 96,
-      workload: 80,
-    },
-    {
-      id: "2",
-      name: t("names.mohammedAli"),
-      initials: "MA",
-      role: t("teamPage.roles.seniorAgent"),
-      status: "online",
-      openTickets: 6,
-      avgResponse: "1.5h",
-      csat: 92,
-      workload: 60,
-    },
-    {
-      id: "3",
-      name: t("names.laylaAhmed"),
-      initials: "LA",
-      role: t("teamPage.roles.agent"),
-      status: "away",
-      openTickets: 5,
-      avgResponse: "1.3h",
-      csat: 94,
-      workload: 50,
-    },
-    {
-      id: "4",
-      name: t("teamPage.agents.saraKhan"),
-      initials: "SK",
-      role: t("teamPage.roles.agent"),
-      status: "online",
-      openTickets: 4,
-      avgResponse: "1.8h",
-      csat: 91,
-      workload: 40,
-    },
-    {
-      id: "5",
-      name: t("teamPage.agents.ahmedNasser"),
-      initials: "AN",
-      role: t("teamPage.roles.juniorAgent"),
-      status: "online",
-      openTickets: 3,
-      avgResponse: "2.1h",
-      csat: 88,
-      workload: 30,
-    },
-    {
-      id: "6",
-      name: t("teamPage.agents.fatimaOmar"),
-      initials: "FO",
-      role: t("teamPage.roles.juniorAgent"),
-      status: "offline",
       openTickets: 0,
-      avgResponse: "2.0h",
-      csat: 90,
+      avgResponse: "--",
+      csat: 0,
       workload: 0,
-    },
-  ];
+    };
+  });
 
   const stats = [
     {
       label: t("teamPage.stats.totalAgents"),
-      value: "6",
+      value: String(agents.length),
       icon: Users,
       bgColor: "bg-[#EFF6FF]",
       textColor: "text-[#3B82F6]",
     },
     {
       label: t("teamPage.stats.online"),
-      value: "4",
+      value: String(agents.length),
       icon: Wifi,
       bgColor: "bg-[#DCFCE7]",
       textColor: "text-[#16A34A]",
     },
     {
       label: t("teamPage.stats.avgResponse"),
-      value: "1.3h",
+      value: "--",
       icon: Clock,
       bgColor: "bg-[#FFEDD5]",
       textColor: "text-[#EA580C]",
     },
     {
       label: t("teamPage.stats.teamCSAT"),
-      value: "94%",
+      value: "--",
       icon: Smile,
       bgColor: "bg-[#EDE9FE]",
       textColor: "text-[#8B5CF6]",

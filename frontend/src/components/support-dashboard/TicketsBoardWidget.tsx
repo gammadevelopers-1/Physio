@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import {
   ClipboardList,
   ArrowRight,
   Search,
   MoreVertical,
+  Loader2,
 } from "lucide-react";
+import { supportApi } from "@/lib/api";
 
 interface Ticket {
   id: string;
-  subjectKey: string;
-  customerKey: string;
-  categoryKey: string;
+  subject: string;
+  customer: string;
+  category: string;
   priority: "High" | "Medium" | "Low";
   status: "New" | "InProgress" | "Waiting" | "Resolved" | "Closed";
 }
@@ -26,57 +28,45 @@ const TicketsBoardWidget = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const tickets: Ticket[] = [
-    {
-      id: "#1234",
-      subjectKey: "cannotAccessCourse",
-      customerKey: "ahmedK",
-      categoryKey: "login",
-      priority: "High",
-      status: "New",
-    },
-    {
-      id: "#1233",
-      subjectKey: "certificateNotReceived",
-      customerKey: "saraM",
-      categoryKey: "certificate",
-      priority: "Medium",
-      status: "InProgress",
-    },
-    {
-      id: "#1232",
-      subjectKey: "paymentFailedTwice",
-      customerKey: "omarA",
-      categoryKey: "billing",
-      priority: "High",
-      status: "InProgress",
-    },
-    {
-      id: "#1231",
-      subjectKey: "videoNotPlaying",
-      customerKey: "fatimaN",
-      categoryKey: "content",
-      priority: "Low",
-      status: "Resolved",
-    },
-    {
-      id: "#1230",
-      subjectKey: "refundRequest",
-      customerKey: "khalidH",
-      categoryKey: "billing",
-      priority: "Medium",
-      status: "New",
-    },
-    {
-      id: "#1229",
-      subjectKey: "loginIssueAfterUpdate",
-      customerKey: "nouraS",
-      categoryKey: "technical",
-      priority: "Low",
-      status: "Waiting",
-    },
-  ];
+  useEffect(() => {
+    const fetchTickets = async () => {
+      setIsLoading(true);
+      try {
+        const data = await supportApi.getTickets({ limit: 30 });
+        const priorityMap: Record<string, Ticket["priority"]> = {
+          high: "High",
+          medium: "Medium",
+          low: "Low",
+        };
+        const statusMap: Record<string, Ticket["status"]> = {
+          new: "New",
+          in_progress: "InProgress",
+          on_hold: "Waiting",
+          resolved: "Resolved",
+          closed: "Closed",
+        };
+        const mapped: Ticket[] = (data.tickets || []).map((t: any) => ({
+          id: t.id?.substring(0, 8) || t.id,
+          subject: t.subject,
+          customer: [t.studentFirstName, t.studentLastName]
+            .filter(Boolean)
+            .join(" ") || "Unknown",
+          category: t.category,
+          priority: priorityMap[t.priority] || "Medium",
+          status: statusMap[t.status] || "New",
+        }));
+        setTickets(mapped);
+      } catch {
+        setTickets([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTickets();
+  }, []);
 
   const priorityStyles: Record<string, string> = {
     High: "bg-[#FEE2E2] text-[#EF4444]",
@@ -100,12 +90,8 @@ const TicketsBoardWidget = () => {
     const matchesSearch =
       searchQuery === "" ||
       ticket.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t(`ticketsBoard.subjects.${ticket.subjectKey}`)
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      t(`names.${ticket.customerKey}`)
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ticket.customer.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
@@ -200,7 +186,19 @@ const TicketsBoardWidget = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredTickets.map((ticket) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={7} className="px-3 py-10 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-[#3B82F6] mx-auto" />
+                </td>
+              </tr>
+            ) : filteredTickets.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-3 py-10 text-center text-sm text-[#6B7280]">
+                  {t("ticketsBoard.noTickets")}
+                </td>
+              </tr>
+            ) : filteredTickets.map((ticket) => (
               <tr
                 key={ticket.id}
                 className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors"
@@ -212,17 +210,17 @@ const TicketsBoardWidget = () => {
                 </td>
                 <td className="px-3 py-3">
                   <span className="text-[13px] text-[#111827] line-clamp-1">
-                    {t(`ticketsBoard.subjects.${ticket.subjectKey}`)}
+                    {ticket.subject}
                   </span>
                 </td>
                 <td className="px-3 py-3">
                   <span className="text-[13px] text-[#374151]">
-                    {t(`names.${ticket.customerKey}`)}
+                    {ticket.customer}
                   </span>
                 </td>
                 <td className="px-3 py-3 hidden md:table-cell">
                   <span className="text-[11px] font-medium bg-[#F3F4F6] text-[#4B5563] px-2 py-0.5 rounded-md">
-                    {t(`ticketsBoard.categories.${ticket.categoryKey}`)}
+                    {ticket.category}
                   </span>
                 </td>
                 <td className="px-3 py-3">

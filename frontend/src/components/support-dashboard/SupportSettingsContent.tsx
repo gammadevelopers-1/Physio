@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
+import { profileApi } from "@/lib/api";
+import { toast } from "sonner";
 import Link from "next/link";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -18,13 +20,17 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Upload,
+  Loader2,
+  User,
+  Settings,
 } from "lucide-react";
 
 const SupportSettingsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const profile = {
     name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
     email: user?.email || "",
@@ -32,7 +38,82 @@ const SupportSettingsContent = () => {
     csat: 0,
     avgFRT: "--",
   };
-  const [activeTab, setActiveTab] = useState("sla");
+  const [activeTab, setActiveTab] = useState("profile");
+
+  // Profile form state
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const avatarMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sync form state when user data loads/changes
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setPhone(user.phone || "");
+    }
+  }, [user]);
+
+  const closeAvatarMenu = useCallback(() => setAvatarMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!avatarMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (avatarMenuRef.current && !avatarMenuRef.current.contains(e.target as Node)) {
+        closeAvatarMenu();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [avatarMenuOpen, closeAvatarMenu]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const { url } = await profileApi.uploadAvatar(file);
+      await profileApi.update({ avatar: url });
+      await refreshUser();
+      toast.success("Profile photo updated");
+    } catch {
+      toast.error("Failed to upload photo");
+    } finally {
+      setAvatarUploading(false);
+    }
+    e.target.value = "";
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarUploading(true);
+    try {
+      await profileApi.update({ avatar: null });
+      await refreshUser();
+      toast.success("Profile photo removed");
+    } catch {
+      toast.error("Failed to remove photo");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleProfileSave = async () => {
+    setProfileSaving(true);
+    try {
+      await profileApi.update({ firstName, lastName, phone });
+      await refreshUser();
+      toast.success("Profile updated successfully");
+    } catch {
+      toast.error("Failed to update profile");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // SLA Target states
   const [highFRT, setHighFRT] = useState(1);
@@ -56,11 +137,12 @@ const SupportSettingsContent = () => {
   const [whatsappNotif, setWhatsappNotif] = useState(true);
 
   const tabs = [
-    { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck },
-    { key: "assignment", label: t("settingsPage.tabs.assignment"), icon: UserPlus },
-    { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare },
-    { key: "notifications", label: t("settingsPage.tabs.notifications"), icon: Bell },
-    { key: "categories", label: t("settingsPage.tabs.categories"), icon: Tag },
+    { key: "profile", label: "Profile", icon: User, comingSoon: false },
+    { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck, comingSoon: true },
+    { key: "assignment", label: t("settingsPage.tabs.assignment"), icon: UserPlus, comingSoon: true },
+    { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare, comingSoon: true },
+    { key: "notifications", label: t("settingsPage.tabs.notifications"), icon: Bell, comingSoon: true },
+    { key: "categories", label: t("settingsPage.tabs.categories"), icon: Tag, comingSoon: true },
   ];
 
   const assignmentRules = [
@@ -146,6 +228,11 @@ const SupportSettingsContent = () => {
                         >
                           <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           {tab.label}
+                          {tab.comingSoon && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-[#F3F4F6] text-[#9CA3AF] leading-none">
+                              Soon
+                            </span>
+                          )}
                           {activeTab === tab.key && (
                             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#a37f49] rounded-t" />
                           )}
@@ -157,8 +244,161 @@ const SupportSettingsContent = () => {
 
                 {/* Tab Content */}
                 <div className="p-5">
-                  {/* SLA Targets */}
-                  {activeTab === "sla" && (
+                  {/* Profile */}
+                  {activeTab === "profile" && (
+                    <div>
+                      <h3 className="text-base font-semibold text-[#111827] mb-6">
+                        Profile Information
+                      </h3>
+
+                      {/* Avatar Section */}
+                      <div className="flex items-center gap-5 mb-8">
+                        <div className="relative">
+                          <div className="w-20 h-20 rounded-full overflow-hidden bg-[#F3F4F6] border-2 border-[#E5E7EB] flex items-center justify-center">
+                            {avatarUploading ? (
+                              <Loader2 className="w-6 h-6 text-[#9CA3AF] animate-spin" />
+                            ) : user?.avatar ? (
+                              <img
+                                src={user.avatar}
+                                alt="Avatar"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <User className="w-8 h-8 text-[#9CA3AF]" />
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setAvatarMenuOpen(!avatarMenuOpen)}
+                            className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#a37f49] text-white rounded-full flex items-center justify-center shadow-sm hover:bg-[#8c6a3a] transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          {avatarMenuOpen && (
+                            <div
+                              ref={avatarMenuRef}
+                              className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border border-[#E5E7EB] py-1 z-20 min-w-[160px]"
+                            >
+                              <button
+                                onClick={() => {
+                                  avatarInputRef.current?.click();
+                                  closeAvatarMenu();
+                                }}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                              >
+                                <Upload className="w-4 h-4" />
+                                Upload Photo
+                              </button>
+                              {user?.avatar && (
+                                <button
+                                  onClick={() => {
+                                    handleRemoveAvatar();
+                                    closeAvatarMenu();
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Remove Photo
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarUpload}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-[#111827]">Profile Photo</p>
+                          <p className="text-xs text-[#6B7280] mt-0.5">
+                            JPG, PNG or GIF. Max 2MB.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Form Fields */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-2xl">
+                        <div>
+                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            First Name
+                          </label>
+                          <input
+                            type="text"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            placeholder="Enter first name"
+                            className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49] transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            Last Name
+                          </label>
+                          <input
+                            type="text"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            placeholder="Enter last name"
+                            className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49] transition-colors"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            Email
+                          </label>
+                          <input
+                            type="email"
+                            value={user?.email || ""}
+                            disabled
+                            className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] bg-[#F9FAFB] cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                            Phone
+                          </label>
+                          <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="Enter phone number"
+                            className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#a37f49] focus:ring-1 focus:ring-[#a37f49] transition-colors"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleProfileSave}
+                        disabled={profileSaving}
+                        className="mt-6 flex items-center gap-1.5 px-5 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                      >
+                        {profileSaving ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4" />
+                        )}
+                        {profileSaving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Coming Soon Overlay for other tabs */}
+                  {activeTab !== "profile" && (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <div className="w-16 h-16 rounded-full bg-[#F3F4F6] flex items-center justify-center mb-4">
+                        <Settings className="w-7 h-7 text-[#9CA3AF]" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-[#111827] mb-2">Coming Soon</h3>
+                      <p className="text-sm text-[#6B7280] max-w-md">
+                        This feature is currently under development and will be available in an upcoming sprint. Stay tuned!
+                      </p>
+                    </div>
+                  )}
+
+                  {/* SLA Targets (hidden behind Coming Soon) */}
+                  {false && activeTab === "sla" && (
                     <div>
                       <h3 className="text-base font-semibold text-[#111827] mb-4">
                         {t("settingsPage.sla.title")}
@@ -277,7 +517,7 @@ const SupportSettingsContent = () => {
                   )}
 
                   {/* Auto-Assignment */}
-                  {activeTab === "assignment" && (
+                  {false && activeTab === "assignment" && (
                     <div>
                       <h3 className="text-base font-semibold text-[#111827] mb-4">
                         {t("settingsPage.assignment.title")}
@@ -340,7 +580,7 @@ const SupportSettingsContent = () => {
                   )}
 
                   {/* Canned Responses */}
-                  {activeTab === "macros" && (
+                  {false && activeTab === "macros" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-base font-semibold text-[#111827]">
@@ -384,7 +624,7 @@ const SupportSettingsContent = () => {
                   )}
 
                   {/* Notifications */}
-                  {activeTab === "notifications" && (
+                  {false && activeTab === "notifications" && (
                     <div>
                       <h3 className="text-base font-semibold text-[#111827] mb-4">
                         {t("settingsPage.notifications.title")}
@@ -441,7 +681,7 @@ const SupportSettingsContent = () => {
                   )}
 
                   {/* Categories */}
-                  {activeTab === "categories" && (
+                  {false && activeTab === "categories" && (
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-base font-semibold text-[#111827]">

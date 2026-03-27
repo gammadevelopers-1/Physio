@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
+import { supportApi } from "@/lib/api";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
 import SupportNavbar from "./SupportNavbar";
@@ -67,8 +68,32 @@ const SupportReportsContent = () => {
     },
   ];
 
-  // Report chart data
-  const reportChartData = [15, 22, 18, 25, 20, 28, 24];
+  // Fetch KPIs for reports
+  const [kpis, setKpis] = useState<any>(null);
+
+  useEffect(() => {
+    async function fetchKPIs() {
+      try {
+        const data = await supportApi.getKPIs();
+        setKpis(data);
+      } catch {
+        // keep null
+      }
+    }
+    fetchKPIs();
+  }, []);
+
+  // Report chart data — use status breakdown if available, else placeholder
+  const statusBreakdown = kpis?.statusBreakdown || {};
+  const reportChartData = [
+    Number(statusBreakdown.new) || 0,
+    Number(statusBreakdown.in_progress) || 0,
+    Number(statusBreakdown.on_hold) || 0,
+    Number(statusBreakdown.resolved) || 0,
+    Number(statusBreakdown.closed) || 0,
+    0,
+    0,
+  ];
   const reportChartLabels = [
     t("days.mon"),
     t("days.tue"),
@@ -112,13 +137,13 @@ const SupportReportsContent = () => {
 
   const { linePath: reportLinePath, areaPath: reportAreaPath, points: reportPoints } = generateLinePath(reportChartData);
 
-  // Mock report data
+  // Report data from KPIs
   const mockReportData = [
-    { name: t("ticketsBoard.categories.billing"), tickets: 45, avgResponse: "1.5h", avgResolution: "5.2h", satisfaction: "92%" },
-    { name: t("ticketsBoard.categories.login"), tickets: 38, avgResponse: "0.8h", avgResolution: "3.1h", satisfaction: "96%" },
-    { name: t("ticketsBoard.categories.certificate"), tickets: 28, avgResponse: "1.2h", avgResolution: "4.8h", satisfaction: "94%" },
-    { name: t("ticketsBoard.categories.content"), tickets: 22, avgResponse: "2.0h", avgResolution: "6.5h", satisfaction: "88%" },
-    { name: t("ticketsBoard.categories.technical"), tickets: 18, avgResponse: "1.8h", avgResolution: "7.2h", satisfaction: "85%" },
+    { name: t("ticketsBoard.categories.billing"), tickets: Number(statusBreakdown.new) || 0, avgResponse: kpis?.avgFrtMinutes ? `${Math.round(kpis.avgFrtMinutes)}m` : "--", avgResolution: kpis?.avgTtrMinutes ? `${(kpis.avgTtrMinutes / 60).toFixed(1)}h` : "--", satisfaction: "--" },
+    { name: t("ticketsBoard.categories.login"), tickets: Number(statusBreakdown.in_progress) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
+    { name: t("ticketsBoard.categories.certificate"), tickets: Number(statusBreakdown.resolved) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
+    { name: t("ticketsBoard.categories.content"), tickets: Number(statusBreakdown.on_hold) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
+    { name: t("ticketsBoard.categories.technical"), tickets: Number(statusBreakdown.closed) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
   ];
 
   return (

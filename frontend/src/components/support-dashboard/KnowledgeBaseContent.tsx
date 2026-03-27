@@ -39,94 +39,44 @@ const KnowledgeBaseContent = () => {
     avgFRT: "--",
   };
 
-  const articles = [
-    {
-      id: "1",
-      title: t("kbPage.articles.howToResetPassword"),
-      category: "login",
-      visibility: "public",
-      views: 2450,
-      helpful: 92,
-      updated: t("mockDates.feb10_2026"),
-      status: "published",
-    },
-    {
-      id: "2",
-      title: t("kbPage.articles.paymentMethods"),
-      category: "billing",
-      visibility: "public",
-      views: 1830,
-      helpful: 88,
-      updated: t("mockDates.feb9_2026"),
-      status: "published",
-    },
-    {
-      id: "3",
-      title: t("kbPage.articles.certificateDownload"),
-      category: "content",
-      visibility: "public",
-      views: 1560,
-      helpful: 95,
-      updated: t("mockDates.feb8_2026"),
-      status: "published",
-    },
-    {
-      id: "4",
-      title: t("kbPage.articles.refundPolicy"),
-      category: "billing",
-      visibility: "public",
-      views: 980,
-      helpful: 85,
-      updated: t("mockDates.feb7_2026"),
-      status: "published",
-    },
-    {
-      id: "5",
-      title: t("kbPage.articles.troubleshootVideo"),
-      category: "technical",
-      visibility: "internal",
-      views: 650,
-      helpful: 78,
-      updated: t("mockDates.feb6_2026"),
-      status: "published",
-    },
-    {
-      id: "6",
-      title: t("kbPage.articles.escalationProcess"),
-      category: "technical",
-      visibility: "internal",
-      views: 320,
-      helpful: 0,
-      updated: t("mockDates.feb5_2026"),
-      status: "draft",
-    },
+  // KB articles — empty until Sprint 4 when KB API is built
+  const articles: {
+    id: string;
+    title: string;
+    category: string;
+    visibility: string;
+    views: number;
+    helpful: number;
+    updated: string;
+    status: string;
+  }[] = [
   ];
 
   const stats = [
     {
       label: t("kbPage.stats.totalArticles"),
-      value: "48",
+      value: "0",
       icon: BookOpen,
       bgColor: "bg-[#EFF6FF]",
       textColor: "text-[#3B82F6]",
     },
     {
       label: t("kbPage.stats.published"),
-      value: "42",
+      value: "0",
       icon: CheckCircle,
       bgColor: "bg-[#DCFCE7]",
       textColor: "text-[#16A34A]",
     },
     {
       label: t("kbPage.stats.drafts"),
-      value: "6",
+      value: "0",
       icon: FileText,
       bgColor: "bg-[#FFEDD5]",
       textColor: "text-[#EA580C]",
     },
     {
       label: t("kbPage.stats.totalViews"),
-      value: "12.4K",
+      value: "0",
       icon: Eye,
       bgColor: "bg-[#EDE9FE]",
       textColor: "text-[#8B5CF6]",

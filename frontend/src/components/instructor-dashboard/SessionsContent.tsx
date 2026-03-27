@@ -559,6 +559,20 @@ function AttendanceModal({
             </div>
           )}
 
+          {/* Marked by info — shown once for the whole sheet */}
+          {(() => {
+            const marker = attendanceRecords.find((r) => (r as any).markedByName);
+            if (!marker) return null;
+            return (
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-[#E5E7EB] bg-[#FAFAFA] text-[10px] text-[#9CA3AF]">
+                <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
+                {(marker as any).updatedAt && (
+                  <span>Last updated: {new Date((marker as any).updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Student list */}
           <div className="max-h-[400px] overflow-y-auto">
             {enrollments.length === 0 ? (
@@ -611,15 +625,6 @@ function AttendanceModal({
                           placeholder={t("sessionsPage.attendance.notePlaceholder")}
                           className="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded text-xs text-[#374151] placeholder:text-[#9CA3AF] focus:ring-1 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
                         />
-                      )}
-                      {/* Marked by info */}
-                      {rec && (rec as any).markedByName && (
-                        <div className="flex items-center gap-3 text-[10px] text-[#9CA3AF]">
-                          <span>Marked by: <span className="font-medium text-[#6B7280]">{(rec as any).markedByName}</span> ({(rec as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (rec as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (rec as any).markedByRole || "System"})</span>
-                          {(rec as any).updatedAt && (
-                            <span>Updated: {new Date((rec as any).updatedAt).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</span>
-                          )}
-                        </div>
                       )}
                       {/* Zoom sync timing data + timeline bar */}
                       {rec?.joinedAt && (

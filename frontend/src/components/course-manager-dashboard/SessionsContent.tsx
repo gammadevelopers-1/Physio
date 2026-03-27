@@ -875,6 +875,20 @@ const SessionsContent = () => {
                   ))}
                 </div>
 
+                {/* Marked by info */}
+                {(() => {
+                  const marker = attendanceData.find((r: any) => r.markedByName);
+                  if (!marker) return null;
+                  return (
+                    <div className="flex items-center gap-3 px-3 py-2 mb-2 bg-[#FAFAFA] rounded-lg text-[10px] text-[#9CA3AF]">
+                      <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
+                      {(marker as any).updatedAt && (
+                        <span>Last updated: {new Date((marker as any).updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Attendance table */}
                 <div className="overflow-x-auto border border-[#E5E7EB] rounded-lg">
                   <table className="w-full text-sm">
@@ -886,7 +900,6 @@ const SessionsContent = () => {
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendLeftAt")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendDuration")}</th>
                         <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendPresence")}</th>
-                        <th className="text-left px-3 py-2 font-medium">Marked By</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E5E7EB]">
@@ -922,11 +935,6 @@ const SessionsContent = () => {
                                   {presPercent}%
                                 </span>
                               ) : "\u2014"}
-                            </td>
-                            <td className="px-3 py-2 text-[#6B7280] text-[10px]">
-                              {(record as any).markedByName ? (
-                                <span>{(record as any).markedByName} ({(record as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (record as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (record as any).markedByRole || "—"})</span>
-                              ) : "—"}
                             </td>
                           </tr>
                         );

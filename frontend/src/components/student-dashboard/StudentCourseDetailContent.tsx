@@ -543,7 +543,18 @@ const StudentCourseDetailContent = () => {
                       </button>
 
                       {showAttendanceHistory && (
-                        <div className="border-t border-[#E5E7EB] divide-y divide-[#E5E7EB]">
+                        <div className="border-t border-[#E5E7EB]">
+                          {/* Marked by info — shown once */}
+                          {(() => {
+                            const marker = data.attendanceRecords.find((r: any) => (r as any).markedByName);
+                            if (!marker) return null;
+                            return (
+                              <div className="flex items-center gap-3 px-4 sm:px-6 py-2 bg-[#FAFAFA] text-[10px] text-[#9CA3AF] border-b border-[#E5E7EB]">
+                                <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
+                              </div>
+                            );
+                          })()}
+                          <div className="divide-y divide-[#E5E7EB]">
                           {data.attendanceRecords.map((record) => {
                             const badge = getAttendanceStatusBadge(record.status);
                             return (
@@ -586,15 +597,10 @@ const StudentCourseDetailContent = () => {
                                     </span>
                                   </div>
                                 </div>
-                                {(record as any).markedByName && (
-                                  <div className="text-[10px] text-[#9CA3AF] mt-1">
-                                    Marked by: <span className="font-medium text-[#6B7280]">{(record as any).markedByName}</span>
-                                    {" "}({(record as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (record as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (record as any).markedByRole || "System"})
-                                  </div>
-                                )}
                               </div>
                             );
                           })}
+                          </div>
                         </div>
                       )}
                     </div>

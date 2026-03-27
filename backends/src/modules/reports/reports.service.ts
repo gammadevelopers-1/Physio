@@ -20,7 +20,7 @@ import {
 } from '../../database/schema';
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { isGlobalAdmin, isManager } from '../../common/role-helpers';
+import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
 import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 
@@ -67,6 +67,14 @@ export class ReportsService {
       // No filter
     } else if (isManager(user)) {
       conditions.push(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`)!);
+    } else if (isTA(user)) {
+      // TA can access courses they are assigned to
+      conditions.push(
+        or(
+          eq(courses.instructorId, user.id),
+          sql`${courses.id} IN (SELECT course_id FROM course_assistants WHERE user_id = ${user.id} AND status = 'approved')`,
+        )!,
+      );
     } else {
       conditions.push(eq(courses.instructorId, user.id));
     }
@@ -1964,6 +1972,14 @@ export class ReportsService {
         .from(courses)
         .where(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`));
       return managedCourses.map((c) => c.id);
+    }
+
+    if (isTA(user)) {
+      const taCourses = await db
+        .select({ id: courseAssistants.courseId })
+        .from(courseAssistants)
+        .where(and(eq(courseAssistants.userId, user.id), eq(courseAssistants.status, 'approved')));
+      return taCourses.map((c) => c.id);
     }
 
     return this.getInstructorCourseIds(user.id);

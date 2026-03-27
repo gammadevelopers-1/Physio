@@ -180,7 +180,8 @@
       "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\) -name \"layout.tsx\")",
       "Bash(cat /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/layout.tsx)",
       "Bash(ls -la \"/home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\(dashboards\\)/dashboard/teaching-assistant/\")",
-      "Bash(docker rm:*)"
+      "Bash(docker rm:*)",
+      "Bash(find /home/haseeb-raza/Desktop/physioguidance/frontend/src/app/[locale]/\\\\\\(dashboards\\\\\\)/dashboard/student -type f)"
     ]
   }
 }

@@ -6,7 +6,7 @@ import {
   ArrowLeft, Clock, Search, Download, Loader2, Lock,
   RefreshCw, Video, CheckCircle, X, XCircle, AlertTriangle, Users,
 } from "lucide-react";
-import api from "@/lib/api";
+import api, { reportsApi } from "@/lib/api";
 import { toast } from "sonner";
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unmarked";
@@ -288,13 +288,11 @@ const TAAttendanceView = ({
   const handleExport = async () => {
     if (!sessionCourseId) return;
     try {
-      const res = await api.get<Blob>(`/reports/download?type=attendance&courseId=${sessionCourseId}&sessionId=${sessionId}&format=${exportFormat}`, { responseType: "blob" } as any);
-      const url = URL.createObjectURL(res);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `attendance-${sessionId}.${exportFormat}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      await reportsApi.download("attendance", {
+        courseId: sessionCourseId,
+        sessionId,
+        format: exportFormat,
+      });
     } catch {
       toast.error("Failed to export");
     }

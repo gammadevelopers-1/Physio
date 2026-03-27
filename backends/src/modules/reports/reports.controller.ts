@@ -20,7 +20,7 @@ import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 
 @Controller('instructor/reports')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+@Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
 export class ReportsController {
   constructor(private reportsService: ReportsService) {}
 

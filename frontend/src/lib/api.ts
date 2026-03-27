@@ -338,6 +338,7 @@ export interface User {
   gender?: string | null;
   dateOfBirth?: string | null;
   roles: string[];
+  supportSubRole?: 'supervisor' | 'agent' | null;
   isActive: boolean;
   isVerified: boolean;
   lastLoginAt?: string;
@@ -442,6 +443,7 @@ export interface CreateUserData {
   lastName: string;
   phone?: string;
   role: string;
+  supportSubRole?: string;
 }
 
 export interface UpdateUserData {
@@ -502,8 +504,11 @@ export const adminApi = {
     api.get<{ userId: string; roles: string[] }>(`/auth/users/${userId}/roles`),
 
   // Assign a role to a user
-  assignRole: (userId: string, role: string) =>
-    api.post<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles`, { role }),
+  assignRole: (userId: string, role: string, supportSubRole?: string) =>
+    api.post<{ message: string; roles: string[] }>(`/auth/users/${userId}/roles`, {
+      role,
+      ...(supportSubRole ? { supportSubRole } : {}),
+    }),
 
   // Remove a role from a user
   removeRole: (userId: string, role: string) =>
@@ -2431,6 +2436,109 @@ export const taApi = {
 
   getCourseSessions: (courseId: string) =>
     api.get<CourseSessionsResponse>(`/sessions?courseId=${courseId}&limit=50`),
+};
+
+// ─── Support Dashboard API ──────────────────────────────
+
+export const supportApi = {
+  createTicket: (data: {
+    category: string;
+    priority?: string;
+    subject: string;
+    description: string;
+    courseId?: string;
+    attachmentUrl?: string;
+  }) => api.post<{ id: string }>('/tickets', data),
+
+  getTickets: (params?: {
+    status?: string;
+    priority?: string;
+    category?: string;
+    assigneeId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== '') {
+          searchParams.set(key, String(val));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{
+      tickets: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/tickets${qs ? `?${qs}` : ''}`);
+  },
+
+  getMyTickets: (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== '') {
+          searchParams.set(key, String(val));
+        }
+      });
+    }
+    const qs = searchParams.toString();
+    return api.get<{
+      tickets: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/tickets/my-tickets${qs ? `?${qs}` : ''}`);
+  },
+
+  getTicket: (id: string) => api.get<any>(`/tickets/${id}`),
+
+  updateTicket: (
+    id: string,
+    data: {
+      status?: string;
+      priority?: string;
+      assigneeId?: string;
+      onHoldReason?: string;
+    },
+  ) => api.patch<any>(`/tickets/${id}`, data),
+
+  addComment: (
+    id: string,
+    data: { message: string; isInternal?: boolean },
+  ) => api.post<any>(`/tickets/${id}/comments`, data),
+
+  resolveTicket: (id: string) => api.post<any>(`/tickets/${id}/resolve`),
+
+  closeTicket: (id: string) => api.post<any>(`/tickets/${id}/close`),
+
+  getKPIs: () =>
+    api.get<{
+      openTickets: number;
+      highPriorityOpen: number;
+      slaBreaches: number;
+      avgFrtMinutes: number | null;
+      avgTtrMinutes: number | null;
+      statusBreakdown: Record<string, number>;
+    }>('/tickets/kpis'),
+
+  getAgents: () =>
+    api.get<
+      {
+        userId: string;
+        supportSubRole: string | null;
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+      }[]
+    >('/tickets/agents'),
 };
 
 export default api;

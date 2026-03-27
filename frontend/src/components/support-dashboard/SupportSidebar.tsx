@@ -27,56 +27,77 @@ interface SupportProfile {
 
 interface SupportSidebarProps {
   profile: SupportProfile;
+  supportSubRole?: string | null;
 }
 
-const SupportSidebar = ({ profile }: SupportSidebarProps) => {
+const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
 
-  const navItems = [
+  const isSupervisor = supportSubRole === "supervisor";
+
+  // Build base path based on sub-role
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
+
+  const allNavItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/dashboard/support`,
+      href: basePath,
       icon: LayoutDashboard,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.allTickets"),
-      href: `/${locale}/dashboard/support/tickets`,
+      href: `${basePath}/tickets`,
       icon: ClipboardList,
-      badge: 23,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.myTickets"),
-      href: `/${locale}/dashboard/support/my-tickets`,
+      href: `${basePath}/my-tickets`,
       icon: Inbox,
-      badge: 8,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.team"),
-      href: `/${locale}/dashboard/support/team`,
+      href: `${basePath}/team`,
       icon: Users,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.knowledgeBase"),
-      href: `/${locale}/dashboard/support/kb`,
+      href: `${basePath}/kb`,
       icon: BookOpen,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/dashboard/support/reports`,
+      href: `${basePath}/reports`,
       icon: BarChart3,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/dashboard/support/settings`,
+      href: `${basePath}/settings`,
       icon: Settings,
+      showFor: "supervisor" as const,
     },
   ];
 
+  const navItems = allNavItems.filter(
+    (item) => item.showFor === "all" || (item.showFor === "supervisor" && isSupervisor),
+  );
+
   const isActive = (href: string) => {
-    return pathname === href;
+    if (pathname === href) return true;
+    // For dashboard root, only exact match
+    if (href === basePath) return pathname === href;
+    // For sub-pages, match prefix
+    return pathname.startsWith(href + "/");
   };
 
   return (
@@ -189,11 +210,11 @@ const SupportSidebar = ({ profile }: SupportSidebarProps) => {
                 >
                   {item.label}
                 </span>
-                {item.badge && (
+                {"badge" in item && item.badge ? (
                   <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
                     {item.badge}
                   </span>
-                )}
+                ) : null}
               </Link>
             );
           })}

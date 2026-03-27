@@ -29,54 +29,69 @@ interface SupportProfile {
 
 interface SupportMobileSidebarProps {
   profile: SupportProfile;
+  supportSubRole?: string | null;
 }
 
-const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
+const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const locale = useLocale();
   const pathname = usePathname();
   const t = useTranslations("supportDashboard");
   const isRTL = locale === "ar";
 
-  const navItems = [
+  const isSupervisor = supportSubRole === "supervisor";
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
+
+  const allNavItems = [
     {
       label: t("sidebar.dashboard"),
-      href: `/${locale}/dashboard/support`,
+      href: basePath,
       icon: LayoutDashboard,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.allTickets"),
-      href: `/${locale}/dashboard/support/tickets`,
+      href: `${basePath}/tickets`,
       icon: ClipboardList,
-      badge: 23,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.myTickets"),
-      href: `/${locale}/dashboard/support/my-tickets`,
+      href: `${basePath}/my-tickets`,
       icon: Inbox,
-      badge: 8,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.team"),
-      href: `/${locale}/dashboard/support/team`,
+      href: `${basePath}/team`,
       icon: Users,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.knowledgeBase"),
-      href: `/${locale}/dashboard/support/kb`,
+      href: `${basePath}/kb`,
       icon: BookOpen,
+      showFor: "all" as const,
     },
     {
       label: t("sidebar.reports"),
-      href: `/${locale}/dashboard/support/reports`,
+      href: `${basePath}/reports`,
       icon: BarChart3,
+      showFor: "supervisor" as const,
     },
     {
       label: t("sidebar.settings"),
-      href: `/${locale}/dashboard/support/settings`,
+      href: `${basePath}/settings`,
       icon: Settings,
+      showFor: "supervisor" as const,
     },
   ];
+
+  const navItems = allNavItems.filter(
+    (item) => item.showFor === "all" || (item.showFor === "supervisor" && isSupervisor),
+  );
 
   const isActive = (href: string) => pathname === href;
 

@@ -54,6 +54,11 @@ export * from './session-recordings';
 
 // Support Tickets schemas
 export * from './tickets';
+export * from './sla';
+export * from './support-macros';
+export * from './escalation-paths';
+export * from './surveys';
+export * from './kb-articles';
 
 // Audit Logs schemas
 export * from './audit-logs';

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -19,24 +20,22 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-// Mock Support Profile
-const mockProfile = {
-  name: "Hana Al-Saud",
-  email: "h.alsaud@physio.edu.sa",
-  resolved: 156,
-  csat: 94,
-  avgFRT: "1.2h",
-};
-
 const TeamContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const profile = { ...mockProfile, name: t("names.hanaAlSaud") };
+  const profile = {
+    name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
+    email: user?.email || "",
+    resolved: 0,
+    csat: 0,
+    avgFRT: "--",
+  };
 
   const agents = [
     {
@@ -197,11 +196,11 @@ const TeamContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar profile={profile} />
+              <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
             {/* Mobile Sidebar */}
-            <SupportMobileSidebar profile={profile} />
+            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

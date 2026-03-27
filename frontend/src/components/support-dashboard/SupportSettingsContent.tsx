@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -19,19 +20,18 @@ import {
   Trash2,
 } from "lucide-react";
 
-const mockProfile = {
-  name: "Hana Al-Saud",
-  email: "h.alsaud@physio.edu.sa",
-  resolved: 156,
-  csat: 94,
-  avgFRT: "1.2h",
-};
-
 const SupportSettingsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.hanaAlSaud") };
+  const { user } = useAuth();
+  const profile = {
+    name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
+    email: user?.email || "",
+    resolved: 0,
+    csat: 0,
+    avgFRT: "--",
+  };
   const [activeTab, setActiveTab] = useState("sla");
 
   // SLA Target states
@@ -104,10 +104,10 @@ const SupportSettingsContent = () => {
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar profile={profile} />
+              <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
-            <SupportMobileSidebar profile={profile} />
+            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             <div className="flex-1 min-w-0">
               {/* Page Header */}

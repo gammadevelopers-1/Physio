@@ -33,6 +33,11 @@ export const tickets = pgTable(
     status: varchar('status', { length: 20 }).notNull().default('new'),
     assigneeId: uuid('assignee_id').references(() => users.id),
     satisfactionRating: integer('satisfaction_rating'),
+    firstResponseAt: timestamp('first_response_at'),
+    slaBreachedFrt: boolean('sla_breached_frt').notNull().default(false),
+    slaBreachedTtr: boolean('sla_breached_ttr').notNull().default(false),
+    onHoldReason: varchar('on_hold_reason', { length: 100 }),
+    onHoldAt: timestamp('on_hold_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     resolvedAt: timestamp('resolved_at'),
@@ -45,7 +50,7 @@ export const tickets = pgTable(
     index('tickets_assignee_id_idx').on(table.assigneeId),
     check(
       'tickets_status_check',
-      sql`${table.status} IN ('new', 'in_progress', 'resolved', 'closed')`,
+      sql`${table.status} IN ('new', 'in_progress', 'on_hold', 'resolved', 'closed')`,
     ),
     check(
       'tickets_category_check',
@@ -92,6 +97,7 @@ export const ticketReplies = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     message: text('message').notNull(),
     isStaffReply: boolean('is_staff_reply').notNull().default(false),
+    isInternal: boolean('is_internal').notNull().default(false),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -116,6 +122,7 @@ export const ticketRepliesRelations = relations(ticketReplies, ({ one }) => ({
 export const TICKET_STATUS = {
   NEW: 'new',
   IN_PROGRESS: 'in_progress',
+  ON_HOLD: 'on_hold',
   RESOLVED: 'resolved',
   CLOSED: 'closed',
 } as const;
@@ -144,3 +151,8 @@ export type TicketCategory =
   (typeof TICKET_CATEGORY)[keyof typeof TICKET_CATEGORY];
 export type TicketPriority =
   (typeof TICKET_PRIORITY)[keyof typeof TICKET_PRIORITY];
+
+// Alias for the new support module (same table, clearer naming)
+export const ticketComments = ticketReplies;
+export const ticketCommentsRelations = ticketRepliesRelations;
+export type TicketComment = TicketReply;

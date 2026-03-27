@@ -28,6 +28,7 @@ import { ProcessingModule } from './modules/processing/processing.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { AuditLogModule } from './modules/audit-logs/audit-logs.module';
 import { StudentModule } from './modules/student/student.module';
+import { SupportModule } from './modules/support/support.module';
 import { UserNotificationsModule } from './modules/user-notifications/user-notifications.module';
 import { JwtAuthGuard } from './modules/auth/guards';
 import appConfig from './config/app.config';
@@ -105,6 +106,7 @@ import processingConfig from './config/processing.config';
     PreferencesModule,
     AuditLogModule,
     StudentModule,
+    SupportModule,
     UserNotificationsModule,
   ],
   controllers: [AppController],

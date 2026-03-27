@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
+import { supportApi } from "@/lib/api";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -13,14 +15,6 @@ import {
   Search,
   Send,
 } from "lucide-react";
-
-const mockProfile = {
-  name: "Hana Al-Saud",
-  email: "h.alsaud@physio.edu.sa",
-  resolved: 156,
-  csat: 94,
-  avgFRT: "1.2h",
-};
 
 interface MyTicket {
   id: string;
@@ -37,7 +31,20 @@ const MyTicketsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.hanaAlSaud") };
+  const { user } = useAuth();
+
+  const profile = {
+    name: user
+      ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+      : "",
+    email: user?.email || "",
+    resolved: 0,
+    csat: 0,
+    avgFRT: "--",
+  };
+
+  const [apiTickets, setApiTickets] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,58 +80,37 @@ const MyTicketsContent = () => {
     },
   ];
 
-  const myTickets: MyTicket[] = [
-    {
-      id: "1234",
-      subject: t("ticketsBoard.subjects.cannotAccessCourse"),
-      customer: t("names.ahmedK"),
-      category: "login",
-      priority: "high",
-      status: "new",
-      slaRemaining: "1.5h",
-      date: t("mockDates.feb10_2026"),
-    },
-    {
-      id: "1232",
-      subject: t("ticketsBoard.subjects.paymentFailedTwice"),
-      customer: t("names.omarA"),
-      category: "billing",
-      priority: "high",
-      status: "inProgress",
-      slaRemaining: "0.5h",
-      date: t("mockDates.feb9_2026"),
-    },
-    {
-      id: "1235",
-      subject: t("ticketsBoard.subjects.certificateNotReceived"),
-      customer: t("names.saraM"),
-      category: "certificate",
-      priority: "medium",
-      status: "inProgress",
-      slaRemaining: "3h",
-      date: t("mockDates.feb10_2026"),
-    },
-    {
-      id: "1236",
-      subject: t("ticketsBoard.subjects.videoNotPlaying"),
-      customer: t("names.fatimaN"),
-      category: "content",
-      priority: "low",
-      status: "waiting",
-      slaRemaining: "8h",
-      date: t("mockDates.feb9_2026"),
-    },
-    {
-      id: "1237",
-      subject: t("ticketsBoard.subjects.refundRequest"),
-      customer: t("names.khalidH"),
-      category: "billing",
-      priority: "medium",
-      status: "new",
-      slaRemaining: "4h",
-      date: t("mockDates.feb8_2026"),
-    },
-  ];
+  const fetchMyTickets = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoading(true);
+    try {
+      // Fetch tickets assigned to current user
+      const data = await supportApi.getTickets({
+        assigneeId: user.id,
+        limit: 50,
+      });
+      setApiTickets(data.tickets || []);
+    } catch {
+      setApiTickets([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchMyTickets();
+  }, [fetchMyTickets]);
+
+  const myTickets: MyTicket[] = apiTickets.map((t: any) => ({
+    id: t.id?.substring(0, 8) || t.id,
+    subject: t.subject,
+    customer: [t.studentFirstName, t.studentLastName].filter(Boolean).join(" ") || "Unknown",
+    category: t.category,
+    priority: t.priority,
+    status: t.status === "in_progress" ? "inProgress" : t.status === "on_hold" ? "waiting" : t.status,
+    slaRemaining: "--",
+    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "",
+  }));
 
   const tabs = [
     { key: "all", label: t("myTicketsPage.tabs.all") },
@@ -173,11 +159,11 @@ const MyTicketsContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar profile={profile} />
+              <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
             {/* Mobile Sidebar */}
-            <SupportMobileSidebar profile={profile} />
+            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

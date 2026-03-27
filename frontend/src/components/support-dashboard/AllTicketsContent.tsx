@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useAuth } from "@/contexts/AuthContext";
+import { supportApi } from "@/lib/api";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -18,15 +20,8 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
-
-const mockProfile = {
-  name: "Hana Al-Saud",
-  email: "h.alsaud@physio.edu.sa",
-  resolved: 156,
-  csat: 94,
-  avgFRT: "1.2h",
-};
 
 interface Ticket {
   id: string;
@@ -44,7 +39,23 @@ const AllTicketsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
-  const profile = { ...mockProfile, name: t("names.hanaAlSaud") };
+  const { user } = useAuth();
+
+  const profile = {
+    name: user
+      ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+      : "",
+    email: user?.email || "",
+    resolved: 0,
+    csat: 0,
+    avgFRT: "--",
+  };
+
+  const [apiTickets, setApiTickets] = useState<any[]>([]);
+  const [totalTickets, setTotalTickets] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+  const pageSize = 10;
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -84,104 +95,64 @@ const AllTicketsContent = () => {
     },
   ];
 
-  const tickets: Ticket[] = [
-    {
-      id: "1234",
-      subject: t("ticketsBoard.subjects.cannotAccessCourse"),
-      customer: t("names.ahmedK"),
-      email: "ahmed.k@email.com",
-      category: "login",
-      priority: "high",
-      status: "new",
-      assignee: t("names.hanaAlSaud"),
-      date: t("mockDates.feb10_2026"),
-    },
-    {
-      id: "1233",
-      subject: t("ticketsBoard.subjects.certificateNotReceived"),
-      customer: t("names.saraM"),
-      email: "sara.m@email.com",
-      category: "certificate",
-      priority: "medium",
-      status: "inProgress",
-      assignee: t("names.mohammedAli"),
-      date: t("mockDates.feb10_2026"),
-    },
-    {
-      id: "1232",
-      subject: t("ticketsBoard.subjects.paymentFailedTwice"),
-      customer: t("names.omarA"),
-      email: "omar.a@email.com",
-      category: "billing",
-      priority: "high",
-      status: "inProgress",
-      assignee: t("names.hanaAlSaud"),
-      date: t("mockDates.feb9_2026"),
-    },
-    {
-      id: "1231",
-      subject: t("ticketsBoard.subjects.videoNotPlaying"),
-      customer: t("names.fatimaN"),
-      email: "fatima.n@email.com",
-      category: "content",
-      priority: "low",
-      status: "resolved",
-      assignee: t("names.laylaAhmed"),
-      date: t("mockDates.feb9_2026"),
-    },
-    {
-      id: "1230",
-      subject: t("ticketsBoard.subjects.refundRequest"),
-      customer: t("names.khalidH"),
-      email: "khalid.h@email.com",
-      category: "billing",
-      priority: "medium",
-      status: "new",
-      assignee: null,
-      date: t("mockDates.feb8_2026"),
-    },
-    {
-      id: "1229",
-      subject: t("ticketsBoard.subjects.loginIssue"),
-      customer: t("names.nouraS"),
-      email: "noura.s@email.com",
-      category: "technical",
-      priority: "low",
-      status: "waiting",
-      assignee: t("names.mohammedAli"),
-      date: t("mockDates.feb8_2026"),
-    },
-    {
-      id: "1228",
-      subject: t("ticketsBoard.subjects.cannotAccessCourse"),
-      customer: t("names.ahmedK"),
-      email: "ahmed.k@email.com",
-      category: "login",
-      priority: "medium",
-      status: "closed",
-      assignee: t("names.laylaAhmed"),
-      date: t("mockDates.feb7_2026"),
-    },
-    {
-      id: "1227",
-      subject: t("ticketsBoard.subjects.certificateNotReceived"),
-      customer: t("names.saraM"),
-      email: "sara.m@email.com",
-      category: "certificate",
-      priority: "high",
-      status: "new",
-      assignee: null,
-      date: t("mockDates.feb7_2026"),
-    },
-  ];
+  const fetchTickets = useCallback(async () => {
+    setIsLoadingTickets(true);
+    try {
+      const params: Record<string, any> = {
+        page: currentPage,
+        limit: pageSize,
+      };
+      if (statusFilter !== "all") {
+        // Map UI status keys to API values
+        const statusMap: Record<string, string> = {
+          new: "new",
+          inProgress: "in_progress",
+          waiting: "on_hold",
+          resolved: "resolved",
+          closed: "closed",
+        };
+        params.status = statusMap[statusFilter] || statusFilter;
+      }
+      if (priorityFilter !== "all") params.priority = priorityFilter;
+      if (categoryFilter !== "all") params.category = categoryFilter;
+      if (searchQuery) params.search = searchQuery;
+
+      const data = await supportApi.getTickets(params);
+      setApiTickets(data.tickets || []);
+      setTotalTickets(data.total || 0);
+    } catch {
+      setApiTickets([]);
+    } finally {
+      setIsLoadingTickets(false);
+    }
+  }, [currentPage, statusFilter, priorityFilter, categoryFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
+
+  // Map API tickets to component's Ticket interface
+  const tickets: Ticket[] = apiTickets.map((t: any) => ({
+    id: t.id?.substring(0, 8) || t.id,
+    subject: t.subject,
+    customer: [t.studentFirstName, t.studentLastName].filter(Boolean).join(" ") || "Unknown",
+    email: t.studentEmail || "",
+    category: t.category,
+    priority: t.priority,
+    status: t.status === "in_progress" ? "inProgress" : t.status === "on_hold" ? "waiting" : t.status,
+    assignee: null, // Could be enriched later
+    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "",
+  }));
+
+  const totalPages = Math.ceil(totalTickets / pageSize);
 
   const tabs = [
-    { key: "all", label: t("allTicketsPage.tabs.all"), count: tickets.length },
-    { key: "new", label: t("allTicketsPage.tabs.new"), count: 8 },
-    { key: "inProgress", label: t("allTicketsPage.tabs.inProgress"), count: 7 },
-    { key: "waiting", label: t("allTicketsPage.tabs.waiting"), count: 3 },
-    { key: "resolved", label: t("allTicketsPage.tabs.resolved"), count: 45 },
-    { key: "closed", label: t("allTicketsPage.tabs.closed"), count: 321 },
+    { key: "all", label: t("allTicketsPage.tabs.all"), count: totalTickets },
+    { key: "new", label: t("allTicketsPage.tabs.new"), count: null },
+    { key: "inProgress", label: t("allTicketsPage.tabs.inProgress"), count: null },
+    { key: "waiting", label: t("allTicketsPage.tabs.waiting"), count: null },
+    { key: "resolved", label: t("allTicketsPage.tabs.resolved"), count: null },
+    { key: "closed", label: t("allTicketsPage.tabs.closed"), count: null },
   ];
 
   const priorityStyles: Record<string, string> = {
@@ -229,11 +200,11 @@ const AllTicketsContent = () => {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
             <div className="hidden lg:block lg:flex-shrink-0">
-              <SupportSidebar profile={profile} />
+              <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
 
             {/* Mobile Sidebar */}
-            <SupportMobileSidebar profile={profile} />
+            <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">

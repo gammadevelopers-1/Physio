@@ -67,8 +67,15 @@ const ROLE_DASHBOARD_PATHS: Record<string, string> = {
   SUPER_ADMIN: '/dashboard/admin',
 };
 
-function getDashboardPath(role: string): string {
-  return ROLE_DASHBOARD_PATHS[role] || '/dashboard/student';
+function getDashboardPath(role: string, supportSubRole?: string | null): string {
+  const basePath = ROLE_DASHBOARD_PATHS[role] || '/dashboard/student';
+  if (role === 'SUPPORT' && supportSubRole === 'supervisor') {
+    return '/dashboard/support/supervisor';
+  }
+  if (role === 'SUPPORT') {
+    return '/dashboard/support/agent';
+  }
+  return basePath;
 }
 
 // Session cookie helpers — used by Next.js middleware to gate protected routes.
@@ -174,7 +181,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const displayName = user.firstName || user.email;
         toast.success(`Welcome back, ${displayName}!`);
 
-        const dashboardPath = getDashboardPath(user.activeRole);
+        const dashboardPath = getDashboardPath(user.activeRole, user.supportSubRole);
         let targetPath = `/${locale}${dashboardPath}`;
 
         if (redirectTo) {
@@ -227,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         toast.success(`Welcome back, ${displayName}!`);
 
         // Navigate to redirect target or user's correct dashboard
-        const dashboardPath = getDashboardPath(user.activeRole);
+        const dashboardPath = getDashboardPath(user.activeRole, user.supportSubRole);
         let targetPath = `/${locale}${dashboardPath}`;
 
         if (redirectTo) {
@@ -315,7 +322,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           response.activeRole.slice(1).toLowerCase();
         toast.success(`Switched to ${roleName} dashboard`);
 
-        const dashboardPath = getDashboardPath(response.activeRole);
+        const dashboardPath = getDashboardPath(response.activeRole, state.user?.supportSubRole);
         router.push(`/${locale}${dashboardPath}`);
       } catch (error) {
         throw error;

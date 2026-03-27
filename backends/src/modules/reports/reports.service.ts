@@ -117,9 +117,11 @@ export class ReportsService {
       format?: string;
       dateFrom?: string;
       dateTo?: string;
+      tz?: string;
     },
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
+    const userTz = params.tz || TZ; // Use user's timezone if provided, else default
     const courseIds = await this.resolveCourseIds(user, params.courseId);
     const instructorName = await this.getInstructorName(user.id);
 
@@ -165,16 +167,14 @@ export class ReportsService {
       sessionConditions.push(eq(sessions.id, params.sessionId));
     }
     if (params.dateFrom) {
-      // Convert local date (YYYY-MM-DD) to start of day in Riyadh timezone (UTC+3)
-      sessionConditions.push(
-        gte(sessions.scheduledAt, new Date(`${params.dateFrom}T00:00:00+03:00`)),
-      );
+      // Convert local date (YYYY-MM-DD) to start of day in user's timezone
+      const startOfDay = this.toStartOfDayInTz(params.dateFrom, userTz);
+      sessionConditions.push(gte(sessions.scheduledAt, startOfDay));
     }
     if (params.dateTo) {
-      // Convert local date to end of day in Riyadh timezone (UTC+3)
-      sessionConditions.push(
-        lte(sessions.scheduledAt, new Date(`${params.dateTo}T23:59:59+03:00`)),
-      );
+      // Convert local date to end of day in user's timezone
+      const endOfDay = this.toEndOfDayInTz(params.dateTo, userTz);
+      sessionConditions.push(lte(sessions.scheduledAt, endOfDay));
     }
 
     // Get instructor IDs for these courses so we can exclude them from attendance
@@ -298,11 +298,11 @@ export class ReportsService {
         row.studentScfhsNumber || '',
         `${row.studentFirstName || ''} ${row.studentLastName || ''}`.trim(),
         row.studentEmail || '',
-        row.sessionDate ? new Date(row.sessionDate).toLocaleDateString('en-GB', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric' }) : '',
+        row.sessionDate ? new Date(row.sessionDate).toLocaleDateString('en-GB', { timeZone: userTz, day: '2-digit', month: 'short', year: 'numeric' }) : '',
         row.sessionTitle || '',
         row.status || '',
-        row.joinedAt ? new Date(row.joinedAt).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }) : '',
-        row.leftAt ? new Date(row.leftAt).toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }) : '',
+        row.joinedAt ? new Date(row.joinedAt).toLocaleTimeString('en-GB', { timeZone: userTz, hour: '2-digit', minute: '2-digit' }) : '',
+        row.leftAt ? new Date(row.leftAt).toLocaleTimeString('en-GB', { timeZone: userTz, hour: '2-digit', minute: '2-digit' }) : '',
         row.durationMinutes != null ? String(row.durationMinutes) : '',
         presencePercent > 0 ? `${presencePercent}%` : '',
         pct,
@@ -350,7 +350,7 @@ export class ReportsService {
           student.scfhsNumber || '',
           `${student.firstName || ''} ${student.lastName || ''}`.trim(),
           student.email || '',
-          sess.scheduledAt ? new Date(sess.scheduledAt).toLocaleDateString('en-GB', { timeZone: TZ, day: '2-digit', month: 'short', year: 'numeric' }) : '',
+          sess.scheduledAt ? new Date(sess.scheduledAt).toLocaleDateString('en-GB', { timeZone: userTz, day: '2-digit', month: 'short', year: 'numeric' }) : '',
           sess.title || '',
           'absent',
           '',
@@ -1879,6 +1879,32 @@ export class ReportsService {
     const ymd = date.toLocaleDateString('en-CA', { timeZone: TZ });
     const hm = date.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
     return `${ymd} ${hm}`;
+  }
+
+  /** Convert a YYYY-MM-DD string to start of day (00:00:00) in the given timezone */
+  private toStartOfDayInTz(dateStr: string, tz: string): Date {
+    // Create a date at midnight in the target timezone by finding the UTC offset
+    const probe = new Date(`${dateStr}T12:00:00Z`); // noon UTC to avoid DST edge cases
+    const localStr = probe.toLocaleDateString('en-CA', { timeZone: tz }); // YYYY-MM-DD in tz
+    const midnightLocal = new Date(`${localStr}T00:00:00`);
+    // Get the offset by comparing local representation
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false, timeZoneName: 'shortOffset' });
+    const parts = formatter.formatToParts(probe);
+    const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || '+03:00';
+    const offsetMatch = offsetPart.match(/GMT([+-]\d{1,2}(?::?\d{2})?)/);
+    const offset = offsetMatch ? offsetMatch[1].replace(/^([+-])(\d)$/, '$10$2').replace(/^([+-]\d{2})$/, '$1:00') : '+03:00';
+    return new Date(`${dateStr}T00:00:00${offset}`);
+  }
+
+  /** Convert a YYYY-MM-DD string to end of day (23:59:59) in the given timezone */
+  private toEndOfDayInTz(dateStr: string, tz: string): Date {
+    const probe = new Date(`${dateStr}T12:00:00Z`);
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false, timeZoneName: 'shortOffset' });
+    const parts = formatter.formatToParts(probe);
+    const offsetPart = parts.find(p => p.type === 'timeZoneName')?.value || '+03:00';
+    const offsetMatch = offsetPart.match(/GMT([+-]\d{1,2}(?::?\d{2})?)/);
+    const offset = offsetMatch ? offsetMatch[1].replace(/^([+-])(\d)$/, '$10$2').replace(/^([+-]\d{2})$/, '$1:00') : '+03:00';
+    return new Date(`${dateStr}T23:59:59${offset}`);
   }
 
   /**

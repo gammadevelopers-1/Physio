@@ -1296,6 +1296,8 @@ export const reportsApi = {
     if (params.format) sp.set('format', params.format);
     if (params.dateFrom) sp.set('dateFrom', params.dateFrom);
     if (params.dateTo) sp.set('dateTo', params.dateTo);
+    // Send user's local timezone so export formats dates correctly
+    try { sp.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { /* fallback to server default */ }
     const qs = sp.toString();
 
     const token = getAccessToken();

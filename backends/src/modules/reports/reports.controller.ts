@@ -39,11 +39,12 @@ export class ReportsController {
     @Query('format') format?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
+    @Query('tz') tz?: string,
     @Res({ passthrough: true }) res?: Response,
   ): Promise<StreamableFile> {
     const result = await this.reportsService.generateAttendanceReport(
       user,
-      { courseId, sessionId, format, dateFrom, dateTo },
+      { courseId, sessionId, format, dateFrom, dateTo, tz },
     );
 
     res!.set({

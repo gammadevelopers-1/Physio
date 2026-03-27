@@ -235,7 +235,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     title: "",
     type: "zoom",
     scheduledAt: "",
-    durationMinutes: "60",
+    durationHours: 1,
+    durationMins: 0,
     zoomLink: "",
     meetingId: "",
     roomName: "",
@@ -526,7 +527,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
 
   const openAddSession = () => {
     setSessionForm({
-      title: "", type: "zoom", scheduledAt: "", durationMinutes: "60",
+      title: "", type: "zoom", scheduledAt: "", durationHours: 1, durationMins: 0,
       zoomLink: "", meetingId: "", roomName: "", venueAddress: "",
     });
     setSessionModal({ open: true, editing: null });
@@ -537,7 +538,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       title: session.title,
       type: session.type,
       scheduledAt: toDatetimeLocal(session.scheduledAt),
-      durationMinutes: String(session.durationMinutes),
+      durationHours: Math.floor(session.durationMinutes / 60),
+      durationMins: session.durationMinutes % 60,
       zoomLink: session.zoomLink || "",
       meetingId: session.meetingId || "",
       roomName: session.roomName || "",
@@ -554,7 +556,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         title: sessionForm.title.trim(),
         type: sessionForm.type,
         scheduledAt: new Date(sessionForm.scheduledAt).toISOString(),
-        durationMinutes: parseInt(sessionForm.durationMinutes, 10) || 60,
+        durationMinutes: (sessionForm.durationHours * 60 + sessionForm.durationMins) || 60,
       };
       if (sessionForm.type === "zoom" || sessionForm.type === "hybrid") {
         if (sessionForm.zoomLink) data.zoomLink = sessionForm.zoomLink;
@@ -604,7 +606,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   };
 
   const [rescheduleModal, setRescheduleModal] = useState<{ open: boolean; sessionId: string | null }>({ open: false, sessionId: null });
-  const [rescheduleData, setRescheduleData] = useState({ reason: "", newDate: "", newTime: "", duration: "60" });
+  const [rescheduleData, setRescheduleData] = useState({ reason: "", newDate: "", newTime: "", durationHours: 1, durationMins: 0 });
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
   const handleRescheduleSession = async () => {
@@ -616,11 +618,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       await instructorApi.rescheduleSession(rescheduleModal.sessionId!, {
         reason: rescheduleData.reason.trim(),
         newScheduledAt,
-        newDurationMinutes: Number(rescheduleData.duration) || 60,
+        newDurationMinutes: (rescheduleData.durationHours * 60 + rescheduleData.durationMins) || 60,
       });
       toast.success("Lecture rescheduled successfully");
       setRescheduleModal({ open: false, sessionId: null });
-      setRescheduleData({ reason: "", newDate: "", newTime: "", duration: "60" });
+      setRescheduleData({ reason: "", newDate: "", newTime: "", durationHours: 1, durationMins: 0 });
       refetch();
     } catch (err: any) {
       toast.error(err?.message || "Failed to reschedule");
@@ -1391,7 +1393,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => {
                                         setRescheduleModal({ open: true, sessionId: session.id });
-                                        setRescheduleData({ reason: "", newDate: "", newTime: "", duration: String(session.durationMinutes || 60) });
+                                        setRescheduleData({ reason: "", newDate: "", newTime: "", durationHours: Math.floor((session.durationMinutes || 60) / 60), durationMins: (session.durationMinutes || 60) % 60 });
                                       }}
                                       className="px-2.5 py-1 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
                                     >
@@ -1912,14 +1914,25 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration")}</label>
-                  <input
-                    type="number"
-                    min="1"
-                    value={sessionForm.durationMinutes}
-                    onChange={(e) => setSessionForm((f) => ({ ...f, durationMinutes: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                    placeholder="60"
-                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      value={sessionForm.durationHours}
+                      onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
+                      className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    />
+                    <span className="text-sm text-[#6B7280]">{t("courseDetail.hours") || "hrs"}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={sessionForm.durationMins}
+                      onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
+                      className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    />
+                    <span className="text-sm text-[#6B7280]">{t("courseDetail.minutes")}</span>
+                  </div>
                 </div>
               </div>
               {(sessionForm.type === "zoom" || sessionForm.type === "hybrid") && (
@@ -2041,14 +2054,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">Duration (minutes)</label>
-                <input
-                  type="number"
-                  value={rescheduleData.duration}
-                  onChange={(e) => setRescheduleData(d => ({ ...d, duration: e.target.value }))}
-                  min={15}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                />
+                <label className="block text-sm font-medium text-[#374151] mb-1">Duration</label>
+                <div className="flex items-center gap-2">
+                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                  <span className="text-sm text-[#6B7280]">hrs</span>
+                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                  <span className="text-sm text-[#6B7280]">min</span>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-5">

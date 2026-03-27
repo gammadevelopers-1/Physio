@@ -40,6 +40,7 @@ export const sessions = pgTable(
     rescheduleReason: text('reschedule_reason'),
     rescheduledToId: uuid('rescheduled_to_id'),
     reminderSentAt: timestamp('reminder_sent_at'),
+    autoEndWarningSentAt: timestamp('auto_end_warning_sent_at'),
     recordingEnabled: boolean('recording_enabled').notNull().default(true),
     zoomSyncedAt: timestamp('zoom_synced_at'),
     isMakeup: boolean('is_makeup').notNull().default(false),

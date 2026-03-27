@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { eq, and, or, isNull, gte, lte } from 'drizzle-orm';
+import { eq, and, or, isNull, gte, lte, sql, isNotNull } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   sessions,
@@ -11,12 +11,23 @@ import {
   SESSION_TYPE,
 } from '../../database/schema';
 import { EmailService } from '../email/email.service';
+import { ZOOM_SERVICE, IZoomService } from '../zoom/zoom.interface';
+import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { NELC_EVENT_TYPE } from '../../database/schema';
+import { AuditLogService } from '../audit-logs/audit-logs.service';
+import { SessionNotificationService } from './session-notification.service';
 
 @Injectable()
 export class SessionReminderService {
   private readonly logger = new Logger(SessionReminderService.name);
 
-  constructor(private readonly emailService: EmailService) {}
+  constructor(
+    private readonly emailService: EmailService,
+    @Inject(ZOOM_SERVICE) private readonly zoomService: IZoomService,
+    private readonly auditService: NelcAuditService,
+    private readonly auditLogService: AuditLogService,
+    private readonly sessionNotificationService: SessionNotificationService,
+  ) {}
 
   /**
    * Runs every minute. Finds Zoom/hybrid sessions starting within
@@ -188,6 +199,170 @@ export class SessionReminderService {
 
     if (missedSessions.length > 0) {
       this.logger.log(`Auto-marked ${missedSessions.length} session(s) as missed`);
+    }
+  }
+
+  /**
+   * Auto-end live sessions that have exceeded their planned duration.
+   * Runs every minute. Uses actualStartedAt + durationMinutes as the cutoff.
+   * Also sends a 4-minute warning email to the instructor before auto-ending.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async autoEndExpiredSessions() {
+    try {
+      const now = new Date();
+
+      // ── 4-minute warning: find live sessions expiring in 3–5 minutes ──
+      const warningSessions = await db
+        .select({
+          id: sessions.id,
+          title: sessions.title,
+          courseId: sessions.courseId,
+          instructorId: sessions.instructorId,
+          actualStartedAt: sessions.actualStartedAt,
+          durationMinutes: sessions.durationMinutes,
+          courseName: courses.title,
+        })
+        .from(sessions)
+        .innerJoin(courses, eq(sessions.courseId, courses.id))
+        .where(
+          and(
+            eq(sessions.status, SESSION_STATUS.LIVE),
+            isNotNull(sessions.actualStartedAt),
+            isNull(sessions.autoEndWarningSentAt),
+            // actualStartedAt + durationMinutes - 5min <= now
+            sql`${sessions.actualStartedAt} + (${sessions.durationMinutes} || ' minutes')::interval - interval '5 minutes' <= ${now}`,
+            // actualStartedAt + durationMinutes > now (not yet expired)
+            sql`${sessions.actualStartedAt} + (${sessions.durationMinutes} || ' minutes')::interval > ${now}`,
+          ),
+        );
+
+      for (const session of warningSessions) {
+        // Send warning email to instructor
+        const [instructor] = await db
+          .select({ email: users.email, firstName: users.firstName, lastName: users.lastName })
+          .from(users)
+          .where(eq(users.id, session.instructorId))
+          .limit(1);
+
+        if (instructor) {
+          const name = `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim() || instructor.email;
+          await this.emailService.sendGenericNotification(
+            instructor.email,
+            {
+              recipientName: name,
+              subject: `Lecture Ending Soon: ${session.title}`,
+              message: `Your lecture "${session.title}" (${session.courseName}) will auto-end in approximately 4 minutes as the planned duration is about to expire.\n\nIf you need more time, please create a new session after this one ends.`,
+            },
+          ).catch((err) => this.logger.warn(`Failed to send auto-end warning email: ${(err as Error).message}`));
+        }
+
+        // Mark warning as sent
+        await db
+          .update(sessions)
+          .set({ autoEndWarningSentAt: new Date() })
+          .where(eq(sessions.id, session.id));
+
+        this.logger.log(`Auto-end warning sent for session "${session.title}" (${session.id})`);
+      }
+
+      // ── Auto-end: find live sessions past their duration ──
+      const expiredSessions = await db
+        .select({
+          id: sessions.id,
+          title: sessions.title,
+          courseId: sessions.courseId,
+          instructorId: sessions.instructorId,
+          type: sessions.type,
+          meetingId: sessions.meetingId,
+          zoomLink: sessions.zoomLink,
+          actualStartedAt: sessions.actualStartedAt,
+          durationMinutes: sessions.durationMinutes,
+        })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.status, SESSION_STATUS.LIVE),
+            isNotNull(sessions.actualStartedAt),
+            // actualStartedAt + durationMinutes <= now
+            sql`${sessions.actualStartedAt} + (${sessions.durationMinutes} || ' minutes')::interval <= ${now}`,
+          ),
+        );
+
+      if (expiredSessions.length === 0) return;
+
+      for (const session of expiredSessions) {
+        try {
+          // 1. End Zoom meeting if applicable
+          if (
+            session.meetingId &&
+            (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
+          ) {
+            const result = await this.zoomService.endMeeting(session.meetingId);
+            if (!result.ended) {
+              this.logger.warn(`Zoom meeting ${session.meetingId} could not be ended: ${result.error}`);
+            }
+          } else if (
+            !session.meetingId &&
+            session.zoomLink &&
+            (session.type === SESSION_TYPE.ZOOM || session.type === SESSION_TYPE.HYBRID)
+          ) {
+            const extracted = session.zoomLink.match(/\/j\/(\d+)/)?.[1];
+            if (extracted) {
+              await this.zoomService.endMeeting(extracted);
+            }
+          }
+
+          // 2. Update session status to ended
+          const [updated] = await db
+            .update(sessions)
+            .set({
+              status: SESSION_STATUS.ENDED,
+              actualEndedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(sessions.id, session.id))
+            .returning();
+
+          // 3. Audit logs
+          await this.auditService.log({
+            eventType: NELC_EVENT_TYPE.SESSION_ENDED,
+            entityType: 'session',
+            entityId: updated.id,
+            userId: session.instructorId,
+            metadata: {
+              sessionId: updated.id,
+              courseId: updated.courseId,
+              actualStartedAt: session.actualStartedAt,
+              actualEndedAt: updated.actualEndedAt,
+              autoEnded: true,
+            },
+          });
+
+          await this.auditLogService.log({
+            entityType: 'session',
+            entityId: updated.id,
+            action: 'session.auto_ended',
+            performedBy: session.instructorId,
+            metadata: { courseId: updated.courseId, durationMinutes: session.durationMinutes },
+          }).catch(() => {});
+
+          // 4. Notify enrolled students
+          this.sessionNotificationService
+            .notifySessionEvent(updated, 'session_ended')
+            .catch(() => {});
+
+          this.logger.log(
+            `Auto-ended session "${session.title}" (${session.id}) — exceeded ${session.durationMinutes} min duration`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to auto-end session "${session.title}" (${session.id}): ${(error as Error).message}`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error('Auto-end expired sessions cron failed', error);
     }
   }
 }

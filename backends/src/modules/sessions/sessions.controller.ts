@@ -216,7 +216,7 @@ export class SessionsController {
   /**
    * POST /sessions/:id/finalize — Lock attendance and mark session completed
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/finalize')
   async finalize(
     @Param('id') id: string,

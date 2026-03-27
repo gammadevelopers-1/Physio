@@ -428,10 +428,10 @@ export class EnrollmentsService {
       .where(eq(sessions.id, sessionId))
       .limit(1);
 
-    // Non-instructor roles can only see attendance after finalization
-    const isInstructor = user.activeRole === 'INSTRUCTOR';
+    // Instructors and TAs can view/edit attendance at any time; others only after finalization
+    const isInstructorOrTA = user.activeRole === 'INSTRUCTOR' || user.activeRole === 'TEACHING_ASSISTANT';
     const isFinalized = session?.status === 'completed';
-    if (!isInstructor && !isGlobalAdmin(user) && !isFinalized) {
+    if (!isInstructorOrTA && !isGlobalAdmin(user) && !isManager(user) && !isFinalized) {
       throw new BadRequestException(
         'Attendance has not been finalized yet. The instructor must complete attendance marking before it can be viewed.',
       );
@@ -472,7 +472,7 @@ export class EnrollmentsService {
       conditions.push(ne(attendance.studentId, taId));
     }
 
-    const data = await db
+    const rawData = await db
       .select({
         id: attendance.id,
         sessionId: attendance.sessionId,
@@ -482,6 +482,7 @@ export class EnrollmentsService {
         leftAt: attendance.leftAt,
         durationMinutes: attendance.durationMinutes,
         markedBy: attendance.markedBy,
+        updatedAt: attendance.updatedAt,
         note: attendance.note,
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
@@ -491,6 +492,31 @@ export class EnrollmentsService {
       .innerJoin(users, eq(attendance.studentId, users.id))
       .where(and(...conditions))
       .orderBy(users.firstName);
+
+    // Resolve markedBy user names in a single batch query
+    const markerIds = [...new Set(rawData.map((d) => d.markedBy).filter(Boolean))] as string[];
+    const markerMap = new Map<string, { name: string; role: string | null }>();
+    if (markerIds.length > 0) {
+      const markers = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, activeRole: users.activeRole })
+        .from(users)
+        .where(inArray(users.id, markerIds));
+      for (const m of markers) {
+        markerMap.set(m.id, {
+          name: `${m.firstName || ''} ${m.lastName || ''}`.trim(),
+          role: m.activeRole,
+        });
+      }
+    }
+
+    const data = rawData.map((d) => {
+      const marker = d.markedBy ? markerMap.get(d.markedBy) : null;
+      return {
+        ...d,
+        markedByName: marker?.name || null,
+        markedByRole: marker?.role || null,
+      };
+    });
 
     // Include enrolled students without attendance records as "absent"
     if (session?.courseId) {
@@ -545,6 +571,9 @@ export class EnrollmentsService {
           leftAt: null,
           durationMinutes: null,
           markedBy: null,
+          markedByName: null,
+          markedByRole: null,
+          updatedAt: null,
           note: null,
           studentFirstName: student.studentFirstName,
           studentLastName: student.studentLastName,
@@ -627,6 +656,7 @@ export class EnrollmentsService {
         set: {
           status: dto.status,
           markedBy: user.id,
+          updatedAt: new Date(),
           ...(dto.joinedAt && { joinedAt: new Date(dto.joinedAt) }),
           ...(dto.leftAt && { leftAt: new Date(dto.leftAt) }),
           ...(dto.durationMinutes !== undefined && {
@@ -694,6 +724,7 @@ export class EnrollmentsService {
           set: {
             status: record.status,
             markedBy: user.id,
+            updatedAt: new Date(),
             ...(record.joinedAt && { joinedAt: new Date(record.joinedAt) }),
             ...(record.leftAt && { leftAt: new Date(record.leftAt) }),
             ...(record.durationMinutes !== undefined && {

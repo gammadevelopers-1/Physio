@@ -1169,7 +1169,9 @@ function ScheduleSessionModal({
   const [type, setType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [duration, setDuration] = useState(60);
+  const [durationHours, setDurationHours] = useState(1);
+  const [durationMins, setDurationMins] = useState(0);
+  const duration = durationHours * 60 + durationMins;
   const [roomName, setRoomName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [zoomLink, setZoomLink] = useState("");
@@ -1342,16 +1344,25 @@ function ScheduleSessionModal({
           <label className="block text-sm font-medium text-[#374151] mb-1.5">
             {t("sessionsPage.form.duration")}
           </label>
-          <select
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
-          >
-            <option value={30}>30 {t("sessionsPage.form.minutes")}</option>
-            <option value={60}>60 {t("sessionsPage.form.minutes")}</option>
-            <option value={90}>90 {t("sessionsPage.form.minutes")}</option>
-            <option value={120}>2 {t("sessionsPage.form.hours")}</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              value={durationHours}
+              onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))}
+              className="w-20 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-center"
+            />
+            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.hours")}</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={durationMins}
+              onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))}
+              className="w-20 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-center"
+            />
+            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.minutes")}</span>
+          </div>
         </div>
 
         {/* Session Type */}
@@ -1644,14 +1655,9 @@ function SessionCard({
           )}
 
           {session.status === "completed" && (
-            <>
-              <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
-                <ClipboardCheck className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={onRecordings} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.recordings.title")}>
-                <Film className="w-3.5 h-3.5" />
-              </button>
-            </>
+            <button onClick={onAttendance} className="p-1.5 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <ClipboardCheck className="w-3.5 h-3.5" />
+            </button>
           )}
 
           {/* Cancelled sessions: no actions — only manager can delete */}
@@ -1693,7 +1699,10 @@ function EditSessionModal({
   const [time, setTime] = useState(
     `${String(scheduled.getHours()).padStart(2, "0")}:${String(scheduled.getMinutes()).padStart(2, "0")}`
   );
-  const [duration, setDuration] = useState(session.durationMinutes || 60);
+  const initDur = session.durationMinutes || 60;
+  const [durationHours, setDurationHours] = useState(Math.floor(initDur / 60));
+  const [durationMins, setDurationMins] = useState(initDur % 60);
+  const duration = durationHours * 60 + durationMins;
   const [roomName, setRoomName] = useState(session.roomName || "");
   const [venueAddress, setVenueAddress] = useState(session.venueAddress || "");
   const [saving, setSaving] = useState(false);
@@ -1824,16 +1833,25 @@ function EditSessionModal({
           <label className="block text-sm font-medium text-[#374151] mb-1.5">
             {t("sessionsPage.form.duration")}
           </label>
-          <select
-            value={duration}
-            onChange={(e) => setDuration(Number(e.target.value))}
-            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
-          >
-            <option value={30}>30 {t("sessionsPage.form.minutes")}</option>
-            <option value={60}>60 {t("sessionsPage.form.minutes")}</option>
-            <option value={90}>90 {t("sessionsPage.form.minutes")}</option>
-            <option value={120}>2 {t("sessionsPage.form.hours")}</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              value={durationHours}
+              onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))}
+              className="w-20 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-center"
+            />
+            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.hours")}</span>
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={durationMins}
+              onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))}
+              className="w-20 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-center"
+            />
+            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.minutes")}</span>
+          </div>
         </div>
         {(session.type === "zoom" || session.type === "hybrid") && session.zoomLink && (
           <div>
@@ -1936,7 +1954,7 @@ const SessionsContent = () => {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [pastLimit, setPastLimit] = useState(10);
   const [rescheduleSession, setRescheduleSession] = useState<CourseSession | null>(null);
-  const [rescheduleForm, setRescheduleForm] = useState({ reason: "", date: "", time: "", duration: "60" });
+  const [rescheduleForm, setRescheduleForm] = useState({ reason: "", date: "", time: "", durationHours: 1, durationMins: 0 });
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
   // Calendar
@@ -2243,7 +2261,7 @@ const SessionsContent = () => {
               onDelete={() => handleDelete(session)}
               onReschedule={() => {
                 setRescheduleSession(session);
-                setRescheduleForm({ reason: "", date: "", time: "", duration: String(session.durationMinutes || 60) });
+                setRescheduleForm({ reason: "", date: "", time: "", durationHours: Math.floor((session.durationMinutes || 60) / 60), durationMins: (session.durationMinutes || 60) % 60 });
               }}
               actionLoading={actionLoadingId === session.id}
               taThreshold={taThresholds[session.courseId]}
@@ -2562,8 +2580,13 @@ const SessionsContent = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">Duration (min)</label>
-                <input type="number" value={rescheduleForm.duration} onChange={(e) => setRescheduleForm(d => ({ ...d, duration: e.target.value }))} min={15} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                <label className="block text-sm font-medium text-[#374151] mb-1">Duration</label>
+                <div className="flex items-center gap-2">
+                  <input type="number" min={0} value={rescheduleForm.durationHours} onChange={(e) => setRescheduleForm(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                  <span className="text-sm text-[#6B7280]">hrs</span>
+                  <input type="number" min={0} max={59} value={rescheduleForm.durationMins} onChange={(e) => setRescheduleForm(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                  <span className="text-sm text-[#6B7280]">min</span>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-5">
@@ -2574,7 +2597,7 @@ const SessionsContent = () => {
                   setRescheduleSaving(true);
                   try {
                     const newScheduledAt = new Date(`${rescheduleForm.date}T${rescheduleForm.time}`).toISOString();
-                    await instructorApi.rescheduleSession(rescheduleSession.id, { reason: rescheduleForm.reason.trim(), newScheduledAt, newDurationMinutes: Number(rescheduleForm.duration) || 60 });
+                    await instructorApi.rescheduleSession(rescheduleSession.id, { reason: rescheduleForm.reason.trim(), newScheduledAt, newDurationMinutes: (rescheduleForm.durationHours * 60 + rescheduleForm.durationMins) || 60 });
                     toast.success("Lecture rescheduled");
                     setRescheduleSession(null);
                     fetchData();
@@ -2619,14 +2642,6 @@ const SessionsContent = () => {
         />
       )}
 
-      {recordingsSession && (
-        <RecordingsModal
-          session={recordingsSession}
-          onClose={() => setRecordingsSession(null)}
-          t={t}
-          locale={locale}
-        />
-      )}
     </>
   );
 };

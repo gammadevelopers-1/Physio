@@ -29,6 +29,7 @@ export const attendance = pgTable(
     durationMinutes: integer('duration_minutes'),
     markedBy: uuid('marked_by').references(() => users.id),
     note: text('note'),
+    updatedAt: timestamp('updated_at').defaultNow(),
   },
   (table) => [
     uniqueIndex('attendance_session_student_unique').on(

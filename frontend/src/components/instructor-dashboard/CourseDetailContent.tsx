@@ -1913,7 +1913,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration")}</label>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration") || "Duration"}</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
@@ -1922,7 +1922,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
                       className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                     />
-                    <span className="text-sm text-[#6B7280]">{t("courseDetail.hours") || "hrs"}</span>
+                    <span className="text-sm text-[#6B7280]">hours</span>
                     <input
                       type="number"
                       min={0}
@@ -1931,22 +1931,10 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
                       className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                     />
-                    <span className="text-sm text-[#6B7280]">{t("courseDetail.minutes")}</span>
+                    <span className="text-sm text-[#6B7280]">min</span>
                   </div>
                 </div>
               </div>
-              {(sessionForm.type === "zoom" || sessionForm.type === "hybrid") && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.zoomLink")}</label>
-                    <input type="url" value={sessionForm.zoomLink} onChange={(e) => setSessionForm((f) => ({ ...f, zoomLink: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.meetingId")}</label>
-                    <input type="text" value={sessionForm.meetingId} onChange={(e) => setSessionForm((f) => ({ ...f, meetingId: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
-                  </div>
-                </div>
-              )}
               {(sessionForm.type === "onsite" || sessionForm.type === "hybrid") && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>

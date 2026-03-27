@@ -212,7 +212,7 @@ export class SessionReminderService {
     try {
       const now = new Date();
 
-      // ── 4-minute warning: find live sessions expiring in 3–5 minutes ──
+      // ── Warning at 90% of duration elapsed (10% remaining) ──
       const warningSessions = await db
         .select({
           id: sessions.id,
@@ -230,10 +230,10 @@ export class SessionReminderService {
             eq(sessions.status, SESSION_STATUS.LIVE),
             isNotNull(sessions.actualStartedAt),
             isNull(sessions.autoEndWarningSentAt),
-            // actualStartedAt + durationMinutes - 5min <= now
-            sql`${sessions.actualStartedAt} + (${sessions.durationMinutes} || ' minutes')::interval - interval '5 minutes' <= ${now}`,
-            // actualStartedAt + durationMinutes > now (not yet expired)
-            sql`${sessions.actualStartedAt} + (${sessions.durationMinutes} || ' minutes')::interval > ${now}`,
+            // 90% of duration has elapsed: now >= actualStartedAt + (durationMinutes * 0.9)
+            sql`${now} >= ${sessions.actualStartedAt} + (${sessions.durationMinutes} * 0.9 || ' minutes')::interval`,
+            // Not yet expired: now < actualStartedAt + durationMinutes
+            sql`${now} < ${sessions.actualStartedAt} + (${sessions.durationMinutes} || ' minutes')::interval`,
           ),
         );
 
@@ -252,7 +252,7 @@ export class SessionReminderService {
             {
               recipientName: name,
               subject: `Lecture Ending Soon: ${session.title}`,
-              message: `Your lecture "${session.title}" (${session.courseName}) will auto-end in approximately 4 minutes as the planned duration is about to expire.\n\nIf you need more time, please create a new session after this one ends.`,
+              message: `Your lecture "${session.title}" (${session.courseName}) will auto-end in approximately ${Math.ceil(session.durationMinutes * 0.1)} minute(s).\n\nIf you need more time, please create a new session after this one ends.`,
             },
           ).catch((err) => this.logger.warn(`Failed to send auto-end warning email: ${(err as Error).message}`));
         }
@@ -314,11 +314,14 @@ export class SessionReminderService {
           }
 
           // 2. Update session status to ended
+          // Use exact planned end time (actualStartedAt + duration), not now(),
+          // to avoid cron delay inflating the session duration
+          const plannedEnd = new Date(new Date(session.actualStartedAt!).getTime() + session.durationMinutes * 60000);
           const [updated] = await db
             .update(sessions)
             .set({
               status: SESSION_STATUS.ENDED,
-              actualEndedAt: new Date(),
+              actualEndedAt: plannedEnd,
               updatedAt: new Date(),
             })
             .where(eq(sessions.id, session.id))

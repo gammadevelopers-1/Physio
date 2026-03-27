@@ -206,7 +206,7 @@ const TAAttendanceView = ({
     setSyncing(true);
     setSyncResult(null);
     try {
-      const result = await api.post<{ synced: number; skipped: number; details: any[] }>(`/sessions/${sessionId}/zoom-sync`, {});
+      const result = await api.post<{ synced: number; skipped: number; details: any[] }>(`/sessions/${sessionId}/sync-zoom`, {});
       setSyncResult({ synced: result.synced, skipped: result.skipped, details: result.details || [] });
       toast.success(`Synced ${result.synced} attendance records from Zoom`);
       setLoading(true);

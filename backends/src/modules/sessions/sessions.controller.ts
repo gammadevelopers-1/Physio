@@ -296,7 +296,7 @@ export class SessionsController {
   /**
    * POST /sessions/:id/sync-zoom — Manually trigger Zoom attendance sync
    */
-  @Roles('INSTRUCTOR' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
+  @Roles('INSTRUCTOR' as UserRole, 'TEACHING_ASSISTANT' as UserRole, 'ADMIN' as UserRole, 'MANAGER' as UserRole)
   @Post(':id/sync-zoom')
   async syncZoom(@Param('id') id: string) {
     try {

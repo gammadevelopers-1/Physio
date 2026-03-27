@@ -49,6 +49,8 @@ const CONTENT_TYPES: Record<ReportFormat, string> = {
 @Injectable()
 export class ReportsService {
   private readonly logger = new Logger(ReportsService.name);
+  /** Active timezone for current report generation (set per-request, defaults to TZ) */
+  private activeTz: string = TZ;
 
   constructor(
     private readonly nelcComplianceService: NelcComplianceService,
@@ -122,6 +124,7 @@ export class ReportsService {
   ): Promise<ReportResult> {
     const format = this.validateFormat(params.format);
     const userTz = params.tz || TZ; // Use user's timezone if provided, else default
+    this.activeTz = userTz; // Set for formatTimestamp/formatDate used in rendering
     const courseIds = await this.resolveCourseIds(user, params.courseId);
     const instructorName = await this.getInstructorName(user.id);
 
@@ -152,6 +155,9 @@ export class ReportsService {
       'Min.',
       'Presence %',
       'Att. %',
+      'Marked By',
+      'Role',
+      'Marked At',
     ];
 
     if (courseIds.length === 0) {
@@ -201,6 +207,8 @@ export class ReportsService {
         joinedAt: attendance.joinedAt,
         leftAt: attendance.leftAt,
         durationMinutes: attendance.durationMinutes,
+        markedBy: attendance.markedBy,
+        attendanceUpdatedAt: attendance.updatedAt,
         sessionDurationMinutes: sessions.durationMinutes,
         actualStartedAt: sessions.actualStartedAt,
         actualEndedAt: sessions.actualEndedAt,
@@ -271,6 +279,20 @@ export class ReportsService {
       attendancePctMap.set(`${ac.studentId}:${ac.courseId}`, `${pct}%`);
     }
 
+    // Resolve markedBy user names for export
+    const markerIds = [...new Set(filteredData.map((d) => d.markedBy).filter(Boolean))] as string[];
+    const markerMap = new Map<string, { name: string; role: string | null }>();
+    if (markerIds.length > 0) {
+      const markers = await db
+        .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, activeRole: users.activeRole })
+        .from(users)
+        .where(inArray(users.id, markerIds));
+      for (const m of markers) {
+        const roleName = m.activeRole === 'TEACHING_ASSISTANT' ? 'TA' : m.activeRole === 'INSTRUCTOR' ? 'Instructor' : m.activeRole || 'System';
+        markerMap.set(m.id, { name: `${m.firstName || ''} ${m.lastName || ''}`.trim(), role: roleName });
+      }
+    }
+
     // Build rows from existing attendance records
     const rows = filteredData.map((row) => {
       const pct = attendancePctMap.get(`${row.studentId}:${row.courseId}`) || '0.00%';
@@ -306,6 +328,9 @@ export class ReportsService {
         row.durationMinutes != null ? String(row.durationMinutes) : '',
         presencePercent > 0 ? `${presencePercent}%` : '',
         pct,
+        row.markedBy ? (markerMap.get(row.markedBy)?.name || '') : '',
+        row.markedBy ? (markerMap.get(row.markedBy)?.role || '') : '',
+        row.attendanceUpdatedAt ? new Date(row.attendanceUpdatedAt).toLocaleTimeString('en-GB', { timeZone: userTz, hour: '2-digit', minute: '2-digit' }) : '',
       ];
     });
 
@@ -355,8 +380,12 @@ export class ReportsService {
           'absent',
           '',
           '',
+          '',
           '0%',
           pct,
+          '',
+          '',
+          '',
         ]);
       }
     }
@@ -1514,7 +1543,7 @@ export class ReportsService {
     format: ReportFormat,
     metadata?: ReportMetadata,
   ): Promise<ReportResult> {
-    const date = new Date().toLocaleDateString('en-CA', { timeZone: TZ });
+    const date = new Date().toLocaleDateString('en-CA', { timeZone: this.activeTz });
     const slug = title.toLowerCase().replace(/\s+/g, '-');
     const ext = format;
     const filename = `${slug}-${date}.${ext}`;
@@ -1864,20 +1893,21 @@ export class ReportsService {
   private formatDate(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
-    const ymd = d.toLocaleDateString('en-CA', { timeZone: TZ }); // YYYY-MM-DD
-    const hm = d.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+    const ymd = d.toLocaleDateString('en-CA', { timeZone: this.activeTz });
+    const hm = d.toLocaleTimeString('en-GB', { timeZone: this.activeTz, hour: '2-digit', minute: '2-digit' });
     return `${ymd} ${hm}`;
   }
 
   private formatDateTime(date: Date | string | null | undefined): string {
     if (!date) return '';
     const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleString('en-CA', { timeZone: TZ, hour12: false }).replace(',', '');
+    return d.toLocaleString('en-CA', { timeZone: this.activeTz, hour12: false }).replace(',', '');
   }
 
   private formatTimestamp(date: Date): string {
-    const ymd = date.toLocaleDateString('en-CA', { timeZone: TZ });
-    const hm = date.toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+    const zone = this.activeTz;
+    const ymd = date.toLocaleDateString('en-CA', { timeZone: zone });
+    const hm = date.toLocaleTimeString('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit' });
     return `${ymd} ${hm}`;
   }
 

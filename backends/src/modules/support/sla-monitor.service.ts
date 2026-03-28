@@ -6,6 +6,8 @@ import {
   tickets,
   slaPolicies,
   slaEvents,
+  csatSurveys,
+  users,
   TICKET_STATUS,
   TICKET_PRIORITY,
   SLA_EVENT_TYPES,
@@ -14,12 +16,16 @@ import {
   calculateBusinessMinutesElapsed,
 } from './business-hours.util';
 import { SupportService } from './support.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class SlaMonitorService {
   private readonly logger = new Logger(SlaMonitorService.name);
 
-  constructor(private readonly supportService: SupportService) {}
+  constructor(
+    private readonly supportService: SupportService,
+    private readonly emailService: EmailService,
+  ) {}
 
   /**
    * SLA Breach Detection — runs every 5 minutes
@@ -441,6 +447,80 @@ export class SlaMonitorService {
       }
     } catch (err) {
       this.logger.error(`Waiting-for-student check failed: ${err}`);
+    }
+  }
+
+  /**
+   * CSAT Email Send — 15 min after ticket resolution
+   * Runs every 5 minutes, finds unsent CSAT surveys
+   */
+  @Cron('*/5 * * * *')
+  async sendCsatEmails() {
+    try {
+      // Find CSAT surveys that need email sending:
+      // - No score submitted yet
+      // - Associated ticket was resolved > 15 min ago
+      // - Ticket is still resolved or closed (not reopened)
+      // - sentAt is very close to ticket resolvedAt (means email not yet sent)
+      const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+      const cutoff = new Date(Date.now() - FIFTEEN_MINUTES_MS);
+
+      const pendingSurveys = await db
+        .select({
+          surveyId: csatSurveys.id,
+          ticketId: csatSurveys.ticketId,
+          sentAt: csatSurveys.sentAt,
+          userId: csatSurveys.userId,
+          ticketStatus: tickets.status,
+          ticketResolvedAt: tickets.resolvedAt,
+          userEmail: users.email,
+          userFirstName: users.firstName,
+        })
+        .from(csatSurveys)
+        .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+        .innerJoin(users, eq(csatSurveys.userId, users.id))
+        .where(
+          and(
+            sql`${csatSurveys.score} IS NULL`,
+            sql`${csatSurveys.submittedAt} IS NULL`,
+            inArray(tickets.status, [
+              TICKET_STATUS.RESOLVED,
+              TICKET_STATUS.CLOSED,
+            ]),
+            sql`${tickets.resolvedAt} IS NOT NULL AND ${tickets.resolvedAt} < ${cutoff}`,
+            // sentAt within 2 min of resolvedAt means email not yet sent
+            sql`ABS(EXTRACT(EPOCH FROM (${csatSurveys.sentAt} - ${tickets.resolvedAt}))) < 120`,
+          ),
+        );
+
+      for (const survey of pendingSurveys) {
+        try {
+          await this.emailService.sendCsatSurvey(
+            survey.userEmail,
+            survey.userFirstName || 'Student',
+            survey.ticketId,
+            survey.surveyId,
+          );
+
+          // Update sentAt to now (marks as email-sent, resets 72h timer)
+          await db
+            .update(csatSurveys)
+            .set({ sentAt: new Date() })
+            .where(eq(csatSurveys.id, survey.surveyId));
+
+          this.logger.log(`CSAT email sent for ticket ${survey.ticketId}`);
+        } catch (err) {
+          this.logger.error(
+            `Failed to send CSAT email for survey ${survey.surveyId}: ${err}`,
+          );
+        }
+      }
+
+      if (pendingSurveys.length > 0) {
+        this.logger.log(`Sent ${pendingSurveys.length} CSAT emails`);
+      }
+    } catch (err) {
+      this.logger.error(`CSAT email send failed: ${err}`);
     }
   }
 }

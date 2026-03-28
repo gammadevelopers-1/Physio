@@ -82,6 +82,32 @@ export class SupportController {
     return this.supportService.getAgents();
   }
 
+  // ─── NPS Survey (Public — no auth required) ────────────
+
+  @Public()
+  @Get('nps/:surveyId')
+  async getNpsSurvey(
+    @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
+  ) {
+    return this.supportService.getNpsSurvey(surveyId);
+  }
+
+  @Public()
+  @Post('nps/:surveyId')
+  async submitNpsScore(
+    @Param('surveyId', new ParseUUIDPipe()) surveyId: string,
+    @Body() body: { score: number; comment?: string },
+  ) {
+    if (body.score === undefined || body.score < 0 || body.score > 10) {
+      throw new ForbiddenException('Score must be between 0 and 10');
+    }
+    return this.supportService.submitNpsScore(
+      surveyId,
+      body.score,
+      body.comment,
+    );
+  }
+
   // ─── Guest Ticket (Login Issues Only — no auth) ────────
 
   @Public()
@@ -108,6 +134,20 @@ export class SupportController {
       throw new ForbiddenException('Message is required');
     }
     return this.supportService.addGuestReply(token, body.message.trim());
+  }
+
+  // ─── Survey Summaries (Supervisor/Admin only) ──────────
+
+  @Get('csat/summary')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getCsatSummary() {
+    return this.supportService.getCsatSummary();
+  }
+
+  @Get('nps/summary')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getNpsSummary() {
+    return this.supportService.getNpsSummary();
   }
 
   // ─── CSAT Survey (Public — no auth required) ──────────

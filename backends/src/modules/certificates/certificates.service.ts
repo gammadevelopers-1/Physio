@@ -24,6 +24,7 @@ import { isGlobalAdmin, isManager } from '../../common/role-helpers';
 import { StorageService } from '../storage/storage.service';
 import { EmailService } from '../email/email.service';
 import { NelcAuditService } from '../nelc-audit/nelc-audit.service';
+import { SupportService } from '../support/support.service';
 import { RejectCertificateDto } from './dto/reject-certificate.dto';
 import { HoldCertificateDto } from './dto/hold-certificate.dto';
 import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
@@ -39,6 +40,7 @@ export class CertificatesService {
     private readonly storageService: StorageService,
     private readonly emailService: EmailService,
     private readonly auditService: NelcAuditService,
+    private readonly supportService: SupportService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -514,6 +516,16 @@ export class CertificatesService {
       );
     } catch (error) {
       this.logger.error(`Failed to send certificate approval email for request ${id}`, error);
+    }
+
+    // Trigger NPS survey on certificate issuance
+    try {
+      await this.supportService.createNpsSurvey(
+        request.studentId,
+        request.courseId,
+      );
+    } catch {
+      // Non-blocking — NPS survey is not critical for certificate approval
     }
 
     return updated;

@@ -17,6 +17,7 @@ import {
   slaPolicies,
   slaEvents,
   csatSurveys,
+  npsSurveys,
   supportConfig,
   enrollments,
   TICKET_STATUS,
@@ -42,6 +43,7 @@ import {
   getNextBusinessOpen,
 } from './business-hours.util';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
+import { EmailService } from '../email/email.service';
 
 // Auto-priority mapping per PDF page 20
 const CATEGORY_PRIORITY_MAP: Record<string, string> = {
@@ -57,6 +59,7 @@ const CATEGORY_PRIORITY_MAP: Record<string, string> = {
 export class SupportService {
   constructor(
     private readonly notificationsService: UserNotificationsService,
+    private readonly emailService: EmailService,
   ) {}
 
   // ─── Create Ticket ──────────────────────────────────────
@@ -995,6 +998,26 @@ export class SupportService {
       .where(eq(csatSurveys.id, surveyId))
       .returning();
 
+    // Detractor follow-up: score 1 or 2 → send follow-up email
+    if (score <= 2) {
+      try {
+        const [userInfo] = await db
+          .select({ email: users.email, firstName: users.firstName })
+          .from(users)
+          .where(eq(users.id, survey.userId));
+        if (userInfo?.email) {
+          await this.emailService.sendCsatFollowup(
+            userInfo.email,
+            userInfo.firstName || 'Student',
+            survey.ticketId,
+            score,
+          );
+        }
+      } catch {
+        // Non-blocking
+      }
+    }
+
     return updated;
   }
 
@@ -1024,6 +1047,188 @@ export class SupportService {
       ...survey,
       expired,
       alreadySubmitted: !!survey.submittedAt,
+    };
+  }
+
+  // ─── NPS Surveys ──────────────────────────────────────
+
+  async createNpsSurvey(userId: string, courseId: string) {
+    // Dedup: check if NPS already sent for this user+course
+    const [existing] = await db
+      .select({ id: npsSurveys.id })
+      .from(npsSurveys)
+      .where(
+        and(eq(npsSurveys.userId, userId), eq(npsSurveys.courseId, courseId)),
+      )
+      .limit(1);
+
+    if (existing) return null; // Already sent
+
+    const [survey] = await db
+      .insert(npsSurveys)
+      .values({
+        userId,
+        courseId,
+        channel: 'email',
+      })
+      .returning();
+
+    // Send NPS email
+    try {
+      const [userInfo] = await db
+        .select({ email: users.email, firstName: users.firstName })
+        .from(users)
+        .where(eq(users.id, userId));
+
+      const [courseInfo] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, courseId));
+
+      if (userInfo?.email) {
+        await this.emailService.sendNpsSurvey(
+          userInfo.email,
+          userInfo.firstName || 'Student',
+          courseInfo?.title || 'your course',
+          survey.id,
+        );
+      }
+    } catch {
+      // Non-blocking
+    }
+
+    return survey;
+  }
+
+  async submitNpsScore(
+    surveyId: string,
+    score: number,
+    comment?: string,
+  ) {
+    const [survey] = await db
+      .select()
+      .from(npsSurveys)
+      .where(eq(npsSurveys.id, surveyId));
+
+    if (!survey) throw new NotFoundException('Survey not found');
+
+    if (survey.submittedAt) {
+      throw new BadRequestException('You have already submitted your rating.');
+    }
+
+    // 7-day expiry
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - new Date(survey.sentAt).getTime() > SEVEN_DAYS_MS) {
+      throw new BadRequestException('This survey has expired.');
+    }
+
+    const [updated] = await db
+      .update(npsSurveys)
+      .set({
+        score,
+        comment: comment || null,
+        submittedAt: new Date(),
+      })
+      .where(eq(npsSurveys.id, surveyId))
+      .returning();
+
+    return updated;
+  }
+
+  async getNpsSurvey(surveyId: string) {
+    const [survey] = await db
+      .select({
+        id: npsSurveys.id,
+        courseId: npsSurveys.courseId,
+        score: npsSurveys.score,
+        sentAt: npsSurveys.sentAt,
+        submittedAt: npsSurveys.submittedAt,
+      })
+      .from(npsSurveys)
+      .where(eq(npsSurveys.id, surveyId));
+
+    if (!survey) throw new NotFoundException('Survey not found');
+
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const expired =
+      Date.now() - new Date(survey.sentAt).getTime() > SEVEN_DAYS_MS;
+
+    return { ...survey, expired, alreadySubmitted: !!survey.submittedAt };
+  }
+
+  // ─── Summary / Analytics ──────────────────────────────
+
+  async getCsatSummary() {
+    const allSurveys = await db
+      .select({
+        score: csatSurveys.score,
+        submittedAt: csatSurveys.submittedAt,
+      })
+      .from(csatSurveys);
+
+    const total = allSurveys.length;
+    const responded = allSurveys.filter((s) => s.submittedAt).length;
+    const scores = allSurveys
+      .filter((s) => s.score !== null)
+      .map((s) => s.score!);
+    const avgScore =
+      scores.length > 0
+        ? scores.reduce((a, b) => a + b, 0) / scores.length
+        : 0;
+
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const s of scores) {
+      if (s >= 1 && s <= 5) distribution[s as 1 | 2 | 3 | 4 | 5]++;
+    }
+
+    return {
+      totalSent: total,
+      totalResponded: responded,
+      responseRate: total > 0 ? Math.round((responded / total) * 100) : 0,
+      avgScore: Math.round(avgScore * 10) / 10,
+      distribution,
+    };
+  }
+
+  async getNpsSummary() {
+    const allSurveys = await db
+      .select({
+        score: npsSurveys.score,
+        submittedAt: npsSurveys.submittedAt,
+      })
+      .from(npsSurveys);
+
+    const total = allSurveys.length;
+    const responded = allSurveys.filter((s) => s.submittedAt).length;
+    const scores = allSurveys
+      .filter((s) => s.score !== null)
+      .map((s) => s.score!);
+
+    let promoters = 0;
+    let passives = 0;
+    let detractors = 0;
+    for (const s of scores) {
+      if (s >= 9) promoters++;
+      else if (s >= 7) passives++;
+      else detractors++;
+    }
+
+    const totalScored = scores.length;
+    const npsScore =
+      totalScored > 0
+        ? Math.round(
+            ((promoters - detractors) / totalScored) * 100,
+          )
+        : 0;
+
+    return {
+      totalSent: total,
+      totalResponded: responded,
+      responseRate: total > 0 ? Math.round((responded / total) * 100) : 0,
+      promoters,
+      passives,
+      detractors,
+      npsScore,
     };
   }
 

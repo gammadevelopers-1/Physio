@@ -83,6 +83,18 @@ import {
   getPasswordResetHtml,
   getPasswordResetText,
 } from './templates/password-reset.template';
+import {
+  getCsatSurveyHtml,
+  getCsatSurveyText,
+} from './templates/csat-survey.template';
+import {
+  getCsatFollowupHtml,
+  getCsatFollowupText,
+} from './templates/csat-followup.template';
+import {
+  getNpsSurveyHtml,
+  getNpsSurveyText,
+} from './templates/nps-survey.template';
 
 @Injectable()
 export class EmailService {
@@ -776,6 +788,89 @@ export class EmailService {
         `Failed to send generic notification email to ${to}`,
         error,
       );
+    }
+  }
+
+  /**
+   * Send CSAT survey email after ticket resolution
+   */
+  async sendCsatSurvey(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+    surveyId: string,
+  ): Promise<void> {
+    const baseUrl =
+      this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
+      'http://localhost:3000';
+    const surveyBaseUrl = `${baseUrl}/en/surveys/csat/${surveyId}`;
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `How did we do? — Ticket #${shortId}`,
+        html: getCsatSurveyHtml(learnerName, shortId, surveyBaseUrl),
+        text: getCsatSurveyText(learnerName, shortId, surveyBaseUrl),
+      });
+      this.logger.log(`CSAT survey email sent to ${to} for ticket #${shortId}`);
+    } catch (error) {
+      this.logger.error(`Failed to send CSAT survey email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send CSAT followup email for low scores
+   */
+  async sendCsatFollowup(
+    to: string,
+    learnerName: string,
+    ticketId: string,
+    score: number,
+  ): Promise<void> {
+    const shortId = ticketId.substring(0, 8);
+
+    try {
+      await this.send({
+        to,
+        subject: `We're sorry — can we help further?`,
+        html: getCsatFollowupHtml(learnerName, shortId, score),
+        text: getCsatFollowupText(learnerName, shortId, score),
+      });
+      this.logger.log(
+        `CSAT followup email sent to ${to} for ticket #${shortId}`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send CSAT followup email to ${to}`, error);
+    }
+  }
+
+  /**
+   * Send NPS survey email after course completion
+   */
+  async sendNpsSurvey(
+    to: string,
+    learnerName: string,
+    courseName: string,
+    surveyId: string,
+  ): Promise<void> {
+    const baseUrl =
+      this.configService.get('NEXT_PUBLIC_API_URL')?.replace('/api', '') ||
+      'http://localhost:3000';
+    const surveyBaseUrl = `${baseUrl}/en/surveys/nps/${surveyId}`;
+
+    try {
+      await this.send({
+        to,
+        subject: `How likely would you recommend ${courseName}?`,
+        html: getNpsSurveyHtml(learnerName, courseName, surveyBaseUrl),
+        text: getNpsSurveyText(learnerName, courseName, surveyBaseUrl),
+      });
+      this.logger.log(
+        `NPS survey email sent to ${to} for course "${courseName}"`,
+      );
+    } catch (error) {
+      this.logger.error(`Failed to send NPS survey email to ${to}`, error);
     }
   }
 }

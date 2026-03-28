@@ -2610,6 +2610,40 @@ export const supportApi = {
       { message },
       { skipAuth: true },
     ),
+
+  // CSAT/NPS Surveys (public — no auth)
+  getCsatSurvey: (surveyId: string) =>
+    api.get<any>(`/tickets/csat/${surveyId}`, { skipAuth: true }),
+
+  submitCsat: (surveyId: string, data: { score: number; comment?: string }) =>
+    api.post<any>(`/tickets/csat/${surveyId}`, data, { skipAuth: true }),
+
+  getNpsSurvey: (surveyId: string) =>
+    api.get<any>(`/tickets/nps/${surveyId}`, { skipAuth: true }),
+
+  submitNps: (surveyId: string, data: { score: number; comment?: string }) =>
+    api.post<any>(`/tickets/nps/${surveyId}`, data, { skipAuth: true }),
+
+  // CSAT/NPS Summaries (auth required)
+  getCsatSummary: () =>
+    api.get<{
+      totalSent: number;
+      totalResponded: number;
+      responseRate: number;
+      avgScore: number;
+      distribution: Record<string, number>;
+    }>('/tickets/csat/summary'),
+
+  getNpsSummary: () =>
+    api.get<{
+      totalSent: number;
+      totalResponded: number;
+      responseRate: number;
+      promoters: number;
+      passives: number;
+      detractors: number;
+      npsScore: number;
+    }>('/tickets/nps/summary'),
 };
 
 export default api;

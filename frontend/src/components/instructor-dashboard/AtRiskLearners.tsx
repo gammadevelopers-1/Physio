@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
-import { instructorApi, ApiError } from "@/lib/api";
+import { instructorApi, supportApi, ApiError } from "@/lib/api";
 
 interface AtRiskLearner {
   id: string;
@@ -125,10 +125,12 @@ const AtRiskLearners = ({
     setOpenDropdown(null);
     setActionLoading(learner.id);
     try {
-      await instructorApi.createIntervention({
-        type: "ticket",
+      await supportApi.createTicketOnBehalf({
         studentId: learner.id,
         courseId: learner.enrolledCourseIds?.[0],
+        category: "other",
+        subject: `Learner Support: ${learner.name}`,
+        description: `Instructor opened ticket on behalf of at-risk learner. Risk type: ${learner.riskType}, value: ${learner.riskValue}`,
       });
       toast.success(t("atRisk.ticketCreated"));
     } catch (err) {

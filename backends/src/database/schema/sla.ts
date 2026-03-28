@@ -79,4 +79,7 @@ export const SLA_EVENT_TYPES = {
   TTR_BREACH: 'ttr_breach',
   ESCALATION_TRIGGERED: 'escalation_triggered',
   RESOLVED_WITHIN_SLA: 'resolved_within_sla',
+  FRT_WARNING_75: 'frt_warning_75',
+  PRIORITY_ESCALATED: 'priority_escalated',
+  FRT_BREACH_REASSIGNED: 'frt_breach_reassigned',
 } as const;

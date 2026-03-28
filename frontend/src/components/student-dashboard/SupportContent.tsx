@@ -27,12 +27,11 @@ import OfflineBanner from "./OfflineBanner";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useStudentTickets } from "@/hooks/useStudentTickets";
 import { useStudentCourses } from "@/hooks/useStudentCourses";
-import { studentApi } from "@/lib/api";
+import { studentApi, supportApi } from "@/lib/api";
 import type {
   SupportTicket,
   TicketStatus,
   TicketCategory,
-  TicketPriority,
 } from "@/types/student-dashboard";
 import TicketDetailView from "./TicketDetailView";
 import EmptyStateIllustration from "./EmptyStateIllustration";
@@ -54,7 +53,6 @@ const CATEGORIES: TicketCategory[] = [
   "other",
 ];
 
-const PRIORITIES: TicketPriority[] = ["high", "medium", "low"];
 
 function StatusBadge({
   status,
@@ -168,7 +166,6 @@ function TicketRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <StatusBadge status={ticket.status} t={t} />
-          <PriorityBadge priority={ticket.priority} t={t} />
           <span className="text-[10px] text-[#9CA3AF]">
             {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
           </span>
@@ -220,7 +217,6 @@ function CreateTicketForm({
 }) {
   const isRTL = locale === "ar";
   const [category, setCategory] = useState<TicketCategory>("technical");
-  const [priority, setPriority] = useState<TicketPriority>("medium");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [courseId, setCourseId] = useState("");
@@ -260,9 +256,8 @@ function CreateTicketForm({
         attachmentUrl = uploadResult.url;
       }
 
-      await studentApi.createTicket({
+      await supportApi.createTicket({
         category,
-        priority,
         subject: subject.trim(),
         description: description.trim(),
         ...(courseId && { courseId }),
@@ -338,29 +333,6 @@ function CreateTicketForm({
             </select>
           </div>
         )}
-
-        {/* Priority */}
-        <div>
-          <label className="block text-sm font-medium text-[#374151] mb-1.5">
-            {t("supportPage.priority")}
-          </label>
-          <div className="flex gap-2">
-            {PRIORITIES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPriority(p)}
-                className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-colors ${
-                  priority === p
-                    ? "border-[#002D87] bg-[#002D87] text-white"
-                    : "border-[#D1D5DB] text-[#374151] hover:bg-gray-50"
-                }`}
-              >
-                {t(`supportPage.priority_${p}` as Parameters<typeof t>[0])}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* Subject */}
         <div>

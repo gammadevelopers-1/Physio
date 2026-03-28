@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { profileApi } from "@/lib/api";
+import { profileApi, supportApi } from "@/lib/api";
 import { toast } from "sonner";
 import Link from "next/link";
 import SupportSidebar from "./SupportSidebar";
@@ -25,6 +25,58 @@ import {
   User,
   Settings,
 } from "lucide-react";
+
+function SLAPolicyRow({ policy, isSupervisor, isSaving, onSave }: {
+  policy: { priority: string; frtMinutes: number; ttrMinutes: number; escalateAfterMinutes: number };
+  isSupervisor: boolean;
+  isSaving: boolean;
+  onSave: (data: { frtMinutes: number; ttrMinutes: number; escalateAfterMinutes: number }) => void;
+}) {
+  const [frt, setFrt] = useState(policy.frtMinutes);
+  const [ttr, setTtr] = useState(policy.ttrMinutes);
+  const [escalate, setEscalate] = useState(policy.escalateAfterMinutes);
+  const hasChanges = frt !== policy.frtMinutes || ttr !== policy.ttrMinutes || escalate !== policy.escalateAfterMinutes;
+
+  const priorityStyles: Record<string, string> = {
+    high: 'bg-[#FEE2E2] text-[#EF4444]',
+    medium: 'bg-[#FFEDD5] text-[#F97316]',
+    low: 'bg-[#DCFCE7] text-[#22C55E]',
+  };
+
+  return (
+    <tr className="border-b border-[#F3F4F6]">
+      <td className="py-3 px-4">
+        <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${priorityStyles[policy.priority] || ''}`}>
+          {policy.priority}
+        </span>
+      </td>
+      <td className="py-3 px-4">
+        <input type="number" value={frt} onChange={e => setFrt(Number(e.target.value))}
+          disabled={!isSupervisor} min={1}
+          className="w-24 h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]" />
+      </td>
+      <td className="py-3 px-4">
+        <input type="number" value={ttr} onChange={e => setTtr(Number(e.target.value))}
+          disabled={!isSupervisor} min={1}
+          className="w-24 h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]" />
+      </td>
+      <td className="py-3 px-4">
+        <input type="number" value={escalate} onChange={e => setEscalate(Number(e.target.value))}
+          disabled={!isSupervisor} min={1}
+          className="w-24 h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]" />
+      </td>
+      <td className="py-3 px-4 text-right">
+        {isSupervisor && hasChanges && (
+          <button onClick={() => onSave({ frtMinutes: frt, ttrMinutes: ttr, escalateAfterMinutes: escalate })}
+            disabled={isSaving}
+            className="px-3 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90 disabled:opacity-50">
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+        )}
+      </td>
+    </tr>
+  );
+}
 
 const SupportSettingsContent = () => {
   const t = useTranslations("supportDashboard");
@@ -115,13 +167,19 @@ const SupportSettingsContent = () => {
     }
   };
 
-  // SLA Target states
-  const [highFRT, setHighFRT] = useState(1);
-  const [highResolution, setHighResolution] = useState(4);
-  const [medFRT, setMedFRT] = useState(2);
-  const [medResolution, setMedResolution] = useState(6);
-  const [lowFRT, setLowFRT] = useState(4);
-  const [lowResolution, setLowResolution] = useState(12);
+  // SLA policy states
+  const [slaPolicies, setSlaPolicies] = useState<any[]>([]);
+  const [slaLoading, setSlaLoading] = useState(false);
+  const [slaSaving, setSlaSaving] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (activeTab !== 'sla') return;
+    setSlaLoading(true);
+    supportApi.getSlaPolicies()
+      .then(data => setSlaPolicies(data))
+      .catch(() => {})
+      .finally(() => setSlaLoading(false));
+  }, [activeTab]);
 
   // Auto-assignment states
   const [selectedRule, setSelectedRule] = useState("roundRobin");
@@ -138,7 +196,7 @@ const SupportSettingsContent = () => {
 
   const tabs = [
     { key: "profile", label: "Profile", icon: User, comingSoon: false },
-    { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck, comingSoon: true },
+    { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck, comingSoon: false },
     { key: "assignment", label: t("settingsPage.tabs.assignment"), icon: UserPlus, comingSoon: true },
     { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare, comingSoon: true },
     { key: "notifications", label: t("settingsPage.tabs.notifications"), icon: Bell, comingSoon: true },
@@ -385,7 +443,7 @@ const SupportSettingsContent = () => {
                   )}
 
                   {/* Coming Soon Overlay for other tabs */}
-                  {activeTab !== "profile" && (
+                  {activeTab !== "profile" && activeTab !== "sla" && (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <div className="w-16 h-16 rounded-full bg-[#F3F4F6] flex items-center justify-center mb-4">
                         <Settings className="w-7 h-7 text-[#9CA3AF]" />
@@ -397,122 +455,50 @@ const SupportSettingsContent = () => {
                     </div>
                   )}
 
-                  {/* SLA Targets (hidden behind Coming Soon) */}
-                  {false && activeTab === "sla" && (
-                    <div>
-                      <h3 className="text-base font-semibold text-[#111827] mb-4">
-                        {t("settingsPage.sla.title")}
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                                {t("settingsPage.sla.priority")}
-                              </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                                {t("settingsPage.sla.firstResponseTarget")}
-                              </th>
-                              <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
-                                {t("settingsPage.sla.resolutionTarget")}
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="border-b border-[#F3F4F6]">
-                              <td className="py-3 px-5">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#FEE2E2] text-[#DC2626]">
-                                  {t("settingsPage.sla.high")}
-                                </span>
-                              </td>
-                              <td className="py-3 px-5">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    value={highFRT}
-                                    onChange={(e) => setHighFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
-                                  />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-5">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    value={highResolution}
-                                    onChange={(e) => setHighResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
-                                  />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr className="border-b border-[#F3F4F6]">
-                              <td className="py-3 px-5">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#FEF9C3] text-[#CA8A04]">
-                                  {t("settingsPage.sla.medium")}
-                                </span>
-                              </td>
-                              <td className="py-3 px-5">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    value={medFRT}
-                                    onChange={(e) => setMedFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
-                                  />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-5">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    value={medResolution}
-                                    onChange={(e) => setMedResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
-                                  />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
-                                </div>
-                              </td>
-                            </tr>
-                            <tr className="border-b border-[#F3F4F6]">
-                              <td className="py-3 px-5">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#DCFCE7] text-[#16A34A]">
-                                  {t("settingsPage.sla.low")}
-                                </span>
-                              </td>
-                              <td className="py-3 px-5">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    value={lowFRT}
-                                    onChange={(e) => setLowFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
-                                  />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-5">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    value={lowResolution}
-                                    onChange={(e) => setLowResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[#a37f49]"
-                                  />
-                                  <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
-                        <Save className="w-4 h-4" />
-                        {t("settingsPage.save")}
-                      </button>
+                  {/* SLA Targets */}
+                  {activeTab === "sla" && (
+                    <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                      <h3 className="text-base font-semibold text-[#1F2937] mb-4">SLA Targets</h3>
+                      <p className="text-sm text-[#6B7280] mb-6">
+                        Configure First Response Time and Time to Resolution targets per priority level.
+                        Changes apply to future tickets only.
+                      </p>
+                      {slaLoading ? (
+                        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#002D87]" /></div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-[#E5E7EB]">
+                                <th className="text-left py-3 px-4 font-medium text-[#6B7280]">Priority</th>
+                                <th className="text-left py-3 px-4 font-medium text-[#6B7280]">FRT (minutes)</th>
+                                <th className="text-left py-3 px-4 font-medium text-[#6B7280]">TTR (minutes)</th>
+                                <th className="text-left py-3 px-4 font-medium text-[#6B7280]">Escalate After (min)</th>
+                                <th className="text-right py-3 px-4 font-medium text-[#6B7280]"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {slaPolicies.map((policy) => (
+                                <SLAPolicyRow
+                                  key={policy.priority}
+                                  policy={policy}
+                                  isSupervisor={user?.supportSubRole === 'supervisor'}
+                                  isSaving={slaSaving === policy.priority}
+                                  onSave={async (data) => {
+                                    setSlaSaving(policy.priority);
+                                    try {
+                                      const updated = await supportApi.updateSlaPolicy(policy.priority, data);
+                                      setSlaPolicies(prev => prev.map(p => p.priority === policy.priority ? updated : p));
+                                      toast.success('SLA policy updated');
+                                    } catch { toast.error('Failed to update'); }
+                                    finally { setSlaSaving(null); }
+                                  }}
+                                />
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </div>
                   )}
 

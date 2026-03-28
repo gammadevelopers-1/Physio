@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { studentApi } from "@/lib/api";
+import { studentApi, supportApi } from "@/lib/api";
 import type {
   SupportTicket,
   TicketDetail,
-  TicketsResponse,
 } from "@/types/student-dashboard";
 
 export function useStudentTickets(params?: { status?: string }) {
@@ -18,7 +17,7 @@ export function useStudentTickets(params?: { status?: string }) {
     setLoading(true);
     setError(null);
     try {
-      const result: TicketsResponse = await studentApi.getTickets({
+      const result = await supportApi.getMyTickets({
         status: params?.status,
       });
       setData(result.tickets);
@@ -49,7 +48,7 @@ export function useTicketDetail(ticketId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const result = await studentApi.getTicketDetail(ticketId);
+      const result = await supportApi.getTicket(ticketId);
       setData(result);
     } catch (err) {
       setError(

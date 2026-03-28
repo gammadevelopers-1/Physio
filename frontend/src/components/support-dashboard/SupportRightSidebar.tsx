@@ -156,26 +156,26 @@ const SupportRightSidebar = () => {
         </h3>
 
         <div className="flex items-center justify-center mb-4">
-          <div className="w-20 h-20 rounded-full bg-[#DCFCE7] flex items-center justify-center">
-            <span className="text-2xl font-bold text-[#16A34A]">94%</span>
+          <div className="w-20 h-20 rounded-full bg-[#F3F4F6] flex items-center justify-center">
+            <span className="text-2xl font-bold text-[#6B7280]">--</span>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#111827]">156</p>
+            <p className="text-sm font-semibold text-[#111827]">0</p>
             <p className="text-[10px] text-[#6B7280]">
               {t("csatSection.responses")}
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#16A34A]">+42</p>
+            <p className="text-sm font-semibold text-[#6B7280]">--</p>
             <p className="text-[10px] text-[#6B7280]">
               {t("csatSection.nps")}
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#111827]">4.7</p>
+            <p className="text-sm font-semibold text-[#6B7280]">--</p>
             <p className="text-[10px] text-[#6B7280]">
               {t("csatSection.avgRating")}
             </p>

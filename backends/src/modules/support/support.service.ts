@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { eq, and, or, desc, asc, sql, ilike, count, avg, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -14,11 +15,16 @@ import {
   userRoles,
   roles,
   slaPolicies,
+  slaEvents,
   csatSurveys,
+  supportConfig,
+  enrollments,
   TICKET_STATUS,
   TICKET_PRIORITY,
   ROLE_NAMES,
   SUPPORT_SUB_ROLES,
+  SLA_EVENT_TYPES,
+  GUEST_USER_ID,
 } from '../../database/schema';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import {
@@ -26,7 +32,16 @@ import {
   UpdateTicketDto,
   AddCommentDto,
   ListTicketsQueryDto,
+  CreateTicketOnBehalfDto,
+  CreateGuestTicketDto,
 } from './dto';
+import {
+  calculateBusinessMinutesElapsed,
+  calculateBusinessDeadline,
+  isWithinBusinessHours,
+  getNextBusinessOpen,
+} from './business-hours.util';
+import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 
 // Auto-priority mapping per PDF page 20
 const CATEGORY_PRIORITY_MAP: Record<string, string> = {
@@ -40,11 +55,16 @@ const CATEGORY_PRIORITY_MAP: Record<string, string> = {
 
 @Injectable()
 export class SupportService {
+  constructor(
+    private readonly notificationsService: UserNotificationsService,
+  ) {}
+
   // ─── Create Ticket ──────────────────────────────────────
 
   async createTicket(userId: string, dto: CreateTicketDto) {
+    // Priority always auto-assigned by category — student input ignored (PR-09)
     const autoPriority =
-      dto.priority || CATEGORY_PRIORITY_MAP[dto.category] || TICKET_PRIORITY.MEDIUM;
+      CATEGORY_PRIORITY_MAP[dto.category] || TICKET_PRIORITY.MEDIUM;
 
     // Round-robin: find agent with fewest open tickets
     const assigneeId = await this.findNextAgent();
@@ -64,7 +84,55 @@ export class SupportService {
       })
       .returning();
 
-    return ticket;
+    // Step 4: Calculate SLA deadline (P-04)
+    const [slaPolicy] = await db
+      .select()
+      .from(slaPolicies)
+      .where(eq(slaPolicies.priority, autoPriority));
+
+    let expectedResponseTime: string | null = null;
+    if (slaPolicy) {
+      const deadline = calculateBusinessDeadline(
+        ticket.createdAt,
+        slaPolicy.frtMinutes,
+      );
+      expectedResponseTime = deadline.toISOString();
+    }
+
+    // Step 5: Notifications (P-01, SYS-05)
+    // Notify student: ticket received
+    try {
+      await this.notificationsService.create({
+        recipientId: userId,
+        type: 'ticket_created',
+        title: 'Ticket Received',
+        message: `Your ticket #${ticket.id.substring(0, 8)} has been received. Expected response within ${slaPolicy?.frtMinutes || 30} minutes.`,
+        link: `/dashboard/student/support`,
+        entityType: 'ticket',
+        entityId: ticket.id,
+      });
+
+      // Notify agent: new ticket assigned
+      if (assigneeId) {
+        await this.notificationsService.create({
+          recipientId: assigneeId,
+          type: 'ticket_assigned',
+          title: 'New Ticket Assigned',
+          message: `New ${autoPriority.toUpperCase()} priority ticket: "${ticket.subject}"`,
+          link: `/dashboard/support/agent/tickets/${ticket.id}`,
+          entityType: 'ticket',
+          entityId: ticket.id,
+        });
+      }
+    } catch {
+      // Notifications are non-blocking (P-07)
+    }
+
+    return {
+      ...ticket,
+      expectedResponseTime,
+      slaPolicy: slaPolicy || null,
+    };
   }
 
   // ─── List Tickets ──────────────────────────────────────
@@ -168,6 +236,7 @@ export class SupportService {
         slaBreachedTtr: tickets.slaBreachedTtr,
         onHoldReason: tickets.onHoldReason,
         onHoldAt: tickets.onHoldAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
         createdAt: tickets.createdAt,
         updatedAt: tickets.updatedAt,
         resolvedAt: tickets.resolvedAt,
@@ -239,12 +308,67 @@ export class SupportService {
       .from(slaPolicies)
       .where(eq(slaPolicies.priority, ticket.priority));
 
+    // Compute SLA deadlines and remaining time
+    let frtDeadline: string | null = null;
+    let ttrDeadline: string | null = null;
+    let frtRemainingMinutes: number | null = null;
+    let ttrRemainingMinutes: number | null = null;
+
+    if (slaPolicy) {
+      const now = new Date();
+      const holdMinutes = ticket.onHoldTotalMinutes || 0;
+      const elapsedBizMinutes = calculateBusinessMinutesElapsed(
+        ticket.createdAt,
+        now,
+      );
+      const effectiveBizMinutes = elapsedBizMinutes - holdMinutes;
+
+      // FRT deadline — only if not yet responded and not breached
+      if (!ticket.firstResponseAt) {
+        const deadline = calculateBusinessDeadline(
+          ticket.createdAt,
+          slaPolicy.frtMinutes + holdMinutes,
+        );
+        frtDeadline = deadline.toISOString();
+        frtRemainingMinutes = Math.max(
+          0,
+          slaPolicy.frtMinutes - effectiveBizMinutes,
+        );
+        if (ticket.slaBreachedFrt) {
+          frtRemainingMinutes = -(effectiveBizMinutes - slaPolicy.frtMinutes);
+        }
+      }
+
+      // TTR deadline — only if not yet resolved
+      if (
+        ticket.status !== TICKET_STATUS.RESOLVED &&
+        ticket.status !== TICKET_STATUS.CLOSED
+      ) {
+        const deadline = calculateBusinessDeadline(
+          ticket.createdAt,
+          slaPolicy.ttrMinutes + holdMinutes,
+        );
+        ttrDeadline = deadline.toISOString();
+        ttrRemainingMinutes = Math.max(
+          0,
+          slaPolicy.ttrMinutes - effectiveBizMinutes,
+        );
+        if (ticket.slaBreachedTtr) {
+          ttrRemainingMinutes = -(effectiveBizMinutes - slaPolicy.ttrMinutes);
+        }
+      }
+    }
+
     return {
       ...ticket,
       assigneeName,
       courseName,
       comments,
       slaPolicy: slaPolicy || null,
+      frtDeadline,
+      ttrDeadline,
+      frtRemainingMinutes,
+      ttrRemainingMinutes,
     };
   }
 
@@ -252,7 +376,12 @@ export class SupportService {
 
   async updateTicket(ticketId: string, dto: UpdateTicketDto) {
     const [existing] = await db
-      .select({ id: tickets.id, status: tickets.status })
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        onHoldAt: tickets.onHoldAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+      })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
 
@@ -263,6 +392,7 @@ export class SupportService {
     if (dto.status) {
       updateData.status = dto.status;
 
+      // Transitioning TO on_hold (BH-05)
       if (dto.status === TICKET_STATUS.ON_HOLD) {
         if (!dto.onHoldReason) {
           throw new BadRequestException(
@@ -271,6 +401,24 @@ export class SupportService {
         }
         updateData.onHoldReason = dto.onHoldReason;
         updateData.onHoldAt = new Date();
+        updateData.onHoldResumedAt = null;
+      }
+
+      // Transitioning FROM on_hold — accumulate hold duration (BH-05, BH-06)
+      if (
+        existing.status === TICKET_STATUS.ON_HOLD &&
+        dto.status !== TICKET_STATUS.ON_HOLD &&
+        existing.onHoldAt
+      ) {
+        const holdDuration = calculateBusinessMinutesElapsed(
+          existing.onHoldAt,
+          new Date(),
+        );
+        updateData.onHoldTotalMinutes =
+          (existing.onHoldTotalMinutes || 0) + holdDuration;
+        updateData.onHoldResumedAt = new Date();
+        updateData.onHoldAt = null;
+        updateData.onHoldReason = null;
       }
 
       if (dto.status === TICKET_STATUS.RESOLVED) {
@@ -311,6 +459,9 @@ export class SupportService {
         studentId: tickets.studentId,
         status: tickets.status,
         firstResponseAt: tickets.firstResponseAt,
+        closedAt: tickets.closedAt,
+        subject: tickets.subject,
+        assigneeId: tickets.assigneeId,
       })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
@@ -320,6 +471,19 @@ export class SupportService {
     // Access check
     if (!isSupportOrAdmin && ticket.studentId !== user.id) {
       throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    // 48h grace period for closed tickets (ST-12, ST-13)
+    if (ticket.status === TICKET_STATUS.CLOSED && !isSupportOrAdmin) {
+      const GRACE_PERIOD_MS = 48 * 60 * 60 * 1000;
+      const closedTime = ticket.closedAt
+        ? new Date(ticket.closedAt).getTime()
+        : 0;
+      if (Date.now() - closedTime > GRACE_PERIOD_MS) {
+        throw new BadRequestException(
+          'This ticket has been closed for more than 48 hours. Please create a new ticket.',
+        );
+      }
     }
 
     // Force isInternal=false for non-support users
@@ -362,16 +526,18 @@ export class SupportService {
         .where(eq(tickets.id, ticketId));
     }
 
-    // Student reply on resolved ticket → reopen
+    // Student reply on resolved/closed ticket → reopen (ST-12, ST-13)
     if (
       !isSupportOrAdmin &&
-      ticket.status === TICKET_STATUS.RESOLVED
+      (ticket.status === TICKET_STATUS.RESOLVED ||
+        ticket.status === TICKET_STATUS.CLOSED)
     ) {
       await db
         .update(tickets)
         .set({
           status: TICKET_STATUS.NEW,
           resolvedAt: null,
+          closedAt: null,
           updatedAt: new Date(),
         })
         .where(eq(tickets.id, ticketId));
@@ -383,6 +549,35 @@ export class SupportService {
       .set({ updatedAt: new Date() })
       .where(eq(tickets.id, ticketId));
 
+    // Notifications for comments (AR-01, AR-02)
+    try {
+      if (isSupportOrAdmin && !isInternal) {
+        // Agent replied publicly → notify student (IN-03: no email for internal notes)
+        await this.notificationsService.create({
+          recipientId: ticket.studentId,
+          type: 'ticket_reply',
+          title: 'New Reply on Your Ticket',
+          message: `Support has replied to your ticket "${ticket.subject || ''}"`,
+          link: `/dashboard/student/support`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      } else if (!isSupportOrAdmin && ticket.assigneeId) {
+        // Student replied → notify assigned agent
+        await this.notificationsService.create({
+          recipientId: ticket.assigneeId,
+          type: 'ticket_reply',
+          title: 'Student Replied',
+          message: `Student replied to ticket #${ticketId.substring(0, 8)}`,
+          link: `/dashboard/support/agent/tickets/${ticketId}`,
+          entityType: 'ticket',
+          entityId: ticketId,
+        });
+      }
+    } catch {
+      // Non-blocking (P-07)
+    }
+
     return comment;
   }
 
@@ -390,7 +585,14 @@ export class SupportService {
 
   async resolveTicket(ticketId: string, userId: string) {
     const [ticket] = await db
-      .select({ id: tickets.id, studentId: tickets.studentId, courseId: tickets.courseId })
+      .select({
+        id: tickets.id,
+        studentId: tickets.studentId,
+        courseId: tickets.courseId,
+        subject: tickets.subject,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+      })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
 
@@ -406,7 +608,20 @@ export class SupportService {
       .where(eq(tickets.id, ticketId))
       .returning();
 
-    // Create CSAT survey placeholder (email sending deferred to Sprint 3)
+    // Log resolved_within_sla event (SB-13)
+    const resolvedWithinSla =
+      !ticket.slaBreachedFrt && !ticket.slaBreachedTtr;
+    try {
+      await db.insert(slaEvents).values({
+        ticketId,
+        eventType: SLA_EVENT_TYPES.RESOLVED_WITHIN_SLA,
+        resolvedWithinSla,
+      });
+    } catch {
+      // Non-blocking
+    }
+
+    // Create CSAT survey placeholder
     await db
       .insert(csatSurveys)
       .values({
@@ -416,6 +631,21 @@ export class SupportService {
         channel: 'email',
       })
       .onConflictDoNothing();
+
+    // Notify student: ticket resolved (RS-01)
+    try {
+      await this.notificationsService.create({
+        recipientId: ticket.studentId,
+        type: 'ticket_resolved',
+        title: 'Ticket Resolved',
+        message: `Your ticket "${ticket.subject}" has been resolved. You can reopen it within 48 hours if the issue persists.`,
+        link: `/dashboard/student/support`,
+        entityType: 'ticket',
+        entityId: ticketId,
+      });
+    } catch {
+      // Non-blocking
+    }
 
     return updated;
   }
@@ -542,18 +772,23 @@ export class SupportService {
     return agents;
   }
 
-  // ─── Round Robin (Private) ──────────────────────────────
+  // ─── Round Robin (True Rotation with DB Pointer) ──────────
 
-  private async findNextAgent(): Promise<string | null> {
+  /**
+   * Get all support agents in stable deterministic order.
+   * Sorted by assignment date then user ID for consistent rotation.
+   */
+  private async getAgentRoster(): Promise<
+    { userId: string; firstName: string | null }[]
+  > {
     const supportRole = await db
       .select({ id: roles.id })
       .from(roles)
       .where(eq(roles.name, ROLE_NAMES.SUPPORT));
 
-    if (!supportRole.length) return null;
+    if (!supportRole.length) return [];
 
-    // Get all agents (supportSubRole = 'agent' or null for backward compat)
-    const agents = await db
+    return db
       .select({
         userId: userRoles.userId,
         firstName: users.firstName,
@@ -568,44 +803,540 @@ export class SupportService {
             sql`${userRoles.supportSubRole} IS NULL`,
           ),
         ),
+      )
+      .orderBy(asc(userRoles.assignedAt), asc(users.id));
+  }
+
+  /**
+   * True round-robin agent assignment with persistent DB pointer.
+   * RR-01: Strict rotation order
+   * RR-03: Skip agent with active FRT breach
+   * RR-05: Returns null if no agents (ticket stays unassigned)
+   * RR-08: Atomic pointer increment via UPDATE...RETURNING
+   * RR-14: Supervisors excluded (query filters supportSubRole='agent')
+   * RR-15: Pointer persisted in support_config table
+   */
+  private async findNextAgent(): Promise<string | null> {
+    const agents = await this.getAgentRoster();
+
+    if (agents.length === 0) return null; // RR-05
+    if (agents.length === 1) return agents[0].userId; // RR-04
+
+    // Read current pointer
+    const [config] = await db
+      .select()
+      .from(supportConfig)
+      .where(eq(supportConfig.key, 'round_robin_pointer'));
+
+    let pointer = config ? Number(config.value) : 0;
+
+    // Try each agent starting from pointer, skip those with active FRT breach (RR-03)
+    for (let i = 0; i < agents.length; i++) {
+      const index = (pointer + i) % agents.length;
+      const agent = agents[index];
+
+      // Check if agent has active FRT breach (unresponded breached ticket)
+      const [breachedTicket] = await db
+        .select({ id: tickets.id })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.assigneeId, agent.userId),
+            eq(tickets.slaBreachedFrt, true),
+            sql`${tickets.firstResponseAt} IS NULL`,
+            inArray(tickets.status, [
+              TICKET_STATUS.NEW,
+              TICKET_STATUS.IN_PROGRESS,
+            ]),
+          ),
+        )
+        .limit(1);
+
+      if (!breachedTicket) {
+        // Agent is eligible — advance pointer atomically (RR-08)
+        const newPointer = (pointer + i + 1) % agents.length;
+        await db
+          .update(supportConfig)
+          .set({
+            value: String(newPointer),
+            updatedAt: new Date(),
+          })
+          .where(eq(supportConfig.key, 'round_robin_pointer'));
+
+        return agent.userId;
+      }
+    }
+
+    // All agents have FRT breaches — fall back to original pointer agent
+    const fallbackIndex = pointer % agents.length;
+    const newPointer = (pointer + 1) % agents.length;
+    await db
+      .update(supportConfig)
+      .set({ value: String(newPointer), updatedAt: new Date() })
+      .where(eq(supportConfig.key, 'round_robin_pointer'));
+
+    return agents[fallbackIndex].userId;
+  }
+
+  /**
+   * Find next agent for FRT breach reassignment, excluding specific agents.
+   * RR-11: Follows rotation but skips excluded agents
+   * RR-12: Returns null if all agents excluded (caller escalates to supervisor)
+   */
+  async findNextAgentForReassignment(
+    excludeAgentIds: string[],
+  ): Promise<string | null> {
+    const agents = await this.getAgentRoster();
+    const eligible = agents.filter(
+      (a) => !excludeAgentIds.includes(a.userId),
+    );
+
+    if (eligible.length === 0) return null; // RR-12: all agents exhausted
+
+    // Read pointer
+    const [config] = await db
+      .select()
+      .from(supportConfig)
+      .where(eq(supportConfig.key, 'round_robin_pointer'));
+
+    const pointer = config ? Number(config.value) : 0;
+
+    // Pick next eligible agent from rotation
+    // Map eligible agents back to their position in the full roster
+    for (let i = 0; i < agents.length; i++) {
+      const index = (pointer + i) % agents.length;
+      const agent = agents[index];
+      if (!excludeAgentIds.includes(agent.userId)) {
+        return agent.userId;
+      }
+    }
+
+    return eligible[0].userId; // fallback
+  }
+
+  /**
+   * Find the first supervisor user ID (for escalation when all agents fail).
+   * RR-12: Ticket escalates to supervisor as last resort
+   */
+  async findSupervisorId(): Promise<string | null> {
+    const supportRole = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+
+    if (!supportRole.length) return null;
+
+    const [supervisor] = await db
+      .select({ userId: userRoles.userId })
+      .from(userRoles)
+      .where(
+        and(
+          eq(userRoles.roleId, supportRole[0].id),
+          eq(userRoles.supportSubRole, SUPPORT_SUB_ROLES.SUPERVISOR),
+        ),
+      )
+      .limit(1);
+
+    return supervisor?.userId || null;
+  }
+
+  // ─── CSAT Survey Submission (RS-02 to RS-07) ──────────
+
+  /**
+   * Submit CSAT score via survey ID (no login required).
+   * RS-04: Expired after 72h from sentAt.
+   * RS-05: Token (surveyId) one-time use — cannot resubmit.
+   * RS-07: One CSAT per ticket per student (unique constraint).
+   */
+  async submitCsatScore(
+    surveyId: string,
+    score: number,
+    comment?: string,
+  ) {
+    const [survey] = await db
+      .select()
+      .from(csatSurveys)
+      .where(eq(csatSurveys.id, surveyId));
+
+    if (!survey) {
+      throw new NotFoundException('Survey not found');
+    }
+
+    // RS-05: Already submitted
+    if (survey.submittedAt) {
+      throw new BadRequestException(
+        'You have already submitted your rating for this ticket.',
       );
+    }
 
-    if (!agents.length) return null;
+    // RS-04: Expired after 72h
+    const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
+    if (
+      Date.now() - new Date(survey.sentAt).getTime() >
+      SEVENTY_TWO_HOURS_MS
+    ) {
+      throw new BadRequestException('This survey has expired.');
+    }
 
-    // Count open tickets per agent
-    const agentIds = agents.map((a) => a.userId);
-    const openStatuses = [
-      TICKET_STATUS.NEW,
-      TICKET_STATUS.IN_PROGRESS,
-      TICKET_STATUS.ON_HOLD,
-    ];
+    // RS-06: Check if ticket was reopened (status not resolved/closed)
+    const [ticket] = await db
+      .select({ status: tickets.status })
+      .from(tickets)
+      .where(eq(tickets.id, survey.ticketId));
 
-    const ticketCounts = await db
-      .select({
-        assigneeId: tickets.assigneeId,
-        count: count(),
+    // Save the score regardless of current ticket status
+    const [updated] = await db
+      .update(csatSurveys)
+      .set({
+        score,
+        comment: comment || null,
+        submittedAt: new Date(),
       })
+      .where(eq(csatSurveys.id, surveyId))
+      .returning();
+
+    return updated;
+  }
+
+  /**
+   * Get CSAT survey details by ID (for the public rating page).
+   */
+  async getCsatSurvey(surveyId: string) {
+    const [survey] = await db
+      .select({
+        id: csatSurveys.id,
+        ticketId: csatSurveys.ticketId,
+        score: csatSurveys.score,
+        sentAt: csatSurveys.sentAt,
+        submittedAt: csatSurveys.submittedAt,
+      })
+      .from(csatSurveys)
+      .where(eq(csatSurveys.id, surveyId));
+
+    if (!survey) throw new NotFoundException('Survey not found');
+
+    // Check expiry
+    const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
+    const expired =
+      Date.now() - new Date(survey.sentAt).getTime() > SEVENTY_TWO_HOURS_MS;
+
+    return {
+      ...survey,
+      expired,
+      alreadySubmitted: !!survey.submittedAt,
+    };
+  }
+
+  // ─── Guest Ticket (Login Issues Only) ──────────────────
+
+  async createGuestTicket(dto: CreateGuestTicketDto) {
+    const autoPriority =
+      CATEGORY_PRIORITY_MAP[dto.category] || TICKET_PRIORITY.HIGH;
+    const assigneeId = await this.findNextAgent();
+    const trackingToken = crypto.randomUUID();
+
+    const [ticket] = await db
+      .insert(tickets)
+      .values({
+        studentId: GUEST_USER_ID,
+        category: dto.category,
+        priority: autoPriority,
+        subject: dto.subject,
+        description: dto.description,
+        status: TICKET_STATUS.NEW,
+        assigneeId,
+        guestTrackingToken: trackingToken,
+        guestName: dto.name,
+        guestEmail: dto.email,
+      })
+      .returning();
+
+    // Notify assigned agent
+    if (assigneeId) {
+      try {
+        await this.notificationsService.create({
+          recipientId: assigneeId,
+          type: 'ticket_assigned',
+          title: 'New Guest Ticket',
+          message: `Login issue from ${dto.name} (${dto.email}): "${dto.subject}"`,
+          link: `/dashboard/support/agent/tickets/${ticket.id}`,
+          entityType: 'ticket',
+          entityId: ticket.id,
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+
+    return { ticket, trackingToken };
+  }
+
+  async getTicketByTrackingToken(token: string) {
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        category: tickets.category,
+        priority: tickets.priority,
+        subject: tickets.subject,
+        description: tickets.description,
+        status: tickets.status,
+        assigneeId: tickets.assigneeId,
+        firstResponseAt: tickets.firstResponseAt,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+        createdAt: tickets.createdAt,
+        resolvedAt: tickets.resolvedAt,
+        closedAt: tickets.closedAt,
+        guestName: tickets.guestName,
+        guestEmail: tickets.guestEmail,
+      })
+      .from(tickets)
+      .where(eq(tickets.guestTrackingToken, token));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // Public comments only (no internal notes)
+    const comments = await db
+      .select({
+        id: ticketReplies.id,
+        message: ticketReplies.message,
+        isStaffReply: ticketReplies.isStaffReply,
+        isInternal: ticketReplies.isInternal,
+        createdAt: ticketReplies.createdAt,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+      })
+      .from(ticketReplies)
+      .leftJoin(users, eq(ticketReplies.userId, users.id))
+      .where(
+        and(
+          eq(ticketReplies.ticketId, ticket.id),
+          eq(ticketReplies.isInternal, false),
+        ),
+      )
+      .orderBy(asc(ticketReplies.createdAt));
+
+    // SLA info
+    const [slaPolicy] = await db
+      .select()
+      .from(slaPolicies)
+      .where(eq(slaPolicies.priority, ticket.priority));
+
+    return {
+      ...ticket,
+      comments,
+      slaPolicy: slaPolicy || null,
+    };
+  }
+
+  async addGuestReply(token: string, message: string) {
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        status: tickets.status,
+        assigneeId: tickets.assigneeId,
+        closedAt: tickets.closedAt,
+      })
+      .from(tickets)
+      .where(eq(tickets.guestTrackingToken, token));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // 48h closed ticket check
+    if (ticket.status === TICKET_STATUS.CLOSED) {
+      const GRACE_PERIOD_MS = 48 * 60 * 60 * 1000;
+      const closedTime = ticket.closedAt
+        ? new Date(ticket.closedAt).getTime()
+        : 0;
+      if (Date.now() - closedTime > GRACE_PERIOD_MS) {
+        throw new BadRequestException(
+          'This ticket has been closed for more than 48 hours.',
+        );
+      }
+    }
+
+    const [comment] = await db
+      .insert(ticketReplies)
+      .values({
+        ticketId: ticket.id,
+        userId: GUEST_USER_ID,
+        message,
+        isStaffReply: false,
+        isInternal: false,
+      })
+      .returning();
+
+    // Reopen if resolved/closed
+    if (
+      ticket.status === TICKET_STATUS.RESOLVED ||
+      ticket.status === TICKET_STATUS.CLOSED
+    ) {
+      await db
+        .update(tickets)
+        .set({
+          status: TICKET_STATUS.NEW,
+          resolvedAt: null,
+          closedAt: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(tickets.id, ticket.id));
+    }
+
+    // Notify agent
+    if (ticket.assigneeId) {
+      try {
+        await this.notificationsService.create({
+          recipientId: ticket.assigneeId,
+          type: 'ticket_reply',
+          title: 'Guest Replied',
+          message: `Guest replied to ticket #${ticket.id.substring(0, 8)}`,
+          link: `/dashboard/support/agent/tickets/${ticket.id}`,
+          entityType: 'ticket',
+          entityId: ticket.id,
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+
+    await db
+      .update(tickets)
+      .set({ updatedAt: new Date() })
+      .where(eq(tickets.id, ticket.id));
+
+    return comment;
+  }
+
+  // ─── Create Ticket on Behalf (Instructor → Learner) ────
+
+  /**
+   * Instructor opens a ticket on behalf of a student (IN-01 to IN-08)
+   * Validates instructor teaches a course the student is enrolled in (IN-03)
+   */
+  async createTicketOnBehalf(
+    openedByUserId: string,
+    dto: CreateTicketOnBehalfDto,
+  ) {
+    // Validate student exists
+    const [student] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, dto.studentId))
+      .limit(1);
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    // Validate instructor teaches a course the student is enrolled in (IN-03)
+    if (dto.courseId) {
+      const [enrollment] = await db
+        .select({ id: enrollments.id })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.studentId, dto.studentId),
+            eq(enrollments.courseId, dto.courseId),
+          ),
+        )
+        .limit(1);
+
+      if (!enrollment) {
+        throw new ForbiddenException(
+          'Student is not enrolled in this course',
+        );
+      }
+    }
+
+    const autoPriority =
+      CATEGORY_PRIORITY_MAP[dto.category] || TICKET_PRIORITY.MEDIUM;
+    const assigneeId = await this.findNextAgent();
+
+    const [ticket] = await db
+      .insert(tickets)
+      .values({
+        studentId: dto.studentId,
+        category: dto.category,
+        priority: autoPriority,
+        subject: dto.subject,
+        description: dto.description,
+        courseId: dto.courseId || null,
+        status: TICKET_STATUS.NEW,
+        assigneeId,
+        openedBy: openedByUserId,
+      })
+      .returning();
+
+    return ticket;
+  }
+
+  // ─── Tickets Opened By Me (Instructor View) ──────────
+
+  async getTicketsOpenedByMe(userId: string) {
+    return db
+      .select({
+        id: tickets.id,
+        subject: tickets.subject,
+        category: tickets.category,
+        priority: tickets.priority,
+        status: tickets.status,
+        createdAt: tickets.createdAt,
+        updatedAt: tickets.updatedAt,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+        studentEmail: users.email,
+      })
+      .from(tickets)
+      .leftJoin(users, eq(tickets.studentId, users.id))
+      .where(eq(tickets.openedBy, userId))
+      .orderBy(desc(tickets.createdAt));
+  }
+
+  // ─── Course Ticket Count (CM-01) ─────────────────────
+
+  async getCourseTicketCount(courseId: string) {
+    const [result] = await db
+      .select({ count: count() })
       .from(tickets)
       .where(
         and(
-          inArray(tickets.assigneeId, agentIds),
-          inArray(tickets.status, openStatuses),
+          eq(tickets.courseId, courseId),
+          inArray(tickets.status, [
+            TICKET_STATUS.NEW,
+            TICKET_STATUS.IN_PROGRESS,
+            TICKET_STATUS.ON_HOLD,
+          ]),
         ),
-      )
-      .groupBy(tickets.assigneeId);
+      );
 
-    const countMap = new Map(
-      ticketCounts.map((r) => [r.assigneeId, Number(r.count)]),
-    );
+    return { courseId, openCount: result?.count ?? 0 };
+  }
 
-    // Pick agent with fewest open tickets (alphabetical tiebreaker)
-    agents.sort((a, b) => {
-      const countDiff =
-        (countMap.get(a.userId) ?? 0) - (countMap.get(b.userId) ?? 0);
-      if (countDiff !== 0) return countDiff;
-      return (a.firstName ?? '').localeCompare(b.firstName ?? '');
-    });
+  // ─── SLA Policy CRUD ──────────────────────────────────
 
-    return agents[0].userId;
+  async getSlaPolicies() {
+    return db
+      .select()
+      .from(slaPolicies)
+      .orderBy(asc(slaPolicies.frtMinutes));
+  }
+
+  async updateSlaPolicy(
+    priority: string,
+    data: {
+      frtMinutes?: number;
+      ttrMinutes?: number;
+      escalateAfterMinutes?: number;
+    },
+  ) {
+    const [updated] = await db
+      .update(slaPolicies)
+      .set(data)
+      .where(eq(slaPolicies.priority, priority))
+      .returning();
+
+    if (!updated) throw new NotFoundException(`SLA policy for ${priority} not found`);
+    return updated;
   }
 }

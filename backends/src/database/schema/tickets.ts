@@ -38,10 +38,18 @@ export const tickets = pgTable(
     slaBreachedTtr: boolean('sla_breached_ttr').notNull().default(false),
     onHoldReason: varchar('on_hold_reason', { length: 100 }),
     onHoldAt: timestamp('on_hold_at'),
+    onHoldTotalMinutes: integer('on_hold_total_minutes').notNull().default(0),
+    onHoldResumedAt: timestamp('on_hold_resumed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     resolvedAt: timestamp('resolved_at'),
     closedAt: timestamp('closed_at'),
+    openedBy: uuid('opened_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    guestTrackingToken: varchar('guest_tracking_token', { length: 100 }),
+    guestName: varchar('guest_name', { length: 100 }),
+    guestEmail: varchar('guest_email', { length: 255 }),
   },
   (table) => [
     index('tickets_student_id_idx').on(table.studentId),
@@ -156,3 +164,6 @@ export type TicketPriority =
 export const ticketComments = ticketReplies;
 export const ticketCommentsRelations = ticketRepliesRelations;
 export type TicketComment = TicketReply;
+
+// Sentinel user ID for guest tickets (created via migration 0021)
+export const GUEST_USER_ID = '00000000-0000-0000-0000-000000000001';

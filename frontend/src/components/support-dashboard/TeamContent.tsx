@@ -110,9 +110,9 @@ const TeamContent = () => {
 
   const tabs = [
     { key: "all", label: t("teamPage.tabs.all") },
-    { key: "online", label: t("teamPage.tabs.online"), count: 4 },
-    { key: "away", label: t("teamPage.tabs.away"), count: 1 },
-    { key: "offline", label: t("teamPage.tabs.offline"), count: 1 },
+    { key: "online", label: t("teamPage.tabs.online"), count: agents.length },
+    { key: "away", label: t("teamPage.tabs.away"), count: 0 },
+    { key: "offline", label: t("teamPage.tabs.offline"), count: 0 },
   ];
 
   const filteredAgents = agents.filter((agent) => {
@@ -381,9 +381,9 @@ const TeamContent = () => {
                     <p className="text-sm text-[#6B7280] mb-1">
                       {t("teamPage.performanceCards.bestResponseTime")}
                     </p>
-                    <p className="text-2xl font-bold text-[#111827]">1.0h</p>
+                    <p className="text-2xl font-bold text-[#111827]">--</p>
                     <p className="text-xs text-[#6B7280] mt-1">
-                      {t("names.hanaAlSaud")}
+                      No data yet
                     </p>
                   </div>
 
@@ -392,9 +392,9 @@ const TeamContent = () => {
                     <p className="text-sm text-[#6B7280] mb-1">
                       {t("teamPage.performanceCards.highestCSAT")}
                     </p>
-                    <p className="text-2xl font-bold text-[#111827]">96%</p>
+                    <p className="text-2xl font-bold text-[#111827]">--</p>
                     <p className="text-xs text-[#6B7280] mt-1">
-                      {t("names.hanaAlSaud")}
+                      No data yet
                     </p>
                   </div>
 
@@ -403,9 +403,9 @@ const TeamContent = () => {
                     <p className="text-sm text-[#6B7280] mb-1">
                       {t("teamPage.performanceCards.mostResolved")}
                     </p>
-                    <p className="text-2xl font-bold text-[#111827]">45</p>
+                    <p className="text-2xl font-bold text-[#111827]">--</p>
                     <p className="text-xs text-[#6B7280] mt-1">
-                      {t("names.mohammedAli")}
+                      No data yet
                     </p>
                   </div>
                 </div>

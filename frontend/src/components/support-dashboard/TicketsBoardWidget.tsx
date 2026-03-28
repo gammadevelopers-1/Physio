@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ClipboardList,
   ArrowRight,
@@ -13,6 +15,7 @@ import { supportApi } from "@/lib/api";
 
 interface Ticket {
   id: string;
+  displayId: string;
   subject: string;
   customer: string;
   category: string;
@@ -23,7 +26,13 @@ interface Ticket {
 const TicketsBoardWidget = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
+  const router = useRouter();
+  const { user } = useAuth();
   const isRTL = locale === "ar";
+
+  const basePath = user?.supportSubRole === 'supervisor'
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -49,7 +58,8 @@ const TicketsBoardWidget = () => {
           closed: "Closed",
         };
         const mapped: Ticket[] = (data.tickets || []).map((t: any) => ({
-          id: t.id?.substring(0, 8) || t.id,
+          id: t.id,
+          displayId: t.id?.substring(0, 8) || t.id,
           subject: t.subject,
           customer: [t.studentFirstName, t.studentLastName]
             .filter(Boolean)
@@ -108,7 +118,10 @@ const TicketsBoardWidget = () => {
             {tickets.length}
           </span>
         </div>
-        <button className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center gap-1">
+        <button
+          onClick={() => router.push(`${basePath}/tickets`)}
+          className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center gap-1"
+        >
           {t("ticketsBoard.viewAll")}
           <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>
@@ -201,11 +214,12 @@ const TicketsBoardWidget = () => {
             ) : filteredTickets.map((ticket) => (
               <tr
                 key={ticket.id}
-                className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors"
+                onClick={() => router.push(`${basePath}/tickets/${ticket.id}`)}
+                className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               >
                 <td className="px-3 py-3">
                   <span className="text-[13px] font-medium text-[#3B82F6]">
-                    {ticket.id}
+                    {ticket.displayId}
                   </span>
                 </td>
                 <td className="px-3 py-3">

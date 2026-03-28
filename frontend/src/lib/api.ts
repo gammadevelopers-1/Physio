@@ -2539,6 +2539,77 @@ export const supportApi = {
         email: string;
       }[]
     >('/tickets/agents'),
+
+  getSlaPolicies: () =>
+    api.get<
+      {
+        id: string;
+        priority: string;
+        frtMinutes: number;
+        ttrMinutes: number;
+        escalateAfterMinutes: number;
+        active: boolean;
+      }[]
+    >('/tickets/sla-policies'),
+
+  updateSlaPolicy: (
+    priority: string,
+    data: {
+      frtMinutes?: number;
+      ttrMinutes?: number;
+      escalateAfterMinutes?: number;
+    },
+  ) =>
+    api.put<{
+      id: string;
+      priority: string;
+      frtMinutes: number;
+      ttrMinutes: number;
+      escalateAfterMinutes: number;
+    }>(`/tickets/sla-policies/${priority}`, data),
+
+  // Instructor: create ticket on behalf of learner (IN-01)
+  createTicketOnBehalf: (data: {
+    studentId: string;
+    category: string;
+    subject: string;
+    description: string;
+    courseId?: string;
+  }) => api.post<{ id: string }>('/tickets/on-behalf', data),
+
+  // Instructor: tickets I opened for learners (IN-04)
+  getTicketsOpenedByMe: () =>
+    api.get<any[]>('/tickets/opened-by-me'),
+
+  // Course Manager: ticket count per course (CM-01)
+  getCourseTicketCount: (courseId: string) =>
+    api.get<{ courseId: string; openCount: number }>(
+      `/tickets/course/${courseId}/count`,
+    ),
+
+  // Guest ticket (login issues only — no auth)
+  createGuestTicket: (data: {
+    name: string;
+    email: string;
+    category: string;
+    subject: string;
+    description: string;
+  }) =>
+    api.post<{ ticket: { id: string }; trackingToken: string }>(
+      '/tickets/guest',
+      data,
+      { skipAuth: true },
+    ),
+
+  getGuestTicket: (trackingToken: string) =>
+    api.get<any>(`/tickets/track/${trackingToken}`, { skipAuth: true }),
+
+  addGuestReply: (trackingToken: string, message: string) =>
+    api.post<any>(
+      `/tickets/track/${trackingToken}/reply`,
+      { message },
+      { skipAuth: true },
+    ),
 };
 
 export default api;

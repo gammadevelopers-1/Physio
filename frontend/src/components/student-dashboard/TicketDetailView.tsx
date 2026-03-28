@@ -18,7 +18,7 @@ import MobileSidebar from "./MobileSidebar";
 import DashboardNavbar from "./DashboardNavbar";
 import { useStudentProfile } from "@/hooks/useStudentProfile";
 import { useTicketDetail } from "@/hooks/useStudentTickets";
-import { studentApi } from "@/lib/api";
+import { studentApi, supportApi } from "@/lib/api";
 import type { TicketReply, TicketStatus } from "@/types/student-dashboard";
 
 function StatusBadge({
@@ -202,7 +202,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
     if (!replyText.trim() || !ticketId) return;
     setSending(true);
     try {
-      await studentApi.replyToTicket(ticketId, replyText.trim());
+      await supportApi.addComment(ticketId, { message: replyText.trim() });
       setReplyText("");
       refetch();
     } catch {
@@ -263,9 +263,6 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                       <span className="text-xs text-[#9CA3AF]">
                         <Tag className="w-3 h-3 inline mr-1" />
                         {t(`supportPage.category_${ticket.category}` as Parameters<typeof t>[0])}
-                      </span>
-                      <span className="text-xs text-[#9CA3AF]">
-                        {t(`supportPage.priority_${ticket.priority}` as Parameters<typeof t>[0])}
                       </span>
                     </div>
                     <h1 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-1">

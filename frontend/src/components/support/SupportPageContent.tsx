@@ -12,9 +12,8 @@ import {
   HelpCircle,
   ChevronDown,
   ChevronRight,
-  LogIn,
-  UserPlus,
   Headphones,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import BusinessHoursIndicator from "./BusinessHoursIndicator";
@@ -127,13 +126,23 @@ export default function SupportPageContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {SUPPORT_CATEGORIES.map((cat, idx) => {
             const Icon = cat.icon;
+            const isLocked = !isAuthenticated && cat.backendValue !== "login";
             return (
               <button
                 key={idx}
                 type="button"
-                onClick={() => handleCategoryClick(cat.backendValue)}
-                className={`group flex items-start gap-4 p-5 bg-white rounded-2xl border border-[#E8ECF0] shadow-sm hover:shadow-md hover:border-[var(--brand-blue)]/30 transition-all text-left ${
+                onClick={() => {
+                  if (!isAuthenticated && cat.backendValue !== "login") {
+                    return;
+                  }
+                  handleCategoryClick(cat.backendValue);
+                }}
+                className={`group flex items-start gap-4 p-5 bg-white rounded-2xl border border-[#E8ECF0] shadow-sm transition-all text-left ${
                   isRTL ? "text-right" : ""
+                } ${
+                  isLocked
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:shadow-md hover:border-[var(--brand-blue)]/30 cursor-pointer"
                 }`}
                 dir={isRTL ? "rtl" : "ltr"}
               >
@@ -143,17 +152,39 @@ export default function SupportPageContent() {
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-1 group-hover:text-[var(--brand-blue)] transition-colors">
+                  <h3 className={`text-sm font-semibold text-gray-900 mb-1 transition-colors ${
+                    isLocked ? "" : "group-hover:text-[var(--brand-blue)]"
+                  }`}>
                     {t(cat.labelKey)}
                   </h3>
                   <p className="text-xs text-gray-500 leading-relaxed">
                     {t(cat.descKey)}
                   </p>
+                  {isLocked && (
+                    <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-400">
+                      <Lock className="w-3 h-3" />
+                      <span>Sign in required</span>
+                    </div>
+                  )}
                 </div>
               </button>
             );
           })}
         </div>
+
+        {!isAuthenticated && (
+          <div className="text-center mt-6 p-4 bg-[#F0F4FF] rounded-xl border border-[#C7D5F0]">
+            <p className="text-sm text-[#374151] mb-3">
+              Sign in to submit tickets for billing, certificates, content, or technical issues.
+            </p>
+            <a
+              href={`/${locale}/signin?redirect=/${locale}/support`}
+              className="inline-flex items-center gap-2 px-5 py-2 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:opacity-90"
+            >
+              Sign In
+            </a>
+          </div>
+        )}
       </section>
 
       {/* ========== FAQ SECTION ========== */}
@@ -233,35 +264,16 @@ export default function SupportPageContent() {
             </div>
 
             {isAuthenticated ? (
-              <PublicTicketForm preSelectedCategory={selectedCategory} />
+              <PublicTicketForm
+                preSelectedCategory={selectedCategory}
+                isAuthenticated={true}
+              />
             ) : (
-              <div className="text-center py-8">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--surface)] mb-4">
-                  <LogIn className="w-6 h-6 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {t("signInRequired")}
-                </h3>
-                <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
-                  {t("signInRequiredDesc")}
-                </p>
-                <div className="flex items-center justify-center gap-3 flex-wrap">
-                  <a
-                    href={`/${locale}/signin?redirect=/${locale}/support`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--brand-blue)] text-white rounded-[10px] text-sm font-medium hover:opacity-90 transition-opacity"
-                  >
-                    <LogIn className="w-4 h-4" />
-                    {t("signIn")}
-                  </a>
-                  <a
-                    href={`/${locale}/signup`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#C8D5E1] bg-white text-gray-700 rounded-[10px] text-sm font-medium hover:bg-gray-50 transition-colors"
-                  >
-                    <UserPlus className="w-4 h-4" />
-                    {t("createAccount")}
-                  </a>
-                </div>
-              </div>
+              <PublicTicketForm
+                preSelectedCategory="login"
+                isAuthenticated={false}
+                guestLoginMode={true}
+              />
             )}
           </div>
         </div>

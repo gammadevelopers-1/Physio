@@ -20,6 +20,7 @@ import {
   Loader2,
   User,
   MessageSquare,
+  UserPlus,
 } from "lucide-react";
 
 interface TicketDetail {
@@ -57,6 +58,10 @@ interface TicketDetail {
     frtMinutes: number;
     ttrMinutes: number;
   } | null;
+  frtDeadline: string | null;
+  ttrDeadline: string | null;
+  frtRemainingMinutes: number | null;
+  ttrRemainingMinutes: number | null;
 }
 
 const TicketDetailContent = () => {
@@ -75,6 +80,8 @@ const TicketDetailContent = () => {
   const [isInternal, setIsInternal] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [agents, setAgents] = useState<any[]>([]);
+  const [showReassign, setShowReassign] = useState(false);
 
   const isSupportOrAdmin =
     user?.roles?.includes("SUPPORT") ||
@@ -93,6 +100,12 @@ const TicketDetailContent = () => {
   };
 
   useEffect(() => {
+    if (isSupervisor) {
+      supportApi.getAgents().then(data => setAgents(data || [])).catch(() => {});
+    }
+  }, [isSupervisor]);
+
+  useEffect(() => {
     if (!ticketId) return;
     async function fetchTicket() {
       setIsLoading(true);
@@ -106,6 +119,18 @@ const TicketDetailContent = () => {
       }
     }
     fetchTicket();
+
+    // Auto-refresh every 60 seconds for live SLA updates
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        supportApi
+          .getTicket(ticketId)
+          .then((data) => setTicket(data))
+          .catch(() => {});
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [ticketId]);
 
   async function handleSendReply() {
@@ -411,48 +436,132 @@ const TicketDetailContent = () => {
                       </div>
                     </div>
 
-                    {/* SLA Panel */}
+                    {/* SLA Panel — Live Countdown */}
                     {ticket.slaPolicy && (
                       <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
                         <h3 className="text-sm font-semibold text-[#1F2937] mb-4">
                           SLA
                         </h3>
-                        <div className="space-y-3 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[#6B7280]">
-                              FRT Target
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium">
-                                {ticket.slaPolicy.frtMinutes}m
-                              </span>
+                        <div className="space-y-4 text-sm">
+                          {/* FRT */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-[#6B7280]">First Response</span>
                               {ticket.slaBreachedFrt ? (
-                                <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
+                                <span className="flex items-center gap-1 text-[#EF4444] font-semibold text-xs">
+                                  <AlertTriangle className="w-3.5 h-3.5" /> BREACHED
+                                </span>
                               ) : ticket.firstResponseAt ? (
-                                <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+                                <span className="flex items-center gap-1 text-[#22C55E] font-semibold text-xs">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> MET
+                                </span>
                               ) : (
-                                <Clock className="w-4 h-4 text-[#F59E0B]" />
+                                <span className="text-[#6B7280] text-xs">
+                                  Target: {ticket.slaPolicy.frtMinutes}m
+                                </span>
                               )}
                             </div>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-[#6B7280]">
-                              TTR Target
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium">
-                                {ticket.slaPolicy.ttrMinutes > 60
-                                  ? `${(ticket.slaPolicy.ttrMinutes / 60).toFixed(0)}h`
-                                  : `${ticket.slaPolicy.ttrMinutes}m`}
+                            {/* FRT remaining time */}
+                            {!ticket.firstResponseAt && !ticket.slaBreachedFrt && ticket.frtRemainingMinutes != null && (
+                              <div>
+                                <div className="flex justify-between items-center">
+                                  <span className={`text-xs font-semibold ${
+                                    ticket.frtRemainingMinutes > ticket.slaPolicy.frtMinutes * 0.5
+                                      ? "text-[#22C55E]"
+                                      : ticket.frtRemainingMinutes > ticket.slaPolicy.frtMinutes * 0.1
+                                        ? "text-[#F59E0B]"
+                                        : "text-[#EF4444]"
+                                  }`}>
+                                    {ticket.frtRemainingMinutes > 60
+                                      ? `${Math.floor(ticket.frtRemainingMinutes / 60)}h ${ticket.frtRemainingMinutes % 60}m remaining`
+                                      : `${ticket.frtRemainingMinutes}m remaining`}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-[#F3F4F6] rounded-full h-1.5 mt-1.5">
+                                  <div
+                                    className={`h-1.5 rounded-full transition-all ${
+                                      ticket.frtRemainingMinutes > ticket.slaPolicy.frtMinutes * 0.5
+                                        ? "bg-[#22C55E]"
+                                        : ticket.frtRemainingMinutes > ticket.slaPolicy.frtMinutes * 0.1
+                                          ? "bg-[#F59E0B]"
+                                          : "bg-[#EF4444]"
+                                    }`}
+                                    style={{
+                                      width: `${Math.min(100, Math.max(0, (ticket.frtRemainingMinutes / ticket.slaPolicy.frtMinutes) * 100))}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {ticket.slaBreachedFrt && ticket.frtRemainingMinutes != null && (
+                              <span className="text-xs text-[#EF4444]">
+                                Overdue by {Math.abs(ticket.frtRemainingMinutes)}m
                               </span>
+                            )}
+                          </div>
+
+                          {/* TTR */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-[#6B7280]">Resolution</span>
                               {ticket.slaBreachedTtr ? (
-                                <AlertTriangle className="w-4 h-4 text-[#EF4444]" />
+                                <span className="flex items-center gap-1 text-[#EF4444] font-semibold text-xs">
+                                  <AlertTriangle className="w-3.5 h-3.5" /> BREACHED
+                                </span>
                               ) : ticket.resolvedAt ? (
-                                <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+                                <span className="flex items-center gap-1 text-[#22C55E] font-semibold text-xs">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> MET
+                                </span>
                               ) : (
-                                <Clock className="w-4 h-4 text-[#F59E0B]" />
+                                <span className="text-[#6B7280] text-xs">
+                                  Target: {ticket.slaPolicy.ttrMinutes > 60
+                                    ? `${(ticket.slaPolicy.ttrMinutes / 60).toFixed(0)}h`
+                                    : `${ticket.slaPolicy.ttrMinutes}m`}
+                                </span>
                               )}
                             </div>
+                            {/* TTR remaining time */}
+                            {!ticket.resolvedAt && !ticket.slaBreachedTtr && ticket.ttrRemainingMinutes != null && (
+                              <div>
+                                <div className="flex justify-between items-center">
+                                  <span className={`text-xs font-semibold ${
+                                    ticket.ttrRemainingMinutes > ticket.slaPolicy.ttrMinutes * 0.5
+                                      ? "text-[#22C55E]"
+                                      : ticket.ttrRemainingMinutes > ticket.slaPolicy.ttrMinutes * 0.1
+                                        ? "text-[#F59E0B]"
+                                        : "text-[#EF4444]"
+                                  }`}>
+                                    {ticket.ttrRemainingMinutes > 60
+                                      ? `${Math.floor(ticket.ttrRemainingMinutes / 60)}h ${ticket.ttrRemainingMinutes % 60}m remaining`
+                                      : `${ticket.ttrRemainingMinutes}m remaining`}
+                                  </span>
+                                </div>
+                                <div className="w-full bg-[#F3F4F6] rounded-full h-1.5 mt-1.5">
+                                  <div
+                                    className={`h-1.5 rounded-full transition-all ${
+                                      ticket.ttrRemainingMinutes > ticket.slaPolicy.ttrMinutes * 0.5
+                                        ? "bg-[#22C55E]"
+                                        : ticket.ttrRemainingMinutes > ticket.slaPolicy.ttrMinutes * 0.1
+                                          ? "bg-[#F59E0B]"
+                                          : "bg-[#EF4444]"
+                                    }`}
+                                    style={{
+                                      width: `${Math.min(100, Math.max(0, (ticket.ttrRemainingMinutes / ticket.slaPolicy.ttrMinutes) * 100))}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {ticket.slaBreachedTtr && ticket.ttrRemainingMinutes != null && (
+                              <span className="text-xs text-[#EF4444]">
+                                Overdue by {Math.abs(ticket.ttrRemainingMinutes)}m
+                              </span>
+                            )}
+                            {ticket.status === "on_hold" && (
+                              <span className="text-xs text-[#F59E0B] flex items-center gap-1 mt-1">
+                                <Clock className="w-3 h-3" /> SLA paused (on hold)
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -466,6 +575,42 @@ const TicketDetailContent = () => {
                             Actions
                           </h3>
                           <div className="space-y-2">
+                            {isSupervisor && (
+                              <div className="mb-2">
+                                <button
+                                  onClick={() => setShowReassign(!showReassign)}
+                                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#002D87] text-sm font-medium rounded-lg hover:bg-[#F0F4FF] disabled:opacity-50"
+                                >
+                                  <UserPlus className="w-4 h-4" />
+                                  Reassign Ticket
+                                </button>
+                                {showReassign && (
+                                  <div className="mt-2 space-y-1">
+                                    {agents.filter(a => a.userId !== ticket.assigneeId).map(agent => (
+                                      <button
+                                        key={agent.userId}
+                                        onClick={async () => {
+                                          try {
+                                            await supportApi.updateTicket(ticketId, { assigneeId: agent.userId });
+                                            const data = await supportApi.getTicket(ticketId);
+                                            setTicket(data);
+                                            setShowReassign(false);
+                                            toast.success(`Reassigned to ${[agent.firstName, agent.lastName].filter(Boolean).join(' ')}`);
+                                          } catch { toast.error('Failed to reassign'); }
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-sm text-[#374151] hover:bg-[#F3F4F6] rounded-lg flex items-center gap-2"
+                                      >
+                                        <div className="w-6 h-6 rounded-full bg-[#002D87] flex items-center justify-center text-[10px] text-white font-bold">
+                                          {[agent.firstName?.[0], agent.lastName?.[0]].filter(Boolean).join('')}
+                                        </div>
+                                        {[agent.firstName, agent.lastName].filter(Boolean).join(' ') || agent.email}
+                                        {agent.supportSubRole === 'supervisor' && <span className="text-xs text-[#8B5CF6]">(Supervisor)</span>}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                             {ticket.status !== "resolved" && (
                               <button
                                 onClick={() => handleStatusChange("resolved")}

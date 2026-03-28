@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
+import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -64,31 +65,35 @@ const AllTicketsContent = () => {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [openActionId, setOpenActionId] = useState<string | null>(null);
 
+  const openCount = apiTickets.filter((t: any) =>
+    ["new", "in_progress", "on_hold"].includes(t.status)
+  ).length;
+
   const stats = [
     {
       label: t("allTicketsPage.stats.totalTickets"),
-      value: "384",
+      value: String(totalTickets),
       icon: FileText,
       iconBg: "bg-[#EFF6FF]",
       iconColor: "text-[#3B82F6]",
     },
     {
       label: t("allTicketsPage.stats.open"),
-      value: "23",
+      value: openCount > 0 ? String(openCount) : "--",
       icon: ClipboardList,
       iconBg: "bg-[#FFEDD5]",
       iconColor: "text-[#F97316]",
     },
     {
       label: t("allTicketsPage.stats.resolvedThisWeek"),
-      value: "45",
+      value: "--",
       icon: CheckCircle,
       iconBg: "bg-[#DCFCE7]",
       iconColor: "text-[#22C55E]",
     },
     {
       label: t("allTicketsPage.stats.avgResolution"),
-      value: "4.5h",
+      value: "--",
       icon: Clock,
       iconBg: "bg-[#F3E8FF]",
       iconColor: "text-[#8B5CF6]",
@@ -133,7 +138,8 @@ const AllTicketsContent = () => {
 
   // Map API tickets to component's Ticket interface
   const tickets: Ticket[] = apiTickets.map((t: any) => ({
-    id: t.id?.substring(0, 8) || t.id,
+    id: t.id,
+    displayId: t.id?.substring(0, 8) || t.id,
     subject: t.subject,
     customer: [t.studentFirstName, t.studentLastName].filter(Boolean).join(" ") || "Unknown",
     email: t.studentEmail || "",
@@ -404,8 +410,11 @@ const AllTicketsContent = () => {
                         >
                           {/* Ticket # */}
                           <td className="py-3 px-4">
-                            <span className="text-[13px] font-medium text-[#3B82F6] cursor-pointer hover:underline">
-                              #{ticket.id}
+                            <span
+                              className="text-[13px] font-medium text-[#3B82F6] cursor-pointer hover:underline"
+                              onClick={() => window.location.assign(`/${locale}/dashboard/support/supervisor/tickets/${ticket.id}`)}
+                            >
+                              #{ticket.displayId}
                             </span>
                           </td>
                           {/* Subject */}
@@ -484,15 +493,39 @@ const AllTicketsContent = () => {
                                 <div
                                   className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                                 >
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button
+                                    onClick={() => {
+                                      window.location.assign(`/${locale}/dashboard/support/supervisor/tickets/${ticket.id}`);
+                                      setOpenActionId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
+                                  >
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.view")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
+                                  <button
+                                    onClick={() => {
+                                      toast.info("Use ticket detail view to reassign");
+                                      setOpenActionId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]"
+                                  >
                                     <UserPlus className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.assign")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#DC2626] hover:bg-[#FEE2E2]">
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await supportApi.closeTicket(ticket.id);
+                                        fetchTickets();
+                                        toast.success("Ticket closed");
+                                      } catch {
+                                        toast.error("Failed");
+                                      }
+                                      setOpenActionId(null);
+                                    }}
+                                    className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#DC2626] hover:bg-[#FEE2E2]"
+                                  >
                                     <XCircle className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.close")}
                                   </button>
@@ -510,17 +543,25 @@ const AllTicketsContent = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3 border-t border-[#F3F4F6] gap-3">
                   <p className="text-[13px] text-[#6B7280]">
                     {t("allTicketsPage.pagination.showing", {
-                      from: 1,
-                      to: filteredTickets.length,
-                      total: 384,
+                      from: totalTickets === 0 ? 0 : (currentPage - 1) * pageSize + 1,
+                      to: Math.min(currentPage * pageSize, totalTickets),
+                      total: totalTickets,
                     })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">
+                    <button
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       <ChevronLeft className="w-4 h-4" />
                       {t("allTicketsPage.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">
+                    <button
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       {t("allTicketsPage.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>

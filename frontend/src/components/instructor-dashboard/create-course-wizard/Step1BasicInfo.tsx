@@ -109,8 +109,56 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             <option value="zoom">Zoom</option>
             <option value="onsite">On-site</option>
             <option value="blended">Blended</option>
+            <option value="self-paced">{t("deliverySelfPaced")}</option>
           </select>
         </div>
+
+        {/* Schedule fields for self-paced (since Step 2 is skipped) */}
+        {state.deliveryType === "self-paced" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div>
+              <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
+                {t("startDate")}
+              </label>
+              <input
+                id="start-date"
+                type="date"
+                value={state.startDate}
+                onChange={(e) => dispatch({ type: "SET_FIELD", field: "startDate", value: e.target.value })}
+                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
+                {t("endDate")}
+              </label>
+              <input
+                id="end-date"
+                type="date"
+                value={state.endDate}
+                min={state.startDate || undefined}
+                onChange={(e) => dispatch({ type: "SET_FIELD", field: "endDate", value: e.target.value })}
+                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="max-enrollment" className="block text-sm font-medium text-[#374151] mb-1">
+                {t("maxEnrollment")}
+              </label>
+              <input
+                id="max-enrollment"
+                type="number"
+                min={1}
+                max={1000}
+                value={state.maxEnrollment}
+                onChange={(e) => dispatch({ type: "SET_FIELD", field: "maxEnrollment", value: e.target.value ? Number(e.target.value) : "" })}
+                placeholder="1000"
+                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              />
+              <p className="text-xs text-[#9CA3AF] mt-1">{t("maxEnrollmentSelfPacedHint")}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Thumbnail */}

@@ -21,6 +21,7 @@ const deliveryLabels: Record<string, string> = {
   zoom: "Zoom",
   onsite: "On-site",
   blended: "Blended",
+  "self-paced": "Self-paced",
 };
 
 const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {

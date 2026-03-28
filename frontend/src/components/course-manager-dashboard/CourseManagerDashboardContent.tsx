@@ -18,10 +18,16 @@ import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerDashboard } from "@/hooks/useCourseManagerDashboard";
 import { courseManagerApi, ApiError } from "@/lib/api";
 import { useContentReview } from "@/hooks/useContentReview";
+import CertificateQueue from "@/components/instructor-dashboard/CertificateQueue";
+import { transformToCertificateQueue } from "@/lib/instructor-dashboard-transforms";
+import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const tA = useTranslations("accessibility");
+  const locale = useLocale();
+  const router = useRouter();
   const manager = useManagerProfile();
   const { summary, courses, instructors, loading, error, refetch, silentRefetch } =
     useCourseManagerDashboard();
@@ -32,6 +38,29 @@ const CourseManagerDashboardContent = () => {
   useEffect(() => {
     courseManagerApi.getAllCourseRatings().then(setRatingsMap).catch(() => {});
   }, []);
+
+  // ─── Certificate handlers ──────────────────────────────────
+  const certificates = summary ? transformToCertificateQueue(summary.pendingCertificates) : [];
+
+  const handleApproveCertificate = async (id: string) => {
+    await courseManagerApi.approveCertificate(id);
+  };
+
+  const handleHoldCertificate = async (id: string, note: string) => {
+    await courseManagerApi.holdCertificate(id, note);
+  };
+
+  const handleBatchApproveCertificates = async (ids: string[]) => {
+    await courseManagerApi.batchCertificates(ids, "approve");
+  };
+
+  const handleBatchHoldCertificates = async (ids: string[], note: string) => {
+    await courseManagerApi.batchCertificates(ids, "hold", note);
+  };
+
+  const handlePreviewCertificate = () => {
+    router.push(`/${locale}/dashboard/manager/certificates`);
+  };
 
   // Derive KPI data from real courses
   const activeCoursesList = courses.filter((c) => c.status === "active");
@@ -269,6 +298,17 @@ const CourseManagerDashboardContent = () => {
 
             <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
               <CourseStatsWidget data={courseStats} />
+              {certificates.length > 0 && (
+                <CertificateQueue
+                  certificates={certificates}
+                  onApprove={handleApproveCertificate}
+                  onHold={handleHoldCertificate}
+                  onBatchApprove={handleBatchApproveCertificates}
+                  onBatchHold={handleBatchHoldCertificates}
+                  onPreview={handlePreviewCertificate}
+                  onRefresh={refetch}
+                />
+              )}
               <UpcomingSessionsWidget sessions={upcomingSessions} />
               <InstructorsManagementWidget instructors={widgetInstructors} />
             </div>

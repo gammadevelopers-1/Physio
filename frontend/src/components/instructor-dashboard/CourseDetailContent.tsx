@@ -202,7 +202,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     title: "",
     titleAr: "",
     type: "video",
-    durationMinutes: "",
+    durationHours: "" as string,
+    durationMins: "" as string,
   });
   const [moduleSaving, setModuleSaving] = useState(false);
   const [deletingModuleId, setDeletingModuleId] = useState<string | null>(null);
@@ -442,7 +443,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   };
 
   const openAddModule = () => {
-    setModuleForm({ title: "", titleAr: "", type: "video", durationMinutes: "" });
+    setModuleForm({ title: "", titleAr: "", type: "video", durationHours: "", durationMins: "" });
     setModuleModal({ open: true, editing: null });
   };
 
@@ -451,7 +452,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       title: mod.title,
       titleAr: mod.titleAr || "",
       type: mod.type,
-      durationMinutes: mod.durationMinutes ? String(mod.durationMinutes) : "",
+      durationHours: mod.durationMinutes ? String(Math.floor(mod.durationMinutes / 60)) : "",
+      durationMins: mod.durationMinutes ? String(mod.durationMinutes % 60) : "",
     });
     setModuleModal({ open: true, editing: mod });
   };
@@ -465,7 +467,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         type: moduleForm.type,
       };
       if (moduleForm.titleAr.trim()) data.titleAr = moduleForm.titleAr.trim();
-      if (moduleForm.durationMinutes) data.durationMinutes = parseInt(moduleForm.durationMinutes, 10);
+      const totalMins = (parseInt(moduleForm.durationHours) || 0) * 60 + (parseInt(moduleForm.durationMins) || 0);
+      if (totalMins > 0) data.durationMinutes = totalMins;
 
       if (moduleModal.editing) {
         await instructorApi.updateModule(courseId, moduleModal.editing.id, data);
@@ -727,11 +730,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   };
 
   // ─── Tabs ─────────────────────────────────────────────────
+  const isSelfPaced = course?.deliveryType === "self-paced";
+
   const tabs = [
     { id: "overview" as const, label: t("courseDetail.tabs.overview") },
     { id: "modules" as const, label: t("courseDetail.tabs.modules") },
     { id: "students" as const, label: t("courseDetail.tabs.students") },
-    { id: "sessions" as const, label: t("courseDetail.tabs.sessions") },
+    ...(!isSelfPaced ? [{ id: "sessions" as const, label: t("courseDetail.tabs.sessions") }] : []),
     { id: "analytics" as const, label: t("courseDetail.tabs.analytics") },
     { id: "settings" as const, label: t("courseDetail.tabs.settings") },
   ];
@@ -823,17 +828,19 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           <p className="text-xs text-[#6B7280]">{t("courseDetail.students")}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
-                          <Calendar className="w-5 h-5 text-[#D4A520]" />
+                      {!isSelfPaced && (
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
+                            <Calendar className="w-5 h-5 text-[#D4A520]" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-bold text-[#1F2937]">
+                              {sessions.filter((s) => s.status === "completed").length}/{sessions.length}
+                            </p>
+                            <p className="text-xs text-[#6B7280]">{t("courseDetail.sessions")}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-lg font-bold text-[#1F2937]">
-                            {sessions.filter((s) => s.status === "completed").length}/{sessions.length}
-                          </p>
-                          <p className="text-xs text-[#6B7280]">{t("courseDetail.sessions")}</p>
-                        </div>
-                      </div>
+                      )}
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                           <BarChart3 className="w-5 h-5 text-[#22C55E]" />
@@ -1754,14 +1761,31 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.moduleDuration")}</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={moduleForm.durationMinutes}
-                  onChange={(e) => setModuleForm((f) => ({ ...f, durationMinutes: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                  placeholder="60"
-                />
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      value={moduleForm.durationHours}
+                      onChange={(e) => setModuleForm((f) => ({ ...f, durationHours: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      placeholder="1"
+                    />
+                    <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("courseDetail.hours")}</span>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={moduleForm.durationMins}
+                      onChange={(e) => setModuleForm((f) => ({ ...f, durationMins: e.target.value }))}
+                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      placeholder="30"
+                    />
+                    <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("courseDetail.minutes")}</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">

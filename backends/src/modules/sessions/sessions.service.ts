@@ -901,6 +901,9 @@ export class SessionsService {
     // Auto-create absent records for any enrolled students still missing
     await this.autoCreateAbsentRecords(sessionId, updated.courseId);
 
+    // Recalculate attendance-based progress for sync courses (zoom/onsite)
+    await this.recalcAttendanceProgress(updated.courseId);
+
     await this.auditLogService.log({
       entityType: 'session',
       entityId: updated.id,
@@ -1007,6 +1010,93 @@ export class SessionsService {
       );
       // Log full error stack for debugging
       if (error?.stack) this.logger.error(error.stack);
+    }
+  }
+
+  /**
+   * Recalculate enrollment progress based on attendance for synchronous courses.
+   * For zoom/onsite: progress = (sessions attended / total completed sessions) * 100
+   * For blended/self-paced: progress is module-based, not updated here.
+   */
+  private async recalcAttendanceProgress(courseId: string): Promise<void> {
+    try {
+      // Only recalculate for zoom/onsite courses
+      const [course] = await db
+        .select({ deliveryType: courses.deliveryType })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+
+      if (!course || course.deliveryType === 'self-paced' || course.deliveryType === 'blended') {
+        return; // Module-based progress, handled by completeModule()
+      }
+
+      // Get total completed (finalized) sessions for this course
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            eq(sessions.status, SESSION_STATUS.COMPLETED),
+          ),
+        );
+      const totalSessions = Number(totalResult?.count || 0);
+      if (totalSessions === 0) return;
+
+      // Get all active enrolled students
+      const enrolledStudents = await db
+        .select({ id: enrollments.id, studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, courseId),
+            sql`${enrollments.status} IN ('active', 'completed')`,
+          ),
+        );
+
+      if (enrolledStudents.length === 0) return;
+
+      // Get all completed session IDs
+      const completedSessions = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            eq(sessions.status, SESSION_STATUS.COMPLETED),
+          ),
+        );
+      const sessionIds = completedSessions.map((s) => s.id);
+
+      // For each student, count attended sessions and update progress
+      for (const enrollment of enrolledStudents) {
+        const [attendedResult] = await db
+          .select({ count: count() })
+          .from(attendance)
+          .where(
+            and(
+              sql`${attendance.sessionId} IN (${sql.join(sessionIds.map(id => sql`${id}`), sql`, `)})`,
+              eq(attendance.studentId, enrollment.studentId),
+              sql`${attendance.status} IN ('present', 'late')`,
+            ),
+          );
+        const attended = Number(attendedResult?.count || 0);
+        const progress = Math.min(Math.round((attended / totalSessions) * 100), 100);
+
+        await db
+          .update(enrollments)
+          .set({ progress, lastAccessedAt: new Date() })
+          .where(eq(enrollments.id, enrollment.id));
+      }
+
+      this.logger.log(
+        `[recalcProgress] Updated attendance-based progress for ${enrolledStudents.length} student(s) in course ${courseId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to recalculate attendance progress for course ${courseId}: ${error?.message || error}`,
+      );
     }
   }
 

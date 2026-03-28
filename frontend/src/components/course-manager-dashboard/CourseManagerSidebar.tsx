@@ -18,6 +18,7 @@ import {
   Settings,
   Pencil,
   Briefcase,
+  Award,
   Upload,
   Trash2,
 } from "lucide-react";
@@ -122,6 +123,11 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
       label: t("sidebar.assessments"),
       href: `/${locale}/dashboard/manager/assessments`,
       icon: ClipboardCheck,
+    },
+    {
+      label: t("sidebar.certificates") || "Certificates",
+      href: `/${locale}/dashboard/manager/certificates`,
+      icon: Award,
     },
     {
       label: t("sidebar.nelcCompliance") || "NELC Compliance",

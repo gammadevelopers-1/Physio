@@ -57,7 +57,7 @@ export const courses = pgTable(
     index('courses_status_idx').on(table.status),
     check(
       'courses_delivery_type_check',
-      sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended')`,
+      sql`${table.deliveryType} IN ('zoom', 'onsite', 'blended', 'self-paced')`,
     ),
     check(
       'courses_status_check',
@@ -98,6 +98,7 @@ export const DELIVERY_TYPE = {
   ZOOM: 'zoom',
   ONSITE: 'onsite',
   BLENDED: 'blended',
+  SELF_PACED: 'self-paced',
 } as const;
 
 export type DeliveryType =

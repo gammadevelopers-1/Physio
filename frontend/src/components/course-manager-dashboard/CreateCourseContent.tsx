@@ -111,7 +111,7 @@ const CreateCourseContent = () => {
   const [description, setDescription] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
   const [deliveryType, setDeliveryType] = useState<
-    "zoom" | "onsite" | "blended"
+    "zoom" | "onsite" | "blended" | "self-paced"
   >("zoom");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -396,7 +396,7 @@ const CreateCourseContent = () => {
                           value={deliveryType}
                           onChange={(e) =>
                             setDeliveryType(
-                              e.target.value as "zoom" | "onsite" | "blended",
+                              e.target.value as "zoom" | "onsite" | "blended" | "self-paced",
                             )
                           }
                           className={selectClass}
@@ -409,6 +409,9 @@ const CreateCourseContent = () => {
                           </option>
                           <option value="blended">
                             {t("createCourse.deliveryBlended")}
+                          </option>
+                          <option value="self-paced">
+                            {t("createCourse.deliverySelfPaced")}
                           </option>
                         </select>
                       </div>

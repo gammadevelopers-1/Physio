@@ -19,6 +19,7 @@ import {
   X,
   Pencil,
   Briefcase,
+  Award,
   Upload,
   Trash2,
 } from "lucide-react";
@@ -127,6 +128,11 @@ const CourseManagerMobileSidebar = ({
       label: t("sidebar.assessments"),
       href: `/${locale}/dashboard/manager/assessments`,
       icon: ClipboardCheck,
+    },
+    {
+      label: t("sidebar.certificates") || "Certificates",
+      href: `/${locale}/dashboard/manager/certificates`,
+      icon: Award,
     },
     {
       label: t("sidebar.nelcCompliance") || "NELC Compliance",

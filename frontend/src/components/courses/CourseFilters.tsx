@@ -75,6 +75,7 @@ const CourseFilters = ({
       zoom: t("filters.zoom"),
       onsite: t("filters.onsite"),
       blended: t("filters.blended"),
+      "self-paced": t("filters.selfPaced"),
     };
     return typeMap[type] || type;
   };

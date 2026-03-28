@@ -1383,7 +1383,7 @@ export interface CreateCourseManagerData {
   titleAr?: string;
   description?: string;
   descriptionAr?: string;
-  deliveryType: 'zoom' | 'onsite' | 'blended';
+  deliveryType: 'zoom' | 'onsite' | 'blended' | 'self-paced';
   thumbnail?: string;
   maxEnrollment?: number;
   cmeHours?: number;
@@ -1758,6 +1758,49 @@ export const courseManagerApi = {
 
   removeMaterial: (materialId: string, reason?: string) =>
     api.delete<{ message: string }>(`/materials/${materialId}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
+
+  // Certificates (manager sees only courses where managerId = their userId)
+  getCertificates: (params?: { courseId?: string; status?: string; page?: number; limit?: number }) => {
+    const sp = new URLSearchParams();
+    if (params?.courseId && params.courseId !== 'all') sp.set('courseId', params.courseId);
+    if (params?.status && params.status !== 'all') sp.set('status', params.status);
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    const qs = sp.toString();
+    return api.get<CertificateListResponse>(`/instructor/certificates${qs ? `?${qs}` : ''}`);
+  },
+
+  getCertificateDetail: (id: string) =>
+    api.get<CertificateRequestResponse>(`/certificates/${id}`),
+
+  approveCertificate: (id: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/approve`, {}),
+
+  rejectCertificate: (id: string, note: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/reject`, { note }),
+
+  holdCertificate: (id: string, note: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/hold`, { note }),
+
+  revokeCertificate: (id: string, reason: string) =>
+    api.patch<CertificateRequestResponse>(`/certificates/${id}/revoke`, { reason }),
+
+  batchCertificates: (ids: string[], action: 'approve' | 'reject' | 'hold', note?: string) =>
+    api.post<BatchCertificateResult>('/certificates/batch', { ids, action, note }),
+
+  downloadCertificate: async (certId: string) => {
+    const blob = await fetchBlob(`/certificates/${certId}/download`);
+    downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);
+  },
+
+  batchDownloadCertificates: async (ids: string[]) => {
+    const blob = await fetchBlob(`/certificates/batch-download`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    } as FetchOptions);
+    downloadBlob(blob, `certificates-${new Date().toISOString().split('T')[0]}.zip`);
+  },
 };
 
 // ===========================================

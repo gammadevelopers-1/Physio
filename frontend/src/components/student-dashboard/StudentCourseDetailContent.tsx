@@ -334,50 +334,52 @@ const StudentCourseDetailContent = () => {
                       </div>
                     </div>
 
-                    {/* Attendance */}
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            data.attendanceSummary &&
-                            data.attendanceSummary.percentage >= 70
-                              ? "bg-[#F0FDF4]"
-                              : "bg-[#FEF2F2]"
-                          }`}
-                        >
-                          <UserCheck
-                            className={`w-5 h-5 ${
+                    {/* Attendance — hidden for self-paced */}
+                    {data.course.deliveryType !== "self-paced" && (
+                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                               data.attendanceSummary &&
                               data.attendanceSummary.percentage >= 70
-                                ? "text-[#16A34A]"
-                                : "text-[#DC2626]"
+                                ? "bg-[#F0FDF4]"
+                                : "bg-[#FEF2F2]"
                             }`}
-                          />
-                        </div>
-                        <div>
-                          <p className="text-xs text-[#6B7280]">
-                            {t("courseDetail.attendance")}
-                          </p>
-                          <p className="text-lg font-semibold text-[#1F2937]">
-                            {data.attendanceSummary
-                              ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total}`
-                              : "0/0"}
-                          </p>
-                          {data.attendanceSummary &&
-                            data.attendanceSummary.total > 0 && (
-                              <p
-                                className={`text-xs ${
-                                  data.attendanceSummary.percentage >= 70
-                                    ? "text-[#16A34A]"
-                                    : "text-[#DC2626]"
-                                }`}
-                              >
-                                {data.attendanceSummary.percentage}%
-                              </p>
-                            )}
+                          >
+                            <UserCheck
+                              className={`w-5 h-5 ${
+                                data.attendanceSummary &&
+                                data.attendanceSummary.percentage >= 70
+                                  ? "text-[#16A34A]"
+                                  : "text-[#DC2626]"
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs text-[#6B7280]">
+                              {t("courseDetail.attendance")}
+                            </p>
+                            <p className="text-lg font-semibold text-[#1F2937]">
+                              {data.attendanceSummary
+                                ? `${data.attendanceSummary.attended}/${data.attendanceSummary.total}`
+                                : "0/0"}
+                            </p>
+                            {data.attendanceSummary &&
+                              data.attendanceSummary.total > 0 && (
+                                <p
+                                  className={`text-xs ${
+                                    data.attendanceSummary.percentage >= 70
+                                      ? "text-[#16A34A]"
+                                      : "text-[#DC2626]"
+                                  }`}
+                                >
+                                  {data.attendanceSummary.percentage}%
+                                </p>
+                              )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Assessments */}
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
@@ -518,8 +520,8 @@ const StudentCourseDetailContent = () => {
                     )}
                   </div>
 
-                  {/* Attendance History */}
-                  {data.attendanceRecords && data.attendanceRecords.length > 0 && (
+                  {/* Attendance History — hidden for self-paced */}
+                  {data.course.deliveryType !== "self-paced" && data.attendanceRecords && data.attendanceRecords.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] mb-4">
                       <button
                         onClick={() => setShowAttendanceHistory(!showAttendanceHistory)}
@@ -606,8 +608,8 @@ const StudentCourseDetailContent = () => {
                     </div>
                   )}
 
-                  {/* Upcoming Sessions */}
-                  {upcomingSessions.length > 0 && (
+                  {/* Upcoming Sessions (hidden for self-paced) */}
+                  {data.course.deliveryType !== "self-paced" && upcomingSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                         {t("courseDetail.upcomingSessions")}
@@ -672,8 +674,8 @@ const StudentCourseDetailContent = () => {
                     </div>
                   )}
 
-                  {/* Past Sessions (Completed) */}
-                  {completedSessions.length > 0 && (
+                  {/* Past Sessions — hidden for self-paced */}
+                  {data.course.deliveryType !== "self-paced" && completedSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                         {t("courseDetail.pastSessions")} ({completedSessions.length})
@@ -736,8 +738,8 @@ const StudentCourseDetailContent = () => {
                     </div>
                   )}
 
-                  {/* Missed/Rescheduled Lectures */}
-                  {inactiveSessions.length > 0 && (
+                  {/* Missed/Rescheduled Lectures — hidden for self-paced */}
+                  {data.course.deliveryType !== "self-paced" && inactiveSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#6B7280] mb-4">
                         Cancelled / Rescheduled Lectures

@@ -107,19 +107,9 @@ const InstructorSidebar = ({ instructor }: InstructorSidebarProps) => {
       icon: ClipboardCheck,
     },
     {
-      label: t("sidebar.certificates"),
-      href: `/${locale}/dashboard/instructor/certificates`,
-      icon: Award,
-    },
-    {
       label: t("sidebar.content"),
       href: `/${locale}/dashboard/instructor/content`,
       icon: Upload,
-    },
-    {
-      label: t("sidebar.reports"),
-      href: `/${locale}/dashboard/instructor/reports`,
-      icon: BarChart3,
     },
     {
       label: t("sidebar.settings"),

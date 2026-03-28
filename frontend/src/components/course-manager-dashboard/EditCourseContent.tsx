@@ -45,7 +45,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [titleAr, setTitleAr] = useState("");
   const [description, setDescription] = useState("");
   const [descriptionAr, setDescriptionAr] = useState("");
-  const [deliveryType, setDeliveryType] = useState<"zoom" | "onsite" | "blended">("zoom");
+  const [deliveryType, setDeliveryType] = useState<"zoom" | "onsite" | "blended" | "self-paced">("zoom");
   const [maxEnrollment, setMaxEnrollment] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -76,7 +76,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setTitleAr(courseData.titleAr || "");
         setDescription(courseData.description || "");
         setDescriptionAr(courseData.descriptionAr || "");
-        setDeliveryType(courseData.deliveryType as "zoom" | "onsite" | "blended");
+        setDeliveryType(courseData.deliveryType as "zoom" | "onsite" | "blended" | "self-paced");
         setMaxEnrollment(courseData.maxEnrollment?.toString() || "");
         setInstructorId(courseData.instructorId);
         setOriginalInstructorId(courseData.instructorId);
@@ -420,7 +420,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={deliveryType}
                         onChange={(e) =>
                           setDeliveryType(
-                            e.target.value as "zoom" | "onsite" | "blended"
+                            e.target.value as "zoom" | "onsite" | "blended" | "self-paced"
                           )
                         }
                         className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
@@ -433,6 +433,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         </option>
                         <option value="blended">
                           {t("createCourse.deliveryBlended")}
+                        </option>
+                        <option value="self-paced">
+                          {t("createCourse.deliverySelfPaced")}
                         </option>
                       </select>
                     </div>

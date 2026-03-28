@@ -19,7 +19,18 @@ const typeIcons: Record<string, React.ReactNode> = {
   mixed: <Layers className="w-4 h-4" />,
 };
 
-const emptyForm = { title: "", titleAr: "", type: "video", durationMinutes: "" as number | "" };
+const emptyForm = { title: "", titleAr: "", type: "video", durationHours: "" as number | "", durationMins: "" as number | "" };
+
+const toTotalMinutes = (hours: number | "", mins: number | ""): number | "" => {
+  const h = typeof hours === "number" ? hours : 0;
+  const m = typeof mins === "number" ? mins : 0;
+  return h === 0 && m === 0 && hours === "" && mins === "" ? "" : h * 60 + m;
+};
+
+const fromTotalMinutes = (total: number | ""): { hours: number | ""; mins: number | "" } => {
+  if (total === "" || total === 0) return { hours: "", mins: "" };
+  return { hours: Math.floor(total / 60) || "", mins: total % 60 || "" };
+};
 
 const Step3Modules = ({ state, dispatch }: Step3Props) => {
   const t = useTranslations("instructorDashboard.createCourse");
@@ -28,6 +39,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
 
   const handleAdd = () => {
     if (!form.title.trim()) return;
+    const totalMinutes = toTotalMinutes(form.durationHours, form.durationMins);
     if (editingId) {
       dispatch({
         type: "UPDATE_MODULE",
@@ -36,7 +48,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
           title: form.title.trim(),
           titleAr: form.titleAr.trim(),
           type: form.type,
-          durationMinutes: form.durationMinutes,
+          durationMinutes: totalMinutes,
         },
       });
       setEditingId(null);
@@ -48,7 +60,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
           title: form.title.trim(),
           titleAr: form.titleAr.trim(),
           type: form.type,
-          durationMinutes: form.durationMinutes,
+          durationMinutes: totalMinutes,
         },
       });
     }
@@ -57,11 +69,13 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
 
   const handleEdit = (mod: WizardModule) => {
     setEditingId(mod.tempId);
+    const { hours, mins } = fromTotalMinutes(mod.durationMinutes);
     setForm({
       title: mod.title,
       titleAr: mod.titleAr,
       type: mod.type,
-      durationMinutes: mod.durationMinutes,
+      durationHours: hours,
+      durationMins: mins,
     });
   };
 
@@ -131,23 +145,46 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
             </select>
           </div>
           <div>
-            <label htmlFor="module-duration" className="block text-sm font-medium text-[#374151] mb-1">
+            <label className="block text-sm font-medium text-[#374151] mb-1">
               {t("moduleDuration")}
             </label>
-            <input
-              id="module-duration"
-              type="number"
-              min={0}
-              value={form.durationMinutes}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  durationMinutes: e.target.value ? parseInt(e.target.value) : "",
-                }))
-              }
-              placeholder="60"
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-            />
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <input
+                  id="module-duration-hours"
+                  type="number"
+                  min={0}
+                  value={form.durationHours}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      durationHours: e.target.value ? parseInt(e.target.value) : "",
+                    }))
+                  }
+                  placeholder="1"
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                />
+                <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("hours")}</span>
+              </div>
+              <div className="flex-1">
+                <input
+                  id="module-duration-mins"
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={form.durationMins}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      durationMins: e.target.value ? parseInt(e.target.value) : "",
+                    }))
+                  }
+                  placeholder="30"
+                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                />
+                <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("minutes")}</span>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-3">
@@ -198,7 +235,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                 </p>
                 <p className="text-xs text-[#6B7280]">
                   {t(`moduleTypes.${mod.type}`)}
-                  {mod.durationMinutes ? ` \u00B7 ${mod.durationMinutes} min` : ""}
+                  {mod.durationMinutes ? ` \u00B7 ${Math.floor(Number(mod.durationMinutes) / 60) > 0 ? `${Math.floor(Number(mod.durationMinutes) / 60)}h ` : ""}${Number(mod.durationMinutes) % 60}m` : ""}
                 </p>
               </div>
               <div className="flex items-center gap-1">

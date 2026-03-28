@@ -1052,7 +1052,27 @@ export class StudentService {
       }
     }
 
-    // Module completion — increment enrollment progress
+    // Fetch course delivery type to determine progress calculation method
+    const [courseForProgress] = await db
+      .select({ deliveryType: courses.deliveryType })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    const deliveryType = courseForProgress?.deliveryType;
+
+    // For zoom/onsite courses: progress is attendance-based (calculated on session finalize)
+    // Module completion is supplementary and should NOT override attendance progress
+    if (deliveryType === 'zoom' || deliveryType === 'onsite') {
+      const [updated] = await db
+        .update(enrollments)
+        .set({ lastAccessedAt: new Date() })
+        .where(eq(enrollments.id, enrollment.id))
+        .returning();
+      return updated;
+    }
+
+    // For self-paced and blended: progress is module-based
     const [moduleCount] = await db
       .select({ count: count() })
       .from(courseModules)
@@ -1065,8 +1085,6 @@ export class StudentService {
       100,
     );
 
-    // Update progress only — enrollment stays 'active' until instructor
-    // or system (end date) marks the course as completed
     const [updated] = await db
       .update(enrollments)
       .set({

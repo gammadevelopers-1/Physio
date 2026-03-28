@@ -5,17 +5,20 @@ import { Check } from "lucide-react";
 
 interface WizardStepIndicatorProps {
   currentStep: 1 | 2 | 3 | 4;
+  skipStep2?: boolean;
 }
 
-const WizardStepIndicator = ({ currentStep }: WizardStepIndicatorProps) => {
+const WizardStepIndicator = ({ currentStep, skipStep2 }: WizardStepIndicatorProps) => {
   const t = useTranslations("instructorDashboard.createCourse");
 
-  const steps = [
+  const allSteps = [
     { number: 1, label: t("wizardStep1") },
     { number: 2, label: t("wizardStep2") },
     { number: 3, label: t("wizardStep3") },
     { number: 4, label: t("wizardStep4") },
   ];
+
+  const steps = skipStep2 ? allSteps.filter((s) => s.number !== 2) : allSteps;
 
   return (
     <div className="flex items-center justify-between mb-8">
@@ -35,7 +38,7 @@ const WizardStepIndicator = ({ currentStep }: WizardStepIndicatorProps) => {
                       : "bg-[#E5E7EB] text-[#9CA3AF]"
                 }`}
               >
-                {isCompleted ? <Check className="w-4 h-4" /> : step.number}
+                {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
               </div>
               <span
                 className={`mt-1.5 text-xs font-medium text-center whitespace-nowrap ${

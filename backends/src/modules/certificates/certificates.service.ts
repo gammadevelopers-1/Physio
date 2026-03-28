@@ -72,33 +72,48 @@ export class CertificatesService {
     assessmentPassed: boolean;
     courseCompleted: boolean;
   }> {
-    // 1. Attendance percentage
-    // Get all sessions for this course
-    const courseSessions = await db
-      .select({ id: sessions.id })
-      .from(sessions)
-      .where(eq(sessions.courseId, courseId));
+    // Fetch course delivery type to apply correct eligibility rules
+    const [course] = await db
+      .select({ deliveryType: courses.deliveryType })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
 
+    const isSelfPaced = course?.deliveryType === 'self-paced';
+    const isBlended = course?.deliveryType === 'blended';
+
+    // 1. Attendance percentage
+    // Self-paced: no sessions → attendance N/A (auto-pass)
+    // Synchronous/Blended: (present + late) / total sessions * 100
     let attendancePercent = '0.00';
 
-    if (courseSessions.length > 0) {
-      const sessionIds = courseSessions.map((s) => s.id);
+    if (isSelfPaced) {
+      // Self-paced courses have no live sessions; attendance is not applicable
+      attendancePercent = '100.00';
+    } else {
+      const courseSessions = await db
+        .select({ id: sessions.id })
+        .from(sessions)
+        .where(eq(sessions.courseId, courseId));
 
-      // Count attendance records where status is 'present' or 'late'
-      const [attendedResult] = await db
-        .select({ count: count() })
-        .from(attendance)
-        .where(
-          and(
-            inArray(attendance.sessionId, sessionIds),
-            eq(attendance.studentId, studentId),
-            sql`${attendance.status} IN ('present', 'late')`,
-          ),
-        );
+      if (courseSessions.length > 0) {
+        const sessionIds = courseSessions.map((s) => s.id);
 
-      const attended = Number(attendedResult?.count ?? 0);
-      const total = courseSessions.length;
-      attendancePercent = ((attended / total) * 100).toFixed(2);
+        const [attendedResult] = await db
+          .select({ count: count() })
+          .from(attendance)
+          .where(
+            and(
+              inArray(attendance.sessionId, sessionIds),
+              eq(attendance.studentId, studentId),
+              sql`${attendance.status} IN ('present', 'late')`,
+            ),
+          );
+
+        const attended = Number(attendedResult?.count ?? 0);
+        const total = courseSessions.length;
+        attendancePercent = ((attended / total) * 100).toFixed(2);
+      }
     }
 
     // 2. Assessment passed — student must have passed ALL published assessments for this course
@@ -120,7 +135,6 @@ export class CertificatesService {
 
     if (courseAssessments.length > 0) {
       for (const assessment of courseAssessments) {
-        // Get the best graded submission for this student on this assessment
         const [bestSubmission] = await db
           .select({ score: submissions.score })
           .from(submissions)
@@ -135,7 +149,6 @@ export class CertificatesService {
           .limit(1);
 
         if (!bestSubmission) {
-          // No graded submission → not passed
           assessmentPassed = false;
           break;
         }
@@ -148,7 +161,7 @@ export class CertificatesService {
       }
     }
 
-    // 3. Course completed — enrollment status is 'completed' (set by instructor or end-date cron)
+    // 3. Course completion
     const [enrollment] = await db
       .select({ status: enrollments.status, progress: enrollments.progress })
       .from(enrollments)
@@ -160,7 +173,20 @@ export class CertificatesService {
       )
       .limit(1);
 
-    const courseCompleted = enrollment ? enrollment.status === 'completed' : false;
+    let courseCompleted = false;
+
+    if (isSelfPaced) {
+      // Self-paced: 100% module completion required
+      courseCompleted = enrollment ? enrollment.progress >= 100 : false;
+    } else if (isBlended) {
+      // Blended: enrollment completed AND 100% module progress
+      courseCompleted = enrollment
+        ? enrollment.status === 'completed' && enrollment.progress >= 100
+        : false;
+    } else {
+      // Synchronous (zoom/onsite): enrollment status is 'completed'
+      courseCompleted = enrollment ? enrollment.status === 'completed' : false;
+    }
 
     return { attendancePercent, assessmentPassed, courseCompleted };
   }
@@ -436,30 +462,51 @@ export class CertificatesService {
       );
     }
 
-    // TODO: Re-enable eligibility check after testing
-    // const eligibility = await this.computeEligibility(
-    //   request.courseId,
-    //   request.studentId,
-    // );
-    //
-    // const errors: string[] = [];
-    // if (parseFloat(eligibility.attendancePercent) < 70) {
-    //   errors.push(
-    //     `Attendance is ${eligibility.attendancePercent}% (minimum 70% required)`,
-    //   );
-    // }
-    // if (!eligibility.assessmentPassed) {
-    //   errors.push('Student has not passed all required assessments');
-    // }
-    // if (!eligibility.courseCompleted) {
-    //   errors.push('Course completion is not 100%');
-    // }
-    //
-    // if (errors.length > 0) {
-    //   throw new BadRequestException(
-    //     `Cannot approve: ${errors.join('; ')}`,
-    //   );
-    // }
+    // Eligibility check — rules vary by delivery type:
+    // Self-paced: 100% module completion + assessments passed
+    // Synchronous: ≥70% lecture attendance + assessments passed + course completed
+    // Blended: ≥70% attendance + 100% module completion + assessments passed
+    const eligibility = await this.computeEligibility(
+      request.courseId,
+      request.studentId,
+    );
+
+    // Fetch delivery type for context-aware error messages
+    const [courseForCheck] = await db
+      .select({ deliveryType: courses.deliveryType })
+      .from(courses)
+      .where(eq(courses.id, request.courseId))
+      .limit(1);
+    const isSelfPacedCourse = courseForCheck?.deliveryType === 'self-paced';
+
+    const errors: string[] = [];
+
+    // Attendance check — skip for self-paced (no live sessions)
+    if (!isSelfPacedCourse && parseFloat(eligibility.attendancePercent) < 70) {
+      errors.push(
+        `Attendance is ${eligibility.attendancePercent}% (minimum 70% required)`,
+      );
+    }
+
+    // Assessments — gate for certificate (all delivery types)
+    if (!eligibility.assessmentPassed) {
+      errors.push('Student has not passed all required assessments');
+    }
+
+    // Completion check
+    if (!eligibility.courseCompleted) {
+      if (isSelfPacedCourse) {
+        errors.push('Student has not completed all modules (100% required)');
+      } else {
+        errors.push('Course completion is not 100%');
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException(
+        `Cannot approve: ${errors.join('; ')}`,
+      );
+    }
 
     // Check SCFHS number before issuing certificate
     const [studentForScfhs] = await db

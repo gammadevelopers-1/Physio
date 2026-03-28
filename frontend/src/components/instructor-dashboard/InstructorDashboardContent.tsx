@@ -15,7 +15,6 @@ import InstructorTabs from "./InstructorTabs";
 import InstructorNotificationsWidget from "./InstructorNotificationsWidget";
 import InstructorCalendarWidget from "./InstructorCalendarWidget";
 import AtRiskLearners from "./AtRiskLearners";
-import CertificateQueue from "./CertificateQueue";
 import SessionsCalendarWidget from "./SessionsCalendarWidget";
 import AssessmentAnalysisWidget from "./AssessmentAnalysisWidget";
 import RecentFeedbackWidget from "./RecentFeedbackWidget";
@@ -32,7 +31,6 @@ import {
   transformToCalendarSessions,
   transformToCalendarEvents,
   transformToAtRiskLearners,
-  transformToCertificateQueue,
   transformToCourseOptions,
 } from "@/lib/instructor-dashboard-transforms";
 
@@ -63,26 +61,6 @@ const InstructorDashboardContent = () => {
 
   const handleRefreshNotifications = () => {
     refetch();
-  };
-
-  const handleApproveCertificate = async (id: string) => {
-    await instructorApi.approveCertificate(id);
-  };
-
-  const handleHoldCertificate = async (id: string, note: string) => {
-    await instructorApi.holdCertificate(id, note);
-  };
-
-  const handleBatchApproveCertificates = async (ids: string[]) => {
-    await instructorApi.batchCertificates(ids, "approve");
-  };
-
-  const handleBatchHoldCertificates = async (ids: string[], note: string) => {
-    await instructorApi.batchCertificates(ids, "hold", note);
-  };
-
-  const handlePreviewCertificate = (id: string) => {
-    router.push(`/${locale}/dashboard/instructor/certificates`);
   };
 
   const handleStartSession = async (sessionId: string) => {
@@ -182,7 +160,6 @@ const InstructorDashboardContent = () => {
   const calendarSessions = dashboard ? transformToCalendarSessions([...dashboard.todaySessions, ...dashboard.upcomingSessions]) : [];
   const calendarEvents = dashboard ? transformToCalendarEvents(dashboard.todaySessions) : [];
   const atRiskLearners = dashboard ? transformToAtRiskLearners(dashboard.atRiskLearners) : [];
-  const certificates = dashboard ? transformToCertificateQueue(dashboard.pendingCertificates) : [];
   const courseOptions = dashboard ? transformToCourseOptions(dashboard.activeCourses) : [{ value: "all", label: t("performance.allCourses") }];
 
   return (
@@ -287,17 +264,6 @@ const InstructorDashboardContent = () => {
 
               {/* Assessments Needing Attention */}
               <AssessmentsNeedingAttention submissions={pendingSubmissions} />
-
-              {/* Pending Certificates */}
-              <CertificateQueue
-                certificates={certificates}
-                onApprove={handleApproveCertificate}
-                onHold={handleHoldCertificate}
-                onBatchApprove={handleBatchApproveCertificates}
-                onBatchHold={handleBatchHoldCertificates}
-                onPreview={handlePreviewCertificate}
-                onRefresh={refetch}
-              />
             </div>
           </div>
         </div>

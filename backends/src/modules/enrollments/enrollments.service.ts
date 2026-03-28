@@ -83,12 +83,26 @@ export class EnrollmentsService {
     }
 
     // 2. Classify course and determine effective max
-    const classification = classifyCourse(course.startDate, course.endDate);
-    const nelcMax = getNelcMaxEnrollment(classification);
-    // NELC rule: manual maxEnrollment can be lower but NEVER exceed NELC max
-    const effectiveMax = course.maxEnrollment
-      ? Math.min(course.maxEnrollment, nelcMax)
-      : nelcMax;
+    // Self-paced courses: no NELC live-session limit, hard cap at 1000
+    // Synchronous/Blended: NELC limits apply (40 long, 50 short)
+    const isSelfPaced = course.deliveryType === 'self-paced';
+    const SELF_PACED_MAX = 1000;
+
+    let effectiveMax: number;
+    let classification: 'long' | 'short' = 'short';
+
+    if (isSelfPaced) {
+      effectiveMax = course.maxEnrollment
+        ? Math.min(course.maxEnrollment, SELF_PACED_MAX)
+        : SELF_PACED_MAX;
+    } else {
+      classification = classifyCourse(course.startDate, course.endDate);
+      const nelcMax = getNelcMaxEnrollment(classification);
+      // NELC rule: manual maxEnrollment can be lower but NEVER exceed NELC max
+      effectiveMax = course.maxEnrollment
+        ? Math.min(course.maxEnrollment, nelcMax)
+        : nelcMax;
+    }
 
     // 3. Count current active enrollments
     const [countResult] = await db

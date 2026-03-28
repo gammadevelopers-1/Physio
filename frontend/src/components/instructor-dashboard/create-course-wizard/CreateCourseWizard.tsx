@@ -29,7 +29,7 @@ export interface WizardState {
   titleAr: string;
   description: string;
   descriptionAr: string;
-  deliveryType: "zoom" | "onsite" | "blended";
+  deliveryType: "zoom" | "onsite" | "blended" | "self-paced";
   thumbnail: string;
   thumbnailUploading: boolean;
   // Step 2 - Schedule
@@ -104,6 +104,8 @@ const CreateCourseWizard = () => {
   const locale = useLocale();
   const t = useTranslations("instructorDashboard.createCourse");
 
+  const isSelfPaced = state.deliveryType === "self-paced";
+
   const handleNext = () => {
     if (state.step === 1) {
       if (!state.title.trim()) {
@@ -111,6 +113,10 @@ const CreateCourseWizard = () => {
         return;
       }
       if (state.thumbnailUploading) return;
+      if (state.endDate && state.startDate && new Date(state.endDate) <= new Date(state.startDate)) {
+        toast.error(t("endDateError"));
+        return;
+      }
     }
     if (state.step === 2) {
       if (state.endDate && state.startDate && new Date(state.endDate) <= new Date(state.startDate)) {
@@ -119,13 +125,19 @@ const CreateCourseWizard = () => {
       }
     }
     if (state.step < 4) {
-      dispatch({ type: "SET_STEP", step: (state.step + 1) as 1 | 2 | 3 | 4 });
+      let nextStep = (state.step + 1) as 1 | 2 | 3 | 4;
+      // Skip Step 2 (Schedule) for self-paced courses
+      if (isSelfPaced && nextStep === 2) nextStep = 3;
+      dispatch({ type: "SET_STEP", step: nextStep });
     }
   };
 
   const handleBack = () => {
     if (state.step > 1) {
-      dispatch({ type: "SET_STEP", step: (state.step - 1) as 1 | 2 | 3 | 4 });
+      let prevStep = (state.step - 1) as 1 | 2 | 3 | 4;
+      // Skip Step 2 (Schedule) for self-paced courses
+      if (isSelfPaced && prevStep === 2) prevStep = 1;
+      dispatch({ type: "SET_STEP", step: prevStep });
     } else {
       router.back();
     }
@@ -193,7 +205,7 @@ const CreateCourseWizard = () => {
       <h1 className="text-2xl font-bold text-[#1F2937] mb-6">{t("title")}</h1>
 
       {/* Step Indicator */}
-      <WizardStepIndicator currentStep={state.step} />
+      <WizardStepIndicator currentStep={state.step} skipStep2={isSelfPaced} />
 
       {/* Step Content */}
       {state.step === 1 && <Step1BasicInfo state={state} dispatch={dispatch} />}

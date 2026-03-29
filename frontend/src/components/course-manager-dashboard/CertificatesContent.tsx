@@ -52,10 +52,11 @@ interface ReviewModalProps {
   courseName: string;
   onClose: () => void;
   onAction: () => void;
+  onApproveConfirm?: (cert: CertificateRequestResponse) => void;
   t: ReturnType<typeof useTranslations>;
 }
 
-const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProps) => {
+const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t }: ReviewModalProps) => {
   const [note, setNote] = useState(cert.reviewNote || "");
   const [processing, setProcessing] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -78,6 +79,11 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
     setActiveAction(action);
     try {
       if (action === "approve") {
+        if (onApproveConfirm) {
+          onApproveConfirm(cert);
+          onClose();
+          return;
+        }
         await courseManagerApi.approveCertificate(cert.id);
         toast.success(t("certificates.approveSuccess"));
       } else if (action === "reject") {
@@ -339,10 +345,20 @@ const CertificatesContent = () => {
   const [revokeReason, setRevokeReason] = useState("");
   const [revokeProcessing, setRevokeProcessing] = useState(false);
 
-  // ── Course name lookup ───────────────────────────────────
+  // Approval confirmation
+  const [confirmingApproval, setConfirmingApproval] = useState<CertificateRequestResponse | null>(null);
+  const [approvalProcessing, setApprovalProcessing] = useState(false);
+
+  // ── Course lookups ───────────────────────────────────
   const courseNameMap = useMemo(() => {
     const map: Record<string, string> = {};
     courses.forEach((c) => { map[c.id] = c.title; });
+    return map;
+  }, [courses]);
+
+  const courseDeliveryMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    courses.forEach((c) => { map[c.id] = c.deliveryType; });
     return map;
   }, [courses]);
 
@@ -471,15 +487,30 @@ const CertificatesContent = () => {
   };
 
   // ── Quick actions (inline) ───────────────────────────────
-  const quickApprove = async (cert: CertificateRequestResponse) => {
+  const quickApprove = (cert: CertificateRequestResponse) => {
+    setConfirmingApproval(cert);
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!confirmingApproval) return;
+    setApprovalProcessing(true);
     try {
-      await courseManagerApi.approveCertificate(cert.id);
+      await courseManagerApi.approveCertificate(confirmingApproval.id);
       toast.success(t("certificates.approveSuccess"));
+      setConfirmingApproval(null);
       refetch();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("certificates.actionError");
       toast.error(msg);
+    } finally {
+      setApprovalProcessing(false);
     }
+  };
+
+  const handleConfirmReject = async () => {
+    if (!confirmingApproval) return;
+    setReviewingCert(confirmingApproval);
+    setConfirmingApproval(null);
   };
 
   // ── Download handler ───────────────────────────────────
@@ -1033,6 +1064,7 @@ const CertificatesContent = () => {
           courseName={courseNameMap[reviewingCert.courseId] || reviewingCert.courseId}
           onClose={() => setReviewingCert(null)}
           onAction={refetch}
+          onApproveConfirm={(c) => { setReviewingCert(null); setConfirmingApproval(c); }}
           t={t}
         />
       )}
@@ -1116,6 +1148,133 @@ const CertificatesContent = () => {
           </div>
         </ModalOverlay>
       )}
+      {/* Approval Confirmation Dialog */}
+      {confirmingApproval && (() => {
+        const cert = confirmingApproval;
+        const deliveryType = courseDeliveryMap[cert.courseId] || "zoom";
+        const isSelfPaced = deliveryType === "self-paced";
+        const isBlended = deliveryType === "blended";
+        const attendancePct = parseFloat(cert.attendancePercent || "0");
+        const attendanceOk = isSelfPaced || attendancePct >= 70;
+        const assessmentOk = cert.assessmentPassed === true;
+        const completionOk = cert.courseCompleted === true;
+        const allPassed = attendanceOk && assessmentOk && completionOk;
+        const studentName = [cert.studentFirstName, cert.studentLastName].filter(Boolean).join(" ") || cert.studentEmail;
+        const courseName = courseNameMap[cert.courseId] || cert.courseId;
+
+        const deliveryLabel = isSelfPaced ? "Self-paced" : isBlended ? "Blended" : deliveryType === "onsite" ? "On-site" : "Zoom";
+
+        return (
+          <ModalOverlay onClose={() => setConfirmingApproval(null)}>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center ${allPassed ? "bg-[#DCFCE7]" : "bg-[#FEF9C3]"}`}>
+                    <Award className={`w-6 h-6 ${allPassed ? "text-[#22C55E]" : "text-[#EAB308]"}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#1F2937]">Approve Certificate</h3>
+                    <p className="text-sm text-[#6B7280]">{studentName}</p>
+                  </div>
+                </div>
+
+                {/* Course Info */}
+                <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
+                  <p className="text-sm text-[#374151]"><span className="font-medium">Course:</span> {courseName}</p>
+                  <p className="text-sm text-[#374151]"><span className="font-medium">Type:</span> {deliveryLabel}</p>
+                </div>
+
+                {/* Eligibility Summary */}
+                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">Eligibility Summary</h4>
+                <div className="space-y-2 mb-4">
+                  {/* Attendance — only for sync/blended */}
+                  {!isSelfPaced && (
+                    <div className={`flex items-center justify-between p-2.5 rounded-lg ${attendanceOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
+                      <span className="text-sm text-[#374151]">Lecture Attendance (≥70%)</span>
+                      <span className={`text-sm font-semibold ${attendanceOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                        {attendancePct.toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Module Completion — for self-paced and blended */}
+                  {(isSelfPaced || isBlended) && (
+                    <div className={`flex items-center justify-between p-2.5 rounded-lg ${completionOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
+                      <span className="text-sm text-[#374151]">Module Completion (100%)</span>
+                      <span className={`text-sm font-semibold ${completionOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                        {completionOk ? "100%" : "Incomplete"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Course Completed — for sync */}
+                  {!isSelfPaced && !isBlended && (
+                    <div className={`flex items-center justify-between p-2.5 rounded-lg ${completionOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
+                      <span className="text-sm text-[#374151]">Course Completed</span>
+                      <span className={`text-sm font-semibold ${completionOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                        {completionOk ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Assessments */}
+                  <div className={`flex items-center justify-between p-2.5 rounded-lg ${assessmentOk ? "bg-[#DCFCE7]" : "bg-[#FEE2E2]"}`}>
+                    <span className="text-sm text-[#374151]">Assessments Passed</span>
+                    <span className={`text-sm font-semibold ${assessmentOk ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                      {assessmentOk ? "All Passed" : "Not Passed"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Warning if not all passed */}
+                {!allPassed && (
+                  <div className="flex items-start gap-2.5 p-3 bg-[#FEF9C3] rounded-lg mb-5">
+                    <AlertTriangle className="w-5 h-5 text-[#EAB308] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-[#92400E]">Student has not met all requirements</p>
+                      <p className="text-xs text-[#A16207] mt-1">You can still approve this certificate as a manager override.</p>
+                    </div>
+                  </div>
+                )}
+
+                {allPassed && (
+                  <div className="flex items-start gap-2.5 p-3 bg-[#DCFCE7] rounded-lg mb-5">
+                    <CheckCircle className="w-5 h-5 text-[#22C55E] flex-shrink-0 mt-0.5" />
+                    <p className="text-sm font-medium text-[#166534]">Student meets all eligibility requirements. CME hours will be awarded.</p>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConfirmingApproval(null)}
+                    disabled={approvalProcessing}
+                    className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={handleConfirmReject}
+                    disabled={approvalProcessing}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#EF4444] text-white rounded-lg text-sm font-medium hover:bg-[#DC2626] disabled:opacity-50"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Reject
+                  </button>
+                  <button
+                    onClick={handleConfirmApprove}
+                    disabled={approvalProcessing}
+                    className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#22C55E] text-white rounded-lg text-sm font-medium hover:bg-[#16A34A] disabled:opacity-50"
+                  >
+                    {approvalProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    Approve
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ModalOverlay>
+        );
+      })()}
     </>
   );
 };

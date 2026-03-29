@@ -462,51 +462,10 @@ export class CertificatesService {
       );
     }
 
-    // Eligibility check — rules vary by delivery type:
-    // Self-paced: 100% module completion + assessments passed
-    // Synchronous: ≥70% lecture attendance + assessments passed + course completed
-    // Blended: ≥70% attendance + 100% module completion + assessments passed
-    const eligibility = await this.computeEligibility(
-      request.courseId,
-      request.studentId,
-    );
-
-    // Fetch delivery type for context-aware error messages
-    const [courseForCheck] = await db
-      .select({ deliveryType: courses.deliveryType })
-      .from(courses)
-      .where(eq(courses.id, request.courseId))
-      .limit(1);
-    const isSelfPacedCourse = courseForCheck?.deliveryType === 'self-paced';
-
-    const errors: string[] = [];
-
-    // Attendance check — skip for self-paced (no live sessions)
-    if (!isSelfPacedCourse && parseFloat(eligibility.attendancePercent) < 70) {
-      errors.push(
-        `Attendance is ${eligibility.attendancePercent}% (minimum 70% required)`,
-      );
-    }
-
-    // Assessments — gate for certificate (all delivery types)
-    if (!eligibility.assessmentPassed) {
-      errors.push('Student has not passed all required assessments');
-    }
-
-    // Completion check
-    if (!eligibility.courseCompleted) {
-      if (isSelfPacedCourse) {
-        errors.push('Student has not completed all modules (100% required)');
-      } else {
-        errors.push('Course completion is not 100%');
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new BadRequestException(
-        `Cannot approve: ${errors.join('; ')}`,
-      );
-    }
+    // Eligibility is computed and stored on the certificate request
+    // but NOT enforced here — the manager has full authority to approve
+    // or reject regardless of eligibility. The frontend shows a
+    // confirmation dialog with eligibility details before approving.
 
     // Check SCFHS number before issuing certificate
     const [studentForScfhs] = await db

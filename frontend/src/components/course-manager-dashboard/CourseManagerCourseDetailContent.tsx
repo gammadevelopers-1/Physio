@@ -599,8 +599,8 @@ const CourseManagerCourseDetailContent = ({
                   </div>
                 )}
 
-                {/* Teaching Assistants Management */}
-                {(course.status === "active" || course.status === "pending_review") && (
+                {/* Teaching Assistants Management — hidden for self-paced */}
+                {course.deliveryType !== "self-paced" && (course.status === "active" || course.status === "pending_review") && (
                   <div className="mb-6">
                     <CourseAssistantsManagePanel courseId={course.id} />
                   </div>

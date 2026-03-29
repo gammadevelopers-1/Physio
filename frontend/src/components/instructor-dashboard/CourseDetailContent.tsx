@@ -961,8 +961,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {/* NELC Compliance Scorecard */}
                         <NELCScorecardPanel courseId={courseId} />
 
-                        {/* Teaching Assistants */}
-                        {!isCourseReadOnly && <CourseAssistantsSuggestPanel courseId={courseId} />}
+                        {/* Teaching Assistants — hidden for self-paced */}
+                        {!isCourseReadOnly && !isSelfPaced && <CourseAssistantsSuggestPanel courseId={courseId} />}
                       </div>
                     )}
 

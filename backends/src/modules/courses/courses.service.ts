@@ -15,6 +15,7 @@ import {
   enrollments,
   sessions,
   courseRatings,
+  assessments,
   users,
   COURSE_STATUS,
   NELC_EVENT_TYPE,
@@ -1292,6 +1293,37 @@ export class CoursesService {
       if (moduleCount[0].count === 0) {
         throw new BadRequestException(
           `Course must have at least one module before ${label}`,
+        );
+      }
+    }
+
+    // Each module must have at least one material (content)
+    const allModules = await db
+      .select({ id: courseModules.id, title: courseModules.title })
+      .from(courseModules)
+      .where(eq(courseModules.courseId, courseId));
+
+    for (const mod of allModules) {
+      const [matCount] = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(courseMaterials)
+        .where(eq(courseMaterials.moduleId, mod.id));
+      if (matCount.count === 0) {
+        throw new BadRequestException(
+          `Module "${mod.title}" has no content. All modules must have at least one material before ${label}.`,
+        );
+      }
+    }
+
+    // Each module must have an attached assessment
+    for (const mod of allModules) {
+      const [assCount] = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(assessments)
+        .where(eq(assessments.moduleId, mod.id));
+      if (assCount.count === 0) {
+        throw new BadRequestException(
+          `Module "${mod.title}" has no assessment. Each module must have an attached assessment before ${label}.`,
         );
       }
     }

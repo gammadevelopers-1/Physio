@@ -124,7 +124,7 @@ const CreateCourseContent = () => {
   // Step 2: Schedule & NELC Config
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [maxEnrollment, setMaxEnrollment] = useState("");
+  const [maxEnrollment, setMaxEnrollment] = useState("50");
   const [cmeHours, setCmeHours] = useState("");
   const [cohort, setCohort] = useState("");
   const [nelcAccreditation, setNelcAccreditation] = useState(true);
@@ -223,6 +223,12 @@ const CreateCourseContent = () => {
   };
 
   const isSelfPaced = deliveryType === "self-paced";
+  const defaultMaxForType = isSelfPaced ? "1000" : "50";
+
+  // Auto-update maxEnrollment when delivery type changes
+  useEffect(() => {
+    setMaxEnrollment(defaultMaxForType);
+  }, [deliveryType, defaultMaxForType]);
 
   const goNext = () => {
     if (validateStep(currentStep) && currentStep < 5) {
@@ -524,10 +530,14 @@ const CreateCourseContent = () => {
                           type="number"
                           value={maxEnrollment}
                           onChange={(e) => setMaxEnrollment(e.target.value)}
-                          placeholder="50"
+                          placeholder={defaultMaxForType}
                           min={1}
+                          max={Number(defaultMaxForType)}
                           className={inputClass}
                         />
+                        <p className="text-xs text-[#9CA3AF] mt-1">
+                          {isSelfPaced ? "Self-paced: up to 1000 students" : "NELC limit: 40 (long) / 50 (short) students"}
+                        </p>
                         {nelcCapacityLimit &&
                           maxEnrollment &&
                           Number(maxEnrollment) > nelcCapacityLimit && (

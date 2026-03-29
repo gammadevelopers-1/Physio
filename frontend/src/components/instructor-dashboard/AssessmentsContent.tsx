@@ -6,7 +6,7 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
-import { instructorApi } from "@/lib/api";
+import { instructorApi, ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import type {
   AssessmentResponse,
@@ -1789,8 +1789,12 @@ const AssessmentsContent = () => {
       toast.success(t("assessments.publishSuccess"));
       refreshAssessments();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg || t("assessments.publishError"));
+      if (err instanceof ApiError) {
+        toast.error(err.message);
+      } else {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.error(msg || t("assessments.publishError"));
+      }
     }
   };
 

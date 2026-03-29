@@ -164,7 +164,7 @@ const MyCoursesContent = () => {
       href: `/${locale}/dashboard/student/courses/${course.id}`,
       className: "bg-[#1F2937] text-white hover:bg-[#111827]",
       icon: BookOpen,
-      showCertificate: course.enrollmentStatus === "completed",
+      showCertificate: course.enrollmentStatus === "completed" && course.progress >= 100,
     };
   };
 

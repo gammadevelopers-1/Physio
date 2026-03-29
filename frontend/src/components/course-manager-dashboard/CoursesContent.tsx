@@ -33,6 +33,7 @@ import {
   Play,
   Trash2,
   MessageSquare,
+  Award,
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
@@ -551,12 +552,26 @@ const CoursesContent = () => {
                               {course.enrolledCount}{" "}
                               {t("coursesPage.students")}
                             </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5" />
-                              {course.completedSessions}/
-                              {course.totalSessions}{" "}
-                              {t("coursesPage.sessions")}
-                            </span>
+                            {course.deliveryType === "self-paced" ? (
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="w-3.5 h-3.5" />
+                                {course.totalModules ?? 0}{" "}
+                                {t("coursesPage.modules")}
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {course.completedSessions}/
+                                {course.totalSessions}{" "}
+                                {t("coursesPage.sessions")}
+                              </span>
+                            )}
+                            {course.cmeHours != null && course.cmeHours > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Award className="w-3.5 h-3.5 text-[#D4A520]" />
+                                {course.cmeHours} CME
+                              </span>
+                            )}
                           </div>
 
                           {course.completionRate > 0 && (

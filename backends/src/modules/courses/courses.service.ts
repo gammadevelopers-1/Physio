@@ -225,6 +225,9 @@ export class CoursesService {
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = "courses"."instructor_id"
         )`,
+        totalModules: sql<number>`(
+          SELECT COUNT(*) FROM course_modules cm WHERE cm.course_id = "courses"."id"
+        )`.mapWith(Number),
       })
       .from(courses)
       .where(whereClause)
@@ -1311,19 +1314,6 @@ export class CoursesService {
       if (matCount.count === 0) {
         throw new BadRequestException(
           `Module "${mod.title}" has no content. All modules must have at least one material before ${label}.`,
-        );
-      }
-    }
-
-    // Each module must have an attached assessment
-    for (const mod of allModules) {
-      const [assCount] = await db
-        .select({ count: sql<number>`count(*)`.mapWith(Number) })
-        .from(assessments)
-        .where(eq(assessments.moduleId, mod.id));
-      if (assCount.count === 0) {
-        throw new BadRequestException(
-          `Module "${mod.title}" has no assessment. Each module must have an attached assessment before ${label}.`,
         );
       }
     }

@@ -29,10 +29,10 @@ import type { StudentCertificate } from "@/types/student-dashboard";
 import EmptyStateIllustration from "./EmptyStateIllustration";
 
 const statusOrder: Record<string, number> = {
-  approved: 0,
-  pending: 1,
-  held: 2,
-  rejected: 3,
+  pending: 0,
+  approved: 1,
+  rejected: 2,
+  held: 3,
   revoked: 4,
 };
 

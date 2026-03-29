@@ -538,7 +538,7 @@ const CreateCourseContent = () => {
                         <p className="text-xs text-[#9CA3AF] mt-1">
                           {isSelfPaced ? "Self-paced: up to 1000 students" : "NELC limit: 40 (long) / 50 (short) students"}
                         </p>
-                        {nelcCapacityLimit &&
+                        {!isSelfPaced && nelcCapacityLimit &&
                           maxEnrollment &&
                           Number(maxEnrollment) > nelcCapacityLimit && (
                             <p className="flex items-center gap-1 mt-1 text-xs text-amber-600">
@@ -595,8 +595,8 @@ const CreateCourseContent = () => {
                       </h2>
                     </div>
 
-                    {/* Auto-computed NELC info */}
-                    {courseClassification && (
+                    {/* Auto-computed NELC info — hidden for self-paced */}
+                    {!isSelfPaced && courseClassification && (
                       <div className="mb-4 p-3 bg-[#FFF8E6] border border-[#BFDBFE] rounded-lg">
                         <div className="flex items-center gap-4 text-sm">
                           <div>
@@ -894,7 +894,7 @@ const CreateCourseContent = () => {
                               {maxEnrollment || "—"}
                             </dd>
                           </div>
-                          {courseClassification && (
+                          {!isSelfPaced && courseClassification && (
                             <div>
                               <dt className="text-[#6B7280]">
                                 {t("createCourse.nelcClassification")}

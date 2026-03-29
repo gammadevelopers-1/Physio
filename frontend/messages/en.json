@@ -1739,7 +1739,9 @@
       "dropping": "Dropping...",
       "cancel": "Cancel",
       "dropSuccess": "You have successfully dropped the course",
-      "dropError": "Failed to drop the course. Please try again."
+      "dropError": "Failed to drop the course. Please try again.",
+      "requirementsNotMet": "Course requirements not met",
+      "cmeHoursEarned": "CME hours earned: {hours}"
     },
     "learning": {
       "courseContent": "Course Content",
@@ -3520,6 +3522,7 @@
       },
       "students": "students",
       "sessions": "lectures",
+      "modules": "modules",
       "statusChanged": "Course status updated successfully",
       "statusFailed": "Failed to update course status",
       "activationFailed": "Cannot activate course: some materials have not been reviewed yet.",

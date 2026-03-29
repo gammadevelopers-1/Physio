@@ -337,6 +337,8 @@ export interface InstructorCourse {
   nextSessionAt: string | null;
   instructorName: string | null;
   cohort?: string | null;
+  totalModules?: number;
+  cmeHours?: number | null;
 }
 
 export interface InstructorCoursesResponse {

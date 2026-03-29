@@ -1626,6 +1626,27 @@ export const courseManagerApi = {
       }>;
     }>(`/assessments/blueprint/${courseId}`),
 
+  // Get submissions for an assessment
+  getSubmissions: (assessmentId: string) =>
+    api.get<Array<{
+      id: string;
+      studentId: string;
+      studentFirstName: string;
+      studentLastName: string;
+      studentEmail: string;
+      assessmentId: string;
+      status: string;
+      score: number | null;
+      maxScore: number;
+      submittedAt: string;
+      gradedAt: string | null;
+      gradedBy: string | null;
+    }>>(`/assessments/${assessmentId}/submissions`),
+
+  // Grade a submission
+  gradeSubmission: (assessmentId: string, submissionId: string, grades: Array<{ questionId: string; score: number; comment?: string }>, overallComment?: string) =>
+    api.patch<{ message: string }>(`/assessments/${assessmentId}/submissions/${submissionId}/grade`, { grades, overallComment }),
+
   // Difficulty distribution for an assessment
   getDifficultyDistribution: (assessmentId: string) =>
     api.get<{

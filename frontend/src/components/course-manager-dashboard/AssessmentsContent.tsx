@@ -25,6 +25,8 @@ import {
   CheckCircle2,
   XCircle,
   Flag,
+  Users,
+  Eye,
 } from "lucide-react";
 import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
 import ExportButton from "@/components/shared/ExportButton";
@@ -56,7 +58,7 @@ const AssessmentsContent = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"assessments" | "blueprint">("assessments");
+  const [activeTab, setActiveTab] = useState<"assessments" | "blueprint" | "submissions">("assessments");
 
   // Settings panel state
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -84,6 +86,25 @@ const AssessmentsContent = () => {
   const [overrideStudents, setOverrideStudents] = useState<Array<{ id: string; name: string }>>([]);
   const [overrideForm, setOverrideForm] = useState({ studentId: "", overrideType: "time_extension", value: 30, reason: "" });
   const [overrideSubmitting, setOverrideSubmitting] = useState(false);
+
+  // Submissions tab state
+  const [selectedSubmissionAssessment, setSelectedSubmissionAssessment] = useState<string>("");
+  const [submissions, setSubmissions] = useState<Array<{
+    id: string;
+    studentId: string;
+    studentFirstName: string;
+    studentLastName: string;
+    studentEmail: string;
+    assessmentId: string;
+    status: string;
+    score: number | null;
+    maxScore: number;
+    submittedAt: string;
+    gradedAt: string | null;
+    gradedBy: string | null;
+  }>>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [viewingSubmission, setViewingSubmission] = useState<typeof submissions[number] | null>(null);
 
   const fetchAssessments = useCallback(() => {
     setLoading(true);
@@ -124,6 +145,22 @@ const AssessmentsContent = () => {
   useEffect(() => {
     if (blueprintCourseId) fetchBlueprint(blueprintCourseId);
   }, [blueprintCourseId, fetchBlueprint]);
+
+  // Fetch submissions when an assessment is selected in the Submissions tab
+  useEffect(() => {
+    if (!selectedSubmissionAssessment) {
+      setSubmissions([]);
+      return;
+    }
+    setSubmissionsLoading(true);
+    courseManagerApi
+      .getSubmissions(selectedSubmissionAssessment)
+      .then((res) => {
+        setSubmissions(Array.isArray(res) ? res : (res as any).data ?? []);
+      })
+      .catch(() => setSubmissions([]))
+      .finally(() => setSubmissionsLoading(false));
+  }, [selectedSubmissionAssessment]);
 
   // Populate flaggedIds from fetched assessments (check for flaggedAt field)
   useEffect(() => {
@@ -573,6 +610,17 @@ const AssessmentsContent = () => {
                 >
                   <LayoutGrid className="w-4 h-4" />
                   {t("assessmentsPage.tabs.blueprint")}
+                </button>
+                <button
+                  onClick={() => setActiveTab("submissions")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    activeTab === "submissions"
+                      ? "bg-[#3B82F6] text-white"
+                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Submissions
                 </button>
               </div>
 
@@ -1079,10 +1127,210 @@ const AssessmentsContent = () => {
                   )}
                 </div>
               )}
+
+              {activeTab === "submissions" && (
+                <div className="space-y-6">
+                  {/* Assessment Selector */}
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <label className="text-sm font-medium text-[#374151] block mb-2">
+                      Select Assessment
+                    </label>
+                    <select
+                      value={selectedSubmissionAssessment}
+                      onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
+                      className="w-full sm:w-80 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    >
+                      <option value="">Select an assessment...</option>
+                      {assessments.map((a) => (
+                        <option key={a.id} value={a.id}>{a.title}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {!selectedSubmissionAssessment && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                      <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
+                      <p className="text-sm text-[#6B7280]">Select an assessment to view submissions</p>
+                    </div>
+                  )}
+
+                  {submissionsLoading && (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                    </div>
+                  )}
+
+                  {selectedSubmissionAssessment && !submissionsLoading && submissions.length === 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                      <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
+                      <p className="text-sm text-[#6B7280]">No submissions yet for this assessment</p>
+                    </div>
+                  )}
+
+                  {selectedSubmissionAssessment && !submissionsLoading && submissions.length > 0 && (
+                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Student</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Score</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Status</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Submitted</th>
+                              <th className="px-4 py-3 text-right text-xs font-semibold text-[#6B7280] uppercase">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#E5E7EB]">
+                            {submissions.map((sub) => {
+                              const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
+                              const isGraded = sub.status === "graded";
+                              return (
+                                <tr key={sub.id} className="hover:bg-[#F9FAFB] transition-colors">
+                                  <td className="px-4 py-3">
+                                    <p className="text-sm font-medium text-[#1F2937]">
+                                      {sub.studentFirstName} {sub.studentLastName}
+                                    </p>
+                                    <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {sub.score !== null ? (
+                                      <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                                        {sub.score} / {sub.maxScore}
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm text-[#9CA3AF]">--</span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                      isGraded
+                                        ? "bg-[#DCFCE7] text-[#22C55E]"
+                                        : "bg-[#FEF3C7] text-[#D97706]"
+                                    }`}>
+                                      {isGraded ? "Graded" : "Pending"}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <p className="text-sm text-[#6B7280]">
+                                      {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                    </p>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    <button
+                                      onClick={() => setViewingSubmission(sub)}
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                      View
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Submission Detail Modal */}
+      {viewingSubmission && (() => {
+        const sub = viewingSubmission;
+        const assessment = assessments.find((a) => a.id === sub.assessmentId);
+        const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
+        const isGraded = sub.status === "graded";
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-[#1F2937]">Submission Details</h3>
+                <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+                  <X className="w-5 h-5 text-[#6B7280]" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
+                    <Users className="w-5 h-5 text-[#3B82F6]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-[#1F2937]">
+                      {sub.studentFirstName} {sub.studentLastName}
+                    </p>
+                    <p className="text-xs text-[#6B7280]">{sub.studentEmail}</p>
+                  </div>
+                </div>
+                {assessment && (
+                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                    <p className="text-xs text-[#6B7280]">Assessment</p>
+                    <p className="text-sm font-medium text-[#1F2937]">{assessment.title}</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                    <p className="text-xs text-[#6B7280]">Score</p>
+                    {sub.score !== null ? (
+                      <p className={`text-lg font-bold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                        {sub.score} / {sub.maxScore}
+                      </p>
+                    ) : (
+                      <p className="text-lg font-bold text-[#9CA3AF]">--</p>
+                    )}
+                  </div>
+                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                    <p className="text-xs text-[#6B7280]">Status</p>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                      isGraded ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEF3C7] text-[#D97706]"
+                    }`}>
+                      {isGraded ? "Graded" : "Pending"}
+                    </span>
+                    {isPassed && sub.score !== null && (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ml-1 bg-[#DCFCE7] text-[#22C55E]">
+                        Pass
+                      </span>
+                    )}
+                    {sub.score !== null && !isPassed && (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ml-1 bg-[#FEE2E2] text-[#EF4444]">
+                        Fail
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                    <p className="text-xs text-[#6B7280]">Submitted</p>
+                    <p className="text-sm text-[#1F2937]">
+                      {new Date(sub.submittedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  </div>
+                  {sub.gradedAt && (
+                    <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                      <p className="text-xs text-[#6B7280]">Graded</p>
+                      <p className="text-sm text-[#1F2937]">
+                        {new Date(sub.gradedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setViewingSubmission(null)}
+                  className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Emergency Override Modal */}
       {overrideModal && (

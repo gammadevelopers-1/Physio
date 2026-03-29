@@ -559,11 +559,11 @@ const ContentReviewContent = () => {
                                   <p className="text-sm text-[#6B7280]">{formatDate(item.createdAt)}</p>
                                 </td>
                                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex items-center justify-end gap-2">
+                                  <div className="flex items-center justify-end gap-2 flex-nowrap">
                                     <button
                                       onClick={() => handleApprove(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-md hover:bg-[#16A34A] transition-colors disabled:opacity-50"
+                                      className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-md hover:bg-[#16A34A] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
                                       {isActionLoading ? (
                                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -574,14 +574,14 @@ const ContentReviewContent = () => {
                                     <button
                                       onClick={() => handleRequestChangesClick(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-3 py-1.5 bg-[#FEF3C7] text-[#D97706] text-xs font-medium rounded-md border border-[#FDE68A] hover:bg-[#FDE68A] transition-colors disabled:opacity-50"
+                                      className="px-3 py-1.5 bg-[#FEF3C7] text-[#D97706] text-xs font-medium rounded-md border border-[#FDE68A] hover:bg-[#FDE68A] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
-                                      {t("contentReviewPage.requestChanges")}
+                                      Changes
                                     </button>
                                     <button
                                       onClick={() => handleRejectClick(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-3 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50"
+                                      className="px-3 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
                                       {t("contentReviewPage.reject")}
                                     </button>

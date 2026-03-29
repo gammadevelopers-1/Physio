@@ -1213,9 +1213,17 @@ const GradeModal = ({
     }
   };
 
+  // Calculate running total
+  const currentTotal = isAssignmentGrade
+    ? Number(assignmentScore) || 0
+    : Object.values(grades).reduce((sum, v) => sum + (v || 0), 0);
+  const maxTotal = isAssignmentGrade
+    ? (totalMarks || 100)
+    : questions.reduce((sum, q) => sum + (q.marks || 1), 0);
+
   return (
     <ModalOverlay onClose={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
+      <div className="bg-white rounded-2xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto scrollbar-hide">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-lg font-semibold text-[#1F2937]">
@@ -1228,6 +1236,12 @@ const GradeModal = ({
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
             <X className="w-5 h-5 text-[#6B7280]" />
           </button>
+        </div>
+
+        {/* Total Score Summary */}
+        <div className="mb-5 p-3 bg-[#F0F7FF] border border-[#BFDBFE] rounded-lg flex items-center justify-between">
+          <span className="text-sm font-medium text-[#1E40AF]">Total Score</span>
+          <span className="text-lg font-bold text-[#1E40AF]">{currentTotal} / {maxTotal}</span>
         </div>
 
         {isAssignmentGrade ? (
@@ -1258,19 +1272,19 @@ const GradeModal = ({
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-[#374151] mb-1">
-                {t("assessments.scoreAwarded") || "Score"}
+              <label className="block text-sm font-semibold text-[#374151] mb-1">
+                Score
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   value={assignmentScore}
                   onChange={(e) => setAssignmentScore(e.target.value)}
-                  className="w-24 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-28 px-3 py-2.5 border-2 border-[#3B82F6] rounded-lg text-base font-semibold focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                   min={0}
                   max={totalMarks || 100}
                 />
-                <span className="text-sm text-[#6B7280]">/ {totalMarks || 100}</span>
+                <span className="text-base font-medium text-[#6B7280]">/ {totalMarks || 100}</span>
               </div>
             </div>
             <div>
@@ -1287,7 +1301,7 @@ const GradeModal = ({
           </div>
         ) : (
           /* ─── Quiz/Exam Grading ─── */
-          <div className="space-y-4">
+          <div className="space-y-0">
             {submission.answers.map((answer, idx) => {
               const question = questionsMap.get(answer.questionId);
               const maxMarks = question?.marks || 1;
@@ -1295,102 +1309,127 @@ const GradeModal = ({
                 question?.type === "essay" || question?.type === "short_answer";
 
               return (
-                <div
-                  key={answer.questionId}
-                  className="p-4 border border-[#E5E7EB] rounded-xl"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <p className="text-sm font-medium text-[#1F2937] flex-1">
-                      {idx + 1}. {question?.questionText || t("assessments.unknownQuestion")}
-                    </p>
-                    {!needsManualGrade && answer.isCorrect !== null && (
-                      <span
-                        className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${
-                          answer.isCorrect
-                            ? "bg-[#DCFCE7] text-[#22C55E]"
-                            : "bg-[#FEE2E2] text-[#EF4444]"
-                        }`}
-                      >
-                        {answer.isCorrect ? t("assessments.correct") : t("assessments.incorrect")}
-                      </span>
-                    )}
-                  </div>
-
-                  {needsManualGrade ? (
-                    <>
-                      <p className="text-xs font-medium text-[#6B7280] mb-1.5 mt-2">
-                        {t("assessments.studentsAnswer")}
-                      </p>
-                      <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-3 mb-3">
-                        <p className="text-sm text-[#374151] whitespace-pre-wrap">
-                          {answer.answer || "-"}
-                        </p>
+                <div key={answer.questionId}>
+                  {idx > 0 && <hr className="border-[#E5E7EB] my-4" />}
+                  <div className="py-2">
+                    {/* Question header */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#3B82F6] text-white text-xs font-bold mr-2">
+                          Q{idx + 1}
+                        </span>
+                        <span className="text-sm font-semibold text-[#1F2937]">
+                          {question?.questionText || t("assessments.unknownQuestion")}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <label className="text-xs text-[#6B7280]">
-                          {t("assessments.marks")}:
-                        </label>
+                      {!needsManualGrade && answer.isCorrect !== null && (
+                        <span
+                          className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            answer.isCorrect
+                              ? "bg-[#DCFCE7] text-[#22C55E]"
+                              : "bg-[#FEE2E2] text-[#EF4444]"
+                          }`}
+                        >
+                          {answer.isCorrect ? t("assessments.correct") : t("assessments.incorrect")}
+                        </span>
+                      )}
+                    </div>
+
+                    {needsManualGrade ? (
+                      <>
+                        <p className="text-xs font-semibold text-[#374151] mb-1.5 uppercase tracking-wide">
+                          {t("assessments.studentsAnswer")}
+                        </p>
+                        <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-4 mb-3">
+                          <p className="text-sm text-[#1F2937] whitespace-pre-wrap leading-relaxed">
+                            {answer.answer || "-"}
+                          </p>
+                        </div>
+                        {question?.correctAnswer && (
+                          <div className="mb-3">
+                            <p className="text-xs font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                              {t("assessments.correctAnswerLabel") || "Correct Answer"} (Reference)
+                            </p>
+                            <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-3">
+                              <p className="text-sm text-[#166534] whitespace-pre-wrap">
+                                {question.correctAnswer}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-3 mb-2 p-2 bg-[#F9FAFB] rounded-lg">
+                          <label className="text-sm font-semibold text-[#374151]">
+                            Score:
+                          </label>
+                          <input
+                            type="number"
+                            value={grades[answer.questionId] ?? 0}
+                            onChange={(e) =>
+                              setGrades((prev) => ({
+                                ...prev,
+                                [answer.questionId]: Math.min(
+                                  Number(e.target.value),
+                                  maxMarks
+                                ),
+                              }))
+                            }
+                            className="w-20 px-3 py-1.5 border-2 border-[#3B82F6] rounded-lg text-sm font-semibold text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            min={0}
+                            max={maxMarks}
+                          />
+                          <span className="text-sm font-medium text-[#6B7280]">/ {maxMarks}</span>
+                        </div>
                         <input
-                          type="number"
-                          value={grades[answer.questionId] ?? 0}
+                          type="text"
+                          value={questionComments[answer.questionId] || ""}
                           onChange={(e) =>
-                            setGrades((prev) => ({
+                            setQuestionComments((prev) => ({
                               ...prev,
-                              [answer.questionId]: Math.min(
-                                Number(e.target.value),
-                                maxMarks
-                              ),
+                              [answer.questionId]: e.target.value,
                             }))
                           }
-                          className="w-20 px-2 py-1 border border-[#E5E7EB] rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                          min={0}
-                          max={maxMarks}
+                          className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          placeholder={t("assessments.questionComment") || "Add comment for this question..."}
                         />
-                        <span className="text-xs text-[#9CA3AF]">/ {maxMarks}</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={questionComments[answer.questionId] || ""}
-                        onChange={(e) =>
-                          setQuestionComments((prev) => ({
-                            ...prev,
-                            [answer.questionId]: e.target.value,
-                          }))
-                        }
-                        className="w-full px-2 py-1.5 border border-[#E5E7EB] rounded text-xs focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                        placeholder={t("assessments.questionComment") || "Add comment for this question..."}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-xs text-[#9CA3AF] mt-1">
-                        {t("assessments.studentAnswer")}: <span className="text-[#374151]">{answer.answer}</span>
-                      </p>
-                      {question && (
-                        <p className="text-xs text-[#9CA3AF] mt-1">
-                          {t("assessments.correctAnswerLabel")}:{" "}
-                          <span className="text-[#22C55E] font-medium">
-                            {question.type === "mcq"
-                              ? (question.options as { text: string; isCorrect: boolean }[] | undefined)
-                                  ?.find((o) => o.isCorrect)?.text || "-"
-                              : question.type === "true_false"
-                                ? question.correctAnswer === "true"
-                                  ? "True"
-                                  : "False"
-                                : question.correctAnswer || t("assessments.manualReviewRequired")}
-                          </span>
-                        </p>
-                      )}
-                      <p className="text-xs text-[#6B7280] mt-1">
-                        {t("assessments.autoGraded")}: {answer.marksAwarded ?? 0}/{maxMarks}
-                      </p>
-                    </>
-                  )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="mb-1.5">
+                          <p className="text-xs font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                            {t("assessments.studentAnswer")}
+                          </p>
+                          <p className="text-sm text-[#1F2937] pl-2">{answer.answer}</p>
+                        </div>
+                        {question && (
+                          <div className="mb-1.5">
+                            <p className="text-xs font-semibold text-[#374151] mb-1 uppercase tracking-wide">
+                              {t("assessments.correctAnswerLabel")}
+                            </p>
+                            <p className="text-sm text-[#22C55E] font-medium pl-2">
+                              {question.type === "mcq"
+                                ? (question.options as { text: string; isCorrect: boolean }[] | undefined)
+                                    ?.find((o) => o.isCorrect)?.text || "-"
+                                : question.type === "true_false"
+                                  ? question.correctAnswer === "true"
+                                    ? "True"
+                                    : "False"
+                                  : question.correctAnswer || t("assessments.manualReviewRequired")}
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 p-2 bg-[#F9FAFB] rounded-lg">
+                          <span className="text-sm font-semibold text-[#374151]">Score:</span>
+                          <span className="text-sm font-medium text-[#1F2937]">{answer.marksAwarded ?? 0} / {maxMarks}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               );
             })}
 
             {/* Overall comment for quiz/exam */}
+            <hr className="border-[#E5E7EB] my-4" />
             <div className="pt-2">
               <label className="block text-sm font-medium text-[#374151] mb-1">
                 {t("assessments.overallComment") || "Overall Comment"}

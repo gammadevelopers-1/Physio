@@ -519,11 +519,7 @@ const CourseManagerCourseDetailContent = ({
                       </span>
                     </div>
                     <p className="text-lg font-semibold text-[#1F2937] capitalize">
-                      {course.deliveryType === "zoom"
-                        ? t("courseDetail.delivery.zoom")
-                        : course.deliveryType === "onsite"
-                          ? t("courseDetail.delivery.onsite")
-                          : t("courseDetail.delivery.blended")}
+                      {t(`courseDetail.delivery.${course.deliveryType}`)}
                     </p>
                   </div>
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">

@@ -1271,38 +1271,43 @@ export class CoursesService {
     const label =
       context === 'activation' ? 'activation' : 'submitting for review';
 
-    // Must have at least 1 module
-    const moduleCount = await db
-      .select({ count: sql<number>`count(*)`.mapWith(Number) })
-      .from(courseModules)
-      .where(eq(courseModules.courseId, courseId));
-    if (moduleCount[0].count === 0) {
-      throw new BadRequestException(
-        `Course must have at least one module before ${label}`,
-      );
-    }
-
-    // Must have at least 1 session
-    const sessionCount = await db
-      .select({ count: sql<number>`count(*)`.mapWith(Number) })
-      .from(sessions)
-      .where(eq(sessions.courseId, courseId));
-    if (sessionCount[0].count === 0) {
-      throw new BadRequestException(
-        `Course must have at least one session before ${label}`,
-      );
-    }
-
-    // Must have start date and end date
+    // Must have start date and end date — fetch course detail first
     const [courseDetail] = await db
       .select({
         startDate: courses.startDate,
         endDate: courses.endDate,
         cmeHours: courses.cmeHours,
+        deliveryType: courses.deliveryType,
       })
       .from(courses)
       .where(eq(courses.id, courseId))
       .limit(1);
+
+    // Must have at least 1 module (required for self-paced and blended; optional for zoom/onsite)
+    if (courseDetail.deliveryType === 'self-paced' || courseDetail.deliveryType === 'blended') {
+      const moduleCount = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId));
+      if (moduleCount[0].count === 0) {
+        throw new BadRequestException(
+          `Course must have at least one module before ${label}`,
+        );
+      }
+    }
+
+    // Must have at least 1 session (skip for self-paced courses)
+    if (courseDetail.deliveryType !== 'self-paced') {
+      const sessionCount = await db
+        .select({ count: sql<number>`count(*)`.mapWith(Number) })
+        .from(sessions)
+        .where(eq(sessions.courseId, courseId));
+      if (sessionCount[0].count === 0) {
+        throw new BadRequestException(
+          `Course must have at least one session before ${label}`,
+        );
+      }
+    }
 
     if (!courseDetail.startDate || !courseDetail.endDate) {
       throw new BadRequestException(

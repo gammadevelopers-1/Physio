@@ -29,17 +29,20 @@ type WizardStep = 1 | 2 | 3 | 4 | 5;
 function StepIndicator({
   currentStep,
   t,
+  skipTA = false,
 }: {
   currentStep: WizardStep;
   t: ReturnType<typeof useTranslations>;
+  skipTA?: boolean;
 }) {
-  const steps = [
+  const allSteps = [
     { number: 1, label: t("createCourse.wizardStep1") },
     { number: 2, label: t("createCourse.wizardStep2") },
     { number: 3, label: t("createCourse.wizardStep3") },
     { number: 4, label: t("createCourse.wizardStep4") },
     { number: 5, label: t("createCourse.wizardStep5") },
   ];
+  const steps = skipTA ? allSteps.filter((s) => s.number !== 4) : allSteps;
 
   return (
     <div className="flex items-center justify-between mb-8">
@@ -219,16 +222,24 @@ const CreateCourseContent = () => {
     }
   };
 
+  const isSelfPaced = deliveryType === "self-paced";
+
   const goNext = () => {
     if (validateStep(currentStep) && currentStep < 5) {
-      setCurrentStep((currentStep + 1) as WizardStep);
+      let next = (currentStep + 1) as WizardStep;
+      // Skip TA step for self-paced courses
+      if (isSelfPaced && next === 4) next = 5;
+      setCurrentStep(next);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const goBack = () => {
     if (currentStep > 1) {
-      setCurrentStep((currentStep - 1) as WizardStep);
+      let prev = (currentStep - 1) as WizardStep;
+      // Skip TA step for self-paced courses
+      if (isSelfPaced && prev === 4) prev = 3;
+      setCurrentStep(prev);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -316,7 +327,7 @@ const CreateCourseContent = () => {
               </div>
 
               {/* Step Indicator */}
-              <StepIndicator currentStep={currentStep} t={t} />
+              <StepIndicator currentStep={currentStep} t={t} skipTA={deliveryType === "self-paced"} />
 
               {/* Step 1: Basic Info */}
               {currentStep === 1 && (
@@ -929,6 +940,7 @@ const CreateCourseContent = () => {
                       </div>
 
                       {/* Teaching Assistant */}
+                      {!isSelfPaced && (
                       <div className="border border-[#E5E7EB] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.taAssignment")}
@@ -946,6 +958,7 @@ const CreateCourseContent = () => {
                           </p>
                         )}
                       </div>
+                      )}
                     </div>
                   </div>
                 </div>

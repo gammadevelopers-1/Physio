@@ -152,6 +152,8 @@ const MyCoursesContent = () => {
         return <MapPin className="w-3.5 h-3.5" />;
       case "blended":
         return <BookOpen className="w-3.5 h-3.5" />;
+      case "self-paced":
+        return <BookOpen className="w-3.5 h-3.5" />;
       default:
         return <Video className="w-3.5 h-3.5" />;
     }
@@ -249,6 +251,9 @@ const MyCoursesContent = () => {
                       </option>
                       <option value="blended">
                         {t("courses.filters.blended")}
+                      </option>
+                      <option value="self-paced">
+                        {t("courses.filters.self-paced")}
                       </option>
                     </select>
 
@@ -369,10 +374,12 @@ const MyCoursesContent = () => {
                                   <Users className="w-4 h-4" />
                                   {course.enrolledCount} {course.enrolledCount === 1 ? t("courses.student") : t("courses.students")}
                                 </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
-                                  {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
-                                </span>
+                                {course.deliveryType !== "self-paced" && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-4 h-4" />
+                                    {course.completedSessions}/{course.totalSessions} {t("courses.sessions")}
+                                  </span>
+                                )}
                                 <span className="flex items-center gap-1 text-[#9CA3AF]">
                                   <Star className={`w-3.5 h-3.5 ${ratingsMap[course.id]?.totalRatings ? "text-[#F59E0B] fill-[#F59E0B]" : ""}`} />
                                   {ratingsMap[course.id]?.totalRatings
@@ -457,9 +464,11 @@ const MyCoursesContent = () => {
                                 <span className="flex items-center gap-1">
                                   <Users className="w-3 h-3" /> {course.enrolledCount}
                                 </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" /> {course.completedSessions}/{course.totalSessions}
-                                </span>
+                                {course.deliveryType !== "self-paced" && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" /> {course.completedSessions}/{course.totalSessions}
+                                  </span>
+                                )}
                                 {course.startDate && (
                                   <span className="flex items-center gap-1">
                                     {new Date(course.startDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" })}

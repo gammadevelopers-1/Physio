@@ -2115,7 +2115,8 @@
         "allDelivery": "جميع طرق التقديم",
         "zoom": "زوم",
         "onsite": "حضوري",
-        "blended": "مختلط"
+        "blended": "مختلط",
+        "self-paced": "تعلم ذاتي"
       },
       "sort": {
         "newest": "الأحدث أولاً",
@@ -2134,7 +2135,8 @@
       "delivery": {
         "zoom": "زوم",
         "onsite": "حضوري",
-        "blended": "مختلط"
+        "blended": "مختلط",
+        "self-paced": "تعلم ذاتي"
       },
       "student": "طالب",
       "students": "طلاب",
@@ -2511,7 +2513,8 @@
       "deliveryOptions": {
         "zoom": "زووم (عبر الإنترنت)",
         "onsite": "حضوري",
-        "blended": "مدمج"
+        "blended": "مدمج",
+        "self-paced": "تعلم ذاتي"
       },
       "thumbnail": "الصورة المصغرة",
       "changeThumbnail": "تغيير الصورة المصغرة",
@@ -3674,7 +3677,8 @@
         "completed": "مكتمل",
         "archived": "مؤرشف",
         "allCategories": "جميع الفئات",
-        "allDelivery": "جميع أنواع التقديم"
+        "allDelivery": "جميع أنواع التقديم",
+        "self-paced": "تعلم ذاتي"
       },
       "status": {
         "active": "نشط",
@@ -3687,7 +3691,8 @@
       "delivery": {
         "zoom": "زوم",
         "onsite": "حضوري",
-        "blended": "مدمج"
+        "blended": "مدمج",
+        "self-paced": "تعلم ذاتي"
       },
       "sort": {
         "newest": "الأحدث أولاً",
@@ -3850,7 +3855,8 @@
       "delivery": {
         "zoom": "زوم (عبر الإنترنت)",
         "onsite": "حضوري",
-        "blended": "مدمج"
+        "blended": "مدمج",
+        "self-paced": "تعلم ذاتي"
       },
       "maxEnrollment": "الحد الأقصى للتسجيل",
       "startDate": "تاريخ البدء",

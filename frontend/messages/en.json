@@ -1903,7 +1903,8 @@
         "allDelivery": "All Delivery",
         "zoom": "Zoom",
         "onsite": "On-site",
-        "blended": "Blended"
+        "blended": "Blended",
+        "self-paced": "Self-paced"
       },
       "sort": {
         "newest": "Newest First",
@@ -1922,7 +1923,8 @@
       "delivery": {
         "zoom": "Zoom",
         "onsite": "On-site",
-        "blended": "Blended"
+        "blended": "Blended",
+        "self-paced": "Self-paced"
       },
       "student": "student",
       "students": "students",
@@ -2296,7 +2298,8 @@
       "deliveryOptions": {
         "zoom": "Zoom (Online)",
         "onsite": "On-site",
-        "blended": "Blended"
+        "blended": "Blended",
+        "self-paced": "Self-paced"
       },
       "thumbnail": "Thumbnail",
       "changeThumbnail": "Change Thumbnail",
@@ -3492,7 +3495,8 @@
         "completed": "Completed",
         "archived": "Archived",
         "allCategories": "All Categories",
-        "allDelivery": "All Delivery"
+        "allDelivery": "All Delivery",
+        "self-paced": "Self-paced"
       },
       "status": {
         "active": "Active",
@@ -3505,7 +3509,8 @@
       "delivery": {
         "zoom": "Zoom",
         "onsite": "On-site",
-        "blended": "Blended"
+        "blended": "Blended",
+        "self-paced": "Self-paced"
       },
       "sort": {
         "newest": "Newest First",
@@ -3643,7 +3648,8 @@
       "delivery": {
         "zoom": "Zoom (Online)",
         "onsite": "On-site",
-        "blended": "Blended"
+        "blended": "Blended",
+        "self-paced": "Self-paced"
       },
       "maxEnrollment": "Max Enrollment",
       "startDate": "Start Date",

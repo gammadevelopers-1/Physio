@@ -323,11 +323,26 @@ export class NelcComplianceService {
     // ─── 1. Course Structure ───
     const structureChecks: ComplianceCheck[] = [];
     const moduleCount = modules.length;
-    structureChecks.push({
-      rule: 'modules_count',
-      status: moduleCount >= 3 ? 'passed' : 'failed',
-      detail: moduleCount >= 3 ? `${moduleCount} modules (min 3)` : `Only ${moduleCount} module(s)`,
-    });
+    const isSelfPacedCourse = course.deliveryType === 'self-paced';
+    const isZoomOnly = course.deliveryType === 'zoom';
+    // Modules required for self-paced/blended; optional (review-level) for zoom/onsite
+    if (isZoomOnly || course.deliveryType === 'onsite') {
+      structureChecks.push({
+        rule: 'modules_count',
+        status: moduleCount >= 3 ? 'passed' : moduleCount > 0 ? 'review' : 'review',
+        detail: moduleCount >= 3
+          ? `${moduleCount} modules (min 3)`
+          : moduleCount > 0
+            ? `${moduleCount} module(s) — modules are optional for ${course.deliveryType} courses`
+            : `No modules — optional for ${course.deliveryType} courses`,
+      });
+    } else {
+      structureChecks.push({
+        rule: 'modules_count',
+        status: moduleCount >= 3 ? 'passed' : 'failed',
+        detail: moduleCount >= 3 ? `${moduleCount} modules (min 3)` : `Only ${moduleCount} module(s)`,
+      });
+    }
 
     const totalMinutes = modules.reduce((s, m) => s + (m.durationMinutes || 0), 0);
     const classification = classifyCourse(course.startDate, course.endDate);
@@ -400,8 +415,11 @@ export class NelcComplianceService {
     });
 
     // ─── 3. Virtual Classes (reuse existing session checks) ───
+    // Skip virtual classes category entirely for self-paced courses
     const vcChecks: ComplianceCheck[] = [];
-    if (courseSessions.length === 0) {
+    if (isSelfPacedCourse) {
+      vcChecks.push({ rule: 'sessions_exist', status: 'passed', detail: 'Not applicable for self-paced courses' });
+    } else if (courseSessions.length === 0) {
       vcChecks.push({ rule: 'sessions_exist', status: 'review', detail: 'No sessions created yet' });
     } else {
       const enrolled = Number(enrollmentRows[0]?.count || 0);
@@ -443,7 +461,7 @@ export class NelcComplianceService {
 
     categories.push({
       category: 'virtual_classes',
-      label: 'Virtual Classes',
+      label: isSelfPacedCourse ? 'Virtual Classes (N/A)' : 'Virtual Classes',
       icon: 'Video',
       status: this.calculateOverallStatus(vcChecks),
       checks: vcChecks,

@@ -1521,6 +1521,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           </div>
                         )}
 
+                        {!isSelfPaced && (
                         <div>
                           <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.sessionStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -1542,8 +1543,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                           </div>
                         </div>
+                        )}
 
-                        {analytics.total === 0 && analytics.totalSessions === 0 && (
+                        {analytics.total === 0 && (isSelfPaced || analytics.totalSessions === 0) && (
                           <div className="text-center py-8">
                             <BarChart3 className="w-10 h-10 text-[#9CA3AF] mx-auto mb-3" />
                             <p className="text-sm text-[#6B7280]">{t("courseDetail.noAnalyticsData")}</p>
@@ -1606,6 +1608,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
                                 <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
                                 <option value="blended">{t("courseDetail.deliveryOptions.blended")}</option>
+                                <option value="self-paced">{t("courseDetail.deliveryOptions.self-paced")}</option>
                               </select>
                             </div>
                             <div>

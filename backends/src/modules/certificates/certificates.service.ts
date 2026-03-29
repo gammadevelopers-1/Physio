@@ -91,10 +91,17 @@ export class CertificatesService {
       // Self-paced courses have no live sessions; attendance is not applicable
       attendancePercent = '100.00';
     } else {
+      // Only count completed (finalized) sessions — exclude missed/cancelled/scheduled
+      // Students shouldn't be penalized for sessions the instructor never started
       const courseSessions = await db
         .select({ id: sessions.id })
         .from(sessions)
-        .where(eq(sessions.courseId, courseId));
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            sql`${sessions.status} IN ('completed', 'ended')`,
+          ),
+        );
 
       if (courseSessions.length > 0) {
         const sessionIds = courseSessions.map((s) => s.id);

@@ -537,6 +537,8 @@ export class SessionsService {
   async findToday(user: AuthenticatedUser) {
     const conditions: ReturnType<typeof eq>[] = [
       sql`DATE(${sessions.scheduledAt}) = CURRENT_DATE` as any,
+      // Exclude cancelled and missed sessions from dashboard
+      sql`${sessions.status} NOT IN ('cancelled', 'missed')` as any,
     ];
 
     this.addSessionOwnershipCondition(conditions, user);
@@ -558,6 +560,8 @@ export class SessionsService {
   async findUpcoming(user: AuthenticatedUser) {
     const conditions: ReturnType<typeof eq>[] = [
       sql`${sessions.scheduledAt} > NOW()` as any,
+      // Exclude cancelled and missed sessions
+      sql`${sessions.status} NOT IN ('cancelled', 'missed')` as any,
     ];
 
     this.addSessionOwnershipCondition(conditions, user);

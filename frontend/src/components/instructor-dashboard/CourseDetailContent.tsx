@@ -559,6 +559,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         title: sessionForm.title.trim(),
         type: sessionForm.type,
         scheduledAt: new Date(sessionForm.scheduledAt).toISOString(),
+        localDate: sessionForm.scheduledAt.slice(0, 10),
         durationMinutes: (sessionForm.durationHours * 60 + sessionForm.durationMins) || 60,
       };
       if (sessionForm.type === "zoom" || sessionForm.type === "hybrid") {

@@ -151,7 +151,7 @@ export class SessionsService {
       }
 
       // Validate session date is within course date range
-      this.validateSessionDateRange(dto.scheduledAt, course.startDate, course.endDate);
+      this.validateSessionDateRange(dto.scheduledAt, course.startDate, course.endDate, dto.localDate);
 
       const instructorId = dto.instructorId || course.instructorId;
 
@@ -228,7 +228,7 @@ export class SessionsService {
     }
 
     // Validate session date is within course date range
-    this.validateSessionDateRange(dto.scheduledAt, course.startDate, course.endDate);
+    this.validateSessionDateRange(dto.scheduledAt, course.startDate, course.endDate, dto.localDate);
 
     const [session] = await db
       .insert(sessions)
@@ -1536,24 +1536,17 @@ export class SessionsService {
     scheduledAt: string,
     courseStartDate: string | null,
     courseEndDate: string | null,
+    localDate?: string,
   ) {
-    // Compare date portions only (YYYY-MM-DD).
-    // scheduledAt is an ISO string (UTC). Course dates are date-only strings.
-    // The user picks a local datetime (e.g., 2026-03-30T03:50 in UTC+5),
-    // which becomes 2026-03-29T22:50Z in UTC. To compare correctly against
-    // course dates (which are calendar dates without timezone), we add a
-    // 1-day buffer to allow sessions scheduled on the start date regardless
-    // of timezone offset.
-    const sessionDate = new Date(scheduledAt);
-    const sessionDateStr = sessionDate.toISOString().slice(0, 10);
+    // Use the user's local date (YYYY-MM-DD) sent from the frontend.
+    // This avoids timezone conversion issues where e.g., March 30 03:50 UTC+5
+    // becomes March 29 22:50 UTC and fails the date range check.
+    // Falls back to extracting from ISO string if localDate not provided.
+    const sessionDateStr = localDate || scheduledAt.slice(0, 10);
 
     if (courseStartDate) {
       const startStr = String(courseStartDate).slice(0, 10);
-      // Allow 1 day before start date to handle timezone offsets (max UTC+14)
-      const startWithBuffer = new Date(startStr);
-      startWithBuffer.setDate(startWithBuffer.getDate() - 1);
-      const bufferStr = startWithBuffer.toISOString().slice(0, 10);
-      if (sessionDateStr < bufferStr) {
+      if (sessionDateStr < startStr) {
         throw new BadRequestException(
           `Lecture date cannot be before the course start date (${startStr})`,
         );
@@ -1561,11 +1554,7 @@ export class SessionsService {
     }
     if (courseEndDate) {
       const endStr = String(courseEndDate).slice(0, 10);
-      // Allow 1 day after end date to handle timezone offsets
-      const endWithBuffer = new Date(endStr);
-      endWithBuffer.setDate(endWithBuffer.getDate() + 1);
-      const bufferStr = endWithBuffer.toISOString().slice(0, 10);
-      if (sessionDateStr > bufferStr) {
+      if (sessionDateStr > endStr) {
         throw new BadRequestException(
           `Lecture date cannot be after the course end date (${endStr})`,
         );

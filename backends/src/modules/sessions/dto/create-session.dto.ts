@@ -77,6 +77,10 @@ export class CreateSessionDto {
   venueAddress?: string;
 
   @IsOptional()
+  @IsString()
+  localDate?: string;
+
+  @IsOptional()
   @IsBoolean()
   recordingEnabled?: boolean;
 

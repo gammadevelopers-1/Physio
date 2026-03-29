@@ -1204,6 +1204,7 @@ function ScheduleSessionModal({
         title: title.trim(),
         type,
         scheduledAt,
+        localDate: date,
         durationMinutes: duration,
       };
       if (type === "onsite" || type === "hybrid") {
@@ -1716,6 +1717,7 @@ function EditSessionModal({
       const data: Record<string, unknown> = {
         title: title.trim(),
         scheduledAt,
+        localDate: date,
         durationMinutes: duration,
       };
       if (session.type === "onsite" || session.type === "hybrid") {

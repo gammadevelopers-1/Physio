@@ -1300,11 +1300,14 @@ export class CoursesService {
       }
     }
 
-    // Each module must have at least one material (content)
-    const allModules = await db
-      .select({ id: courseModules.id, title: courseModules.title })
-      .from(courseModules)
-      .where(eq(courseModules.courseId, courseId));
+    // Each module must have at least one material (content) — only for self-paced/blended
+    // Zoom/onsite: modules are optional supplementary content, no content enforcement
+    const allModules = (courseDetail.deliveryType === 'self-paced' || courseDetail.deliveryType === 'blended')
+      ? await db
+          .select({ id: courseModules.id, title: courseModules.title })
+          .from(courseModules)
+          .where(eq(courseModules.courseId, courseId))
+      : [];
 
     for (const mod of allModules) {
       const [matCount] = await db
@@ -1337,8 +1340,12 @@ export class CoursesService {
       );
     }
 
-    // Total module hours must meet CME hours (if CME accredited)
-    if (courseDetail.cmeHours && courseDetail.cmeHours > 0) {
+    // Total module hours must meet CME hours — only for self-paced/blended
+    // Zoom/onsite: CME hours are based on approved lecture duration, not modules
+    if (
+      courseDetail.cmeHours && courseDetail.cmeHours > 0 &&
+      (courseDetail.deliveryType === 'self-paced' || courseDetail.deliveryType === 'blended')
+    ) {
       const totalMinutes = await db
         .select({
           total: sql<number>`COALESCE(SUM(${courseModules.durationMinutes}), 0)`.mapWith(Number),

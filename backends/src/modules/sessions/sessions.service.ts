@@ -1537,21 +1537,35 @@ export class SessionsService {
     courseStartDate: string | null,
     courseEndDate: string | null,
   ) {
-    // Compare date portions only (YYYY-MM-DD) to avoid timezone issues.
-    // The session datetime from the frontend represents the user's local date,
-    // so we extract just the date part for comparison.
-    const sessionDateStr = scheduledAt.slice(0, 10); // "YYYY-MM-DD"
+    // Compare date portions only (YYYY-MM-DD).
+    // scheduledAt is an ISO string (UTC). Course dates are date-only strings.
+    // The user picks a local datetime (e.g., 2026-03-30T03:50 in UTC+5),
+    // which becomes 2026-03-29T22:50Z in UTC. To compare correctly against
+    // course dates (which are calendar dates without timezone), we add a
+    // 1-day buffer to allow sessions scheduled on the start date regardless
+    // of timezone offset.
+    const sessionDate = new Date(scheduledAt);
+    const sessionDateStr = sessionDate.toISOString().slice(0, 10);
+
     if (courseStartDate) {
-      const startStr = new Date(courseStartDate).toISOString().slice(0, 10);
-      if (sessionDateStr < startStr) {
+      const startStr = String(courseStartDate).slice(0, 10);
+      // Allow 1 day before start date to handle timezone offsets (max UTC+14)
+      const startWithBuffer = new Date(startStr);
+      startWithBuffer.setDate(startWithBuffer.getDate() - 1);
+      const bufferStr = startWithBuffer.toISOString().slice(0, 10);
+      if (sessionDateStr < bufferStr) {
         throw new BadRequestException(
           `Lecture date cannot be before the course start date (${startStr})`,
         );
       }
     }
     if (courseEndDate) {
-      const endStr = new Date(courseEndDate).toISOString().slice(0, 10);
-      if (sessionDateStr > endStr) {
+      const endStr = String(courseEndDate).slice(0, 10);
+      // Allow 1 day after end date to handle timezone offsets
+      const endWithBuffer = new Date(endStr);
+      endWithBuffer.setDate(endWithBuffer.getDate() + 1);
+      const bufferStr = endWithBuffer.toISOString().slice(0, 10);
+      if (sessionDateStr > bufferStr) {
         throw new BadRequestException(
           `Lecture date cannot be after the course end date (${endStr})`,
         );

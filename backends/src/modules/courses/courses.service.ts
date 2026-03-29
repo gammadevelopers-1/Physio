@@ -1361,6 +1361,7 @@ export class CoursesService {
     }
 
     // All sessions must be within course date range
+    // Add 1-day buffer to handle timezone offsets (UTC vs local time)
     const outOfRangeSessions = await db
       .select({
         id: sessions.id,
@@ -1373,8 +1374,8 @@ export class CoursesService {
           eq(sessions.courseId, courseId),
           sql`${sessions.status} != 'cancelled'`,
           or(
-            sql`${sessions.scheduledAt}::date < ${courseDetail.startDate}::date`,
-            sql`${sessions.scheduledAt}::date > ${courseDetail.endDate}::date`,
+            sql`${sessions.scheduledAt}::date < (${courseDetail.startDate}::date - interval '1 day')`,
+            sql`${sessions.scheduledAt}::date > (${courseDetail.endDate}::date + interval '1 day')`,
           ),
         ),
       );

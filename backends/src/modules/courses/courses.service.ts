@@ -1244,7 +1244,7 @@ export class CoursesService {
     // Auto-create certificate requests for all finalized students
     for (const student of activeStudents) {
       try {
-        await this.certificatesService.createRequest(courseId, student.studentId);
+        await this.certificatesService.createRequest(courseId, student.studentId, true);
         this.logger.log(
           `Auto-created certificate request for student ${student.studentId} in course ${courseId}`,
         );

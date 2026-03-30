@@ -86,7 +86,7 @@ export class CourseCompletionCronService {
             // Auto-create certificate requests for all students
             for (const student of activeStudents) {
               try {
-                await this.certificatesService.createRequest(course.id, student.studentId);
+                await this.certificatesService.createRequest(course.id, student.studentId, true);
               } catch {
                 // Skip duplicates silently
               }

@@ -278,7 +278,7 @@ export class CertificatesService {
    * POST /certificates — Student or instructor creates a certificate request.
    * Auto-computes eligibility fields.
    */
-  async createRequest(courseId: string, studentId: string) {
+  async createRequest(courseId: string, studentId: string, skipEligibilityCheck = false) {
     // Verify the student is enrolled in the course
     const [enrollment] = await db
       .select({ id: enrollments.id })
@@ -339,27 +339,29 @@ export class CertificatesService {
     // Compute eligibility
     const eligibility = await this.computeEligibility(courseId, studentId);
 
-    // Block certificate request if minimum attendance not met (for sync courses)
-    const [courseForType] = await db
-      .select({ deliveryType: courses.deliveryType })
-      .from(courses)
-      .where(eq(courses.id, courseId))
-      .limit(1);
-    const isSelfPacedCourse = courseForType?.deliveryType === 'self-paced';
+    // When called from auto-create (course completion), skip eligibility checks
+    // — the manager will review and decide. Only block on manual student requests.
+    if (!skipEligibilityCheck) {
+      const [courseForType] = await db
+        .select({ deliveryType: courses.deliveryType })
+        .from(courses)
+        .where(eq(courses.id, courseId))
+        .limit(1);
+      const isSelfPacedCourse = courseForType?.deliveryType === 'self-paced';
 
-    if (!isSelfPacedCourse && parseFloat(eligibility.attendancePercent) < 70) {
-      throw new BadRequestException(
-        `Your attendance is ${eligibility.attendancePercent}% (minimum 70% required). You are not eligible for a certificate.`,
-      );
-    }
+      if (!isSelfPacedCourse && parseFloat(eligibility.attendancePercent) < 70) {
+        throw new BadRequestException(
+          `Your attendance is ${eligibility.attendancePercent}% (minimum 70% required). You are not eligible for a certificate.`,
+        );
+      }
 
-    // Block if course not completed
-    if (!eligibility.courseCompleted) {
-      throw new BadRequestException(
-        isSelfPacedCourse
-          ? 'You must complete all modules (100%) before requesting a certificate.'
-          : 'Course must be completed before requesting a certificate.',
-      );
+      if (!eligibility.courseCompleted) {
+        throw new BadRequestException(
+          isSelfPacedCourse
+            ? 'You must complete all modules (100%) before requesting a certificate.'
+            : 'Course must be completed before requesting a certificate.',
+        );
+      }
     }
 
     const [request] = await db

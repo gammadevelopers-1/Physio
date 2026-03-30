@@ -469,18 +469,34 @@ const StudentCourseDetailContent = () => {
                     return attPct >= 70;
                   })() && data.course.cmeHours && data.course.cmeHours > 0 && (
                     <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-green-800">
+                              Congratulations! You have earned {data.course.cmeHours} CME hours
+                            </p>
+                            <p className="text-xs text-green-600">
+                              Request your certificate below
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-green-800">
-                            Congratulations! You have earned {data.course.cmeHours} CME hours
-                          </p>
-                          <p className="text-xs text-green-600">
-                            Your certificate is pending manager approval
-                          </p>
-                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              await studentApi.requestCertificate(data.course.id);
+                              toast.success("Certificate requested! Pending manager approval.");
+                            } catch (err: unknown) {
+                              const msg = err instanceof Error ? err.message : "Failed to request certificate";
+                              toast.error(msg);
+                            }
+                          }}
+                          className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                        >
+                          Request Certificate
+                        </button>
                       </div>
                     </div>
                   )}

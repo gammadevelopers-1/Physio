@@ -2186,6 +2186,9 @@ export const studentApi = {
   getCertificates: () =>
     api.get<StudentCertificate[]>('/student/certificates'),
 
+  requestCertificate: (courseId: string) =>
+    api.post<{ id: string; status: string }>('/certificates', { courseId }),
+
   downloadCertificate: async (certId: string) => {
     const blob = await fetchBlob(`/student/certificates/${certId}/download`);
     downloadBlob(blob, `certificate-${certId.slice(0, 8)}.pdf`);

@@ -433,7 +433,15 @@ const StudentCourseDetailContent = () => {
                   </div>
 
                   {/* Course requirements not met banner */}
-                  {data.enrollment.status === "completed" && data.enrollment.progress < 100 && (
+                  {data.enrollment.status === "completed" && (() => {
+                    const dt = data.course.deliveryType;
+                    const isSP = dt === "self-paced";
+                    const isBlend = dt === "blended";
+                    if (isSP || isBlend) return data.enrollment.progress < 100;
+                    // Zoom/onsite: check attendance >= 70%
+                    const attPct = data.attendanceSummary?.percentage ?? 0;
+                    return attPct < 70;
+                  })() && (
                     <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -445,6 +453,32 @@ const StudentCourseDetailContent = () => {
                           </p>
                           <p className="text-xs text-red-600">
                             {t("courseDetail.cmeHoursEarned", { hours: 0 }) || "CME hours: 0"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Course requirements met — show CME earned */}
+                  {data.enrollment.status === "completed" && (() => {
+                    const dt = data.course.deliveryType;
+                    const isSP = dt === "self-paced";
+                    const isBlend = dt === "blended";
+                    if (isSP || isBlend) return data.enrollment.progress >= 100;
+                    const attPct = data.attendanceSummary?.percentage ?? 0;
+                    return attPct >= 70;
+                  })() && data.course.cmeHours && data.course.cmeHours > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-green-800">
+                            Congratulations! You have earned {data.course.cmeHours} CME hours
+                          </p>
+                          <p className="text-xs text-green-600">
+                            Your certificate is pending manager approval
                           </p>
                         </div>
                       </div>

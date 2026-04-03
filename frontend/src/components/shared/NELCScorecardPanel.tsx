@@ -190,7 +190,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
                       >
                         <CheckIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${checkCfg.text}`} />
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-[#374151]">{check.rule}</p>
+                          <p className="text-xs font-medium text-[#374151]">{t.has(`rule_${check.rule}`) ? t(`rule_${check.rule}`) : check.rule}</p>
                           <p className="text-xs text-[#6B7280]">{check.detail}</p>
                         </div>
                       </div>

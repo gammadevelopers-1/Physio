@@ -61,7 +61,7 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
           {t("maxEnrollment")}
         </label>
         <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5 max-w-xs">
-          40–50 students (NELC requirement)
+          {t("syncDefaultMax") || "Default: up to 2000 students"}
         </p>
       </div>
     </div>

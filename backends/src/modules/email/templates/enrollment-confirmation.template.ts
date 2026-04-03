@@ -1,21 +1,25 @@
 /**
  * Enrollment confirmation email for students
  */
+import { EmailLocale, getEmailStrings, t, htmlAttrs, textAlign } from '../email-i18n';
+
 export function getEnrollmentConfirmationHtml(params: {
   studentName: string;
   courseName: string;
   startDate: string | null;
   instructorName: string;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
+
   const dateBlock = params.startDate
     ? `<tr>
-        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Starts:</td>
+        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.startsLabel}</td>
         <td style="padding:4px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${params.startDate}</td>
       </tr>`
     : '';
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -38,7 +42,7 @@ export function getEnrollmentConfirmationHtml(params: {
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -55,9 +59,9 @@ export function getEnrollmentConfirmationHtml(params: {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Enrollment Confirmed!</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.enrollTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hi ${params.studentName},
+                ${s.hi} ${params.studentName},
               </p>
             </td>
           </tr>
@@ -68,16 +72,16 @@ export function getEnrollmentConfirmationHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 12px;font-size:14px;color:#166534;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
-                      You have been successfully enrolled in the following course:
+                    <p style="margin:0 0 12px;font-size:14px;color:#166534;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      ${s.enrollBody}
                     </p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Course:</td>
+                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
                         <td style="padding:4px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${params.courseName}</td>
                       </tr>
                       <tr>
-                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Instructor:</td>
+                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.instructorLabel}</td>
                         <td style="padding:4px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${params.instructorName}</td>
                       </tr>
                       ${dateBlock}
@@ -91,8 +95,8 @@ export function getEnrollmentConfirmationHtml(params: {
           <!-- CTA -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Log in to your student dashboard to access course materials and upcoming sessions.
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${s.enrollCta}
               </p>
             </td>
           </tr>
@@ -108,10 +112,10 @@ export function getEnrollmentConfirmationHtml(params: {
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -129,26 +133,28 @@ export function getEnrollmentConfirmationText(params: {
   courseName: string;
   startDate: string | null;
   instructorName: string;
-}): string {
-  let text = `PhysioGuidance - Enrollment Confirmed!
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
 
-Hi ${params.studentName},
+  let text = `PhysioGuidance - ${s.enrollTitle}
 
-You have been successfully enrolled in the following course:
+${s.hi} ${params.studentName},
 
-Course: ${params.courseName}
-Instructor: ${params.instructorName}`;
+${s.enrollBody}
+
+${s.courseLabel} ${params.courseName}
+${s.instructorLabel} ${params.instructorName}`;
 
   if (params.startDate) {
-    text += `\nStarts: ${params.startDate}`;
+    text += `\n${s.startsLabel} ${params.startDate}`;
   }
 
   text += `
 
-Log in to your student dashboard to access course materials and upcoming sessions.
+${s.enrollCta}
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+\u00a9 ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 
   return text;
 }

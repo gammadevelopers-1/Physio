@@ -593,7 +593,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   {riskReasons.some(r => r.includes(`[${cp.courseTitle}]`)) && (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#FEF2F2] text-[#EF4444]">
                                       <AlertTriangle className="w-3 h-3" />
-                                      At Risk
+                                      {t("studentDetail.atRisk")}
                                     </span>
                                   )}
                                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -601,7 +601,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     : cp.enrollmentStatus === "active" ? "bg-[#EFF6FF] text-[#3B82F6]"
                                     : "bg-[#F3F4F6] text-[#6B7280]"
                                   }`}>
-                                    {cp.enrollmentStatus === "completed" ? "Completed" : cp.enrollmentStatus === "active" ? "In Progress" : cp.enrollmentStatus}
+                                    {cp.enrollmentStatus === "completed" ? t("studentDetail.enrollmentCompleted") : cp.enrollmentStatus === "active" ? t("studentDetail.enrollmentInProgress") : cp.enrollmentStatus}
                                   </span>
                                 </div>
                               </div>
@@ -611,29 +611,29 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <div className="grid grid-cols-5 gap-2">
                                   <div className="bg-[#F9FAFB] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[#1F2937]">{cp.attendance.totalSessions}</p>
-                                    <p className="text-[10px] text-[#6B7280]">Total</p>
+                                    <p className="text-[10px] text-[#6B7280]">{t("studentDetail.total")}</p>
                                   </div>
                                   <div className="bg-[#DCFCE7] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[#22C55E]">{cp.attendance.present}</p>
-                                    <p className="text-[10px] text-[#166534]">Present</p>
+                                    <p className="text-[10px] text-[#166534]">{t("studentDetail.present")}</p>
                                   </div>
                                   <div className="bg-[#FEE2E2] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[#EF4444]">{cp.attendance.absent}</p>
-                                    <p className="text-[10px] text-[#991B1B]">Absent</p>
+                                    <p className="text-[10px] text-[#991B1B]">{t("studentDetail.absent")}</p>
                                   </div>
                                   <div className="bg-[#FEF9C3] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[#EAB308]">{cp.attendance.late}</p>
-                                    <p className="text-[10px] text-[#854D0E]">Late</p>
+                                    <p className="text-[10px] text-[#854D0E]">{t("studentDetail.late")}</p>
                                   </div>
                                   <div className="bg-[#F3F4F6] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[#6B7280]">{cp.attendance.excused}</p>
-                                    <p className="text-[10px] text-[#4B5563]">Excused</p>
+                                    <p className="text-[10px] text-[#4B5563]">{t("studentDetail.excused")}</p>
                                   </div>
                                 </div>
 
                                 {/* Attendance Rate Bar */}
                                 <div className="flex items-center gap-3">
-                                  <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">Attendance</span>
+                                  <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">{t("studentDetail.attendance")}</span>
                                   <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                                     <div
                                       className={`h-full rounded-full transition-all ${
@@ -656,7 +656,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 {/* Assessment Average (if available) */}
                                 {cp.assessmentAverage !== null && (
                                   <div className="flex items-center gap-3">
-                                    <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">Assessment</span>
+                                    <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">{t("studentDetail.assessment")}</span>
                                     <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                                       <div
                                         className={`h-full rounded-full transition-all ${
@@ -682,15 +682,15 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   <details className="group">
                                     <summary className="text-xs font-medium text-[#6B7280] cursor-pointer hover:text-[#1F2937] flex items-center gap-1">
                                       <ChevronRight className="w-3.5 h-3.5 group-open:rotate-90 transition-transform" />
-                                      Lecture-by-Lecture ({cp.attendanceRecords.length})
+                                      {t("studentDetail.lectureByLecture", { count: cp.attendanceRecords.length })}
                                     </summary>
                                     <div className="mt-2 overflow-x-auto">
                                       <table className="w-full">
                                         <thead>
                                           <tr className="bg-[#F9FAFB]">
-                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">Lecture</th>
-                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">Date</th>
-                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">Status</th>
+                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.session")}</th>
+                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.dateLabel")}</th>
+                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.status")}</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#F3F4F6]">
@@ -705,7 +705,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                                   : r.status === "late" ? "bg-[#FEF9C3] text-[#854D0E]"
                                                   : "bg-[#F3F4F6] text-[#4B5563]"
                                                 }`}>
-                                                  {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                                                  {t(`studentDetail.status${r.status.charAt(0).toUpperCase() + r.status.slice(1)}`)}
                                                 </span>
                                               </td>
                                             </tr>
@@ -726,7 +726,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     className="w-full flex items-center justify-center gap-2 px-3 py-2 mt-2 text-xs font-medium text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] rounded-lg hover:bg-[#FEF3C7] transition-colors"
                                   >
                                     <Calendar className="w-3.5 h-3.5" />
-                                    Schedule Make-up Lecture
+                                    {t("studentDetail.scheduleMakeup")}
                                   </button>
                                 )}
                               </div>
@@ -770,7 +770,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                       : cp.assessmentAverage >= 50 ? "text-[#EAB308]"
                                       : "text-[#EF4444]"
                                     }`}>
-                                      Avg: {cp.assessmentAverage}%
+                                      {t("studentDetail.avg")}: {cp.assessmentAverage}%
                                     </span>
                                   )}
                                 </div>
@@ -778,10 +778,10 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   <table className="w-full">
                                     <thead>
                                       <tr className="text-left">
-                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Assessment</th>
-                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Score</th>
-                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Class Avg</th>
-                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">Status</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.assessment")}</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.score")}</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.classAvg")}</th>
+                                        <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.status")}</th>
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-[#F3F4F6]">
@@ -800,7 +800,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                             <td className="px-4 py-2.5">
                                               <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${passed ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
                                                 {passed ? <CheckCircle className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-                                                {passed ? "Passed" : "Failed"}
+                                                {passed ? t("studentDetail.passed") : t("studentDetail.failed")}
                                               </span>
                                             </td>
                                           </tr>
@@ -816,7 +816,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {(!student.coursePerformance || student.coursePerformance.every((cp: any) => !(cp.assessments?.length))) && (
                             <div className="text-center py-8">
                               <FileText className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
-                              <p className="text-sm text-[#6B7280]">No assessment scores available yet.</p>
+                              <p className="text-sm text-[#6B7280]">{t("studentDetail.noAssessments")}</p>
                             </div>
                           )}
                         </div>
@@ -971,14 +971,14 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-[#1F2937]">Schedule Make-up Lecture</h3>
+                <h3 className="text-lg font-semibold text-[#1F2937]">{t("studentDetail.makeupModalTitle")}</h3>
                 <button onClick={() => setMakeupModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded">
                   <UserX className="w-5 h-5 text-[#6B7280]" />
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">Lecture Title *</label>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("studentDetail.lectureTitle")} *</label>
                   <input
                     type="text"
                     value={makeupData.title}
@@ -988,7 +988,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">Date *</label>
+                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("studentDetail.dateRequired")} *</label>
                     <input
                       type="date"
                       value={makeupData.date}
@@ -997,7 +997,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">Time *</label>
+                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("studentDetail.timeRequired")} *</label>
                     <input
                       type="time"
                       value={makeupData.time}
@@ -1007,7 +1007,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">Duration (minutes)</label>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("studentDetail.durationMinutes")}</label>
                   <input
                     type="number"
                     value={makeupData.duration}
@@ -1016,14 +1016,14 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
                 </div>
-                <p className="text-xs text-[#9CA3AF]">This make-up lecture will only be visible to the assigned at-risk student.</p>
+                <p className="text-xs text-[#9CA3AF]">{t("studentDetail.makeupNote")}</p>
               </div>
               <div className="flex justify-end gap-3 mt-5">
-                <button onClick={() => setMakeupModal(null)} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937]">Cancel</button>
+                <button onClick={() => setMakeupModal(null)} className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1F2937]">{t("studentDetail.cancel")}</button>
                 <button
                   onClick={async () => {
                     if (!makeupData.title.trim() || !makeupData.date || !makeupData.time) {
-                      toast.error("Please fill in all required fields");
+                      toast.error(t("studentDetail.fillRequired"));
                       return;
                     }
                     setMakeupSaving(true);
@@ -1038,11 +1038,11 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                         isMakeup: true,
                         assignedStudents: [studentId],
                       });
-                      toast.success("Make-up lecture scheduled");
+                      toast.success(t("studentDetail.makeupScheduled"));
                       setMakeupModal(null);
                       window.location.reload();
                     } catch (err: any) {
-                      toast.error(err?.message || "Failed to schedule");
+                      toast.error(err?.message || t("studentDetail.makeupFailed"));
                     } finally {
                       setMakeupSaving(false);
                     }
@@ -1050,7 +1050,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   disabled={makeupSaving || !makeupData.title.trim() || !makeupData.date || !makeupData.time}
                   className="px-4 py-2 bg-[#D97706] text-white text-sm font-medium rounded-lg hover:bg-[#B45309] transition-colors disabled:opacity-50"
                 >
-                  {makeupSaving ? "Scheduling..." : "Schedule Lecture"}
+                  {makeupSaving ? t("studentDetail.scheduling") : t("studentDetail.scheduleLecture")}
                 </button>
               </div>
             </div>

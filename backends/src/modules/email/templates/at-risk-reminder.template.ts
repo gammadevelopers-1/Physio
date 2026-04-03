@@ -1,11 +1,16 @@
 /**
  * At-risk student reminder email template for PhysioGuidance
  */
+import { EmailLocale, getEmailStrings, textAlign, htmlAttrs } from '../email-i18n';
+
 export function getAtRiskReminderHtml(
   studentName: string,
   courseName: string,
   customMessage?: string,
+  locale: EmailLocale = 'en',
 ): string {
+  const s = getEmailStrings(locale);
+
   const messageBlock = customMessage
     ? `
           <!-- Custom message from instructor -->
@@ -15,7 +20,7 @@ export function getAtRiskReminderHtml(
                 <tr>
                   <td style="padding:20px;">
                     <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Message from your instructor</p>
-                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">${customMessage}</p>
+                    <p style="margin:0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">${customMessage}</p>
                   </td>
                 </tr>
               </table>
@@ -24,11 +29,11 @@ export function getAtRiskReminderHtml(
     : '';
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Course Reminder - PhysioGuidance</title>
+  <title>${s.atRiskTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -47,7 +52,7 @@ export function getAtRiskReminderHtml(
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -64,9 +69,9 @@ export function getAtRiskReminderHtml(
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Course Progress Reminder</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.atRiskTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hi ${studentName},
+                ${s.hi} ${studentName},
               </p>
             </td>
           </tr>
@@ -77,8 +82,11 @@ export function getAtRiskReminderHtml(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fefce8;border-radius:10px;border:1px solid #fde68a;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0;font-size:14px;color:#854d0e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
-                      Your instructor has noticed that your progress in <strong>${courseName}</strong> needs attention. We encourage you to review your recent activity, attend upcoming sessions, and reach out if you need any support.
+                    <p style="margin:0;font-size:14px;color:#854d0e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      ${s.atRiskBody}
+                    </p>
+                    <p style="margin:8px 0 0;font-size:14px;color:#854d0e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      <strong>${s.courseLabel}</strong> ${courseName}
                     </p>
                   </td>
                 </tr>
@@ -89,8 +97,8 @@ ${messageBlock}
           <!-- Encouragement -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Log in to your account to catch up on materials and upcoming sessions. Your success matters to us!
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${s.atRiskCta}
               </p>
             </td>
           </tr>
@@ -106,10 +114,10 @@ ${messageBlock}
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -126,23 +134,28 @@ export function getAtRiskReminderText(
   studentName: string,
   courseName: string,
   customMessage?: string,
+  locale: EmailLocale = 'en',
 ): string {
-  let text = `PhysioGuidance - Course Progress Reminder
+  const s = getEmailStrings(locale);
 
-Hi ${studentName},
+  let text = `PhysioGuidance - ${s.atRiskTitle}
 
-Your instructor has noticed that your progress in "${courseName}" needs attention. We encourage you to review your recent activity, attend upcoming sessions, and reach out if you need any support.`;
+${s.hi} ${studentName},
+
+${s.atRiskBody}
+
+${s.courseLabel} ${courseName}`;
 
   if (customMessage) {
-    text += `\n\nMessage from your instructor:\n${customMessage}`;
+    text += `\n\n${customMessage}`;
   }
 
   text += `
 
-Log in to your account to catch up on materials and upcoming sessions. Your success matters to us!
+${s.atRiskCta}
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+\u00a9 ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 
   return text;
 }

@@ -367,15 +367,18 @@ export class CoursesService {
       .limit(limit)
       .offset(offset);
 
-    // Enrich with NELC capacity info (no longer hiding full courses)
+    // Enrich with capacity info
     const enriched = data.map((c) => {
-      const classification = classifyCourse(c.startDate, c.endDate);
-      const nelcMax = getNelcMaxEnrollment(classification);
-      const effectiveMax = c.maxEnrollment
-        ? Math.min(c.maxEnrollment, nelcMax)
-        : nelcMax;
-      const remainingSeats = Math.max(0, effectiveMax - c.enrolledCount);
-      const isFull = remainingSeats === 0;
+      const isSelfPaced = c.deliveryType === 'self-paced';
+      let effectiveMax: number | null;
+      if (isSelfPaced) {
+        effectiveMax = c.maxEnrollment ?? null; // unlimited if not set
+      } else {
+        const classification = classifyCourse(c.startDate, c.endDate);
+        effectiveMax = c.maxEnrollment ?? getNelcMaxEnrollment(classification);
+      }
+      const remainingSeats = effectiveMax !== null ? Math.max(0, effectiveMax - c.enrolledCount) : null;
+      const isFull = effectiveMax !== null ? remainingSeats === 0 : false;
 
       return {
         ...c,
@@ -476,12 +479,15 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
-    const classification = classifyCourse(data.startDate, data.endDate);
-    const nelcMax = getNelcMaxEnrollment(classification);
-    const effectiveMax = data.maxEnrollment
-      ? Math.min(data.maxEnrollment, nelcMax)
-      : nelcMax;
-    const remainingSeats = Math.max(0, effectiveMax - data.enrolledCount);
+    const isSelfPaced = data.deliveryType === 'self-paced';
+    let effectiveMax: number | null;
+    if (isSelfPaced) {
+      effectiveMax = data.maxEnrollment ?? null;
+    } else {
+      const classification = classifyCourse(data.startDate, data.endDate);
+      effectiveMax = data.maxEnrollment ?? getNelcMaxEnrollment(classification);
+    }
+    const remainingSeats = effectiveMax !== null ? Math.max(0, effectiveMax - data.enrolledCount) : null;
 
     return {
       ...data,
@@ -489,7 +495,7 @@ export class CoursesService {
       avgRating: Number(Number(data.avgRating || 0).toFixed(1)),
       price: data.price ? Number(data.price) : 0,
       remainingSeats,
-      isFull: remainingSeats === 0,
+      isFull: effectiveMax !== null ? remainingSeats === 0 : false,
     };
   }
 
@@ -715,7 +721,7 @@ export class CoursesService {
 
     // Notify all managers (in-app + email)
     const managers = await db
-      .select({ id: users.id, email: users.email, firstName: users.firstName })
+      .select({ id: users.id, email: users.email, firstName: users.firstName, language: users.language })
       .from(users)
       .where(
         sql`${users.activeRole} IN ('MANAGER', 'ADMIN', 'SUPER_ADMIN')`,
@@ -736,6 +742,7 @@ export class CoursesService {
       // Email each manager
       for (const mgr of managers) {
         if (mgr.email) {
+          const mgrLocale = (mgr.language || 'en') as 'en' | 'ar';
           await this.emailService.sendContentPendingReview(mgr.email, {
             recipientName: mgr.firstName || 'Manager',
             materialTitle: course.title,
@@ -743,7 +750,7 @@ export class CoursesService {
             instructorName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email,
             wcagStatus: 'N/A',
             wcagSummary: 'Course submitted for review',
-          }).catch(() => {});
+          }, mgrLocale).catch(() => {});
         }
       }
     }
@@ -811,18 +818,19 @@ export class CoursesService {
     });
 
     const [instructor] = await db
-      .select({ email: users.email, firstName: users.firstName })
+      .select({ email: users.email, firstName: users.firstName, language: users.language })
       .from(users)
       .where(eq(users.id, course.instructorId))
       .limit(1);
     if (instructor?.email) {
+      const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
       await this.emailService.sendContentReview(instructor.email, {
         recipientName: instructor.firstName || 'Instructor',
         materialTitle: course.title,
         courseName: course.title,
         decision: 'changes_requested',
         comment: note,
-      }).catch(() => {});
+      }, instrLocale).catch(() => {});
     }
 
     this.logger.log(`Changes requested on course "${course.title}" by ${user.id}: ${note}`);
@@ -1092,18 +1100,19 @@ export class CoursesService {
 
     // Email instructor
     const [instructor] = await db
-      .select({ email: users.email, firstName: users.firstName })
+      .select({ email: users.email, firstName: users.firstName, language: users.language })
       .from(users)
       .where(eq(users.id, course.instructorId))
       .limit(1);
     if (instructor?.email) {
+      const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
       await this.emailService.sendContentReview(instructor.email, {
         recipientName: instructor.firstName || 'Instructor',
         materialTitle: course.title,
         courseName: course.title,
         decision: 'approved',
         comment: null,
-      }).catch(() => {});
+      }, instrLocale).catch(() => {});
     }
 
     this.logger.log(`Course "${course.title}" activated by ${user.id}`);

@@ -1,23 +1,26 @@
 /**
  * Assessment submission notification email for instructors
  */
+import { EmailLocale, getEmailStrings, textAlign, htmlAttrs } from '../email-i18n';
+
 export function getAssessmentSubmittedHtml(params: {
   instructorName: string;
   studentName: string;
   assessmentTitle: string;
   assessmentType: string;
   courseName: string;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const typeLabel =
     params.assessmentType.charAt(0).toUpperCase() +
     params.assessmentType.slice(1);
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${typeLabel} Submitted - PhysioGuidance</title>
+  <title>${s.assessSubmittedTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -36,7 +39,7 @@ export function getAssessmentSubmittedHtml(params: {
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -53,9 +56,9 @@ export function getAssessmentSubmittedHtml(params: {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">New ${typeLabel} Submission</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.assessSubmittedTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hi ${params.instructorName},
+                ${s.hi} ${params.instructorName},
               </p>
             </td>
           </tr>
@@ -66,16 +69,20 @@ export function getAssessmentSubmittedHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f9ff;border-radius:10px;border:1px solid #bae6fd;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 12px;font-size:14px;color:#0c4a6e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
-                      <strong>${params.studentName}</strong> has submitted their ${params.assessmentType} for grading.
+                    <p style="margin:0 0 12px;font-size:14px;color:#0c4a6e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      ${s.assessSubmittedBody}
                     </p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${typeLabel}:</td>
+                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.studentLabel}</td>
+                        <td style="padding:4px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${params.studentName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.assessmentLabel}</td>
                         <td style="padding:4px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${params.assessmentTitle}</td>
                       </tr>
                       <tr>
-                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Course:</td>
+                        <td style="padding:4px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
                         <td style="padding:4px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${params.courseName}</td>
                       </tr>
                     </table>
@@ -88,9 +95,6 @@ export function getAssessmentSubmittedHtml(params: {
           <!-- CTA -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Log in to your instructor dashboard to review and grade this submission.
-              </p>
             </td>
           </tr>
 
@@ -105,10 +109,10 @@ export function getAssessmentSubmittedHtml(params: {
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -127,22 +131,19 @@ export function getAssessmentSubmittedText(params: {
   assessmentTitle: string;
   assessmentType: string;
   courseName: string;
-}): string {
-  const typeLabel =
-    params.assessmentType.charAt(0).toUpperCase() +
-    params.assessmentType.slice(1);
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
 
-  return `PhysioGuidance - New ${typeLabel} Submission
+  return `PhysioGuidance - ${s.assessSubmittedTitle}
 
-Hi ${params.instructorName},
+${s.hi} ${params.instructorName},
 
-${params.studentName} has submitted their ${params.assessmentType} for grading.
+${s.assessSubmittedBody}
 
-${typeLabel}: ${params.assessmentTitle}
-Course: ${params.courseName}
+${s.studentLabel} ${params.studentName}
+${s.assessmentLabel} ${params.assessmentTitle}
+${s.courseLabel} ${params.courseName}
 
-Log in to your instructor dashboard to review and grade this submission.
-
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+\u00a9 ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

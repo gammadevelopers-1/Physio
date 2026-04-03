@@ -2,6 +2,8 @@
  * Session scheduled email template for PhysioGuidance
  * Sent when an instructor schedules a new session
  */
+import { EmailLocale, getEmailStrings, t, htmlAttrs, textAlign } from '../email-i18n';
+
 export function getSessionScheduledHtml(params: {
   recipientName: string;
   sessionTitle: string;
@@ -9,21 +11,27 @@ export function getSessionScheduledHtml(params: {
   scheduledDate: string;
   sessionType: string;
   zoomLink: string | null;
-}): string {
-  const { recipientName, sessionTitle, courseName, scheduledDate, sessionType, zoomLink } = params;
+  isRescheduled?: boolean;
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
+  const { recipientName, sessionTitle, courseName, scheduledDate, sessionType, zoomLink, isRescheduled } = params;
 
-  const typeLabel =
-    sessionType === 'zoom' ? 'Online (Zoom)' :
-    sessionType === 'hybrid' ? 'Hybrid' : 'On-Site';
+  const typeValue =
+    sessionType === 'zoom' ? s.typeZoom :
+    sessionType === 'hybrid' ? s.typeHybrid : s.typeOnsite;
+
+  const title = isRescheduled ? s.sessionRescheduledTitle : s.sessionScheduledTitle;
+  const body = isRescheduled ? s.sessionRescheduledBody : s.sessionScheduledBody;
+  const note = isRescheduled ? s.sessionRescheduledNote : s.sessionScheduledNote;
 
   const zoomBlock = ''; // Zoom link not shared in emails — students join from platform
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>New Lecture Scheduled - PhysioGuidance</title>
+  <title>${title} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -42,7 +50,7 @@ export function getSessionScheduledHtml(params: {
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -59,9 +67,9 @@ export function getSessionScheduledHtml(params: {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">New Lecture Scheduled</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${title}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hi ${recipientName},
+                ${s.hi} ${recipientName},
               </p>
             </td>
           </tr>
@@ -72,23 +80,23 @@ export function getSessionScheduledHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Lecture Details</p>
+                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.lectureLabel}</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">Lecture</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">${s.lectureLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${sessionTitle}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Course</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${courseName}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Date & Time</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.dateTimeLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${scheduledDate}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Type</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${typeLabel}</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.typeLabel}</td>
+                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${typeValue}</td>
                       </tr>
 ${zoomBlock}
                     </table>
@@ -101,8 +109,8 @@ ${zoomBlock}
           <!-- Info text -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                A new lecture has been scheduled for your course. Please mark your calendar!
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${note}
               </p>
             </td>
           </tr>
@@ -118,10 +126,10 @@ ${zoomBlock}
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -141,32 +149,38 @@ export function getSessionScheduledText(params: {
   scheduledDate: string;
   sessionType: string;
   zoomLink: string | null;
-}): string {
-  const { recipientName, sessionTitle, courseName, scheduledDate, sessionType, zoomLink } = params;
+  isRescheduled?: boolean;
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
+  const { recipientName, sessionTitle, courseName, scheduledDate, sessionType, zoomLink, isRescheduled } = params;
 
-  const typeLabel =
-    sessionType === 'zoom' ? 'Online (Zoom)' :
-    sessionType === 'hybrid' ? 'Hybrid' : 'On-Site';
+  const typeValue =
+    sessionType === 'zoom' ? s.typeZoom :
+    sessionType === 'hybrid' ? s.typeHybrid : s.typeOnsite;
 
-  let text = `PhysioGuidance - New Lecture Scheduled
-
-Hi ${recipientName},
-
-A new lecture has been scheduled for your course:
-
-Lecture: ${sessionTitle}
-Course: ${courseName}
-Date & Time: ${scheduledDate}
-Type: ${typeLabel}`;
+  const title = isRescheduled ? s.sessionRescheduledTitle : s.sessionScheduledTitle;
+  const body = isRescheduled ? s.sessionRescheduledBody : s.sessionScheduledBody;
+  const note = isRescheduled ? s.sessionRescheduledNote : s.sessionScheduledNote;
 
   // Zoom link not shared in emails — students join from platform
 
+  let text = `PhysioGuidance - ${title}
+
+${s.hi} ${recipientName},
+
+${body}
+
+${s.lectureLabel} ${sessionTitle}
+${s.courseLabel} ${courseName}
+${s.dateTimeLabel} ${scheduledDate}
+${s.typeLabel} ${typeValue}`;
+
   text += `
 
-Please mark your calendar!
+${note}
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+\u00a9 ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 
   return text;
 }

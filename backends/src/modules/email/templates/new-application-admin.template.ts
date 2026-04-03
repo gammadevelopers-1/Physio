@@ -1,16 +1,20 @@
 /**
  * New application notification for admins - PhysioGuidance
  */
+import { EmailLocale, getEmailStrings, htmlAttrs, textAlign } from '../email-i18n';
+
 export function getNewApplicationAdminHtml(
   applicantName: string,
   applicantEmail: string,
+  locale: EmailLocale = 'en',
 ): string {
+  const s = getEmailStrings(locale);
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>New Instructor Application - PhysioGuidance</title>
+  <title>${s.newAppAdminTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -29,7 +33,7 @@ export function getNewApplicationAdminHtml(
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -46,9 +50,9 @@ export function getNewApplicationAdminHtml(
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">New Instructor Application</h1>
-              <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                A new trainer application has been submitted and requires your review.
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.newAppAdminTitle}</h1>
+              <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${s.newAppAdminBody}
               </p>
             </td>
           </tr>
@@ -61,10 +65,13 @@ export function getNewApplicationAdminHtml(
                   <td style="padding:20px;">
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                       <tr>
-                        <td style="font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;padding-bottom:4px;font-weight:600;">Applicant</td>
+                        <td style="font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;padding-bottom:4px;font-weight:600;">${s.applicantLabel}</td>
                       </tr>
                       <tr>
                         <td style="font-size:16px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;padding-bottom:4px;">${applicantName}</td>
+                      </tr>
+                      <tr>
+                        <td style="font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;padding-bottom:4px;padding-top:8px;font-weight:600;">${s.emailLabel}</td>
                       </tr>
                       <tr>
                         <td style="font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${applicantEmail}</td>
@@ -79,9 +86,6 @@ export function getNewApplicationAdminHtml(
           <!-- Action -->
           <tr>
             <td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Review this application in the Admin Dashboard under <strong>Role Requests</strong>.
-              </p>
             </td>
           </tr>
 
@@ -96,10 +100,10 @@ export function getNewApplicationAdminHtml(
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -115,16 +119,16 @@ export function getNewApplicationAdminHtml(
 export function getNewApplicationAdminText(
   applicantName: string,
   applicantEmail: string,
+  locale: EmailLocale = 'en',
 ): string {
-  return `PhysioGuidance - New Instructor Application
+  const s = getEmailStrings(locale);
+  return `PhysioGuidance - ${s.newAppAdminTitle}
 
-A new trainer application has been submitted and requires your review.
+${s.newAppAdminBody}
 
-Applicant: ${applicantName}
-Email: ${applicantEmail}
+${s.applicantLabel} ${applicantName}
+${s.emailLabel} ${applicantEmail}
 
-Review this application in the Admin Dashboard under Role Requests.
-
-© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited · Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

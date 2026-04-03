@@ -448,13 +448,14 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         type="number"
                         value={maxEnrollment}
                         onChange={(e) => setMaxEnrollment(e.target.value)}
-                        placeholder={deliveryType === "self-paced" ? "1000" : "50"}
+                        placeholder={deliveryType === "self-paced" ? t("createCourse.unlimited") || "Unlimited" : "2000"}
                         min={1}
-                        max={deliveryType === "self-paced" ? 1000 : 50}
                         className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
                       <p className="text-xs text-[#9CA3AF] mt-1">
-                        {deliveryType === "self-paced" ? "Self-paced: up to 1000 students" : "NELC limit: 40 (long) / 50 (short) students"}
+                        {deliveryType === "self-paced"
+                          ? t("createCourse.selfPacedNoLimit") || "Self-paced: unlimited enrollment. Leave empty for no limit."
+                          : t("createCourse.syncDefaultLimit") || "Synchronous: default max 2000. Leave empty for default."}
                       </p>
                     </div>
                     <div>

@@ -92,6 +92,7 @@ export class SessionNotificationService {
           email: users.email,
           firstName: users.firstName,
           lastName: users.lastName,
+          language: users.language,
         })
         .from(enrollments)
         .innerJoin(users, eq(enrollments.studentId, users.id))
@@ -142,6 +143,8 @@ export class SessionNotificationService {
           courseName,
         };
 
+        const locale = (student.language || 'en') as 'en' | 'ar';
+
         switch (eventType) {
           case 'session_scheduled':
             this.emailService
@@ -150,7 +153,7 @@ export class SessionNotificationService {
                 scheduledDate: scheduledDateStr,
                 sessionType: session.type || 'zoom',
                 zoomLink: session.zoomLink,
-              })
+              }, locale)
               .catch(() => {});
             break;
           case 'session_started':
@@ -158,12 +161,12 @@ export class SessionNotificationService {
               .sendSessionStarted(student.email, {
                 ...emailParams,
                 zoomLink: session.zoomLink,
-              })
+              }, locale)
               .catch(() => {});
             break;
           case 'session_ended':
             this.emailService
-              .sendSessionEnded(student.email, emailParams)
+              .sendSessionEnded(student.email, emailParams, locale)
               .catch(() => {});
             break;
           case 'session_cancelled':
@@ -171,7 +174,7 @@ export class SessionNotificationService {
               .sendSessionCancelled(student.email, {
                 ...emailParams,
                 cancelReason: extraContext?.cancelReason || null,
-              })
+              }, locale)
               .catch(() => {});
             break;
           case 'session_rescheduled':
@@ -179,7 +182,7 @@ export class SessionNotificationService {
               .sendSessionScheduled(student.email, {
                 ...emailParams,
                 isRescheduled: true,
-              } as any)
+              } as any, locale)
               .catch(() => {});
             break;
         }

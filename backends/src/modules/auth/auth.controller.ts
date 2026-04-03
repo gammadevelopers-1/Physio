@@ -115,6 +115,7 @@ export class AuthController {
           fingerprint,
           result.user.email as string,
           userAgent,
+          (result.user as any).language,
         );
 
         return {
@@ -205,6 +206,7 @@ export class AuthController {
       challengeInfo.fingerprint,
       challengeInfo.email,
       userAgent,
+      challengeInfo.language,
     );
 
     return { challengeId: newChallengeId };

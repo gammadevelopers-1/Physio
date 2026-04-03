@@ -149,7 +149,7 @@ export class WcagProcessor extends WorkerHost {
 
     // 2. Get all managers
     const managers = await db
-      .select({ id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName })
+      .select({ id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName, language: users.language })
       .from(userRoles)
       .innerJoin(users, eq(userRoles.userId, users.id))
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
@@ -177,6 +177,7 @@ export class WcagProcessor extends WorkerHost {
     // 4. Email each manager (fire-and-forget)
     for (const mgr of managers) {
       const name = [mgr.firstName, mgr.lastName].filter(Boolean).join(' ') || 'Manager';
+      const mgrLocale = (mgr.language || 'en') as 'en' | 'ar';
       this.emailService.sendContentPendingReview(mgr.email, {
         recipientName: name,
         materialTitle: material.title,
@@ -184,7 +185,7 @@ export class WcagProcessor extends WorkerHost {
         instructorName,
         wcagStatus,
         wcagSummary,
-      }).catch(() => {});
+      }, mgrLocale).catch(() => {});
     }
 
     this.logger.log(`Notified ${managers.length} manager(s) about pending review for material ${materialId}`);

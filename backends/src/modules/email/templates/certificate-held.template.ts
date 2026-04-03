@@ -1,17 +1,22 @@
 /**
  * Certificate held email template for PhysioGuidance
  */
+import { EmailLocale, getEmailStrings, textAlign, htmlAttrs } from '../email-i18n';
+
 export function getCertificateHeldHtml(
   studentName: string,
   courseName: string,
   reviewNote: string,
+  locale: EmailLocale = 'en',
 ): string {
+  const s = getEmailStrings(locale);
+
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Certificate Request On Hold - PhysioGuidance</title>
+  <title>${s.certHeldTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -30,7 +35,7 @@ export function getCertificateHeldHtml(
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -47,9 +52,9 @@ export function getCertificateHeldHtml(
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Certificate Request On Hold</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.certHeldTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hello, ${studentName}
+                ${s.hi}, ${studentName}
               </p>
             </td>
           </tr>
@@ -60,11 +65,14 @@ export function getCertificateHeldHtml(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fffbeb;border-radius:10px;border:1px solid #fde68a;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 12px;font-size:14px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
-                      Your certificate request for <strong>${courseName}</strong> has been placed <strong>on hold</strong> pending further review.
+                    <p style="margin:0 0 12px;font-size:14px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      ${s.certHeldBody}
                     </p>
-                    <p style="margin:0;font-size:13px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
-                      <strong>Note:</strong> ${reviewNote}
+                    <p style="margin:0 0 8px;font-size:14px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      <strong>${s.courseLabel}</strong> ${courseName}
+                    </p>
+                    <p style="margin:0;font-size:13px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      <strong>${s.reviewerFeedback}</strong> ${reviewNote}
                     </p>
                   </td>
                 </tr>
@@ -75,9 +83,6 @@ export function getCertificateHeldHtml(
           <!-- Info -->
           <tr>
             <td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Your request is still active and will be reviewed again. No further action is needed from you at this time. If you have questions, contact your instructor.
-              </p>
             </td>
           </tr>
 
@@ -92,10 +97,10 @@ export function getCertificateHeldHtml(
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -112,17 +117,19 @@ export function getCertificateHeldText(
   studentName: string,
   courseName: string,
   reviewNote: string,
+  locale: EmailLocale = 'en',
 ): string {
-  return `PhysioGuidance - Certificate Request On Hold
+  const s = getEmailStrings(locale);
 
-Hello, ${studentName}
+  return `PhysioGuidance - ${s.certHeldTitle}
 
-Your certificate request for "${courseName}" has been placed on hold pending further review.
+${s.hi}, ${studentName}
 
-Note: ${reviewNote}
+${s.certHeldBody}
 
-Your request is still active and will be reviewed again. No further action is needed from you at this time. If you have questions, contact your instructor.
+${s.courseLabel} ${courseName}
+${s.reviewerFeedback} ${reviewNote}
 
-© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited · Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

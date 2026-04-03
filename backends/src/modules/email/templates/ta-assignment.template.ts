@@ -2,6 +2,8 @@
  * TA (Teaching Assistant) assignment notification email template.
  * Sent when an instructor is assigned as a TA to a session.
  */
+import { EmailLocale, getEmailStrings, textAlign, htmlAttrs } from '../email-i18n';
+
 export function getTaAssignmentHtml(params: {
   recipientName: string;
   sessionTitle: string;
@@ -10,7 +12,8 @@ export function getTaAssignmentHtml(params: {
   durationMinutes: number;
   instructorName: string;
   isAutoAssigned: boolean;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const {
     recipientName,
     sessionTitle,
@@ -21,28 +24,27 @@ export function getTaAssignmentHtml(params: {
     isAutoAssigned,
   } = params;
 
+  const dateLocale = locale === 'ar' ? 'ar-SA' : 'en-US';
   const date = new Date(scheduledAt);
-  const formattedDate = date.toLocaleDateString('en-US', {
+  const formattedDate = date.toLocaleDateString(dateLocale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
-  const formattedTime = date.toLocaleTimeString('en-US', {
+  const formattedTime = date.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
   });
 
-  const assignmentNote = isAutoAssigned
-    ? 'You have been automatically assigned based on NELC enrollment thresholds.'
-    : 'You have been manually assigned by the course manager.';
+  const assignmentLabel = isAutoAssigned ? s.taAutoAssigned : s.taManualAssigned;
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Teaching Assistant Assignment - PhysioGuidance</title>
+  <title>${s.taAssignTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;padding:32px 16px;">
@@ -57,7 +59,7 @@ export function getTaAssignmentHtml(params: {
                 <span style="color:#ffffff;">Physio</span><span style="color:#f5f0e8;">Guidance</span>
               </h1>
               <p style="margin:6px 0 0;font-size:12px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited Training Platform
+                ${s.genericNelcTraining}
               </p>
             </td>
           </tr>
@@ -78,10 +80,10 @@ export function getTaAssignmentHtml(params: {
               <tr>
                 <td style="padding:16px 32px 0;text-align:center;">
                   <h2 style="margin:0;font-size:20px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">
-                    Teaching Assistant Assignment
+                    ${s.taAssignTitle}
                   </h2>
                   <p style="margin:8px 0 0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">
-                    Hi ${recipientName}, you've been assigned as a TA.
+                    ${s.hi} ${recipientName}, ${s.taAssignBody}
                   </p>
                 </td>
               </tr>
@@ -92,32 +94,32 @@ export function getTaAssignmentHtml(params: {
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F9FAFB;border:1px solid #e5e7eb;border-radius:10px;padding:20px;">
                     <tr>
                       <td style="padding:0 0 10px;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">Session</p>
+                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">${s.sessionLabel}</p>
                         <p style="margin:2px 0 0;font-size:15px;font-weight:600;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${sessionTitle}</p>
                       </td>
                     </tr>
                     <tr>
                       <td style="padding:0 0 10px;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">Course</p>
+                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</p>
                         <p style="margin:2px 0 0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${courseName}</p>
                       </td>
                     </tr>
                     <tr>
                       <td style="padding:0 0 10px;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">Lead Instructor</p>
+                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">${s.instructorLabel}</p>
                         <p style="margin:2px 0 0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${instructorName}</p>
                       </td>
                     </tr>
                     <tr>
                       <td style="padding:0 0 10px;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">Date &amp; Time</p>
+                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">${s.dateTimeLabel}</p>
                         <p style="margin:2px 0 0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${formattedDate} at ${formattedTime}</p>
                       </td>
                     </tr>
                     <tr>
                       <td>
-                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">Duration</p>
-                        <p style="margin:2px 0 0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${durationMinutes} minutes</p>
+                        <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">${s.durationLabel}</p>
+                        <p style="margin:2px 0 0;font-size:14px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${durationMinutes} ${s.minutesLabel}</p>
                       </td>
                     </tr>
                   </table>
@@ -127,8 +129,8 @@ export function getTaAssignmentHtml(params: {
               <!-- Assignment note -->
               <tr>
                 <td style="padding:0 32px 24px;">
-                  <p style="margin:0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                    ${assignmentNote}
+                  <p style="margin:0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                    ${assignmentLabel}
                   </p>
                 </td>
               </tr>
@@ -144,10 +146,10 @@ export function getTaAssignmentHtml(params: {
               <tr>
                 <td style="padding:24px 32px 28px;text-align:center;">
                   <p style="margin:0;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                    &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                    &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
                   </p>
                   <p style="margin:4px 0 0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                    NELC Accredited &middot; Saudi Arabia
+                    ${s.nelcFooter}
                   </p>
                 </td>
               </tr>
@@ -170,7 +172,8 @@ export function getTaAssignmentText(params: {
   durationMinutes: number;
   instructorName: string;
   isAutoAssigned: boolean;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const {
     recipientName,
     sessionTitle,
@@ -181,36 +184,35 @@ export function getTaAssignmentText(params: {
     isAutoAssigned,
   } = params;
 
+  const dateLocale = locale === 'ar' ? 'ar-SA' : 'en-US';
   const date = new Date(scheduledAt);
-  const formattedDate = date.toLocaleDateString('en-US', {
+  const formattedDate = date.toLocaleDateString(dateLocale, {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
     year: 'numeric',
   });
-  const formattedTime = date.toLocaleTimeString('en-US', {
+  const formattedTime = date.toLocaleTimeString(dateLocale, {
     hour: '2-digit',
     minute: '2-digit',
   });
 
-  const assignmentNote = isAutoAssigned
-    ? 'You have been automatically assigned based on NELC enrollment thresholds.'
-    : 'You have been manually assigned by the course manager.';
+  const assignmentLabel = isAutoAssigned ? s.taAutoAssigned : s.taManualAssigned;
 
-  return `PhysioGuidance - Teaching Assistant Assignment
+  return `PhysioGuidance - ${s.taAssignTitle}
 
-Hi ${recipientName},
+${s.hi} ${recipientName},
 
-You have been assigned as a Teaching Assistant for the following session:
+${s.taAssignBody}
 
-Session: ${sessionTitle}
-Course: ${courseName}
-Lead Instructor: ${instructorName}
-Date & Time: ${formattedDate} at ${formattedTime}
-Duration: ${durationMinutes} minutes
+${s.sessionLabel} ${sessionTitle}
+${s.courseLabel} ${courseName}
+${s.instructorLabel} ${instructorName}
+${s.dateTimeLabel} ${formattedDate} at ${formattedTime}
+${s.durationLabel} ${durationMinutes} ${s.minutesLabel}
 
-${assignmentNote}
+${assignmentLabel}
 
-© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited · Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

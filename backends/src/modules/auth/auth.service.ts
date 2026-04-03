@@ -197,6 +197,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         activeRole: user.activeRole,
+        language: user.language,
         roles: userRolesList,
       },
       accessToken,
@@ -745,7 +746,7 @@ export class AuthService {
     const normalizedEmail = email.toLowerCase().trim();
 
     const [user] = await db
-      .select({ id: users.id, email: users.email })
+      .select({ id: users.id, email: users.email, language: users.language })
       .from(users)
       .where(eq(users.email, normalizedEmail))
       .limit(1);
@@ -770,7 +771,8 @@ export class AuthService {
     });
 
     // Send email
-    await this.emailService.sendPasswordReset(normalizedEmail, code);
+    const locale = (user.language || 'en') as 'en' | 'ar';
+    await this.emailService.sendPasswordReset(normalizedEmail, code, locale);
 
     return { message: 'If an account exists with that email, a reset code has been sent.' };
   }
@@ -1345,7 +1347,7 @@ export class AuthService {
   // ===========================================
   async getChallengeUserInfo(
     challengeId: string,
-  ): Promise<{ userId: string; fingerprint: string; email: string } | null> {
+  ): Promise<{ userId: string; fingerprint: string; email: string; language: string } | null> {
     const [challenge] = await db
       .select({
         userId: twoFactorChallenges.userId,
@@ -1358,7 +1360,7 @@ export class AuthService {
     if (!challenge) return null;
 
     const [user] = await db
-      .select({ email: users.email })
+      .select({ email: users.email, language: users.language })
       .from(users)
       .where(eq(users.id, challenge.userId))
       .limit(1);
@@ -1369,6 +1371,7 @@ export class AuthService {
       userId: challenge.userId,
       fingerprint: challenge.fingerprint,
       email: user.email,
+      language: user.language || 'en',
     };
   }
 }

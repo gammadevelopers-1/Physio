@@ -66,13 +66,13 @@ const InstructorDashboardContent = () => {
   const handleStartSession = async (sessionId: string) => {
     try {
       const result = await instructorApi.startSession(sessionId);
-      toast.success("Lecture started");
+      toast.success(t("sessions.sessionStartSuccess"));
       if ((result as any).zoomStartUrl) {
         window.open((result as any).zoomStartUrl, "_blank");
       }
       refetch();
     } catch (err: any) {
-      toast.error(err?.message || "Failed to start lecture");
+      toast.error(err?.message || t("sessions.sessionStartError"));
     }
   };
 

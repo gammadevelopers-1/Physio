@@ -146,7 +146,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
                 {t("maxEnrollment")}
               </label>
               <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5">
-                Max enrollment: up to 1000 students
+                {t("selfPacedUnlimited") || "Self-paced: unlimited enrollment"}
               </p>
             </div>
           </div>

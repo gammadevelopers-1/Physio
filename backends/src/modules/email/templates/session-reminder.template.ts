@@ -2,6 +2,8 @@
  * Session reminder email template for PhysioGuidance
  * Sent 5 minutes before a Zoom/hybrid session starts
  */
+import { EmailLocale, getEmailStrings, t, htmlAttrs, textAlign } from '../email-i18n';
+
 export function getSessionReminderHtml(params: {
   recipientName: string;
   sessionTitle: string;
@@ -10,14 +12,15 @@ export function getSessionReminderHtml(params: {
   durationMinutes: number;
   zoomLink: string | null;
   isInstructor: boolean;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const { recipientName, sessionTitle, courseName, scheduledAt, durationMinutes, zoomLink, isInstructor } = params;
 
   const date = new Date(scheduledAt);
   const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  const roleLabel = isInstructor ? 'You are the instructor for this lecture.' : 'You are enrolled in this lecture.';
+  const roleText = isInstructor ? s.roleInstructor : s.roleStudent;
   const platformUrl = process.env.FRONTEND_URL || 'https://physioguidance.org';
 
   // No Zoom links in emails — everyone joins from platform
@@ -37,7 +40,7 @@ export function getSessionReminderHtml(params: {
           </tr>`;
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -60,7 +63,7 @@ export function getSessionReminderHtml(params: {
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -77,9 +80,9 @@ export function getSessionReminderHtml(params: {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Lecture Starting Soon!</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.sessionReminderTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hi ${recipientName},
+                ${s.hi} ${recipientName},
               </p>
             </td>
           </tr>
@@ -90,27 +93,27 @@ export function getSessionReminderHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Lecture Details</p>
+                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.sessionLabel}</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">Lecture</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">${s.sessionLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${sessionTitle}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Course</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${courseName}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Date</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${formattedDate}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Time</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.timeLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${formattedTime}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Duration</td>
-                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${durationMinutes} minutes</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.durationLabel}</td>
+                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${durationMinutes} ${s.minutesLabel}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.roleLabel}</td>
+                        <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${roleText}</td>
                       </tr>
                     </table>
                   </td>
@@ -122,8 +125,8 @@ export function getSessionReminderHtml(params: {
           <!-- Role info -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                ${roleLabel}
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${s.sessionReminderCta}
               </p>
             </td>
           </tr>
@@ -139,10 +142,10 @@ ${joinBlock}
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -163,35 +166,36 @@ export function getSessionReminderText(params: {
   durationMinutes: number;
   zoomLink: string | null;
   isInstructor: boolean;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const { recipientName, sessionTitle, courseName, scheduledAt, durationMinutes, zoomLink, isInstructor } = params;
 
   const date = new Date(scheduledAt);
   const formattedDate = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const formattedTime = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  let text = `PhysioGuidance - Lecture Starting Soon!
+  const roleText = isInstructor ? s.roleInstructor : s.roleStudent;
 
-Hi ${recipientName},
+  let text = `PhysioGuidance - ${s.sessionReminderTitle}
 
-Your lecture is about to begin. Here are the details:
+${s.hi} ${recipientName},
 
-Lecture: ${sessionTitle}
-Course: ${courseName}
-Date: ${formattedDate}
-Time: ${formattedTime}
-Duration: ${durationMinutes} minutes
+${s.sessionReminderBody}
 
-${isInstructor ? 'You are the instructor for this lecture.' : 'You are enrolled in this lecture.'}`;
+${s.sessionLabel} ${sessionTitle}
+${s.courseLabel} ${courseName}
+${s.timeLabel} ${formattedTime}
+${s.durationLabel} ${durationMinutes} ${s.minutesLabel}
+${s.roleLabel} ${roleText}`;
 
   const platformUrlText = process.env.FRONTEND_URL || 'https://physioguidance.org';
   const dashboardPathText = isInstructor ? '/en/dashboard/instructor' : '/en/dashboard/student';
-  text += `\n\n${isInstructor ? 'Start' : 'Join'} from your dashboard: ${platformUrlText}${dashboardPathText}`;
+  text += `\n\n${s.sessionReminderCta}\n${platformUrlText}${dashboardPathText}`;
 
   text += `
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+\u00a9 ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 
   return text;
 }

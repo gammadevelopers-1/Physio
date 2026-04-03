@@ -2,12 +2,15 @@
  * Session cancelled email template for PhysioGuidance
  * Sent when a session is cancelled by instructor or manager
  */
+import { EmailLocale, getEmailStrings, t, htmlAttrs, textAlign } from '../email-i18n';
+
 export function getSessionCancelledHtml(params: {
   recipientName: string;
   sessionTitle: string;
   courseName: string;
   cancelReason: string | null;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const { recipientName, sessionTitle, courseName, cancelReason } = params;
 
   const reasonBlock = cancelReason
@@ -18,7 +21,7 @@ export function getSessionCancelledHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef3c7;border-radius:10px;border:1px solid #fcd34d;">
                 <tr>
                   <td style="padding:16px 20px;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reason</p>
+                    <p style="margin:0 0 4px;font-size:12px;color:#92400e;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.reasonLabel}</p>
                     <p style="margin:0;font-size:13px;color:#78350f;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">${cancelReason}</p>
                   </td>
                 </tr>
@@ -28,7 +31,7 @@ export function getSessionCancelledHtml(params: {
     : '';
 
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -51,7 +54,7 @@ export function getSessionCancelledHtml(params: {
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -68,9 +71,9 @@ export function getSessionCancelledHtml(params: {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Lecture Cancelled</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.sessionCancelledTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Hi ${recipientName},
+                ${s.hi} ${recipientName},
               </p>
             </td>
           </tr>
@@ -81,14 +84,14 @@ export function getSessionCancelledHtml(params: {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Lecture Details</p>
+                    <p style="margin:0 0 4px;font-size:12px;color:#737373;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.sessionLabel}</p>
                     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:12px;">
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">Lecture</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;width:100px;">${s.sessionLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${sessionTitle}</td>
                       </tr>
                       <tr>
-                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">Course</td>
+                        <td style="padding:6px 0;font-size:13px;color:#737373;font-family:'DM Sans',Arial,sans-serif;">${s.courseLabel}</td>
                         <td style="padding:6px 0;font-size:13px;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;font-weight:600;">${courseName}</td>
                       </tr>
                     </table>
@@ -101,8 +104,8 @@ ${reasonBlock}
           <!-- Apology note -->
           <tr>
             <td style="padding:0 32px 24px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                We apologize for the inconvenience. Please check your course page for updates on rescheduling.
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${s.sessionCancelledCta}
               </p>
             </td>
           </tr>
@@ -118,10 +121,10 @@ ${reasonBlock}
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -139,28 +142,29 @@ export function getSessionCancelledText(params: {
   sessionTitle: string;
   courseName: string;
   cancelReason: string | null;
-}): string {
+}, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   const { recipientName, sessionTitle, courseName, cancelReason } = params;
 
-  let text = `PhysioGuidance - Lecture Cancelled
+  let text = `PhysioGuidance - ${s.sessionCancelledTitle}
 
-Hi ${recipientName},
+${s.hi} ${recipientName},
 
-The following lecture has been cancelled:
+${s.sessionCancelledBody}
 
-Lecture: ${sessionTitle}
-Course: ${courseName}`;
+${s.sessionLabel} ${sessionTitle}
+${s.courseLabel} ${courseName}`;
 
   if (cancelReason) {
-    text += `\nReason: ${cancelReason}`;
+    text += `\n${s.reasonLabel} ${cancelReason}`;
   }
 
   text += `
 
-We apologize for the inconvenience. Please check your course page for updates on rescheduling.
+${s.sessionCancelledCta}
 
-\u00a9 ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited \u00b7 Saudi Arabia`;
+\u00a9 ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 
   return text;
 }

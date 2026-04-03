@@ -223,6 +223,7 @@ export class TwoFactorService {
     fingerprint: string,
     email: string,
     userAgent: string,
+    userLanguage?: string,
   ): Promise<string> {
     // Rate limit: check most recent challenge for this user
     const [recentChallenge] = await db
@@ -277,7 +278,8 @@ export class TwoFactorService {
 
     // Send email
     const deviceName = this.parseDeviceName(userAgent);
-    await this.emailService.sendOTP(email, code, deviceName);
+    const locale = (userLanguage || 'en') as 'en' | 'ar';
+    await this.emailService.sendOTP(email, code, deviceName, locale);
 
     this.logger.log(
       `2FA challenge created for user ${userId} → challenge ${challenge.id}`,

@@ -57,8 +57,8 @@ const SessionCard = ({
     ended: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusEnded") },
     completed: { bg: "bg-[#DCFCE7]", text: "text-[#22C55E]", label: t("sessions.statusCompleted") },
     cancelled: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: t("sessions.statusCancelled") || "Cancelled" },
-    missed: { bg: "bg-[#FEF2F2]", text: "text-[#EF4444]", label: "Missed" },
-    rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: "Rescheduled" },
+    missed: { bg: "bg-[#FEF2F2]", text: "text-[#EF4444]", label: t("sessions.statusMissed") },
+    rescheduled: { bg: "bg-[#FEF3C7]", text: "text-[#D97706]", label: t("sessions.statusRescheduled") },
   };
 
   const typeIcon = session.type === "zoom" ? <Video className="w-3 h-3" /> :

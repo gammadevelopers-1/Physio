@@ -2004,19 +2004,20 @@ export class StudentService {
 
     // Email notification to instructor
     const [instructor] = await db
-      .select({ email: users.email, firstName: users.firstName })
+      .select({ email: users.email, firstName: users.firstName, language: users.language })
       .from(users)
       .where(eq(users.id, course.instructorId))
       .limit(1);
 
     if (instructor?.email) {
+      const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
       await this.emailService.sendAssessmentSubmitted(instructor.email, {
         instructorName: instructor.firstName || 'Instructor',
         studentName,
         assessmentTitle,
         assessmentType,
         courseName: course.title,
-      });
+      }, instrLocale);
     }
   }
 

@@ -1,16 +1,20 @@
 /**
  * Application rejected email template for PhysioGuidance
  */
+import { EmailLocale, getEmailStrings, htmlAttrs, textAlign } from '../email-i18n';
+
 export function getApplicationRejectedHtml(
   applicantName: string,
   reviewNote: string,
+  locale: EmailLocale = 'en',
 ): string {
+  const s = getEmailStrings(locale);
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Application Update - PhysioGuidance</title>
+  <title>${s.appRejectedTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -29,7 +33,7 @@ export function getApplicationRejectedHtml(
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -46,9 +50,18 @@ export function getApplicationRejectedHtml(
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Application Not Approved</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.appRejectedTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Dear ${applicantName},
+                ${s.hi}, ${applicantName},
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:0 32px 16px;">
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                ${s.appRejectedBody}
               </p>
             </td>
           </tr>
@@ -59,7 +72,7 @@ export function getApplicationRejectedHtml(
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef2f2;border-radius:10px;border:1px solid #fecaca;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0 0 8px;font-size:12px;color:#991b1b;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Reason</p>
+                    <p style="margin:0 0 8px;font-size:12px;color:#991b1b;font-family:'DM Sans',Arial,sans-serif;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">${s.reviewerFeedback}</p>
                     <p style="margin:0;font-size:14px;color:#991b1b;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
                       ${reviewNote}
                     </p>
@@ -72,9 +85,6 @@ export function getApplicationRejectedHtml(
           <!-- Reapply info -->
           <tr>
             <td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                You may reapply by submitting a new application through the "Become a Trainer" page.
-              </p>
             </td>
           </tr>
 
@@ -89,10 +99,10 @@ export function getApplicationRejectedHtml(
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -108,17 +118,17 @@ export function getApplicationRejectedHtml(
 export function getApplicationRejectedText(
   applicantName: string,
   reviewNote: string,
+  locale: EmailLocale = 'en',
 ): string {
-  return `PhysioGuidance - Application Update
+  const s = getEmailStrings(locale);
+  return `PhysioGuidance - ${s.appRejectedTitle}
 
-Dear ${applicantName},
+${s.hi}, ${applicantName},
 
-Your trainer application was not approved.
+${s.appRejectedBody}
 
-Reason: ${reviewNote}
+${s.reviewerFeedback} ${reviewNote}
 
-You may reapply by submitting a new application through the "Become a Trainer" page.
-
-© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited · Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

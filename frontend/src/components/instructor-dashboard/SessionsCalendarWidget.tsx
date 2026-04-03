@@ -170,7 +170,7 @@ const SessionsCalendarWidget = ({
 
   const getTypeLabel = (type: string) => {
     if (type === "zoom") return t("sessionsCalendar.zoom");
-    if (type === "hybrid") return "Hybrid";
+    if (type === "hybrid") return t("sessionsCalendar.hybrid");
     return t("sessionsCalendar.onsite");
   };
 

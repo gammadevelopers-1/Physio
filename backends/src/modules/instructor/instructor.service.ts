@@ -1644,6 +1644,7 @@ export class InstructorService {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
+        language: users.language,
       })
       .from(users)
       .where(eq(users.id, dto.studentId))
@@ -1701,11 +1702,13 @@ export class InstructorService {
         const studentName =
           `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
           student.email;
+        const studentLocale = (student.language || 'en') as 'en' | 'ar';
         await this.emailService.sendAtRiskReminder(
           student.email,
           studentName,
           courseName,
           dto.message || undefined,
+          studentLocale,
         );
         metadata = { emailSentTo: student.email, courseName };
         this.logger.log(
@@ -1780,11 +1783,13 @@ export class InstructorService {
           entityType: 'intervention',
           entityId: intervention.id,
         });
+        const makeupLocale = (student.language || 'en') as 'en' | 'ar';
         await this.emailService.sendAtRiskReminder(
           student.email,
           studentName,
           courseName,
           'A make-up session has been scheduled for you. Please check your dashboard for details.',
+          makeupLocale,
         );
         break;
       }

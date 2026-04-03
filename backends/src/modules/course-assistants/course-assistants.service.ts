@@ -89,6 +89,7 @@ export class CourseAssistantsService {
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
+        language: users.language,
       })
       .from(users)
       .where(eq(users.id, userId))
@@ -564,12 +565,13 @@ export class CourseAssistantsService {
       const suggester = await this.getUser(existing.suggestedBy);
       if (suggester) {
         try {
+          const locale = (suggester.language || 'en') as 'en' | 'ar';
           await this.emailService.sendTaRejection(suggester.email, {
             recipientName: `${suggester.firstName} ${suggester.lastName}`,
             courseName: course.title,
             taName: `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim(),
             rejectionReason: reason,
-          });
+          }, locale);
         } catch (err) {
           this.logger.warn('Failed to send TA rejection email', err);
         }
@@ -1000,6 +1002,7 @@ export class CourseAssistantsService {
       const instructor = await this.getUser(course.instructorId);
 
       if (taUser && instructor) {
+        const locale = (taUser.language || 'en') as 'en' | 'ar';
         await this.emailService.sendTaAssignment(taUser.email, {
           recipientName: `${taUser.firstName} ${taUser.lastName}`,
           sessionTitle: `All sessions - ${course.title}`,
@@ -1008,7 +1011,7 @@ export class CourseAssistantsService {
           durationMinutes: 0,
           instructorName: `${instructor.firstName} ${instructor.lastName}`,
           isAutoAssigned: false,
-        });
+        }, locale);
       }
     } catch (err) {
       this.logger.warn('Failed to send TA assignment email', err);

@@ -401,6 +401,7 @@ export class RoleRequestsService {
         userFirstName: users.firstName,
         userLastName: users.lastName,
         userAvatar: users.avatar,
+        userLanguage: users.language,
       })
       .from(roleRequests)
       .innerJoin(users, eq(roleRequests.userId, users.id))
@@ -418,6 +419,7 @@ export class RoleRequestsService {
         firstName: result.userFirstName,
         lastName: result.userLastName,
         avatar: result.userAvatar,
+        language: result.userLanguage,
       },
     };
   }
@@ -471,9 +473,11 @@ export class RoleRequestsService {
         profileData.fullNameArabic ||
         request.user.email;
 
+      const locale = (request.user.language || 'en') as 'en' | 'ar';
       await this.emailService.sendApplicationApproved(
         request.user.email,
         applicantName,
+        locale,
       );
     } catch (error) {
       this.logger.error('Failed to send approval email', error);
@@ -535,10 +539,12 @@ export class RoleRequestsService {
         profileData.fullNameArabic ||
         request.user.email;
 
+      const locale = (request.user.language || 'en') as 'en' | 'ar';
       await this.emailService.sendApplicationRejected(
         request.user.email,
         applicantName,
         dto.reviewNote,
+        locale,
       );
     } catch (error) {
       this.logger.error('Failed to send rejection email', error);
@@ -587,10 +593,12 @@ export class RoleRequestsService {
         profileData.fullNameArabic ||
         request.user.email;
 
+      const locale = (request.user.language || 'en') as 'en' | 'ar';
       await this.emailService.sendApplicationMoreInfo(
         request.user.email,
         applicantName,
         dto.reviewNote,
+        locale,
       );
     } catch (error) {
       this.logger.error('Failed to send more-info email', error);

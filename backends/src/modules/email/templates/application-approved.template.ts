@@ -1,13 +1,16 @@
 /**
  * Application approved email template for PhysioGuidance
  */
-export function getApplicationApprovedHtml(applicantName: string): string {
+import { EmailLocale, getEmailStrings, htmlAttrs, textAlign } from '../email-i18n';
+
+export function getApplicationApprovedHtml(applicantName: string, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
   return `<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html ${htmlAttrs(locale)}>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Application Approved - PhysioGuidance</title>
+  <title>${s.appApprovedTitle} - PhysioGuidance</title>
 </head>
 <body style="margin:0;padding:0;background-color:#EEF3F7;font-family:'DM Sans',Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#EEF3F7;">
@@ -26,7 +29,7 @@ export function getApplicationApprovedHtml(applicantName: string): string {
                 </tr>
                 <tr>
                   <td style="text-align:center;">
-                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">NELC Accredited Platform</span>
+                    <span style="font-size:11px;color:rgba(255,255,255,0.7);font-family:'DM Sans',Arial,sans-serif;letter-spacing:1px;text-transform:uppercase;">${s.nelcBadge}</span>
                   </td>
                 </tr>
               </table>
@@ -43,9 +46,9 @@ export function getApplicationApprovedHtml(applicantName: string): string {
                   </td>
                 </tr>
               </table>
-              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">Application Approved!</h1>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#1a1a1a;font-family:'DM Sans',Arial,sans-serif;">${s.appApprovedTitle}</h1>
               <p style="margin:0 0 24px;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Congratulations, ${applicantName}!
+                ${s.hi}, ${applicantName}!
               </p>
             </td>
           </tr>
@@ -56,8 +59,8 @@ export function getApplicationApprovedHtml(applicantName: string): string {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;">
                 <tr>
                   <td style="padding:20px;">
-                    <p style="margin:0;font-size:14px;color:#166534;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;">
-                      Your trainer application has been reviewed and <strong>approved</strong>. You can now switch to your Instructor dashboard and start creating courses.
+                    <p style="margin:0;font-size:14px;color:#166534;font-family:'DM Sans',Arial,sans-serif;line-height:1.6;text-align:${textAlign(locale)};">
+                      ${s.appApprovedBody}
                     </p>
                   </td>
                 </tr>
@@ -68,8 +71,8 @@ export function getApplicationApprovedHtml(applicantName: string): string {
           <!-- CTA Button -->
           <tr>
             <td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;">
-                Log in to your account and switch to the Instructor role to get started.
+              <p style="margin:0;font-size:14px;color:#737373;font-family:'DM Sans',Arial,sans-serif;line-height:1.5;text-align:${textAlign(locale)};">
+                ${s.appApprovedCta}
               </p>
             </td>
           </tr>
@@ -85,10 +88,10 @@ export function getApplicationApprovedHtml(applicantName: string): string {
           <tr>
             <td style="padding:20px 32px 24px;text-align:center;">
               <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                &copy; ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
+                &copy; ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
               </p>
               <p style="margin:0;font-size:11px;color:#9ca3af;font-family:'DM Sans',Arial,sans-serif;">
-                NELC Accredited &middot; Saudi Arabia
+                ${s.nelcFooter}
               </p>
             </td>
           </tr>
@@ -101,15 +104,16 @@ export function getApplicationApprovedHtml(applicantName: string): string {
 </html>`;
 }
 
-export function getApplicationApprovedText(applicantName: string): string {
-  return `PhysioGuidance - Application Approved
+export function getApplicationApprovedText(applicantName: string, locale: EmailLocale = 'en'): string {
+  const s = getEmailStrings(locale);
+  return `PhysioGuidance - ${s.appApprovedTitle}
 
-Congratulations, ${applicantName}!
+${s.hi}, ${applicantName}!
 
-Your trainer application has been reviewed and approved. You can now switch to your Instructor dashboard and start creating courses.
+${s.appApprovedBody}
 
-Log in to your account and switch to the Instructor role to get started.
+${s.appApprovedCta}
 
-© ${new Date().getFullYear()} PhysioGuidance. All rights reserved.
-NELC Accredited · Saudi Arabia`;
+© ${new Date().getFullYear()} PhysioGuidance. ${s.allRightsReserved}
+${s.nelcFooter}`;
 }

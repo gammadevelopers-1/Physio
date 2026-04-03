@@ -5,6 +5,7 @@ import { Bell, Clock } from "lucide-react";
 
 interface Notification {
   id: string;
+  type: string;
   title: string;
   message: string;
   date: string;
@@ -18,7 +19,7 @@ interface InstructorNotificationsWidgetProps {
   onClearAll?: () => void;
 }
 
-function formatRelativeDate(isoString: string): string {
+function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslations>): string {
   try {
     const date = new Date(isoString);
     const now = new Date();
@@ -27,10 +28,10 @@ function formatRelativeDate(isoString: string): string {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return tN("justNow");
+    if (diffMins < 60) return tN("minutesAgo", { m: diffMins });
+    if (diffHours < 24) return tN("hoursAgo", { h: diffHours });
+    if (diffDays < 7) return tN("daysAgo", { d: diffDays });
 
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   } catch {
@@ -45,6 +46,7 @@ const InstructorNotificationsWidget = ({
   onClearAll,
 }: InstructorNotificationsWidgetProps) => {
   const t = useTranslations("instructorDashboard");
+  const tN = useTranslations("notifications");
   const tA = useTranslations("accessibility");
 
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -116,7 +118,7 @@ const InstructorNotificationsWidget = ({
             >
               <div className="flex items-start justify-between gap-2 mb-1">
                 <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
-                  {notification.title}
+                  {tN.has(`types.${notification.type}.title`) ? tN(`types.${notification.type}.title`) : notification.title}
                 </h4>
                 {!notification.read && (
                   <span className="w-2 h-2 rounded-full bg-[#3B82F6] flex-shrink-0 mt-1.5" />
@@ -128,7 +130,7 @@ const InstructorNotificationsWidget = ({
               <div className="flex items-center gap-1 mt-1.5">
                 <Clock className="w-3 h-3 text-[#9CA3AF]" />
                 <span className="text-[11px] text-[#9CA3AF]">
-                  {formatRelativeDate(notification.date)}
+                  {formatRelativeDate(notification.date, tN)}
                 </span>
               </div>
             </div>

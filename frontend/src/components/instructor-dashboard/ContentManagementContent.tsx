@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import ReactDOM from "react-dom";
 import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
@@ -105,27 +106,48 @@ interface ActionItem {
 
 const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
+    if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (
+        btnRef.current?.contains(e.target as Node) ||
+        dropRef.current?.contains(e.target as Node)
+      ) return;
+      setOpen(false);
     };
-    if (open) document.addEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.right });
+    }
+    setOpen((v) => !v);
+  };
+
   return (
-    <div ref={ref} className="relative inline-block">
+    <>
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        ref={btnRef}
+        onClick={handleToggle}
         className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
         aria-label="Actions"
       >
         <MoreVertical className="w-4 h-4" />
       </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px]">
+      {open && ReactDOM.createPortal(
+        <div
+          ref={dropRef}
+          style={{ position: "fixed", top: pos.top, left: pos.left, transform: "translateX(-100%)" }}
+          className="z-[9999] bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px]"
+        >
           {actions.map((a, i) => (
             <button
               key={i}
@@ -140,9 +162,10 @@ const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
               {a.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 

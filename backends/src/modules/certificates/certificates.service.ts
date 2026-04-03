@@ -544,11 +544,13 @@ export class CertificatesService {
       const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
       const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
       const courseName = course?.title || 'your course';
+      const locale = (request.studentLanguage || 'en') as 'en' | 'ar';
       await this.emailService.sendCertificateApproved(
         request.studentEmail,
         studentName,
         courseName,
         certificateUrl,
+        locale,
       );
     } catch (error) {
       this.logger.error(`Failed to send certificate approval email for request ${id}`, error);
@@ -592,11 +594,13 @@ export class CertificatesService {
       const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
       const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
       const courseName = course?.title || 'your course';
+      const locale = (request.studentLanguage || 'en') as 'en' | 'ar';
       await this.emailService.sendCertificateRejected(
         request.studentEmail,
         studentName,
         courseName,
         dto.note,
+        locale,
       );
     } catch (error) {
       this.logger.error(`Failed to send certificate rejection email for request ${id}`, error);
@@ -640,11 +644,13 @@ export class CertificatesService {
       const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
       const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
       const courseName = course?.title || 'your course';
+      const locale = (request.studentLanguage || 'en') as 'en' | 'ar';
       await this.emailService.sendCertificateHeld(
         request.studentEmail,
         studentName,
         courseName,
         dto.note,
+        locale,
       );
     } catch (error) {
       this.logger.error(`Failed to send certificate hold email for request ${id}`, error);
@@ -702,11 +708,13 @@ export class CertificatesService {
       const studentName = `${request.studentFirstName || ''} ${request.studentLastName || ''}`.trim() || 'Student';
       const [course] = await db.select({ title: courses.title }).from(courses).where(eq(courses.id, request.courseId)).limit(1);
       const courseName = course?.title || 'your course';
+      const locale = (request.studentLanguage || 'en') as 'en' | 'ar';
       await this.emailService.sendCertificateRejected(
         request.studentEmail,
         studentName,
         courseName,
         `Certificate revoked: ${dto.reason}`,
+        locale,
       );
     } catch (error) {
       this.logger.error(`Failed to send certificate revocation email for request ${id}`, error);
@@ -1064,6 +1072,7 @@ export class CertificatesService {
         studentFirstName: users.firstName,
         studentLastName: users.lastName,
         studentEmail: users.email,
+        studentLanguage: users.language,
       })
       .from(certificateRequests)
       .innerJoin(users, eq(certificateRequests.studentId, users.id))

@@ -108,6 +108,7 @@ export class SessionReminderService {
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
+        language: users.language,
       })
       .from(users)
       .where(eq(users.id, session.instructorId))
@@ -118,6 +119,7 @@ export class SessionReminderService {
         `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim() ||
         instructor.email;
 
+      const locale = (instructor.language || 'en') as 'en' | 'ar';
       await this.emailService.sendSessionReminder(instructor.email, {
         recipientName: instructorName,
         sessionTitle: session.title,
@@ -126,7 +128,7 @@ export class SessionReminderService {
         durationMinutes: session.durationMinutes,
         zoomLink: session.zoomLink,
         isInstructor: true,
-      });
+      }, locale);
     }
 
     // 2. Get all actively enrolled students for this course
@@ -135,6 +137,7 @@ export class SessionReminderService {
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
+        language: users.language,
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
@@ -155,6 +158,7 @@ export class SessionReminderService {
         `${student.firstName || ''} ${student.lastName || ''}`.trim() ||
         student.email;
 
+      const studentLocale = (student.language || 'en') as 'en' | 'ar';
       await this.emailService.sendSessionReminder(student.email, {
         recipientName: studentName,
         sessionTitle: session.title,
@@ -163,7 +167,7 @@ export class SessionReminderService {
         durationMinutes: session.durationMinutes,
         zoomLink: session.zoomLink,
         isInstructor: false,
-      });
+      }, studentLocale);
     }
   }
 
@@ -240,13 +244,14 @@ export class SessionReminderService {
       for (const session of warningSessions) {
         // Send warning email to instructor
         const [instructor] = await db
-          .select({ email: users.email, firstName: users.firstName, lastName: users.lastName })
+          .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, language: users.language })
           .from(users)
           .where(eq(users.id, session.instructorId))
           .limit(1);
 
         if (instructor) {
           const name = `${instructor.firstName || ''} ${instructor.lastName || ''}`.trim() || instructor.email;
+          const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
           await this.emailService.sendGenericNotification(
             instructor.email,
             {
@@ -254,6 +259,7 @@ export class SessionReminderService {
               subject: `Lecture Ending Soon: ${session.title}`,
               message: `Your lecture "${session.title}" (${session.courseName}) will auto-end in approximately ${Math.ceil(session.durationMinutes * 0.1)} minute(s).\n\nIf you need more time, please create a new session after this one ends.`,
             },
+            instrLocale,
           ).catch((err) => this.logger.warn(`Failed to send auto-end warning email: ${(err as Error).message}`));
         }
 

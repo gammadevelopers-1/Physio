@@ -124,7 +124,7 @@ const CreateCourseContent = () => {
   // Step 2: Schedule & NELC Config
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [maxEnrollment, setMaxEnrollment] = useState("50");
+  const [maxEnrollment, setMaxEnrollment] = useState("");
   const [cmeHours, setCmeHours] = useState("");
   const [cohort, setCohort] = useState("");
   const [nelcAccreditation, setNelcAccreditation] = useState(true);
@@ -155,7 +155,7 @@ const CreateCourseContent = () => {
 
   const nelcCapacityLimit = useMemo(() => {
     if (!courseClassification) return null;
-    return courseClassification === "long" ? 40 : 50;
+    return 2000;
   }, [courseClassification]);
 
   // Fetch instructors and TAs on mount
@@ -223,12 +223,11 @@ const CreateCourseContent = () => {
   };
 
   const isSelfPaced = deliveryType === "self-paced";
-  const defaultMaxForType = isSelfPaced ? "1000" : "50";
 
-  // Auto-update maxEnrollment when delivery type changes
+  // Reset maxEnrollment when delivery type changes
   useEffect(() => {
-    setMaxEnrollment(defaultMaxForType);
-  }, [deliveryType, defaultMaxForType]);
+    setMaxEnrollment("");
+  }, [deliveryType]);
 
   const goNext = () => {
     if (validateStep(currentStep) && currentStep < 5) {
@@ -530,23 +529,19 @@ const CreateCourseContent = () => {
                           type="number"
                           value={maxEnrollment}
                           onChange={(e) => setMaxEnrollment(e.target.value)}
-                          placeholder={defaultMaxForType}
+                          placeholder={isSelfPaced ? t("createCourse.unlimited") || "Unlimited" : "2000"}
                           min={1}
-                          max={Number(defaultMaxForType)}
                           className={inputClass}
                         />
                         <p className="text-xs text-[#9CA3AF] mt-1">
-                          {isSelfPaced ? "Self-paced: up to 1000 students" : "NELC limit: 40 (long) / 50 (short) students"}
+                          {isSelfPaced
+                            ? t("createCourse.selfPacedNoLimit") || "Self-paced: unlimited enrollment. Leave empty for no limit."
+                            : t("createCourse.syncDefaultLimit") || "Synchronous: default max 2000. Leave empty for default."}
                         </p>
-                        {!isSelfPaced && nelcCapacityLimit &&
-                          maxEnrollment &&
-                          Number(maxEnrollment) > nelcCapacityLimit && (
+                        {!isSelfPaced && maxEnrollment && Number(maxEnrollment) > 2000 && (
                             <p className="flex items-center gap-1 mt-1 text-xs text-amber-600">
                               <AlertTriangle className="w-3 h-3" />
-                              {t("createCourse.nelcCapacityWarning", {
-                                limit: nelcCapacityLimit,
-                                type: deliveryType,
-                              })}
+                              {t("createCourse.syncCapacityNote") || "Exceeds default 2000 limit. Requires committee approval."}
                             </p>
                           )}
                       </div>
@@ -595,32 +590,6 @@ const CreateCourseContent = () => {
                       </h2>
                     </div>
 
-                    {/* Auto-computed NELC info — hidden for self-paced */}
-                    {!isSelfPaced && courseClassification && (
-                      <div className="mb-4 p-3 bg-[#FFF8E6] border border-[#BFDBFE] rounded-lg">
-                        <div className="flex items-center gap-4 text-sm">
-                          <div>
-                            <span className="text-[#6B7280]">
-                              {t("createCourse.nelcClassification")}:
-                            </span>{" "}
-                            <span className="font-medium text-[#1F2937]">
-                              {courseClassification === "long"
-                                ? t("createCourse.longCourse")
-                                : t("createCourse.shortCourse")}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-[#6B7280]">
-                              {t("createCourse.nelcMaxCapacity")}:
-                            </span>{" "}
-                            <span className="font-medium text-[#1F2937]">
-                              {nelcCapacityLimit}{" "}
-                              {t("createCourse.nelcLearners")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     <div className="space-y-4">
                       {/* NELC Accreditation */}
@@ -894,19 +863,6 @@ const CreateCourseContent = () => {
                               {maxEnrollment || "—"}
                             </dd>
                           </div>
-                          {!isSelfPaced && courseClassification && (
-                            <div>
-                              <dt className="text-[#6B7280]">
-                                {t("createCourse.nelcClassification")}
-                              </dt>
-                              <dd className="font-medium text-[#1F2937]">
-                                {courseClassification === "long"
-                                  ? t("createCourse.longCourse")
-                                  : t("createCourse.shortCourse")}{" "}
-                                (max {nelcCapacityLimit})
-                              </dd>
-                            </div>
-                          )}
                           <div className="sm:col-span-2 flex items-center gap-4">
                             <span
                               className={`px-2 py-1 text-xs rounded-full ${nelcAccreditation ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}

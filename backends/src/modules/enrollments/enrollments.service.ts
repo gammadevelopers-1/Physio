@@ -82,26 +82,21 @@ export class EnrollmentsService {
       throw new NotFoundException('Course not found');
     }
 
-    // 2. Classify course and determine effective max
-    // Self-paced courses: no NELC live-session limit, hard cap at 1000
-    // Synchronous/Blended: NELC limits apply (40 long, 50 short)
+    // 2. Determine effective max enrollment
+    // Self-paced (async): unlimited unless manager sets a cap
+    // Synchronous/Blended: default 2000 (adjustable per-course)
     const isSelfPaced = course.deliveryType === 'self-paced';
-    const SELF_PACED_MAX = 1000;
 
-    let effectiveMax: number;
+    let effectiveMax: number | null;
     let classification: 'long' | 'short' = 'short';
 
     if (isSelfPaced) {
-      effectiveMax = course.maxEnrollment
-        ? Math.min(course.maxEnrollment, SELF_PACED_MAX)
-        : SELF_PACED_MAX;
+      // Async: only enforce if manager explicitly set a limit
+      effectiveMax = course.maxEnrollment ?? null;
     } else {
       classification = classifyCourse(course.startDate, course.endDate);
-      const nelcMax = getNelcMaxEnrollment(classification);
-      // NELC rule: manual maxEnrollment can be lower but NEVER exceed NELC max
-      effectiveMax = course.maxEnrollment
-        ? Math.min(course.maxEnrollment, nelcMax)
-        : nelcMax;
+      const syncDefault = getNelcMaxEnrollment(classification); // 2000
+      effectiveMax = course.maxEnrollment ?? syncDefault;
     }
 
     // 3. Count current active enrollments
@@ -116,8 +111,9 @@ export class EnrollmentsService {
       );
     const currentCount = Number(countResult?.count || 0);
 
-    // 4. Enforce NELC limit — offer waitlist if course is full
-    if (currentCount >= effectiveMax) {
+    // 4. Enforce enrollment limit — offer waitlist if course is full
+    //    effectiveMax === null means unlimited (self-paced with no cap)
+    if (effectiveMax !== null && currentCount >= effectiveMax) {
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.ENROLLMENT_LIMIT_ENFORCED,
         entityType: 'course',
@@ -305,6 +301,7 @@ export class EnrollmentsService {
         email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
+        language: users.language,
       })
       .from(users)
       .where(eq(users.id, studentId))
@@ -352,12 +349,13 @@ export class EnrollmentsService {
           })
         : null;
 
+      const locale = (student.language || 'en') as 'en' | 'ar';
       await this.emailService.sendEnrollmentConfirmation(student.email, {
         studentName,
         courseName: course.title,
         startDate: formattedDate,
         instructorName,
-      });
+      }, locale);
     }
   }
 

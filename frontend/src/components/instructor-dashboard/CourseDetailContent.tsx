@@ -1064,13 +1064,15 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       <span className="text-xs font-medium text-[#6B7280] uppercase tracking-wide">
                                         {t("courseDetail.moduleMaterials")}
                                       </span>
-                                      <button
-                                        onClick={() => openAddMaterialModal(mod.id)}
-                                        className="flex items-center gap-1 text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium"
-                                      >
-                                        <Plus className="w-3 h-3" />
-                                        {t("courseDetail.addMaterial")}
-                                      </button>
+                                      {!isCourseReadOnly && (
+                                        <button
+                                          onClick={() => openAddMaterialModal(mod.id)}
+                                          className="flex items-center gap-1 text-xs text-[#3B82F6] hover:text-[#2563EB] font-medium"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                          {t("courseDetail.addMaterial")}
+                                        </button>
+                                      )}
                                     </div>
 
                                     {loadingModuleMaterials[mod.id] ? (
@@ -1950,7 +1952,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
                       className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                     />
-                    <span className="text-sm text-[#6B7280]">hours</span>
+                    <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHours")}</span>
                     <input
                       type="number"
                       min={0}
@@ -1959,7 +1961,6 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
                       className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                     />
-                    <span className="text-sm text-[#6B7280]">min</span>
                   </div>
                 </div>
               </div>
@@ -2070,12 +2071,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#374151] mb-1">Duration</label>
+                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration")}</label>
                 <div className="flex items-center gap-2">
                   <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
-                  <span className="text-sm text-[#6B7280]">hrs</span>
+                  <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHrs")}</span>
                   <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
-                  <span className="text-sm text-[#6B7280]">min</span>
                 </div>
               </div>
             </div>

@@ -235,7 +235,7 @@ export class MaterialsService {
     user: AuthenticatedUser,
     params: { type?: string; status?: string; moduleId?: string },
   ) {
-    await this.verifyCourseAccess(courseId, user);
+    await this.verifyCourseAccess(courseId, user, { allowCompleted: true });
 
     const conditions: ReturnType<typeof eq>[] = [
       eq(courseMaterials.courseId, courseId),
@@ -682,7 +682,7 @@ export class MaterialsService {
   ) {
     // Fetch uploader info
     const [uploader] = await db
-      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email })
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email, language: users.language })
       .from(users)
       .where(eq(users.id, material.uploadedBy))
       .limit(1);
@@ -716,13 +716,14 @@ export class MaterialsService {
     });
 
     // Email (fire-and-forget)
+    const locale = (uploader.language || 'en') as 'en' | 'ar';
     this.emailService.sendContentReview(uploader.email, {
       recipientName,
       materialTitle: material.title,
       courseName,
       decision,
       comment: comment || null,
-    }).catch(() => {});
+    }, locale).catch(() => {});
   }
 
   // ─── Compliance Checklist ─────────────────────────────────

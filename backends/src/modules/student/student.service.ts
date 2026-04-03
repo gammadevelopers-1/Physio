@@ -1991,23 +1991,29 @@ export class StudentService {
 
     const typeLabel = assessmentType === 'assignment' ? 'assignment' : assessmentType;
 
-    // In-app notification
-    await this.userNotificationsService.create({
-      recipientId: course.instructorId,
-      type: 'assessment_submitted',
-      title: `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} Submitted`,
-      message: `${studentName} submitted "${assessmentTitle}" in ${course.title}`,
-      link: `/dashboard/instructor/assessments`,
-      entityType: 'submission',
-      entityId: assessmentId,
-    });
-
-    // Email notification to instructor
+    // Email notification to instructor (fetch first so we know language)
     const [instructor] = await db
       .select({ email: users.email, firstName: users.firstName, language: users.language })
       .from(users)
       .where(eq(users.id, course.instructorId))
       .limit(1);
+
+    const instrIsAr = instructor?.language === 'ar';
+
+    // In-app notification
+    await this.userNotificationsService.create({
+      recipientId: course.instructorId,
+      type: 'assessment_submitted',
+      title: instrIsAr
+        ? 'تم تقديم تقييم'
+        : `${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} Submitted`,
+      message: instrIsAr
+        ? `${studentName} قدم "${assessmentTitle}" في ${course.title}`
+        : `${studentName} submitted "${assessmentTitle}" in ${course.title}`,
+      link: `/dashboard/instructor/assessments`,
+      entityType: 'submission',
+      entityId: assessmentId,
+    });
 
     if (instructor?.email) {
       const instrLocale = (instructor.language || 'en') as 'en' | 'ar';

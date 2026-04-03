@@ -696,12 +696,20 @@ export class MaterialsService {
       .limit(1);
     const courseName = course?.title || 'Unknown Course';
 
-    const decisionLabels: Record<string, string> = {
+    const locale = (uploader.language || 'en') as 'en' | 'ar';
+    const isAr = locale === 'ar';
+
+    const decisionLabelsEn: Record<string, string> = {
       approved: 'Content Approved',
       rejected: 'Content Rejected',
       changes_requested: 'Changes Requested',
     };
-    const label = decisionLabels[decision];
+    const decisionLabelsAr: Record<string, string> = {
+      approved: 'تمت الموافقة على المحتوى',
+      rejected: 'تم رفض المحتوى',
+      changes_requested: 'مطلوب تعديلات',
+    };
+    const label = isAr ? decisionLabelsAr[decision] : decisionLabelsEn[decision];
     const recipientName = `${uploader.firstName || ''} ${uploader.lastName || ''}`.trim() || 'Instructor';
 
     // In-app notification
@@ -709,14 +717,15 @@ export class MaterialsService {
       recipientId: uploader.id,
       type: 'content_review',
       title: label,
-      message: `"${material.title}" in ${courseName} — ${label.toLowerCase()}${comment ? `: ${comment}` : ''}`,
+      message: isAr
+        ? `"${material.title}" في ${courseName} — ${label}${comment ? `: ${comment}` : ''}`
+        : `"${material.title}" in ${courseName} — ${label.toLowerCase()}${comment ? `: ${comment}` : ''}`,
       link: '/dashboard/instructor/content',
       entityType: 'material',
       entityId: material.id,
     });
 
     // Email (fire-and-forget)
-    const locale = (uploader.language || 'en') as 'en' | 'ar';
     this.emailService.sendContentReview(uploader.email, {
       recipientName,
       materialTitle: material.title,

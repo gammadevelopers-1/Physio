@@ -157,27 +157,29 @@ export class WcagProcessor extends WorkerHost {
 
     if (managers.length === 0) return;
 
-    const wcagSummary = wcagDetails
-      .map((d) => `${d.passed ? '\u2713' : '\u2717'} ${d.label}: ${d.detail}`)
-      .join('\n');
+    // 3. In-app notifications + email per manager (localized)
+    for (const mgr of managers) {
+      const mgrLocale = (mgr.language || 'en') as 'en' | 'ar';
+      const isAr = mgrLocale === 'ar';
 
-    // 3. In-app notifications (bulk)
-    await this.userNotificationsService.createBulk(
-      managers.map((m) => m.id),
-      {
+      const wcagSummary = wcagDetails
+        .map((d) => `${d.passed ? '\u2713' : '\u2717'} ${d.label}: ${d.detail}`)
+        .join('\n');
+
+      await this.userNotificationsService.create({
+        recipientId: mgr.id,
         type: 'content_pending_review',
-        title: 'Content Pending Review',
-        message: `"${material.title}" from ${instructorName} in ${courseName} requires review (WCAG ${wcagStatus})`,
+        title: isAr ? 'محتوى بانتظار المراجعة' : 'Content Pending Review',
+        message: isAr
+          ? `"${material.title}" من ${instructorName} في ${courseName} يتطلب مراجعة (WCAG ${wcagStatus})`
+          : `"${material.title}" from ${instructorName} in ${courseName} requires review (WCAG ${wcagStatus})`,
         link: '/dashboard/manager/content-review',
         entityType: 'material',
         entityId: material.id,
-      },
-    );
+      });
 
-    // 4. Email each manager (fire-and-forget)
-    for (const mgr of managers) {
+      // Email (fire-and-forget)
       const name = [mgr.firstName, mgr.lastName].filter(Boolean).join(' ') || 'Manager';
-      const mgrLocale = (mgr.language || 'en') as 'en' | 'ar';
       this.emailService.sendContentPendingReview(mgr.email, {
         recipientName: name,
         materialTitle: material.title,

@@ -620,11 +620,15 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA that their suggestion was not approved
+    const taUserForNotif = await this.getUser(userId);
+    const taIsAr = taUserForNotif?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_suggestion_rejected',
-      title: 'TA Suggestion Not Approved',
-      message: `Your TA suggestion for "${course.title}" was not approved. Reason: ${reason}`,
+      title: taIsAr ? 'لم تتم الموافقة على اقتراح المساعد' : 'TA Suggestion Not Approved',
+      message: taIsAr
+        ? `لم تتم الموافقة على اقتراحك كمساعد في "${course.title}". السبب: ${reason}`
+        : `Your TA suggestion for "${course.title}" was not approved. Reason: ${reason}`,
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,

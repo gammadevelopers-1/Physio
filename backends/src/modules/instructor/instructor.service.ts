@@ -1757,13 +1757,16 @@ export class InstructorService {
       .returning();
 
     // 6. Dispatch in-app notifications
+    const isAr = student.language === 'ar';
     switch (dto.type) {
       case INTERVENTION_TYPE.EMAIL: {
         await this.userNotificationsService.create({
           recipientId: dto.studentId,
           type: 'intervention_email',
-          title: 'Course Progress Reminder',
-          message: `Your instructor sent a reminder about "${courseName}"${dto.message ? `: ${dto.message}` : ''}`,
+          title: isAr ? 'تذكير بتقدم الدورة' : 'Course Progress Reminder',
+          message: isAr
+            ? `أرسل المدرب تذكيرًا بخصوص "${courseName}"${dto.message ? `: ${dto.message}` : ''}`
+            : `Your instructor sent a reminder about "${courseName}"${dto.message ? `: ${dto.message}` : ''}`,
           link: `/dashboard/student/courses/${resolvedCourseId}`,
           entityType: 'intervention',
           entityId: intervention.id,
@@ -1777,8 +1780,10 @@ export class InstructorService {
         await this.userNotificationsService.create({
           recipientId: dto.studentId,
           type: 'intervention_makeup',
-          title: 'Make-up Session Scheduled',
-          message: `A make-up session has been scheduled for you in "${courseName}"`,
+          title: isAr ? 'تمت جدولة محاضرة تعويضية' : 'Make-up Session Scheduled',
+          message: isAr
+            ? `تمت جدولة محاضرة تعويضية لك في "${courseName}"`
+            : `A make-up session has been scheduled for you in "${courseName}"`,
           link: `/dashboard/student/courses/${resolvedCourseId}`,
           entityType: 'intervention',
           entityId: intervention.id,

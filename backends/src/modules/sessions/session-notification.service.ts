@@ -25,35 +25,67 @@ interface SessionContext {
   type?: string | null;
 }
 
-const EVENT_CONFIG: Record<
-  SessionEventType,
-  {
-    title: string;
-    messageFn: (sessionTitle: string, extra?: string) => string;
-  }
-> = {
+interface EventConfigEntry {
+  title: string;
+  messageFn: (sessionTitle: string, extra?: string) => string;
+}
+
+const EVENT_CONFIG: Record<SessionEventType, { en: EventConfigEntry; ar: EventConfigEntry }> = {
   session_scheduled: {
-    title: 'New Lecture Scheduled',
-    messageFn: (t, extra) =>
-      extra
-        ? `A new lecture "${t}" has been scheduled for ${extra}.`
-        : `A new lecture "${t}" has been scheduled.`,
+    en: {
+      title: 'New Lecture Scheduled',
+      messageFn: (t, extra) =>
+        extra
+          ? `A new lecture "${t}" has been scheduled for ${extra}.`
+          : `A new lecture "${t}" has been scheduled.`,
+    },
+    ar: {
+      title: 'تمت جدولة محاضرة جديدة',
+      messageFn: (t, extra) =>
+        extra
+          ? `تمت جدولة محاضرة جديدة "${t}" في ${extra}.`
+          : `تمت جدولة محاضرة جديدة "${t}".`,
+    },
   },
   session_started: {
-    title: 'Lecture Started',
-    messageFn: (t) => `"${t}" is now live. Join now!`,
+    en: {
+      title: 'Lecture Started',
+      messageFn: (t) => `"${t}" is now live. Join now!`,
+    },
+    ar: {
+      title: 'بدأت المحاضرة',
+      messageFn: (t) => `"${t}" مباشرة الآن. انضم الآن!`,
+    },
   },
   session_ended: {
-    title: 'Lecture Ended',
-    messageFn: (t) => `"${t}" has ended.`,
+    en: {
+      title: 'Lecture Ended',
+      messageFn: (t) => `"${t}" has ended.`,
+    },
+    ar: {
+      title: 'انتهت المحاضرة',
+      messageFn: (t) => `"${t}" انتهت.`,
+    },
   },
   session_cancelled: {
-    title: 'Lecture Cancelled',
-    messageFn: (t) => `"${t}" has been cancelled.`,
+    en: {
+      title: 'Lecture Cancelled',
+      messageFn: (t) => `"${t}" has been cancelled.`,
+    },
+    ar: {
+      title: 'تم إلغاء المحاضرة',
+      messageFn: (t) => `تم إلغاء "${t}".`,
+    },
   },
   session_rescheduled: {
-    title: 'Lecture Rescheduled',
-    messageFn: (t) => `"${t}" has been rescheduled.`,
+    en: {
+      title: 'Lecture Rescheduled',
+      messageFn: (t) => `"${t}" has been rescheduled.`,
+    },
+    ar: {
+      title: 'تمت إعادة جدولة المحاضرة',
+      messageFn: (t) => `تمت إعادة جدولة "${t}".`,
+    },
   },
 };
 
@@ -111,7 +143,6 @@ export class SessionNotificationService {
       }
 
       const config = EVENT_CONFIG[eventType];
-      const studentIds = enrolledStudents.map((s) => s.studentId);
 
       // Format scheduled date for messages
       const scheduledDateStr = session.scheduledAt
@@ -121,15 +152,30 @@ export class SessionNotificationService {
           })
         : '';
 
-      // 3. In-app notifications (bulk insert — always)
-      await this.userNotificationsService.createBulk(studentIds, {
-        type: eventType,
-        title: config.title,
-        message: config.messageFn(session.title, scheduledDateStr),
-        link: `/dashboard/student/courses/${session.courseId}`,
-        entityType: 'session',
-        entityId: session.id,
-      });
+      // 3. In-app notifications — group by language for localized messages
+      const enIds = enrolledStudents
+        .filter((s) => (s.language || 'en') !== 'ar')
+        .map((s) => s.studentId);
+      const arIds = enrolledStudents
+        .filter((s) => s.language === 'ar')
+        .map((s) => s.studentId);
+
+      const bulkPromises: Promise<void>[] = [];
+      for (const [lang, ids] of [['en', enIds], ['ar', arIds]] as const) {
+        if (ids.length === 0) continue;
+        const localized = config[lang];
+        bulkPromises.push(
+          this.userNotificationsService.createBulk(ids, {
+            type: eventType,
+            title: localized.title,
+            message: localized.messageFn(session.title, scheduledDateStr),
+            link: `/dashboard/student/courses/${session.courseId}`,
+            entityType: 'session',
+            entityId: session.id,
+          }),
+        );
+      }
+      await Promise.all(bulkPromises);
 
       // 4. Email notifications (fire-and-forget per student)
       for (const student of enrolledStudents) {

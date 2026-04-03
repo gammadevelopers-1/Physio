@@ -329,11 +329,14 @@ export class EnrollmentsService {
     }
 
     // In-app notification
+    const isAr = student.language === 'ar';
     await this.userNotificationsService.create({
       recipientId: studentId,
       type: 'enrollment_confirmed',
-      title: 'Enrollment Confirmed',
-      message: `You have been enrolled in "${course.title}"`,
+      title: isAr ? 'تم تأكيد التسجيل' : 'Enrollment Confirmed',
+      message: isAr
+        ? `تم تسجيلك في "${course.title}"`
+        : `You have been enrolled in "${course.title}"`,
       link: `/dashboard/student/courses`,
       entityType: 'enrollment',
       entityId: courseId,

@@ -162,6 +162,17 @@ const strings = {
   atRiskBody:                  { en: 'Your instructor has sent you a reminder about your progress in:', ar: 'أرسل لك مدربك تذكيراً بخصوص تقدمك في:' },
   atRiskCta:                   { en: 'Log in to your dashboard to review your progress and catch up.', ar: 'سجل الدخول إلى لوحة التحكم لمراجعة تقدمك.' },
 
+  /* ── Course assignment ────────────────────────────────── */
+  courseAssignedSubject:        { en: 'Course Assigned: {course}',              ar: 'تم تعيين دورة: {course}' },
+  courseAssignedTitle:          { en: 'Course Assigned',                        ar: 'تم تعيين دورة' },
+  courseAssignedBody:           { en: 'You have been assigned as the instructor for the following course:', ar: 'تم تعيينك كمدرب للدورة التالية:' },
+  courseAssignedCta:            { en: 'Log in to your instructor dashboard to review course details and start preparing.', ar: 'سجل الدخول إلى لوحة تحكم المدرب لمراجعة تفاصيل الدورة والبدء في التحضير.' },
+  courseUnassignedSubject:      { en: 'Course Unassigned: {course}',            ar: 'تم إلغاء تعيين الدورة: {course}' },
+  courseUnassignedTitle:        { en: 'Course Unassigned',                      ar: 'تم إلغاء تعيين الدورة' },
+  courseUnassignedBody:         { en: 'You have been removed as the instructor for the following course:', ar: 'تم إزالتك كمدرب من الدورة التالية:' },
+  assignedByLabel:             { en: 'Assigned by:',                           ar: 'تم التعيين بواسطة:' },
+  deliveryTypeLabel:           { en: 'Type:',                                  ar: 'النوع:' },
+
   /* ── Generic ─────────────────────────────────────────── */
   genericNelcTraining:         { en: 'NELC Accredited Training Platform', ar: 'منصة تدريب معتمدة من المركز الوطني للتعليم الإلكتروني' },
 

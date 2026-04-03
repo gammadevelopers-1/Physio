@@ -19,6 +19,8 @@ const TYPE_COLORS: Record<string, string> = {
   content_review: "bg-green-500",
   assessment_published: "bg-amber-500",
   assessment_submitted: "bg-orange-500",
+  course_assigned: "bg-indigo-500",
+  course_unassigned: "bg-red-400",
 };
 
 function getRelativeTime(

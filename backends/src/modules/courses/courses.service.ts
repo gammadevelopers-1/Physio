@@ -117,6 +117,11 @@ export class CoursesService {
       })
       .returning();
 
+    // Notify the assigned instructor (if different from creator)
+    if (instructorId !== user.id) {
+      this.notifyInstructorAssigned(instructorId, course.title, user.id).catch(() => {});
+    }
+
     return course;
   }
 
@@ -1432,6 +1437,86 @@ export class CoursesService {
   }
 
   /**
+   * Notify an instructor that they have been assigned to a course.
+   */
+  private async notifyInstructorAssigned(instructorId: string, courseTitle: string, assignedById: string) {
+    const [instructor] = await db
+      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, language: users.language })
+      .from(users)
+      .where(eq(users.id, instructorId))
+      .limit(1);
+    if (!instructor) return;
+
+    const [assigner] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, assignedById))
+      .limit(1);
+    const assignerName = assigner ? [assigner.firstName, assigner.lastName].filter(Boolean).join(' ') : 'Admin';
+    const instructorName = [instructor.firstName, instructor.lastName].filter(Boolean).join(' ') || 'Instructor';
+    const locale = (instructor.language || 'en') as 'en' | 'ar';
+
+    // In-app notification
+    await this.userNotificationsService.create({
+      recipientId: instructorId,
+      type: 'course_assigned',
+      title: locale === 'ar' ? `تم تعيين دورة: ${courseTitle}` : `Course Assigned: ${courseTitle}`,
+      message: locale === 'ar'
+        ? `تم تعيينك كمدرب للدورة "${courseTitle}" بواسطة ${assignerName}.`
+        : `You have been assigned as instructor for "${courseTitle}" by ${assignerName}.`,
+      link: '/dashboard/instructor',
+      entityType: 'course',
+      entityId: null,
+    });
+
+    // Email
+    const { getEmailStrings, t: tt } = await import('../email/email-i18n');
+    const s = getEmailStrings(locale);
+    this.emailService.sendGenericNotification(
+      instructor.email,
+      { recipientName: instructorName, subject: tt(s.courseAssignedSubject, { course: courseTitle }), message: `${s.courseAssignedBody}\n\n${s.courseLabel} ${courseTitle}\n${s.assignedByLabel} ${assignerName}\n\n${s.courseAssignedCta}` },
+      locale,
+    ).catch(() => {});
+  }
+
+  /**
+   * Notify an instructor that they have been removed from a course.
+   */
+  private async notifyInstructorUnassigned(instructorId: string, courseTitle: string) {
+    const [instructor] = await db
+      .select({ email: users.email, firstName: users.firstName, lastName: users.lastName, language: users.language })
+      .from(users)
+      .where(eq(users.id, instructorId))
+      .limit(1);
+    if (!instructor) return;
+
+    const instructorName = [instructor.firstName, instructor.lastName].filter(Boolean).join(' ') || 'Instructor';
+    const locale = (instructor.language || 'en') as 'en' | 'ar';
+
+    // In-app notification
+    await this.userNotificationsService.create({
+      recipientId: instructorId,
+      type: 'course_unassigned',
+      title: locale === 'ar' ? `تم إلغاء تعيين الدورة: ${courseTitle}` : `Course Unassigned: ${courseTitle}`,
+      message: locale === 'ar'
+        ? `تم إزالتك كمدرب من الدورة "${courseTitle}".`
+        : `You have been removed as instructor for "${courseTitle}".`,
+      link: '/dashboard/instructor',
+      entityType: 'course',
+      entityId: null,
+    });
+
+    // Email
+    const { getEmailStrings, t: tt } = await import('../email/email-i18n');
+    const s = getEmailStrings(locale);
+    this.emailService.sendGenericNotification(
+      instructor.email,
+      { recipientName: instructorName, subject: tt(s.courseUnassignedSubject, { course: courseTitle }), message: `${s.courseUnassignedBody}\n\n${s.courseLabel} ${courseTitle}` },
+      locale,
+    ).catch(() => {});
+  }
+
+  /**
    * Reassign instructor for a course.
    * Only MANAGER and ADMIN can do this.
    */
@@ -1481,6 +1566,10 @@ export class CoursesService {
     this.logger.log(
       `Course "${course.title}" reassigned from ${course.instructorId} to ${newInstructorId} by ${user.id}`,
     );
+
+    // Notify old instructor (removed) and new instructor (assigned)
+    this.notifyInstructorUnassigned(course.instructorId, course.title).catch(() => {});
+    this.notifyInstructorAssigned(newInstructorId, course.title, user.id).catch(() => {});
 
     return updated;
   }

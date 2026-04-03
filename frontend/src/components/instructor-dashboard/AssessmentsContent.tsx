@@ -2314,7 +2314,7 @@ const AssessmentsContent = () => {
                                 {qbCourseFilter && qbTypeFilter !== "assignment" && (
                                   <button
                                     onClick={() => setSelectedAssessmentForQ(`course:${qbCourseFilter}`)}
-                                    className="w-full text-left p-3 border border-[#DBEAFE] bg-[#EFF6FF] rounded-lg hover:bg-[#DBEAFE] transition-colors"
+                                    className="w-full text-start p-3 border border-[#DBEAFE] bg-[#EFF6FF] rounded-lg hover:bg-[#DBEAFE] transition-colors"
                                   >
                                     <span className="text-sm font-medium text-[#2563EB]">
                                       {t("assessments.allQuestions")} — {courses.find((c) => c.id === qbCourseFilter)?.title || ""}
@@ -2329,7 +2329,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForQ(a.id)}
-                                      className="w-full text-left p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2676,7 +2676,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForS(a.id)}
-                                      className="w-full text-left p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2755,7 +2755,7 @@ const AssessmentsContent = () => {
                               <div className="overflow-x-auto">
                                 <table className="w-full">
                                   <thead>
-                                    <tr className="text-left">
+                                    <tr className="text-start">
                                       <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
                                         {t("assessments.student")}
                                       </th>
@@ -2920,7 +2920,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForIA(a.id)}
-                                      className="w-full text-left p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -3054,7 +3054,7 @@ const AssessmentsContent = () => {
                               <div className="overflow-x-auto">
                                 <table className="w-full">
                                   <thead>
-                                    <tr className="text-left">
+                                    <tr className="text-start">
                                       <th className="pb-3 text-xs font-semibold text-[#6B7280] uppercase">
                                         {t("assessments.question")}
                                       </th>

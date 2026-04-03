@@ -93,6 +93,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
     const newLocale = locale === "en" ? "ar" : "en";
     const pathWithoutLocale = pathname.replace(`/${locale}`, "");
     router.push(`/${newLocale}${pathWithoutLocale}`);
+    import("@/lib/api").then(({ profileApi }) => profileApi.update({ language: newLocale }).catch(() => {}));
   };
 
   return (

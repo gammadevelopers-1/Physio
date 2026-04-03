@@ -150,6 +150,7 @@ function PreferencesTab({
     const segments = pathname.split("/");
     segments[1] = newLocale;
     router.push(segments.join("/"));
+    profileApi.update({ language: newLocale }).catch(() => {});
   };
 
   return (

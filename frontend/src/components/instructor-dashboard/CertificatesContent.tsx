@@ -785,7 +785,7 @@ const CertificatesContent = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                              <th className="px-4 py-3 text-left">
+                              <th className="px-4 py-3 text-start">
                                 <input
                                   type="checkbox"
                                   checked={actionableCerts.length > 0 && selectedIds.size === actionableCerts.length}
@@ -793,12 +793,12 @@ const CertificatesContent = () => {
                                   className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                                 />
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5E7EB]">

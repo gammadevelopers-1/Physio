@@ -435,7 +435,7 @@ const InstructorTabs = ({
                   <col className="w-[15%]" />
                 </colgroup>
                 <thead>
-                  <tr className="text-left">
+                  <tr className="text-start">
                     <th className="pb-3 text-[13px] font-medium text-[#6B7280]">
                       {t("content.fileName")}
                     </th>

@@ -127,7 +127,11 @@ const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
     e.stopPropagation();
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 4, left: rect.right });
+      // Estimate dropdown height (~7 items * 36px + padding)
+      const dropdownHeight = 280;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const top = spaceBelow < dropdownHeight ? rect.top - dropdownHeight : rect.bottom + 4;
+      setPos({ top, left: rect.right });
     }
     setOpen((v) => !v);
   };
@@ -1375,22 +1379,22 @@ const ContentManagementContent = () => {
                           </colgroup>
                           <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableFile")}
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableCourse")}
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableSize")}
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableStatus")}
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableWCAG")}
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableActions")}
                               </th>
                             </tr>

@@ -490,7 +490,7 @@ const StudentsContent = () => {
                           <table className="w-full table-fixed">
                             <thead>
                               <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "28%" }}>
+                                <th className="px-3 py-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "28%" }}>
                                   <button onClick={() => toggleSort("name")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableStudent")}
                                     <ArrowUpDown className="w-3 h-3" />
@@ -502,7 +502,7 @@ const StudentsContent = () => {
                                     <ArrowUpDown className="w-3 h-3" />
                                   </button>
                                 </th>
-                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "18%" }}>
+                                <th className="px-3 py-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "18%" }}>
                                   <button onClick={() => toggleSort("progress")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableProgress") || "Progress"}
                                     <ArrowUpDown className="w-3 h-3" />
@@ -517,7 +517,7 @@ const StudentsContent = () => {
                                 <th className="px-3 py-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "12%" }}>
                                   {t("students.tableStatus")}
                                 </th>
-                                <th className="px-3 py-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "14%" }}>
+                                <th className="px-3 py-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "14%" }}>
                                   <button onClick={() => toggleSort("lastActive")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableLastActivity")}
                                     <ArrowUpDown className="w-3 h-3" />

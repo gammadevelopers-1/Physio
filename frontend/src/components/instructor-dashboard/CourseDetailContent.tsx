@@ -983,7 +983,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <div className="flex items-center justify-between p-4 bg-[#F9FAFB]">
                                 <button
                                   onClick={() => toggleModule(mod.id)}
-                                  className="flex-1 flex items-center gap-3 text-left"
+                                  className="flex-1 flex items-center gap-3 text-start"
                                 >
                                   <span className="w-6 h-6 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-medium text-[#6B7280]">
                                     {idx + 1}
@@ -1221,11 +1221,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <table className="w-full">
                                 <thead>
                                   <tr className="border-b border-[#E5E7EB]">
-                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.name")}</th>
-                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.enrolledDate")}</th>
-                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.name")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.enrolledDate")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
                                     <th className="px-3 pb-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-20">{t("courseDetail.status")}</th>
-                                    <th className="px-3 pb-3 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.lastActive")}</th>
+                                    <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.lastActive")}</th>
                                     <th className="px-2 pb-3 text-center text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-12"></th>
                                   </tr>
                                 </thead>
@@ -1850,7 +1850,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           isSelected ? prev.filter((id) => id !== mat.id) : [...prev, mat.id]
                         )
                       }
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border text-start transition-colors ${
                         isSelected
                           ? "border-[#3B82F6] bg-[#EFF6FF]"
                           : "border-[#E5E7EB] hover:border-[#D1D5DB]"

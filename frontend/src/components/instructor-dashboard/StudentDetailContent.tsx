@@ -688,9 +688,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                       <table className="w-full">
                                         <thead>
                                           <tr className="bg-[#F9FAFB]">
-                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.session")}</th>
-                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.dateLabel")}</th>
-                                            <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.status")}</th>
+                                            <th className="px-3 py-1.5 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.session")}</th>
+                                            <th className="px-3 py-1.5 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.dateLabel")}</th>
+                                            <th className="px-3 py-1.5 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.status")}</th>
                                           </tr>
                                         </thead>
                                         <tbody className="divide-y divide-[#F3F4F6]">
@@ -777,7 +777,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <div className="overflow-x-auto">
                                   <table className="w-full">
                                     <thead>
-                                      <tr className="text-left">
+                                      <tr className="text-start">
                                         <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.assessment")}</th>
                                         <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.score")}</th>
                                         <th className="px-4 py-2 text-[10px] font-semibold text-[#9CA3AF] uppercase">{t("studentDetail.classAvg")}</th>

@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import ReactDOM from "react-dom";
 import { useTranslations, useLocale } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
@@ -104,77 +109,26 @@ interface ActionItem {
   danger?: boolean;
 }
 
-const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
-  const [open, setOpen] = useState(false);
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const dropRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        btnRef.current?.contains(e.target as Node) ||
-        dropRef.current?.contains(e.target as Node)
-      ) return;
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      const dropdownHeight = 280;
-      const dropdownWidth = 200;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const top = spaceBelow < dropdownHeight ? rect.top - dropdownHeight : rect.bottom + 4;
-      // In RTL the button is on the left — open dropdown to the right of button
-      const isRtl = document.documentElement.dir === "rtl";
-      const left = isRtl ? rect.left : rect.right - dropdownWidth;
-      setPos({ top, left: Math.max(8, left) });
-    }
-    setOpen((v) => !v);
-  };
-
-  return (
-    <>
+const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
       <button
-        ref={btnRef}
-        onClick={handleToggle}
         className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors"
         aria-label="Actions"
       >
         <MoreVertical className="w-4 h-4" />
       </button>
-      {open && ReactDOM.createPortal(
-        <div
-          ref={dropRef}
-          style={{ position: "fixed", top: pos.top, left: pos.left }}
-          className="z-[9999] bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 w-[200px]"
-        >
-          {actions.map((a, i) => (
-            <button
-              key={i}
-              onClick={(e) => { e.stopPropagation(); setOpen(false); a.onClick(); }}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-                a.danger
-                  ? "text-[#EF4444] hover:bg-[#FEF2F2]"
-                  : "text-[#374151] hover:bg-[#F3F4F6]"
-              }`}
-            >
-              {a.icon}
-              {a.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </>
-  );
-};
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end">
+      {actions.map((a, i) => (
+        <DropdownMenuItem key={i} danger={a.danger} onClick={a.onClick}>
+          {a.icon}
+          {a.label}
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
 
 // ─── Modal Overlay ─────────────────────────────────────────
 

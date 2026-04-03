@@ -127,11 +127,14 @@ const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
     e.stopPropagation();
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      // Estimate dropdown height (~7 items * 36px + padding)
       const dropdownHeight = 280;
+      const dropdownWidth = 200;
       const spaceBelow = window.innerHeight - rect.bottom;
       const top = spaceBelow < dropdownHeight ? rect.top - dropdownHeight : rect.bottom + 4;
-      setPos({ top, left: rect.right });
+      // In RTL the button is on the left — open dropdown to the right of button
+      const isRtl = document.documentElement.dir === "rtl";
+      const left = isRtl ? rect.left : rect.right - dropdownWidth;
+      setPos({ top, left: Math.max(8, left) });
     }
     setOpen((v) => !v);
   };
@@ -149,8 +152,8 @@ const ActionsDropdown = ({ actions }: { actions: ActionItem[] }) => {
       {open && ReactDOM.createPortal(
         <div
           ref={dropRef}
-          style={{ position: "fixed", top: pos.top, left: pos.left, transform: "translateX(-100%)" }}
-          className="z-[9999] bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px]"
+          style={{ position: "fixed", top: pos.top, left: pos.left }}
+          className="z-[9999] bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 w-[200px]"
         >
           {actions.map((a, i) => (
             <button

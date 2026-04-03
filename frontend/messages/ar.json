@@ -3502,7 +3502,14 @@
       "needsReview": "يحتاج مراجعة",
       "missing": "مفقود",
       "loadError": "فشل تحميل بيانات الامتثال",
-      "loadErrorFallback": "تعذر تحميل بيانات امتثال NELC"
+      "loadErrorFallback": "تعذر تحميل بيانات امتثال NELC",
+      "cat_course_structure": "هيكل الدورة",
+      "cat_accessibility": "إمكانية الوصول",
+      "cat_virtual_classes": "الفصول الافتراضية",
+      "cat_assessment_quality": "جودة التقييم",
+      "cat_policies": "السياسات",
+      "cat_data_protection": "حماية البيانات",
+      "cat_instructor_qualifications": "مؤهلات المدرب"
     },
     "taPanel": {
       "title": "مساعدو التدريس",

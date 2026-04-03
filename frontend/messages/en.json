@@ -3320,7 +3320,14 @@
       "needsReview": "Needs Review",
       "missing": "Missing",
       "loadError": "Failed to load compliance data",
-      "loadErrorFallback": "Could not load NELC compliance data"
+      "loadErrorFallback": "Could not load NELC compliance data",
+      "cat_course_structure": "Course Structure",
+      "cat_accessibility": "Accessibility",
+      "cat_virtual_classes": "Virtual Classes",
+      "cat_assessment_quality": "Assessment Quality",
+      "cat_policies": "Policies",
+      "cat_data_protection": "Data Protection",
+      "cat_instructor_qualifications": "Instructor Qualifications"
     },
     "taPanel": {
       "title": "Teaching Assistants",

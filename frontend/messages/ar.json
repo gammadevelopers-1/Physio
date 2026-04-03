@@ -3494,6 +3494,30 @@
         "sat": "السبت"
       }
     },
+    "nelcScorecard": {
+      "title": "امتثال NELC",
+      "categoriesPassed": "{passed}/{total} فئات ناجحة",
+      "checks": "{passed}/{total} فحوصات",
+      "passed": "ناجح",
+      "needsReview": "يحتاج مراجعة",
+      "missing": "مفقود",
+      "loadError": "فشل تحميل بيانات الامتثال",
+      "loadErrorFallback": "تعذر تحميل بيانات امتثال NELC"
+    },
+    "taPanel": {
+      "title": "مساعدو التدريس",
+      "suggestTA": "اقتراح مساعد",
+      "selectTA": "اختر مساعد تدريس",
+      "suggestionSent": "تم إرسال اقتراح المساعد للمديرين للموافقة",
+      "suggestionFailed": "فشل في اقتراح المساعد",
+      "noTAs": "لم يتم تعيين مساعدي تدريس لهذه الدورة بعد.",
+      "statusActive": "نشط",
+      "statusPending": "بانتظار الموافقة",
+      "statusRejected": "مرفوض",
+      "enrolled": "مسجل",
+      "tasActive": "مساعد نشط",
+      "nelcMet": "تم استيفاء متطلبات NELC"
+    },
     "analytics": {
       "title": "تحليلات مشاهدة الفيديو",
       "loadError": "فشل تحميل بيانات التحليلات",

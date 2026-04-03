@@ -93,13 +93,13 @@ const CourseAssistantsSuggestPanel = ({
     try {
       setSuggesting(true);
       await courseAssistantsApi.suggestTA(courseId, { userId });
-      toast.success("TA suggestion sent to managers for approval");
+      toast.success(t("taPanel.suggestionSent"));
       setShowDropdown(false);
       await fetchTAs();
       await fetchAvailableTAs();
       await fetchThresholdStatus();
     } catch {
-      toast.error("Failed to suggest TA");
+      toast.error(t("taPanel.suggestionFailed"));
     } finally {
       setSuggesting(false);
     }
@@ -121,11 +121,11 @@ const CourseAssistantsSuggestPanel = ({
   const getStatusLabel = (ta: CourseTA) => {
     switch (ta.status) {
       case "approved":
-        return "Active";
+        return t("taPanel.statusActive");
       case "suggested":
-        return "Pending Approval";
+        return t("taPanel.statusPending");
       case "rejected":
-        return "Rejected";
+        return t("taPanel.statusRejected");
       default:
         return ta.status;
     }
@@ -143,7 +143,7 @@ const CourseAssistantsSuggestPanel = ({
     <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1F2937]">
-          Teaching Assistants
+          {t("taPanel.title")}
         </h3>
         {unassignedTAs.length > 0 && (
           <button
@@ -151,7 +151,7 @@ const CourseAssistantsSuggestPanel = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6b4e24] border border-[#a37f49] rounded-lg hover:bg-[#FFF8E6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            Suggest TA
+            {t("taPanel.suggestTA")}
           </button>
         )}
       </div>
@@ -173,9 +173,9 @@ const CourseAssistantsSuggestPanel = ({
               </>
             ) : (
               <span>
-                {thresholdStatus.enrolledCount} enrolled &middot;{" "}
-                {thresholdStatus.activeTAs} TA(s) active &middot;{" "}
-                NELC requirement met
+                {thresholdStatus.enrolledCount} {t("taPanel.enrolled")} &middot;{" "}
+                {thresholdStatus.activeTAs} {t("taPanel.tasActive")} &middot;{" "}
+                {t("taPanel.nelcMet")}
               </span>
             )}
           </div>
@@ -187,7 +187,7 @@ const CourseAssistantsSuggestPanel = ({
         <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-[#4B5563]">
-              Select a Teaching Assistant
+              {t("taPanel.selectTA")}
             </p>
             <button onClick={() => setShowDropdown(false)}>
               <X className="w-4 h-4 text-[#6B7280]" />
@@ -221,7 +221,7 @@ const CourseAssistantsSuggestPanel = ({
         </div>
       ) : tas.length === 0 ? (
         <p className="text-sm text-[#6B7280] text-center py-4">
-          No teaching assistants assigned to this course yet.
+          {t("taPanel.noTAs")}
         </p>
       ) : (
         <div className="space-y-2">

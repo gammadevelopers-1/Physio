@@ -229,15 +229,24 @@ export class CourseAssistantsService {
     if (otherCourseCount > 0) {
       const recipientIds = await this.getNotificationRecipients(courseId);
       const taUser = await this.getUser(userId);
+      const taName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
       if (recipientIds.length > 0) {
-        await this.notificationsService.createBulk(recipientIds, {
-          type: 'ta_workload_warning',
-          title: 'TA Workload Notice',
-          message: `TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} assigned to "${course.title}" is also assigned to ${otherCourseCount} other course(s)`,
-          link: `/dashboard/manager/courses/${courseId}`,
-          entityType: 'course',
-          entityId: courseId,
-        });
+        // Send per-recipient in their language
+        for (const recipientId of recipientIds) {
+          const recipient = await this.getUser(recipientId);
+          const isAr = recipient?.language === 'ar';
+          await this.notificationsService.create({
+            recipientId,
+            type: 'ta_workload_warning',
+            title: isAr ? 'إشعار عبء عمل المساعد' : 'TA Workload Notice',
+            message: isAr
+              ? `المساعد ${taName} المعين في "${course.title}" معين أيضاً في ${otherCourseCount} دورة أخرى`
+              : `TA ${taName} assigned to "${course.title}" is also assigned to ${otherCourseCount} other course(s)`,
+            link: `/dashboard/manager/courses/${courseId}`,
+            entityType: 'course',
+            entityId: courseId,
+          });
+        }
       }
     }
 
@@ -263,12 +272,17 @@ export class CourseAssistantsService {
 
     // Notify course instructor
     const taUser2 = await this.getUser(userId);
+    const taName = `${taUser2?.firstName || ''} ${taUser2?.lastName || ''}`.trim();
     if (course.instructorId) {
+      const instructor = await this.getUser(course.instructorId);
+      const isAr = instructor?.language === 'ar';
       await this.notificationsService.create({
         recipientId: course.instructorId,
         type: 'ta_assigned',
-        title: 'Teaching Assistant Assigned',
-        message: `TA ${taUser2?.firstName || ''} ${taUser2?.lastName || ''} has been assigned to your course "${course.title}"`,
+        title: isAr ? 'تم تعيين مساعد تدريس' : 'Teaching Assistant Assigned',
+        message: isAr
+          ? `تم تعيين المساعد ${taName} لدورتك "${course.title}"`
+          : `TA ${taName} has been assigned to your course "${course.title}"`,
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
@@ -276,11 +290,14 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA themselves
+    const taLang = taUser2?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_assigned',
-      title: 'Assigned as Teaching Assistant',
-      message: `You have been assigned as a Teaching Assistant for "${course.title}"`,
+      title: taLang ? 'تم تعيينك كمساعد تدريس' : 'Assigned as Teaching Assistant',
+      message: taLang
+        ? `تم تعيينك كمساعد تدريس للدورة "${course.title}"`
+        : `You have been assigned as a Teaching Assistant for "${course.title}"`,
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -366,28 +383,39 @@ export class CourseAssistantsService {
     const suggester = await this.getUser(suggestedBy);
     const taUser = await this.getUser(userId);
 
-    const workloadNote =
-      otherCourseCount > 0
-        ? ` (Note: This TA is currently assigned to ${otherCourseCount} other course(s))`
-        : '';
+    const suggesterName = `${suggester?.firstName || 'Instructor'} ${suggester?.lastName || ''}`.trim();
+    const taSugName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
 
     if (recipientIds.length > 0) {
-      await this.notificationsService.createBulk(recipientIds, {
-        type: 'ta_suggestion',
-        title: 'TA Suggestion',
-        message: `${suggester?.firstName || 'Instructor'} ${suggester?.lastName || ''} suggested TA ${taUser?.firstName || ''} ${taUser?.lastName || ''} for Course "${course.title}"${workloadNote}`,
-        link: `/dashboard/manager/courses/${courseId}`,
-        entityType: 'course',
-        entityId: courseId,
-      });
+      for (const recipientId of recipientIds) {
+        const recipient = await this.getUser(recipientId);
+        const isAr = recipient?.language === 'ar';
+        const workloadNote = otherCourseCount > 0
+          ? (isAr ? ` (ملاحظة: هذا المساعد معين حالياً في ${otherCourseCount} دورة أخرى)` : ` (Note: This TA is currently assigned to ${otherCourseCount} other course(s))`)
+          : '';
+        await this.notificationsService.create({
+          recipientId,
+          type: 'ta_suggestion',
+          title: isAr ? 'اقتراح مساعد تدريس' : 'TA Suggestion',
+          message: isAr
+            ? `${suggesterName} اقترح المساعد ${taSugName} للدورة "${course.title}"${workloadNote}`
+            : `${suggesterName} suggested TA ${taSugName} for Course "${course.title}"${workloadNote}`,
+          link: `/dashboard/manager/courses/${courseId}`,
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
     }
 
     // Notify the TA that they have been suggested
+    const taIsAr = taUser?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_suggestion',
-      title: 'Suggested as Teaching Assistant',
-      message: `You have been suggested as a Teaching Assistant for "${course.title}". Awaiting manager approval.`,
+      title: taIsAr ? 'تم اقتراحك كمساعد تدريس' : 'Suggested as Teaching Assistant',
+      message: taIsAr
+        ? `تم اقتراحك كمساعد تدريس للدورة "${course.title}". بانتظار موافقة المدير.`
+        : `You have been suggested as a Teaching Assistant for "${course.title}". Awaiting manager approval.`,
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -473,12 +501,17 @@ export class CourseAssistantsService {
 
     // Notify the suggesting instructor
     const taUser = await this.getUser(userId);
+    const taApName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
     if (existing.suggestedBy) {
+      const suggesterUser = await this.getUser(existing.suggestedBy);
+      const sIsAr = suggesterUser?.language === 'ar';
       await this.notificationsService.create({
         recipientId: existing.suggestedBy,
         type: 'ta_suggestion_approved',
-        title: 'TA Suggestion Approved',
-        message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was approved and activated`,
+        title: sIsAr ? 'تمت الموافقة على اقتراح المساعد' : 'TA Suggestion Approved',
+        message: sIsAr
+          ? `تمت الموافقة على اقتراحك للمساعد ${taApName} في الدورة "${course.title}" وتم تفعيله`
+          : `Your TA suggestion for ${taApName} on "${course.title}" was approved and activated`,
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,
@@ -486,11 +519,14 @@ export class CourseAssistantsService {
     }
 
     // Notify the TA
+    const taIsAr = taUser?.language === 'ar';
     await this.notificationsService.create({
       recipientId: userId,
       type: 'ta_suggestion_approved',
-      title: 'TA Assignment Approved',
-      message: `Your TA assignment for "${course.title}" has been approved. You are now active.`,
+      title: taIsAr ? 'تمت الموافقة على تعيينك كمساعد' : 'TA Assignment Approved',
+      message: taIsAr
+        ? `تمت الموافقة على تعيينك كمساعد تدريس للدورة "${course.title}". أنت الآن نشط.`
+        : `Your TA assignment for "${course.title}" has been approved. You are now active.`,
       link: `/dashboard/teaching-assistant`,
       entityType: 'course',
       entityId: courseId,
@@ -550,12 +586,17 @@ export class CourseAssistantsService {
 
     // Notify the suggesting instructor
     const taUser = await this.getUser(userId);
+    const taRejName = `${taUser?.firstName || ''} ${taUser?.lastName || ''}`.trim();
     if (existing.suggestedBy) {
+      const suggesterUser = await this.getUser(existing.suggestedBy);
+      const sIsAr = suggesterUser?.language === 'ar';
       await this.notificationsService.create({
         recipientId: existing.suggestedBy,
         type: 'ta_suggestion_rejected',
-        title: 'TA Suggestion Rejected',
-        message: `Your TA suggestion for ${taUser?.firstName || ''} ${taUser?.lastName || ''} on "${course.title}" was rejected. Reason: ${reason}`,
+        title: sIsAr ? 'تم رفض اقتراح المساعد' : 'TA Suggestion Rejected',
+        message: sIsAr
+          ? `تم رفض اقتراحك للمساعد ${taRejName} في الدورة "${course.title}". السبب: ${reason}`
+          : `Your TA suggestion for ${taRejName} on "${course.title}" was rejected. Reason: ${reason}`,
         link: `/dashboard/instructor/courses/${courseId}`,
         entityType: 'course',
         entityId: courseId,

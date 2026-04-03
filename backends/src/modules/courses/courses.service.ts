@@ -811,22 +811,26 @@ export class CoursesService {
       metadata: { courseTitle: course.title, reviewNote: note },
     });
 
-    // Notify instructor (in-app + email)
-    await this.userNotificationsService.create({
-      recipientId: course.instructorId,
-      type: 'course_changes_requested',
-      title: 'Changes Requested',
-      message: `Changes have been requested on your course "${course.title}": ${note}`,
-      link: '/dashboard/instructor/courses',
-      entityType: 'course',
-      entityId: courseId,
-    });
-
     const [instructor] = await db
       .select({ email: users.email, firstName: users.firstName, language: users.language })
       .from(users)
       .where(eq(users.id, course.instructorId))
       .limit(1);
+
+    const instrIsAr = instructor?.language === 'ar';
+
+    // Notify instructor (in-app + email)
+    await this.userNotificationsService.create({
+      recipientId: course.instructorId,
+      type: 'course_changes_requested',
+      title: instrIsAr ? 'تم طلب تعديلات' : 'Changes Requested',
+      message: instrIsAr
+        ? `تم طلب تعديلات على دورتك "${course.title}": ${note}`
+        : `Changes have been requested on your course "${course.title}": ${note}`,
+      link: '/dashboard/instructor/courses',
+      entityType: 'course',
+      entityId: courseId,
+    });
     if (instructor?.email) {
       const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
       await this.emailService.sendContentReview(instructor.email, {
@@ -1092,23 +1096,29 @@ export class CoursesService {
       metadata: { courseTitle: course.title },
     });
 
+    // Fetch instructor for notification + email
+    const [instructor] = await db
+      .select({ email: users.email, firstName: users.firstName, language: users.language })
+      .from(users)
+      .where(eq(users.id, course.instructorId))
+      .limit(1);
+
+    const apIsAr = instructor?.language === 'ar';
+
     // Notify instructor: course approved
     await this.userNotificationsService.create({
       recipientId: course.instructorId,
       type: 'course_approved',
-      title: 'Course Approved',
-      message: `Your course "${course.title}" has been approved and is now active.`,
+      title: apIsAr ? 'تمت الموافقة على الدورة' : 'Course Approved',
+      message: apIsAr
+        ? `تمت الموافقة على دورتك "${course.title}" وهي الآن نشطة.`
+        : `Your course "${course.title}" has been approved and is now active.`,
       link: '/dashboard/instructor/courses',
       entityType: 'course',
       entityId: courseId,
     });
 
     // Email instructor
-    const [instructor] = await db
-      .select({ email: users.email, firstName: users.firstName, language: users.language })
-      .from(users)
-      .where(eq(users.id, course.instructorId))
-      .limit(1);
     if (instructor?.email) {
       const instrLocale = (instructor.language || 'en') as 'en' | 'ar';
       await this.emailService.sendContentReview(instructor.email, {
@@ -1206,11 +1216,19 @@ export class CoursesService {
     });
 
     // Notify instructor
+    const [completedInstr] = await db
+      .select({ language: users.language })
+      .from(users)
+      .where(eq(users.id, course.instructorId))
+      .limit(1);
+    const compIsAr = completedInstr?.language === 'ar';
     await this.userNotificationsService.create({
       recipientId: course.instructorId,
-      type: 'course_approved',
-      title: 'Course Completed',
-      message: `Your course "${course.title}" has been marked as completed.`,
+      type: 'course_completed',
+      title: compIsAr ? 'اكتملت الدورة' : 'Course Completed',
+      message: compIsAr
+        ? `تم تعيين دورتك "${course.title}" كمكتملة.`
+        : `Your course "${course.title}" has been marked as completed.`,
       link: '/dashboard/instructor/courses',
       entityType: 'course',
       entityId: courseId,

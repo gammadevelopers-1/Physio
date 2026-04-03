@@ -17,12 +17,13 @@ import {
   Lock,
   GraduationCap,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { nelcComplianceApi } from "@/lib/api";
 
-const STATUS_CONFIG = {
-  passed: { label: "Passed", bg: "bg-[#D1FAE5]", text: "text-[#065F46]", icon: CheckCircle2, ring: "ring-[#10B981]" },
-  review: { label: "Needs Review", bg: "bg-[#FEF3C7]", text: "text-[#92400E]", icon: AlertCircle, ring: "ring-[#F59E0B]" },
-  failed: { label: "Missing", bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", icon: XCircle, ring: "ring-[#EF4444]" },
+const STATUS_STYLES = {
+  passed: { bg: "bg-[#D1FAE5]", text: "text-[#065F46]", icon: CheckCircle2, ring: "ring-[#10B981]" },
+  review: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", icon: AlertCircle, ring: "ring-[#F59E0B]" },
+  failed: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", icon: XCircle, ring: "ring-[#EF4444]" },
 };
 
 const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
@@ -49,6 +50,8 @@ interface Props {
 }
 
 export default function NELCScorecardPanel({ courseId, compact = false }: Props) {
+  const t = useTranslations("instructorDashboard.nelcScorecard");
+  const statusLabels = { passed: t("passed"), review: t("needsReview"), failed: t("missing") };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scorecard, setScorecard] = useState<{
@@ -69,7 +72,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
         if (!cancelled) setScorecard(data);
       })
       .catch((err) => {
-        if (!cancelled) setError(err?.message || "Failed to load compliance data");
+        if (!cancelled) setError(err?.message || t("loadError"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -88,12 +91,12 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
   if (error || !scorecard) {
     return (
       <div className="p-4 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-sm text-[#DC2626]">
-        {error || "Could not load NELC compliance data"}
+        {error || t("loadErrorFallback")}
       </div>
     );
   }
 
-  const overallCfg = STATUS_CONFIG[scorecard.overallStatus];
+  const overallCfg = STATUS_STYLES[scorecard.overallStatus];
   const OverallIcon = overallCfg.icon;
 
   const passedCount = scorecard.categories.filter((c) => c.status === "passed").length;
@@ -104,12 +107,12 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
       {/* Header — clickable to toggle */}
       <button
         onClick={() => setPanelOpen((v) => !v)}
-        className="w-full p-4 text-left hover:bg-[#F9FAFB] transition-colors"
+        className="w-full p-4 text-start hover:bg-[#F9FAFB] transition-colors"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-[#6366F1]" />
-            <h3 className="text-sm font-semibold text-[#1F2937]">NELC Compliance</h3>
+            <h3 className="text-sm font-semibold text-[#1F2937]">{t("title")}</h3>
           </div>
           <div className="flex items-center gap-2">
             <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${overallCfg.bg} ${overallCfg.text}`}>
@@ -127,8 +130,8 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
         {/* Progress bar */}
         <div className="mt-3">
           <div className="flex justify-between text-xs text-[#6B7280] mb-1">
-            <span>{passedCount}/{totalCount} categories passed</span>
-            <span className={`font-medium ${overallCfg.text}`}>{overallCfg.label}</span>
+            <span>{t("categoriesPassed", { passed: passedCount, total: totalCount })}</span>
+            <span className={`font-medium ${overallCfg.text}`}>{statusLabels[scorecard.overallStatus]}</span>
           </div>
           <div className="h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
             <div
@@ -148,7 +151,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
       {/* Categories — collapsible */}
       {panelOpen && <div className="divide-y divide-[#F3F4F6] border-t border-[#E5E7EB]">
         {scorecard.categories.map((cat) => {
-          const cfg = STATUS_CONFIG[cat.status];
+          const cfg = STATUS_STYLES[cat.status];
           const CatIcon = CATEGORY_ICONS[cat.category] || BookOpen;
           const StatusIcon = cfg.icon;
           const isExpanded = expandedCategory === cat.category;
@@ -158,14 +161,14 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
             <div key={cat.category}>
               <button
                 onClick={() => setExpandedCategory(isExpanded ? null : cat.category)}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] transition-colors text-start"
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${cfg.bg}`}>
                   <CatIcon className={`w-3.5 h-3.5 ${cfg.text}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#1F2937] truncate">{cat.label}</p>
-                  <p className="text-xs text-[#9CA3AF]">{passedChecks}/{cat.checks.length} checks</p>
+                  <p className="text-xs text-[#9CA3AF]">{t("checks", { passed: passedChecks, total: cat.checks.length })}</p>
                 </div>
                 <StatusIcon className={`w-4 h-4 flex-shrink-0 ${cfg.text}`} />
                 {isExpanded ? (
@@ -178,7 +181,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
               {isExpanded && (
                 <div className="px-4 pb-3 space-y-1.5">
                   {cat.checks.map((check, i) => {
-                    const checkCfg = STATUS_CONFIG[check.status];
+                    const checkCfg = STATUS_STYLES[check.status];
                     const CheckIcon = checkCfg.icon;
                     return (
                       <div

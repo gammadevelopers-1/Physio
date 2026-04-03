@@ -3312,6 +3312,30 @@
         "sat": "Sat"
       }
     },
+    "nelcScorecard": {
+      "title": "NELC Compliance",
+      "categoriesPassed": "{passed}/{total} categories passed",
+      "checks": "{passed}/{total} checks",
+      "passed": "Passed",
+      "needsReview": "Needs Review",
+      "missing": "Missing",
+      "loadError": "Failed to load compliance data",
+      "loadErrorFallback": "Could not load NELC compliance data"
+    },
+    "taPanel": {
+      "title": "Teaching Assistants",
+      "suggestTA": "Suggest TA",
+      "selectTA": "Select a Teaching Assistant",
+      "suggestionSent": "TA suggestion sent to managers for approval",
+      "suggestionFailed": "Failed to suggest TA",
+      "noTAs": "No teaching assistants assigned to this course yet.",
+      "statusActive": "Active",
+      "statusPending": "Pending Approval",
+      "statusRejected": "Rejected",
+      "enrolled": "enrolled",
+      "tasActive": "TA(s) active",
+      "nelcMet": "NELC requirement met"
+    },
     "analytics": {
       "title": "Video Retention Analytics",
       "loadError": "Failed to load analytics data",

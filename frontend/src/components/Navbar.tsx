@@ -17,7 +17,7 @@ import type { SiteSettings, NavigationLink } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { UserMenu } from "./UserMenu";
 import { useAuth } from "@/contexts";
-import { getAccessToken } from "@/lib/api";
+import { profileApi } from "@/lib/api";
 
 interface NavbarProps {
   siteSettings?: SiteSettings | null;
@@ -38,21 +38,11 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
     ? getStrapiMediaUrl(siteSettings.logo.url)
     : "/images/logo.png";
 
-  const switchLocale = () => {
+  const switchLocale = async () => {
     const newLocale = locale === "en" ? "ar" : "en";
     const pathWithoutLocale = pathname.replace(`/${locale}`, "");
-    // Persist language preference before navigating (keepalive survives page unload)
     if (isAuthenticated) {
-      const jwt = getAccessToken();
-      if (jwt) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-        fetch(`${apiUrl}/auth/profile`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
-          body: JSON.stringify({ language: newLocale }),
-          keepalive: true,
-        }).catch(() => {});
-      }
+      await profileApi.update({ language: newLocale }).catch(() => {});
     }
     router.push(`/${newLocale}${pathWithoutLocale}`);
   };

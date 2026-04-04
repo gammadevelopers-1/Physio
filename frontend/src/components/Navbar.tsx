@@ -41,6 +41,9 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
     const newLocale = locale === "en" ? "ar" : "en";
     const pathWithoutLocale = pathname.replace(`/${locale}`, "");
     router.push(`/${newLocale}${pathWithoutLocale}`);
+    if (isAuthenticated) {
+      import("@/lib/api").then(({ profileApi }) => profileApi.update({ language: newLocale }).catch(() => {}));
+    }
   };
 
   return (

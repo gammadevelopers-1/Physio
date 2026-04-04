@@ -40,10 +40,22 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
   const switchLocale = () => {
     const newLocale = locale === "en" ? "ar" : "en";
     const pathWithoutLocale = pathname.replace(`/${locale}`, "");
-    router.push(`/${newLocale}${pathWithoutLocale}`);
+    // Persist language preference before navigating (keepalive survives page unload)
     if (isAuthenticated) {
-      import("@/lib/api").then(({ profileApi }) => profileApi.update({ language: newLocale }).catch(() => {}));
+      import("@/lib/api").then(({ getAccessToken }) => {
+        const jwt = getAccessToken();
+        if (jwt) {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+          fetch(`${apiUrl}/auth/profile`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+            body: JSON.stringify({ language: newLocale }),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      });
     }
+    router.push(`/${newLocale}${pathWithoutLocale}`);
   };
 
   return (

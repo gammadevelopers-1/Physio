@@ -157,6 +157,39 @@ export class SlaMonitorService {
                 this.logger.warn(
                   `FRT breach on ticket ${ticket.id} — reassigned to ${newAssignee || 'supervisor'}`,
                 );
+
+                // Send FRT breach emails
+                try {
+                  // Email to breaching agent
+                  if (ticket.assigneeId) {
+                    const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
+                    if (agentInfo?.email) {
+                      await this.emailService.sendSlaFrtBreach(
+                        agentInfo.email,
+                        agentInfo.firstName || 'Agent',
+                        ticket.id,
+                        '',
+                        String(policy.frtMinutes),
+                      );
+                    }
+                  }
+                } catch { /* non-blocking */ }
+
+                // Send escalation email to supervisor
+                try {
+                  if (newAssignee) {
+                    const [supervisorInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, newAssignee));
+                    if (supervisorInfo?.email) {
+                      await this.emailService.sendTicketEscalation(
+                        supervisorInfo.email,
+                        supervisorInfo.firstName || 'Supervisor',
+                        ticket.id,
+                        '',
+                        'All agents missed FRT deadline',
+                      );
+                    }
+                  }
+                } catch { /* non-blocking */ }
               }
             }
 
@@ -231,6 +264,22 @@ export class SlaMonitorService {
                 this.logger.warn(
                   `TTR breach on ticket ${ticket.id} — agent keeps ticket, supervisor notified`,
                 );
+
+                // Send TTR breach email
+                try {
+                  if (ticket.assigneeId) {
+                    const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
+                    if (agentInfo?.email) {
+                      await this.emailService.sendSlaTtrBreach(
+                        agentInfo.email,
+                        agentInfo.firstName || 'Agent',
+                        ticket.id,
+                        '',
+                        String(policy.ttrMinutes),
+                      );
+                    }
+                  }
+                } catch { /* non-blocking */ }
               }
             }
           }
@@ -419,7 +468,7 @@ export class SlaMonitorService {
         .where(
           and(
             eq(tickets.status, TICKET_STATUS.ON_HOLD),
-            sql`LOWER(${tickets.onHoldReason}) LIKE '%student%'`,
+            sql`LOWER(${tickets.onHoldReason}) = 'waiting for student response'`,
             sql`${tickets.onHoldAt} IS NOT NULL AND ${tickets.onHoldAt} < ${cutoff}`,
           ),
         );

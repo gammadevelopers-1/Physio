@@ -4,6 +4,7 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
@@ -25,6 +26,10 @@ import {
   UpdateSlaPolicyDto,
   CreateTicketOnBehalfDto,
   CreateGuestTicketDto,
+  CreateMacroDto,
+  UpdateMacroDto,
+  CreateKbArticleDto,
+  UpdateKbArticleDto,
 } from './dto';
 
 @Controller('tickets')
@@ -136,6 +141,102 @@ export class SupportController {
     return this.supportService.addGuestReply(token, body.message.trim());
   }
 
+  // ─── SLA Breaches + Backlog ────────────────────────────
+
+  @Get('sla/breaches')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSlaBreaches() {
+    return this.supportService.getSlaBreaches();
+  }
+
+  @Get('sla/backlog')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSlaBacklog() {
+    return this.supportService.getSlaBacklog();
+  }
+
+  // ─── Create Support Agent (Supervisor Only) ────────────
+
+  @Post('agents')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createAgent(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    dto: {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      phone?: string;
+    },
+  ) {
+    // Only supervisors can create agents (not agents themselves)
+    if (
+      user.supportSubRole !== 'supervisor' &&
+      !user.roles.includes('ADMIN') &&
+      !user.roles.includes('SUPER_ADMIN')
+    ) {
+      throw new ForbiddenException('Only supervisors can create agents');
+    }
+    return this.supportService.createAgent(dto);
+  }
+
+  // ─── Admin Support KPIs ────────────────────────────────
+
+  @Get('admin/support-kpis')
+  @Roles('ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getAdminSupportKpis() {
+    return this.supportService.getAdminSupportKpis();
+  }
+
+  // ─── Reports API ───────────────────────────────────────
+
+  @Get('reports/volume')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getVolumeReport(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getVolumeReport(dateFrom, dateTo);
+  }
+
+  @Get('reports/issues')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getTopIssues(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getTopIssues(dateFrom, dateTo);
+  }
+
+  @Get('reports/sla-compliance')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSlaComplianceReport(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getSlaComplianceReport(dateFrom, dateTo);
+  }
+
+  @Get('reports/agent-performance')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getAgentPerformance(
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.getAgentPerformance(dateFrom, dateTo);
+  }
+
+  @Get('reports/export')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async exportReport(
+    @Query('type') type: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+  ) {
+    return this.supportService.exportReport(type, dateFrom, dateTo);
+  }
+
   // ─── Survey Summaries (Supervisor/Admin only) ──────────
 
   @Get('csat/summary')
@@ -148,6 +249,89 @@ export class SupportController {
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   async getNpsSummary() {
     return this.supportService.getNpsSummary();
+  }
+
+  // ─── Macros CRUD (Support/Admin only) ───────────────────
+
+  @Get('macros')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getMacros() {
+    return this.supportService.getMacros();
+  }
+
+  @Get('macros/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getMacro(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.supportService.getMacro(id);
+  }
+
+  @Post('macros')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createMacro(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateMacroDto,
+  ) {
+    return this.supportService.createMacro(user.id, dto);
+  }
+
+  @Patch('macros/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateMacro(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateMacroDto,
+  ) {
+    return this.supportService.updateMacro(id, dto);
+  }
+
+  @Delete('macros/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async deleteMacro(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.supportService.deleteMacro(id);
+  }
+
+  // ─── Knowledge Base (Public read, Admin write) ────────
+
+  @Public()
+  @Get('kb/articles')
+  async getKbArticles(
+    @Query('category') category?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.supportService.getKbArticles({
+      category,
+      search,
+      publishedOnly: true,
+    });
+  }
+
+  @Public()
+  @Get('kb/articles/:id')
+  async getKbArticle(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.supportService.getKbArticle(id, true);
+  }
+
+  @Post('kb/articles')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createKbArticle(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateKbArticleDto,
+  ) {
+    return this.supportService.createKbArticle(user.id, dto);
+  }
+
+  @Patch('kb/articles/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateKbArticle(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateKbArticleDto,
+  ) {
+    return this.supportService.updateKbArticle(id, dto);
+  }
+
+  @Delete('kb/articles/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async deleteKbArticle(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.supportService.deleteKbArticle(id);
   }
 
   // ─── CSAT Survey (Public — no auth required) ──────────
@@ -254,6 +438,20 @@ export class SupportController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.supportService.closeTicket(id);
+  }
+
+  // ─── Apply Macro to Ticket ─────────────────────────────
+
+  @Post(':id/apply-macro')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async applyMacro(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() body: { macroId: string },
+  ) {
+    if (!body.macroId) {
+      throw new ForbiddenException('macroId is required');
+    }
+    return this.supportService.applyMacro(body.macroId, id);
   }
 
   // ─── SLA Policy Endpoints ──────────────────────────────

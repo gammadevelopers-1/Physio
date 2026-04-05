@@ -2540,6 +2540,14 @@ export const supportApi = {
       }[]
     >('/tickets/agents'),
 
+  createAgent: (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+  }) => api.post<any>('/tickets/agents', data),
+
   getSlaPolicies: () =>
     api.get<
       {
@@ -2634,6 +2642,14 @@ export const supportApi = {
       distribution: Record<string, number>;
     }>('/tickets/csat/summary'),
 
+  getSlaBreaches: () =>
+    api.get<any[]>('/tickets/sla/breaches'),
+
+  getSlaBacklog: () =>
+    api.get<{ buckets: { label: string; count: number }[]; total: number }>(
+      '/tickets/sla/backlog',
+    ),
+
   getNpsSummary: () =>
     api.get<{
       totalSent: number;
@@ -2644,6 +2660,101 @@ export const supportApi = {
       detractors: number;
       npsScore: number;
     }>('/tickets/nps/summary'),
+
+  // Reports API
+  getVolumeReport: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any[]>(`/tickets/reports/volume${qs ? `?${qs}` : ''}`);
+  },
+
+  getTopIssues: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any[]>(`/tickets/reports/issues${qs ? `?${qs}` : ''}`);
+  },
+
+  getSlaComplianceReport: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any>(`/tickets/reports/sla-compliance${qs ? `?${qs}` : ''}`);
+  },
+
+  getAgentPerformance: (params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams();
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    const qs = sp.toString();
+    return api.get<any[]>(`/tickets/reports/agent-performance${qs ? `?${qs}` : ''}`);
+  },
+
+  exportReport: (type: string, params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams({ type });
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    return api.get<{ csv: string; filename: string }>(`/tickets/reports/export?${sp.toString()}`);
+  },
+
+  // Macros CRUD
+  getMacros: () => api.get<any[]>('/tickets/macros'),
+
+  getMacro: (id: string) => api.get<any>(`/tickets/macros/${id}`),
+
+  createMacro: (data: {
+    title: string;
+    bodyTemplate: string;
+    variables?: string[];
+    kbArticleUrls?: string[];
+    escalationPathId?: string;
+  }) => api.post<any>('/tickets/macros', data),
+
+  updateMacro: (id: string, data: any) =>
+    api.patch<any>(`/tickets/macros/${id}`, data),
+
+  deleteMacro: (id: string) =>
+    api.delete<any>(`/tickets/macros/${id}`),
+
+  applyMacro: (ticketId: string, macroId: string) =>
+    api.post<{ resolvedBody: string; macroTitle: string }>(
+      `/tickets/${ticketId}/apply-macro`,
+      { macroId },
+    ),
+
+  // Knowledge Base CRUD
+  getKbArticles: (params?: { category?: string; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.set('category', params.category);
+    if (params?.search) searchParams.set('search', params.search);
+    const qs = searchParams.toString();
+    return api.get<any[]>(
+      `/tickets/kb/articles${qs ? `?${qs}` : ''}`,
+      { skipAuth: true },
+    );
+  },
+
+  getKbArticle: (id: string) =>
+    api.get<any>(`/tickets/kb/articles/${id}`, { skipAuth: true }),
+
+  createKbArticle: (data: {
+    titleEn?: string;
+    titleAr?: string;
+    bodyEn?: string;
+    bodyAr?: string;
+    category: string;
+    published?: boolean;
+  }) => api.post<any>('/tickets/kb/articles', data),
+
+  updateKbArticle: (id: string, data: any) =>
+    api.patch<any>(`/tickets/kb/articles/${id}`, data),
+
+  deleteKbArticle: (id: string) =>
+    api.delete<any>(`/tickets/kb/articles/${id}`),
 };
 
 export default api;

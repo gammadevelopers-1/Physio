@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
+import * as argon2 from 'argon2';
 import { eq, and, or, desc, asc, sql, ilike, count, avg, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
@@ -19,6 +20,8 @@ import {
   csatSurveys,
   npsSurveys,
   supportConfig,
+  supportMacros,
+  kbArticles,
   enrollments,
   TICKET_STATUS,
   TICKET_PRIORITY,
@@ -35,6 +38,10 @@ import {
   ListTicketsQueryDto,
   CreateTicketOnBehalfDto,
   CreateGuestTicketDto,
+  CreateMacroDto,
+  UpdateMacroDto,
+  CreateKbArticleDto,
+  UpdateKbArticleDto,
 } from './dto';
 import {
   calculateBusinessMinutesElapsed,
@@ -129,6 +136,36 @@ export class SupportService {
       }
     } catch {
       // Notifications are non-blocking (P-07)
+    }
+
+    // Send email to student
+    try {
+      const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, userId));
+      if (studentInfo?.email) {
+        await this.emailService.sendTicketCreatedLearner(
+          studentInfo.email,
+          studentInfo.firstName || 'Student',
+          ticket.id,
+          expectedResponseTime || 'within business hours',
+        );
+      }
+    } catch { /* non-blocking */ }
+
+    // Send email to agent
+    if (assigneeId) {
+      try {
+        const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, assigneeId));
+        if (agentInfo?.email) {
+          await this.emailService.sendTicketAssignedAgent(
+            agentInfo.email,
+            agentInfo.firstName || 'Agent',
+            ticket.id,
+            dto.subject,
+            autoPriority,
+            expectedResponseTime || '--',
+          );
+        }
+      } catch { /* non-blocking */ }
     }
 
     return {
@@ -393,6 +430,26 @@ export class SupportService {
     const updateData: Record<string, any> = { updatedAt: new Date() };
 
     if (dto.status) {
+      // M1: Status transition validation
+      const validTransitions: Record<string, string[]> = {
+        [TICKET_STATUS.NEW]: [TICKET_STATUS.IN_PROGRESS],
+        [TICKET_STATUS.IN_PROGRESS]: [
+          TICKET_STATUS.ON_HOLD,
+          TICKET_STATUS.RESOLVED,
+          TICKET_STATUS.CLOSED,
+        ],
+        [TICKET_STATUS.ON_HOLD]: [TICKET_STATUS.IN_PROGRESS],
+        [TICKET_STATUS.RESOLVED]: [TICKET_STATUS.CLOSED],
+        [TICKET_STATUS.CLOSED]: [],
+      };
+
+      const allowed = validTransitions[existing.status] || [];
+      if (!allowed.includes(dto.status)) {
+        throw new BadRequestException(
+          `Cannot transition from ${existing.status} to ${dto.status}`,
+        );
+      }
+
       updateData.status = dto.status;
 
       // Transitioning TO on_hold (BH-05)
@@ -581,6 +638,35 @@ export class SupportService {
       // Non-blocking (P-07)
     }
 
+    // Send email notifications
+    try {
+      if (isSupportOrAdmin && !isInternal) {
+        // Agent replied → email student
+        const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.studentId));
+        if (studentInfo?.email) {
+          await this.emailService.sendTicketReplyNotification(
+            studentInfo.email,
+            studentInfo.firstName || 'Student',
+            user.firstName || 'Support Agent',
+            ticketId,
+            dto.message.substring(0, 200),
+          );
+        }
+      } else if (!isSupportOrAdmin && ticket.assigneeId) {
+        // Student replied → email agent
+        const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
+        if (agentInfo?.email) {
+          await this.emailService.sendTicketReplyNotification(
+            agentInfo.email,
+            agentInfo.firstName || 'Agent',
+            user.firstName || 'Student',
+            ticketId,
+            dto.message.substring(0, 200),
+          );
+        }
+      }
+    } catch { /* non-blocking */ }
+
     return comment;
   }
 
@@ -593,21 +679,49 @@ export class SupportService {
         studentId: tickets.studentId,
         courseId: tickets.courseId,
         subject: tickets.subject,
+        status: tickets.status,
         slaBreachedFrt: tickets.slaBreachedFrt,
         slaBreachedTtr: tickets.slaBreachedTtr,
+        onHoldAt: tickets.onHoldAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
       })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
 
     if (!ticket) throw new NotFoundException('Ticket not found');
 
+    // H1: Prevent double-resolve and invalid transitions
+    if (
+      ticket.status === TICKET_STATUS.RESOLVED ||
+      ticket.status === TICKET_STATUS.CLOSED
+    ) {
+      throw new BadRequestException(
+        `Ticket is already ${ticket.status}. Cannot resolve again.`,
+      );
+    }
+
+    // M2: If resolving from on_hold, accumulate hold time first
+    const updateData: Record<string, any> = {
+      status: TICKET_STATUS.RESOLVED,
+      resolvedAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    if (ticket.status === TICKET_STATUS.ON_HOLD && ticket.onHoldAt) {
+      const holdDuration = calculateBusinessMinutesElapsed(
+        ticket.onHoldAt,
+        new Date(),
+      );
+      updateData.onHoldTotalMinutes =
+        (ticket.onHoldTotalMinutes || 0) + holdDuration;
+      updateData.onHoldResumedAt = new Date();
+      updateData.onHoldAt = null;
+      updateData.onHoldReason = null;
+    }
+
     const [updated] = await db
       .update(tickets)
-      .set({
-        status: TICKET_STATUS.RESOLVED,
-        resolvedAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(tickets.id, ticketId))
       .returning();
 
@@ -649,6 +763,18 @@ export class SupportService {
     } catch {
       // Non-blocking
     }
+
+    // Send resolution email
+    try {
+      const [studentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.studentId));
+      if (studentInfo?.email) {
+        await this.emailService.sendTicketResolved(
+          studentInfo.email,
+          studentInfo.firstName || 'Student',
+          ticketId,
+        );
+      }
+    } catch { /* non-blocking */ }
 
     return updated;
   }
@@ -832,6 +958,7 @@ export class SupportService {
       .where(eq(supportConfig.key, 'round_robin_pointer'));
 
     let pointer = config ? Number(config.value) : 0;
+    if (isNaN(pointer)) pointer = 0; // H2: Guard against corrupted pointer
 
     // Try each agent starting from pointer, skip those with active FRT breach (RR-03)
     for (let i = 0; i < agents.length; i++) {
@@ -856,15 +983,19 @@ export class SupportService {
         .limit(1);
 
       if (!breachedTicket) {
-        // Agent is eligible — advance pointer atomically (RR-08)
+        // Agent is eligible — advance pointer atomically (RR-08, C3: UPSERT)
         const newPointer = (pointer + i + 1) % agents.length;
         await db
-          .update(supportConfig)
-          .set({
+          .insert(supportConfig)
+          .values({
+            key: 'round_robin_pointer',
             value: String(newPointer),
             updatedAt: new Date(),
           })
-          .where(eq(supportConfig.key, 'round_robin_pointer'));
+          .onConflictDoUpdate({
+            target: supportConfig.key,
+            set: { value: String(newPointer), updatedAt: new Date() },
+          });
 
         return agent.userId;
       }
@@ -874,9 +1005,16 @@ export class SupportService {
     const fallbackIndex = pointer % agents.length;
     const newPointer = (pointer + 1) % agents.length;
     await db
-      .update(supportConfig)
-      .set({ value: String(newPointer), updatedAt: new Date() })
-      .where(eq(supportConfig.key, 'round_robin_pointer'));
+      .insert(supportConfig)
+      .values({
+        key: 'round_robin_pointer',
+        value: String(newPointer),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: supportConfig.key,
+        set: { value: String(newPointer), updatedAt: new Date() },
+      });
 
     return agents[fallbackIndex].userId;
   }
@@ -1235,6 +1373,19 @@ export class SupportService {
   // ─── Guest Ticket (Login Issues Only) ──────────────────
 
   async createGuestTicket(dto: CreateGuestTicketDto) {
+    // H6: Verify sentinel guest user exists
+    const [guestUser] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, GUEST_USER_ID))
+      .limit(1);
+
+    if (!guestUser) {
+      throw new BadRequestException(
+        'Guest ticket system not configured. Please contact support via email.',
+      );
+    }
+
     const autoPriority =
       CATEGORY_PRIORITY_MAP[dto.category] || TICKET_PRIORITY.HIGH;
     const assigneeId = await this.findNextAgent();
@@ -1518,6 +1669,299 @@ export class SupportService {
     return { courseId, openCount: result?.count ?? 0 };
   }
 
+  // ─── SLA Breaches + Backlog ────────────────────────────
+
+  async getSlaBreaches() {
+    return db
+      .select({
+        id: tickets.id,
+        subject: tickets.subject,
+        category: tickets.category,
+        priority: tickets.priority,
+        status: tickets.status,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+        createdAt: tickets.createdAt,
+        assigneeFirstName: users.firstName,
+        assigneeLastName: users.lastName,
+      })
+      .from(tickets)
+      .leftJoin(users, eq(tickets.assigneeId, users.id))
+      .where(
+        and(
+          or(
+            eq(tickets.slaBreachedFrt, true),
+            eq(tickets.slaBreachedTtr, true),
+          ),
+          inArray(tickets.status, [
+            TICKET_STATUS.NEW,
+            TICKET_STATUS.IN_PROGRESS,
+            TICKET_STATUS.ON_HOLD,
+          ]),
+        ),
+      )
+      .orderBy(desc(tickets.createdAt));
+  }
+
+  async getSlaBacklog() {
+    const openTickets = await db
+      .select({
+        id: tickets.id,
+        createdAt: tickets.createdAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
+      })
+      .from(tickets)
+      .where(
+        inArray(tickets.status, [
+          TICKET_STATUS.NEW,
+          TICKET_STATUS.IN_PROGRESS,
+          TICKET_STATUS.ON_HOLD,
+        ]),
+      );
+
+    const now = new Date();
+    const buckets = [
+      { label: '0-1h', min: 0, max: 60, count: 0 },
+      { label: '1-4h', min: 60, max: 240, count: 0 },
+      { label: '4-24h', min: 240, max: 1440, count: 0 },
+      { label: '24h+', min: 1440, max: Infinity, count: 0 },
+    ];
+
+    for (const ticket of openTickets) {
+      const elapsed = calculateBusinessMinutesElapsed(ticket.createdAt, now);
+      const effective = elapsed - (ticket.onHoldTotalMinutes || 0);
+      for (const bucket of buckets) {
+        if (effective >= bucket.min && effective < bucket.max) {
+          bucket.count++;
+          break;
+        }
+      }
+    }
+
+    return {
+      buckets: buckets.map((b) => ({ label: b.label, count: b.count })),
+      total: openTickets.length,
+    };
+  }
+
+  // ─── Reports API ──────────────────────────────────────
+
+  async getVolumeReport(dateFrom?: string, dateTo?: string) {
+    const conditions: any[] = [];
+    if (dateFrom) conditions.push(sql`${tickets.createdAt} >= ${new Date(dateFrom)}`);
+    if (dateTo) conditions.push(sql`${tickets.createdAt} <= ${new Date(dateTo)}`);
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const result = await db
+      .select({
+        category: tickets.category,
+        status: tickets.status,
+        priority: tickets.priority,
+        count: count(),
+      })
+      .from(tickets)
+      .where(where)
+      .groupBy(tickets.category, tickets.status, tickets.priority);
+
+    return result;
+  }
+
+  async getTopIssues(dateFrom?: string, dateTo?: string) {
+    const conditions: any[] = [];
+    if (dateFrom) conditions.push(sql`${tickets.createdAt} >= ${new Date(dateFrom)}`);
+    if (dateTo) conditions.push(sql`${tickets.createdAt} <= ${new Date(dateTo)}`);
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const result = await db
+      .select({
+        category: tickets.category,
+        count: count(),
+      })
+      .from(tickets)
+      .where(where)
+      .groupBy(tickets.category)
+      .orderBy(desc(count()));
+
+    return result;
+  }
+
+  async getSlaComplianceReport(dateFrom?: string, dateTo?: string) {
+    const conditions: any[] = [
+      sql`${tickets.resolvedAt} IS NOT NULL`,
+    ];
+    if (dateFrom) conditions.push(sql`${tickets.resolvedAt} >= ${new Date(dateFrom)}`);
+    if (dateTo) conditions.push(sql`${tickets.resolvedAt} <= ${new Date(dateTo)}`);
+
+    const resolved = await db
+      .select({
+        id: tickets.id,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+      })
+      .from(tickets)
+      .where(and(...conditions));
+
+    const total = resolved.length;
+    const frtMet = resolved.filter((t) => !t.slaBreachedFrt).length;
+    const ttrMet = resolved.filter((t) => !t.slaBreachedTtr).length;
+    const bothMet = resolved.filter(
+      (t) => !t.slaBreachedFrt && !t.slaBreachedTtr,
+    ).length;
+
+    return {
+      totalResolved: total,
+      resolvedWithinSla: bothMet,
+      complianceRate: total > 0 ? Math.round((bothMet / total) * 100) : 0,
+      frtCompliance: total > 0 ? Math.round((frtMet / total) * 100) : 0,
+      ttrCompliance: total > 0 ? Math.round((ttrMet / total) * 100) : 0,
+    };
+  }
+
+  async getAgentPerformance(dateFrom?: string, dateTo?: string) {
+    const agents = await this.getAgents();
+
+    const results = [];
+    for (const agent of agents) {
+      const conditions: any[] = [eq(tickets.assigneeId, agent.userId)];
+      if (dateFrom) conditions.push(sql`${tickets.createdAt} >= ${new Date(dateFrom)}`);
+      if (dateTo) conditions.push(sql`${tickets.createdAt} <= ${new Date(dateTo)}`);
+
+      const agentTickets = await db
+        .select({
+          id: tickets.id,
+          firstResponseAt: tickets.firstResponseAt,
+          createdAt: tickets.createdAt,
+          resolvedAt: tickets.resolvedAt,
+          slaBreachedFrt: tickets.slaBreachedFrt,
+          slaBreachedTtr: tickets.slaBreachedTtr,
+        })
+        .from(tickets)
+        .where(and(...conditions));
+
+      const resolved = agentTickets.filter((t) => t.resolvedAt);
+      const frtBreaches = agentTickets.filter((t) => t.slaBreachedFrt).length;
+      const ttrBreaches = agentTickets.filter((t) => t.slaBreachedTtr).length;
+
+      // Avg FRT (minutes)
+      const frtTimes = agentTickets
+        .filter((t) => t.firstResponseAt)
+        .map((t) => {
+          const elapsed =
+            (new Date(t.firstResponseAt!).getTime() -
+              new Date(t.createdAt).getTime()) /
+            60000;
+          return elapsed;
+        });
+      const avgFrt =
+        frtTimes.length > 0
+          ? Math.round(
+              frtTimes.reduce((a, b) => a + b, 0) / frtTimes.length,
+            )
+          : null;
+
+      results.push({
+        userId: agent.userId,
+        name: [agent.firstName, agent.lastName].filter(Boolean).join(' '),
+        totalTickets: agentTickets.length,
+        resolvedTickets: resolved.length,
+        avgFrtMinutes: avgFrt,
+        frtBreaches,
+        ttrBreaches,
+      });
+    }
+
+    return results;
+  }
+
+  async exportReport(
+    type: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ) {
+    let data: any[];
+    let headers: string[];
+
+    switch (type) {
+      case 'volume': {
+        data = await this.getVolumeReport(dateFrom, dateTo);
+        headers = ['Category', 'Status', 'Priority', 'Count'];
+        break;
+      }
+      case 'issues': {
+        data = await this.getTopIssues(dateFrom, dateTo);
+        headers = ['Category', 'Count'];
+        break;
+      }
+      case 'sla': {
+        const sla = await this.getSlaComplianceReport(dateFrom, dateTo);
+        data = [sla];
+        headers = [
+          'Total Resolved',
+          'Within SLA',
+          'Compliance %',
+          'FRT Compliance %',
+          'TTR Compliance %',
+        ];
+        break;
+      }
+      case 'agents': {
+        data = await this.getAgentPerformance(dateFrom, dateTo);
+        headers = [
+          'Agent',
+          'Total Tickets',
+          'Resolved',
+          'Avg FRT (min)',
+          'FRT Breaches',
+          'TTR Breaches',
+        ];
+        break;
+      }
+      default:
+        throw new BadRequestException('Invalid report type');
+    }
+
+    // Generate CSV
+    const csvRows = [headers.join(',')];
+    for (const row of data) {
+      const values = headers.map((h) => {
+        const key = h
+          .toLowerCase()
+          .replace(/ /g, '_')
+          .replace(/[^a-z_]/g, '');
+        return JSON.stringify(
+          row[key] ?? row[Object.keys(row)[headers.indexOf(h)]] ?? '',
+        );
+      });
+      csvRows.push(values.join(','));
+    }
+
+    return {
+      csv: csvRows.join('\n'),
+      filename: `support_report_${type}_${new Date().toISOString().split('T')[0]}.csv`,
+    };
+  }
+
+  // ─── Admin Support KPIs ────────────────────────────────
+
+  async getAdminSupportKpis() {
+    const kpis = await this.getKPIs();
+    const csatSummary = await this.getCsatSummary();
+    const npsSummary = await this.getNpsSummary();
+
+    return {
+      avgFrtMinutes: kpis.avgFrtMinutes,
+      avgTtrMinutes: kpis.avgTtrMinutes,
+      openTickets: kpis.openTickets,
+      slaBreaches: kpis.slaBreaches,
+      csatAvgScore: csatSummary.avgScore,
+      npsScore: npsSummary.npsScore,
+      csatResponseRate: csatSummary.responseRate,
+      statusBreakdown: kpis.statusBreakdown,
+    };
+  }
+
   // ─── SLA Policy CRUD ──────────────────────────────────
 
   async getSlaPolicies() {
@@ -1543,5 +1987,348 @@ export class SupportService {
 
     if (!updated) throw new NotFoundException(`SLA policy for ${priority} not found`);
     return updated;
+  }
+
+  // ─── Create Support Agent (Supervisor Only) ────────────
+
+  async createAgent(dto: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+  }) {
+    // Check if user already exists
+    const [existing] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, dto.email.toLowerCase()))
+      .limit(1);
+
+    if (existing) {
+      throw new BadRequestException('A user with this email already exists');
+    }
+
+    // Hash password
+    const passwordHash = await argon2.hash(dto.password);
+
+    // Get the SUPPORT role ID
+    const [supportRole] = await db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, ROLE_NAMES.SUPPORT));
+
+    if (!supportRole) {
+      throw new BadRequestException('SUPPORT role not found in system');
+    }
+
+    // Create user
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        email: dto.email.toLowerCase(),
+        passwordHash,
+        firstName: dto.firstName,
+        lastName: dto.lastName,
+        phone: dto.phone || null,
+        activeRole: ROLE_NAMES.SUPPORT,
+        isVerified: true,
+        isActive: true,
+      })
+      .returning({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      });
+
+    // Assign SUPPORT role with 'agent' sub-role
+    await db.insert(userRoles).values({
+      userId: newUser.id,
+      roleId: supportRole.id,
+      supportSubRole: SUPPORT_SUB_ROLES.AGENT,
+    });
+
+    return {
+      ...newUser,
+      role: ROLE_NAMES.SUPPORT,
+      supportSubRole: SUPPORT_SUB_ROLES.AGENT,
+    };
+  }
+
+  // ─── Macros CRUD ──────────────────────────────────────
+
+  async getMacros() {
+    return db
+      .select({
+        id: supportMacros.id,
+        title: supportMacros.title,
+        bodyTemplate: supportMacros.bodyTemplate,
+        variables: supportMacros.variables,
+        kbArticleUrls: supportMacros.kbArticleUrls,
+        escalationPathId: supportMacros.escalationPathId,
+        isActive: supportMacros.isActive,
+        createdAt: supportMacros.createdAt,
+        creatorFirstName: users.firstName,
+        creatorLastName: users.lastName,
+      })
+      .from(supportMacros)
+      .leftJoin(users, eq(supportMacros.createdBy, users.id))
+      .where(eq(supportMacros.isActive, true))
+      .orderBy(desc(supportMacros.createdAt));
+  }
+
+  async getMacro(id: string) {
+    const [macro] = await db
+      .select()
+      .from(supportMacros)
+      .where(and(eq(supportMacros.id, id), eq(supportMacros.isActive, true)));
+    if (!macro) throw new NotFoundException('Macro not found');
+    return macro;
+  }
+
+  async createMacro(userId: string, dto: CreateMacroDto) {
+    const [macro] = await db
+      .insert(supportMacros)
+      .values({
+        title: dto.title,
+        bodyTemplate: dto.bodyTemplate,
+        variables: dto.variables || null,
+        kbArticleUrls: dto.kbArticleUrls || null,
+        escalationPathId: dto.escalationPathId || null,
+        createdBy: userId,
+      })
+      .returning();
+    return macro;
+  }
+
+  async updateMacro(id: string, dto: UpdateMacroDto) {
+    const [existing] = await db
+      .select({ id: supportMacros.id })
+      .from(supportMacros)
+      .where(eq(supportMacros.id, id));
+    if (!existing) throw new NotFoundException('Macro not found');
+
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (dto.title !== undefined) updateData.title = dto.title;
+    if (dto.bodyTemplate !== undefined) updateData.bodyTemplate = dto.bodyTemplate;
+    if (dto.variables !== undefined) updateData.variables = dto.variables;
+    if (dto.kbArticleUrls !== undefined) updateData.kbArticleUrls = dto.kbArticleUrls;
+    if (dto.escalationPathId !== undefined) updateData.escalationPathId = dto.escalationPathId;
+    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+
+    const [updated] = await db
+      .update(supportMacros)
+      .set(updateData)
+      .where(eq(supportMacros.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteMacro(id: string) {
+    const [existing] = await db
+      .select({ id: supportMacros.id })
+      .from(supportMacros)
+      .where(eq(supportMacros.id, id));
+    if (!existing) throw new NotFoundException('Macro not found');
+
+    await db
+      .update(supportMacros)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(supportMacros.id, id));
+    return { success: true };
+  }
+
+  async applyMacro(macroId: string, ticketId: string) {
+    // Fetch macro (404 if deleted/inactive)
+    const [macro] = await db
+      .select()
+      .from(supportMacros)
+      .where(and(eq(supportMacros.id, macroId), eq(supportMacros.isActive, true)));
+    if (!macro) throw new NotFoundException('Macro not found or deleted');
+
+    // Fetch ticket with student + course + agent info
+    const [ticket] = await db
+      .select({
+        id: tickets.id,
+        studentId: tickets.studentId,
+        courseId: tickets.courseId,
+        assigneeId: tickets.assigneeId,
+        guestName: tickets.guestName,
+        studentFirstName: users.firstName,
+        studentLastName: users.lastName,
+      })
+      .from(tickets)
+      .leftJoin(users, eq(tickets.studentId, users.id))
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // Get course name if courseId exists
+    let courseName = '';
+    if (ticket.courseId) {
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, ticket.courseId));
+      courseName = course?.title || '';
+    }
+
+    // Get agent name if assigned
+    let agentName = '';
+    if (ticket.assigneeId) {
+      const [agent] = await db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, ticket.assigneeId));
+      agentName = [agent?.firstName, agent?.lastName].filter(Boolean).join(' ');
+    }
+
+    // Determine learner name (guest vs registered)
+    const learnerName = ticket.studentId === GUEST_USER_ID
+      ? (ticket.guestName || '')
+      : [ticket.studentFirstName, ticket.studentLastName].filter(Boolean).join(' ');
+
+    // Variable resolution
+    let resolvedBody = macro.bodyTemplate;
+    resolvedBody = resolvedBody.replace(/\{\{learner_name\}\}/g, learnerName);
+    resolvedBody = resolvedBody.replace(/\{\{course_name\}\}/g, courseName);
+    resolvedBody = resolvedBody.replace(/\{\{ticket_id\}\}/g, ticketId.substring(0, 8));
+    resolvedBody = resolvedBody.replace(/\{\{agent_name\}\}/g, agentName);
+
+    // Replace any remaining unresolved {{...}} with empty string
+    resolvedBody = resolvedBody.replace(/\{\{[^}]*\}\}/g, '');
+
+    // Append KB article URLs if any
+    const urls = macro.kbArticleUrls as string[] | null;
+    if (urls && urls.length > 0) {
+      resolvedBody += '\n\n---\nRelated articles:';
+      for (const url of urls) {
+        resolvedBody += `\n- ${url}`;
+      }
+    }
+
+    return { resolvedBody, macroTitle: macro.title };
+  }
+
+  // ─── Knowledge Base CRUD ──────────────────────────────
+
+  async getKbArticles(filters?: {
+    category?: string;
+    search?: string;
+    publishedOnly?: boolean;
+  }) {
+    const conditions: any[] = [];
+
+    if (filters?.publishedOnly) {
+      conditions.push(eq(kbArticles.published, true));
+    }
+    if (filters?.category) {
+      conditions.push(eq(kbArticles.category, filters.category));
+    }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(kbArticles.titleEn, `%${filters.search}%`),
+          ilike(kbArticles.titleAr, `%${filters.search}%`),
+          ilike(kbArticles.bodyEn, `%${filters.search}%`),
+        ),
+      );
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+    return db
+      .select({
+        id: kbArticles.id,
+        titleAr: kbArticles.titleAr,
+        titleEn: kbArticles.titleEn,
+        bodyAr: kbArticles.bodyAr,
+        bodyEn: kbArticles.bodyEn,
+        category: kbArticles.category,
+        published: kbArticles.published,
+        viewCount: kbArticles.viewCount,
+        createdAt: kbArticles.createdAt,
+        authorFirstName: users.firstName,
+        authorLastName: users.lastName,
+      })
+      .from(kbArticles)
+      .leftJoin(users, eq(kbArticles.authorId, users.id))
+      .where(where)
+      .orderBy(desc(kbArticles.createdAt));
+  }
+
+  async getKbArticle(id: string, incrementView: boolean = false) {
+    if (incrementView) {
+      await db
+        .update(kbArticles)
+        .set({ viewCount: sql`${kbArticles.viewCount} + 1` })
+        .where(eq(kbArticles.id, id));
+    }
+
+    const [article] = await db
+      .select()
+      .from(kbArticles)
+      .where(eq(kbArticles.id, id));
+
+    if (!article) throw new NotFoundException('Article not found');
+    return article;
+  }
+
+  async createKbArticle(userId: string, dto: CreateKbArticleDto) {
+    // M9: Require at least one title
+    if (!dto.titleEn && !dto.titleAr) {
+      throw new BadRequestException(
+        'At least one title (English or Arabic) is required',
+      );
+    }
+
+    const [article] = await db
+      .insert(kbArticles)
+      .values({
+        titleEn: dto.titleEn || null,
+        titleAr: dto.titleAr || null,
+        bodyEn: dto.bodyEn || null,
+        bodyAr: dto.bodyAr || null,
+        category: dto.category,
+        published: dto.published ?? false,
+        authorId: userId,
+      })
+      .returning();
+    return article;
+  }
+
+  async updateKbArticle(id: string, dto: UpdateKbArticleDto) {
+    const [existing] = await db
+      .select({ id: kbArticles.id })
+      .from(kbArticles)
+      .where(eq(kbArticles.id, id));
+    if (!existing) throw new NotFoundException('Article not found');
+
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (dto.titleEn !== undefined) updateData.titleEn = dto.titleEn;
+    if (dto.titleAr !== undefined) updateData.titleAr = dto.titleAr;
+    if (dto.bodyEn !== undefined) updateData.bodyEn = dto.bodyEn;
+    if (dto.bodyAr !== undefined) updateData.bodyAr = dto.bodyAr;
+    if (dto.category !== undefined) updateData.category = dto.category;
+    if (dto.published !== undefined) updateData.published = dto.published;
+
+    const [updated] = await db
+      .update(kbArticles)
+      .set(updateData)
+      .where(eq(kbArticles.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteKbArticle(id: string) {
+    const [existing] = await db
+      .select({ id: kbArticles.id })
+      .from(kbArticles)
+      .where(eq(kbArticles.id, id));
+    if (!existing) throw new NotFoundException('Article not found');
+
+    await db.delete(kbArticles).where(eq(kbArticles.id, id));
+    return { success: true };
   }
 }

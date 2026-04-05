@@ -5,3 +5,7 @@ export { ListTicketsQueryDto } from './list-tickets-query.dto';
 export { UpdateSlaPolicyDto } from './update-sla-policy.dto';
 export { CreateTicketOnBehalfDto } from './create-ticket-on-behalf.dto';
 export { CreateGuestTicketDto } from './create-guest-ticket.dto';
+export { CreateMacroDto } from './create-macro.dto';
+export { UpdateMacroDto } from './update-macro.dto';
+export { CreateKbArticleDto } from './create-kb-article.dto';
+export { UpdateKbArticleDto } from './update-kb-article.dto';

@@ -167,6 +167,38 @@ const SupportSettingsContent = () => {
     }
   };
 
+  // Macros state
+  const [macrosList, setMacrosList] = useState<any[]>([]);
+  const [macrosLoading, setMacrosLoading] = useState(false);
+  const [showMacroForm, setShowMacroForm] = useState(false);
+  const [editingMacro, setEditingMacro] = useState<any>(null);
+  const [macroForm, setMacroForm] = useState({ title: '', bodyTemplate: '', kbArticleUrls: '' });
+  const [macroSaving, setMacroSaving] = useState(false);
+
+  const handleSaveMacro = async () => {
+    if (!macroForm.title.trim() || !macroForm.bodyTemplate.trim()) { toast.error('Title and body are required'); return; }
+    setMacroSaving(true);
+    try {
+      const data = {
+        title: macroForm.title.trim(),
+        bodyTemplate: macroForm.bodyTemplate.trim(),
+        kbArticleUrls: macroForm.kbArticleUrls ? macroForm.kbArticleUrls.split('\n').filter(Boolean) : [],
+      };
+      if (editingMacro) {
+        await supportApi.updateMacro(editingMacro.id, data);
+        toast.success('Macro updated');
+      } else {
+        await supportApi.createMacro(data);
+        toast.success('Macro created');
+      }
+      setShowMacroForm(false);
+      // Refresh list
+      const refreshed = await supportApi.getMacros();
+      setMacrosList(refreshed || []);
+    } catch { toast.error('Failed to save macro'); }
+    finally { setMacroSaving(false); }
+  };
+
   // SLA policy states
   const [slaPolicies, setSlaPolicies] = useState<any[]>([]);
   const [slaLoading, setSlaLoading] = useState(false);
@@ -179,6 +211,13 @@ const SupportSettingsContent = () => {
       .then(data => setSlaPolicies(data))
       .catch(() => {})
       .finally(() => setSlaLoading(false));
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'macros') {
+      setMacrosLoading(true);
+      supportApi.getMacros().then(data => setMacrosList(data || [])).catch(() => {}).finally(() => setMacrosLoading(false));
+    }
   }, [activeTab]);
 
   // Auto-assignment states
@@ -198,7 +237,7 @@ const SupportSettingsContent = () => {
     { key: "profile", label: "Profile", icon: User, comingSoon: false },
     { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck, comingSoon: false },
     { key: "assignment", label: t("settingsPage.tabs.assignment"), icon: UserPlus, comingSoon: true },
-    { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare, comingSoon: true },
+    { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare, comingSoon: false },
     { key: "notifications", label: t("settingsPage.tabs.notifications"), icon: Bell, comingSoon: true },
     { key: "categories", label: t("settingsPage.tabs.categories"), icon: Tag, comingSoon: true },
   ];
@@ -443,7 +482,7 @@ const SupportSettingsContent = () => {
                   )}
 
                   {/* Coming Soon Overlay for other tabs */}
-                  {activeTab !== "profile" && activeTab !== "sla" && (
+                  {activeTab !== "profile" && activeTab !== "sla" && activeTab !== "macros" && (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                       <div className="w-16 h-16 rounded-full bg-[#F3F4F6] flex items-center justify-center mb-4">
                         <Settings className="w-7 h-7 text-[#9CA3AF]" />
@@ -565,47 +604,83 @@ const SupportSettingsContent = () => {
                     </div>
                   )}
 
-                  {/* Canned Responses */}
-                  {false && activeTab === "macros" && (
-                    <div>
+                  {/* Macros */}
+                  {activeTab === "macros" && (
+                    <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-[#111827]">
-                          {t("settingsPage.macros.title")}
-                        </h3>
-                        <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
-                          <Plus className="w-4 h-4" />
-                          {t("settingsPage.macros.addMacro")}
-                        </button>
+                        <h3 className="text-base font-semibold text-[#1F2937]">Reply Macros</h3>
+                        {user?.supportSubRole === 'supervisor' && (
+                          <button className="px-3 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90"
+                            onClick={() => { setEditingMacro(null); setMacroForm({ title: '', bodyTemplate: '', kbArticleUrls: '' }); setShowMacroForm(true); }}>
+                            + New Macro
+                          </button>
+                        )}
                       </div>
-                      <div className="space-y-4">
-                        {macros.map((macro) => (
-                          <div key={macro.id} className="p-5 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <p className="text-sm font-semibold text-[#111827]">{macro.name}</p>
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#EFF6FF] text-[#3B82F6]">
-                                    {macro.category}
-                                  </span>
-                                </div>
-                                <p className="text-[13px] text-[#6B7280] line-clamp-2">{macro.content}</p>
-                              </div>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <button className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg transition-colors">
-                                  <Pencil className="w-4 h-4" />
-                                </button>
-                                <button className="p-2 text-[#6B7280] hover:text-[#DC2626] hover:bg-[#FEE2E2] rounded-lg transition-colors">
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </div>
+                      <p className="text-sm text-[#6B7280] mb-4">Pre-built reply templates with variable substitution. Variables: {'{{learner_name}}, {{course_name}}, {{ticket_id}}, {{agent_name}}'}</p>
+                      {showMacroForm && (
+                        <div className="mb-6 p-4 border border-[#C7D5F0] bg-[#F0F4FF] rounded-lg">
+                          <h4 className="text-sm font-semibold text-[#002D87] mb-3">{editingMacro ? 'Edit Macro' : 'Create New Macro'}</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-[#374151] mb-1">Title *</label>
+                              <input type="text" value={macroForm.title} onChange={e => setMacroForm(p => ({...p, title: e.target.value}))}
+                                className="w-full h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" placeholder="e.g., Zoom Session Fix" />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-[#374151] mb-1">Body Template *</label>
+                              <p className="text-[10px] text-[#9CA3AF] mb-1">Variables: {'{{learner_name}}, {{course_name}}, {{ticket_id}}, {{agent_name}}'}</p>
+                              <textarea value={macroForm.bodyTemplate} onChange={e => setMacroForm(p => ({...p, bodyTemplate: e.target.value}))}
+                                rows={5} className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#002D87]"
+                                placeholder="Hi {{learner_name}}, thank you for reaching out..." />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-[#374151] mb-1">KB Article URLs (one per line)</label>
+                              <textarea value={macroForm.kbArticleUrls} onChange={e => setMacroForm(p => ({...p, kbArticleUrls: e.target.value}))}
+                                rows={2} className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#002D87]"
+                                placeholder="https://..." />
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={handleSaveMacro} disabled={macroSaving}
+                                className="px-4 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90 disabled:opacity-50">
+                                {macroSaving ? 'Saving...' : editingMacro ? 'Update' : 'Create'}
+                              </button>
+                              <button onClick={() => setShowMacroForm(false)} className="px-4 py-1.5 text-xs text-[#6B7280] hover:underline">Cancel</button>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                      <button className="mt-4 flex items-center gap-1.5 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
-                        <Save className="w-4 h-4" />
-                        {t("settingsPage.save")}
-                      </button>
+                        </div>
+                      )}
+                      {macrosLoading ? (
+                        <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#002D87]" /></div>
+                      ) : macrosList.length === 0 ? (
+                        <p className="text-center py-8 text-sm text-[#9CA3AF]">No macros created yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {macrosList.map(macro => (
+                            <div key={macro.id} className="p-4 border border-[#E5E7EB] rounded-lg">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-medium text-[#1F2937]">{macro.title}</h4>
+                                {user?.supportSubRole === 'supervisor' && (
+                                  <div className="flex items-center">
+                                    <button onClick={() => {
+                                      setEditingMacro(macro);
+                                      setMacroForm({ title: macro.title, bodyTemplate: macro.bodyTemplate, kbArticleUrls: (macro.kbArticleUrls || []).join('\n') });
+                                      setShowMacroForm(true);
+                                    }} className="text-xs text-[#002D87] hover:underline mr-2">Edit</button>
+                                    <button onClick={async () => {
+                                      if (confirm('Delete this macro?')) {
+                                        await supportApi.deleteMacro(macro.id);
+                                        setMacrosList(prev => prev.filter(m => m.id !== macro.id));
+                                        toast.success('Macro deleted');
+                                      }
+                                    }} className="text-xs text-red-500 hover:underline">Delete</button>
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-xs text-[#6B7280] whitespace-pre-wrap line-clamp-3">{macro.bodyTemplate}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 

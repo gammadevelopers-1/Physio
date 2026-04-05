@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
+import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -20,6 +21,7 @@ import {
   MoreVertical,
   TrendingUp,
   Loader2,
+  X,
 } from "lucide-react";
 
 const TeamContent = () => {
@@ -30,6 +32,9 @@ const TeamContent = () => {
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAddAgent, setShowAddAgent] = useState(false);
+  const [agentForm, setAgentForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' });
+  const [isCreating, setIsCreating] = useState(false);
 
   const profile = {
     name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
@@ -156,8 +161,98 @@ const TeamContent = () => {
     return "bg-[#16A34A]";
   };
 
+  const handleCreateAgent = async () => {
+    if (!agentForm.firstName || !agentForm.lastName || !agentForm.email || !agentForm.password) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    if (agentForm.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setIsCreating(true);
+    try {
+      await supportApi.createAgent(agentForm);
+      toast.success("Agent created successfully");
+      setShowAddAgent(false);
+      setAgentForm({ firstName: '', lastName: '', email: '', password: '', phone: '' });
+      // Refresh agents list
+      const data = await supportApi.getAgents();
+      setApiAgents(data || []);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create agent");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <>
+      {/* Add Agent Modal */}
+      {showAddAgent && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setShowAddAgent(false)} />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-[#1F2937]">Add New Agent</h2>
+              <button onClick={() => setShowAddAgent(false)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+                <X className="w-5 h-5 text-[#6B7280]" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">First Name *</label>
+                  <input type="text" value={agentForm.firstName}
+                    onChange={e => setAgentForm(p => ({...p, firstName: e.target.value}))}
+                    className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#374151] mb-1">Last Name *</label>
+                  <input type="text" value={agentForm.lastName}
+                    onChange={e => setAgentForm(p => ({...p, lastName: e.target.value}))}
+                    className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Email *</label>
+                <input type="email" value={agentForm.email}
+                  onChange={e => setAgentForm(p => ({...p, email: e.target.value}))}
+                  className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Password *</label>
+                <input type="password" value={agentForm.password}
+                  onChange={e => setAgentForm(p => ({...p, password: e.target.value}))}
+                  placeholder="Min 8 characters"
+                  className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">Phone</label>
+                <input type="tel" value={agentForm.phone}
+                  onChange={e => setAgentForm(p => ({...p, phone: e.target.value}))}
+                  className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]" />
+              </div>
+              <p className="text-xs text-[#9CA3AF]">
+                The new user will be created with the Support Agent role and can immediately access the agent dashboard.
+              </p>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowAddAgent(false)}
+                  className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+                  Cancel
+                </button>
+                <button onClick={handleCreateAgent} disabled={isCreating}
+                  className="flex-1 h-10 bg-[#002D87] text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {isCreating ? <><Loader2 className="w-4 h-4 animate-spin" /> Creating...</> : 'Create Agent'}
+                </button>
+              </div>
+            </div>
+          </div>
+          </div>
+        </>
+      )}
+
       {/* Dashboard Navbar */}
       <SupportNavbar profile={profile} />
 
@@ -229,7 +324,7 @@ const TeamContent = () => {
                 </div>
 
                 {/* Add Agent Button */}
-                <button className="btn-gold text-white h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
+                <button onClick={() => setShowAddAgent(true)} className="btn-gold text-white h-10 px-4 rounded-lg text-sm font-medium flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   {t("teamPage.addAgent")}
                 </button>

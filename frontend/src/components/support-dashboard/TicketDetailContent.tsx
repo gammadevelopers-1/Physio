@@ -20,6 +20,7 @@ import {
   Loader2,
   User,
   MessageSquare,
+  MessageSquarePlus,
   UserPlus,
 } from "lucide-react";
 
@@ -82,6 +83,10 @@ const TicketDetailContent = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [agents, setAgents] = useState<any[]>([]);
   const [showReassign, setShowReassign] = useState(false);
+  const [macros, setMacros] = useState<any[]>([]);
+  const [showMacroDropdown, setShowMacroDropdown] = useState(false);
+  const [macroPreview, setMacroPreview] = useState<string | null>(null);
+  const [isApplyingMacro, setIsApplyingMacro] = useState(false);
 
   const isSupportOrAdmin =
     user?.roles?.includes("SUPPORT") ||
@@ -104,6 +109,12 @@ const TicketDetailContent = () => {
       supportApi.getAgents().then(data => setAgents(data || [])).catch(() => {});
     }
   }, [isSupervisor]);
+
+  useEffect(() => {
+    if (isSupportOrAdmin) {
+      supportApi.getMacros().then(data => setMacros(data || [])).catch(() => {});
+    }
+  }, [isSupportOrAdmin]);
 
   useEffect(() => {
     if (!ticketId) return;
@@ -338,6 +349,39 @@ const TicketDetailContent = () => {
                           <span className="text-sm font-medium text-[#1F2937]">
                             Reply
                           </span>
+                          {isSupportOrAdmin && macros.length > 0 && (
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setShowMacroDropdown(!showMacroDropdown)}
+                                className="flex items-center gap-1 px-2 py-1 text-xs text-[#002D87] bg-[#EFF6FF] rounded hover:bg-[#DBEAFE] transition-colors"
+                              >
+                                <MessageSquarePlus className="w-3.5 h-3.5" />
+                                Apply Macro
+                              </button>
+                              {showMacroDropdown && (
+                                <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-20 min-w-[200px] py-1">
+                                  {macros.map(macro => (
+                                    <button
+                                      key={macro.id}
+                                      onClick={async () => {
+                                        setIsApplyingMacro(true);
+                                        try {
+                                          const result = await supportApi.applyMacro(ticketId, macro.id);
+                                          setMacroPreview(result.resolvedBody);
+                                          setShowMacroDropdown(false);
+                                        } catch { toast.error("Failed to apply macro"); }
+                                        finally { setIsApplyingMacro(false); }
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-sm text-[#374151] hover:bg-[#F3F4F6]"
+                                    >
+                                      {macro.title}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {isSupportOrAdmin && (
                             <label className="flex items-center gap-1.5 ml-auto cursor-pointer">
                               <input
@@ -355,6 +399,20 @@ const TicketDetailContent = () => {
                             </label>
                           )}
                         </div>
+                        {macroPreview && (
+                          <div className="mb-3 p-3 bg-[#F0F4FF] border border-[#C7D5F0] rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-medium text-[#002D87]">Macro Preview</span>
+                              <div className="flex gap-2">
+                                <button onClick={() => { setReplyMessage(prev => prev ? prev + '\n\n' + macroPreview : macroPreview); setMacroPreview(null); }}
+                                  className="px-2 py-1 text-xs bg-[#002D87] text-white rounded hover:opacity-90">Insert</button>
+                                <button onClick={() => setMacroPreview(null)}
+                                  className="px-2 py-1 text-xs text-[#6B7280] hover:underline">Cancel</button>
+                              </div>
+                            </div>
+                            <p className="text-sm text-[#374151] whitespace-pre-wrap">{macroPreview}</p>
+                          </div>
+                        )}
                         <textarea
                           value={replyMessage}
                           onChange={(e) => setReplyMessage(e.target.value)}

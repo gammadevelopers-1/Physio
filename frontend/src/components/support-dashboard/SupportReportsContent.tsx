@@ -15,6 +15,7 @@ import {
   Filter,
   FileSpreadsheet,
   Download,
+  Loader2,
 } from "lucide-react";
 
 const SupportReportsContent = () => {
@@ -82,6 +83,21 @@ const SupportReportsContent = () => {
     }
     fetchKPIs();
   }, []);
+
+  // CSAT / NPS state
+  const [csatData, setCsatData] = useState<any>(null);
+  const [npsData, setNpsData] = useState<any>(null);
+  const [surveyLoading, setSurveyLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedReport === 'csatNps') {
+      setSurveyLoading(true);
+      Promise.all([supportApi.getCsatSummary(), supportApi.getNpsSummary()])
+        .then(([csat, nps]) => { setCsatData(csat); setNpsData(nps); })
+        .catch(() => {})
+        .finally(() => setSurveyLoading(false));
+    }
+  }, [selectedReport]);
 
   // Report chart data — use status breakdown if available, else placeholder
   const statusBreakdown = kpis?.statusBreakdown || {};
@@ -260,6 +276,96 @@ const SupportReportsContent = () => {
                   </h3>
                 </div>
 
+                {selectedReport === 'csatNps' ? (
+                  <div className="p-5 space-y-6">
+                    {surveyLoading ? (
+                      <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#002D87]" /></div>
+                    ) : (
+                      <>
+                        {/* CSAT Section */}
+                        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                          <h3 className="text-base font-semibold text-[#1F2937] mb-4">CSAT Score</h3>
+                          <div className="flex items-center gap-8 mb-4">
+                            <div className="text-center">
+                              <p className="text-4xl font-bold text-[#002D87]">{csatData?.avgScore || '--'}</p>
+                              <p className="text-xs text-[#6B7280]">Avg Score (out of 5)</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-[#1F2937]">{csatData?.totalResponded || 0}</p>
+                              <p className="text-xs text-[#6B7280]">Responses</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-[#16A34A]">{csatData?.responseRate || 0}%</p>
+                              <p className="text-xs text-[#6B7280]">Response Rate</p>
+                            </div>
+                          </div>
+                          {/* Score Distribution */}
+                          <div className="space-y-2">
+                            {[5,4,3,2,1].map(score => {
+                              const count = csatData?.distribution?.[score] || 0;
+                              const total = csatData?.totalResponded || 1;
+                              const pct = Math.round((count / total) * 100) || 0;
+                              const colors: Record<number, string> = { 5: 'bg-[#22C55E]', 4: 'bg-[#3B82F6]', 3: 'bg-[#EAB308]', 2: 'bg-[#F97316]', 1: 'bg-[#EF4444]' };
+                              return (
+                                <div key={score} className="flex items-center gap-3">
+                                  <span className="text-xs font-medium text-[#6B7280] w-12">{score} star</span>
+                                  <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
+                                    <div className={`h-2.5 rounded-full ${colors[score]}`} style={{ width: `${pct}%` }} />
+                                  </div>
+                                  <span className="text-xs text-[#6B7280] w-8">{count}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* NPS Section */}
+                        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                          <h3 className="text-base font-semibold text-[#1F2937] mb-4">Net Promoter Score</h3>
+                          <div className="flex items-center gap-8 mb-4">
+                            <div className="text-center">
+                              <p className={`text-4xl font-bold ${(npsData?.npsScore || 0) >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>{npsData?.npsScore || 0}</p>
+                              <p className="text-xs text-[#6B7280]">NPS Score</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-[#1F2937]">{npsData?.totalResponded || 0}</p>
+                              <p className="text-xs text-[#6B7280]">Responses</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-[#16A34A]">{npsData?.responseRate || 0}%</p>
+                              <p className="text-xs text-[#6B7280]">Response Rate</p>
+                            </div>
+                          </div>
+                          {/* Promoter/Passive/Detractor bars */}
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-medium text-[#6B7280] w-20">Promoters</span>
+                              <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
+                                <div className="h-2.5 rounded-full bg-[#22C55E]" style={{ width: `${npsData?.totalResponded ? Math.round((npsData.promoters / npsData.totalResponded) * 100) : 0}%` }} />
+                              </div>
+                              <span className="text-xs text-[#6B7280] w-8">{npsData?.promoters || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-medium text-[#6B7280] w-20">Passives</span>
+                              <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
+                                <div className="h-2.5 rounded-full bg-[#EAB308]" style={{ width: `${npsData?.totalResponded ? Math.round((npsData.passives / npsData.totalResponded) * 100) : 0}%` }} />
+                              </div>
+                              <span className="text-xs text-[#6B7280] w-8">{npsData?.passives || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-medium text-[#6B7280] w-20">Detractors</span>
+                              <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
+                                <div className="h-2.5 rounded-full bg-[#EF4444]" style={{ width: `${npsData?.totalResponded ? Math.round((npsData.detractors / npsData.totalResponded) * 100) : 0}%` }} />
+                              </div>
+                              <span className="text-xs text-[#6B7280] w-8">{npsData?.detractors || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <>
                 {/* Report Line Chart */}
                 <div className="px-5 py-4">
                   <div className="h-[200px] bg-gradient-to-b from-[#EFF6FF] to-transparent rounded-xl p-4 relative">
@@ -360,6 +466,8 @@ const SupportReportsContent = () => {
                     </tbody>
                   </table>
                 </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

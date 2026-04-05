@@ -71,14 +71,14 @@ function ReplyBubble({
         className={`max-w-[85%] sm:max-w-[75%] ${
           isStaff
             ? "bg-[#F3F4F6] rounded-tl-sm"
-            : "bg-[#002D87] text-white rounded-tr-sm"
+            : "bg-[#a37f49] text-white rounded-tr-sm"
         } rounded-2xl p-3 sm:p-4`}
       >
         <div className="flex items-center gap-1.5 mb-1">
-          <User className={`w-3 h-3 ${isStaff ? "text-[#6B7280]" : "text-blue-200"}`} />
+          <User className={`w-3 h-3 ${isStaff ? "text-[#6B7280]" : "text-[#FFF1CF]"}`} />
           <span
             className={`text-[10px] sm:text-xs font-medium ${
-              isStaff ? "text-[#6B7280]" : "text-blue-200"
+              isStaff ? "text-[#6B7280]" : "text-[#FFF1CF]"
             }`}
           >
             {reply.userName}
@@ -326,12 +326,12 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                           onKeyDown={handleKeyDown}
                           placeholder={t("supportPage.replyPlaceholder")}
                           rows={2}
-                          className="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+                          className="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent resize-none"
                         />
                         <button
                           onClick={handleSendReply}
                           disabled={sending || !replyText.trim()}
-                          className="p-2.5 bg-[#002D87] text-white rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                          className="p-2.5 btn-gold text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                         >
                           {sending ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

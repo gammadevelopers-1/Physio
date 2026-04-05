@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as argon2 from 'argon2';
-import { eq, and, or, desc, asc, sql, ilike, count, avg, inArray } from 'drizzle-orm';
+import { eq, and, or, desc, asc, sql, ilike, count, inArray, gte } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   tickets,
@@ -837,25 +837,50 @@ export class SupportService {
         or(eq(tickets.slaBreachedFrt, true), eq(tickets.slaBreachedTtr, true)),
       );
 
-    // Avg first response time (in minutes) for tickets that have been responded to
-    const [avgFrt] = await db
-      .select({
-        avgMinutes: avg(
-          sql`EXTRACT(EPOCH FROM (${tickets.firstResponseAt} - ${tickets.createdAt})) / 60`,
-        ),
-      })
-      .from(tickets)
-      .where(sql`${tickets.firstResponseAt} IS NOT NULL`);
+    // Batch 4: business-hours-aware avg FRT / TTR.
+    //
+    // Pull the last-30-day tickets (cap 500) and reduce in JS using the
+    // business-hours util, so AST weekends + off-hours don't inflate the
+    // averages. TTR also subtracts onHoldTotalMinutes.
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const since = new Date(Date.now() - THIRTY_DAYS_MS);
 
-    // Avg resolution time (in minutes) for resolved tickets
-    const [avgTtr] = await db
+    const recentTickets = await db
       .select({
-        avgMinutes: avg(
-          sql`EXTRACT(EPOCH FROM (${tickets.resolvedAt} - ${tickets.createdAt})) / 60`,
-        ),
+        createdAt: tickets.createdAt,
+        firstResponseAt: tickets.firstResponseAt,
+        resolvedAt: tickets.resolvedAt,
+        onHoldTotalMinutes: tickets.onHoldTotalMinutes,
       })
       .from(tickets)
-      .where(sql`${tickets.resolvedAt} IS NOT NULL`);
+      .where(gte(tickets.createdAt, since))
+      .limit(500);
+
+    const frtMinutesSamples: number[] = [];
+    const ttrMinutesSamples: number[] = [];
+    for (const row of recentTickets) {
+      if (row.firstResponseAt) {
+        const m = calculateBusinessMinutesElapsed(
+          row.createdAt,
+          row.firstResponseAt,
+        );
+        if (Number.isFinite(m) && m >= 0) frtMinutesSamples.push(m);
+      }
+      if (row.resolvedAt) {
+        const raw = calculateBusinessMinutesElapsed(
+          row.createdAt,
+          row.resolvedAt,
+        );
+        const effective = Math.max(0, raw - (row.onHoldTotalMinutes || 0));
+        if (Number.isFinite(effective)) ttrMinutesSamples.push(effective);
+      }
+    }
+    const avgFrtMinutes = frtMinutesSamples.length
+      ? frtMinutesSamples.reduce((a, b) => a + b, 0) / frtMinutesSamples.length
+      : null;
+    const avgTtrMinutes = ttrMinutesSamples.length
+      ? ttrMinutesSamples.reduce((a, b) => a + b, 0) / ttrMinutesSamples.length
+      : null;
 
     // Status breakdown
     const statusBreakdown = await db
@@ -867,8 +892,10 @@ export class SupportService {
       openTickets: openCount?.count ?? 0,
       highPriorityOpen: highCount?.count ?? 0,
       slaBreaches: breachCount?.count ?? 0,
-      avgFrtMinutes: avgFrt?.avgMinutes ? Number(avgFrt.avgMinutes) : null,
-      avgTtrMinutes: avgTtr?.avgMinutes ? Number(avgTtr.avgMinutes) : null,
+      avgFrtMinutes:
+        avgFrtMinutes == null ? null : Math.round(avgFrtMinutes),
+      avgTtrMinutes:
+        avgTtrMinutes == null ? null : Math.round(avgTtrMinutes),
       statusBreakdown: statusBreakdown.reduce(
         (acc, row) => ({ ...acc, [row.status]: row.count }),
         {} as Record<string, number>,
@@ -1136,17 +1163,42 @@ export class SupportService {
       .where(eq(csatSurveys.id, surveyId))
       .returning();
 
-    // Detractor follow-up: score 1 or 2 → send follow-up email
+    // Detractor follow-up: score 1 or 2 → send follow-up email.
+    // For guest tickets the survey userId is the sentinel GUEST_USER_ID —
+    // use the ticket's stored guestEmail/guestName instead of the sentinel
+    // user's row so the follow-up actually reaches the real guest.
     if (score <= 2) {
       try {
-        const [userInfo] = await db
-          .select({ email: users.email, firstName: users.firstName })
-          .from(users)
-          .where(eq(users.id, survey.userId));
-        if (userInfo?.email) {
+        let recipientEmail: string | null = null;
+        let recipientName: string = 'Student';
+
+        if (survey.userId === GUEST_USER_ID) {
+          const [guestTicket] = await db
+            .select({
+              guestEmail: tickets.guestEmail,
+              guestName: tickets.guestName,
+            })
+            .from(tickets)
+            .where(eq(tickets.id, survey.ticketId));
+          if (guestTicket?.guestEmail) {
+            recipientEmail = guestTicket.guestEmail;
+            recipientName = guestTicket.guestName || 'Guest';
+          }
+        } else {
+          const [userInfo] = await db
+            .select({ email: users.email, firstName: users.firstName })
+            .from(users)
+            .where(eq(users.id, survey.userId));
+          if (userInfo?.email) {
+            recipientEmail = userInfo.email;
+            recipientName = userInfo.firstName || 'Student';
+          }
+        }
+
+        if (recipientEmail) {
           await this.emailService.sendCsatFollowup(
-            userInfo.email,
-            userInfo.firstName || 'Student',
+            recipientEmail,
+            recipientName,
             survey.ticketId,
             score,
           );
@@ -1479,10 +1531,56 @@ export class SupportService {
       .from(slaPolicies)
       .where(eq(slaPolicies.priority, ticket.priority));
 
+    // CSAT survey — only attach for resolved/closed tickets so the
+    // tracking page can show a rating widget. For still-open tickets
+    // we return null (widget hidden).
+    let csatSurvey: {
+      id: string;
+      score: number | null;
+      submittedAt: string | null;
+      sentAt: string;
+      expired: boolean;
+      alreadySubmitted: boolean;
+    } | null = null;
+
+    if (
+      ticket.status === TICKET_STATUS.RESOLVED ||
+      ticket.status === TICKET_STATUS.CLOSED
+    ) {
+      const [survey] = await db
+        .select({
+          id: csatSurveys.id,
+          score: csatSurveys.score,
+          submittedAt: csatSurveys.submittedAt,
+          sentAt: csatSurveys.sentAt,
+        })
+        .from(csatSurveys)
+        .where(eq(csatSurveys.ticketId, ticket.id))
+        .limit(1);
+
+      if (survey) {
+        const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000;
+        const expired =
+          Date.now() - new Date(survey.sentAt).getTime() >
+          SEVENTY_TWO_HOURS_MS;
+        csatSurvey = {
+          id: survey.id,
+          score: survey.score,
+          submittedAt: survey.submittedAt
+            ? new Date(survey.submittedAt).toISOString()
+            : null,
+          sentAt: new Date(survey.sentAt).toISOString(),
+          expired,
+          alreadySubmitted: !!survey.submittedAt,
+        };
+      }
+    }
+
     return {
       ...ticket,
       comments,
       slaPolicy: slaPolicy || null,
+      csatSurvey,
     };
   }
 

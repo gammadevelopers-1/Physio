@@ -159,7 +159,7 @@ export default function PublicTicketForm({
                   setCopied(true);
                   setTimeout(() => setCopied(false), 2000);
                 }}
-                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90 transition-opacity"
+                className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 btn-gold text-white text-xs font-medium rounded-lg"
               >
                 {copied ? (
                   <>
@@ -186,7 +186,7 @@ export default function PublicTicketForm({
           {isAuthenticated && (
             <a
               href={`/${locale}/dashboard/student/support`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#002D87] text-white rounded-[10px] text-sm font-medium hover:opacity-90 transition-opacity"
+              className="inline-flex items-center gap-2 px-5 py-2.5 btn-gold text-white rounded-[10px] text-sm font-medium"
             >
               {t("viewInDashboard")}
             </a>
@@ -210,7 +210,7 @@ export default function PublicTicketForm({
     `w-full h-[44px] px-3.5 border rounded-[10px] text-sm bg-white shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] outline-none transition-colors ${
       errors[field]
         ? "border-[#DC2626] focus:border-[#DC2626]"
-        : "border-[#C8D5E1] focus:border-[#002D87]"
+        : "border-[#C8D5E1] focus:border-[#a37f49]"
     }`;
 
   return (
@@ -346,7 +346,7 @@ export default function PublicTicketForm({
               className={`w-full h-[44px] px-3.5 border rounded-[10px] text-sm bg-white shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] outline-none transition-colors flex items-center justify-between ${
                 errors.category
                   ? "border-[#DC2626]"
-                  : "border-[#C8D5E1] focus:border-[#002D87]"
+                  : "border-[#C8D5E1] focus:border-[#a37f49]"
               }`}
               dir={isRTL ? "rtl" : "ltr"}
             >
@@ -377,9 +377,9 @@ export default function PublicTicketForm({
                       if (errors.category)
                         setErrors((p) => ({ ...p, category: "" }));
                     }}
-                    className={`w-full px-3.5 py-2.5 text-sm text-left hover:bg-[#F0F4FF] transition-colors ${
+                    className={`w-full px-3.5 py-2.5 text-sm text-left hover:bg-[#FFF8E6] transition-colors ${
                       category === cat.value
-                        ? "bg-blue-50 text-[#002D87] font-medium"
+                        ? "bg-[#FFF8E6] text-[#6b4e24] font-medium"
                         : "text-gray-700"
                     }`}
                     style={{ textAlign: isRTL ? "right" : "left" }}
@@ -419,7 +419,7 @@ export default function PublicTicketForm({
           className={`w-full px-3.5 py-2.5 border rounded-[10px] text-sm bg-white shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)] outline-none transition-colors resize-none ${
             errors.description
               ? "border-[#DC2626] focus:border-[#DC2626]"
-              : "border-[#C8D5E1] focus:border-[#002D87]"
+              : "border-[#C8D5E1] focus:border-[#a37f49]"
           }`}
           style={{ textAlign: isRTL ? "right" : "left" }}
           dir={isRTL ? "rtl" : "ltr"}
@@ -433,7 +433,7 @@ export default function PublicTicketForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#002D87] text-white rounded-[10px] text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white rounded-[10px] text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <>

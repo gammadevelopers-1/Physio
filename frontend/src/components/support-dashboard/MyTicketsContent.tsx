@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
 import SupportNavbar from "./SupportNavbar";
@@ -14,17 +16,23 @@ import {
   XCircle,
   Search,
   Send,
+  Loader2,
+  MessageSquarePlus,
+  ExternalLink,
 } from "lucide-react";
 
 interface MyTicket {
   id: string;
+  displayId: string;
   subject: string;
   customer: string;
   category: string;
   priority: "high" | "medium" | "low";
   status: "new" | "inProgress" | "waiting" | "resolved" | "closed";
+  rawStatus: string;
   slaRemaining: string;
   date: string;
+  slaBreached: boolean;
 }
 
 const MyTicketsContent = () => {
@@ -32,6 +40,7 @@ const MyTicketsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { user } = useAuth();
+  const router = useRouter();
 
   const profile = {
     name: user
@@ -49,36 +58,16 @@ const MyTicketsContent = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const stats = [
-    {
-      label: t("myTicketsPage.stats.assigned"),
-      value: "8",
-      icon: Inbox,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
-    },
-    {
-      label: t("myTicketsPage.stats.inProgress"),
-      value: "5",
-      icon: Clock,
-      iconBg: "bg-[#FEF9C3]",
-      iconColor: "text-[#EAB308]",
-    },
-    {
-      label: t("myTicketsPage.stats.dueToday"),
-      value: "2",
-      icon: AlertTriangle,
-      iconBg: "bg-[#FFEDD5]",
-      iconColor: "text-[#F97316]",
-    },
-    {
-      label: t("myTicketsPage.stats.overdue"),
-      value: "1",
-      icon: XCircle,
-      iconBg: "bg-[#FEE2E2]",
-      iconColor: "text-[#EF4444]",
-    },
-  ];
+  // Quick reply state
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  // Macro state
+  const [macros, setMacros] = useState<any[]>([]);
+  const [showMacroDropdown, setShowMacroDropdown] = useState(false);
+  const [macroPreview, setMacroPreview] = useState<string | null>(null);
+  const [isApplyingMacro, setIsApplyingMacro] = useState(false);
 
   const fetchMyTickets = useCallback(async () => {
     if (!user?.id) return;
@@ -101,16 +90,122 @@ const MyTicketsContent = () => {
     fetchMyTickets();
   }, [fetchMyTickets]);
 
-  const myTickets: MyTicket[] = apiTickets.map((t: any) => ({
-    id: t.id?.substring(0, 8) || t.id,
-    subject: t.subject,
-    customer: [t.studentFirstName, t.studentLastName].filter(Boolean).join(" ") || "Unknown",
-    category: t.category,
-    priority: t.priority,
-    status: t.status === "in_progress" ? "inProgress" : t.status === "on_hold" ? "waiting" : t.status,
+  // Fetch macros once on mount
+  useEffect(() => {
+    supportApi
+      .getMacros()
+      .then((data) => setMacros(Array.isArray(data) ? data : []))
+      .catch(() => setMacros([]));
+  }, []);
+
+  const myTickets: MyTicket[] = apiTickets.map((raw: any) => ({
+    id: raw.id,
+    displayId: (raw.id || "").substring(0, 8),
+    subject: raw.subject,
+    customer:
+      [raw.studentFirstName, raw.studentLastName].filter(Boolean).join(" ") ||
+      raw.guestName ||
+      "Unknown",
+    category: raw.category,
+    priority: raw.priority,
+    status:
+      raw.status === "in_progress"
+        ? "inProgress"
+        : raw.status === "on_hold"
+          ? "waiting"
+          : raw.status,
+    rawStatus: raw.status,
     slaRemaining: "--",
-    date: t.createdAt ? new Date(t.createdAt).toLocaleDateString() : "",
+    date: raw.createdAt ? new Date(raw.createdAt).toLocaleDateString() : "",
+    slaBreached: Boolean(raw.slaBreachedTtr || raw.slaBreachedFrt),
   }));
+
+  // Compute stats from live data
+  const stats = useMemo(
+    () => [
+      {
+        label: t("myTicketsPage.stats.assigned"),
+        value: String(apiTickets.length),
+        icon: Inbox,
+        iconBg: "bg-[#EFF6FF]",
+        iconColor: "text-[#3B82F6]",
+      },
+      {
+        label: t("myTicketsPage.stats.inProgress"),
+        value: String(
+          apiTickets.filter((x: any) => x.status === "in_progress").length,
+        ),
+        icon: Clock,
+        iconBg: "bg-[#FEF9C3]",
+        iconColor: "text-[#EAB308]",
+      },
+      {
+        label: t("myTicketsPage.stats.dueToday"),
+        value: String(
+          apiTickets.filter(
+            (x: any) => x.status === "new" || x.status === "in_progress",
+          ).length,
+        ),
+        icon: AlertTriangle,
+        iconBg: "bg-[#FFEDD5]",
+        iconColor: "text-[#F97316]",
+      },
+      {
+        label: t("myTicketsPage.stats.overdue"),
+        value: String(
+          apiTickets.filter(
+            (x: any) => x.slaBreachedTtr || x.slaBreachedFrt,
+          ).length,
+        ),
+        icon: XCircle,
+        iconBg: "bg-[#FEE2E2]",
+        iconColor: "text-[#EF4444]",
+      },
+    ],
+    [apiTickets, t],
+  );
+
+  const selectedTicket = myTickets.find((x) => x.id === selectedTicketId) || null;
+
+  async function handleSendReply() {
+    if (!selectedTicketId || !replyMessage.trim()) return;
+    setIsSending(true);
+    try {
+      await supportApi.addComment(selectedTicketId, {
+        message: replyMessage.trim(),
+        isInternal: false,
+      });
+      setReplyMessage("");
+      setMacroPreview(null);
+      toast.success("Reply sent");
+      await fetchMyTickets();
+    } catch {
+      toast.error("Failed to send reply");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleApplyMacro(macroId: string) {
+    if (!selectedTicketId) {
+      toast.error("Select a ticket first");
+      return;
+    }
+    setIsApplyingMacro(true);
+    try {
+      const result = await supportApi.applyMacro(selectedTicketId, macroId);
+      setMacroPreview(result.resolvedBody);
+      setShowMacroDropdown(false);
+    } catch {
+      toast.error("Failed to apply macro");
+    } finally {
+      setIsApplyingMacro(false);
+    }
+  }
+
+  function handleOpenTicket(ticketId: string) {
+    router.push(`/${locale}/dashboard/support/agent/tickets/${ticketId}`);
+  }
 
   const tabs = [
     { key: "all", label: t("myTicketsPage.tabs.all") },
@@ -146,7 +241,7 @@ const MyTicketsContent = () => {
       searchQuery === "" ||
       ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.id.includes(searchQuery);
+      ticket.displayId.includes(searchQuery.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
@@ -241,22 +336,36 @@ const MyTicketsContent = () => {
                   const slaHours = parseFloat(ticket.slaRemaining);
                   const slaColor = getSlaColor(ticket.slaRemaining);
                   const isUrgent = slaHours < 1;
+                  const isSelected = selectedTicketId === ticket.id;
 
                   return (
                     <div
                       key={ticket.id}
-                      className={`bg-white rounded-xl border border-[#E5E7EB] p-4 ${isRTL ? "border-r-[3px]" : "border-l-[3px]"} ${priorityBorderColors[ticket.priority]} hover:shadow-sm transition-shadow`}
+                      onClick={() => setSelectedTicketId(ticket.id)}
+                      className={`bg-white rounded-xl border border-[#E5E7EB] p-4 cursor-pointer ${isRTL ? "border-r-[3px]" : "border-l-[3px]"} ${priorityBorderColors[ticket.priority]} hover:shadow-sm transition-all ${isSelected ? "ring-2 ring-[#a37f49] shadow-sm" : ""}`}
                     >
                       {/* Top Row: Ticket ID + Subject */}
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="min-w-0">
-                          <span className="text-[13px] font-medium text-[#3B82F6] cursor-pointer hover:underline">
-                            #{ticket.id}
+                          <span className="text-[13px] font-medium text-[#3B82F6]">
+                            #{ticket.displayId}
                           </span>
                           <h4 className="text-sm font-semibold text-[#111827] mt-0.5 truncate">
                             {ticket.subject}
                           </h4>
                         </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenTicket(ticket.id);
+                          }}
+                          className="flex items-center gap-1 text-[11px] text-[#6B7280] hover:text-[#a37f49] flex-shrink-0"
+                          title="Open full detail"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Open
+                        </button>
                       </div>
 
                       {/* Middle Row: Customer + Category */}
@@ -314,38 +423,141 @@ const MyTicketsContent = () => {
               {/* Quick Reply Section */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
                 {/* Title */}
-                <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2 mb-3">
                   <Send className="w-5 h-5 text-[#a37f49]" />
                   <h3 className="text-base font-semibold text-[#111827]">
                     {t("myTicketsPage.quickReply")}
                   </h3>
                 </div>
 
+                {/* Selected Ticket Indicator */}
+                {selectedTicket ? (
+                  <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-[#FFF8E6] border border-[#a37f49]/30 rounded-lg text-xs">
+                    <span className="font-semibold text-[#6b4e24]">
+                      Replying to #{selectedTicket.displayId}
+                    </span>
+                    <span className="text-[#6b4e24] truncate">
+                      — {selectedTicket.subject}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTicketId(null);
+                        setMacroPreview(null);
+                      }}
+                      className="ml-auto text-[#9CA3AF] hover:text-[#6B7280]"
+                      title="Clear selection"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mb-3 px-3 py-2 bg-[#F9FAFB] border border-dashed border-[#E5E7EB] rounded-lg text-xs text-[#9CA3AF]">
+                    Select a ticket above to reply
+                  </div>
+                )}
+
+                {/* Macro Preview */}
+                {macroPreview && (
+                  <div className="mb-3 p-3 bg-[#FFF8E6] border border-[#a37f49]/40 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-[#6b4e24]">
+                        Macro Preview
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyMessage((prev) =>
+                              prev ? prev + "\n\n" + macroPreview : macroPreview,
+                            );
+                            setMacroPreview(null);
+                          }}
+                          className="px-2 py-1 text-xs btn-gold text-white rounded"
+                        >
+                          Insert
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMacroPreview(null)}
+                          className="px-2 py-1 text-xs text-[#6B7280] hover:underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-[#374151] whitespace-pre-wrap">
+                      {macroPreview}
+                    </p>
+                  </div>
+                )}
+
                 {/* Textarea */}
                 <textarea
                   rows={3}
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  disabled={!selectedTicketId || isSending}
                   placeholder={t("myTicketsPage.quickReplyPlaceholder")}
-                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-xl text-[13px] text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#a37f49] resize-none mb-3"
+                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-xl text-[13px] text-[#374151] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#a37f49] resize-none mb-3 disabled:bg-[#F9FAFB] disabled:cursor-not-allowed"
                 />
 
                 {/* Macros + Send */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  {/* Macro Pills */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[#4B5563] bg-[#F3F4F6] rounded-full hover:bg-[#E5E7EB] transition-colors">
-                      {t("myTicketsPage.macros.acknowledgement")}
+                  {/* Apply Macro Dropdown */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowMacroDropdown(!showMacroDropdown)}
+                      disabled={
+                        !selectedTicketId || isApplyingMacro || macros.length === 0
+                      }
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium text-[#6b4e24] bg-[#FFF8E6] rounded-full hover:bg-[#FFEFC9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isApplyingMacro ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <MessageSquarePlus className="w-3.5 h-3.5" />
+                      )}
+                      Apply Macro
+                      {macros.length > 0 && (
+                        <span className="text-[10px] opacity-70">
+                          ({macros.length})
+                        </span>
+                      )}
                     </button>
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[#4B5563] bg-[#F3F4F6] rounded-full hover:bg-[#E5E7EB] transition-colors">
-                      {t("myTicketsPage.macros.needMoreInfo")}
-                    </button>
-                    <button className="px-3 py-1.5 text-[12px] font-medium text-[#4B5563] bg-[#F3F4F6] rounded-full hover:bg-[#E5E7EB] transition-colors">
-                      {t("myTicketsPage.macros.resolved")}
-                    </button>
+                    {showMacroDropdown && macros.length > 0 && (
+                      <div
+                        className={`absolute bottom-full mb-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-20 min-w-[220px] max-h-60 overflow-y-auto py-1 ${isRTL ? "right-0" : "left-0"}`}
+                      >
+                        {macros.map((macro) => (
+                          <button
+                            key={macro.id}
+                            type="button"
+                            onClick={() => handleApplyMacro(macro.id)}
+                            className="w-full text-left px-3 py-2 text-sm text-[#374151] hover:bg-[#FFF8E6]"
+                          >
+                            {macro.title}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Send Button */}
-                  <button className="flex items-center gap-1.5 px-5 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
-                    <Send className="w-4 h-4" />
+                  <button
+                    type="button"
+                    onClick={handleSendReply}
+                    disabled={
+                      !selectedTicketId || !replyMessage.trim() || isSending
+                    }
+                    className="flex items-center gap-1.5 px-5 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
                     {t("myTicketsPage.send")}
                   </button>
                 </div>

@@ -7,13 +7,20 @@ import { toast } from "sonner";
 import {
   Loader2,
   Send,
-  Clock,
-  CheckCircle2,
   AlertTriangle,
   MessageSquare,
   Headphones,
-  Copy,
+  Star,
 } from "lucide-react";
+
+interface CsatSurveyState {
+  id: string;
+  score: number | null;
+  submittedAt: string | null;
+  sentAt: string;
+  expired: boolean;
+  alreadySubmitted: boolean;
+}
 
 interface GuestTicketTrackerProps {
   token: string;
@@ -65,6 +72,12 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // CSAT rating state
+  const [ratingHover, setRatingHover] = useState(0);
+  const [ratingSelected, setRatingSelected] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
   const fetchTicket = useCallback(async () => {
     try {
       const data = await supportApi.getGuestTicket(token);
@@ -99,10 +112,35 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
     }
   };
 
+  const handleSubmitRating = async () => {
+    const csat: CsatSurveyState | null = ticket?.csatSurvey ?? null;
+    if (!csat || ratingSelected < 1 || isSubmittingRating) return;
+    setIsSubmittingRating(true);
+    try {
+      await supportApi.submitCsat(csat.id, {
+        score: ratingSelected,
+        comment: ratingComment.trim() || undefined,
+      });
+      toast.success("Thank you for your feedback!");
+      await fetchTicket();
+    } catch (err: any) {
+      // Surface server-side edge cases (already submitted, expired, etc.)
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to submit rating. Please try again.";
+      toast.error(typeof message === "string" ? message : "Failed to submit rating");
+      // Refetch so the widget reflects any server-side state change
+      await fetchTicket();
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-[#002D87]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#a37f49]" />
       </div>
     );
   }
@@ -135,8 +173,8 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
     >
       {/* Header */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#EFF6FF] mb-3">
-          <Headphones className="w-6 h-6 text-[#002D87]" />
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#FFF8E6] mb-3">
+          <Headphones className="w-6 h-6 text-[#a37f49]" />
         </div>
         <h1
           className="text-xl font-bold text-gray-900"
@@ -224,7 +262,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
-                    className={`w-8 h-8 rounded-full ${isStaff ? "bg-[#002D87]" : "bg-[#8B5CF6]"} text-white text-xs font-bold flex items-center justify-center`}
+                    className={`w-8 h-8 rounded-full ${isStaff ? "bg-[#a37f49]" : "bg-[#8B5CF6]"} text-white text-xs font-bold flex items-center justify-center`}
                   >
                     {avatarInitials}
                   </div>
@@ -232,7 +270,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
                     {isStaff ? staffName || "Support Agent" : ticket.guestName}
                   </span>
                   {isStaff && (
-                    <span className="text-xs bg-[#EFF6FF] text-[#002D87] px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-xs bg-[#FFF8E6] text-[#6b4e24] px-1.5 py-0.5 rounded font-medium">
                       Support
                     </span>
                   )}
@@ -266,7 +304,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
             value={replyMessage}
             onChange={(e) => setReplyMessage(e.target.value)}
             placeholder="Type your reply..."
-            className="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#002D87]"
+            className="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#a37f49]"
             style={{ textAlign: isRTL ? "right" : "left" }}
           />
           <div
@@ -275,7 +313,7 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
             <button
               onClick={handleReply}
               disabled={!replyMessage.trim() || isSending}
-              className="flex items-center gap-2 px-4 py-2 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
             >
               {isSending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -287,6 +325,132 @@ export default function GuestTicketTracker({ token }: GuestTicketTrackerProps) {
           </div>
         </div>
       )}
+
+      {/* CSAT Rating Widget — shown for resolved/closed tickets */}
+      {(ticket.status === "resolved" || ticket.status === "closed") &&
+        ticket.csatSurvey && (
+          <div className="mt-4 bg-white rounded-2xl border border-[#E5E7EB] p-5">
+            {(() => {
+              const csat = ticket.csatSurvey as CsatSurveyState;
+
+              // State 1: Already rated — show thank-you + score read-only
+              if (csat.alreadySubmitted) {
+                return (
+                  <div className="text-center py-2">
+                    <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#FFF8E6] mb-2">
+                      <Star className="w-5 h-5 text-[#a37f49] fill-[#a37f49]" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-gray-800 mb-1">
+                      Thank you for your feedback!
+                    </h3>
+                    {csat.score != null && (
+                      <div className="flex items-center justify-center gap-1 mt-2">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`w-5 h-5 ${
+                              n <= (csat.score ?? 0)
+                                ? "text-[#a37f49] fill-[#a37f49]"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // State 2: Rating window expired (>72h since sent)
+              if (csat.expired) {
+                return (
+                  <div className="text-center py-2">
+                    <AlertTriangle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">
+                      The rating window for this ticket has expired.
+                    </p>
+                  </div>
+                );
+              }
+
+              // State 3: Show interactive star widget
+              return (
+                <div>
+                  <h3
+                    className="text-sm font-semibold text-gray-800 mb-1"
+                    style={{ textAlign: isRTL ? "right" : "left" }}
+                  >
+                    How was your support experience?
+                  </h3>
+                  <p
+                    className="text-xs text-gray-500 mb-3"
+                    style={{ textAlign: isRTL ? "right" : "left" }}
+                  >
+                    Your feedback helps us improve. It only takes a moment.
+                  </p>
+                  <div
+                    className={`flex items-center gap-1 mb-3 ${isRTL ? "justify-end" : "justify-start"}`}
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => {
+                      const filled = n <= (ratingHover || ratingSelected);
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          disabled={isSubmittingRating}
+                          onClick={() => setRatingSelected(n)}
+                          onMouseEnter={() => setRatingHover(n)}
+                          onMouseLeave={() => setRatingHover(0)}
+                          className="p-1 disabled:cursor-default"
+                          aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                        >
+                          <Star
+                            className={`w-7 h-7 transition-colors ${
+                              filled
+                                ? "text-[#a37f49] fill-[#a37f49]"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={ratingComment}
+                    onChange={(e) => setRatingComment(e.target.value.slice(0, 1000))}
+                    placeholder="Optional: tell us more about your experience"
+                    disabled={isSubmittingRating}
+                    className="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#a37f49] disabled:bg-gray-50"
+                    style={{ textAlign: isRTL ? "right" : "left" }}
+                  />
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-gray-400">
+                      {ratingComment.length}/1000
+                    </span>
+                  </div>
+                  <div
+                    className={`flex ${isRTL ? "justify-start" : "justify-end"} mt-3`}
+                  >
+                    <button
+                      type="button"
+                      onClick={handleSubmitRating}
+                      disabled={ratingSelected < 1 || isSubmittingRating}
+                      className="flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmittingRating ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      Submit Rating
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
     </div>
   );
 }

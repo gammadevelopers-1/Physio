@@ -26,6 +26,7 @@ import {
 
 interface Ticket {
   id: string;
+  displayId: string;
   subject: string;
   customer: string;
   email: string;

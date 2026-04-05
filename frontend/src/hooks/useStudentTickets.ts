@@ -49,7 +49,36 @@ export function useTicketDetail(ticketId: string | null) {
     setError(null);
     try {
       const result = await supportApi.getTicket(ticketId);
-      setData(result);
+      // Map support-api response shape to student TicketDetail shape.
+      // Backend returns `comments` with split `userFirstName`/`userLastName`
+      // and a single `courseName`; student UI expects `replies` with
+      // `userName` and separate `courseTitle`/`courseTitleAr`.
+      const mapped: TicketDetail = {
+        id: result.id,
+        category: result.category,
+        priority: result.priority,
+        subject: result.subject,
+        description: result.description,
+        attachmentUrl: result.attachmentUrl ?? null,
+        status: result.status,
+        satisfactionRating: result.satisfactionRating ?? null,
+        courseTitle: result.courseName ?? null,
+        courseTitleAr: null,
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        resolvedAt: result.resolvedAt ?? null,
+        closedAt: result.closedAt ?? null,
+        replies: (result.comments ?? []).map((c: any) => ({
+          id: c.id,
+          message: c.message,
+          isStaffReply: Boolean(c.isStaffReply),
+          createdAt: c.createdAt,
+          userName:
+            [c.userFirstName, c.userLastName].filter(Boolean).join(" ") ||
+            "Unknown",
+        })),
+      };
+      setData(mapped);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load ticket",

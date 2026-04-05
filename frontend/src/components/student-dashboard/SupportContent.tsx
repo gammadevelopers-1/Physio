@@ -303,7 +303,7 @@ function CreateTicketForm({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as TicketCategory)}
-            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent"
           >
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
@@ -322,7 +322,7 @@ function CreateTicketForm({
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent"
             >
               <option value="">{t("supportPage.selectCourse")}</option>
               {enrolledCourses.map((c) => (
@@ -345,7 +345,7 @@ function CreateTicketForm({
             onChange={(e) => setSubject(e.target.value)}
             maxLength={200}
             placeholder={t("supportPage.subjectPlaceholder")}
-            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent"
             required
           />
         </div>
@@ -361,7 +361,7 @@ function CreateTicketForm({
             maxLength={2000}
             rows={5}
             placeholder={t("supportPage.descriptionPlaceholder")}
-            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent resize-none"
             required
           />
           <p className="text-xs text-[#9CA3AF] mt-1 text-right">
@@ -414,7 +414,7 @@ function CreateTicketForm({
         <button
           type="submit"
           disabled={submitting || !subject.trim() || !description.trim()}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -463,7 +463,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("supportPage.searchFaq")}
-          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent`}
+          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent`}
         />
       </div>
 
@@ -471,7 +471,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
       <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => setActiveCategory("all")}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#a37f49] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
         >
           {t("supportPage.faq.allCategories")}
         </button>
@@ -479,7 +479,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#a37f49] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
           >
             {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
           </button>
@@ -540,7 +540,7 @@ function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; 
         {TUTORIAL_ITEMS.map((tutorial) => (
           <div key={tutorial.key} className="border border-[#E5E7EB] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
             {/* Thumbnail placeholder */}
-            <div className="relative h-[120px] bg-gradient-to-br from-[#002D87] to-[#0047D4] flex items-center justify-center">
+            <div className="relative h-[120px] bg-gradient-to-br from-[#a37f49] to-[#6b4e24] flex items-center justify-center">
               <PlayCircle className="w-12 h-12 text-white/80" />
               <span className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/60 text-white text-[10px] font-medium rounded">
                 {tutorial.duration}
@@ -625,7 +625,7 @@ const SupportContent = () => {
                 {!showForm && (
                   <button
                     onClick={() => setShowForm(true)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-[#002D87] text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-[#001f5c] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 btn-gold text-white text-xs sm:text-sm font-medium rounded-lg transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     {t("supportPage.newTicket")}
@@ -649,7 +649,7 @@ const SupportContent = () => {
                       onClick={() => setMainTab(tab.key)}
                       className={`flex items-center gap-1.5 px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
                         mainTab === tab.key
-                          ? "border-[#002D87] text-[#002D87]"
+                          ? "border-[#a37f49] text-[#6b4e24]"
                           : "border-transparent text-[#6B7280] hover:text-[#374151]"
                       }`}
                     >
@@ -688,7 +688,7 @@ const SupportContent = () => {
                           onClick={() => setStatusFilter(tab.key)}
                           className={`px-3 py-1.5 text-xs sm:text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${
                             statusFilter === tab.key
-                              ? "bg-[#002D87] text-white"
+                              ? "bg-[#a37f49] text-white"
                               : "text-[#6B7280] hover:bg-gray-100"
                           }`}
                         >

@@ -32,10 +32,57 @@ function SLAPolicyRow({ policy, isSupervisor, isSaving, onSave }: {
   isSaving: boolean;
   onSave: (data: { frtMinutes: number; ttrMinutes: number; escalateAfterMinutes: number }) => void;
 }) {
-  const [frt, setFrt] = useState(policy.frtMinutes);
-  const [ttr, setTtr] = useState(policy.ttrMinutes);
-  const [escalate, setEscalate] = useState(policy.escalateAfterMinutes);
-  const hasChanges = frt !== policy.frtMinutes || ttr !== policy.ttrMinutes || escalate !== policy.escalateAfterMinutes;
+  // Store inputs as strings so the user can fully clear the field. Using
+  // `<input type="number">` with a numeric state causes two known bugs:
+  //   (a) clearing the field triggers `Number("") === 0` → the field
+  //       snaps to "0" and won't re-accept input cleanly
+  //   (b) typing after a leading 0 (e.g. "0" → "32") can render as "032"
+  //       because type=number inputs keep their own text state
+  // Switching to `type="text" inputMode="numeric"` + string state avoids both.
+  const [frt, setFrt] = useState(String(policy.frtMinutes));
+  const [ttr, setTtr] = useState(String(policy.ttrMinutes));
+  const [escalate, setEscalate] = useState(String(policy.escalateAfterMinutes));
+
+  // Resync local state whenever the parent's policy updates (e.g. after a
+  // successful save). Without this, the row would hold stale values.
+  useEffect(() => {
+    setFrt(String(policy.frtMinutes));
+    setTtr(String(policy.ttrMinutes));
+    setEscalate(String(policy.escalateAfterMinutes));
+  }, [policy.frtMinutes, policy.ttrMinutes, policy.escalateAfterMinutes]);
+
+  // Accept only digits; strip leading zeros but allow empty string while
+  // the user is mid-edit. Max 6 digits (up to 999,999 minutes = ~1.9 years).
+  const sanitize = (raw: string): string => {
+    const digitsOnly = raw.replace(/[^0-9]/g, '').slice(0, 6);
+    if (digitsOnly === '') return '';
+    const stripped = digitsOnly.replace(/^0+/, '');
+    return stripped === '' ? '0' : stripped;
+  };
+
+  const frtNum = frt === '' ? NaN : Number(frt);
+  const ttrNum = ttr === '' ? NaN : Number(ttr);
+  const escalateNum = escalate === '' ? NaN : Number(escalate);
+
+  const hasChanges =
+    frt !== String(policy.frtMinutes) ||
+    ttr !== String(policy.ttrMinutes) ||
+    escalate !== String(policy.escalateAfterMinutes);
+
+  // Client-side validation (only check once the user has actually touched
+  // something — `hasChanges` guards this in the UI below).
+  const validationError = ((): string | null => {
+    if (!Number.isInteger(frtNum) || frtNum < 1)
+      return 'FRT must be a positive integer';
+    if (!Number.isInteger(ttrNum) || ttrNum < 1)
+      return 'TTR must be a positive integer';
+    if (!Number.isInteger(escalateNum) || escalateNum < 1)
+      return 'Escalate After must be a positive integer';
+    if (ttrNum <= frtNum) return 'TTR must be greater than FRT';
+    if (escalateNum > ttrNum) return 'Escalate After must be ≤ TTR';
+    return null;
+  })();
+  const isValid = validationError === null;
 
   const priorityStyles: Record<string, string> = {
     high: 'bg-[#FEE2E2] text-[#EF4444]',
@@ -43,38 +90,88 @@ function SLAPolicyRow({ policy, isSupervisor, isSaving, onSave }: {
     low: 'bg-[#DCFCE7] text-[#22C55E]',
   };
 
+  const inputBase =
+    'w-24 h-9 px-3 border rounded-lg text-sm focus:outline-none disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]';
+  const inputClass = (fieldError: boolean) =>
+    `${inputBase} ${
+      hasChanges && fieldError
+        ? 'border-[#FECACA] focus:border-[#EF4444]'
+        : 'border-[#E5E7EB] focus:border-[#002D87]'
+    }`;
+
   return (
-    <tr className="border-b border-[#F3F4F6]">
-      <td className="py-3 px-4">
-        <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${priorityStyles[policy.priority] || ''}`}>
-          {policy.priority}
-        </span>
-      </td>
-      <td className="py-3 px-4">
-        <input type="number" value={frt} onChange={e => setFrt(Number(e.target.value))}
-          disabled={!isSupervisor} min={1}
-          className="w-24 h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]" />
-      </td>
-      <td className="py-3 px-4">
-        <input type="number" value={ttr} onChange={e => setTtr(Number(e.target.value))}
-          disabled={!isSupervisor} min={1}
-          className="w-24 h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]" />
-      </td>
-      <td className="py-3 px-4">
-        <input type="number" value={escalate} onChange={e => setEscalate(Number(e.target.value))}
-          disabled={!isSupervisor} min={1}
-          className="w-24 h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] disabled:bg-[#F9FAFB] disabled:text-[#9CA3AF]" />
-      </td>
-      <td className="py-3 px-4 text-right">
-        {isSupervisor && hasChanges && (
-          <button onClick={() => onSave({ frtMinutes: frt, ttrMinutes: ttr, escalateAfterMinutes: escalate })}
-            disabled={isSaving}
-            className="px-3 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90 disabled:opacity-50">
-            {isSaving ? 'Saving...' : 'Save'}
-          </button>
-        )}
-      </td>
-    </tr>
+    <>
+      <tr className="border-b border-[#F3F4F6]">
+        <td className="py-3 px-4">
+          <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${priorityStyles[policy.priority] || ''}`}>
+            {policy.priority}
+          </span>
+        </td>
+        <td className="py-3 px-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={frt}
+            onChange={(e) => setFrt(sanitize(e.target.value))}
+            disabled={!isSupervisor || isSaving}
+            className={inputClass(!Number.isInteger(frtNum) || frtNum < 1)}
+          />
+        </td>
+        <td className="py-3 px-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={ttr}
+            onChange={(e) => setTtr(sanitize(e.target.value))}
+            disabled={!isSupervisor || isSaving}
+            className={inputClass(
+              !Number.isInteger(ttrNum) || ttrNum < 1 || ttrNum <= frtNum,
+            )}
+          />
+        </td>
+        <td className="py-3 px-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={escalate}
+            onChange={(e) => setEscalate(sanitize(e.target.value))}
+            disabled={!isSupervisor || isSaving}
+            className={inputClass(
+              !Number.isInteger(escalateNum) ||
+                escalateNum < 1 ||
+                escalateNum > ttrNum,
+            )}
+          />
+        </td>
+        <td className="py-3 px-4 text-right">
+          {isSupervisor && hasChanges && (
+            <button
+              onClick={() =>
+                onSave({
+                  frtMinutes: frtNum,
+                  ttrMinutes: ttrNum,
+                  escalateAfterMinutes: escalateNum,
+                })
+              }
+              disabled={isSaving || !isValid}
+              className="px-3 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+          )}
+        </td>
+      </tr>
+      {hasChanges && !isValid && (
+        <tr>
+          <td colSpan={5} className="px-4 pb-2">
+            <p className="text-xs text-[#B91C1C]">{validationError}</p>
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 
@@ -202,16 +299,29 @@ const SupportSettingsContent = () => {
   // SLA policy states
   const [slaPolicies, setSlaPolicies] = useState<any[]>([]);
   const [slaLoading, setSlaLoading] = useState(false);
+  const [slaError, setSlaError] = useState<string | null>(null);
   const [slaSaving, setSlaSaving] = useState<string | null>(null);
+
+  const fetchSlaPolicies = useCallback(() => {
+    setSlaLoading(true);
+    setSlaError(null);
+    supportApi.getSlaPolicies()
+      .then((data) => setSlaPolicies(Array.isArray(data) ? data : []))
+      .catch((err: any) => {
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          'Failed to load SLA policies';
+        setSlaError(typeof message === 'string' ? message : 'Failed to load SLA policies');
+        toast.error('Failed to load SLA policies');
+      })
+      .finally(() => setSlaLoading(false));
+  }, []);
 
   useEffect(() => {
     if (activeTab !== 'sla') return;
-    setSlaLoading(true);
-    supportApi.getSlaPolicies()
-      .then(data => setSlaPolicies(data))
-      .catch(() => {})
-      .finally(() => setSlaLoading(false));
-  }, [activeTab]);
+    fetchSlaPolicies();
+  }, [activeTab, fetchSlaPolicies]);
 
   useEffect(() => {
     if (activeTab === 'macros') {
@@ -504,6 +614,24 @@ const SupportSettingsContent = () => {
                       </p>
                       {slaLoading ? (
                         <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[#002D87]" /></div>
+                      ) : slaError ? (
+                        <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-lg p-4 flex items-start gap-3">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[#B91C1C]">Failed to load SLA policies</p>
+                            <p className="text-xs text-[#991B1B] mt-0.5">{slaError}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={fetchSlaPolicies}
+                            className="px-3 py-1.5 bg-white border border-[#FECACA] text-[#B91C1C] text-xs font-medium rounded-lg hover:bg-[#FEF2F2]"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : slaPolicies.length === 0 ? (
+                        <div className="text-center py-8 text-sm text-[#6B7280]">
+                          No SLA policies configured. Contact an administrator.
+                        </div>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
@@ -529,7 +657,13 @@ const SupportSettingsContent = () => {
                                       const updated = await supportApi.updateSlaPolicy(policy.priority, data);
                                       setSlaPolicies(prev => prev.map(p => p.priority === policy.priority ? updated : p));
                                       toast.success('SLA policy updated');
-                                    } catch { toast.error('Failed to update'); }
+                                    } catch (err: any) {
+                                      const message =
+                                        err?.response?.data?.message ||
+                                        err?.message ||
+                                        'Failed to update SLA policy';
+                                      toast.error(typeof message === 'string' ? message : 'Failed to update');
+                                    }
                                     finally { setSlaSaving(null); }
                                   }}
                                 />

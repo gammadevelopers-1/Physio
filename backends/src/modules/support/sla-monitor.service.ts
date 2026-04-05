@@ -141,8 +141,11 @@ export class SlaMonitorService {
                     .update(tickets)
                     .set({
                       assigneeId: newAssignee,
-                      // Reset breach flag for new agent's fresh start
-                      slaBreachedFrt: false,
+                      // Batch 3: do NOT reset slaBreachedFrt here. The
+                      // breach is a historical fact needed by reports and
+                      // the breach banner on the detail view. The
+                      // `frt_breach_reassigned` slaEvents row records the
+                      // remediation; the flag stays true.
                       updatedAt: now,
                     })
                     .where(eq(tickets.id, ticket.id));
@@ -252,12 +255,28 @@ export class SlaMonitorService {
                   })
                   .where(eq(tickets.id, ticket.id));
 
+                // Look up the supervisor once so we can (a) record them in
+                // the sla_events audit row and (b) email them below. Spec:
+                // "breach-alert notifications to the assigned agent AND
+                // their supervisor."
+                const supervisorId =
+                  await this.supportService.findSupervisorId();
+
+                if (!supervisorId) {
+                  this.logger.warn(
+                    `TTR breach on ticket ${ticket.id}: no supervisor configured — escalation email skipped. Configure at least one SUPPORT user with supportSubRole='supervisor'.`,
+                  );
+                }
+
+                const notifiedIds: string[] = [];
+                if (ticket.assigneeId) notifiedIds.push(ticket.assigneeId);
+                if (supervisorId && supervisorId !== ticket.assigneeId)
+                  notifiedIds.push(supervisorId);
+
                 await db.insert(slaEvents).values({
                   ticketId: ticket.id,
                   eventType: SLA_EVENT_TYPES.TTR_BREACH,
-                  notifiedUserIds: ticket.assigneeId
-                    ? [ticket.assigneeId]
-                    : [],
+                  notifiedUserIds: notifiedIds,
                 });
 
                 // NO auto-reassignment for TTR breach (SLA-04)
@@ -265,7 +284,7 @@ export class SlaMonitorService {
                   `TTR breach on ticket ${ticket.id} — agent keeps ticket, supervisor notified`,
                 );
 
-                // Send TTR breach email
+                // Send TTR breach email to the assigned agent
                 try {
                   if (ticket.assigneeId) {
                     const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
@@ -276,6 +295,25 @@ export class SlaMonitorService {
                         ticket.id,
                         '',
                         String(policy.ttrMinutes),
+                      );
+                    }
+                  }
+                } catch { /* non-blocking */ }
+
+                // Send escalation email to the supervisor
+                try {
+                  if (supervisorId) {
+                    const [supInfo] = await db
+                      .select({ email: users.email, firstName: users.firstName })
+                      .from(users)
+                      .where(eq(users.id, supervisorId));
+                    if (supInfo?.email) {
+                      await this.emailService.sendTicketEscalation(
+                        supInfo.email,
+                        supInfo.firstName || 'Supervisor',
+                        ticket.id,
+                        '',
+                        `TTR breached: ${policy.ttrMinutes}m target exceeded`,
                       );
                     }
                   }

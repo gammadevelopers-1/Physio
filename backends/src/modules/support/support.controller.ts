@@ -11,6 +11,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -387,6 +388,47 @@ export class SupportController {
     return this.supportService.getCourseTicketCount(courseId);
   }
 
+  // ─── SLA Policy Endpoints ──────────────────────────────
+  // NOTE: These MUST be declared before `@Get(':id')` below, otherwise
+  // NestJS matches `/tickets/sla-policies` against the UUID route first
+  // and ParseUUIDPipe throws 400. Same applies to any future literal paths.
+
+  @Get('sla-policies')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getSlaPolicies() {
+    return this.supportService.getSlaPolicies();
+  }
+
+  @Put('sla-policies/:priority')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateSlaPolicy(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('priority') priority: string,
+    @Body() dto: UpdateSlaPolicyDto,
+  ) {
+    // Batch 6.2: validate priority path param up front
+    const ALLOWED_PRIORITIES = ['high', 'medium', 'low'];
+    if (!ALLOWED_PRIORITIES.includes(priority)) {
+      throw new BadRequestException(
+        `Invalid priority "${priority}". Must be one of: ${ALLOWED_PRIORITIES.join(', ')}`,
+      );
+    }
+
+    // Only supervisors and admins can update (SA-05: agents get 403)
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors can update SLA policies',
+      );
+    }
+
+    return this.supportService.updateSlaPolicy(priority, dto);
+  }
+
   // ─── Get Ticket Detail ──────────────────────────────────
 
   @Get(':id')
@@ -454,33 +496,4 @@ export class SupportController {
     return this.supportService.applyMacro(body.macroId, id);
   }
 
-  // ─── SLA Policy Endpoints ──────────────────────────────
-
-  @Get('sla-policies')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async getSlaPolicies() {
-    return this.supportService.getSlaPolicies();
-  }
-
-  @Put('sla-policies/:priority')
-  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async updateSlaPolicy(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('priority') priority: string,
-    @Body() dto: UpdateSlaPolicyDto,
-  ) {
-    // Only supervisors and admins can update (SA-05: agents get 403)
-    const isSupervisorOrAdmin =
-      user.supportSubRole === 'supervisor' ||
-      user.roles.includes('ADMIN') ||
-      user.roles.includes('SUPER_ADMIN');
-
-    if (!isSupervisorOrAdmin) {
-      throw new ForbiddenException(
-        'Only supervisors can update SLA policies',
-      );
-    }
-
-    return this.supportService.updateSlaPolicy(priority, dto);
-  }
 }

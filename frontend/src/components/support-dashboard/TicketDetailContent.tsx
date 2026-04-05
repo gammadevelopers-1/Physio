@@ -186,6 +186,23 @@ const TicketDetailContent = () => {
     }
   }
 
+  // Format a positive minute count as a human-readable duration.
+  // < 60m   → "45m"
+  // < 24h   → "2h 15m" (omits "0m")
+  // >= 24h  → "3d 4h"  (omits "0h")
+  function formatDuration(totalMinutes: number): string {
+    const mins = Math.max(0, Math.round(totalMinutes));
+    if (mins < 60) return `${mins}m`;
+    if (mins < 60 * 24) {
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    }
+    const d = Math.floor(mins / (60 * 24));
+    const h = Math.floor((mins % (60 * 24)) / 60);
+    return h > 0 ? `${d}d ${h}h` : `${d}d`;
+  }
+
   const priorityStyles: Record<string, string> = {
     high: "bg-[#FEE2E2] text-[#EF4444]",
     medium: "bg-[#FFEDD5] text-[#F97316]",
@@ -433,7 +450,7 @@ const TicketDetailContent = () => {
                           <button
                             onClick={handleSendReply}
                             disabled={!replyMessage.trim() || isSending}
-                            className="flex items-center gap-2 px-4 py-2 bg-[#002D87] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isSending ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -530,9 +547,7 @@ const TicketDetailContent = () => {
                                         ? "text-[#F59E0B]"
                                         : "text-[#EF4444]"
                                   }`}>
-                                    {ticket.frtRemainingMinutes > 60
-                                      ? `${Math.floor(ticket.frtRemainingMinutes / 60)}h ${ticket.frtRemainingMinutes % 60}m remaining`
-                                      : `${ticket.frtRemainingMinutes}m remaining`}
+                                    {formatDuration(ticket.frtRemainingMinutes)} remaining
                                   </span>
                                 </div>
                                 <div className="w-full bg-[#F3F4F6] rounded-full h-1.5 mt-1.5">
@@ -553,7 +568,7 @@ const TicketDetailContent = () => {
                             )}
                             {ticket.slaBreachedFrt && ticket.frtRemainingMinutes != null && (
                               <span className="text-xs text-[#EF4444]">
-                                Overdue by {Math.abs(ticket.frtRemainingMinutes)}m
+                                Overdue by {formatDuration(Math.abs(ticket.frtRemainingMinutes))}
                               </span>
                             )}
                           </div>
@@ -589,9 +604,7 @@ const TicketDetailContent = () => {
                                         ? "text-[#F59E0B]"
                                         : "text-[#EF4444]"
                                   }`}>
-                                    {ticket.ttrRemainingMinutes > 60
-                                      ? `${Math.floor(ticket.ttrRemainingMinutes / 60)}h ${ticket.ttrRemainingMinutes % 60}m remaining`
-                                      : `${ticket.ttrRemainingMinutes}m remaining`}
+                                    {formatDuration(ticket.ttrRemainingMinutes)} remaining
                                   </span>
                                 </div>
                                 <div className="w-full bg-[#F3F4F6] rounded-full h-1.5 mt-1.5">
@@ -612,7 +625,7 @@ const TicketDetailContent = () => {
                             )}
                             {ticket.slaBreachedTtr && ticket.ttrRemainingMinutes != null && (
                               <span className="text-xs text-[#EF4444]">
-                                Overdue by {Math.abs(ticket.ttrRemainingMinutes)}m
+                                Overdue by {formatDuration(Math.abs(ticket.ttrRemainingMinutes))}
                               </span>
                             )}
                             {ticket.status === "on_hold" && (

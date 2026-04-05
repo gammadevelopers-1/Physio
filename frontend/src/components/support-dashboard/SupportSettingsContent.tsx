@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { profileApi, supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import Link from "next/link";
 import SupportSidebar from "./SupportSidebar";
@@ -180,13 +181,7 @@ const SupportSettingsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { user, refreshUser } = useAuth();
-  const profile = {
-    name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
-    email: user?.email || "",
-    resolved: 0,
-    csat: 0,
-    avgFRT: "--",
-  };
+  const profile = useSupportProfile();
   const [activeTab, setActiveTab] = useState("profile");
 
   // Profile form state

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   ClipboardList,
   MessageSquare,
@@ -12,12 +14,13 @@ import {
   Plus,
   BookOpen,
   Download,
-  MessageCircle,
+  Users,
   Zap,
   ArrowRight,
   Loader2,
 } from "lucide-react";
 import { supportApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 function formatRelativeTime(dateStr: string): string {
   const now = Date.now();
@@ -49,6 +52,13 @@ const SupportRightSidebar = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const router = useRouter();
+  const { user } = useAuth();
+  const isSupervisor = user?.supportSubRole === "supervisor";
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
+  const [isExporting, setIsExporting] = useState(false);
 
   const [activityItems, setActivityItems] = useState<
     { id: string; icon: typeof ClipboardList; iconBg: string; iconColor: string; description: string; time: string }[]
@@ -57,6 +67,14 @@ const SupportRightSidebar = () => {
     { id: string; type: "error" | "warning"; titleKey: string; descriptionKey: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
+
+  // CSAT/NPS summary state sourced from the extended getKPIs() response.
+  const [csatStats, setCsatStats] = useState<{
+    avgScore: number;
+    responses: number;
+    npsScore: number;
+    npsResponses: number;
+  }>({ avgScore: 0, responses: 0, npsScore: 0, npsResponses: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +102,14 @@ const SupportRightSidebar = () => {
           };
         });
         setActivityItems(mapped);
+
+        // CSAT + NPS summary (already computed inside getKPIs)
+        setCsatStats({
+          avgScore: Number(kpisRes?.csatAvgScore) || 0,
+          responses: Number(kpisRes?.csatResponses) || 0,
+          npsScore: Number(kpisRes?.npsScore) || 0,
+          npsResponses: Number(kpisRes?.npsResponses) || 0,
+        });
 
         // Derive alerts from KPIs
         const derivedAlerts: typeof alerts = [];
@@ -121,29 +147,74 @@ const SupportRightSidebar = () => {
     }
 
     fetchData();
-    return () => { cancelled = true; };
+    // Auto-refresh every 60s while visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchData();
+    }, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
-  const quickActions = [
+  async function handleExportReport() {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const res = await supportApi.exportReport("volume");
+      // Backend returns { csv, filename } — turn it into a download
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.filename || `support-volume-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
+    } catch {
+      toast.error("Failed to export report");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  const quickActions: {
+    id: string;
+    icon: typeof Plus;
+    labelKey: string;
+    onClick: () => void;
+    disabled?: boolean;
+  }[] = [
     {
       id: "newTicket",
       icon: Plus,
       labelKey: "quickActions.newTicket",
+      // Supervisors/agents create tickets via the All Tickets board ("New" button)
+      onClick: () => router.push(`${basePath}/tickets?new=1`),
     },
     {
       id: "knowledgeBase",
       icon: BookOpen,
       labelKey: "quickActions.knowledgeBase",
+      onClick: () => router.push(`${basePath}/kb`),
     },
     {
       id: "exportReport",
       icon: Download,
       labelKey: "quickActions.exportReport",
+      onClick: handleExportReport,
+      disabled: isExporting,
     },
     {
       id: "teamChat",
-      icon: MessageCircle,
+      // Team Chat is not implemented yet; button routes to the Team page
+      // (where supervisors can see the agent roster). Relabel by the
+      // existing i18n key and swap the icon to Users for clarity.
+      icon: Users,
       labelKey: "quickActions.teamChat",
+      onClick: () => router.push(`${basePath}/team`),
     },
   ];
 
@@ -156,26 +227,58 @@ const SupportRightSidebar = () => {
         </h3>
 
         <div className="flex items-center justify-center mb-4">
-          <div className="w-20 h-20 rounded-full bg-[#F3F4F6] flex items-center justify-center">
-            <span className="text-2xl font-bold text-[#6B7280]">--</span>
+          <div
+            className={`w-20 h-20 rounded-full flex items-center justify-center ${
+              csatStats.avgScore >= 4
+                ? "bg-[#DCFCE7]"
+                : csatStats.avgScore >= 3
+                  ? "bg-[#FEF9C3]"
+                  : csatStats.avgScore > 0
+                    ? "bg-[#FEE2E2]"
+                    : "bg-[#F3F4F6]"
+            }`}
+          >
+            <span
+              className={`text-2xl font-bold ${
+                csatStats.avgScore >= 4
+                  ? "text-[#16A34A]"
+                  : csatStats.avgScore >= 3
+                    ? "text-[#CA8A04]"
+                    : csatStats.avgScore > 0
+                      ? "text-[#DC2626]"
+                      : "text-[#6B7280]"
+              }`}
+            >
+              {csatStats.avgScore > 0
+                ? csatStats.avgScore.toFixed(1)
+                : "—"}
+            </span>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#111827]">0</p>
+            <p className="text-sm font-semibold text-[#111827]">
+              {csatStats.responses}
+            </p>
             <p className="text-[10px] text-[#6B7280]">
               {t("csatSection.responses")}
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#6B7280]">--</p>
+            <p className="text-sm font-semibold text-[#111827]">
+              {csatStats.npsResponses > 0 ? csatStats.npsScore : "—"}
+            </p>
             <p className="text-[10px] text-[#6B7280]">
               {t("csatSection.nps")}
             </p>
           </div>
           <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
-            <p className="text-sm font-semibold text-[#6B7280]">--</p>
+            <p className="text-sm font-semibold text-[#111827]">
+              {csatStats.avgScore > 0
+                ? `${csatStats.avgScore.toFixed(1)}/5`
+                : "—"}
+            </p>
             <p className="text-[10px] text-[#6B7280]">
               {t("csatSection.avgRating")}
             </p>
@@ -230,7 +333,7 @@ const SupportRightSidebar = () => {
 
         <div className="mt-3 pt-3 border-t border-[#F3F4F6] text-center">
           <Link
-            href={`/${locale}/dashboard/support/activity`}
+            href={`${basePath}/tickets`}
             className="text-[13px] font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center justify-center gap-1"
           >
             {t("activity.viewAll")}
@@ -305,9 +408,16 @@ const SupportRightSidebar = () => {
             return (
               <button
                 key={action.id}
-                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                type="button"
+                onClick={action.onClick}
+                disabled={action.disabled}
+                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Icon className="w-3.5 h-3.5" />
+                {action.id === "exportReport" && isExporting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Icon className="w-3.5 h-3.5" />
+                )}
                 {t(action.labelKey)}
               </button>
             );

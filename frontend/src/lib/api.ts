@@ -2524,10 +2524,28 @@ export const supportApi = {
       openTickets: number;
       highPriorityOpen: number;
       slaBreaches: number;
+      slaCompliance: number;
       avgFrtMinutes: number | null;
       avgTtrMinutes: number | null;
+      csatAvgScore: number;
+      csatResponses: number;
+      csatResponseRate: number;
+      npsScore: number;
+      npsResponses: number;
       statusBreakdown: Record<string, number>;
     }>('/tickets/kpis'),
+
+  // Per-user sidebar stats (for the logged-in agent / supervisor)
+  getMyPerformance: () =>
+    api.get<{
+      totalTickets: number;
+      resolvedCount: number;
+      avgFrtMinutes: number | null;
+      csatAvgScore: number | null;
+      csatResponses: number;
+      frtBreaches: number;
+      ttrBreaches: number;
+    }>('/tickets/my-performance'),
 
   getAgents: () =>
     api.get<

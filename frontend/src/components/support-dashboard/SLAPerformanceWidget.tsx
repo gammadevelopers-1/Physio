@@ -2,26 +2,42 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useRouter } from "next/navigation";
 import { BarChart3, ArrowRight, Loader2 } from "lucide-react";
 import { supportApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface AgentPerfRow {
+  userId: string;
+  name: string;
+  totalTickets: number;
+  openTickets: number;
+  resolvedTickets: number;
+  avgFrtMinutes: number | null;
+  csatAvgScore: number | null;
+  csatResponses: number;
+  frtBreaches: number;
+  ttrBreaches: number;
+}
 
 const SLAPerformanceWidget = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const router = useRouter();
+  const { user } = useAuth();
+  const isSupervisor = user?.supportSubRole === "supervisor";
+  const basePath = isSupervisor
+    ? `/${locale}/dashboard/support/supervisor`
+    : `/${locale}/dashboard/support/agent`;
 
-  const [kpiData, setKpiData] = useState<{
-    openTickets: number;
-    highPriorityOpen: number;
-    slaBreaches: number;
-    avgFrtMinutes: number | null;
-    avgTtrMinutes: number | null;
-    statusBreakdown: Record<string, number>;
-  } | null>(null);
-  const [agentData, setAgentData] = useState<
+  const [kpiData, setKpiData] = useState<Awaited<
+    ReturnType<typeof supportApi.getKPIs>
+  > | null>(null);
+  const [agentPerf, setAgentPerf] = useState<AgentPerfRow[]>([]);
+  const [agentDirectory, setAgentDirectory] = useState<
     {
       userId: string;
-      supportSubRole: string | null;
       firstName: string | null;
       lastName: string | null;
       email: string;
@@ -30,21 +46,33 @@ const SLAPerformanceWidget = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       try {
-        const [kpis, agentsRes] = await Promise.all([
+        const [kpis, agentsRes, perfRes] = await Promise.all([
           supportApi.getKPIs(),
           supportApi.getAgents(),
+          supportApi.getAgentPerformance(),
         ]);
-        setKpiData(kpis.data);
-        setAgentData(agentsRes.data ?? []);
+        if (cancelled) return;
+        setKpiData(kpis);
+        setAgentDirectory(Array.isArray(agentsRes) ? agentsRes : []);
+        setAgentPerf(Array.isArray(perfRes) ? (perfRes as AgentPerfRow[]) : []);
       } catch (err) {
         console.error("Failed to load SLA data:", err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
+    // Auto-refresh every 60s while the tab is visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchData();
+    }, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   const formatMinutes = (minutes: number | null): string => {
@@ -103,19 +131,28 @@ const SLAPerformanceWidget = () => {
       ]
     : [];
 
-  const agents = agentData.map((agent) => {
+  // Build a perf lookup keyed by userId so we can merge against the
+  // agent directory (which has first/last name for avatar initials).
+  const perfByUser = new Map(agentPerf.map((p) => [p.userId, p]));
+  const agents = agentDirectory.map((agent) => {
     const first = agent.firstName ?? "";
     const last = agent.lastName ?? "";
-    const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || agent.email.charAt(0).toUpperCase();
+    const initials =
+      `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() ||
+      agent.email.charAt(0).toUpperCase();
     const displayName = first && last ? `${first} ${last}` : agent.email;
+    const perf = perfByUser.get(agent.userId);
     return {
       id: agent.userId,
       displayName,
       initials,
       status: "online" as const,
-      openTickets: "--" as const,
-      avgResponse: "--",
-      csat: "--" as const,
+      openTickets: perf ? String(perf.openTickets) : "0",
+      avgResponse: formatMinutes(perf?.avgFrtMinutes ?? null),
+      csat:
+        perf && perf.csatAvgScore != null
+          ? perf.csatAvgScore.toFixed(1)
+          : "—",
     };
   });
 
@@ -147,7 +184,11 @@ const SLAPerformanceWidget = () => {
             {t("sla.title")}
           </h3>
         </div>
-        <button className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => router.push(`${basePath}/reports`)}
+          className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline flex items-center gap-1"
+        >
           {t("sla.viewDetails")}
           <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
         </button>
@@ -236,7 +277,7 @@ const SLAPerformanceWidget = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-[13px] font-semibold text-[#16A34A]">
-                      {agent.csat === "--" ? "--" : `${agent.csat}%`}
+                      {agent.csat === "—" ? "—" : `${agent.csat}/5`}
                     </p>
                     <p className="text-[10px] text-[#9CA3AF]">
                       {t("sla.csat")}

@@ -888,18 +888,52 @@ export class SupportService {
       .from(tickets)
       .groupBy(tickets.status);
 
+    const statusMap = statusBreakdown.reduce(
+      (acc, row) => ({ ...acc, [row.status]: row.count }),
+      {} as Record<string, number>,
+    );
+
+    // CSAT + NPS summaries — reuse existing methods so we only compute
+    // these numbers in one place. Used to populate the main KPI cards
+    // and the right-rail CSAT widget.
+    const csatSummary = await this.getCsatSummary();
+    const npsSummary = await this.getNpsSummary();
+
+    // SLA compliance % = (resolved_or_closed - breached) / resolved_or_closed
+    // The breachCount query above counts tickets with either FRT or TTR
+    // breached. We divide against resolved+closed because that is the
+    // denominator of "what had a chance to meet SLA".
+    const totalResolved = Number(statusMap['resolved'] ?? 0);
+    const totalClosed = Number(statusMap['closed'] ?? 0);
+    const totalResolvedOrClosed = totalResolved + totalClosed;
+    const totalBreaches = Number(breachCount?.count ?? 0);
+    const slaCompliance =
+      totalResolvedOrClosed > 0
+        ? Math.max(
+            0,
+            Math.round(
+              ((totalResolvedOrClosed - totalBreaches) /
+                totalResolvedOrClosed) *
+                100,
+            ),
+          )
+        : 100;
+
     return {
       openTickets: openCount?.count ?? 0,
       highPriorityOpen: highCount?.count ?? 0,
-      slaBreaches: breachCount?.count ?? 0,
+      slaBreaches: totalBreaches,
+      slaCompliance,
       avgFrtMinutes:
         avgFrtMinutes == null ? null : Math.round(avgFrtMinutes),
       avgTtrMinutes:
         avgTtrMinutes == null ? null : Math.round(avgTtrMinutes),
-      statusBreakdown: statusBreakdown.reduce(
-        (acc, row) => ({ ...acc, [row.status]: row.count }),
-        {} as Record<string, number>,
-      ),
+      csatAvgScore: csatSummary.avgScore,
+      csatResponses: csatSummary.totalResponded,
+      csatResponseRate: csatSummary.responseRate,
+      npsScore: npsSummary.npsScore,
+      npsResponses: npsSummary.totalResponded,
+      statusBreakdown: statusMap,
     };
   }
 
@@ -1917,6 +1951,78 @@ export class SupportService {
     };
   }
 
+  // ─── Per-User Performance ──────────────────────────────
+  // Used by the support dashboard sidebar profile card to show the
+  // logged-in agent or supervisor their own resolved count, CSAT average,
+  // and average FRT. Cheaper than getAgentPerformance (which loops all
+  // agents) and also includes CSAT, which getAgentPerformance does not.
+
+  async getMyPerformance(userId: string) {
+    // 1. All tickets where this user is the assignee
+    const userTickets = await db
+      .select({
+        id: tickets.id,
+        firstResponseAt: tickets.firstResponseAt,
+        createdAt: tickets.createdAt,
+        resolvedAt: tickets.resolvedAt,
+        slaBreachedFrt: tickets.slaBreachedFrt,
+        slaBreachedTtr: tickets.slaBreachedTtr,
+      })
+      .from(tickets)
+      .where(eq(tickets.assigneeId, userId));
+
+    const totalTickets = userTickets.length;
+    const resolvedCount = userTickets.filter((t) => t.resolvedAt).length;
+
+    // Avg FRT in business minutes
+    const frtSamples = userTickets
+      .filter((t) => t.firstResponseAt)
+      .map((t) =>
+        calculateBusinessMinutesElapsed(t.createdAt, t.firstResponseAt!),
+      )
+      .filter((m) => Number.isFinite(m) && m >= 0);
+    const avgFrtMinutes =
+      frtSamples.length > 0
+        ? Math.round(
+            frtSamples.reduce((a, b) => a + b, 0) / frtSamples.length,
+          )
+        : null;
+
+    // 2. Per-user CSAT — join csat_surveys via ticket.assigneeId so we
+    // only count ratings on tickets this user actually resolved.
+    const userCsat = await db
+      .select({ score: csatSurveys.score })
+      .from(csatSurveys)
+      .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+      .where(
+        and(
+          eq(tickets.assigneeId, userId),
+          sql`${csatSurveys.score} IS NOT NULL`,
+        ),
+      );
+
+    const csatScores = userCsat
+      .map((r) => r.score)
+      .filter((s): s is number => s != null);
+    const csatAvgScore =
+      csatScores.length > 0
+        ? Math.round(
+            (csatScores.reduce((a, b) => a + b, 0) / csatScores.length) *
+              10,
+          ) / 10
+        : null;
+
+    return {
+      totalTickets,
+      resolvedCount,
+      avgFrtMinutes,
+      csatAvgScore,
+      csatResponses: csatScores.length,
+      frtBreaches: userTickets.filter((t) => t.slaBreachedFrt).length,
+      ttrBreaches: userTickets.filter((t) => t.slaBreachedTtr).length,
+    };
+  }
+
   async getAgentPerformance(dateFrom?: string, dateTo?: string) {
     const agents = await this.getAgents();
 
@@ -1929,6 +2035,7 @@ export class SupportService {
       const agentTickets = await db
         .select({
           id: tickets.id,
+          status: tickets.status,
           firstResponseAt: tickets.firstResponseAt,
           createdAt: tickets.createdAt,
           resolvedAt: tickets.resolvedAt,
@@ -1941,6 +2048,14 @@ export class SupportService {
       const resolved = agentTickets.filter((t) => t.resolvedAt);
       const frtBreaches = agentTickets.filter((t) => t.slaBreachedFrt).length;
       const ttrBreaches = agentTickets.filter((t) => t.slaBreachedTtr).length;
+
+      // Open tickets count (currently NEW / IN_PROGRESS / ON_HOLD)
+      const openTickets = agentTickets.filter(
+        (t) =>
+          t.status === TICKET_STATUS.NEW ||
+          t.status === TICKET_STATUS.IN_PROGRESS ||
+          t.status === TICKET_STATUS.ON_HOLD,
+      ).length;
 
       // Avg FRT (minutes)
       const frtTimes = agentTickets
@@ -1959,12 +2074,38 @@ export class SupportService {
             )
           : null;
 
+      // Per-agent CSAT avg — only count ratings on tickets this agent
+      // was assigned to
+      const agentCsat = await db
+        .select({ score: csatSurveys.score })
+        .from(csatSurveys)
+        .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
+        .where(
+          and(
+            eq(tickets.assigneeId, agent.userId),
+            sql`${csatSurveys.score} IS NOT NULL`,
+          ),
+        );
+      const csatScores = agentCsat
+        .map((r) => r.score)
+        .filter((s): s is number => s != null);
+      const csatAvgScore =
+        csatScores.length > 0
+          ? Math.round(
+              (csatScores.reduce((a, b) => a + b, 0) / csatScores.length) *
+                10,
+            ) / 10
+          : null;
+
       results.push({
         userId: agent.userId,
         name: [agent.firstName, agent.lastName].filter(Boolean).join(' '),
         totalTickets: agentTickets.length,
+        openTickets,
         resolvedTickets: resolved.length,
         avgFrtMinutes: avgFrt,
+        csatAvgScore,
+        csatResponses: csatScores.length,
         frtBreaches,
         ttrBreaches,
       });
@@ -2042,20 +2183,20 @@ export class SupportService {
   }
 
   // ─── Admin Support KPIs ────────────────────────────────
+  // Kept as a thin alias over getKPIs() since getKPIs now includes
+  // CSAT + NPS + SLA compliance fields. Preserved for any existing
+  // admin widget that hits /api/tickets/admin/support-kpis.
 
   async getAdminSupportKpis() {
     const kpis = await this.getKPIs();
-    const csatSummary = await this.getCsatSummary();
-    const npsSummary = await this.getNpsSummary();
-
     return {
       avgFrtMinutes: kpis.avgFrtMinutes,
       avgTtrMinutes: kpis.avgTtrMinutes,
       openTickets: kpis.openTickets,
       slaBreaches: kpis.slaBreaches,
-      csatAvgScore: csatSummary.avgScore,
-      npsScore: npsSummary.npsScore,
-      csatResponseRate: csatSummary.responseRate,
+      csatAvgScore: kpis.csatAvgScore,
+      npsScore: kpis.npsScore,
+      csatResponseRate: kpis.csatResponseRate,
       statusBreakdown: kpis.statusBreakdown,
     };
   }

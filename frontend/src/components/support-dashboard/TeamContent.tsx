@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
@@ -36,13 +37,7 @@ const TeamContent = () => {
   const [agentForm, setAgentForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' });
   const [isCreating, setIsCreating] = useState(false);
 
-  const profile = {
-    name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
-    email: user?.email || "",
-    resolved: 0,
-    csat: 0,
-    avgFRT: "--",
-  };
+  const profile = useSupportProfile();
 
   const [apiAgents, setApiAgents] = useState<any[]>([]);
   const [isLoadingAgents, setIsLoadingAgents] = useState(true);

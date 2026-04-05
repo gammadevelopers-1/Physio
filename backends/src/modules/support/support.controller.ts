@@ -388,6 +388,17 @@ export class SupportController {
     return this.supportService.getCourseTicketCount(courseId);
   }
 
+  // ─── My Performance (per-user sidebar stats) ──────────
+  // MUST be declared before `@Get(':id')` so Nest doesn't route
+  // `/tickets/my-performance` through the UUID handler. Returns the
+  // logged-in agent/supervisor's resolved count, avg FRT, and CSAT avg.
+
+  @Get('my-performance')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getMyPerformance(@CurrentUser() user: AuthenticatedUser) {
+    return this.supportService.getMyPerformance(user.id);
+  }
+
   // ─── SLA Policy Endpoints ──────────────────────────────
   // NOTE: These MUST be declared before `@Get(':id')` below, otherwise
   // NestJS matches `/tickets/sla-policies` against the UUID route first

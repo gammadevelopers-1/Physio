@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -42,15 +43,7 @@ const MyTicketsContent = () => {
   const { user } = useAuth();
   const router = useRouter();
 
-  const profile = {
-    name: user
-      ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-      : "",
-    email: user?.email || "",
-    resolved: 0,
-    csat: 0,
-    avgFRT: "--",
-  };
+  const profile = useSupportProfile();
 
   const [apiTickets, setApiTickets] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

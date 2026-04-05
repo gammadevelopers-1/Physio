@@ -552,6 +552,11 @@ export class SlaMonitorService {
       const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
       const cutoff = new Date(Date.now() - FIFTEEN_MINUTES_MS);
 
+      // leftJoin users so guest tickets (userId = GUEST_USER_ID sentinel)
+      // don't get excluded. Also pull guestEmail/guestName from the ticket
+      // row so we can route to the real guest address when the survey
+      // userId points at the sentinel user. This mirrors the guest handling
+      // in submitCsatScore() for the detractor follow-up path.
       const pendingSurveys = await db
         .select({
           surveyId: csatSurveys.id,
@@ -562,10 +567,12 @@ export class SlaMonitorService {
           ticketResolvedAt: tickets.resolvedAt,
           userEmail: users.email,
           userFirstName: users.firstName,
+          guestEmail: tickets.guestEmail,
+          guestName: tickets.guestName,
         })
         .from(csatSurveys)
         .innerJoin(tickets, eq(csatSurveys.ticketId, tickets.id))
-        .innerJoin(users, eq(csatSurveys.userId, users.id))
+        .leftJoin(users, eq(csatSurveys.userId, users.id))
         .where(
           and(
             sql`${csatSurveys.score} IS NULL`,
@@ -582,9 +589,23 @@ export class SlaMonitorService {
 
       for (const survey of pendingSurveys) {
         try {
+          // Prefer the guest email/name when the ticket is a guest ticket
+          // (identified by a non-null guestEmail on the ticket row). Fall
+          // back to the learner's user row otherwise.
+          const recipientEmail = survey.guestEmail || survey.userEmail;
+          const recipientName =
+            survey.guestName || survey.userFirstName || 'Student';
+
+          if (!recipientEmail) {
+            this.logger.warn(
+              `CSAT survey ${survey.surveyId} skipped: no recipient email (ticket ${survey.ticketId})`,
+            );
+            continue;
+          }
+
           await this.emailService.sendCsatSurvey(
-            survey.userEmail,
-            survey.userFirstName || 'Student',
+            recipientEmail,
+            recipientName,
             survey.ticketId,
             survey.surveyId,
           );
@@ -595,7 +616,7 @@ export class SlaMonitorService {
             .set({ sentAt: new Date() })
             .where(eq(csatSurveys.id, survey.surveyId));
 
-          this.logger.log(`CSAT email sent for ticket ${survey.ticketId}`);
+          this.logger.log(`CSAT email sent for ticket ${survey.ticketId} → ${recipientEmail}`);
         } catch (err) {
           this.logger.error(
             `Failed to send CSAT email for survey ${survey.surveyId}: ${err}`,

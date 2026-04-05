@@ -25,9 +25,12 @@ interface SupportProfile {
   name: string;
   email: string;
   resolved: number;
-  csat: number;
-  avgFRT: string;
+  csat: number | null;  // 1-5 star average, null when no responses yet
+  avgFRT: string;       // pre-formatted ("18m", "2h 15m", "--")
   avatar?: string;
+  totalTickets?: number;
+  hasAnyTickets?: boolean;
+  isLoading?: boolean;
 }
 
 interface SupportSidebarProps {
@@ -236,27 +239,44 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="mt-6 flex justify-around py-4 border-t border-[#E5E7EB]">
-          <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">
-              {profile.resolved}
+        {/* Stats Row — real data from useSupportProfile.
+            For users who have never been assigned a ticket (new agents,
+            supervisors who don't own the queue), show a friendly empty
+            state instead of "0 / — / --". */}
+        {profile.hasAnyTickets === false && !profile.isLoading ? (
+          <div className="mt-6 py-4 border-t border-[#E5E7EB] text-center">
+            <p className="text-xs text-[#6B7280]">
+              {isSupervisor
+                ? "You don't have assigned tickets yet. View your team's performance in Reports."
+                : "You haven't been assigned any tickets yet."}
             </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.resolved")}</p>
           </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-[#16A34A]">
-              {profile.csat}%
-            </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.csat")}</p>
+        ) : (
+          <div className="mt-6 flex justify-around py-4 border-t border-[#E5E7EB]">
+            <div className="text-center">
+              <p className="text-xl font-bold text-[#1F2937]">
+                {profile.resolved}
+              </p>
+              <p className="text-xs text-[#6B7280]">{t("sidebar.resolved")}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-[#16A34A]">
+                {profile.csat != null
+                  ? `${profile.csat.toFixed(1)}`
+                  : "—"}
+              </p>
+              <p className="text-xs text-[#6B7280]">
+                {profile.csat != null ? "CSAT /5" : t("sidebar.csat")}
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-[#1F2937]">
+                {profile.avgFRT}
+              </p>
+              <p className="text-xs text-[#6B7280]">{t("sidebar.avgFRT")}</p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">
-              {profile.avgFRT}
-            </p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.avgFRT")}</p>
-          </div>
-        </div>
+        )}
 
         {/* View Profile Button */}
         <Link

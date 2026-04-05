@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
 import SupportNavbar from "./SupportNavbar";
@@ -23,13 +24,7 @@ const SupportReportsContent = () => {
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { user } = useAuth();
-  const profile = {
-    name: user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : "",
-    email: user?.email || "",
-    resolved: 0,
-    csat: 0,
-    avgFRT: "--",
-  };
+  const profile = useSupportProfile();
   const [selectedReport, setSelectedReport] = useState("ticketVolume");
   const [period, setPeriod] = useState("thisWeek");
   const [groupBy, setGroupBy] = useState("byCategory");

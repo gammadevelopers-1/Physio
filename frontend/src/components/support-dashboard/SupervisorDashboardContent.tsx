@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
+import { useSupportProfile } from "@/hooks/useSupportProfile";
 import SupportNavbar from "./SupportNavbar";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
@@ -11,6 +12,15 @@ import SupportKPICards from "./SupportKPICards";
 import TicketsBoardWidget from "./TicketsBoardWidget";
 import SLAPerformanceWidget from "./SLAPerformanceWidget";
 import SupportRightSidebar from "./SupportRightSidebar";
+
+// Format a minute count as a compact human-readable duration.
+function formatMinutes(minutes: number | null | undefined): string {
+  if (minutes == null) return "--";
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  const hours = minutes / 60;
+  if (hours < 24) return `${hours.toFixed(1)}h`;
+  return `${(hours / 24).toFixed(1)}d`;
+}
 
 const SupervisorDashboardContent = () => {
   const t = useTranslations("supportDashboard");
@@ -26,49 +36,51 @@ const SupervisorDashboardContent = () => {
     avgResponseTrend: "",
     avgResolution: "--",
     resolutionTarget: "6h",
-    csatScore: 0,
+    csatScore: 0,        // displayed as "X.X/5"
+    csatResponses: 0,
     csatTrend: "",
-    slaCompliance: 0,
+    slaCompliance: 100,
     slaBreaches: 0,
     escalatedTickets: 0,
     escalatedTrend: "",
+    npsScore: 0,
+    npsResponses: 0,
   });
 
-  const profile = {
-    name: user
-      ? [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-        user.email
-      : "",
-    email: user?.email || "",
-    resolved: 0,
-    csat: 0,
-    avgFRT: "--",
-  };
+  const profile = useSupportProfile();
+
+  const fetchKPIs = useCallback(async () => {
+    try {
+      const data = await supportApi.getKPIs();
+      setKpiData((prev) => ({
+        ...prev,
+        openTickets: Number(data.openTickets) || 0,
+        highPriority: Number(data.highPriorityOpen) || 0,
+        slaBreaches: Number(data.slaBreaches) || 0,
+        slaCompliance: Number(data.slaCompliance) || 0,
+        avgResponseTime: formatMinutes(data.avgFrtMinutes),
+        avgResolution: formatMinutes(data.avgTtrMinutes),
+        csatScore: Number(data.csatAvgScore) || 0,
+        csatResponses: Number(data.csatResponses) || 0,
+        npsScore: Number(data.npsScore) || 0,
+        npsResponses: Number(data.npsResponses) || 0,
+      }));
+    } catch {
+      // Leave previous state intact on failure so the UI doesn't flicker to zeros
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchKPIs() {
-      try {
-        const data = await supportApi.getKPIs();
-        setKpiData((prev) => ({
-          ...prev,
-          openTickets: Number(data.openTickets) || 0,
-          highPriority: Number(data.highPriorityOpen) || 0,
-          slaBreaches: Number(data.slaBreaches) || 0,
-          avgResponseTime: data.avgFrtMinutes
-            ? `${Math.round(data.avgFrtMinutes)}m`
-            : "--",
-          avgResolution: data.avgTtrMinutes
-            ? data.avgTtrMinutes > 60
-              ? `${(data.avgTtrMinutes / 60).toFixed(1)}h`
-              : `${Math.round(data.avgTtrMinutes)}m`
-            : "--",
-        }));
-      } catch {
-        // Show defaults
-      }
-    }
     fetchKPIs();
-  }, []);
+    // Auto-refresh every 60 seconds while the tab is visible.
+    // Mirrors the TicketDetailContent.tsx SLA countdown pattern.
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchKPIs();
+      }
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [fetchKPIs]);
 
   return (
     <>

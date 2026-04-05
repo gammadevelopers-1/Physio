@@ -22,9 +22,12 @@ interface SupportProfile {
   name: string;
   email: string;
   resolved: number;
-  csat: number;
+  csat: number | null;
   avgFRT: string;
   avatar?: string;
+  totalTickets?: number;
+  hasAnyTickets?: boolean;
+  isLoading?: boolean;
 }
 
 interface SupportMobileSidebarProps {
@@ -187,10 +190,10 @@ const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarP
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-[#16A34A]">
-                  {profile.csat}%
+                  {profile.csat != null ? profile.csat.toFixed(1) : "—"}
                 </p>
                 <p className="text-xs text-[#6B7280]">
-                  {t("sidebar.csat")}
+                  {profile.csat != null ? "CSAT /5" : t("sidebar.csat")}
                 </p>
               </div>
               <div className="text-center">

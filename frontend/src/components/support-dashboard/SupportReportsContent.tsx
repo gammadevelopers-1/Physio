@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useTranslations, useLocale } from "next-intl";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { supportApi } from "@/lib/api";
+import { supportApi, getAccessToken } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
 import { toast } from "sonner";
 import SupportSidebar from "./SupportSidebar";
@@ -64,8 +64,6 @@ function formatMinutes(m: number | null): string {
 // ─── Component ────────────────────────────────────────────
 const SupportReportsContent = () => {
   const t = useTranslations("supportDashboard");
-  const locale = useLocale();
-  const isRTL = locale === "ar";
   const { user } = useAuth();
   const profile = useSupportProfile();
 
@@ -88,6 +86,7 @@ const SupportReportsContent = () => {
 
   // Export
   const [isExporting, setIsExporting] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const reportTypes = [
     { key: "ticketVolume", title: t("reportsPage.reportTypes.ticketVolume"), description: t("reportsPage.reportTypes.ticketVolumeDesc"), icon: BarChart3, iconBg: "bg-[#EFF6FF]", iconColor: "text-[#3B82F6]" },
@@ -98,9 +97,13 @@ const SupportReportsContent = () => {
   ];
 
   // ─── Compute date params ──────────────────────────────
-  const dateParams = period === "custom"
-    ? { dateFrom: customFrom, dateTo: customTo }
-    : getDateRange(period);
+  const dateParams = useMemo(
+    () =>
+      period === "custom"
+        ? { dateFrom: customFrom, dateTo: customTo }
+        : getDateRange(period),
+    [period, customFrom, customTo],
+  );
 
   // ─── Fetch report data ────────────────────────────────
   const fetchReport = useCallback(async () => {
@@ -133,12 +136,13 @@ const SupportReportsContent = () => {
           break;
         }
       }
-    } catch {
+    } catch (err) {
+      console.error("Report fetch error:", err);
       toast.error("Failed to load report data");
     } finally {
       setReportLoading(false);
     }
-  }, [selectedReport, dateParams.dateFrom, dateParams.dateTo]);
+  }, [selectedReport, dateParams]);
 
   useEffect(() => {
     fetchReport();
@@ -149,13 +153,13 @@ const SupportReportsContent = () => {
       setSurveyLoading(true);
       Promise.all([supportApi.getCsatSummary(), supportApi.getNpsSummary()])
         .then(([csat, nps]) => { setCsatData(csat); setNpsData(nps); })
-        .catch(() => {})
+        .catch((err) => { console.error("CSAT/NPS fetch error:", err); })
         .finally(() => setSurveyLoading(false));
     }
   }, [selectedReport]);
 
   // ─── Export handler ───────────────────────────────────
-  async function handleExport(format: "csv") {
+  async function handleExport() {
     setIsExporting(true);
     try {
       const typeMap: Record<string, string> = {
@@ -179,8 +183,49 @@ const SupportReportsContent = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       toast.success("Report downloaded");
-    } catch {
+    } catch (err) {
+      console.error("Export error:", err);
       toast.error("Failed to export report");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function handleExportPdf() {
+    setIsExporting(true);
+    try {
+      const typeMap: Record<string, string> = {
+        ticketVolume: "volume",
+        topIssues: "issues",
+        slaCompliance: "sla",
+        agentPerformance: "agent-performance",
+        csatNps: "volume",
+      };
+      const endpoint = supportApi.getExportPdfUrl(
+        typeMap[selectedReport] || "volume",
+        { dateFrom: dateParams.dateFrom, dateTo: dateParams.dateTo },
+      );
+      // Binary fetch with auth token
+      const token = getAccessToken();
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+      const response = await fetch(`${apiUrl}${endpoint}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `support_report_${typeMap[selectedReport]}_${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("PDF downloaded");
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast.error("Failed to export PDF");
     } finally {
       setIsExporting(false);
     }
@@ -222,20 +267,40 @@ const SupportReportsContent = () => {
                     {t("reportsPage.subtitle")}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="relative">
                   <button
                     type="button"
-                    onClick={() => handleExport("csv")}
+                    onClick={() => setShowExportMenu(!showExportMenu)}
                     disabled={isExporting}
                     className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                   >
                     {isExporting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      <FileSpreadsheet className="w-4 h-4" />
+                      <Download className="w-4 h-4" />
                     )}
-                    Export CSV
+                    Export
                   </button>
+                  {showExportMenu && (
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-20 min-w-[180px] py-1">
+                      <button
+                        type="button"
+                        onClick={() => { setShowExportMenu(false); handleExport(); }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#374151] hover:bg-[#F9FAFB] text-left"
+                      >
+                        <FileSpreadsheet className="w-4 h-4 text-[#16A34A]" />
+                        Download CSV
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setShowExportMenu(false); handleExportPdf(); }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#374151] hover:bg-[#F9FAFB] text-left"
+                      >
+                        <Download className="w-4 h-4 text-[#DC2626]" />
+                        Download PDF
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -310,10 +375,18 @@ const SupportReportsContent = () => {
                   )}
                   <button
                     type="button"
-                    onClick={fetchReport}
-                    className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                    onClick={async () => {
+                      await fetchReport();
+                      toast.success("Report refreshed");
+                    }}
+                    disabled={reportLoading}
+                    className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
                   >
-                    <BarChart3 className="w-4 h-4" />
+                    {reportLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <BarChart3 className="w-4 h-4" />
+                    )}
                     {t("reportsPage.generateReport")}
                   </button>
                 </div>

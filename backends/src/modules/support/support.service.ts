@@ -2376,6 +2376,195 @@ export class SupportService {
     };
   }
 
+  async exportReportPdf(
+    type: string,
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<Buffer> {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const PDFDocument = require('pdfkit');
+
+    let data: any[];
+    let headers: string[];
+    let title: string;
+
+    switch (type) {
+      case 'volume': {
+        data = await this.getVolumeReport(dateFrom, dateTo);
+        headers = ['Category', 'Status', 'Priority', 'Count'];
+        title = 'Ticket Volume Report';
+        break;
+      }
+      case 'issues': {
+        data = await this.getTopIssues(dateFrom, dateTo);
+        headers = ['Category', 'Count'];
+        title = 'Top Issues Report';
+        break;
+      }
+      case 'sla': {
+        const sla = await this.getSlaComplianceReport(dateFrom, dateTo);
+        data = [sla];
+        headers = [
+          'Total Resolved',
+          'Within SLA',
+          'Compliance %',
+          'FRT Compliance %',
+          'TTR Compliance %',
+        ];
+        title = 'SLA Compliance Report';
+        break;
+      }
+      case 'agents':
+      case 'agent-performance': {
+        data = await this.getAgentPerformance(dateFrom, dateTo);
+        headers = [
+          'Agent',
+          'Total Tickets',
+          'Open',
+          'Resolved',
+          'Avg FRT (min)',
+          'CSAT',
+          'FRT Breaches',
+          'TTR Breaches',
+        ];
+        title = 'Agent Performance Report';
+        break;
+      }
+      default:
+        throw new BadRequestException('Invalid report type');
+    }
+
+    const now = new Date();
+    const filtersApplied = [
+      dateFrom ? `From: ${dateFrom}` : null,
+      dateTo ? `To: ${dateTo}` : null,
+    ]
+      .filter(Boolean)
+      .join(' | ');
+
+    return new Promise<Buffer>((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({
+          size: 'A4',
+          margin: 40,
+          info: {
+            Title: title,
+            Author: 'PhysioGuidance Support System',
+            Subject: `${title} — Generated ${now.toISOString()}`,
+          },
+        });
+
+        const chunks: Buffer[] = [];
+        doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
+
+        // ─── Header ───────────────────────────────
+        doc
+          .fontSize(8)
+          .fillColor('#6B7280')
+          .text(
+            'PhysioGuidance eLearning Platform  |  Support Dashboard  |  Gamma Developers',
+            40,
+            25,
+          );
+
+        doc
+          .moveTo(40, 40)
+          .lineTo(555, 40)
+          .strokeColor('#E5E7EB')
+          .stroke();
+
+        // Title
+        doc.fontSize(18).fillColor('#111827').text(title, 40, 55);
+
+        // Meta
+        doc
+          .fontSize(9)
+          .fillColor('#6B7280')
+          .text(`Generated: ${now.toLocaleString()}`, 40, 80)
+          .text(
+            filtersApplied ? `Filters: ${filtersApplied}` : 'Filters: All time',
+            40,
+            93,
+          )
+          .text(`Report type: ${type}`, 40, 106);
+
+        doc
+          .moveTo(40, 122)
+          .lineTo(555, 122)
+          .strokeColor('#E5E7EB')
+          .stroke();
+
+        // ─── Table ────────────────────────────────
+        const tableTop = 135;
+        const colWidth = Math.floor(515 / headers.length);
+        const rowHeight = 22;
+
+        // Table header
+        doc.rect(40, tableTop, 515, rowHeight).fill('#111827');
+        headers.forEach((h, i) => {
+          doc
+            .fontSize(8)
+            .fillColor('#FFFFFF')
+            .text(h, 44 + i * colWidth, tableTop + 6, {
+              width: colWidth - 8,
+              align: 'left',
+            });
+        });
+
+        // Table rows
+        data.forEach((row, rowIdx) => {
+          const y = tableTop + rowHeight + rowIdx * rowHeight;
+
+          if (y > 760) return; // page overflow guard (simple single-page)
+
+          if (rowIdx % 2 === 0) {
+            doc.rect(40, y, 515, rowHeight).fill('#F9FAFB');
+          }
+
+          headers.forEach((h, colIdx) => {
+            const key = h
+              .toLowerCase()
+              .replace(/ /g, '_')
+              .replace(/[^a-z_]/g, '');
+            const value = String(
+              row[key] ?? row[Object.keys(row)[colIdx]] ?? '',
+            );
+            doc
+              .fontSize(8)
+              .fillColor('#374151')
+              .text(value, 44 + colIdx * colWidth, y + 6, {
+                width: colWidth - 8,
+                align: 'left',
+              });
+          });
+        });
+
+        // ─── Footer ───────────────────────────────
+        const footerY = 780;
+        doc
+          .moveTo(40, footerY)
+          .lineTo(555, footerY)
+          .strokeColor('#E5E7EB')
+          .stroke();
+        doc
+          .fontSize(7)
+          .fillColor('#9CA3AF')
+          .text(
+            `Confidential — Gamma Developers © ${now.getFullYear()}  |  report_generated_at: ${now.toISOString()}`,
+            40,
+            footerY + 5,
+            { align: 'center', width: 515 },
+          );
+
+        doc.end();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   // ─── Admin Support KPIs ────────────────────────────────
   // Kept as a thin alias over getKPIs() since getKPIs now includes
   // CSAT + NPS + SLA compliance fields. Preserved for any existing

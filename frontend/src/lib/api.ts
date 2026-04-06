@@ -2719,6 +2719,14 @@ export const supportApi = {
     return api.get<{ csv: string; filename: string }>(`/tickets/reports/export?${sp.toString()}`);
   },
 
+  // PDF export — returns a direct download URL (binary response)
+  getExportPdfUrl: (type: string, params?: { dateFrom?: string; dateTo?: string }) => {
+    const sp = new URLSearchParams({ type });
+    if (params?.dateFrom) sp.set('dateFrom', params.dateFrom);
+    if (params?.dateTo) sp.set('dateTo', params.dateTo);
+    return `/tickets/reports/export-pdf?${sp.toString()}`;
+  },
+
   // Macros CRUD
   getMacros: () => api.get<any[]>('/tickets/macros'),
 

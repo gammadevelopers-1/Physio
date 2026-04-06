@@ -12,7 +12,10 @@ import {
   ParseUUIDPipe,
   ForbiddenException,
   BadRequestException,
+  Res,
+  Header,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser, Roles, Public } from '../auth/decorators';
@@ -238,6 +241,28 @@ export class SupportController {
     @Query('dateTo') dateTo?: string,
   ) {
     return this.supportService.exportReport(type, dateFrom, dateTo);
+  }
+
+  @Get('reports/export-pdf')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async exportReportPdf(
+    @Query('type') type: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Res() res?: Response,
+  ) {
+    const pdfBuffer = await this.supportService.exportReportPdf(
+      type,
+      dateFrom,
+      dateTo,
+    );
+    const filename = `support_report_${type}_${new Date().toISOString().split('T')[0]}.pdf`;
+    res!.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res!.end(pdfBuffer);
   }
 
   // ─── Survey Summaries (Supervisor/Admin only) ──────────

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { supportApi } from "@/lib/api";
 import { useSupportProfile } from "@/hooks/useSupportProfile";
+import { toast } from "sonner";
 import SupportSidebar from "./SupportSidebar";
 import SupportMobileSidebar from "./SupportMobileSidebar";
 import SupportNavbar from "./SupportNavbar";
@@ -17,75 +18,134 @@ import {
   FileSpreadsheet,
   Download,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
+// ─── Date range helpers ───────────────────────────────────
+function getDateRange(period: string): { dateFrom: string; dateTo: string } {
+  const now = new Date();
+  const to = now.toISOString();
+  switch (period) {
+    case "thisWeek": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - d.getDay()); // start of week (Sunday)
+      d.setHours(0, 0, 0, 0);
+      return { dateFrom: d.toISOString(), dateTo: to };
+    }
+    case "lastWeek": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - start.getDay() - 7);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 7);
+      return { dateFrom: start.toISOString(), dateTo: end.toISOString() };
+    }
+    case "thisMonth": {
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { dateFrom: d.toISOString(), dateTo: to };
+    }
+    case "lastMonth": {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { dateFrom: start.toISOString(), dateTo: end.toISOString() };
+    }
+    default:
+      return { dateFrom: "", dateTo: "" };
+  }
+}
+
+function formatMinutes(m: number | null): string {
+  if (m == null) return "--";
+  if (m < 60) return `${Math.round(m)}m`;
+  if (m < 60 * 24) return `${(m / 60).toFixed(1)}h`;
+  return `${(m / (60 * 24)).toFixed(1)}d`;
+}
+
+// ─── Component ────────────────────────────────────────────
 const SupportReportsContent = () => {
   const t = useTranslations("supportDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { user } = useAuth();
   const profile = useSupportProfile();
+
   const [selectedReport, setSelectedReport] = useState("ticketVolume");
-  const [period, setPeriod] = useState("thisWeek");
-  const [groupBy, setGroupBy] = useState("byCategory");
+  const [period, setPeriod] = useState("thisMonth");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
-  const reportTypes = [
-    {
-      key: "ticketVolume",
-      title: t("reportsPage.reportTypes.ticketVolume"),
-      description: t("reportsPage.reportTypes.ticketVolumeDesc"),
-      icon: BarChart3,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
-    },
-    {
-      key: "slaCompliance",
-      title: t("reportsPage.reportTypes.slaCompliance"),
-      description: t("reportsPage.reportTypes.slaComplianceDesc"),
-      icon: ShieldCheck,
-      iconBg: "bg-[#DCFCE7]",
-      iconColor: "text-[#16A34A]",
-    },
-    {
-      key: "agentPerformance",
-      title: t("reportsPage.reportTypes.agentPerformance"),
-      description: t("reportsPage.reportTypes.agentPerformanceDesc"),
-      icon: Users,
-      iconBg: "bg-[#EDE9FE]",
-      iconColor: "text-[#8B5CF6]",
-    },
-    {
-      key: "csatNps",
-      title: t("reportsPage.reportTypes.csatNps"),
-      description: t("reportsPage.reportTypes.csatNpsDesc"),
-      icon: Smile,
-      iconBg: "bg-[#FEF3C7]",
-      iconColor: "text-[#D97706]",
-    },
-  ];
+  // Report data states
+  const [volumeData, setVolumeData] = useState<any[]>([]);
+  const [issuesData, setIssuesData] = useState<any[]>([]);
+  const [slaData, setSlaData] = useState<any>(null);
+  const [agentData, setAgentData] = useState<any[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
 
-  // Fetch KPIs for reports
-  const [kpis, setKpis] = useState<any>(null);
-
-  useEffect(() => {
-    async function fetchKPIs() {
-      try {
-        const data = await supportApi.getKPIs();
-        setKpis(data);
-      } catch {
-        // keep null
-      }
-    }
-    fetchKPIs();
-  }, []);
-
-  // CSAT / NPS state
+  // CSAT/NPS (existing, works)
   const [csatData, setCsatData] = useState<any>(null);
   const [npsData, setNpsData] = useState<any>(null);
   const [surveyLoading, setSurveyLoading] = useState(false);
 
+  // Export
+  const [isExporting, setIsExporting] = useState(false);
+
+  const reportTypes = [
+    { key: "ticketVolume", title: t("reportsPage.reportTypes.ticketVolume"), description: t("reportsPage.reportTypes.ticketVolumeDesc"), icon: BarChart3, iconBg: "bg-[#EFF6FF]", iconColor: "text-[#3B82F6]" },
+    { key: "topIssues", title: "Top Issues", description: "Recurring issue categories by frequency", icon: AlertTriangle, iconBg: "bg-[#FFEDD5]", iconColor: "text-[#F97316]" },
+    { key: "slaCompliance", title: t("reportsPage.reportTypes.slaCompliance"), description: t("reportsPage.reportTypes.slaComplianceDesc"), icon: ShieldCheck, iconBg: "bg-[#DCFCE7]", iconColor: "text-[#16A34A]" },
+    { key: "agentPerformance", title: t("reportsPage.reportTypes.agentPerformance"), description: t("reportsPage.reportTypes.agentPerformanceDesc"), icon: Users, iconBg: "bg-[#EDE9FE]", iconColor: "text-[#8B5CF6]" },
+    { key: "csatNps", title: t("reportsPage.reportTypes.csatNps"), description: t("reportsPage.reportTypes.csatNpsDesc"), icon: Smile, iconBg: "bg-[#FEF3C7]", iconColor: "text-[#D97706]" },
+  ];
+
+  // ─── Compute date params ──────────────────────────────
+  const dateParams = period === "custom"
+    ? { dateFrom: customFrom, dateTo: customTo }
+    : getDateRange(period);
+
+  // ─── Fetch report data ────────────────────────────────
+  const fetchReport = useCallback(async () => {
+    if (selectedReport === "csatNps") return; // handled separately
+    setReportLoading(true);
+    try {
+      const params = {
+        dateFrom: dateParams.dateFrom || undefined,
+        dateTo: dateParams.dateTo || undefined,
+      };
+      switch (selectedReport) {
+        case "ticketVolume": {
+          const res = await supportApi.getVolumeReport(params);
+          setVolumeData(Array.isArray(res) ? res : []);
+          break;
+        }
+        case "topIssues": {
+          const res = await supportApi.getTopIssues(params);
+          setIssuesData(Array.isArray(res) ? res : []);
+          break;
+        }
+        case "slaCompliance": {
+          const res = await supportApi.getSlaComplianceReport(params);
+          setSlaData(res);
+          break;
+        }
+        case "agentPerformance": {
+          const res = await supportApi.getAgentPerformance(params);
+          setAgentData(Array.isArray(res) ? res : []);
+          break;
+        }
+      }
+    } catch {
+      toast.error("Failed to load report data");
+    } finally {
+      setReportLoading(false);
+    }
+  }, [selectedReport, dateParams.dateFrom, dateParams.dateTo]);
+
   useEffect(() => {
-    if (selectedReport === 'csatNps') {
+    fetchReport();
+  }, [fetchReport]);
+
+  useEffect(() => {
+    if (selectedReport === "csatNps") {
       setSurveyLoading(true);
       Promise.all([supportApi.getCsatSummary(), supportApi.getNpsSummary()])
         .then(([csat, nps]) => { setCsatData(csat); setNpsData(nps); })
@@ -94,69 +154,51 @@ const SupportReportsContent = () => {
     }
   }, [selectedReport]);
 
-  // Report chart data — use status breakdown if available, else placeholder
-  const statusBreakdown = kpis?.statusBreakdown || {};
-  const reportChartData = [
-    Number(statusBreakdown.new) || 0,
-    Number(statusBreakdown.in_progress) || 0,
-    Number(statusBreakdown.on_hold) || 0,
-    Number(statusBreakdown.resolved) || 0,
-    Number(statusBreakdown.closed) || 0,
-    0,
-    0,
-  ];
-  const reportChartLabels = [
-    t("days.mon"),
-    t("days.tue"),
-    t("days.wed"),
-    t("days.thu"),
-    t("days.fri"),
-    t("days.sat"),
-    t("days.sun"),
-  ];
-
-  const generateLinePath = (chartData: number[]) => {
-    const width = 100;
-    const height = 100;
-    const padding = 5;
-    const chartWidth = width - padding * 2;
-    const chartHeight = height - padding * 2;
-
-    const maxValue = Math.max(...chartData) * 1.1;
-    const minValue = Math.min(...chartData) * 0.9;
-    const range = maxValue - minValue || 1;
-
-    const pts = chartData.map((value, index) => {
-      const x = padding + (index / (chartData.length - 1)) * chartWidth;
-      const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
-      return { x, y };
-    });
-
-    let path = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const prev = pts[i - 1];
-      const curr = pts[i];
-      const cpx = (prev.x + curr.x) / 2;
-      path += ` Q ${prev.x + (cpx - prev.x) * 0.5} ${prev.y}, ${cpx} ${(prev.y + curr.y) / 2}`;
-      path += ` Q ${cpx + (curr.x - cpx) * 0.5} ${curr.y}, ${curr.x} ${curr.y}`;
+  // ─── Export handler ───────────────────────────────────
+  async function handleExport(format: "csv") {
+    setIsExporting(true);
+    try {
+      const typeMap: Record<string, string> = {
+        ticketVolume: "volume",
+        topIssues: "issues",
+        slaCompliance: "sla",
+        agentPerformance: "agent-performance",
+        csatNps: "volume", // fallback
+      };
+      const res = await supportApi.exportReport(
+        typeMap[selectedReport] || "volume",
+        { dateFrom: dateParams.dateFrom, dateTo: dateParams.dateTo },
+      );
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.filename || `report-${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Report downloaded");
+    } catch {
+      toast.error("Failed to export report");
+    } finally {
+      setIsExporting(false);
     }
+  }
 
-    const areaPath = path + ` L ${pts[pts.length - 1].x} ${height - padding} L ${pts[0].x} ${height - padding} Z`;
+  // ─── Volume: aggregate by category ────────────────────
+  const volumeByCategory = volumeData.reduce<Record<string, number>>(
+    (acc, row) => {
+      acc[row.category] = (acc[row.category] || 0) + Number(row.count);
+      return acc;
+    },
+    {},
+  );
+  const volumeCategories = Object.entries(volumeByCategory)
+    .sort((a, b) => b[1] - a[1]);
+  const volumeTotal = volumeCategories.reduce((s, [, c]) => s + c, 0);
 
-    return { linePath: path, areaPath, points: pts };
-  };
-
-  const { linePath: reportLinePath, areaPath: reportAreaPath, points: reportPoints } = generateLinePath(reportChartData);
-
-  // Report data from KPIs
-  const mockReportData = [
-    { name: t("ticketsBoard.categories.billing"), tickets: Number(statusBreakdown.new) || 0, avgResponse: kpis?.avgFrtMinutes ? `${Math.round(kpis.avgFrtMinutes)}m` : "--", avgResolution: kpis?.avgTtrMinutes ? `${(kpis.avgTtrMinutes / 60).toFixed(1)}h` : "--", satisfaction: "--" },
-    { name: t("ticketsBoard.categories.login"), tickets: Number(statusBreakdown.in_progress) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
-    { name: t("ticketsBoard.categories.certificate"), tickets: Number(statusBreakdown.resolved) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
-    { name: t("ticketsBoard.categories.content"), tickets: Number(statusBreakdown.on_hold) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
-    { name: t("ticketsBoard.categories.technical"), tickets: Number(statusBreakdown.closed) || 0, avgResponse: "--", avgResolution: "--", satisfaction: "--" },
-  ];
-
+  // ─── Render ───────────────────────────────────────────
   return (
     <>
       <SupportNavbar profile={profile} />
@@ -167,11 +209,10 @@ const SupportReportsContent = () => {
             <div className="hidden lg:block lg:flex-shrink-0">
               <SupportSidebar profile={profile} supportSubRole={user?.supportSubRole} />
             </div>
-
             <SupportMobileSidebar profile={profile} supportSubRole={user?.supportSubRole} />
 
             <div className="flex-1 min-w-0">
-              {/* Page Header */}
+              {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-[var(--on-surface-default)]">
@@ -182,19 +223,24 @@ const SupportReportsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
-                    <FileSpreadsheet className="w-4 h-4" />
-                    {t("reportsPage.exportExcel")}
-                  </button>
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
-                    <Download className="w-4 h-4" />
-                    {t("reportsPage.exportPdf")}
+                  <button
+                    type="button"
+                    onClick={() => handleExport("csv")}
+                    disabled={isExporting}
+                    className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileSpreadsheet className="w-4 h-4" />
+                    )}
+                    Export CSV
                   </button>
                 </div>
               </div>
 
-              {/* Report Type Selection */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Report Type Tabs */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
                 {reportTypes.map((report) => {
                   const Icon = report.icon;
                   const isSelected = selectedReport === report.key;
@@ -202,33 +248,32 @@ const SupportReportsContent = () => {
                     <button
                       key={report.key}
                       onClick={() => setSelectedReport(report.key)}
-                      className={`p-4 rounded-xl border text-left transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all ${
                         isSelected
                           ? "bg-[#FDF6EC] border-[#a37f49] ring-1 ring-[#a37f49]"
                           : "bg-white border-[#E5E7EB] hover:border-[#D1D5DB]"
                       }`}
                     >
-                      <div className={`w-10 h-10 ${report.iconBg} rounded-lg flex items-center justify-center mb-3`}>
-                        <Icon className={`w-5 h-5 ${report.iconColor}`} />
+                      <div className={`w-8 h-8 ${report.iconBg} rounded-lg flex items-center justify-center mb-2`}>
+                        <Icon className={`w-4 h-4 ${report.iconColor}`} />
                       </div>
-                      <p className={`text-sm font-semibold ${isSelected ? "text-[#a37f49]" : "text-[#111827]"}`}>
+                      <p className={`text-xs font-semibold ${isSelected ? "text-[#a37f49]" : "text-[#111827]"}`}>
                         {report.title}
                       </p>
-                      <p className="text-[12px] text-[#6B7280] mt-0.5">{report.description}</p>
                     </button>
                   );
                 })}
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 mb-6">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4 mb-6">
+                <div className="flex items-center gap-2 mb-3">
                   <Filter className="w-4 h-4 text-[#6B7280]" />
                   <h3 className="text-sm font-semibold text-[#111827]">{t("reportsPage.filters.title")}</h3>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-wrap items-end gap-3">
                   <div>
-                    <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.period")}</label>
+                    <label className="block text-[11px] text-[#6B7280] mb-1">{t("reportsPage.filters.period")}</label>
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
@@ -241,29 +286,40 @@ const SupportReportsContent = () => {
                       <option value="custom">{t("reportsPage.filters.custom")}</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-[12px] text-[#6B7280] mb-1">{t("reportsPage.filters.groupBy")}</label>
-                    <select
-                      value={groupBy}
-                      onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
-                    >
-                      <option value="byCategory">{t("reportsPage.filters.byCategory")}</option>
-                      <option value="byAgent">{t("reportsPage.filters.byAgent")}</option>
-                      <option value="byPriority">{t("reportsPage.filters.byPriority")}</option>
-                      <option value="byChannel">{t("reportsPage.filters.byChannel")}</option>
-                    </select>
-                  </div>
-                  <div className="sm:ml-auto flex items-end">
-                    <button className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors">
-                      <BarChart3 className="w-4 h-4" />
-                      {t("reportsPage.generateReport")}
-                    </button>
-                  </div>
+                  {period === "custom" && (
+                    <>
+                      <div>
+                        <label className="block text-[11px] text-[#6B7280] mb-1">From</label>
+                        <input
+                          type="date"
+                          value={customFrom}
+                          onChange={(e) => setCustomFrom(e.target.value)}
+                          className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[#6B7280] mb-1">To</label>
+                        <input
+                          type="date"
+                          value={customTo}
+                          onChange={(e) => setCustomTo(e.target.value)}
+                          className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[#a37f49]"
+                        />
+                      </div>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={fetchReport}
+                    className="flex items-center gap-1.5 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    {t("reportsPage.generateReport")}
+                  </button>
                 </div>
               </div>
 
-              {/* Report Results */}
+              {/* Report Content */}
               <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <h3 className="text-base font-semibold text-[#111827]">
@@ -271,196 +327,247 @@ const SupportReportsContent = () => {
                   </h3>
                 </div>
 
-                {selectedReport === 'csatNps' ? (
-                  <div className="p-5 space-y-6">
-                    {surveyLoading ? (
-                      <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-[#002D87]" /></div>
-                    ) : (
-                      <>
-                        {/* CSAT Section */}
-                        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-4">CSAT Score</h3>
-                          <div className="flex items-center gap-8 mb-4">
-                            <div className="text-center">
-                              <p className="text-4xl font-bold text-[#002D87]">{csatData?.avgScore || '--'}</p>
-                              <p className="text-xs text-[#6B7280]">Avg Score (out of 5)</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-[#1F2937]">{csatData?.totalResponded || 0}</p>
-                              <p className="text-xs text-[#6B7280]">Responses</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-[#16A34A]">{csatData?.responseRate || 0}%</p>
-                              <p className="text-xs text-[#6B7280]">Response Rate</p>
-                            </div>
-                          </div>
-                          {/* Score Distribution */}
-                          <div className="space-y-2">
-                            {[5,4,3,2,1].map(score => {
-                              const count = csatData?.distribution?.[score] || 0;
-                              const total = csatData?.totalResponded || 1;
-                              const pct = Math.round((count / total) * 100) || 0;
-                              const colors: Record<number, string> = { 5: 'bg-[#22C55E]', 4: 'bg-[#3B82F6]', 3: 'bg-[#EAB308]', 2: 'bg-[#F97316]', 1: 'bg-[#EF4444]' };
-                              return (
-                                <div key={score} className="flex items-center gap-3">
-                                  <span className="text-xs font-medium text-[#6B7280] w-12">{score} star</span>
-                                  <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
-                                    <div className={`h-2.5 rounded-full ${colors[score]}`} style={{ width: `${pct}%` }} />
-                                  </div>
-                                  <span className="text-xs text-[#6B7280] w-8">{count}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* NPS Section */}
-                        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-4">Net Promoter Score</h3>
-                          <div className="flex items-center gap-8 mb-4">
-                            <div className="text-center">
-                              <p className={`text-4xl font-bold ${(npsData?.npsScore || 0) >= 0 ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>{npsData?.npsScore || 0}</p>
-                              <p className="text-xs text-[#6B7280]">NPS Score</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-[#1F2937]">{npsData?.totalResponded || 0}</p>
-                              <p className="text-xs text-[#6B7280]">Responses</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-[#16A34A]">{npsData?.responseRate || 0}%</p>
-                              <p className="text-xs text-[#6B7280]">Response Rate</p>
-                            </div>
-                          </div>
-                          {/* Promoter/Passive/Detractor bars */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-medium text-[#6B7280] w-20">Promoters</span>
-                              <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
-                                <div className="h-2.5 rounded-full bg-[#22C55E]" style={{ width: `${npsData?.totalResponded ? Math.round((npsData.promoters / npsData.totalResponded) * 100) : 0}%` }} />
-                              </div>
-                              <span className="text-xs text-[#6B7280] w-8">{npsData?.promoters || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-medium text-[#6B7280] w-20">Passives</span>
-                              <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
-                                <div className="h-2.5 rounded-full bg-[#EAB308]" style={{ width: `${npsData?.totalResponded ? Math.round((npsData.passives / npsData.totalResponded) * 100) : 0}%` }} />
-                              </div>
-                              <span className="text-xs text-[#6B7280] w-8">{npsData?.passives || 0}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-medium text-[#6B7280] w-20">Detractors</span>
-                              <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
-                                <div className="h-2.5 rounded-full bg-[#EF4444]" style={{ width: `${npsData?.totalResponded ? Math.round((npsData.detractors / npsData.totalResponded) * 100) : 0}%` }} />
-                              </div>
-                              <span className="text-xs text-[#6B7280] w-8">{npsData?.detractors || 0}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
+                {reportLoading && selectedReport !== "csatNps" ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-6 h-6 animate-spin text-[#002D87]" />
                   </div>
                 ) : (
                   <>
-                {/* Report Line Chart */}
-                <div className="px-5 py-4">
-                  <div className="h-[200px] bg-gradient-to-b from-[#EFF6FF] to-transparent rounded-xl p-4 relative">
-                    <svg
-                      viewBox="0 0 100 100"
-                      className="w-full h-full"
-                      preserveAspectRatio="none"
-                    >
-                      <defs>
-                        <linearGradient id="supportReportAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
-                          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
-                        </linearGradient>
-                      </defs>
+                    {/* ─── Ticket Volume ─────────────────────── */}
+                    {selectedReport === "ticketVolume" && (
+                      <div className="p-5">
+                        {volumeCategories.length === 0 ? (
+                          <div className="text-center py-12 text-sm text-[#6B7280]">
+                            No tickets found in this date range.
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-xs text-[#6B7280] mb-4">
+                              Total tickets: <span className="font-semibold text-[#111827]">{volumeTotal}</span>
+                            </p>
+                            <div className="space-y-2">
+                              {volumeCategories.map(([cat, cnt]) => {
+                                const pct = volumeTotal > 0 ? Math.round((cnt / volumeTotal) * 100) : 0;
+                                return (
+                                  <div key={cat} className="flex items-center gap-3">
+                                    <span className="text-xs font-medium text-[#374151] w-24 capitalize">{cat}</span>
+                                    <div className="flex-1 bg-[#F3F4F6] rounded-full h-3">
+                                      <div className="h-3 rounded-full bg-[#3B82F6] transition-all" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <span className="text-xs font-semibold text-[#111827] w-12 text-right">{cnt}</span>
+                                    <span className="text-[10px] text-[#9CA3AF] w-10 text-right">{pct}%</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
 
-                      {[0, 25, 50, 75, 100].map((y) => (
-                        <line
-                          key={y}
-                          x1="5"
-                          y1={5 + (90 * (100 - y)) / 100}
-                          x2="95"
-                          y2={5 + (90 * (100 - y)) / 100}
-                          stroke="#E5E7EB"
-                          strokeWidth="0.3"
-                          strokeDasharray="2,2"
-                        />
-                      ))}
+                    {/* ─── Top Issues ─────────────────────────── */}
+                    {selectedReport === "topIssues" && (
+                      <div className="p-5">
+                        {issuesData.length === 0 ? (
+                          <div className="text-center py-12 text-sm text-[#6B7280]">
+                            No issues found in this date range.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                                  <th className="py-3 px-4 text-left text-[11px] font-semibold text-[#6B7280] uppercase">Rank</th>
+                                  <th className="py-3 px-4 text-left text-[11px] font-semibold text-[#6B7280] uppercase">Category</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">Tickets</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {issuesData.map((item, i) => (
+                                  <tr key={item.category} className="border-b border-[#F3F4F6]">
+                                    <td className="py-3 px-4 text-[13px] text-[#6B7280]">#{i + 1}</td>
+                                    <td className="py-3 px-4 text-[13px] font-medium text-[#111827] capitalize">{item.category}</td>
+                                    <td className="py-3 px-4 text-[13px] font-semibold text-[#111827] text-right">{Number(item.count)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                      <path d={reportAreaPath} fill="url(#supportReportAreaGradient)" />
+                    {/* ─── SLA Compliance ─────────────────────── */}
+                    {selectedReport === "slaCompliance" && (
+                      <div className="p-5">
+                        {!slaData || slaData.totalResolved === 0 ? (
+                          <div className="text-center py-12 text-sm text-[#6B7280]">
+                            No resolved tickets in this date range.
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            <div className="text-center p-6 bg-[#F9FAFB] rounded-xl">
+                              <p className={`text-4xl font-bold ${slaData.complianceRate >= 80 ? "text-[#16A34A]" : slaData.complianceRate >= 50 ? "text-[#F59E0B]" : "text-[#EF4444]"}`}>
+                                {slaData.complianceRate}%
+                              </p>
+                              <p className="text-xs text-[#6B7280] mt-1">Overall SLA Compliance</p>
+                              <p className="text-[10px] text-[#9CA3AF] mt-0.5">{slaData.resolvedWithinSla} / {slaData.totalResolved} tickets met SLA</p>
+                            </div>
+                            <div className="text-center p-6 bg-[#F9FAFB] rounded-xl">
+                              <p className={`text-4xl font-bold ${slaData.frtCompliance >= 80 ? "text-[#16A34A]" : "text-[#F59E0B]"}`}>
+                                {slaData.frtCompliance}%
+                              </p>
+                              <p className="text-xs text-[#6B7280] mt-1">FRT Compliance</p>
+                              <p className="text-[10px] text-[#9CA3AF] mt-0.5">First Response Time met</p>
+                            </div>
+                            <div className="text-center p-6 bg-[#F9FAFB] rounded-xl">
+                              <p className={`text-4xl font-bold ${slaData.ttrCompliance >= 80 ? "text-[#16A34A]" : "text-[#F59E0B]"}`}>
+                                {slaData.ttrCompliance}%
+                              </p>
+                              <p className="text-xs text-[#6B7280] mt-1">TTR Compliance</p>
+                              <p className="text-[10px] text-[#9CA3AF] mt-0.5">Time to Resolution met</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                      <path
-                        d={reportLinePath}
-                        fill="none"
-                        stroke="#3B82F6"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        vectorEffect="non-scaling-stroke"
-                      />
+                    {/* ─── Agent Performance ──────────────────── */}
+                    {selectedReport === "agentPerformance" && (
+                      <div className="p-5">
+                        {agentData.length === 0 ? (
+                          <div className="text-center py-12 text-sm text-[#6B7280]">
+                            No agent data available.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                                  <th className="py-3 px-4 text-left text-[11px] font-semibold text-[#6B7280] uppercase">Agent</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">Total</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">Open</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">Resolved</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">Avg FRT</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">CSAT</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">FRT Breaches</th>
+                                  <th className="py-3 px-4 text-right text-[11px] font-semibold text-[#6B7280] uppercase">TTR Breaches</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {agentData.map((agent) => (
+                                  <tr key={agent.userId} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                                    <td className="py-3 px-4 text-[13px] font-medium text-[#111827]">{agent.name || "Unknown"}</td>
+                                    <td className="py-3 px-4 text-[13px] text-[#111827] text-right">{agent.totalTickets}</td>
+                                    <td className="py-3 px-4 text-[13px] text-[#111827] text-right">{agent.openTickets ?? "--"}</td>
+                                    <td className="py-3 px-4 text-[13px] text-[#111827] text-right">{agent.resolvedTickets}</td>
+                                    <td className="py-3 px-4 text-[13px] text-[#6B7280] text-right">{formatMinutes(agent.avgFrtMinutes)}</td>
+                                    <td className="py-3 px-4 text-[13px] font-semibold text-right">
+                                      <span className={agent.csatAvgScore ? "text-[#16A34A]" : "text-[#6B7280]"}>
+                                        {agent.csatAvgScore != null ? `${agent.csatAvgScore}/5` : "--"}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-[13px] text-right">
+                                      <span className={agent.frtBreaches > 0 ? "text-[#EF4444] font-semibold" : "text-[#16A34A]"}>
+                                        {agent.frtBreaches}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-[13px] text-right">
+                                      <span className={agent.ttrBreaches > 0 ? "text-[#EF4444] font-semibold" : "text-[#16A34A]"}>
+                                        {agent.ttrBreaches}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                      {reportPoints.map((point, index) => (
-                        <g key={index}>
-                          <circle
-                            cx={point.x}
-                            cy={point.y}
-                            r="3"
-                            fill="white"
-                            stroke="#3B82F6"
-                            strokeWidth="2"
-                            vectorEffect="non-scaling-stroke"
-                          />
-                          <circle
-                            cx={point.x}
-                            cy={point.y}
-                            r="8"
-                            fill="transparent"
-                            className="cursor-pointer"
-                          >
-                            <title>{`${reportChartLabels[index]}: ${reportChartData[index]}`}</title>
-                          </circle>
-                        </g>
-                      ))}
-                    </svg>
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-[#6B7280] px-1">
-                    {reportChartLabels.map((label, index) => (
-                      <span key={index} className="text-center">{label}</span>
-                    ))}
-                  </div>
-                </div>
+                    {/* ─── CSAT / NPS (existing, preserved) ──── */}
+                    {selectedReport === "csatNps" && (
+                      <div className="p-5 space-y-6">
+                        {surveyLoading ? (
+                          <div className="flex justify-center py-12">
+                            <Loader2 className="w-6 h-6 animate-spin text-[#002D87]" />
+                          </div>
+                        ) : (
+                          <>
+                            {/* CSAT */}
+                            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                              <h3 className="text-base font-semibold text-[#1F2937] mb-4">CSAT Score</h3>
+                              <div className="flex items-center gap-8 mb-4">
+                                <div className="text-center">
+                                  <p className="text-4xl font-bold text-[#002D87]">{csatData?.avgScore || "--"}</p>
+                                  <p className="text-xs text-[#6B7280]">Avg Score (out of 5)</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-2xl font-bold text-[#1F2937]">{csatData?.totalResponded || 0}</p>
+                                  <p className="text-xs text-[#6B7280]">Responses</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-2xl font-bold text-[#16A34A]">{csatData?.responseRate || 0}%</p>
+                                  <p className="text-xs text-[#6B7280]">Response Rate</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {[5, 4, 3, 2, 1].map((score) => {
+                                  const cnt = csatData?.distribution?.[score] || 0;
+                                  const total = csatData?.totalResponded || 1;
+                                  const pct = Math.round((cnt / total) * 100) || 0;
+                                  const colors: Record<number, string> = { 5: "bg-[#22C55E]", 4: "bg-[#3B82F6]", 3: "bg-[#EAB308]", 2: "bg-[#F97316]", 1: "bg-[#EF4444]" };
+                                  return (
+                                    <div key={score} className="flex items-center gap-3">
+                                      <span className="text-xs font-medium text-[#6B7280] w-12">{score} star</span>
+                                      <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
+                                        <div className={`h-2.5 rounded-full ${colors[score]}`} style={{ width: `${pct}%` }} />
+                                      </div>
+                                      <span className="text-xs text-[#6B7280] w-8">{cnt}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
 
-                {/* Data Table */}
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.category")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.tickets")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResponse")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResolution")}</th>
-                        <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.satisfaction")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mockReportData.map((item, index) => (
-                        <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
-                          <td className="py-3 px-5 text-[13px] font-medium text-[#111827]">{item.name}</td>
-                          <td className="py-3 px-5 text-[13px] font-semibold text-[#111827]">{item.tickets}</td>
-                          <td className="py-3 px-5 text-[13px] text-[#6B7280] hidden md:table-cell">{item.avgResponse}</td>
-                          <td className="py-3 px-5 text-[13px] text-[#6B7280] hidden md:table-cell">{item.avgResolution}</td>
-                          <td className="py-3 px-5">
-                            <span className="text-[13px] font-semibold text-[#16A34A]">
-                              {item.satisfaction}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            {/* NPS */}
+                            <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                              <h3 className="text-base font-semibold text-[#1F2937] mb-4">Net Promoter Score</h3>
+                              <div className="flex items-center gap-8 mb-4">
+                                <div className="text-center">
+                                  <p className={`text-4xl font-bold ${(npsData?.npsScore || 0) >= 0 ? "text-[#22C55E]" : "text-[#EF4444]"}`}>{npsData?.npsScore || 0}</p>
+                                  <p className="text-xs text-[#6B7280]">NPS Score</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-2xl font-bold text-[#1F2937]">{npsData?.totalResponded || 0}</p>
+                                  <p className="text-xs text-[#6B7280]">Responses</p>
+                                </div>
+                                <div className="text-center">
+                                  <p className="text-2xl font-bold text-[#16A34A]">{npsData?.responseRate || 0}%</p>
+                                  <p className="text-xs text-[#6B7280]">Response Rate</p>
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                {[
+                                  { label: "Promoters", count: npsData?.promoters || 0, color: "bg-[#22C55E]" },
+                                  { label: "Passives", count: npsData?.passives || 0, color: "bg-[#EAB308]" },
+                                  { label: "Detractors", count: npsData?.detractors || 0, color: "bg-[#EF4444]" },
+                                ].map((seg) => (
+                                  <div key={seg.label} className="flex items-center gap-3">
+                                    <span className="text-xs font-medium text-[#6B7280] w-20">{seg.label}</span>
+                                    <div className="flex-1 bg-[#F3F4F6] rounded-full h-2.5">
+                                      <div className={`h-2.5 rounded-full ${seg.color}`} style={{ width: `${npsData?.totalResponded ? Math.round((seg.count / npsData.totalResponded) * 100) : 0}%` }} />
+                                    </div>
+                                    <span className="text-xs text-[#6B7280] w-8">{seg.count}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>

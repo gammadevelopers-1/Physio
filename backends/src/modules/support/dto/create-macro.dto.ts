@@ -15,6 +15,7 @@ export class CreateMacroDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(10000)
   bodyTemplate: string;
 
   @IsOptional()

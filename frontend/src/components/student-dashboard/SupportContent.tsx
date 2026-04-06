@@ -481,7 +481,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
             onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#a37f49] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
           >
-            {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
+            {t(`supportPage.faq.${cat}` as Parameters<typeof t>[0])}
           </button>
         ))}
       </div>
@@ -502,7 +502,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#F3F4F6] text-[#6B7280] flex-shrink-0">
-                    {t(`supportPage.category_${item.category}` as Parameters<typeof t>[0])}
+                    {t(`supportPage.faq.${item.category}` as Parameters<typeof t>[0])}
                   </span>
                   <span className="text-sm font-medium text-[#1F2937] truncate">{item.question}</span>
                 </div>

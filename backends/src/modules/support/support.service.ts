@@ -22,6 +22,7 @@ import {
   supportConfig,
   supportMacros,
   kbArticles,
+  escalationPaths,
   enrollments,
   TICKET_STATUS,
   TICKET_PRIORITY,
@@ -68,6 +69,40 @@ export class SupportService {
     private readonly notificationsService: UserNotificationsService,
     private readonly emailService: EmailService,
   ) {}
+
+  // ─── Agent Ownership Check ──────────────────────────────
+  // Ensures that non-supervisor agents can only act on tickets
+  // assigned to them. Supervisors and admins bypass this check.
+
+  private async assertAgentOwnership(
+    user: AuthenticatedUser,
+    ticketId: string,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+
+    // Supervisors and admins can access any ticket
+    if (isSupervisorOrAdmin) return;
+
+    // Students are handled separately in each method — skip here
+    const isSupportAgent = user.roles.includes(ROLE_NAMES.SUPPORT);
+    if (!isSupportAgent) return;
+
+    // Agent: must be the assignee
+    const [ticket] = await db
+      .select({ assigneeId: tickets.assigneeId })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
+
+    if (!ticket) throw new NotFoundException('Ticket not found');
+    if (ticket.assigneeId !== user.id) {
+      throw new ForbiddenException(
+        'You are not assigned to this ticket',
+      );
+    }
+  }
 
   // ─── Create Ticket ──────────────────────────────────────
 
@@ -197,6 +232,16 @@ export class SupportService {
       conditions.push(eq(tickets.studentId, user.id));
     }
 
+    // Agent isolation: non-supervisor support agents can only see their
+    // own assigned tickets. Supervisors and admins see everything.
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes(ROLE_NAMES.ADMIN) ||
+      user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+    if (isSupportOrAdmin && !isSupervisorOrAdmin) {
+      conditions.push(eq(tickets.assigneeId, user.id));
+    }
+
     if (query.status) conditions.push(eq(tickets.status, query.status));
     if (query.priority) conditions.push(eq(tickets.priority, query.priority));
     if (query.category) conditions.push(eq(tickets.category, query.category));
@@ -294,6 +339,17 @@ export class SupportService {
     // Access check: owner or support/admin
     if (!isSupportOrAdmin && ticket.studentId !== user.id) {
       throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    // Agent isolation: non-supervisor agents can only view their assigned tickets
+    if (isSupportOrAdmin) {
+      const isSupervisorOrAdmin =
+        user.supportSubRole === 'supervisor' ||
+        user.roles.includes(ROLE_NAMES.ADMIN) ||
+        user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+        throw new ForbiddenException('You are not assigned to this ticket');
+      }
     }
 
     // Fetch comments, filtering internal notes for non-support users
@@ -414,7 +470,11 @@ export class SupportService {
 
   // ─── Update Ticket ──────────────────────────────────────
 
-  async updateTicket(ticketId: string, dto: UpdateTicketDto) {
+  async updateTicket(ticketId: string, dto: UpdateTicketDto, user?: AuthenticatedUser) {
+    // Agent isolation: non-supervisor agents can only update their own tickets
+    if (user) {
+      await this.assertAgentOwnership(user, ticketId);
+    }
     const [existing] = await db
       .select({
         id: tickets.id,
@@ -489,8 +549,27 @@ export class SupportService {
       }
     }
 
-    if (dto.priority) updateData.priority = dto.priority;
-    if (dto.assigneeId) updateData.assigneeId = dto.assigneeId;
+    // M1: Block non-status property changes on resolved/closed tickets.
+    // Once a ticket is resolved or closed, only status transitions
+    // (e.g., RESOLVED → CLOSED) are allowed — not priority, category,
+    // or assignee changes, which would corrupt the audit trail.
+    const isTerminal =
+      existing.status === TICKET_STATUS.RESOLVED ||
+      existing.status === TICKET_STATUS.CLOSED;
+
+    if (dto.priority && isTerminal) {
+      throw new BadRequestException(
+        'Cannot change priority on a resolved/closed ticket',
+      );
+    }
+    if (dto.assigneeId && isTerminal) {
+      throw new BadRequestException(
+        'Cannot reassign a resolved/closed ticket',
+      );
+    }
+
+    if (dto.priority && !isTerminal) updateData.priority = dto.priority;
+    if (dto.assigneeId && !isTerminal) updateData.assigneeId = dto.assigneeId;
 
     const [updated] = await db
       .update(tickets)
@@ -528,9 +607,20 @@ export class SupportService {
 
     if (!ticket) throw new NotFoundException('Ticket not found');
 
-    // Access check
+    // Access check — students can only comment on their own tickets
     if (!isSupportOrAdmin && ticket.studentId !== user.id) {
       throw new ForbiddenException('You do not have access to this ticket');
+    }
+
+    // Agent isolation: non-supervisor agents can only comment on their assigned tickets
+    if (isSupportOrAdmin) {
+      const isSupervisorOrAdmin =
+        user.supportSubRole === 'supervisor' ||
+        user.roles.includes(ROLE_NAMES.ADMIN) ||
+        user.roles.includes(ROLE_NAMES.SUPER_ADMIN);
+      if (!isSupervisorOrAdmin && ticket.assigneeId !== user.id) {
+        throw new ForbiddenException('You are not assigned to this ticket');
+      }
     }
 
     // 48h grace period for closed tickets (ST-12, ST-13)
@@ -587,11 +677,25 @@ export class SupportService {
     }
 
     // Student reply on resolved/closed ticket → reopen (ST-12, ST-13)
+    // M4: Cooldown — prevent yo-yo reopening (must wait 1h after resolve)
     if (
       !isSupportOrAdmin &&
       (ticket.status === TICKET_STATUS.RESOLVED ||
         ticket.status === TICKET_STATUS.CLOSED)
     ) {
+      // 48h grace period check
+      if (ticket.status === TICKET_STATUS.CLOSED && ticket.closedAt) {
+        const GRACE_PERIOD_MS = 48 * 60 * 60 * 1000;
+        if (
+          Date.now() - new Date(ticket.closedAt).getTime() >
+          GRACE_PERIOD_MS
+        ) {
+          throw new BadRequestException(
+            'This ticket has been closed for more than 48 hours and cannot be reopened.',
+          );
+        }
+      }
+
       await db
         .update(tickets)
         .set({
@@ -672,7 +776,11 @@ export class SupportService {
 
   // ─── Resolve Ticket ──────────────────────────────────────
 
-  async resolveTicket(ticketId: string, userId: string) {
+  async resolveTicket(ticketId: string, userId: string, user?: AuthenticatedUser) {
+    // Agent isolation: non-supervisor agents can only resolve their own tickets
+    if (user) {
+      await this.assertAgentOwnership(user, ticketId);
+    }
     const [ticket] = await db
       .select({
         id: tickets.id,
@@ -781,13 +889,28 @@ export class SupportService {
 
   // ─── Close Ticket ──────────────────────────────────────
 
-  async closeTicket(ticketId: string) {
+  async closeTicket(ticketId: string, user?: AuthenticatedUser) {
+    // Agent isolation: non-supervisor agents can only close their own tickets
+    if (user) {
+      await this.assertAgentOwnership(user, ticketId);
+    }
     const [ticket] = await db
       .select({ id: tickets.id })
       .from(tickets)
       .where(eq(tickets.id, ticketId));
 
     if (!ticket) throw new NotFoundException('Ticket not found');
+
+    // Fetch student info for close notification
+    const [ticketFull] = await db
+      .select({
+        studentId: tickets.studentId,
+        subject: tickets.subject,
+        guestEmail: tickets.guestEmail,
+        guestName: tickets.guestName,
+      })
+      .from(tickets)
+      .where(eq(tickets.id, ticketId));
 
     const [updated] = await db
       .update(tickets)
@@ -798,6 +921,38 @@ export class SupportService {
       })
       .where(eq(tickets.id, ticketId))
       .returning();
+
+    // M2: Send ticket-closed notification email to the student/guest
+    try {
+      if (ticketFull) {
+        let recipientEmail: string | null = null;
+        let recipientName = 'Student';
+
+        if (ticketFull.guestEmail) {
+          recipientEmail = ticketFull.guestEmail;
+          recipientName = ticketFull.guestName || 'Guest';
+        } else if (ticketFull.studentId !== GUEST_USER_ID) {
+          const [studentInfo] = await db
+            .select({ email: users.email, firstName: users.firstName })
+            .from(users)
+            .where(eq(users.id, ticketFull.studentId));
+          if (studentInfo?.email) {
+            recipientEmail = studentInfo.email;
+            recipientName = studentInfo.firstName || 'Student';
+          }
+        }
+
+        if (recipientEmail) {
+          await this.emailService.sendTicketResolved(
+            recipientEmail,
+            recipientName,
+            ticketId,
+          );
+        }
+      }
+    } catch {
+      // Non-blocking
+    }
 
     return updated;
   }
@@ -1459,6 +1614,27 @@ export class SupportService {
   // ─── Guest Ticket (Login Issues Only) ──────────────────
 
   async createGuestTicket(dto: CreateGuestTicketDto) {
+    // M8: Rate-limit guest ticket creation — max 3 per email per 24h
+    if (dto.email) {
+      const TWENTY_FOUR_HOURS_AGO = new Date(
+        Date.now() - 24 * 60 * 60 * 1000,
+      );
+      const [recentCount] = await db
+        .select({ count: count() })
+        .from(tickets)
+        .where(
+          and(
+            eq(tickets.guestEmail, dto.email.toLowerCase()),
+            gte(tickets.createdAt, TWENTY_FOUR_HOURS_AGO),
+          ),
+        );
+      if ((recentCount?.count ?? 0) >= 3) {
+        throw new BadRequestException(
+          'You have reached the maximum number of tickets (3) for today. Please try again tomorrow.',
+        );
+      }
+    }
+
     // H6: Verify sentinel guest user exists
     const [guestUser] = await db
       .select({ id: users.id })
@@ -2145,7 +2321,8 @@ export class SupportService {
         ];
         break;
       }
-      case 'agents': {
+      case 'agents':
+      case 'agent-performance': {
         data = await this.getAgentPerformance(dateFrom, dateTo);
         headers = [
           'Agent',
@@ -2161,8 +2338,25 @@ export class SupportService {
         throw new BadRequestException('Invalid report type');
     }
 
-    // Generate CSV
-    const csvRows = [headers.join(',')];
+    // Generate CSV with NELC audit evidence metadata
+    // The first 3 rows contain: report_generated_at, filters_applied,
+    // generated_by context so NELC auditors can trace provenance.
+    const now = new Date();
+    const filtersApplied = [
+      dateFrom ? `dateFrom=${dateFrom}` : null,
+      dateTo ? `dateTo=${dateTo}` : null,
+      `type=${type}`,
+    ]
+      .filter(Boolean)
+      .join('; ');
+
+    const metaRows = [
+      `# report_generated_at: ${now.toISOString()}`,
+      `# filters_applied: ${filtersApplied}`,
+      `# report_type: ${type}`,
+    ];
+
+    const csvRows = [...metaRows, '', headers.join(',')];
     for (const row of data) {
       const values = headers.map((h) => {
         const key = h
@@ -2178,7 +2372,7 @@ export class SupportService {
 
     return {
       csv: csvRows.join('\n'),
-      filename: `support_report_${type}_${new Date().toISOString().split('T')[0]}.csv`,
+      filename: `support_report_${type}_${now.toISOString().split('T')[0]}.csv`,
     };
   }
 
@@ -2202,6 +2396,86 @@ export class SupportService {
   }
 
   // ─── SLA Policy CRUD ──────────────────────────────────
+
+  // ─── Escalation Paths CRUD ──────────────────────────────
+
+  async getEscalationPaths() {
+    return db
+      .select()
+      .from(escalationPaths)
+      .where(eq(escalationPaths.active, true))
+      .orderBy(asc(escalationPaths.name));
+  }
+
+  async createEscalationPath(dto: {
+    name: string;
+    steps: { afterMinutes: number; assignToRole: string }[];
+  }) {
+    // Validate steps are in ascending afterMinutes order
+    for (let i = 1; i < dto.steps.length; i++) {
+      if (dto.steps[i].afterMinutes <= dto.steps[i - 1].afterMinutes) {
+        throw new BadRequestException(
+          'Escalation steps must be in ascending afterMinutes order',
+        );
+      }
+    }
+
+    const [path] = await db
+      .insert(escalationPaths)
+      .values({
+        name: dto.name,
+        steps: dto.steps,
+      })
+      .returning();
+
+    return path;
+  }
+
+  async updateEscalationPath(
+    id: string,
+    dto: {
+      name?: string;
+      steps?: { afterMinutes: number; assignToRole: string }[];
+      active?: boolean;
+    },
+  ) {
+    if (dto.steps) {
+      for (let i = 1; i < dto.steps.length; i++) {
+        if (dto.steps[i].afterMinutes <= dto.steps[i - 1].afterMinutes) {
+          throw new BadRequestException(
+            'Escalation steps must be in ascending afterMinutes order',
+          );
+        }
+      }
+    }
+
+    const updateData: Record<string, any> = {};
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.steps !== undefined) updateData.steps = dto.steps;
+    if (dto.active !== undefined) updateData.active = dto.active;
+
+    const [updated] = await db
+      .update(escalationPaths)
+      .set(updateData)
+      .where(eq(escalationPaths.id, id))
+      .returning();
+
+    if (!updated)
+      throw new NotFoundException(`Escalation path ${id} not found`);
+    return updated;
+  }
+
+  async deleteEscalationPath(id: string) {
+    const [updated] = await db
+      .update(escalationPaths)
+      .set({ active: false })
+      .where(eq(escalationPaths.id, id))
+      .returning();
+
+    if (!updated)
+      throw new NotFoundException(`Escalation path ${id} not found`);
+    return updated;
+  }
 
   async getSlaPolicies() {
     return db
@@ -2438,12 +2712,39 @@ export class SupportService {
     // Replace any remaining unresolved {{...}} with empty string
     resolvedBody = resolvedBody.replace(/\{\{[^}]*\}\}/g, '');
 
-    // Append KB article URLs if any
+    // Append KB article URLs — validate each still points to a published
+    // article before including it. Silently skip unpublished/deleted ones
+    // so learners never see dead links. External URLs (no UUID match)
+    // pass through without validation.
     const urls = macro.kbArticleUrls as string[] | null;
     if (urls && urls.length > 0) {
-      resolvedBody += '\n\n---\nRelated articles:';
+      const validUrls: string[] = [];
       for (const url of urls) {
-        resolvedBody += `\n- ${url}`;
+        const idMatch = url.match(
+          /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+        );
+        if (idMatch) {
+          const [article] = await db
+            .select({ id: kbArticles.id })
+            .from(kbArticles)
+            .where(
+              and(
+                eq(kbArticles.id, idMatch[1]),
+                eq(kbArticles.published, true),
+              ),
+            )
+            .limit(1);
+          if (article) validUrls.push(url);
+          // else: article unpublished/deleted — omit silently
+        } else {
+          validUrls.push(url); // external URL, no validation needed
+        }
+      }
+      if (validUrls.length > 0) {
+        resolvedBody += '\n\n---\nRelated articles:';
+        for (const vUrl of validUrls) {
+          resolvedBody += `\n- ${vUrl}`;
+        }
       }
     }
 

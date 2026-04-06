@@ -31,6 +31,8 @@ import {
   UpdateMacroDto,
   CreateKbArticleDto,
   UpdateKbArticleDto,
+  CreateEscalationPathDto,
+  UpdateEscalationPathDto,
 } from './dto';
 
 @Controller('tickets')
@@ -272,21 +274,47 @@ export class SupportController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateMacroDto,
   ) {
+    // Only supervisors and admins can create macros (agents get 403)
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException('Only supervisors can manage macros');
+    }
     return this.supportService.createMacro(user.id, dto);
   }
 
   @Patch('macros/:id')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   async updateMacro(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateMacroDto,
   ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException('Only supervisors can manage macros');
+    }
     return this.supportService.updateMacro(id, dto);
   }
 
   @Delete('macros/:id')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
-  async deleteMacro(@Param('id', new ParseUUIDPipe()) id: string) {
+  async deleteMacro(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException('Only supervisors can manage macros');
+    }
     return this.supportService.deleteMacro(id);
   }
 
@@ -440,6 +468,70 @@ export class SupportController {
     return this.supportService.updateSlaPolicy(priority, dto);
   }
 
+  // ─── Escalation Paths CRUD ──────────────────────────────
+  // Same route-ordering rule: MUST be before @Get(':id')
+
+  @Get('escalation-paths')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async getEscalationPaths() {
+    return this.supportService.getEscalationPaths();
+  }
+
+  @Post('escalation-paths')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async createEscalationPath(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateEscalationPathDto,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors can manage escalation paths',
+      );
+    }
+    return this.supportService.createEscalationPath(dto);
+  }
+
+  @Patch('escalation-paths/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async updateEscalationPath(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() dto: UpdateEscalationPathDto,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors can manage escalation paths',
+      );
+    }
+    return this.supportService.updateEscalationPath(id, dto);
+  }
+
+  @Delete('escalation-paths/:id')
+  @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
+  async deleteEscalationPath(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const isSupervisorOrAdmin =
+      user.supportSubRole === 'supervisor' ||
+      user.roles.includes('ADMIN') ||
+      user.roles.includes('SUPER_ADMIN');
+    if (!isSupervisorOrAdmin) {
+      throw new ForbiddenException(
+        'Only supervisors can manage escalation paths',
+      );
+    }
+    return this.supportService.deleteEscalationPath(id);
+  }
+
   // ─── Get Ticket Detail ──────────────────────────────────
 
   @Get(':id')
@@ -455,10 +547,11 @@ export class SupportController {
   @Patch(':id')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   async updateTicket(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateTicketDto,
   ) {
-    return this.supportService.updateTicket(id, dto);
+    return this.supportService.updateTicket(id, dto, user);
   }
 
   // ─── Add Comment ────────────────────────────────────────
@@ -480,7 +573,7 @@ export class SupportController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    return this.supportService.resolveTicket(id, user.id);
+    return this.supportService.resolveTicket(id, user.id, user);
   }
 
   // ─── Close Ticket (support/admin only) ──────────────────
@@ -488,9 +581,10 @@ export class SupportController {
   @Post(':id/close')
   @Roles('SUPPORT' as UserRole, 'ADMIN' as UserRole, 'SUPER_ADMIN' as UserRole)
   async closeTicket(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    return this.supportService.closeTicket(id);
+    return this.supportService.closeTicket(id, user);
   }
 
   // ─── Apply Macro to Ticket ─────────────────────────────

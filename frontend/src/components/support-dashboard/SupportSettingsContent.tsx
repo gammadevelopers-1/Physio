@@ -267,6 +267,17 @@ const SupportSettingsContent = () => {
   const [macroForm, setMacroForm] = useState({ title: '', bodyTemplate: '', kbArticleUrls: '' });
   const [macroSaving, setMacroSaving] = useState(false);
 
+  // Escalation Paths state
+  const [escalationPaths, setEscalationPaths] = useState<any[]>([]);
+  const [escalationLoading, setEscalationLoading] = useState(false);
+  const [showEscalationForm, setShowEscalationForm] = useState(false);
+  const [editingEscalation, setEditingEscalation] = useState<any>(null);
+  const [escalationForm, setEscalationForm] = useState<{
+    name: string;
+    steps: { afterMinutes: number; assignToRole: string }[];
+  }>({ name: '', steps: [{ afterMinutes: 30, assignToRole: 'SUPPORT' }] });
+  const [escalationSaving, setEscalationSaving] = useState(false);
+
   const handleSaveMacro = async () => {
     if (!macroForm.title.trim() || !macroForm.bodyTemplate.trim()) { toast.error('Title and body are required'); return; }
     setMacroSaving(true);
@@ -289,6 +300,43 @@ const SupportSettingsContent = () => {
       setMacrosList(refreshed || []);
     } catch { toast.error('Failed to save macro'); }
     finally { setMacroSaving(false); }
+  };
+
+  const handleSaveEscalationPath = async () => {
+    if (!escalationForm.name.trim()) { toast.error('Name is required'); return; }
+    if (escalationForm.steps.length === 0) { toast.error('At least one step is required'); return; }
+    for (let i = 0; i < escalationForm.steps.length; i++) {
+      if (escalationForm.steps[i].afterMinutes < 1) {
+        toast.error(`Step ${i + 1}: minutes must be >= 1`);
+        return;
+      }
+      if (i > 0 && escalationForm.steps[i].afterMinutes <= escalationForm.steps[i - 1].afterMinutes) {
+        toast.error(`Step ${i + 1} must have higher minutes than step ${i}`);
+        return;
+      }
+    }
+    setEscalationSaving(true);
+    try {
+      const data = {
+        name: escalationForm.name.trim(),
+        steps: escalationForm.steps,
+      };
+      if (editingEscalation) {
+        await supportApi.updateEscalationPath(editingEscalation.id, data);
+        toast.success('Escalation path updated');
+      } else {
+        await supportApi.createEscalationPath(data);
+        toast.success('Escalation path created');
+      }
+      setShowEscalationForm(false);
+      const refreshed = await supportApi.getEscalationPaths();
+      setEscalationPaths(Array.isArray(refreshed) ? refreshed : []);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to save';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to save');
+    } finally {
+      setEscalationSaving(false);
+    }
   };
 
   // SLA policy states
@@ -323,6 +371,14 @@ const SupportSettingsContent = () => {
       setMacrosLoading(true);
       supportApi.getMacros().then(data => setMacrosList(data || [])).catch(() => {}).finally(() => setMacrosLoading(false));
     }
+    if (activeTab === 'escalation') {
+      setEscalationLoading(true);
+      supportApi
+        .getEscalationPaths()
+        .then((data) => setEscalationPaths(Array.isArray(data) ? data : []))
+        .catch(() => toast.error('Failed to load escalation paths'))
+        .finally(() => setEscalationLoading(false));
+    }
   }, [activeTab]);
 
   // Auto-assignment states
@@ -338,14 +394,27 @@ const SupportSettingsContent = () => {
   const [smsNotif, setSmsNotif] = useState(false);
   const [whatsappNotif, setWhatsappNotif] = useState(true);
 
-  const tabs = [
-    { key: "profile", label: "Profile", icon: User, comingSoon: false },
-    { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck, comingSoon: false },
-    { key: "assignment", label: t("settingsPage.tabs.assignment"), icon: UserPlus, comingSoon: true },
-    { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare, comingSoon: false },
-    { key: "notifications", label: t("settingsPage.tabs.notifications"), icon: Bell, comingSoon: true },
-    { key: "categories", label: t("settingsPage.tabs.categories"), icon: Tag, comingSoon: true },
+  const isSupervisorOrAdmin =
+    user?.supportSubRole === "supervisor" ||
+    user?.roles?.includes("ADMIN") ||
+    user?.roles?.includes("SUPER_ADMIN");
+
+  // Agents only see Profile. All operational configuration tabs
+  // (SLA, Escalation, Macros, etc.) are supervisor/admin-only.
+  // Agents access macros via the Apply Macro dropdown on the
+  // ticket reply composer — they don't need a library view here.
+  const allTabs = [
+    { key: "profile", label: "Profile", icon: User, comingSoon: false, showFor: "all" as const },
+    { key: "sla", label: t("settingsPage.tabs.sla"), icon: ShieldCheck, comingSoon: false, showFor: "supervisor" as const },
+    { key: "escalation", label: "Escalation Paths", icon: Shield, comingSoon: false, showFor: "supervisor" as const },
+    { key: "assignment", label: t("settingsPage.tabs.assignment"), icon: UserPlus, comingSoon: true, showFor: "supervisor" as const },
+    { key: "macros", label: t("settingsPage.tabs.macros"), icon: MessageSquare, comingSoon: false, showFor: "supervisor" as const },
+    { key: "notifications", label: t("settingsPage.tabs.notifications"), icon: Bell, comingSoon: true, showFor: "supervisor" as const },
+    { key: "categories", label: t("settingsPage.tabs.categories"), icon: Tag, comingSoon: true, showFor: "supervisor" as const },
   ];
+  const tabs = allTabs.filter(
+    (tab) => tab.showFor === "all" || (tab.showFor === "supervisor" && isSupervisorOrAdmin),
+  );
 
   const assignmentRules = [
     {
@@ -757,10 +826,49 @@ const SupportSettingsContent = () => {
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-[#374151] mb-1">Body Template *</label>
-                              <p className="text-[10px] text-[#9CA3AF] mb-1">Variables: {'{{learner_name}}, {{course_name}}, {{ticket_id}}, {{agent_name}}'}</p>
-                              <textarea value={macroForm.bodyTemplate} onChange={e => setMacroForm(p => ({...p, bodyTemplate: e.target.value}))}
-                                rows={5} className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#002D87]"
-                                placeholder="Hi {{learner_name}}, thank you for reaching out..." />
+                              <p className="text-[10px] text-[#9CA3AF] mb-1">Click a variable to insert it at the cursor:</p>
+                              <div className="flex flex-wrap gap-1.5 mb-2">
+                                {[
+                                  { key: '{{learner_name}}', label: 'Learner Name' },
+                                  { key: '{{course_name}}', label: 'Course Name' },
+                                  { key: '{{ticket_id}}', label: 'Ticket ID' },
+                                  { key: '{{agent_name}}', label: 'Agent Name' },
+                                ].map(v => (
+                                  <button
+                                    key={v.key}
+                                    type="button"
+                                    onClick={() => {
+                                      const el = document.getElementById('macro-body-textarea') as HTMLTextAreaElement | null;
+                                      if (!el) {
+                                        setMacroForm(p => ({...p, bodyTemplate: p.bodyTemplate + v.key}));
+                                        return;
+                                      }
+                                      const start = el.selectionStart;
+                                      const end = el.selectionEnd;
+                                      const before = macroForm.bodyTemplate.slice(0, start);
+                                      const after = macroForm.bodyTemplate.slice(end);
+                                      setMacroForm(p => ({...p, bodyTemplate: before + v.key + after}));
+                                      requestAnimationFrame(() => {
+                                        el.selectionStart = el.selectionEnd = start + v.key.length;
+                                        el.focus();
+                                      });
+                                    }}
+                                    className="px-2 py-1 text-[11px] font-mono bg-[#EFF6FF] text-[#3B82F6] rounded border border-[#DBEAFE] hover:bg-[#DBEAFE] transition-colors"
+                                  >
+                                    {v.key}
+                                  </button>
+                                ))}
+                              </div>
+                              <textarea
+                                id="macro-body-textarea"
+                                value={macroForm.bodyTemplate}
+                                onChange={e => setMacroForm(p => ({...p, bodyTemplate: e.target.value}))}
+                                rows={5}
+                                maxLength={10000}
+                                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm resize-none focus:outline-none focus:border-[#002D87]"
+                                placeholder="Hi {{learner_name}}, thank you for reaching out..."
+                              />
+                              <p className="text-[10px] text-[#9CA3AF] text-right mt-0.5">{macroForm.bodyTemplate.length}/10,000</p>
                             </div>
                             <div>
                               <label className="block text-xs font-medium text-[#374151] mb-1">KB Article URLs (one per line)</label>
@@ -806,6 +914,223 @@ const SupportSettingsContent = () => {
                                 )}
                               </div>
                               <p className="text-xs text-[#6B7280] whitespace-pre-wrap line-clamp-3">{macro.bodyTemplate}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Escalation Paths */}
+                  {activeTab === "escalation" && (
+                    <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-base font-semibold text-[#1F2937]">Escalation Paths</h3>
+                          <p className="text-sm text-[#6B7280] mt-1">
+                            Define automatic ticket reassignment chains based on elapsed time.
+                          </p>
+                        </div>
+                        {user?.supportSubRole === 'supervisor' && (
+                          <button
+                            className="px-3 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90"
+                            onClick={() => {
+                              setEditingEscalation(null);
+                              setEscalationForm({ name: '', steps: [{ afterMinutes: 30, assignToRole: 'SUPPORT' }] });
+                              setShowEscalationForm(true);
+                            }}
+                          >
+                            + New Path
+                          </button>
+                        )}
+                      </div>
+
+                      {showEscalationForm && (
+                        <div className="mb-6 p-4 border border-[#C7D5F0] bg-[#F0F4FF] rounded-lg">
+                          <h4 className="text-sm font-semibold text-[#002D87] mb-3">
+                            {editingEscalation ? 'Edit Escalation Path' : 'Create Escalation Path'}
+                          </h4>
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-[#374151] mb-1">Name *</label>
+                              <input
+                                type="text"
+                                value={escalationForm.name}
+                                onChange={(e) => setEscalationForm((p) => ({ ...p, name: e.target.value }))}
+                                maxLength={100}
+                                className="w-full h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                                placeholder="e.g., Standard Escalation"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-xs font-medium text-[#374151] mb-2">
+                                Steps (in ascending order of minutes)
+                              </label>
+                              {escalationForm.steps.map((step, i) => (
+                                <div key={i} className="flex items-center gap-2 mb-2">
+                                  <span className="text-xs text-[#6B7280] w-14 flex-shrink-0">Step {i + 1}:</span>
+                                  <span className="text-xs text-[#6B7280]">After</span>
+                                  <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
+                                    value={String(step.afterMinutes)}
+                                    onChange={(e) => {
+                                      const val = e.target.value.replace(/[^0-9]/g, '');
+                                      setEscalationForm((p) => ({
+                                        ...p,
+                                        steps: p.steps.map((s, j) =>
+                                          j === i ? { ...s, afterMinutes: Number(val) || 0 } : s,
+                                        ),
+                                      }));
+                                    }}
+                                    className="w-20 h-8 px-2 border border-[#E5E7EB] rounded text-sm text-center focus:outline-none focus:border-[#002D87]"
+                                  />
+                                  <span className="text-xs text-[#6B7280]">min →</span>
+                                  <select
+                                    value={step.assignToRole}
+                                    onChange={(e) =>
+                                      setEscalationForm((p) => ({
+                                        ...p,
+                                        steps: p.steps.map((s, j) =>
+                                          j === i ? { ...s, assignToRole: e.target.value } : s,
+                                        ),
+                                      }))
+                                    }
+                                    className="h-8 px-2 border border-[#E5E7EB] rounded text-sm focus:outline-none focus:border-[#002D87]"
+                                  >
+                                    <option value="SUPPORT">Support Agent</option>
+                                    <option value="ADMIN">Admin</option>
+                                    <option value="SUPER_ADMIN">Super Admin</option>
+                                  </select>
+                                  {escalationForm.steps.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setEscalationForm((p) => ({
+                                          ...p,
+                                          steps: p.steps.filter((_, j) => j !== i),
+                                        }))
+                                      }
+                                      className="text-xs text-red-500 hover:underline"
+                                    >
+                                      Remove
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEscalationForm((p) => ({
+                                    ...p,
+                                    steps: [
+                                      ...p.steps,
+                                      {
+                                        afterMinutes:
+                                          (p.steps[p.steps.length - 1]?.afterMinutes || 0) + 30,
+                                        assignToRole: 'ADMIN',
+                                      },
+                                    ],
+                                  }))
+                                }
+                                className="text-xs text-[#002D87] hover:underline mt-1"
+                              >
+                                + Add Step
+                              </button>
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                              <button
+                                onClick={handleSaveEscalationPath}
+                                disabled={escalationSaving}
+                                className="px-4 py-1.5 bg-[#002D87] text-white text-xs font-medium rounded-lg hover:opacity-90 disabled:opacity-50"
+                              >
+                                {escalationSaving
+                                  ? 'Saving...'
+                                  : editingEscalation
+                                    ? 'Update'
+                                    : 'Create'}
+                              </button>
+                              <button
+                                onClick={() => setShowEscalationForm(false)}
+                                className="px-4 py-1.5 text-xs text-[#6B7280] hover:underline"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {escalationLoading ? (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-[#002D87]" />
+                        </div>
+                      ) : escalationPaths.length === 0 ? (
+                        <p className="text-center py-8 text-sm text-[#9CA3AF]">
+                          No escalation paths configured.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {escalationPaths.map((path) => (
+                            <div
+                              key={path.id}
+                              className="p-4 border border-[#E5E7EB] rounded-lg"
+                            >
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-sm font-medium text-[#1F2937]">
+                                  {path.name}
+                                </h4>
+                                {user?.supportSubRole === 'supervisor' && (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => {
+                                        setEditingEscalation(path);
+                                        setEscalationForm({
+                                          name: path.name,
+                                          steps: path.steps || [],
+                                        });
+                                        setShowEscalationForm(true);
+                                      }}
+                                      className="text-xs text-[#002D87] hover:underline"
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        if (confirm('Delete this escalation path?')) {
+                                          try {
+                                            await supportApi.deleteEscalationPath(path.id);
+                                            setEscalationPaths((prev) =>
+                                              prev.filter((p) => p.id !== path.id),
+                                            );
+                                            toast.success('Escalation path deleted');
+                                          } catch {
+                                            toast.error('Failed to delete');
+                                          }
+                                        }
+                                      }}
+                                      className="text-xs text-red-500 hover:underline"
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {(path.steps as { afterMinutes: number; assignToRole: string }[]).map(
+                                  (step, i) => (
+                                    <span
+                                      key={i}
+                                      className="inline-flex items-center gap-1 text-[11px] px-2 py-1 bg-[#F3F4F6] rounded-full text-[#374151]"
+                                    >
+                                      After {step.afterMinutes}m → {step.assignToRole}
+                                    </span>
+                                  ),
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

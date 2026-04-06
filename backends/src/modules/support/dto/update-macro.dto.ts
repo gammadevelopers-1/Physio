@@ -15,6 +15,7 @@ export class UpdateMacroDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(10000)
   bodyTemplate?: string;
 
   @IsOptional()

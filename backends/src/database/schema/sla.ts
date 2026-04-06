@@ -82,4 +82,5 @@ export const SLA_EVENT_TYPES = {
   FRT_WARNING_75: 'frt_warning_75',
   PRIORITY_ESCALATED: 'priority_escalated',
   FRT_BREACH_REASSIGNED: 'frt_breach_reassigned',
+  TTR_BREACH_REASSIGNED: 'ttr_breach_reassigned',
 } as const;

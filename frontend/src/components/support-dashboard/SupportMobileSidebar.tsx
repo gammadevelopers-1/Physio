@@ -89,7 +89,7 @@ const SupportMobileSidebar = ({ profile, supportSubRole }: SupportMobileSidebarP
       label: t("sidebar.settings"),
       href: `${basePath}/settings`,
       icon: Settings,
-      showFor: "supervisor" as const,
+      showFor: "all" as const,
     },
   ];
 

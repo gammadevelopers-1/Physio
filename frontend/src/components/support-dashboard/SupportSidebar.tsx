@@ -133,7 +133,7 @@ const SupportSidebar = ({ profile, supportSubRole }: SupportSidebarProps) => {
       label: t("sidebar.settings"),
       href: `${basePath}/settings`,
       icon: Settings,
-      showFor: "supervisor" as const,
+      showFor: "all" as const,
     },
   ];
 

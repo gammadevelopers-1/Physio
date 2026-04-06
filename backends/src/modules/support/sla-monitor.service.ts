@@ -279,12 +279,41 @@ export class SlaMonitorService {
                   notifiedUserIds: notifiedIds,
                 });
 
-                // NO auto-reassignment for TTR breach (SLA-04)
+                // TTR breach: auto-reassign to next agent. Combined with
+                // the agent isolation checks in Batch 1, the breaching
+                // agent automatically loses access once assigneeId changes.
+                const excludeIds = ticket.assigneeId
+                  ? [ticket.assigneeId]
+                  : [];
+                let newTtrAssignee =
+                  await this.supportService.findNextAgentForReassignment(
+                    excludeIds,
+                  );
+                if (!newTtrAssignee) {
+                  newTtrAssignee = supervisorId || null;
+                }
+
+                if (newTtrAssignee) {
+                  await db
+                    .update(tickets)
+                    .set({
+                      assigneeId: newTtrAssignee,
+                      updatedAt: now,
+                    })
+                    .where(eq(tickets.id, ticket.id));
+
+                  await db.insert(slaEvents).values({
+                    ticketId: ticket.id,
+                    eventType: 'ttr_breach_reassigned',
+                    notifiedUserIds: [newTtrAssignee],
+                  });
+                }
+
                 this.logger.warn(
-                  `TTR breach on ticket ${ticket.id} — agent keeps ticket, supervisor notified`,
+                  `TTR breach on ticket ${ticket.id} — reassigned to ${newTtrAssignee || 'supervisor'}`,
                 );
 
-                // Send TTR breach email to the assigned agent
+                // Send TTR breach email to the breaching agent
                 try {
                   if (ticket.assigneeId) {
                     const [agentInfo] = await db.select({ email: users.email, firstName: users.firstName }).from(users).where(eq(users.id, ticket.assigneeId));
@@ -295,6 +324,25 @@ export class SlaMonitorService {
                         ticket.id,
                         '',
                         String(policy.ttrMinutes),
+                      );
+                    }
+                  }
+                } catch { /* non-blocking */ }
+
+                // Send assignment email to the new agent
+                try {
+                  if (newTtrAssignee) {
+                    const [newAgentInfo] = await db
+                      .select({ email: users.email, firstName: users.firstName })
+                      .from(users)
+                      .where(eq(users.id, newTtrAssignee));
+                    if (newAgentInfo?.email) {
+                      await this.emailService.sendTicketEscalation(
+                        newAgentInfo.email,
+                        newAgentInfo.firstName || 'Agent',
+                        ticket.id,
+                        '',
+                        `TTR breach — ticket reassigned to you`,
                       );
                     }
                   }
@@ -313,7 +361,7 @@ export class SlaMonitorService {
                         supInfo.firstName || 'Supervisor',
                         ticket.id,
                         '',
-                        `TTR breached: ${policy.ttrMinutes}m target exceeded`,
+                        `TTR breached: ${policy.ttrMinutes}m target exceeded — reassigned`,
                       );
                     }
                   }
@@ -345,6 +393,7 @@ export class SlaMonitorService {
         .select({
           id: tickets.id,
           priority: tickets.priority,
+          assigneeId: tickets.assigneeId,
           onHoldTotalMinutes: tickets.onHoldTotalMinutes,
           createdAt: tickets.createdAt,
         })
@@ -412,15 +461,37 @@ export class SlaMonitorService {
               })
               .where(eq(tickets.id, ticket.id));
 
+            const escalationNotifiedIds: string[] = [];
+            if (ticket.assigneeId) escalationNotifiedIds.push(ticket.assigneeId);
+
             await db.insert(slaEvents).values({
               ticketId: ticket.id,
               eventType: SLA_EVENT_TYPES.PRIORITY_ESCALATED,
-              notifiedUserIds: [],
+              notifiedUserIds: escalationNotifiedIds,
             });
 
             this.logger.log(
               `Priority escalated: ticket ${ticket.id} from ${ticket.priority} to ${newPriority}`,
             );
+
+            // M5: Notify assigned agent about priority escalation
+            try {
+              if (ticket.assigneeId) {
+                const [agInfo] = await db
+                  .select({ email: users.email, firstName: users.firstName })
+                  .from(users)
+                  .where(eq(users.id, ticket.assigneeId));
+                if (agInfo?.email) {
+                  await this.emailService.sendTicketEscalation(
+                    agInfo.email,
+                    agInfo.firstName || 'Agent',
+                    ticket.id,
+                    '',
+                    `Priority auto-escalated from ${ticket.priority} to ${newPriority}`,
+                  );
+                }
+              }
+            } catch { /* non-blocking */ }
           }
         } catch (err) {
           this.logger.error(

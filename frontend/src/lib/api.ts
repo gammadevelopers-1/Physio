@@ -2744,6 +2744,29 @@ export const supportApi = {
       { macroId },
     ),
 
+  // Escalation Paths CRUD
+  getEscalationPaths: () =>
+    api.get<
+      {
+        id: string;
+        name: string;
+        steps: { afterMinutes: number; assignToRole: string }[];
+        active: boolean;
+        createdAt: string;
+      }[]
+    >('/tickets/escalation-paths'),
+
+  createEscalationPath: (data: {
+    name: string;
+    steps: { afterMinutes: number; assignToRole: string }[];
+  }) => api.post<any>('/tickets/escalation-paths', data),
+
+  updateEscalationPath: (id: string, data: any) =>
+    api.patch<any>(`/tickets/escalation-paths/${id}`, data),
+
+  deleteEscalationPath: (id: string) =>
+    api.delete<any>(`/tickets/escalation-paths/${id}`),
+
   // Knowledge Base CRUD
   getKbArticles: (params?: { category?: string; search?: string }) => {
     const searchParams = new URLSearchParams();

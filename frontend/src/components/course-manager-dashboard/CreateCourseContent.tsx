@@ -24,25 +24,21 @@ import {
   Users,
 } from "lucide-react";
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardStep = 1 | 2 | 3 | 4;
 
 function StepIndicator({
   currentStep,
   t,
-  skipTA = false,
 }: {
   currentStep: WizardStep;
   t: ReturnType<typeof useTranslations>;
-  skipTA?: boolean;
 }) {
-  const allSteps = [
+  const steps = [
     { number: 1, label: t("createCourse.wizardStep1") },
     { number: 2, label: t("createCourse.wizardStep2") },
     { number: 3, label: t("createCourse.wizardStep3") },
-    { number: 4, label: t("createCourse.wizardStep4") },
-    { number: 5, label: t("createCourse.wizardStep5") },
+    { number: 4, label: t("createCourse.wizardStep5") },
   ];
-  const steps = skipTA ? allSteps.filter((s) => s.number !== 4) : allSteps;
 
   return (
     <div className="flex items-center justify-between mb-8">
@@ -93,6 +89,39 @@ function StepIndicator({
   );
 }
 
+function getInstructorStatusLabel(
+  status: InstructorListItem["status"],
+  t: ReturnType<typeof useTranslations>,
+): string {
+  switch (status) {
+    case "available":
+      return t("instructorsPage.status.available");
+    case "busy":
+      return t("instructorsPage.status.busy");
+    case "overloaded":
+      return t("instructorsPage.status.overloaded");
+    case "on_leave":
+      return t("instructorsPage.status.on_leave");
+    default:
+      return "";
+  }
+}
+
+function getStatusColor(status: InstructorListItem["status"]): string {
+  switch (status) {
+    case "available":
+      return "bg-green-500";
+    case "busy":
+      return "bg-amber-500";
+    case "overloaded":
+      return "bg-red-500";
+    case "on_leave":
+      return "bg-gray-400";
+    default:
+      return "bg-gray-300";
+  }
+}
+
 const CreateCourseContent = () => {
   const manager = useManagerProfile();
   const router = useRouter();
@@ -127,14 +156,13 @@ const CreateCourseContent = () => {
   const [maxEnrollment, setMaxEnrollment] = useState("");
   const [cmeHours, setCmeHours] = useState("");
   const [cohort, setCohort] = useState("");
-  const [nelcAccreditation, setNelcAccreditation] = useState(true);
-  const [bilingualContent, setBilingualContent] = useState(true);
-  const [wcagCompliant, setWcagCompliant] = useState(true);
+  // NELC compliance flags — always enabled, shown as static indicators
+  const nelcAccreditation = true;
+  const bilingualContent = true;
+  const wcagCompliant = true;
 
-  // Step 3: Instructor Assignment
+  // Step 3: Team Assignment (Instructor + TA)
   const [instructorId, setInstructorId] = useState("");
-
-  // Step 4: TA Assignment (optional)
   const [availableTAs, setAvailableTAs] = useState<
     Array<{ id: string; firstName: string | null; lastName: string | null; email: string }>
   >([]);
@@ -209,8 +237,30 @@ const CreateCourseContent = () => {
           return false;
         }
         return true;
-      case 2:
-        return true; // Schedule fields are optional
+      case 2: {
+        const today = new Date().toISOString().split("T")[0];
+        if (!startDate) {
+          toast.error(t("createCourse.startDate") + " is required");
+          return false;
+        }
+        if (!endDate) {
+          toast.error(t("createCourse.endDate") + " is required");
+          return false;
+        }
+        if (!cmeHours) {
+          toast.error(t("createCourse.cmeHours") + " is required");
+          return false;
+        }
+        if (startDate < today) {
+          toast.error(t("createCourse.startDate") + " must not be in the past");
+          return false;
+        }
+        if (endDate <= startDate) {
+          toast.error(t("createCourse.endDate") + " must be after " + t("createCourse.startDate"));
+          return false;
+        }
+        return true;
+      }
       case 3:
         if (!instructorId) {
           toast.error(t("createCourse.instructorRequired"));
@@ -230,10 +280,8 @@ const CreateCourseContent = () => {
   }, [deliveryType]);
 
   const goNext = () => {
-    if (validateStep(currentStep) && currentStep < 5) {
-      let next = (currentStep + 1) as WizardStep;
-      // Skip TA step for self-paced courses
-      if (isSelfPaced && next === 4) next = 5;
+    if (validateStep(currentStep) && currentStep < 4) {
+      const next = (currentStep + 1) as WizardStep;
       setCurrentStep(next);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -241,16 +289,14 @@ const CreateCourseContent = () => {
 
   const goBack = () => {
     if (currentStep > 1) {
-      let prev = (currentStep - 1) as WizardStep;
-      // Skip TA step for self-paced courses
-      if (isSelfPaced && prev === 4) prev = 3;
+      const prev = (currentStep - 1) as WizardStep;
       setCurrentStep(prev);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(1) || !validateStep(3)) return;
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
 
     setSubmitting(true);
     try {
@@ -301,6 +347,34 @@ const CreateCourseContent = () => {
     "w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]";
   const selectClass = `${inputClass} bg-white`;
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "\u2014";
+    try {
+      return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const getDeliveryTypeLabel = (dt: string) => {
+    switch (dt) {
+      case "zoom":
+        return t("createCourse.deliveryZoom");
+      case "onsite":
+        return t("createCourse.deliveryOnsite");
+      case "blended":
+        return t("createCourse.deliveryBlended");
+      case "self-paced":
+        return t("createCourse.deliverySelfPaced");
+      default:
+        return dt;
+    }
+  };
+
   return (
     <>
       <CourseManagerNavbar manager={manager} />
@@ -332,7 +406,7 @@ const CreateCourseContent = () => {
               </div>
 
               {/* Step Indicator */}
-              <StepIndicator currentStep={currentStep} t={t} skipTA={deliveryType === "self-paced"} />
+              <StepIndicator currentStep={currentStep} t={t} />
 
               {/* Step 1: Basic Info */}
               {currentStep === 1 && (
@@ -498,26 +572,30 @@ const CreateCourseContent = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
-                          {t("createCourse.startDate")}
+                          {t("createCourse.startDate")} *
                         </label>
                         <input
                           id="start-date"
                           type="date"
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
                           className={inputClass}
+                          required
                         />
                       </div>
                       <div>
                         <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
-                          {t("createCourse.endDate")}
+                          {t("createCourse.endDate")} *
                         </label>
                         <input
                           id="end-date"
                           type="date"
                           value={endDate}
                           onChange={(e) => setEndDate(e.target.value)}
+                          min={startDate || new Date().toISOString().split("T")[0]}
                           className={inputClass}
+                          required
                         />
                       </div>
                       <div>
@@ -591,192 +669,176 @@ const CreateCourseContent = () => {
                     </div>
 
 
-                    <div className="space-y-4">
-                      {/* NELC Accreditation */}
-                      <label className="flex items-center justify-between p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
-                        <div>
-                          <p className="text-sm font-medium text-[#1F2937]">
-                            {t("createCourse.nelcAccreditation")}
-                          </p>
-                          <p className="text-xs text-[#6B7280] mt-0.5">
-                            {t("createCourse.nelcAccreditationDesc")}
-                          </p>
+                    <div className="space-y-3">
+                      {[
+                        { label: t("createCourse.nelcAccreditation"), desc: t("createCourse.nelcAccreditationDesc"), icon: "🏅" },
+                        { label: t("createCourse.bilingualContent"), desc: t("createCourse.bilingualContentDesc"), icon: "🌐" },
+                        { label: t("createCourse.wcagCompliant"), desc: t("createCourse.wcagCompliantDesc"), icon: "♿" },
+                      ].map((item, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg">
+                          <div className="w-8 h-8 bg-[#DCFCE7] rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Check className="w-4 h-4 text-[#22C55E]" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[#1F2937]">{item.label}</p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">{item.desc}</p>
+                          </div>
                         </div>
-                        <input
-                          type="checkbox"
-                          checked={nelcAccreditation}
-                          onChange={(e) =>
-                            setNelcAccreditation(e.target.checked)
-                          }
-                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#a37f49] focus:ring-[#d4a520]"
-                        />
-                      </label>
-
-                      {/* Bilingual Content */}
-                      <label className="flex items-center justify-between p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
-                        <div>
-                          <p className="text-sm font-medium text-[#1F2937]">
-                            {t("createCourse.bilingualContent")}
-                          </p>
-                          <p className="text-xs text-[#6B7280] mt-0.5">
-                            {t("createCourse.bilingualContentDesc")}
-                          </p>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={bilingualContent}
-                          onChange={(e) =>
-                            setBilingualContent(e.target.checked)
-                          }
-                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#a37f49] focus:ring-[#d4a520]"
-                        />
-                      </label>
-
-                      {/* WCAG Compliance */}
-                      <label className="flex items-center justify-between p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] cursor-pointer">
-                        <div>
-                          <p className="text-sm font-medium text-[#1F2937]">
-                            {t("createCourse.wcagCompliant")}
-                          </p>
-                          <p className="text-xs text-[#6B7280] mt-0.5">
-                            {t("createCourse.wcagCompliantDesc")}
-                          </p>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={wcagCompliant}
-                          onChange={(e) => setWcagCompliant(e.target.checked)}
-                          className="w-5 h-5 rounded border-[#D1D5DB] text-[#a37f49] focus:ring-[#d4a520]"
-                        />
-                      </label>
+                      ))}
+                      <p className="text-xs text-[#9CA3AF] mt-2">
+                        {isRTL ? "هذه المتطلبات مطبقة تلقائياً على جميع الدورات." : "These requirements are automatically enforced for all courses."}
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Step 3: Instructor Assignment */}
+              {/* Step 3: Team Assignment (Instructor + TA) */}
               {currentStep === 3 && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-                    {t("createCourse.instructor")}
-                  </h2>
-                  <div>
-                    <label htmlFor="instructor-select" className="block text-sm font-medium text-[#374151] mb-1">
-                      {t("createCourse.selectInstructor")} *
-                    </label>
-                    <select
-                      id="instructor-select"
-                      value={instructorId}
-                      onChange={(e) => setInstructorId(e.target.value)}
-                      className={`max-w-md ${selectClass}`}
-                      required
-                    >
-                      <option value="">
-                        {loadingInstructors
-                          ? t("createCourse.loadingInstructors")
-                          : t("createCourse.chooseInstructor")}
-                      </option>
-                      {instructors.map((inst) => (
-                        <option key={inst.id} value={inst.id}>
-                          {[inst.firstName, inst.lastName]
-                            .filter(Boolean)
-                            .join(" ") || inst.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Selected instructor preview */}
-                  {selectedInstructor && (
-                    <div className="mt-4 p-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg max-w-md">
-                      <p className="text-sm font-medium text-[#1F2937]">
-                        {[
-                          selectedInstructor.firstName,
-                          selectedInstructor.lastName,
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      </p>
-                      <p className="text-xs text-[#6B7280] mt-0.5">
-                        {selectedInstructor.email}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Step 4: TA Assignment (Optional) */}
-              {currentStep === 4 && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Users className="w-5 h-5 text-[#6b4e24]" />
-                    <h2 className="text-lg font-semibold text-[#1F2937]">
-                      {t("createCourse.taAssignment")}
+                <div className="space-y-6">
+                  {/* Instructor Section */}
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                      {t("createCourse.instructor")} *
                     </h2>
-                  </div>
-                  <p className="text-sm text-[#6B7280] mb-4">
-                    {t("createCourse.taAssignmentDesc")}
-                  </p>
-
-                  <div>
-                    <label htmlFor="ta-select" className="block text-sm font-medium text-[#374151] mb-1">
-                      {t("createCourse.selectTA")}
-                    </label>
-                    <select
-                      id="ta-select"
-                      value={selectedTAId}
-                      onChange={(e) => setSelectedTAId(e.target.value)}
-                      className={`max-w-md ${selectClass}`}
-                    >
-                      <option value="">
-                        {loadingTAs
-                          ? t("createCourse.loadingTAs")
-                          : t("createCourse.chooseTA")}
-                      </option>
-                      {availableTAs.map((ta) => (
-                        <option key={ta.id} value={ta.id}>
-                          {[ta.firstName, ta.lastName]
-                            .filter(Boolean)
-                            .join(" ") || ta.email}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Selected TA preview */}
-                  {selectedTA && (
-                    <div className="mt-4 p-4 bg-[#FFF8E6] border border-[#E5E7EB] rounded-lg max-w-md flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-[#1F2937]">
-                          {[selectedTA.firstName, selectedTA.lastName]
-                            .filter(Boolean)
-                            .join(" ")}
-                        </p>
-                        <p className="text-xs text-[#6B7280] mt-0.5">
-                          {selectedTA.email}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTAId("")}
-                        className="p-1 text-[#6B7280] hover:text-red-500 transition-colors"
-                        aria-label={tA("removeImage")}
+                    <div>
+                      <label htmlFor="instructor-select" className="block text-sm font-medium text-[#374151] mb-1">
+                        {t("createCourse.selectInstructor")}
+                      </label>
+                      <select
+                        id="instructor-select"
+                        value={instructorId}
+                        onChange={(e) => setInstructorId(e.target.value)}
+                        className={`max-w-md ${selectClass}`}
+                        required
                       >
-                        <X className="w-4 h-4" />
-                      </button>
+                        <option value="">
+                          {loadingInstructors
+                            ? t("createCourse.loadingInstructors")
+                            : t("createCourse.chooseInstructor")}
+                        </option>
+                        {instructors.map((inst) => {
+                          const name =
+                            [inst.firstName, inst.lastName]
+                              .filter(Boolean)
+                              .join(" ") || inst.email;
+                          const statusLabel = inst.status
+                            ? ` \u2014 ${getInstructorStatusLabel(inst.status, t)}`
+                            : "";
+                          return (
+                            <option key={inst.id} value={inst.id}>
+                              {name}{statusLabel}
+                            </option>
+                          );
+                        })}
+                      </select>
                     </div>
-                  )}
 
-                  {!selectedTAId && (
-                    <p className="mt-3 text-xs text-[#9CA3AF]">
-                      {t("createCourse.taSkipNote")}
-                    </p>
-                  )}
+                    {/* Selected instructor preview */}
+                    {selectedInstructor && (
+                      <div className="mt-4 p-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg max-w-md">
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-[#1F2937]">
+                              {[
+                                selectedInstructor.firstName,
+                                selectedInstructor.lastName,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
+                            </p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">
+                              {selectedInstructor.email}
+                            </p>
+                          </div>
+                          {selectedInstructor.status && (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full bg-gray-50 border border-[#E5E7EB]">
+                              <span className={`w-2 h-2 rounded-full ${getStatusColor(selectedInstructor.status)}`} />
+                              {getInstructorStatusLabel(selectedInstructor.status, t)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-[#E5E7EB]" />
+                    </div>
+                    <div className="relative flex justify-center">
+                      <span className="bg-[#F9FAFB] px-3 text-xs text-[#9CA3AF] uppercase tracking-wider">
+                        {t("createCourse.taAssignment")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* TA Section */}
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Users className="w-5 h-5 text-[#6b4e24]" />
+                      <h2 className="text-lg font-semibold text-[#1F2937]">
+                        {t("createCourse.taAssignment")}
+                      </h2>
+                      <span className="text-xs text-[#9CA3AF] font-normal">
+                        ({t("createCourse.optional") || "Optional"})
+                      </span>
+                    </div>
+
+                    {selectedTA ? (
+                      <div className="p-4 bg-[#FFF8E6] border border-[#E5E7EB] rounded-lg max-w-md flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-[#1F2937]">
+                            {[selectedTA.firstName, selectedTA.lastName]
+                              .filter(Boolean)
+                              .join(" ")}
+                          </p>
+                          <p className="text-xs text-[#6B7280] mt-0.5">
+                            {selectedTA.email}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTAId("")}
+                          className="p-1 text-[#6B7280] hover:text-red-500 transition-colors"
+                          aria-label={tA("removeImage")}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <label htmlFor="ta-select" className="block text-sm font-medium text-[#374151] mb-1">
+                          {t("createCourse.selectTA")}
+                        </label>
+                        <select
+                          id="ta-select"
+                          value={selectedTAId}
+                          onChange={(e) => setSelectedTAId(e.target.value)}
+                          className={`max-w-md ${selectClass}`}
+                        >
+                          <option value="">
+                            {loadingTAs
+                              ? t("createCourse.loadingTAs")
+                              : "\u2014 None \u2014"}
+                          </option>
+                          {availableTAs.map((ta) => (
+                            <option key={ta.id} value={ta.id}>
+                              {[ta.firstName, ta.lastName]
+                                .filter(Boolean)
+                                .join(" ") || ta.email}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* Step 5: Review & Submit */}
-              {currentStep === 5 && (
+              {/* Step 4: Review & Submit */}
+              {currentStep === 4 && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
@@ -792,13 +854,26 @@ const CreateCourseContent = () => {
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.basicInfo")}
                         </h3>
+
+                        {/* Thumbnail preview */}
+                        {thumbnailPreview && (
+                          <div className="relative w-full max-w-xs h-36 rounded-lg overflow-hidden border border-[#E5E7EB] mb-4">
+                            <Image
+                              src={thumbnailPreview}
+                              alt="Course thumbnail"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+
                         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                           <div>
                             <dt className="text-[#6B7280]">
                               {t("createCourse.courseTitle")}
                             </dt>
                             <dd className="font-medium text-[#1F2937]">
-                              {title || "—"}
+                              {title || "\u2014"}
                             </dd>
                           </div>
                           {titleAr && (
@@ -815,8 +890,8 @@ const CreateCourseContent = () => {
                             <dt className="text-[#6B7280]">
                               {t("createCourse.deliveryType")}
                             </dt>
-                            <dd className="font-medium text-[#1F2937] capitalize">
-                              {deliveryType}
+                            <dd className="font-medium text-[#1F2937]">
+                              {getDeliveryTypeLabel(deliveryType)}
                             </dd>
                           </div>
                           {description && (
@@ -844,7 +919,7 @@ const CreateCourseContent = () => {
                               {t("createCourse.startDate")}
                             </dt>
                             <dd className="font-medium text-[#1F2937]">
-                              {startDate || "—"}
+                              {formatDate(startDate)}
                             </dd>
                           </div>
                           <div>
@@ -852,7 +927,15 @@ const CreateCourseContent = () => {
                               {t("createCourse.endDate")}
                             </dt>
                             <dd className="font-medium text-[#1F2937]">
-                              {endDate || "—"}
+                              {formatDate(endDate)}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt className="text-[#6B7280]">
+                              {t("createCourse.cmeHours")}
+                            </dt>
+                            <dd className="font-medium text-[#1F2937]">
+                              {cmeHours || "\u2014"}
                             </dd>
                           </div>
                           <div>
@@ -860,26 +943,37 @@ const CreateCourseContent = () => {
                               {t("createCourse.maxEnrollment")}
                             </dt>
                             <dd className="font-medium text-[#1F2937]">
-                              {maxEnrollment || "—"}
+                              {maxEnrollment || "\u2014"}
                             </dd>
                           </div>
-                          <div className="sm:col-span-2 flex items-center gap-4">
+                          {cohort && (
+                            <div>
+                              <dt className="text-[#6B7280]">
+                                {t("createCourse.cohort")}
+                              </dt>
+                              <dd className="font-medium text-[#1F2937]">
+                                {cohort}
+                              </dd>
+                            </div>
+                          )}
+                          <div className="sm:col-span-2 flex items-center gap-4 flex-wrap">
                             <span
                               className={`px-2 py-1 text-xs rounded-full ${nelcAccreditation ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
                             >
-                              {nelcAccreditation ? "✓" : "✗"}{" "}
+                              {nelcAccreditation ? "\u2713" : "\u2717"}{" "}
                               {t("createCourse.nelcAccreditation")}
                             </span>
                             <span
                               className={`px-2 py-1 text-xs rounded-full ${bilingualContent ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
                             >
-                              {bilingualContent ? "✓" : "✗"}{" "}
+                              {bilingualContent ? "\u2713" : "\u2717"}{" "}
                               {t("createCourse.bilingualContent")}
                             </span>
                             <span
                               className={`px-2 py-1 text-xs rounded-full ${wcagCompliant ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}
                             >
-                              {wcagCompliant ? "✓" : "✗"} WCAG 2.1 AA
+                              {wcagCompliant ? "\u2713" : "\u2717"}{" "}
+                              {t("createCourse.wcagCompliant")}
                             </span>
                           </div>
                         </dl>
@@ -891,22 +985,29 @@ const CreateCourseContent = () => {
                           {t("createCourse.instructor")}
                         </h3>
                         {selectedInstructor ? (
-                          <p className="text-sm font-medium text-[#1F2937]">
-                            {[
-                              selectedInstructor.firstName,
-                              selectedInstructor.lastName,
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}{" "}
-                            ({selectedInstructor.email})
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-[#1F2937]">
+                              {[
+                                selectedInstructor.firstName,
+                                selectedInstructor.lastName,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}{" "}
+                              ({selectedInstructor.email})
+                            </p>
+                            {selectedInstructor.status && (
+                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-50 border border-[#E5E7EB]">
+                                <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(selectedInstructor.status)}`} />
+                                {getInstructorStatusLabel(selectedInstructor.status, t)}
+                              </span>
+                            )}
+                          </div>
                         ) : (
-                          <p className="text-sm text-[#6B7280]">—</p>
+                          <p className="text-sm text-[#6B7280]">{"\u2014"}</p>
                         )}
                       </div>
 
                       {/* Teaching Assistant */}
-                      {!isSelfPaced && (
                       <div className="border border-[#E5E7EB] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.taAssignment")}
@@ -924,7 +1025,6 @@ const CreateCourseContent = () => {
                           </p>
                         )}
                       </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -943,7 +1043,7 @@ const CreateCourseContent = () => {
                     : t("createCourse.back")}
                 </button>
 
-                {currentStep < 5 ? (
+                {currentStep < 4 ? (
                   <button
                     type="button"
                     onClick={goNext}

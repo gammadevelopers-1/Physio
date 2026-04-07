@@ -1376,6 +1376,11 @@ export interface InstructorListItem {
   firstName: string | null;
   lastName: string | null;
   email: string;
+  avatar?: string | null;
+  status?: 'available' | 'busy' | 'overloaded' | 'on_leave';
+  coursesCount?: number;
+  hoursThisWeek?: number;
+  avgRating?: number;
 }
 
 export interface CreateCourseManagerData {

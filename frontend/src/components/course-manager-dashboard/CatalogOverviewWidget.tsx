@@ -50,17 +50,21 @@ const CatalogOverviewWidget = ({
     archived: courses.filter((c) => c.status === "archived").length,
   };
 
-  const categories = Array.from(new Set(courses.map((c) => c.category)));
-  const categoryEnrollment = categories.map((cat) => {
+  const deliveryTypes = Array.from(new Set(courses.map((c) => c.category)));
+  const categoryEnrollment = deliveryTypes.map((cat) => {
     const catCourses = courses.filter((c) => c.category === cat);
+    const enrolled = catCourses.reduce((sum, c) => sum + c.enrolled, 0);
+    const coursesWithCap = catCourses.filter((c) => c.capacity > 0);
+    const capacity = coursesWithCap.reduce((sum, c) => sum + c.capacity, 0);
     return {
       category: cat,
-      enrolled: catCourses.reduce((sum, c) => sum + c.enrolled, 0),
-      capacity: catCourses.reduce((sum, c) => sum + c.capacity, 0),
+      enrolled,
+      capacity,
+      courseCount: catCourses.length,
     };
   });
 
-  const maxEnrollment = Math.max(...categoryEnrollment.map((c) => c.capacity), 1);
+  const maxEnrollment = Math.max(...categoryEnrollment.map((c) => Math.max(c.capacity, c.enrolled)), 1);
 
   // Donut chart helpers
   const donutData = [
@@ -154,29 +158,40 @@ const CatalogOverviewWidget = ({
               </div>
             </div>
 
-            {/* Bar Chart — Enrollment by Category */}
+            {/* Bar Chart — Enrollment by Delivery Type */}
             <div>
               <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
                 {t("catalog.enrollmentByCategory")}
               </p>
               <div className="space-y-2">
-                {categoryEnrollment.slice(0, 5).map((cat, i) => (
-                  <div key={i}>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-xs text-[#374151] truncate max-w-[120px]">{cat.category}</span>
-                      <span className="text-xs font-medium text-[#1F2937]">{cat.enrolled}/{cat.capacity}</span>
+                {categoryEnrollment.slice(0, 5).map((cat, i) => {
+                  const deliveryLabel = (() => {
+                    try { return t(`coursesPage.delivery.${cat.category}` as Parameters<typeof t>[0]); }
+                    catch { return cat.category; }
+                  })();
+                  const barValue = Math.max(cat.enrolled, 1);
+                  const fillPercent = cat.capacity > 0
+                    ? Math.min((cat.enrolled / cat.capacity) * 100, 100)
+                    : 100;
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs text-[#374151] truncate max-w-[120px]">
+                          {deliveryLabel} ({cat.courseCount})
+                        </span>
+                        <span className="text-xs font-medium text-[#1F2937]">
+                          {cat.capacity > 0 ? `${cat.enrolled}/${cat.capacity}` : `${cat.enrolled}`}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#3B82F6] rounded-full"
+                          style={{ width: `${(barValue / maxEnrollment) * 100}%`, opacity: fillPercent < 100 ? 0.6 : 1 }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${(cat.capacity / maxEnrollment) * 100}%`,
-                          background: `linear-gradient(90deg, #3B82F6 ${cat.capacity > 0 ? (cat.enrolled / cat.capacity) * 100 : 0}%, #BFDBFE ${cat.capacity > 0 ? (cat.enrolled / cat.capacity) * 100 : 0}%)`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {categoryEnrollment.length === 0 && (
                   <p className="text-xs text-[#9CA3AF]">—</p>
                 )}

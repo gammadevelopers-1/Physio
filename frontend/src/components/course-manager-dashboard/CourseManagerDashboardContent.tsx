@@ -291,21 +291,24 @@ const CourseManagerDashboardContent = () => {
                 />
               </div>
 
+              {certificates.length > 0 && (
+                <div className="mb-6">
+                  <CertificateQueue
+                    certificates={certificates}
+                    onApprove={handleApproveCertificate}
+                    onHold={handleHoldCertificate}
+                    onBatchApprove={handleBatchApproveCertificates}
+                    onBatchHold={handleBatchHoldCertificates}
+                    onPreview={handlePreviewCertificate}
+                    onRefresh={refetch}
+                  />
+                </div>
+              )}
+
             </div>
 
             <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
               <CourseStatsWidget data={courseStats} />
-              {certificates.length > 0 && (
-                <CertificateQueue
-                  certificates={certificates}
-                  onApprove={handleApproveCertificate}
-                  onHold={handleHoldCertificate}
-                  onBatchApprove={handleBatchApproveCertificates}
-                  onBatchHold={handleBatchHoldCertificates}
-                  onPreview={handlePreviewCertificate}
-                  onRefresh={refetch}
-                />
-              )}
               <UpcomingSessionsWidget sessions={upcomingSessions} />
               <InstructorsManagementWidget instructors={widgetInstructors} />
             </div>

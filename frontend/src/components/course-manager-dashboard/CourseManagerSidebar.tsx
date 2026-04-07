@@ -30,7 +30,7 @@ interface CourseManagerProfile {
   email: string;
   totalCourses: number;
   totalInstructors: number;
-  nelcCompliance: number;
+  totalEnrollments: number;
   avatar?: string;
 }
 
@@ -232,18 +232,12 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
             <p className="text-xs text-[#6B7280]">{t("sidebar.courses")}</p>
           </div>
           <div className="text-center">
-            <p className="text-xl font-bold text-[#1F2937]">{manager.totalInstructors}</p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.instructors")}</p>
+            <p className="text-xl font-bold text-[#1F2937]">{manager.totalEnrollments}</p>
+            <p className="text-xs text-[#6B7280]">{t("kpi.totalEnrollments")}</p>
           </div>
           <div className="text-center">
-            <p className={`text-xl font-bold ${
-              manager.nelcCompliance >= 80
-                ? "text-[#16A34A]"
-                : manager.nelcCompliance >= 60
-                  ? "text-[#D97706]"
-                  : "text-[#DC2626]"
-            }`}>{manager.nelcCompliance}%</p>
-            <p className="text-xs text-[#6B7280]">{t("sidebar.nelc")}</p>
+            <p className="text-xl font-bold text-[#1F2937]">{manager.totalInstructors}</p>
+            <p className="text-xs text-[#6B7280]">{t("sidebar.instructors")}</p>
           </div>
         </div>
 

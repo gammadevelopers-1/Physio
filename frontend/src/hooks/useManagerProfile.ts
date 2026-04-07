@@ -9,7 +9,7 @@ export interface ManagerProfile {
   email: string;
   totalCourses: number;
   totalInstructors: number;
-  nelcCompliance: number;
+  totalEnrollments: number;
   avatar?: string;
 }
 
@@ -17,18 +17,20 @@ export function useManagerProfile(): ManagerProfile {
   const user = useUser();
   const [totalCourses, setTotalCourses] = useState(0);
   const [totalInstructors, setTotalInstructors] = useState(0);
+  const [totalEnrollments, setTotalEnrollments] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
 
     Promise.all([
-      courseManagerApi.getCourses({ limit: 1 }),
+      courseManagerApi.getCourses({ limit: 100 }),
       courseManagerApi.getInstructors(),
     ])
       .then(([coursesResult, instructorsResult]) => {
         if (!cancelled) {
           setTotalCourses(coursesResult.total);
           setTotalInstructors(instructorsResult.length);
+          setTotalEnrollments(coursesResult.data.reduce((sum, c) => sum + c.enrolledCount, 0));
         }
       })
       .catch(() => {
@@ -48,9 +50,9 @@ export function useManagerProfile(): ManagerProfile {
       email: user?.email || "",
       totalCourses,
       totalInstructors,
-      nelcCompliance: 0,
+      totalEnrollments,
       avatar: user?.avatar || undefined,
     }),
-    [user, totalCourses, totalInstructors]
+    [user, totalCourses, totalInstructors, totalEnrollments]
   );
 }

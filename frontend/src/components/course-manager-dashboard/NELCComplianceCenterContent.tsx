@@ -78,6 +78,123 @@ interface CourseScorecard {
   categories: ScorecardCategory[];
 }
 
+// Translation maps for backend NELC compliance strings
+const RULE_NAME_AR: Record<string, string> = {
+  course_structure: "هيكل الدورة",
+  bilingual_content: "محتوى ثنائي اللغة",
+  learning_objectives: "أهداف التعلم",
+  hours_compliance: "الامتثال لساعات التدريب",
+  max_capacity: "السعة القصوى",
+  accessibility: "إمكانية الوصول",
+  wcag_materials: "مواد WCAG",
+  video_captions: "ترجمة الفيديو",
+  virtual_classes: "الفصول الافتراضية",
+  zoom_config: "إعدادات Zoom",
+  recording_sync: "مزامنة التسجيل",
+  assessment_quality: "جودة التقييم",
+  assessment_coverage: "تغطية التقييم",
+  passing_criteria: "معايير النجاح",
+  policies: "السياسات",
+  cancellation_policy: "سياسة الإلغاء",
+  data_protection: "حماية البيانات",
+  data_retention: "الاحتفاظ بالبيانات",
+  consent_management: "إدارة الموافقة",
+  instructor_qualifications: "مؤهلات المدرب",
+  instructor_credentials: "أوراق اعتماد المدرب",
+  instructor_workload: "عبء عمل المدرب",
+  enrollment_limit: "حد التسجيل",
+  assistant_allocation: "تخصيص المساعدين",
+  zoom_configuration: "إعدادات Zoom",
+  scheduling: "الجدولة",
+  attendance_tracking: "تتبع الحضور",
+};
+
+const CATEGORY_LABEL_AR: Record<string, string> = {
+  "Course Structure": "هيكل الدورة",
+  "Accessibility": "إمكانية الوصول",
+  "Virtual Classes": "الفصول الافتراضية",
+  "Virtual Classes (N/A)": "الفصول الافتراضية (غير متاح)",
+  "Assessment Quality": "جودة التقييم",
+  "Policies": "السياسات",
+  "Data Protection": "حماية البيانات",
+  "Instructor Qualifications": "مؤهلات المدرب",
+};
+
+const NELC_DETAIL_AR: [RegExp, string][] = [
+  [/^Course has (\d+) modules \(minimum 3\)$/, "الدورة تحتوي على $1 وحدات (الحد الأدنى 3)"],
+  [/^Course has only (\d+) module.*$/, "الدورة تحتوي على $1 وحدة فقط — مطلوب 3 على الأقل"],
+  [/^Both English and Arabic titles provided$/, "العنوان متوفر بالإنجليزية والعربية"],
+  [/^Missing Arabic title$/, "العنوان العربي مفقود"],
+  [/^Missing English title$/, "العنوان الإنجليزي مفقود"],
+  [/^([\d.]+) hours meets (\d+)h minimum.*$/, "$1 ساعة تستوفي الحد الأدنى $2 ساعة"],
+  [/^([\d.]+) hours is below (\d+)h minimum.*$/, "$1 ساعة أقل من الحد الأدنى $2 ساعة"],
+  [/^Enrollment (\d+) within.*capacity (\d+)$/, "التسجيل $1 ضمن السعة القصوى $2"],
+  [/^Enrollment (\d+) exceeds.*capacity (\d+)$/, "التسجيل $1 يتجاوز السعة القصوى $2"],
+  [/^All (\d+) materials WCAG compliant.*$/, "جميع المواد ($1) متوافقة مع WCAG"],
+  [/^(\d+)\/(\d+) materials WCAG compliant.*$/, "$1/$2 مواد متوافقة مع WCAG"],
+  [/^No materials uploaded yet$/, "لم يتم رفع مواد بعد"],
+  [/^(\d+)\/(\d+) videos captioned$/, "$1/$2 فيديو مترجم"],
+  [/^No video materials$/, "لا توجد مواد فيديو"],
+  [/^All (\d+) sessions have Zoom configured$/, "جميع المحاضرات ($1) لديها إعدادات Zoom"],
+  [/^(\d+)\/(\d+) sessions have Zoom configured$/, "$1/$2 محاضرة لديها إعدادات Zoom"],
+  [/^No sessions scheduled$/, "لا توجد محاضرات مجدولة"],
+  [/^Self-paced course.*$/, "دورة ذاتية — لا تتطلب فصول افتراضية"],
+  [/^(\d+)\/(\d+) sessions have recordings synced$/, "$1/$2 محاضرة لديها تسجيلات مزامنة"],
+  [/^All (\d+) modules covered by assessments$/, "جميع الوحدات ($1) مغطاة بالتقييمات"],
+  [/^(\d+) of (\d+) modules? have no linked assessment$/, "$1 من $2 وحدة ليس لها تقييم مرتبط"],
+  [/^No modules exist to assess$/, "لا توجد وحدات للتقييم"],
+  [/^All assessments have passing criteria defined$/, "جميع التقييمات لها معايير نجاح محددة"],
+  [/^(\d+)\/(\d+) assessments have passing criteria$/, "$1/$2 تقييم له معايير نجاح"],
+  [/^No assessments configured$/, "لا توجد تقييمات"],
+  [/^Cancellation policy is configured.*$/, "سياسة الإلغاء مُعدة"],
+  [/^No cancellation policy configured$/, "لم يتم إعداد سياسة الإلغاء"],
+  [/^Data retention policy configured$/, "سياسة الاحتفاظ بالبيانات مُعدة"],
+  [/^No data retention policy$/, "لا توجد سياسة احتفاظ بالبيانات"],
+  [/^Consent management configured$/, "إدارة الموافقة مُعدة"],
+  [/^No consent management configured$/, "لم يتم إعداد إدارة الموافقة"],
+  [/^Instructor has valid credentials$/, "المدرب لديه أوراق اعتماد صالحة"],
+  [/^Instructor credentials not verified$/, "لم يتم التحقق من أوراق اعتماد المدرب"],
+  [/^No instructor assigned$/, "لم يتم تعيين مدرب"],
+  [/^Instructor workload within limits.*$/, "عبء عمل المدرب ضمن الحدود"],
+  [/^Instructor workload exceeds.*$/, "عبء عمل المدرب يتجاوز الحدود"],
+  [/^Passed$/, "ناجح"],
+  [/^Failed$/, "فاشل"],
+  [/^Review$/, "مراجعة"],
+  // Virtual class checks
+  [/^Course not found$/, "الدورة غير موجودة"],
+  [/^(\d+)\/(\d+) — exceeds NELC max for (\w+) course$/, "$1/$2 — يتجاوز الحد الأقصى NELC لدورة $3"],
+  [/^(\d+)\/(\d+) — approaching NELC limit for (\w+) course$/, "$1/$2 — يقترب من حد NELC لدورة $3"],
+  [/^(\d+)\/(\d+) — within NELC limit for (\w+) course$/, "$1/$2 — ضمن حد NELC لدورة $3"],
+  [/^(\d+) enrolled — no assistants required$/, "$1 مسجل — لا يتطلب مساعدين"],
+  [/^(\d+)\/(\d+) assistants assigned \((\d+) enrolled\)$/, "$1/$2 مساعد معين ($3 مسجل)"],
+  [/^(\d+)\/(\d+) assistants assigned — (\d+) more needed \((\d+) enrolled\)$/, "$1/$2 مساعد معين — يحتاج $3 إضافي ($4 مسجل)"],
+  [/^Zoom\/hybrid session has no meeting link configured$/, "محاضرة Zoom/هجينة بدون رابط اجتماع"],
+  [/^Zoom meeting configured$/, "اجتماع Zoom مُعد"],
+  [/^Session has no scheduled date$/, "المحاضرة بدون تاريخ مجدول"],
+  [/^Duration is (\d+) minutes — should be at least 15 minutes$/, "المدة $1 دقيقة — يجب أن تكون 15 دقيقة على الأقل"],
+  [/^Scheduled for (\d+) minutes$/, "مجدولة لمدة $1 دقيقة"],
+  [/^No attendance records for completed session$/, "لا توجد سجلات حضور للمحاضرة المكتملة"],
+  [/^(\d+) attendance records tracked$/, "$1 سجل حضور متتبع"],
+];
+
+function translateRule(rule: string, isArabic: boolean): string {
+  if (!isArabic) return rule.replace(/_/g, " ");
+  return RULE_NAME_AR[rule] || rule.replace(/_/g, " ");
+}
+
+function translateCategoryLabel(label: string, isArabic: boolean): string {
+  if (!isArabic) return label;
+  return CATEGORY_LABEL_AR[label] || label;
+}
+
+function translateNelcDetail(detail: string, isArabic: boolean): string {
+  if (!isArabic) return detail;
+  for (const [pattern, replacement] of NELC_DETAIL_AR) {
+    if (pattern.test(detail)) return detail.replace(pattern, replacement);
+  }
+  return detail;
+}
+
 const NELCComplianceCenterContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
@@ -451,7 +568,7 @@ const NELCComplianceCenterContent = () => {
                                                   </div>
                                                   <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-semibold text-[#1F2937] truncate">
-                                                      {cat.label}
+                                                      {translateCategoryLabel(cat.label, isRTL)}
                                                     </p>
                                                     <span className={`inline-flex items-center gap-1 text-[10px] font-medium ${catConfig.text}`}>
                                                       <CatStatusIcon className="w-3 h-3" />
@@ -474,10 +591,10 @@ const NELCComplianceCenterContent = () => {
                                                         <div key={check.rule} className="flex items-start gap-2">
                                                           <ChkIcon className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${chkConfig.text}`} />
                                                           <div className="min-w-0">
-                                                            <p className="text-xs font-medium text-[#1F2937] capitalize">
-                                                              {check.rule.replace(/_/g, " ")}
+                                                            <p className="text-xs font-medium text-[#1F2937]">
+                                                              {translateRule(check.rule, isRTL)}
                                                             </p>
-                                                            <p className="text-[10px] text-[#6B7280]">{check.detail}</p>
+                                                            <p className="text-[10px] text-[#6B7280]">{translateNelcDetail(check.detail, isRTL)}</p>
                                                           </div>
                                                         </div>
                                                       );
@@ -616,7 +733,7 @@ const NELCComplianceCenterContent = () => {
                                         ) : (
                                           <Monitor className="w-3.5 h-3.5 text-[#8B5CF6]" />
                                         )}
-                                        {vc.type === "zoom" ? "Zoom" : "Hybrid"}
+                                        {vc.type === "zoom" ? t("schedules.zoom") : t("sessionsPage.type.hybrid")}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 text-center hidden sm:table-cell">
@@ -682,10 +799,10 @@ const NELCComplianceCenterContent = () => {
                                                   className={`w-4 h-4 mt-0.5 flex-shrink-0 ${checkConfig.text}`}
                                                 />
                                                 <div>
-                                                  <p className="text-sm font-medium text-[#1F2937] capitalize">
-                                                    {check.rule.replace(/_/g, " ")}
+                                                  <p className="text-sm font-medium text-[#1F2937]">
+                                                    {translateRule(check.rule, isRTL)}
                                                   </p>
-                                                  <p className="text-xs text-[#6B7280]">{check.detail}</p>
+                                                  <p className="text-xs text-[#6B7280]">{translateNelcDetail(check.detail, isRTL)}</p>
                                                 </div>
                                               </div>
                                             );

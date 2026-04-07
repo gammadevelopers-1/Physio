@@ -14,6 +14,7 @@ import {
   Video,
   MapPin,
   Clock,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -424,9 +425,10 @@ const SessionsContent = () => {
   const today = new Date().toISOString().split("T")[0];
   const todaySessions = sessions.filter((s) => s.scheduledAt.startsWith(today));
   const upcomingSessions = sessions.filter(
-    (s) => !s.scheduledAt.startsWith(today) && (s.status === "scheduled" || s.status === "live" || s.status === "ended")
+    (s) => !s.scheduledAt.startsWith(today) && (s.status === "scheduled" || s.status === "live")
   );
-  const pastSessions = sessions.filter((s) => s.status === "completed" || s.status === "cancelled");
+  const pastSessions = sessions.filter((s) => s.status === "completed" || s.status === "cancelled" || s.status === "ended");
+  const [showPast, setShowPast] = useState(false);
 
   const renderSessionRow = (session: SessionWithInstructor, showDate = false, dimmed = false) => {
     const colorClass = instructorColorMap.get(session.instructorId) || "";
@@ -770,12 +772,21 @@ const SessionsContent = () => {
 
                   {pastSessions.length > 0 && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB]">
-                      <div className="p-4 border-b border-[#E5E7EB]">
-                        <h2 className="text-base font-semibold text-[#1F2937]">{t("sessionsPage.past")}</h2>
-                      </div>
-                      <div className="divide-y divide-[#E5E7EB]">
-                        {pastSessions.map((session) => renderSessionRow(session, true, true))}
-                      </div>
+                      <button
+                        onClick={() => setShowPast(!showPast)}
+                        className="w-full flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors rounded-xl"
+                      >
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-base font-semibold text-[#1F2937]">{t("sessionsPage.past")}</h2>
+                          <span className="text-xs font-medium text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded-full">{pastSessions.length}</span>
+                        </div>
+                        <ChevronDown className={`w-5 h-5 text-[#6B7280] transition-transform ${showPast ? "rotate-180" : ""}`} />
+                      </button>
+                      {showPast && (
+                        <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
+                          {pastSessions.map((session) => renderSessionRow(session, true, true))}
+                        </div>
+                      )}
                     </div>
                   )}
 

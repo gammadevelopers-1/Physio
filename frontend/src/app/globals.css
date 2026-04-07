@@ -240,3 +240,11 @@ body {
   transition-duration: 0s !important;
   transition-delay: 0s !important;
 }
+
+/* RTL truncation fix: auto-detect text direction so LTR content (filenames, emails)
+   truncates correctly in RTL pages, while Arabic text still truncates from the left */
+[dir="rtl"] .truncate,
+[dir="rtl"] .line-clamp-1,
+[dir="rtl"] .line-clamp-2 {
+  unicode-bidi: plaintext;
+}

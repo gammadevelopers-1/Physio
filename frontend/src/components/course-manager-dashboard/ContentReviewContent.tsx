@@ -516,11 +516,10 @@ const ContentReviewContent = () => {
                       <colgroup>
                         <col className="w-10" />
                         <col className="w-8" />
-                        <col className="w-[30%]" />
-                        <col className="w-[14%]" />
-                        <col className="w-[12%] hidden md:table-column" />
-                        <col className="w-[10%] hidden sm:table-column" />
                         <col />
+                        <col className="w-[16%]" />
+                        <col className="w-[12%] hidden sm:table-column" />
+                        <col className="w-[120px]" />
                       </colgroup>
                       <thead>
                         <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
@@ -538,9 +537,6 @@ const ContentReviewContent = () => {
                           </th>
                           <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                             {t("contentReviewPage.tableCourse")}
-                          </th>
-                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
-                            {t("contentReviewPage.tableInstructor")}
                           </th>
                           <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
                             {t("contentReviewPage.submittedOn")}
@@ -603,7 +599,7 @@ const ContentReviewContent = () => {
                                       </div>
                                       <div className="flex items-center gap-2 mt-0.5">
                                         <p className="text-xs text-[#9CA3AF]">
-                                          {item.type.toUpperCase()} {formatSize(item.fileSize) && `• ${formatSize(item.fileSize)}`}
+                                          {item.type.toUpperCase()} {formatSize(item.fileSize) && `• ${formatSize(item.fileSize)}`} {instructorName && `• ${instructorName}`}
                                         </p>
                                         {item.wcagStatus && item.wcagStatus !== "pending" && (
                                           <span
@@ -634,38 +630,47 @@ const ContentReviewContent = () => {
                                     {item.courseTitle}
                                   </p>
                                 </td>
-                                <td className="px-3 py-3 hidden md:table-cell">
-                                  <p className="text-sm text-[#4B5563] truncate">{instructorName || item.instructorEmail}</p>
-                                </td>
                                 <td className="px-3 py-3 hidden sm:table-cell">
                                   <p className="text-xs text-[#6B7280] whitespace-nowrap">{formatDate(item.createdAt)}</p>
                                 </td>
                                 <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex items-center justify-end gap-1.5 flex-nowrap">
+                                  <div className="flex items-center justify-end gap-1 flex-nowrap">
                                     <button
                                       onClick={() => handleApprove(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-2.5 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-md hover:bg-[#16A34A] transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      className="p-2 text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors disabled:opacity-50 group relative"
+                                      title={t("contentReviewPage.approve")}
                                     >
                                       {isActionLoading ? (
-                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                        <Loader2 className="w-4 h-4 animate-spin" />
                                       ) : (
-                                        t("contentReviewPage.approve")
+                                        <CheckCircle2 className="w-4 h-4" />
                                       )}
+                                      <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        {t("contentReviewPage.approve")}
+                                      </span>
                                     </button>
                                     <button
                                       onClick={() => handleRequestChangesClick(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-2.5 py-1.5 bg-[#FEF3C7] text-[#D97706] text-xs font-medium rounded-md border border-[#FDE68A] hover:bg-[#FDE68A] transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      className="p-2 text-[#D97706] hover:bg-[#FEF3C7] rounded-lg transition-colors disabled:opacity-50 group relative"
+                                      title={t("contentReviewPage.requestChanges")}
                                     >
-                                      {t("contentReviewPage.requestChanges")}
+                                      <MessageSquare className="w-4 h-4" />
+                                      <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        {t("contentReviewPage.requestChanges")}
+                                      </span>
                                     </button>
                                     <button
                                       onClick={() => handleRejectClick(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-2.5 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      className="p-2 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors disabled:opacity-50 group relative"
+                                      title={t("contentReviewPage.reject")}
                                     >
-                                      {t("contentReviewPage.reject")}
+                                      <XCircle className="w-4 h-4" />
+                                      <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        {t("contentReviewPage.reject")}
+                                      </span>
                                     </button>
                                   </div>
                                 </td>
@@ -674,7 +679,7 @@ const ContentReviewContent = () => {
                               {/* Expandable Compliance Checklist Row */}
                               {isExpanded && (
                                 <tr>
-                                  <td colSpan={7} className="bg-[#F9FAFB] px-4 py-4">
+                                  <td colSpan={6} className="bg-[#F9FAFB] px-4 py-4">
                                     {/* Previous review note */}
                                     {item.reviewNote && (
                                       <div className="mb-4 p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">

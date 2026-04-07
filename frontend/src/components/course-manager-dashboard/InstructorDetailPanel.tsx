@@ -13,6 +13,9 @@ import {
   XCircle,
   Clock,
   BarChart3,
+  GraduationCap,
+  Mail,
+  Calendar,
 } from "lucide-react";
 
 interface InstructorPerformance {
@@ -37,6 +40,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
   const isRTL = locale === "ar";
   const [data, setData] = useState<InstructorPerformance | null>(null);
   const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -45,7 +49,14 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
       .then(setData)
       .catch(() => {})
       .finally(() => setLoading(false));
+    // Trigger slide-in after mount
+    requestAnimationFrame(() => setVisible(true));
   }, [instructorId]);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 300);
+  };
 
   const getName = () => {
     if (!data) return "";
@@ -66,23 +77,47 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
     return "text-[#EF4444]";
   };
 
+  const getRateBg = (rate: number) => {
+    if (rate >= 80) return "bg-[#DCFCE7]";
+    if (rate >= 60) return "bg-[#FEF3C7]";
+    return "bg-[#FEE2E2]";
+  };
+
+  const sessionPercent = data && data.sessions.total > 0
+    ? Math.round((data.sessions.completed / data.sessions.total) * 100)
+    : 0;
+
+  const contentTotal = data?.contentQuality.total || 0;
+
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
+      <div
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+        onClick={handleClose}
+      />
 
-      {/* Panel */}
-      <div className={`fixed inset-y-0 ${isRTL ? "left-0" : "right-0"} z-50 w-full max-w-md bg-white shadow-xl flex flex-col`}>
+      {/* Slide Panel */}
+      <div
+        className={`fixed inset-y-0 ${isRTL ? "left-0" : "right-0"} z-50 w-full max-w-[440px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
+          visible
+            ? "translate-x-0"
+            : isRTL ? "-translate-x-full" : "translate-x-full"
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
-          <h2 className="text-lg font-semibold text-[#1F2937]">{t("instructorDetail.title")}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB] bg-gradient-to-r from-[#F9FAFB] to-white">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-[#6b4e24]" />
+            <h2 className="text-lg font-semibold text-[#1F2937]">{t("instructorDetail.title")}</h2>
+          </div>
+          <button onClick={handleClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
             <X className="w-5 h-5 text-[#6B7280]" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
@@ -91,136 +126,152 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
           {!loading && data && (
             <>
-              {/* Profile Header */}
-              <div className="flex items-center gap-4 mb-6">
-                {data.instructor.avatar ? (
-                  <img
-                    src={data.instructor.avatar}
-                    alt={getName()}
-                    className="w-16 h-16 rounded-full object-cover"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div className={`w-16 h-16 bg-[#EFF6FF] rounded-full flex items-center justify-center ${data.instructor.avatar ? 'hidden' : ''}`}>
-                  <span className="text-lg font-semibold text-[#3B82F6]">{getInitials()}</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-[#1F2937]">{getName()}</h3>
-                  <p className="text-sm text-[#6B7280]">{data.instructor.email}</p>
-                </div>
-              </div>
-
-              {/* KPI Cards */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
-                  <TrendingUp className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
-                  <p className={`text-2xl font-bold ${getRateColor(data.completionRate)}`}>
-                    {data.completionRate}%
-                  </p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.completionRate")}</p>
-                </div>
-                <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
-                  <BarChart3 className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
-                  <p className={`text-2xl font-bold ${getRateColor(data.attendanceRate)}`}>
-                    {data.attendanceRate}%
-                  </p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.attendanceRate")}</p>
-                </div>
-                <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
-                  <BookOpen className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-[#1F2937]">{data.coursesCount}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.courses")}</p>
-                </div>
-                <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
-                  <Users className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-[#1F2937]">{data.totalStudents}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.students")}</p>
-                </div>
-              </div>
-
-              {/* Content Quality */}
-              <div className="bg-[#F9FAFB] rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.contentQuality")}</h4>
+              {/* Profile Hero */}
+              <div className="px-6 py-6 bg-gradient-to-b from-[#F0F7FF] to-white">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
-                    <span className="text-sm font-medium text-[#1F2937]">{data.contentQuality.approved}</span>
-                    <span className="text-xs text-[#6B7280]">{t("instructorDetail.approved")}</span>
+                  {data.instructor.avatar ? (
+                    <img
+                      src={data.instructor.avatar}
+                      alt={getName()}
+                      className="w-18 h-18 rounded-full object-cover ring-4 ring-white shadow-md"
+                      style={{ width: 72, height: 72 }}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center ring-4 ring-white shadow-md ${data.instructor.avatar ? 'hidden' : ''}`} style={{ width: 72, height: 72 }}>
+                    <span className="text-xl font-bold text-white">{getInitials()}</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <XCircle className="w-4 h-4 text-[#EF4444]" />
-                    <span className="text-sm font-medium text-[#1F2937]">{data.contentQuality.rejected}</span>
-                    <span className="text-xs text-[#6B7280]">{t("instructorDetail.rejected")}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-[#F59E0B]" />
-                    <span className="text-sm font-medium text-[#1F2937]">{data.contentQuality.pending}</span>
-                    <span className="text-xs text-[#6B7280]">{t("instructorDetail.pending")}</span>
-                  </div>
-                </div>
-                {data.contentQuality.total > 0 && (
-                  <div className="mt-3">
-                    <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden flex">
-                      <div
-                        className="bg-[#22C55E] h-full"
-                        style={{ width: `${(data.contentQuality.approved / data.contentQuality.total) * 100}%` }}
-                      />
-                      <div
-                        className="bg-[#EF4444] h-full"
-                        style={{ width: `${(data.contentQuality.rejected / data.contentQuality.total) * 100}%` }}
-                      />
-                      <div
-                        className="bg-[#F59E0B] h-full"
-                        style={{ width: `${(data.contentQuality.pending / data.contentQuality.total) * 100}%` }}
-                      />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold text-[#1F2937] truncate">{getName()}</h3>
+                    <div className="flex items-center gap-1.5 mt-1 text-sm text-[#6B7280]">
+                      <Mail className="w-3.5 h-3.5" />
+                      <span className="truncate">{data.instructor.email}</span>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Lectures */}
-              <div className="bg-[#F9FAFB] rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-2">{t("instructorDetail.lectures")}</h4>
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-[#6B7280]">
-                    {data.sessions.completed} {t("instructorDetail.completed")} / {data.sessions.total} {t("instructorDetail.total")}
-                  </span>
+              <div className="px-6 pb-6">
+                {/* Performance KPIs */}
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <div className={`rounded-xl p-4 text-center border ${getRateBg(data.completionRate)} border-transparent`}>
+                    <TrendingUp className="w-5 h-5 text-[#3B82F6] mx-auto mb-1.5" />
+                    <p className={`text-2xl font-bold ${getRateColor(data.completionRate)}`}>
+                      {data.completionRate}%
+                    </p>
+                    <p className="text-[11px] text-[#6B7280] mt-1">{t("instructorDetail.completionRate")}</p>
+                  </div>
+                  <div className={`rounded-xl p-4 text-center border ${getRateBg(data.attendanceRate)} border-transparent`}>
+                    <BarChart3 className="w-5 h-5 text-[#3B82F6] mx-auto mb-1.5" />
+                    <p className={`text-2xl font-bold ${getRateColor(data.attendanceRate)}`}>
+                      {data.attendanceRate}%
+                    </p>
+                    <p className="text-[11px] text-[#6B7280] mt-1">{t("instructorDetail.attendanceRate")}</p>
+                  </div>
                 </div>
-                {data.sessions.total > 0 && (
-                  <div className="mt-2 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-3 gap-3 mt-3">
+                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
+                    <BookOpen className="w-4 h-4 text-[#6b4e24] mx-auto mb-1" />
+                    <p className="text-xl font-bold text-[#1F2937]">{data.coursesCount}</p>
+                    <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.courses")}</p>
+                  </div>
+                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
+                    <Users className="w-4 h-4 text-[#6b4e24] mx-auto mb-1" />
+                    <p className="text-xl font-bold text-[#1F2937]">{data.totalStudents}</p>
+                    <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.students")}</p>
+                  </div>
+                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
+                    <Calendar className="w-4 h-4 text-[#6b4e24] mx-auto mb-1" />
+                    <p className="text-xl font-bold text-[#1F2937]">{data.sessions.total}</p>
+                    <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.lectures")}</p>
+                  </div>
+                </div>
+
+                {/* Lectures Progress */}
+                <div className="mt-5 bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-[#1F2937]">{t("instructorDetail.lectures")}</h4>
+                    <span className="text-xs font-medium text-[#6B7280]">
+                      {data.sessions.completed}/{data.sessions.total} ({sessionPercent}%)
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
                     <div
-                      className="bg-[#3B82F6] h-full rounded-full"
-                      style={{ width: `${(data.sessions.completed / data.sessions.total) * 100}%` }}
+                      className="h-full bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full transition-all"
+                      style={{ width: `${sessionPercent}%` }}
                     />
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* Courses List */}
-              <div>
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.courses")}</h4>
-                <div className="space-y-2">
-                  {data.courses.map((course) => (
-                    <div key={course.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
-                      <span className="text-sm text-[#1F2937] truncate">{course.title}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        course.status === "active"
-                          ? "bg-[#D1FAE5] text-[#065F46]"
-                          : course.status === "draft"
-                          ? "bg-[#F3F4F6] text-[#6B7280]"
-                          : "bg-[#EFF6FF] text-[#3B82F6]"
-                      }`}>
-                        {t(`coursesPage.status.${course.status}` as Parameters<typeof t>[0])}
-                      </span>
+                {/* Content Quality */}
+                <div className="mt-4 bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+                  <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.contentQuality")}</h4>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
+                      <span className="text-sm font-semibold text-[#1F2937]">{data.contentQuality.approved}</span>
+                      <span className="text-xs text-[#6B7280]">{t("instructorDetail.approved")}</span>
                     </div>
-                  ))}
-                  {data.courses.length === 0 && (
-                    <p className="text-sm text-[#6B7280] text-center py-4">{t("instructorDetail.noCourses")}</p>
+                    <div className="flex items-center gap-1.5">
+                      <XCircle className="w-4 h-4 text-[#EF4444]" />
+                      <span className="text-sm font-semibold text-[#1F2937]">{data.contentQuality.rejected}</span>
+                      <span className="text-xs text-[#6B7280]">{t("instructorDetail.rejected")}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-[#F59E0B]" />
+                      <span className="text-sm font-semibold text-[#1F2937]">{data.contentQuality.pending}</span>
+                      <span className="text-xs text-[#6B7280]">{t("instructorDetail.pending")}</span>
+                    </div>
+                  </div>
+                  {contentTotal > 0 && (
+                    <div className="mt-3 h-2 bg-[#E5E7EB] rounded-full overflow-hidden flex">
+                      <div className="bg-[#22C55E] h-full" style={{ width: `${(data.contentQuality.approved / contentTotal) * 100}%` }} />
+                      <div className="bg-[#EF4444] h-full" style={{ width: `${(data.contentQuality.rejected / contentTotal) * 100}%` }} />
+                      <div className="bg-[#F59E0B] h-full" style={{ width: `${(data.contentQuality.pending / contentTotal) * 100}%` }} />
+                    </div>
                   )}
+                </div>
+
+                {/* Assigned Courses */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-[#1F2937]">
+                      {t("instructorDetail.courses")}
+                    </h4>
+                    <span className="text-xs text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
+                      {data.courses.length}
+                    </span>
+                  </div>
+                  <div className="max-h-[200px] overflow-y-auto space-y-2 rounded-xl border border-[#E5E7EB] p-2 bg-[#FAFAFA]">
+                    {data.courses.map((course) => (
+                      <div key={course.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#F3F4F6] hover:border-[#E5E7EB] transition-colors">
+                        <span className="text-sm text-[#1F2937] truncate flex-1 me-3">{course.title}</span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${
+                          course.status === "active"
+                            ? "bg-[#D1FAE5] text-[#065F46]"
+                            : course.status === "draft"
+                            ? "bg-[#F3F4F6] text-[#6B7280]"
+                            : course.status === "completed"
+                            ? "bg-[#EFF6FF] text-[#3B82F6]"
+                            : "bg-[#F3F4F6] text-[#6B7280]"
+                        }`}>
+                          {t(`coursesPage.status.${course.status}` as Parameters<typeof t>[0])}
+                        </span>
+                      </div>
+                    ))}
+                    {data.courses.length === 0 && (
+                      <div className="py-6 text-center">
+                        <BookOpen className="w-6 h-6 text-[#D1D5DB] mx-auto mb-2" />
+                        <p className="text-sm text-[#6B7280]">{t("instructorDetail.noCourses")}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </>

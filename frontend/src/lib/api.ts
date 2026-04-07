@@ -1531,6 +1531,7 @@ export const courseManagerApi = {
       sessionsThisWeek: number;
       hoursThisWeek: number;
       status: 'available' | 'busy' | 'overloaded' | 'on_leave';
+      isMyInstructor?: boolean;
     }>>('/instructor/roster'),
 
   // Assign instructor to course

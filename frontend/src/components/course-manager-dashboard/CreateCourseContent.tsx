@@ -698,66 +698,62 @@ const CreateCourseContent = () => {
                 <div className="space-y-6">
                   {/* Instructor Section */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
-                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    <h2 className="text-lg font-semibold text-[#1F2937] mb-1">
                       {t("createCourse.instructor")} *
                     </h2>
-                    <div>
-                      <label htmlFor="instructor-select" className="block text-sm font-medium text-[#374151] mb-1">
-                        {t("createCourse.selectInstructor")}
-                      </label>
-                      <select
-                        id="instructor-select"
-                        value={instructorId}
-                        onChange={(e) => setInstructorId(e.target.value)}
-                        className={`max-w-md ${selectClass}`}
-                        required
-                      >
-                        <option value="">
-                          {loadingInstructors
-                            ? t("createCourse.loadingInstructors")
-                            : t("createCourse.chooseInstructor")}
-                        </option>
+                    <p className="text-sm text-[#6B7280] mb-4">{t("createCourse.selectInstructor")}</p>
+
+                    {loadingInstructors ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                        <span className="ms-2 text-sm text-[#6B7280]">{t("createCourse.loadingInstructors")}</span>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[320px] overflow-y-auto">
                         {instructors.map((inst) => {
-                          const name =
-                            [inst.firstName, inst.lastName]
-                              .filter(Boolean)
-                              .join(" ") || inst.email;
-                          const statusLabel = inst.status
-                            ? ` \u2014 ${getInstructorStatusLabel(inst.status, t)}`
-                            : "";
+                          const name = [inst.firstName, inst.lastName].filter(Boolean).join(" ") || inst.email;
+                          const initials = inst.firstName && inst.lastName
+                            ? `${inst.firstName[0]}${inst.lastName[0]}`.toUpperCase()
+                            : name.substring(0, 2).toUpperCase();
+                          const isSelected = instructorId === inst.id;
+                          const statusColors: Record<string, string> = {
+                            available: "bg-[#22C55E]",
+                            busy: "bg-[#F59E0B]",
+                            overloaded: "bg-[#EF4444]",
+                          };
+
                           return (
-                            <option key={inst.id} value={inst.id}>
-                              {name}{statusLabel}
-                            </option>
+                            <button
+                              key={inst.id}
+                              type="button"
+                              onClick={() => setInstructorId(inst.id)}
+                              className={`flex items-center gap-3 p-3 rounded-xl border-2 text-start transition-all ${
+                                isSelected
+                                  ? "border-[#3B82F6] bg-[#EFF6FF] shadow-sm"
+                                  : "border-[#E5E7EB] bg-white hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+                              }`}
+                            >
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                                {initials}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
+                                <p className="text-[11px] text-[#6B7280] truncate">{inst.email}</p>
+                              </div>
+                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                {isSelected && (
+                                  <Check className="w-4 h-4 text-[#3B82F6]" />
+                                )}
+                                {inst.status && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#6B7280]">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${statusColors[inst.status] || "bg-[#9CA3AF]"}`} />
+                                    {t(`instructorsPage.status.${inst.status}` as Parameters<typeof t>[0])}
+                                  </span>
+                                )}
+                              </div>
+                            </button>
                           );
                         })}
-                      </select>
-                    </div>
-
-                    {/* Selected instructor preview */}
-                    {selectedInstructor && (
-                      <div className="mt-4 p-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg max-w-md">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-[#1F2937]">
-                              {[
-                                selectedInstructor.firstName,
-                                selectedInstructor.lastName,
-                              ]
-                                .filter(Boolean)
-                                .join(" ")}
-                            </p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">
-                              {selectedInstructor.email}
-                            </p>
-                          </div>
-                          {selectedInstructor.status && (
-                            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full bg-gray-50 border border-[#E5E7EB]">
-                              <span className={`w-2 h-2 rounded-full ${getStatusColor(selectedInstructor.status)}`} />
-                              {getInstructorStatusLabel(selectedInstructor.status, t)}
-                            </span>
-                          )}
-                        </div>
                       </div>
                     )}
                   </div>
@@ -781,56 +777,66 @@ const CreateCourseContent = () => {
                       <h2 className="text-lg font-semibold text-[#1F2937]">
                         {t("createCourse.taAssignment")}
                       </h2>
-                      <span className="text-xs text-[#9CA3AF] font-normal">
-                        ({t("createCourse.optional") || "Optional"})
+                      <span className="text-xs text-[#9CA3AF] bg-[#F3F4F6] px-2 py-0.5 rounded-full">
+                        {t("createCourse.optional")}
                       </span>
                     </div>
 
                     {selectedTA ? (
-                      <div className="p-4 bg-[#FFF8E6] border border-[#E5E7EB] rounded-lg max-w-md flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-[#1F2937]">
-                            {[selectedTA.firstName, selectedTA.lastName]
-                              .filter(Boolean)
-                              .join(" ")}
-                          </p>
-                          <p className="text-xs text-[#6B7280] mt-0.5">
-                            {selectedTA.email}
-                          </p>
+                      <div className="p-4 bg-[#FFF8E6] border border-[#FDE68A] rounded-xl flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center text-sm font-semibold text-[#92400E] flex-shrink-0">
+                            {(selectedTA.firstName?.[0] || "") + (selectedTA.lastName?.[0] || "").toUpperCase() || selectedTA.email.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-[#1F2937]">
+                              {[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}
+                            </p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">{selectedTA.email}</p>
+                          </div>
                         </div>
                         <button
                           type="button"
                           onClick={() => setSelectedTAId("")}
-                          className="p-1 text-[#6B7280] hover:text-red-500 transition-colors"
-                          aria-label={tA("removeImage")}
+                          className="p-1.5 text-[#6B7280] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
+                    ) : loadingTAs ? (
+                      <div className="flex items-center justify-center py-6">
+                        <Loader2 className="w-5 h-5 text-[#6b4e24] animate-spin" />
+                        <span className="ms-2 text-sm text-[#6B7280]">{t("createCourse.loadingTAs")}</span>
+                      </div>
+                    ) : availableTAs.length === 0 ? (
+                      <p className="text-sm text-[#9CA3AF] text-center py-4">
+                        {isRTL ? "لا يوجد مساعدو تدريس متاحون" : "No teaching assistants available"}
+                      </p>
                     ) : (
-                      <div>
-                        <label htmlFor="ta-select" className="block text-sm font-medium text-[#374151] mb-1">
-                          {t("createCourse.selectTA")}
-                        </label>
-                        <select
-                          id="ta-select"
-                          value={selectedTAId}
-                          onChange={(e) => setSelectedTAId(e.target.value)}
-                          className={`max-w-md ${selectClass}`}
-                        >
-                          <option value="">
-                            {loadingTAs
-                              ? t("createCourse.loadingTAs")
-                              : "\u2014 None \u2014"}
-                          </option>
-                          {availableTAs.map((ta) => (
-                            <option key={ta.id} value={ta.id}>
-                              {[ta.firstName, ta.lastName]
-                                .filter(Boolean)
-                                .join(" ") || ta.email}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
+                        {availableTAs.map((ta) => {
+                          const name = [ta.firstName, ta.lastName].filter(Boolean).join(" ") || ta.email;
+                          const initials = ta.firstName && ta.lastName
+                            ? `${ta.firstName[0]}${ta.lastName[0]}`.toUpperCase()
+                            : name.substring(0, 2).toUpperCase();
+
+                          return (
+                            <button
+                              key={ta.id}
+                              type="button"
+                              onClick={() => setSelectedTAId(ta.id)}
+                              className="flex items-center gap-3 p-3 rounded-xl border border-[#E5E7EB] bg-white hover:border-[#D1D5DB] hover:bg-[#F9FAFB] text-start transition-all"
+                            >
+                              <div className="w-9 h-9 rounded-full bg-[#FEF3C7] flex items-center justify-center text-xs font-semibold text-[#92400E] flex-shrink-0">
+                                {initials}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
+                                <p className="text-[11px] text-[#6B7280] truncate">{ta.email}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>

@@ -1875,22 +1875,18 @@ export class InstructorService {
    * Only available to MANAGER and ADMIN roles.
    */
   async getInstructorRoster(user: AuthenticatedUser) {
-    // For managers, only show instructors teaching their managed courses
-    let managedInstructorIds: string[] | null = null;
+    // Collect IDs of instructors teaching this manager's courses (for tagging)
+    let managedInstructorIds = new Set<string>();
     if (isManager(user)) {
       const managedCourses = await db
         .select({ instructorId: courses.instructorId })
         .from(courses)
         .where(or(eq(courses.managerId, user.id), sql`${courses.managerId} IS NULL`));
-      managedInstructorIds = [...new Set(managedCourses.map((c) => c.instructorId))];
-      if (managedInstructorIds.length === 0) return [];
+      managedInstructorIds = new Set(managedCourses.map((c) => c.instructorId));
     }
 
-    // Get instructors via user_roles junction table
+    // Get ALL instructors (no manager filter)
     const baseConditions: any[] = [eq(roles.name, 'INSTRUCTOR')];
-    if (managedInstructorIds) {
-      baseConditions.push(inArray(users.id, managedInstructorIds));
-    }
 
     const instructorsList = await db
       .selectDistinct({
@@ -2033,6 +2029,7 @@ export class InstructorService {
         sessionsThisWeek: load.sessionsThisWeek,
         hoursThisWeek: load.hoursThisWeek,
         status,
+        isMyInstructor: managedInstructorIds.has(inst.id),
       };
     });
   }

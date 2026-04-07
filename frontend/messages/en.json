@@ -3706,7 +3706,10 @@
       "selectedInstructor": "Selected Instructor",
       "cohort": "Cohort",
       "cohortPlaceholder": "e.g. Spring 2026, Group A",
-      "cohortHint": "Optional. Group courses by cohort for easier filtering."
+      "cohortHint": "Optional. Group courses by cohort for easier filtering.",
+      "optional": "Optional",
+      "noneSelected": "— None —",
+      "teamTitle": "Team Assignment"
     },
     "courseDetail": {
       "backToCourses": "Back to Courses",

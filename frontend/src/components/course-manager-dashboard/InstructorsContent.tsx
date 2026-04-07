@@ -42,6 +42,7 @@ interface RosterInstructor {
   sessionsThisWeek: number;
   hoursThisWeek: number;
   status: "available" | "busy" | "overloaded" | "on_leave";
+  isMyInstructor?: boolean;
 }
 
 interface CourseOption {
@@ -59,7 +60,7 @@ interface ScheduleSession {
   status: string;
 }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { bg: string; text: string; bar: string }> = {
   available: { bg: "bg-[#D1FAE5]", text: "text-[#065F46]", bar: "bg-[#22C55E]" },
   busy: { bg: "bg-[#FEF3C7]", text: "text-[#92400E]", bar: "bg-[#F59E0B]" },
   overloaded: { bg: "bg-[#FEE2E2]", text: "text-[#991B1B]", bar: "bg-[#EF4444]" },
@@ -72,7 +73,7 @@ const InstructorsContent = () => {
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "busy" | "overloaded" | "on_leave">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "available" | "busy" | "overloaded">("all");
   const [instructors, setInstructors] = useState<RosterInstructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +159,6 @@ const InstructorsContent = () => {
     available: instructors.filter((i) => i.status === "available").length,
     busy: instructors.filter((i) => i.status === "busy").length,
     overloaded: instructors.filter((i) => i.status === "overloaded").length,
-    onLeave: instructors.filter((i) => i.status === "on_leave").length,
   }), [instructors]);
 
   const getInitials = (inst: RosterInstructor) => {
@@ -241,7 +241,7 @@ const InstructorsContent = () => {
               </div>
 
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.total")}</p>
                   <p className="text-2xl font-bold text-[#1F2937] mt-1">{stats.total}</p>
@@ -257,10 +257,6 @@ const InstructorsContent = () => {
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.overloaded")}</p>
                   <p className="text-2xl font-bold text-[#EF4444] mt-1">{stats.overloaded}</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.onLeave")}</p>
-                  <p className="text-2xl font-bold text-[#6366F1] mt-1">{stats.onLeave}</p>
                 </div>
               </div>
 
@@ -285,7 +281,6 @@ const InstructorsContent = () => {
                   <option value="available">{t("instructorsPage.filters.available")}</option>
                   <option value="busy">{t("instructorsPage.filters.busy")}</option>
                   <option value="overloaded">{t("instructorsPage.filters.overloaded")}</option>
-                  <option value="on_leave">{t("instructorsPage.filters.onLeave")}</option>
                 </select>
               </div>
 
@@ -325,14 +320,14 @@ const InstructorsContent = () => {
 
                     return (
                       <div key={instructor.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
-                        {/* Recommended badge */}
-                        <div className="h-6 mb-2">
-                          {recommendedId === instructor.id && (
-                            <div className="flex items-center gap-1 px-2 py-1 bg-[#FEF3C7] rounded-lg w-fit">
-                              <Star className="w-3 h-3 text-[#F59E0B] fill-[#F59E0B]" />
-                              <span className="text-[10px] font-semibold text-[#92400E]">{t("instructorsPage.recommended")}</span>
-                            </div>
+                        {/* Badges row */}
+                        <div className="h-6 mb-2 flex items-center gap-2">
+                          {instructor.isMyInstructor && (
+                            <span className="inline-flex items-center px-2 py-0.5 bg-[#EFF6FF] text-[#3B82F6] text-[10px] font-semibold rounded-full">
+                              {isRTL ? "مدربي" : "My Instructor"}
+                            </span>
                           )}
+                          {/* Recommended badge — disabled until feedback system is implemented */}
                         </div>
 
                         {/* Header */}
@@ -368,7 +363,7 @@ const InstructorsContent = () => {
                         </div>
 
                         {/* Metrics */}
-                        <div className="grid grid-cols-4 gap-3 mb-4">
+                        <div className="grid grid-cols-3 gap-3 mb-4">
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
                               <BookOpen className="w-3.5 h-3.5" />
@@ -382,13 +377,6 @@ const InstructorsContent = () => {
                             </div>
                             <p className="text-lg font-bold text-[#1F2937]">{instructor.studentsCount}</p>
                             <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.students")}</p>
-                          </div>
-                          <div className="text-center">
-                            <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
-                              <Clock className="w-3.5 h-3.5" />
-                            </div>
-                            <p className="text-lg font-bold text-[#1F2937]">{instructor.sessionsThisWeek}</p>
-                            <p className="text-[10px] text-[#6B7280]">{t("instructorsPage.weekly")}</p>
                           </div>
                           <div className="text-center">
                             <div className="flex items-center justify-center gap-1 text-[#6B7280] mb-1">
@@ -414,28 +402,13 @@ const InstructorsContent = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB] mt-auto">
-                          <div className="flex items-center gap-2">
-                            <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
-                              <Mail className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => setDetailInstructorId(instructor.id)}
-                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
-                            >
-                              {t("instructorsPage.viewProfile")}
-                              <ChevronRight className={`w-3 h-3 ${isRTL ? "rotate-180" : ""}`} />
-                            </button>
-                          </div>
+                        <div className="flex items-center justify-center pt-3 border-t border-[#E5E7EB] mt-auto">
                           <button
-                            onClick={() => {
-                              setAssignModal({ instructorId: instructor.id, instructorName: getName(instructor) });
-                              setSelectedCourseId("");
-                              setAssignSuccess(false);
-                            }}
-                            className="px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                            onClick={() => setDetailInstructorId(instructor.id)}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F9FAFB] rounded-lg transition-colors"
                           >
-                            {t("instructorsPage.assignToCoursBtn")}
+                            {t("instructorsPage.viewProfile")}
+                            <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
                           </button>
                         </div>
                       </div>
@@ -447,136 +420,6 @@ const InstructorsContent = () => {
           </div>
         </div>
       </div>
-
-      {/* Assignment Modal */}
-      {assignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-[#1F2937]">{t("instructorsPage.assignTitle")}</h3>
-              <button onClick={() => setAssignModal(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
-                <X className="w-5 h-5 text-[#6B7280]" />
-              </button>
-            </div>
-
-            {assignSuccess ? (
-              <div className="text-center py-6">
-                <div className="w-12 h-12 bg-[#D1FAE5] rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Check className="w-6 h-6 text-[#22C55E]" />
-                </div>
-                <p className="text-sm font-medium text-[#1F2937]">{t("instructorsPage.assignSuccess")}</p>
-              </div>
-            ) : (
-              <>
-                <p className="text-sm text-[#6B7280] mb-4">
-                  {t("instructorsPage.assignDesc")} <span className="font-medium text-[#1F2937]">{assignModal.instructorName}</span>
-                </p>
-
-                {/* Overload Warning */}
-                {(() => {
-                  const inst = instructors.find((i) => i.id === assignModal.instructorId);
-                  if (inst && (inst.status === "busy" || inst.status === "overloaded")) {
-                    return (
-                      <div className={`mb-4 p-3 rounded-lg border ${inst.status === "overloaded" ? "bg-[#FEE2E2] border-[#FECACA]" : "bg-[#FEF3C7] border-[#FDE68A]"}`}>
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${inst.status === "overloaded" ? "text-[#EF4444]" : "text-[#F59E0B]"}`} />
-                          <div>
-                            <p className={`text-xs font-medium ${inst.status === "overloaded" ? "text-[#991B1B]" : "text-[#92400E]"}`}>
-                              {t("instructorsPage.overloadWarning", { hours: inst.hoursThisWeek })}
-                            </p>
-                            {suggestion && (
-                              <p className="text-xs text-[#6B7280] mt-1">
-                                {t("instructorsPage.suggestAlternative", { name: suggestion })}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-
-                {/* 2-Week Schedule Mini Grid */}
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-[#6B7280]" />
-                    <span className="text-xs font-medium text-[#6B7280]">{t("instructorsPage.scheduleTitle")}</span>
-                  </div>
-                  {scheduleLoading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="w-5 h-5 text-[#3B82F6] animate-spin" />
-                    </div>
-                  ) : scheduleGrid.length > 0 ? (
-                    <div className="grid grid-cols-7 gap-1">
-                      {scheduleGrid.map((day) => {
-                        const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-                        return (
-                          <div
-                            key={day.label}
-                            className={`rounded-md p-1 text-center min-h-[52px] ${isWeekend ? "bg-[#F3F4F6]" : "bg-[#F9FAFB]"}`}
-                            title={day.sessions.length > 0 ? day.sessions.map((s) => `${s.title} (${s.durationMinutes}min)`).join(", ") : t("instructorsPage.noSessions")}
-                          >
-                            <p className="text-[9px] text-[#9CA3AF] leading-tight">{day.label.split(",")[0]}</p>
-                            {day.sessions.length > 0 ? (
-                              <div className="mt-1 space-y-0.5">
-                                {day.sessions.slice(0, 3).map((s, idx) => (
-                                  <div
-                                    key={`${s.id}-${idx}`}
-                                    className="h-1.5 rounded-full bg-[#3B82F6]"
-                                    title={`${s.title} (${s.durationMinutes}min)`}
-                                  />
-                                ))}
-                                {day.sessions.length > 3 && (
-                                  <p className="text-[8px] text-[#6B7280]">+{day.sessions.length - 3}</p>
-                                )}
-                              </div>
-                            ) : (
-                              <div className="mt-2">
-                                <div className="h-1.5 rounded-full bg-[#E5E7EB]" />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-[#9CA3AF] text-center py-3">{t("instructorsPage.noSessions")}</p>
-                  )}
-                </div>
-
-                {/* Course Select */}
-                <select
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
-                >
-                  <option value="">{t("instructorsPage.selectCourse")}</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-                <div className="flex justify-end gap-3">
-                  <button
-                    onClick={() => setAssignModal(null)}
-                    className="px-4 py-2 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
-                  >
-                    {t("instructorsPage.cancel")}
-                  </button>
-                  <button
-                    onClick={handleAssign}
-                    disabled={!selectedCourseId || assigning}
-                    className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2"
-                  >
-                    {assigning && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {t("instructorsPage.assign")}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Detail Panel */}
       {detailInstructorId && (

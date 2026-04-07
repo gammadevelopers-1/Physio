@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -35,10 +35,10 @@ import ExportButton from "@/components/shared/ExportButton";
 
 // 10-color palette for instructor color-coding
 const INSTRUCTOR_COLORS = [
-  "border-l-[#3B82F6]", "border-l-[#22C55E]", "border-l-[#F59E0B]",
-  "border-l-[#EF4444]", "border-l-[#8B5CF6]", "border-l-[#EC4899]",
-  "border-l-[#14B8A6]", "border-l-[#F97316]", "border-l-[#6366F1]",
-  "border-l-[#84CC16]",
+  "border-s-[#3B82F6]", "border-s-[#22C55E]", "border-s-[#F59E0B]",
+  "border-s-[#EF4444]", "border-s-[#8B5CF6]", "border-s-[#EC4899]",
+  "border-s-[#14B8A6]", "border-s-[#F97316]", "border-s-[#6366F1]",
+  "border-s-[#84CC16]",
 ];
 
 // Extended session type with instructor + capacity fields from backend
@@ -85,6 +85,8 @@ interface AttendanceEntry {
 
 const SessionsContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -347,7 +349,7 @@ const SessionsContent = () => {
     return (
       <div
         key={session.id}
-        className={`p-4 hover:bg-[#F9FAFB] transition-colors border-l-4 ${colorClass} ${dimmed ? "opacity-75" : ""} ${isConflict ? "bg-[#FEF2F2]" : ""}`}
+        className={`p-4 hover:bg-[#F9FAFB] transition-colors border-s-4 ${colorClass} ${dimmed ? "opacity-75" : ""} ${isConflict ? "bg-[#FEF2F2]" : ""}`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -439,7 +441,7 @@ const SessionsContent = () => {
                 <MoreVertical className="w-4 h-4 text-[#6B7280]" />
               </button>
               {actionDropdown === session.id && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 py-1">
+                <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 py-1`}>
                   <button
                     onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
@@ -896,12 +898,12 @@ const SessionsContent = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-[#F9FAFB] text-[#6B7280]">
                       <tr>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendStudent")}</th>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendStatus")}</th>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendJoinedAt")}</th>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendLeftAt")}</th>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendDuration")}</th>
-                        <th className="text-left px-3 py-2 font-medium">{t("sessionsPage.attendPresence")}</th>
+                        <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendStudent")}</th>
+                        <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendStatus")}</th>
+                        <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendJoinedAt")}</th>
+                        <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendLeftAt")}</th>
+                        <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendDuration")}</th>
+                        <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendPresence")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#E5E7EB]">

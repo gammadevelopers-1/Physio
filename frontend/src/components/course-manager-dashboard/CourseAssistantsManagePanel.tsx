@@ -82,12 +82,12 @@ const CourseAssistantsManagePanel = ({
     try {
       setAssigning(true);
       await courseAssistantsApi.assignTA(courseId, { userId });
-      toast.success(t("taManagement.assignSuccess") || "TA assigned successfully");
+      toast.success(t("taManagement.assignSuccess"));
       setShowDropdown(false);
       await fetchData();
       await fetchAvailableTAs();
     } catch {
-      toast.error(t("taManagement.assignError") || "Failed to assign TA");
+      toast.error(t("taManagement.assignError"));
     } finally {
       setAssigning(false);
     }
@@ -96,27 +96,27 @@ const CourseAssistantsManagePanel = ({
   const handleApprove = async (userId: string) => {
     try {
       await courseAssistantsApi.approveTA(courseId, userId);
-      toast.success("TA suggestion approved");
+      toast.success(t("taManagement.approveSuccess"));
       await fetchData();
     } catch {
-      toast.error("Failed to approve TA");
+      toast.error(t("taManagement.approveError"));
     }
   };
 
   const handleReject = async (userId: string) => {
     if (!rejectionReason.trim()) {
-      toast.error("Please provide a reason for rejection");
+      toast.error(t("taManagement.reasonRequired"));
       return;
     }
     try {
       setRejectingLoading(true);
       await courseAssistantsApi.rejectTA(courseId, userId, { reason: rejectionReason.trim() });
-      toast.success("TA suggestion rejected");
+      toast.success(t("taManagement.rejectSuccess"));
       setRejectingUserId(null);
       setRejectionReason("");
       await fetchData();
     } catch {
-      toast.error("Failed to reject TA");
+      toast.error(t("taManagement.rejectError"));
     } finally {
       setRejectingLoading(false);
     }
@@ -126,12 +126,12 @@ const CourseAssistantsManagePanel = ({
     try {
       setRemoving(userId);
       await courseAssistantsApi.removeTA(courseId, userId);
-      toast.success("TA removed from course");
+      toast.success(t("taManagement.removeSuccess"));
       setConfirmRemove(null);
       await fetchData();
       await fetchAvailableTAs();
     } catch {
-      toast.error("Failed to remove TA");
+      toast.error(t("taManagement.removeError"));
     } finally {
       setRemoving(null);
     }
@@ -151,7 +151,7 @@ const CourseAssistantsManagePanel = ({
       await courseAssistantsApi.updatePriority(courseId, userId, newPriority);
       await fetchData();
     } catch {
-      toast.error("Failed to update priority");
+      toast.error(t("taManagement.priorityError"));
     }
   };
 
@@ -171,11 +171,11 @@ const CourseAssistantsManagePanel = ({
   const getStatusLabel = (ta: CourseAssistantTA) => {
     switch (ta.status) {
       case "approved":
-        return t("taManagement.activeTA") || "Active";
+        return t("taManagement.activeTA");
       case "suggested":
-        return "Pending Approval";
+        return t("taManagement.pendingApproval");
       case "rejected":
-        return "Rejected";
+        return t("taManagement.rejected");
       default:
         return ta.status;
     }
@@ -212,7 +212,7 @@ const CourseAssistantsManagePanel = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1F2937]">
-          {t("taManagement.title") || "Teaching Assistants"}
+          {t("taManagement.title")}
         </h3>
         {unassignedTAs.length > 0 && (
           <button
@@ -220,7 +220,7 @@ const CourseAssistantsManagePanel = ({
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#6b4e24] border border-[#a37f49] rounded-lg hover:bg-[#FFF8E6] transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            {t("taManagement.assignTA") || "Assign TA"}
+            {t("taManagement.assignTA")}
           </button>
         )}
       </div>
@@ -242,7 +242,7 @@ const CourseAssistantsManagePanel = ({
           <span>
             {thresholdStatus.warning
               ? thresholdStatus.warning
-              : `${thresholdStatus.enrolledCount} enrolled · ${thresholdStatus.activeTAs} TA(s) active · NELC requirement met`}
+              : t("taManagement.nelcRequirementMet", { enrolled: thresholdStatus.enrolledCount, active: thresholdStatus.activeTAs })}
           </span>
         </div>
       )}
@@ -252,7 +252,7 @@ const CourseAssistantsManagePanel = ({
         <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-[#4B5563]">
-              Select a Teaching Assistant
+              {t("taManagement.selectTA")}
             </p>
             <button onClick={() => setShowDropdown(false)}>
               <X className="w-4 h-4 text-[#6B7280]" />
@@ -286,7 +286,7 @@ const CourseAssistantsManagePanel = ({
         </div>
       ) : sortedTAs.length === 0 ? (
         <p className="text-sm text-[#6B7280] text-center py-4">
-          No teaching assistants assigned to this course yet.
+          {t("taManagement.noTAs")}
         </p>
       ) : (
         <div className="space-y-2">
@@ -305,7 +305,7 @@ const CourseAssistantsManagePanel = ({
                       }
                       disabled={ta.priority <= minPriority}
                       className="p-0.5 text-[#6B7280] hover:text-[#6b4e24] disabled:opacity-30 disabled:cursor-not-allowed"
-                      title={t("taManagement.movePriorityUp") || "Move priority up"}
+                      title={t("taManagement.movePriorityUp")}
                     >
                       <ChevronUp className="w-3.5 h-3.5" />
                     </button>
@@ -315,7 +315,7 @@ const CourseAssistantsManagePanel = ({
                       }
                       disabled={ta.priority >= maxPriority}
                       className="p-0.5 text-[#6B7280] hover:text-[#6b4e24] disabled:opacity-30 disabled:cursor-not-allowed"
-                      title={t("taManagement.movePriorityDown") || "Move priority down"}
+                      title={t("taManagement.movePriorityDown")}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
                     </button>
@@ -327,14 +327,13 @@ const CourseAssistantsManagePanel = ({
                     {ta.firstName} {ta.lastName}
                     {ta.otherCourseCount > 0 && (
                       <span
-                        className="ml-1.5 text-xs text-amber-600"
+                        className="ms-1.5 text-xs text-amber-600"
                         title={t("taManagement.workloadWarning", {
                           name: `${ta.firstName} ${ta.lastName}`,
                           count: ta.otherCourseCount,
                         })}
                       >
-                        ({ta.otherCourseCount} other{" "}
-                        {ta.otherCourseCount === 1 ? "course" : "courses"})
+                        ({t("taManagement.otherCourses", { count: ta.otherCourseCount })})
                       </span>
                     )}
                   </p>
@@ -355,14 +354,14 @@ const CourseAssistantsManagePanel = ({
                     <button
                       onClick={() => handleApprove(ta.userId)}
                       className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                      title="Approve"
+                      title={t("contentReviewPage.approve")}
                     >
                       <CheckCircle className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setRejectingUserId(ta.userId)}
                       className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Reject"
+                      title={t("contentReviewPage.reject")}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -382,21 +381,21 @@ const CourseAssistantsManagePanel = ({
                           {removing === ta.userId ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
                           ) : (
-                            "Confirm"
+                            t("taManagement.confirm")
                           )}
                         </button>
                         <button
                           onClick={() => setConfirmRemove(null)}
                           className="px-2 py-1 text-xs text-[#6B7280] border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]"
                         >
-                          Cancel
+                          {t("taManagement.cancel")}
                         </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setConfirmRemove(ta.userId)}
                         className="p-1.5 text-[#6B7280] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Remove TA"
+                        title={t("taManagement.removeTA")}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -423,10 +422,10 @@ const CourseAssistantsManagePanel = ({
           />
           <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-[#1F2937] mb-1">
-              Reject TA Suggestion
+              {t("taManagement.rejectTitle")}
             </h3>
             <p className="text-sm text-[#6B7280] mb-4">
-              Please provide a reason for rejecting this TA suggestion.
+              {t("taManagement.rejectDesc")}
             </p>
             <textarea
               value={rejectionReason}
@@ -435,14 +434,14 @@ const CourseAssistantsManagePanel = ({
                   setRejectionReason(e.target.value);
                 }
               }}
-              placeholder="Enter rejection reason..."
+              placeholder={t("taManagement.rejectPlaceholder")}
               rows={4}
               className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#a37f49] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
               disabled={rejectingLoading}
             />
             <div className="flex items-center justify-between mt-2 mb-4">
               <span className="text-xs text-[#9CA3AF]">
-                {rejectionReason.length}/500 characters
+                {rejectionReason.length}/500 {t("taManagement.characters")}
               </span>
             </div>
             <div className="flex items-center justify-end gap-2">
@@ -454,7 +453,7 @@ const CourseAssistantsManagePanel = ({
                 disabled={rejectingLoading}
                 className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
               >
-                Cancel
+                {t("taManagement.cancel")}
               </button>
               <button
                 onClick={() => handleReject(rejectingUserId)}
@@ -464,7 +463,7 @@ const CourseAssistantsManagePanel = ({
                 {rejectingLoading && (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 )}
-                Confirm Reject
+                {t("taManagement.confirmReject")}
               </button>
             </div>
           </div>

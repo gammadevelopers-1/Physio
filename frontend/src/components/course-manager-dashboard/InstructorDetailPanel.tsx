@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { courseManagerApi } from "@/lib/api";
 import {
   X,
@@ -31,6 +32,9 @@ interface Props {
 }
 
 const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
+  const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const [data, setData] = useState<InstructorPerformance | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,10 +72,10 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
       <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
 
       {/* Panel */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-xl flex flex-col">
+      <div className={`fixed inset-y-0 ${isRTL ? "left-0" : "right-0"} z-50 w-full max-w-md bg-white shadow-xl flex flex-col`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
-          <h2 className="text-lg font-semibold text-[#1F2937]">Instructor Profile</h2>
+          <h2 className="text-lg font-semibold text-[#1F2937]">{t("instructorDetail.title")}</h2>
           <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
             <X className="w-5 h-5 text-[#6B7280]" />
           </button>
@@ -117,45 +121,45 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                   <p className={`text-2xl font-bold ${getRateColor(data.completionRate)}`}>
                     {data.completionRate}%
                   </p>
-                  <p className="text-xs text-[#6B7280] mt-1">Completion Rate</p>
+                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.completionRate")}</p>
                 </div>
                 <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
                   <BarChart3 className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
                   <p className={`text-2xl font-bold ${getRateColor(data.attendanceRate)}`}>
                     {data.attendanceRate}%
                   </p>
-                  <p className="text-xs text-[#6B7280] mt-1">Attendance Rate</p>
+                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.attendanceRate")}</p>
                 </div>
                 <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
                   <BookOpen className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
                   <p className="text-2xl font-bold text-[#1F2937]">{data.coursesCount}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">Courses</p>
+                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.courses")}</p>
                 </div>
                 <div className="bg-[#F9FAFB] rounded-lg p-4 text-center">
                   <Users className="w-5 h-5 text-[#3B82F6] mx-auto mb-2" />
                   <p className="text-2xl font-bold text-[#1F2937]">{data.totalStudents}</p>
-                  <p className="text-xs text-[#6B7280] mt-1">Students</p>
+                  <p className="text-xs text-[#6B7280] mt-1">{t("instructorDetail.students")}</p>
                 </div>
               </div>
 
               {/* Content Quality */}
               <div className="bg-[#F9FAFB] rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">Content Quality</h4>
+                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.contentQuality")}</h4>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
                     <span className="text-sm font-medium text-[#1F2937]">{data.contentQuality.approved}</span>
-                    <span className="text-xs text-[#6B7280]">Approved</span>
+                    <span className="text-xs text-[#6B7280]">{t("instructorDetail.approved")}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <XCircle className="w-4 h-4 text-[#EF4444]" />
                     <span className="text-sm font-medium text-[#1F2937]">{data.contentQuality.rejected}</span>
-                    <span className="text-xs text-[#6B7280]">Rejected</span>
+                    <span className="text-xs text-[#6B7280]">{t("instructorDetail.rejected")}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-[#F59E0B]" />
                     <span className="text-sm font-medium text-[#1F2937]">{data.contentQuality.pending}</span>
-                    <span className="text-xs text-[#6B7280]">Pending</span>
+                    <span className="text-xs text-[#6B7280]">{t("instructorDetail.pending")}</span>
                   </div>
                 </div>
                 {data.contentQuality.total > 0 && (
@@ -180,10 +184,10 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
               {/* Lectures */}
               <div className="bg-[#F9FAFB] rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-2">Lectures</h4>
+                <h4 className="text-sm font-semibold text-[#1F2937] mb-2">{t("instructorDetail.lectures")}</h4>
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-[#6B7280]">
-                    {data.sessions.completed} completed / {data.sessions.total} total
+                    {data.sessions.completed} {t("instructorDetail.completed")} / {data.sessions.total} {t("instructorDetail.total")}
                   </span>
                 </div>
                 {data.sessions.total > 0 && (
@@ -198,7 +202,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
               {/* Courses List */}
               <div>
-                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">Courses</h4>
+                <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.courses")}</h4>
                 <div className="space-y-2">
                   {data.courses.map((course) => (
                     <div key={course.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
@@ -210,12 +214,12 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                           ? "bg-[#F3F4F6] text-[#6B7280]"
                           : "bg-[#EFF6FF] text-[#3B82F6]"
                       }`}>
-                        {course.status}
+                        {t(`coursesPage.status.${course.status}` as Parameters<typeof t>[0])}
                       </span>
                     </div>
                   ))}
                   {data.courses.length === 0 && (
-                    <p className="text-sm text-[#6B7280] text-center py-4">No courses assigned</p>
+                    <p className="text-sm text-[#6B7280] text-center py-4">{t("instructorDetail.noCourses")}</p>
                   )}
                 </div>
               </div>

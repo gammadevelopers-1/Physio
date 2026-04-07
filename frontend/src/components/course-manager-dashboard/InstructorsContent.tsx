@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -68,6 +68,8 @@ const STATUS_CONFIG = {
 
 const InstructorsContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "available" | "busy" | "overloaded" | "on_leave">("all");
@@ -265,13 +267,13 @@ const InstructorsContent = () => {
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
                   <input
                     type="text"
                     placeholder={t("instructorsPage.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                   />
                 </div>
                 <select

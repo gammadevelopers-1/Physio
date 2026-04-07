@@ -134,12 +134,12 @@ const SchedulesSessionsWidget = ({
               key={session.id}
               className={`flex items-center gap-3 p-3 rounded-xl ${
                 session.hasConflict
-                  ? "bg-[#FEE2E2] border-l-3 border-[#EF4444]"
+                  ? "bg-[#FEE2E2] border-s-3 border-[#EF4444]"
                   : session.type === "onsite"
-                    ? "bg-[#F9FAFB] border-l-3 border-[#22C55E]"
-                    : "bg-[#F9FAFB] border-l-3 border-[#3B82F6]"
+                    ? "bg-[#F9FAFB] border-s-3 border-[#22C55E]"
+                    : "bg-[#F9FAFB] border-s-3 border-[#3B82F6]"
               }`}
-              style={{ borderLeftWidth: "3px" }}
+              style={{ borderInlineStartWidth: "3px" }}
             >
               <div className="min-w-[55px]">
                 <p className="text-xs font-semibold text-[#374151]">{session.time}</p>

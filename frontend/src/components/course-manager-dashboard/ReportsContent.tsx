@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -226,7 +226,7 @@ function ExportModal({
             <label className="block text-sm font-medium text-[#374151] mb-1.5">
               {t("reportsPage.selectCourse")}
               {reportType.requiresCourse && (
-                <span className="text-red-500 ml-0.5">*</span>
+                <span className="text-red-500 ms-0.5">*</span>
               )}
             </label>
             <select
@@ -305,7 +305,7 @@ function ExportModal({
                     }`}
                   />
                 </div>
-                <div className="flex-1 text-left">
+                <div className="flex-1 text-start">
                   <p className="text-sm font-medium text-[#1F2937]">
                     {fmt.label}
                   </p>
@@ -374,6 +374,8 @@ function ExportModal({
 const ReportsContent = () => {
   const manager = useManagerProfile();
   const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
 
   // Courses for the filter / selector
   const [courses, setCourses] = useState<InstructorCourse[]>([]);

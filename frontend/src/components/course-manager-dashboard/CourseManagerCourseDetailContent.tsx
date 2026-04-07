@@ -628,7 +628,7 @@ const CourseManagerCourseDetailContent = ({
                                 <span className="w-8 h-8 rounded-lg bg-[#F0F7FF] flex items-center justify-center text-sm font-semibold text-[#002D87]">
                                   {idx + 1}
                                 </span>
-                                <div className={`${isRTL ? "text-right" : "text-left"}`}>
+                                <div className={`text-start`}>
                                   <span className="text-sm font-medium text-[#1F2937]">
                                     {mod.title}
                                   </span>
@@ -696,7 +696,7 @@ const CourseManagerCourseDetailContent = ({
                                             <p className="text-xs text-[#6B7280]">
                                               {mat.type} • {formatFileSize(mat.fileSize)}
                                               {mat.wcagStatus && (
-                                                <span className={`ml-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[#6B7280]"}`}>
+                                                <span className={`ms-2 ${mat.wcagStatus === "compliant" ? "text-[#16A34A]" : mat.wcagStatus === "warning" ? "text-[#D97706]" : mat.wcagStatus === "fail" ? "text-[#DC2626]" : "text-[#6B7280]"}`}>
                                                   WCAG: {mat.wcagStatus}
                                                 </span>
                                               )}

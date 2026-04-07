@@ -3718,7 +3718,11 @@
       "exportEvidence": "تصدير الأدلة",
       "scorecardUnavailable": "بطاقة الامتثال غير متاحة",
       "bundleContents": "يتضمن الملف المضغوط: فحوصات الامتثال مع بنود المركز الوطني، المحاضرات، الحضور، تدقيق المواد، نتائج التقييمات، أوراق اعتماد المدرب، ملاحظات الطلاب، تقرير إمكانية الوصول، والسياسات",
-      "bundleContentsShort": "٩ ملفات مضمنة في الملف المضغوط"
+      "bundleContentsShort": "٩ ملفات مضمنة في الملف المضغوط",
+      "subtitle": "مراقبة امتثال NELC عبر جميع الدورات والمحاضرات",
+      "overallCompliance": "الامتثال الإجمالي",
+      "noCourses": "لم يتم العثور على دورات",
+      "noCoursesDesc": "لا توجد دورات بعد لفحص الامتثال."
     },
     "courseStats": {
       "title": "إحصائيات الدورات",
@@ -4163,7 +4167,22 @@
       "bulkReject": "رفض الكل",
       "clearSelection": "مسح",
       "bulkApproveSuccess": "تم اعتماد {count} عنصر(عناصر) بنجاح",
-      "bulkRejectSuccess": "تم رفض {count} عنصر(عناصر) بنجاح"
+      "bulkRejectSuccess": "تم رفض {count} عنصر(عناصر) بنجاح",
+      "tableContent": "المحتوى",
+      "tableCourse": "الدورة",
+      "tableInstructor": "المدرب",
+      "tableActions": "الإجراءات",
+      "wcagChecks": "فحوصات إمكانية الوصول WCAG",
+      "wcagPass": "ناجح",
+      "wcagWarning": "تحذير",
+      "wcagFail": "فاشل",
+      "checkLabels": {
+        "learningObjectives": "أهداف التعلم",
+        "assessmentAlignment": "مواءمة التقييم",
+        "hoursCompliance": "الامتثال لساعات التدريب",
+        "wcagCompliance": "الامتثال لـ WCAG",
+        "nelcChecklist": "قائمة فحص NELC"
+      }
     },
     "assessmentsPage": {
       "title": "التقييمات",
@@ -4300,7 +4319,16 @@
         "error": "فشل في تعليم التقييم"
       },
       "flaggedBadge": "مُعلَّم",
-      "flagForReview": "تعليم للمراجعة"
+      "flagForReview": "تعليم للمراجعة",
+      "submissions": {
+        "student": "الطالب",
+        "score": "الدرجة",
+        "status": "الحالة",
+        "submitted": "تاريخ التقديم",
+        "actions": "الإجراءات",
+        "graded": "تم التقييم",
+        "pending": "قيد الانتظار"
+      }
     },
     "reportsPage": {
       "title": "التقارير والتحليلات",
@@ -4508,7 +4536,44 @@
       "deactivationPending": "إلغاء التفعيل مجدول (فترة سماح 24 ساعة)",
       "thresholdInfo": "{enrolled} مسجل، مطلوب {required} مساعد(ين)",
       "assignSuccess": "تم تعيين المساعد بنجاح",
-      "assignError": "فشل تعيين المساعد"
+      "assignError": "فشل تعيين المساعد",
+      "approveSuccess": "تم اعتماد اقتراح المساعد",
+      "approveError": "فشل في اعتماد المساعد",
+      "reasonRequired": "يرجى تقديم سبب للرفض",
+      "rejectSuccess": "تم رفض اقتراح المساعد",
+      "rejectError": "فشل في رفض المساعد",
+      "removeSuccess": "تم إزالة المساعد من الدورة",
+      "removeError": "فشل في إزالة المساعد",
+      "priorityError": "فشل في تحديث الأولوية",
+      "pendingApproval": "في انتظار الموافقة",
+      "rejected": "مرفوض",
+      "nelcRequirementMet": "{enrolled} مسجل · {active} مساعد(ين) نشط · متطلبات NELC مستوفاة",
+      "selectTA": "اختيار مساعد تدريس",
+      "noTAs": "لم يتم تعيين مساعدي تدريس لهذه الدورة بعد.",
+      "otherCourses": "{count, plural, one {دورة أخرى واحدة} other {# دورات أخرى}}",
+      "confirm": "تأكيد",
+      "cancel": "إلغاء",
+      "removeTA": "إزالة المساعد",
+      "rejectTitle": "رفض اقتراح المساعد",
+      "rejectDesc": "يرجى تقديم سبب لرفض اقتراح المساعد هذا.",
+      "rejectPlaceholder": "أدخل سبب الرفض...",
+      "characters": "حرف",
+      "confirmReject": "تأكيد الرفض"
+    },
+    "instructorDetail": {
+      "title": "ملف المدرب",
+      "completionRate": "نسبة الإكمال",
+      "attendanceRate": "نسبة الحضور",
+      "courses": "الدورات",
+      "students": "الطلاب",
+      "contentQuality": "جودة المحتوى",
+      "approved": "معتمد",
+      "rejected": "مرفوض",
+      "pending": "قيد الانتظار",
+      "lectures": "المحاضرات",
+      "completed": "مكتملة",
+      "total": "الإجمالي",
+      "noCourses": "لا توجد دورات معينة"
     }
   },
   "adminDashboard": {

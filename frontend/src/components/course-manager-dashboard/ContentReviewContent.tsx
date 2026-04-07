@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, Fragment } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import {
   FileText,
@@ -35,16 +35,18 @@ const TYPE_ICONS: Record<string, { icon: typeof Video; bg: string; color: string
   image: { icon: ImageIcon, bg: "bg-[#D1FAE5]", color: "text-[#10B981]" },
 };
 
-const CHECK_LABELS: Record<string, string> = {
-  learning_objectives: "Learning Objectives",
-  assessment_alignment: "Assessment Alignment",
-  hours_compliance: "Hours Compliance",
-  wcag_compliance: "WCAG Compliance",
-  nelc_checklist: "NELC Checklist",
+const CHECK_LABEL_KEYS: Record<string, string> = {
+  learning_objectives: "learningObjectives",
+  assessment_alignment: "assessmentAlignment",
+  hours_compliance: "hoursCompliance",
+  wcag_compliance: "wcagCompliance",
+  nelc_checklist: "nelcChecklist",
 };
 
 const ContentReviewContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const {
     items,
@@ -317,13 +319,13 @@ const ContentReviewContent = () => {
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                  <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
                   <input
                     type="text"
                     placeholder={t("contentReviewPage.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
@@ -394,7 +396,7 @@ const ContentReviewContent = () => {
                   <span className="text-sm font-medium text-[#1E40AF]">
                     {t("contentReviewPage.bulkSelected", { count: selectedIds.size })}
                   </span>
-                  <div className="flex items-center gap-2 ml-auto">
+                  <div className="flex items-center gap-2 ms-auto">
                     <button
                       onClick={handleBulkApprove}
                       disabled={bulkLoading}
@@ -450,21 +452,21 @@ const ContentReviewContent = () => {
                               className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase w-8"></th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">
-                            Content
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase w-8"></th>
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                            {t("contentReviewPage.tableContent")}
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">
-                            Course
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                            {t("contentReviewPage.tableCourse")}
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
-                            Instructor
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
+                            {t("contentReviewPage.tableInstructor")}
                           </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
+                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
                             {t("contentReviewPage.submittedOn")}
                           </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold text-[#6B7280] uppercase">
-                            Actions
+                          <th className="px-4 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">
+                            {t("contentReviewPage.tableActions")}
                           </th>
                         </tr>
                       </thead>
@@ -540,7 +542,7 @@ const ContentReviewContent = () => {
                                               } catch { return "WCAG " + item.wcagStatus; }
                                             })()}
                                           >
-                                            WCAG {item.wcagStatus === "compliant" || item.wcagStatus === "pass" ? "Pass" : item.wcagStatus === "warning" ? "Warning" : "Fail"}
+                                            WCAG {item.wcagStatus === "compliant" || item.wcagStatus === "pass" ? t("contentReviewPage.wcagPass") : item.wcagStatus === "warning" ? t("contentReviewPage.wcagWarning") : t("contentReviewPage.wcagFail")}
                                           </span>
                                         )}
                                       </div>
@@ -576,7 +578,7 @@ const ContentReviewContent = () => {
                                       disabled={isActionLoading}
                                       className="px-3 py-1.5 bg-[#FEF3C7] text-[#D97706] text-xs font-medium rounded-md border border-[#FDE68A] hover:bg-[#FDE68A] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
-                                      Changes
+                                      {t("contentReviewPage.requestChanges")}
                                     </button>
                                     <button
                                       onClick={() => handleRejectClick(item.id)}
@@ -610,7 +612,7 @@ const ContentReviewContent = () => {
                                         if (details.length === 0) return null;
                                         return (
                                           <div className="mb-4">
-                                            <h4 className="text-sm font-semibold text-[#1F2937] mb-2">WCAG Accessibility Checks</h4>
+                                            <h4 className="text-sm font-semibold text-[#1F2937] mb-2">{t("contentReviewPage.wcagChecks")}</h4>
                                             <div className="space-y-1.5">
                                               {details.map((d, i) => (
                                                 <div key={i} className="flex items-start gap-2 text-xs">
@@ -675,7 +677,7 @@ const ContentReviewContent = () => {
                                             )}
                                             <div className="min-w-0 flex-1">
                                               <p className="text-sm font-medium text-[#1F2937]">
-                                                {CHECK_LABELS[check.rule] || check.rule}
+                                                {CHECK_LABEL_KEYS[check.rule] ? t(`contentReviewPage.checkLabels.${CHECK_LABEL_KEYS[check.rule]}`) : check.rule}
                                               </p>
                                               <p className="text-xs text-[#6B7280] mt-0.5">
                                                 {check.detail}

@@ -725,7 +725,7 @@ const CertificatesContent = () => {
               {loading && (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
-                  <span className="ml-3 text-[#6B7280]">{t("certificates.loading")}</span>
+                  <span className="ms-3 text-[#6B7280]">{t("certificates.loading")}</span>
                 </div>
               )}
 
@@ -815,7 +815,7 @@ const CertificatesContent = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                              <th className="px-4 py-3 text-left">
+                              <th className="px-4 py-3 text-start">
                                 <input
                                   type="checkbox"
                                   checked={actionableCerts.length > 0 && selectedIds.size === actionableCerts.length}
@@ -823,12 +823,12 @@ const CertificatesContent = () => {
                                   className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                                 />
                               </th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
-                              <th className={`px-4 py-3 ${isRTL ? "text-right" : "text-left"} text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableCourse")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableEligibility")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableRequestDate")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStatus")}</th>
+                              <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5E7EB]">
@@ -872,7 +872,7 @@ const CertificatesContent = () => {
                                       <span className={`w-5 h-5 rounded flex items-center justify-center ${elig.completion ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`} title={`${t("certificates.completion")}: ${elig.completion ? "100%" : t("certificates.incomplete")}`}>
                                         {elig.completion ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
                                       </span>
-                                      {!isFullyEligible(cert) && <AlertTriangle className="w-4 h-4 text-[#EAB308] ml-1" />}
+                                      {!isFullyEligible(cert) && <AlertTriangle className="w-4 h-4 text-[#EAB308] ms-1" />}
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">

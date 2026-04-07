@@ -3536,7 +3536,11 @@
       "exportEvidence": "Export Evidence",
       "scorecardUnavailable": "Compliance scorecard unavailable",
       "bundleContents": "ZIP includes: compliance checks with NELC clauses, lectures, attendance, materials audit, assessment results, instructor credentials, student feedback, accessibility report, and policies",
-      "bundleContentsShort": "9 files included in ZIP"
+      "bundleContentsShort": "9 files included in ZIP",
+      "subtitle": "Monitor NELC compliance across all courses and sessions",
+      "overallCompliance": "Overall Compliance",
+      "noCourses": "No courses found",
+      "noCoursesDesc": "No courses exist yet to check compliance."
     },
     "courseStats": {
       "title": "Course Statistics",
@@ -3954,7 +3958,22 @@
       "bulkReject": "Reject All",
       "clearSelection": "Clear",
       "bulkApproveSuccess": "{count} item(s) approved successfully",
-      "bulkRejectSuccess": "{count} item(s) rejected successfully"
+      "bulkRejectSuccess": "{count} item(s) rejected successfully",
+      "tableContent": "Content",
+      "tableCourse": "Course",
+      "tableInstructor": "Instructor",
+      "tableActions": "Actions",
+      "wcagChecks": "WCAG Accessibility Checks",
+      "wcagPass": "Pass",
+      "wcagWarning": "Warning",
+      "wcagFail": "Fail",
+      "checkLabels": {
+        "learningObjectives": "Learning Objectives",
+        "assessmentAlignment": "Assessment Alignment",
+        "hoursCompliance": "Hours Compliance",
+        "wcagCompliance": "WCAG Compliance",
+        "nelcChecklist": "NELC Checklist"
+      }
     },
     "assessmentsPage": {
       "title": "Assessments",
@@ -4091,7 +4110,16 @@
         "error": "Failed to flag assessment"
       },
       "flaggedBadge": "Flagged",
-      "flagForReview": "Flag for Review"
+      "flagForReview": "Flag for Review",
+      "submissions": {
+        "student": "Student",
+        "score": "Score",
+        "status": "Status",
+        "submitted": "Submitted",
+        "actions": "Actions",
+        "graded": "Graded",
+        "pending": "Pending"
+      }
     },
     "reportsPage": {
       "title": "Reports & Analytics",
@@ -4299,7 +4327,44 @@
       "deactivationPending": "Deactivation scheduled (24h grace)",
       "thresholdInfo": "{enrolled} enrolled, {required} TA(s) required",
       "assignSuccess": "TA assigned successfully",
-      "assignError": "Failed to assign TA"
+      "assignError": "Failed to assign TA",
+      "approveSuccess": "TA suggestion approved",
+      "approveError": "Failed to approve TA",
+      "reasonRequired": "Please provide a reason for rejection",
+      "rejectSuccess": "TA suggestion rejected",
+      "rejectError": "Failed to reject TA",
+      "removeSuccess": "TA removed from course",
+      "removeError": "Failed to remove TA",
+      "priorityError": "Failed to update priority",
+      "pendingApproval": "Pending Approval",
+      "rejected": "Rejected",
+      "nelcRequirementMet": "{enrolled} enrolled · {active} TA(s) active · NELC requirement met",
+      "selectTA": "Select a Teaching Assistant",
+      "noTAs": "No teaching assistants assigned to this course yet.",
+      "otherCourses": "{count, plural, one {# other course} other {# other courses}}",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "removeTA": "Remove TA",
+      "rejectTitle": "Reject TA Suggestion",
+      "rejectDesc": "Please provide a reason for rejecting this TA suggestion.",
+      "rejectPlaceholder": "Enter rejection reason...",
+      "characters": "characters",
+      "confirmReject": "Confirm Reject"
+    },
+    "instructorDetail": {
+      "title": "Instructor Profile",
+      "completionRate": "Completion Rate",
+      "attendanceRate": "Attendance Rate",
+      "courses": "Courses",
+      "students": "Students",
+      "contentQuality": "Content Quality",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "pending": "Pending",
+      "lectures": "Lectures",
+      "completed": "completed",
+      "total": "total",
+      "noCourses": "No courses assigned"
     }
   },
   "adminDashboard": {

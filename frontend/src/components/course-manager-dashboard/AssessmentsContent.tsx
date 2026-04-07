@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
@@ -49,6 +49,8 @@ interface SettingsForm {
 
 const AssessmentsContent = () => {
   const t = useTranslations("courseManagerDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -671,13 +673,13 @@ const AssessmentsContent = () => {
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
                     <input
                       type="text"
                       placeholder={t("assessmentsPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                     />
                   </div>
                   <div className="flex gap-3">
@@ -746,12 +748,12 @@ const AssessmentsContent = () => {
                       </colgroup>
                       <thead>
                         <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                          <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
-                          <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.type")}</th>
-                          <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.totalMarks")}</th>
-                          <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.passingMarks")}</th>
-                          <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.status")}</th>
-                          <th className="text-left text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.actions")}</th>
+                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
+                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.type")}</th>
+                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.totalMarks")}</th>
+                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.passingMarks")}</th>
+                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.status")}</th>
+                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.actions")}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E5E7EB]">
@@ -1021,13 +1023,13 @@ const AssessmentsContent = () => {
                             <table className="w-full">
                               <thead>
                                 <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">
+                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                                     {t("assessmentsPage.blueprint.module")}
                                   </th>
                                   <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase">
                                     {t("assessmentsPage.blueprint.coverage")}
                                   </th>
-                                  <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">
+                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                                     {t("assessmentsPage.blueprint.linked")}
                                   </th>
                                 </tr>
@@ -1173,11 +1175,11 @@ const AssessmentsContent = () => {
                         <table className="w-full">
                           <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Student</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Score</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Status</th>
-                              <th className="px-4 py-3 text-left text-xs font-semibold text-[#6B7280] uppercase">Submitted</th>
-                              <th className="px-4 py-3 text-right text-xs font-semibold text-[#6B7280] uppercase">Actions</th>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.student")}</th>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.score")}</th>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.status")}</th>
+                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.submitted")}</th>
+                              <th className="px-4 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.actions")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5E7EB]">
@@ -1207,7 +1209,7 @@ const AssessmentsContent = () => {
                                         ? "bg-[#DCFCE7] text-[#22C55E]"
                                         : "bg-[#FEF3C7] text-[#D97706]"
                                     }`}>
-                                      {isGraded ? "Graded" : "Pending"}
+                                      {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
                                     </span>
                                   </td>
                                   <td className="px-4 py-3">
@@ -1215,13 +1217,13 @@ const AssessmentsContent = () => {
                                       {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
                                     </p>
                                   </td>
-                                  <td className="px-4 py-3 text-right">
+                                  <td className="px-4 py-3 text-end">
                                     <button
                                       onClick={() => setViewingSubmission(sub)}
                                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
                                     >
                                       <Eye className="w-3.5 h-3.5" />
-                                      View
+                                      {t("assessmentsPage.actions.view")}
                                     </button>
                                   </td>
                                 </tr>
@@ -1288,15 +1290,15 @@ const AssessmentsContent = () => {
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
                       isGraded ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEF3C7] text-[#D97706]"
                     }`}>
-                      {isGraded ? "Graded" : "Pending"}
+                      {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
                     </span>
                     {isPassed && sub.score !== null && (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ml-1 bg-[#DCFCE7] text-[#22C55E]">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#DCFCE7] text-[#22C55E]">
                         Pass
                       </span>
                     )}
                     {sub.score !== null && !isPassed && (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ml-1 bg-[#FEE2E2] text-[#EF4444]">
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#FEE2E2] text-[#EF4444]">
                         Fail
                       </span>
                     )}

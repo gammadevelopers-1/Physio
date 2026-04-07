@@ -345,27 +345,27 @@ const CatalogOverviewWidget = ({
           <thead>
             <tr className="border-b border-[#E5E7EB]">
               <th
-                className={`${isRTL ? "text-right" : "text-left"} px-5 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
+                className={`text-start px-5 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
               >
                 {t("catalog.course")}
               </th>
               <th
-                className={`${isRTL ? "text-right" : "text-left"} px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
+                className={`text-start px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
               >
                 {t("catalog.instructor")}
               </th>
               <th
-                className={`${isRTL ? "text-right" : "text-left"} px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
+                className={`text-start px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
               >
                 {t("catalog.status")}
               </th>
               <th
-                className={`${isRTL ? "text-right" : "text-left"} px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
+                className={`text-start px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
               >
                 {t("catalog.enrolled")}
               </th>
               <th
-                className={`${isRTL ? "text-right" : "text-left"} px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
+                className={`text-start px-4 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider`}
               >
                 {t("catalog.rating")}
               </th>

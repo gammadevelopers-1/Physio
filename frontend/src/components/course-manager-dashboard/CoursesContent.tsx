@@ -71,6 +71,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 const CoursesContent = () => {
   const manager = useManagerProfile();
   const locale = useLocale();
+  const isRTL = locale === "ar";
   const router = useRouter();
   const t = useTranslations("courseManagerDashboard");
   const tA = useTranslations("accessibility");
@@ -263,13 +264,13 @@ const CoursesContent = () => {
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
                     <input
                       type="text"
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                     />
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -411,7 +412,7 @@ const CoursesContent = () => {
                             className="object-cover"
                             unoptimized={thumbnailSrc.startsWith("http")}
                           />
-                          <div className="absolute top-3 left-3 flex gap-2">
+                          <div className={`absolute top-3 ${isRTL ? "right-3" : "left-3"} flex gap-2`}>
                             <span
                               className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}
                             >
@@ -426,7 +427,7 @@ const CoursesContent = () => {
                           </div>
                           {/* Context-aware action dropdown */}
                           {(course.status === "draft" || course.status === "pending_review" || course.status === "active" || course.status === "completed") && (
-                          <div className="absolute top-3 right-3" ref={openDropdown === course.id ? dropdownRef : undefined}>
+                          <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"}`} ref={openDropdown === course.id ? dropdownRef : undefined}>
                             <button
                               onClick={() => setOpenDropdown(openDropdown === course.id ? null : course.id)}
                               disabled={statusLoading === course.id}

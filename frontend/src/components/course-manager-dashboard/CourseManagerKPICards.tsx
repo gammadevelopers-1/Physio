@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { BookOpen, Users, FileText, TrendingUp, UserCheck, DollarSign } from "lucide-react";
+import { BookOpen, Users, FileText } from "lucide-react";
 
 interface KPIData {
   totalCourses: number;
@@ -24,7 +24,6 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
       id: "totalCourses",
       label: t("kpi.totalCourses"),
       value: data.totalCourses,
-      suffix: "",
       icon: BookOpen,
       iconBg: "bg-[var(--gold-gold-100)]",
       iconColor: "text-[var(--gold-gold-500)]",
@@ -33,7 +32,6 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
       id: "totalEnrollments",
       label: t("kpi.totalEnrollments"),
       value: data.totalEnrollments,
-      suffix: "",
       icon: Users,
       iconBg: "bg-[var(--gold-gold-100)]",
       iconColor: "text-[var(--gold-gold-500)]",
@@ -42,42 +40,14 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
       id: "pendingReviews",
       label: t("kpi.pendingReviews"),
       value: data.pendingReviews,
-      suffix: "",
       icon: FileText,
       iconBg: "bg-[var(--functional-red-400)]/10",
       iconColor: "text-[var(--functional-red-600)]",
     },
-    {
-      id: "avgCompletion",
-      label: t("kpi.avgCompletion"),
-      value: data.avgCompletionRate ?? 0,
-      suffix: "%",
-      icon: TrendingUp,
-      iconBg: "bg-[#D1FAE5]",
-      iconColor: "text-[#065F46]",
-    },
-    {
-      id: "activeInstructors",
-      label: "Active Instructors",
-      value: data.activeInstructors ?? 0,
-      suffix: "",
-      icon: UserCheck,
-      iconBg: "bg-[#EFF6FF]",
-      iconColor: "text-[#3B82F6]",
-    },
-    {
-      id: "totalRevenue",
-      label: t("kpi.totalRevenue"),
-      value: data.totalRevenue ?? 0,
-      suffix: " SAR",
-      icon: DollarSign,
-      iconBg: "bg-[#FEF3C7]",
-      iconColor: "text-[#D97706]",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-3 gap-4 mb-6">
       {kpiCards.map((card) => {
         const Icon = card.icon;
         return (
@@ -93,7 +63,7 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
             <div>
               <p className="text-sm text-[var(--on-surface-variant)]">{card.label}</p>
               <p className="text-2xl font-bold text-[var(--on-surface-default)]">
-                {card.value}{card.suffix}
+                {card.value}
               </p>
             </div>
           </div>

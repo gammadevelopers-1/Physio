@@ -324,14 +324,16 @@ const InstructorsContent = () => {
                     const loadPercent = Math.min((instructor.hoursThisWeek / maxHours) * 100, 100);
 
                     return (
-                      <div key={instructor.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow">
+                      <div key={instructor.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
                         {/* Recommended badge */}
-                        {recommendedId === instructor.id && (
-                          <div className="flex items-center gap-1 mb-2 px-2 py-1 bg-[#FEF3C7] rounded-lg w-fit">
-                            <Star className="w-3 h-3 text-[#F59E0B] fill-[#F59E0B]" />
-                            <span className="text-[10px] font-semibold text-[#92400E]">{t("instructorsPage.recommended")}</span>
-                          </div>
-                        )}
+                        <div className="h-6 mb-2">
+                          {recommendedId === instructor.id && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-[#FEF3C7] rounded-lg w-fit">
+                              <Star className="w-3 h-3 text-[#F59E0B] fill-[#F59E0B]" />
+                              <span className="text-[10px] font-semibold text-[#92400E]">{t("instructorsPage.recommended")}</span>
+                            </div>
+                          )}
+                        </div>
 
                         {/* Header */}
                         <div className="flex items-center gap-3 mb-4">
@@ -360,7 +362,7 @@ const InstructorsContent = () => {
                               </div>
                             )}
                           </div>
-                          <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-semibold ${config.bg} ${config.text} flex-shrink-0`}>
+                          <span className={`ms-auto px-2 py-0.5 rounded-full text-[10px] font-semibold ${config.bg} ${config.text} flex-shrink-0`}>
                             {t(`instructorsPage.status.${instructor.status}`)}
                           </span>
                         </div>
@@ -412,7 +414,7 @@ const InstructorsContent = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
+                        <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB] mt-auto">
                           <div className="flex items-center gap-2">
                             <button className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors">
                               <Mail className="w-4 h-4" />
@@ -422,7 +424,7 @@ const InstructorsContent = () => {
                               className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
                             >
                               {t("instructorsPage.viewProfile")}
-                              <ChevronRight className="w-3 h-3" />
+                              <ChevronRight className={`w-3 h-3 ${isRTL ? "rotate-180" : ""}`} />
                             </button>
                           </div>
                           <button
@@ -433,7 +435,7 @@ const InstructorsContent = () => {
                             }}
                             className="px-3 py-1.5 text-xs font-medium text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
                           >
-                            Assign to Course
+                            {t("instructorsPage.assignToCoursBtn")}
                           </button>
                         </div>
                       </div>

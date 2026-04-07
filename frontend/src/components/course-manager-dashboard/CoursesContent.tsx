@@ -602,7 +602,7 @@ const CoursesContent = () => {
                               className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
                             >
                               {t("coursesPage.manage")}
-                              <ChevronRight className="w-4 h-4" />
+                              <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                             </Link>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}

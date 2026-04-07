@@ -43,6 +43,77 @@ const CHECK_LABEL_KEYS: Record<string, string> = {
   nelc_checklist: "nelcChecklist",
 };
 
+// Maps for translating backend WCAG / compliance detail strings
+const WCAG_LABEL_AR: Record<string, string> = {
+  "Document Title": "عنوان المستند",
+  "Document Language": "لغة المستند",
+  "Tagged Structure": "البنية الموسومة",
+  "Page Content": "محتوى الصفحة",
+  "Author Metadata": "بيانات المؤلف",
+  "Captions": "الترجمة",
+  "Transcript": "النص المكتوب",
+  "File Access": "الوصول للملف",
+  "PDF Parsing": "تحليل PDF",
+  "Heading Structure": "هيكل العناوين",
+  "Image Alt Text": "النص البديل للصور",
+  "Slide Structure": "هيكل الشرائح",
+  "Alt Text": "النص البديل",
+  "Image Validity": "صلاحية الصورة",
+  "Unknown Type": "نوع غير معروف",
+};
+
+const WCAG_DETAIL_AR: [RegExp, string][] = [
+  [/^No document title set in PDF metadata$/, "لم يتم تعيين عنوان المستند في بيانات PDF"],
+  [/^No language attribute set in PDF metadata$/, "لم يتم تعيين سمة اللغة في بيانات PDF"],
+  [/^PDF is not tagged \(no structural markup for headings, lists, tables\)$/, "PDF غير موسوم (لا توجد بنية للعناوين والقوائم والجداول)"],
+  [/^PDF has (\d+) page\(s\)$/, "PDF يحتوي على $1 صفحة(صفحات)"],
+  [/^No author metadata set$/, "لم يتم تعيين بيانات المؤلف"],
+  [/^Title: "(.+)"$/, 'العنوان: "$1"'],
+  [/^Language: (.+)$/, "اللغة: $1"],
+  [/^Author: "(.+)"$/, 'المؤلف: "$1"'],
+  [/^Missing captions.*$/, "الترجمة مفقودة (مطلوبة للمستخدمين الصم وضعاف السمع)"],
+  [/^Captions present$/, "الترجمة موجودة"],
+  [/^Missing transcript.*$/, "النص المكتوب مفقود (مطلوب كبديل للوصف الصوتي)"],
+  [/^Transcript present$/, "النص المكتوب موجود"],
+  [/^File not available for inspection$/, "الملف غير متاح للفحص"],
+  [/^Material title is used as alt text.*$/, "يُستخدم عنوان المادة كنص بديل"],
+  [/^No headings found.*$/, "لم يتم العثور على عناوين — قد يفتقر المستند إلى تسلسل هرمي"],
+  [/^Found (\d+) heading\(s\) in document$/, "تم العثور على $1 عنوان(عناوين) في المستند"],
+  [/^(\d+)\/(\d+) embedded images have alt text$/, "$1/$2 صورة مضمنة لها نص بديل"],
+  [/^Presentation has (\d+) slide\(s\)$/, "العرض يحتوي على $1 شريحة(شرائح)"],
+  [/^No slides found.*$/, "لم يتم العثور على شرائح في العرض"],
+  [/^Could not parse PDF: (.+)$/, "تعذر تحليل PDF: $1"],
+  [/^Could not parse document: (.+)$/, "تعذر تحليل المستند: $1"],
+  [/^File size: (.+)$/, "حجم الملف: $1"],
+  [/^File appears too small.*$/, "الملف صغير جداً ليكون صورة صالحة"],
+  [/^Could not read image file$/, "تعذرت قراءة ملف الصورة"],
+  // Compliance check details
+  [/^Course has (\d+) modules \(minimum 3\)$/, "الدورة تحتوي على $1 وحدات (الحد الأدنى 3)"],
+  [/^Course has only (\d+) module\(s\) — at least 3 required$/, "الدورة تحتوي على $1 وحدة(وحدات) فقط — مطلوب 3 على الأقل"],
+  [/^No modules exist to assess$/, "لا توجد وحدات للتقييم"],
+  [/^All (\d+) modules covered by assessments$/, "جميع الوحدات ($1) مغطاة بالتقييمات"],
+  [/^(\d+) of (\d+) module\(s\) have no linked assessment$/, "$1 من $2 وحدة(وحدات) ليس لها تقييم مرتبط"],
+  [/^([\d.]+) hours meets (\d+)h minimum for (\w+) course$/, "$1 ساعة تستوفي الحد الأدنى $2 ساعة لدورة $3"],
+  [/^([\d.]+) hours is below (\d+)h minimum for (\w+) course$/, "$1 ساعة أقل من الحد الأدنى $2 ساعة لدورة $3"],
+  [/^All (\d+) materials WCAG compliant, (\d+)\/(\d+) videos captioned$/, "جميع المواد ($1) متوافقة مع WCAG، $2/$3 فيديو مترجم"],
+  [/^(\d+)\/(\d+) materials compliant, (\d+)\/(\d+) videos captioned$/, "$1/$2 مواد متوافقة، $3/$4 فيديو مترجم"],
+  [/^All mandatory fields filled.*$/, "جميع الحقول الإلزامية مكتملة (العنوان، العنوان العربي، الوصف، التواريخ)"],
+  [/^Missing: (.+)$/, "مفقود: $1"],
+];
+
+function translateDetail(detail: string, isArabic: boolean): string {
+  if (!isArabic) return detail;
+  for (const [pattern, replacement] of WCAG_DETAIL_AR) {
+    if (pattern.test(detail)) return detail.replace(pattern, replacement);
+  }
+  return detail;
+}
+
+function translateLabel(label: string, isArabic: boolean): string {
+  if (!isArabic) return label;
+  return WCAG_LABEL_AR[label] || label;
+}
+
 const ContentReviewContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
@@ -441,10 +512,19 @@ const ContentReviewContent = () => {
               ) : (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full table-fixed">
+                      <colgroup>
+                        <col className="w-10" />
+                        <col className="w-8" />
+                        <col className="w-[30%]" />
+                        <col className="w-[14%]" />
+                        <col className="w-[12%] hidden md:table-column" />
+                        <col className="w-[10%] hidden sm:table-column" />
+                        <col />
+                      </colgroup>
                       <thead>
                         <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                          <th className="px-4 py-3 w-8">
+                          <th className="px-2 py-3">
                             <input
                               type="checkbox"
                               checked={filtered.length > 0 && selectedIds.size === filtered.length}
@@ -452,20 +532,20 @@ const ContentReviewContent = () => {
                               className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                           </th>
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase w-8"></th>
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-1 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase"></th>
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                             {t("contentReviewPage.tableContent")}
                           </th>
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                             {t("contentReviewPage.tableCourse")}
                           </th>
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden md:table-cell">
                             {t("contentReviewPage.tableInstructor")}
                           </th>
-                          <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
+                          <th className="px-3 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
                             {t("contentReviewPage.submittedOn")}
                           </th>
-                          <th className="px-4 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">
+                          <th className="px-3 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">
                             {t("contentReviewPage.tableActions")}
                           </th>
                         </tr>
@@ -487,7 +567,7 @@ const ContentReviewContent = () => {
                                 className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                                 onClick={() => toggleExpand(item.id)}
                               >
-                                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
                                   <input
                                     type="checkbox"
                                     checked={selectedIds.has(item.id)}
@@ -495,17 +575,17 @@ const ContentReviewContent = () => {
                                     className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                                   />
                                 </td>
-                                <td className="px-4 py-3">
+                                <td className="px-1 py-3">
                                   {isExpanded ? (
                                     <ChevronDown className="w-4 h-4 text-[#6B7280]" />
                                   ) : (
-                                    <ChevronRight className="w-4 h-4 text-[#6B7280]" />
+                                    <ChevronRight className={`w-4 h-4 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`} />
                                   )}
                                 </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center gap-3">
+                                <td className="px-3 py-3">
+                                  <div className="flex items-center gap-2">
                                     <div
-                                      className={`w-9 h-9 ${typeConfig.bg} rounded-lg flex items-center justify-center flex-shrink-0`}
+                                      className={`w-8 h-8 ${typeConfig.bg} rounded-lg flex items-center justify-center flex-shrink-0`}
                                     >
                                       <TypeIcon className={`w-4 h-4 ${typeConfig.color}`} />
                                     </div>
@@ -538,7 +618,7 @@ const ContentReviewContent = () => {
                                               if (!item.wcagDetails) return "WCAG " + item.wcagStatus;
                                               try {
                                                 const d = JSON.parse(item.wcagDetails) as { label: string; passed: boolean; detail: string }[];
-                                                return d.map((c) => `${c.passed ? "\u2713" : "\u2717"} ${c.label}: ${c.detail}`).join("\n");
+                                                return d.map((c) => `${c.passed ? "\u2713" : "\u2717"} ${translateLabel(c.label, isRTL)}: ${translateDetail(c.detail, isRTL)}`).join("\n");
                                               } catch { return "WCAG " + item.wcagStatus; }
                                             })()}
                                           >
@@ -549,23 +629,23 @@ const ContentReviewContent = () => {
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3">
-                                  <p className="text-sm text-[#4B5563] truncate max-w-[200px]">
+                                <td className="px-3 py-3">
+                                  <p className="text-sm text-[#4B5563] truncate">
                                     {item.courseTitle}
                                   </p>
                                 </td>
-                                <td className="px-4 py-3 hidden md:table-cell">
-                                  <p className="text-sm text-[#4B5563]">{instructorName || item.instructorEmail}</p>
+                                <td className="px-3 py-3 hidden md:table-cell">
+                                  <p className="text-sm text-[#4B5563] truncate">{instructorName || item.instructorEmail}</p>
                                 </td>
-                                <td className="px-4 py-3 hidden sm:table-cell">
-                                  <p className="text-sm text-[#6B7280]">{formatDate(item.createdAt)}</p>
+                                <td className="px-3 py-3 hidden sm:table-cell">
+                                  <p className="text-xs text-[#6B7280] whitespace-nowrap">{formatDate(item.createdAt)}</p>
                                 </td>
-                                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex items-center justify-end gap-2 flex-nowrap">
+                                <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center justify-end gap-1.5 flex-nowrap">
                                     <button
                                       onClick={() => handleApprove(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-3 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-md hover:bg-[#16A34A] transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      className="px-2.5 py-1.5 bg-[#22C55E] text-white text-xs font-medium rounded-md hover:bg-[#16A34A] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
                                       {isActionLoading ? (
                                         <Loader2 className="w-3 h-3 animate-spin" />
@@ -576,14 +656,14 @@ const ContentReviewContent = () => {
                                     <button
                                       onClick={() => handleRequestChangesClick(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-3 py-1.5 bg-[#FEF3C7] text-[#D97706] text-xs font-medium rounded-md border border-[#FDE68A] hover:bg-[#FDE68A] transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      className="px-2.5 py-1.5 bg-[#FEF3C7] text-[#D97706] text-xs font-medium rounded-md border border-[#FDE68A] hover:bg-[#FDE68A] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
                                       {t("contentReviewPage.requestChanges")}
                                     </button>
                                     <button
                                       onClick={() => handleRejectClick(item.id)}
                                       disabled={isActionLoading}
-                                      className="px-3 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50 whitespace-nowrap"
+                                      className="px-2.5 py-1.5 bg-white text-[#EF4444] text-xs font-medium rounded-md border border-[#FEE2E2] hover:bg-[#FEF2F2] transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
                                       {t("contentReviewPage.reject")}
                                     </button>
@@ -622,8 +702,8 @@ const ContentReviewContent = () => {
                                                     <XCircle className="w-4 h-4 text-[#EF4444] flex-shrink-0 mt-0.5" />
                                                   )}
                                                   <div>
-                                                    <span className="font-medium text-[#374151]">{d.label}</span>
-                                                    <span className="text-[#6B7280]"> — {d.detail}</span>
+                                                    <span className="font-medium text-[#374151]">{translateLabel(d.label, isRTL)}</span>
+                                                    <span className="text-[#6B7280]"> — {translateDetail(d.detail, isRTL)}</span>
                                                   </div>
                                                 </div>
                                               ))}
@@ -680,7 +760,7 @@ const ContentReviewContent = () => {
                                                 {CHECK_LABEL_KEYS[check.rule] ? t(`contentReviewPage.checkLabels.${CHECK_LABEL_KEYS[check.rule]}`) : check.rule}
                                               </p>
                                               <p className="text-xs text-[#6B7280] mt-0.5">
-                                                {check.detail}
+                                                {translateDetail(check.detail, isRTL)}
                                               </p>
                                             </div>
                                           </div>

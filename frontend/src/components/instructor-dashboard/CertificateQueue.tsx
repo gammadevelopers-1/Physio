@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Star,
   Check,
@@ -10,10 +8,8 @@ import {
   ChevronRight,
   GraduationCap,
   Eye,
-  CheckCircle,
-  PauseCircle,
-  Loader2,
 } from "lucide-react";
+import Link from "next/link";
 
 interface PendingCertificate {
   id: string;
@@ -38,107 +34,21 @@ interface CertificateQueueProps {
   onRefresh?: () => void;
 }
 
+const MAX_DISPLAY = 4;
+
 const CertificateQueue = ({
   certificates,
-  onApprove,
-  onHold,
-  onBatchApprove,
-  onBatchHold,
   onPreview,
-  onRefresh,
 }: CertificateQueueProps) => {
   const t = useTranslations("instructorDashboard");
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [batchLoading, setBatchLoading] = useState(false);
+  const locale = useLocale();
+  const isRTL = locale === "ar";
 
   const totalCount = certificates.length;
-  const allSelected = selectedIds.size === certificates.length && certificates.length > 0;
-  const someSelected = selectedIds.size > 0 && selectedIds.size < certificates.length;
-
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(certificates.map((c) => c.id)));
-    }
-  };
-
-  const toggleSelect = (id: string) => {
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const handleApprove = async (id: string) => {
-    if (!onApprove) return;
-    setLoadingId(id);
-    try {
-      await onApprove(id);
-      toast.success(t("certificates.approveSuccess"));
-      onRefresh?.();
-    } catch (err: any) {
-      toast.error(err?.message || t("certificates.approveFailed"));
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const handleHold = async (id: string) => {
-    if (!onHold) return;
-    setLoadingId(id);
-    try {
-      await onHold(id, "Placed on hold for review");
-      toast.success(t("certificates.holdSuccess"));
-      onRefresh?.();
-    } catch (err: any) {
-      toast.error(err?.message || t("certificates.holdFailed"));
-    } finally {
-      setLoadingId(null);
-    }
-  };
+  const displayCerts = certificates.slice(0, MAX_DISPLAY);
 
   const handlePreview = (id: string) => {
     onPreview?.(id);
-  };
-
-  const handleBatchApprove = async () => {
-    if (!onBatchApprove || selectedIds.size === 0) return;
-    setBatchLoading(true);
-    try {
-      await onBatchApprove(Array.from(selectedIds));
-      toast.success(t("certificates.batchApproveSuccess"));
-      setSelectedIds(new Set());
-      onRefresh?.();
-    } catch (err: any) {
-      toast.error(err?.message || t("certificates.batchApproveFailed"));
-    } finally {
-      setBatchLoading(false);
-    }
-  };
-
-  const handleBatchHold = async () => {
-    if (!onBatchHold || selectedIds.size === 0) return;
-    setBatchLoading(true);
-    try {
-      await onBatchHold(Array.from(selectedIds), "Batch hold for review");
-      toast.success(t("certificates.batchHoldSuccess"));
-      setSelectedIds(new Set());
-      onRefresh?.();
-    } catch (err: any) {
-      toast.error(err?.message || t("certificates.batchHoldFailed"));
-    } finally {
-      setBatchLoading(false);
-    }
-  };
-
-  // Check if certificate is eligible (all checks passed)
-  const isEligible = (checks: PendingCertificate["checks"]) => {
-    return checks.attendance && checks.assessment && checks.completion;
   };
 
   return (
@@ -150,78 +60,20 @@ const CertificateQueue = ({
             <GraduationCap className="w-5 h-5 text-[#D4A520]" />
             {t("certificates.pendingTitle")}
           </h3>
-          {/* Badge Count */}
           <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#FEF3C7] text-[#D4A520] text-xs font-semibold rounded-full">
             {totalCount}
           </span>
         </div>
 
-        {/* Select All Row */}
-        <div className="py-2 px-2 mb-2 bg-[#F3F4F6] rounded-lg">
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                ref={(el) => {
-                  if (el) el.indeterminate = someSelected;
-                }}
-                onChange={toggleSelectAll}
-                className="w-4 h-4 text-[#3B82F6] border-[#D1D5DB] rounded focus:ring-[#3B82F6] cursor-pointer"
-              />
-              <span className="text-xs font-medium text-[#4B5563]">
-                {t("certificates.selectAll")}
-              </span>
-            </label>
-            {selectedIds.size > 0 && (
-              <span className="text-xs text-[#6B7280]">
-                {selectedIds.size} {t("certificates.selected")}
-              </span>
-            )}
-          </div>
-
-          {/* Batch Actions - Show when items selected */}
-          {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#E5E7EB]">
-              <button
-                onClick={handleBatchApprove}
-                disabled={batchLoading}
-                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-[#22C55E] bg-[#DCFCE7] rounded hover:bg-[#BBF7D0] transition-colors disabled:opacity-50"
-              >
-                {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                {t("certificates.approve")}
-              </button>
-              <button
-                onClick={handleBatchHold}
-                disabled={batchLoading}
-                className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium text-[#F97316] bg-[#FFEDD5] rounded hover:bg-[#FED7AA] transition-colors disabled:opacity-50"
-              >
-                {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PauseCircle className="w-3.5 h-3.5" />}
-                {t("certificates.hold")}
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Certificate List */}
         <div className="space-y-2">
-          {certificates.map((cert) => (
+          {displayCerts.map((cert) => (
             <div
               key={cert.id}
-              className={`p-3 rounded-lg border transition-colors ${
-                selectedIds.has(cert.id)
-                  ? "bg-[#EFF6FF] border-[#3B82F6]"
-                  : "bg-[#F9FAFB] border-transparent hover:border-[#E5E7EB]"
-              }`}
+              className="p-3 rounded-lg border bg-[#F9FAFB] border-transparent hover:border-[#E5E7EB] transition-colors"
             >
-              {/* Top Row: Checkbox, Star, Name */}
+              {/* Top Row: Star, Name */}
               <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(cert.id)}
-                  onChange={() => toggleSelect(cert.id)}
-                  className="w-4 h-4 text-[#3B82F6] border-[#D1D5DB] rounded focus:ring-[#3B82F6] cursor-pointer flex-shrink-0"
-                />
                 <div className="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">
                   <Star className="w-4 h-4 text-[#D4A520] fill-[#D4A520]" />
                 </div>
@@ -235,96 +87,75 @@ const CertificateQueue = ({
                 </div>
               </div>
 
-              {/* Bottom Row: Checklist + Actions */}
-              <div className="flex items-center justify-between ps-6">
+              {/* Bottom Row: Checklist + View */}
+              <div className="flex items-center justify-between ps-10">
                 {/* Eligibility Checklist */}
-                <div className="flex items-center gap-2">
-                  <div className="flex gap-1">
-                    <span
-                      className={`w-[18px] h-[18px] rounded flex items-center justify-center ${
-                        cert.checks.attendance
-                          ? "bg-[#DCFCE7] text-[#22C55E]"
-                          : "bg-[#FEE2E2] text-[#EF4444]"
-                      }`}
-                      title={t("certificates.attendance")}
-                    >
-                      {cert.checks.attendance ? (
-                        <Check className="w-2.5 h-2.5" />
-                      ) : (
-                        <X className="w-2.5 h-2.5" />
-                      )}
-                    </span>
-                    <span
-                      className={`w-[18px] h-[18px] rounded flex items-center justify-center ${
-                        cert.checks.assessment
-                          ? "bg-[#DCFCE7] text-[#22C55E]"
-                          : "bg-[#FEE2E2] text-[#EF4444]"
-                      }`}
-                      title={t("certificates.assessment")}
-                    >
-                      {cert.checks.assessment ? (
-                        <Check className="w-2.5 h-2.5" />
-                      ) : (
-                        <X className="w-2.5 h-2.5" />
-                      )}
-                    </span>
-                    <span
-                      className={`w-[18px] h-[18px] rounded flex items-center justify-center ${
-                        cert.checks.completion
-                          ? "bg-[#DCFCE7] text-[#22C55E]"
-                          : "bg-[#FEE2E2] text-[#EF4444]"
-                      }`}
-                      title={t("certificates.completion")}
-                    >
-                      {cert.checks.completion ? (
-                        <Check className="w-2.5 h-2.5" />
-                      ) : (
-                        <X className="w-2.5 h-2.5" />
-                      )}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`w-[18px] h-[18px] rounded flex items-center justify-center ${
+                      cert.checks.attendance
+                        ? "bg-[#DCFCE7] text-[#22C55E]"
+                        : "bg-[#FEE2E2] text-[#EF4444]"
+                    }`}
+                    title={t("certificates.attendance")}
+                  >
+                    {cert.checks.attendance ? (
+                      <Check className="w-2.5 h-2.5" />
+                    ) : (
+                      <X className="w-2.5 h-2.5" />
+                    )}
+                  </span>
+                  <span
+                    className={`w-[18px] h-[18px] rounded flex items-center justify-center ${
+                      cert.checks.assessment
+                        ? "bg-[#DCFCE7] text-[#22C55E]"
+                        : "bg-[#FEE2E2] text-[#EF4444]"
+                    }`}
+                    title={t("certificates.assessment")}
+                  >
+                    {cert.checks.assessment ? (
+                      <Check className="w-2.5 h-2.5" />
+                    ) : (
+                      <X className="w-2.5 h-2.5" />
+                    )}
+                  </span>
+                  <span
+                    className={`w-[18px] h-[18px] rounded flex items-center justify-center ${
+                      cert.checks.completion
+                        ? "bg-[#DCFCE7] text-[#22C55E]"
+                        : "bg-[#FEE2E2] text-[#EF4444]"
+                    }`}
+                    title={t("certificates.completion")}
+                  >
+                    {cert.checks.completion ? (
+                      <Check className="w-2.5 h-2.5" />
+                    ) : (
+                      <X className="w-2.5 h-2.5" />
+                    )}
+                  </span>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handlePreview(cert.id)}
-                    className="p-1.5 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
-                    aria-label={t("certificates.preview")}
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleApprove(cert.id)}
-                    disabled={!isEligible(cert.checks) || loadingId === cert.id}
-                    className={`p-1.5 rounded transition-colors ${
-                      isEligible(cert.checks) && loadingId !== cert.id
-                        ? "text-[#22C55E] hover:bg-[#DCFCE7]"
-                        : "text-[#D1D5DB] cursor-not-allowed"
-                    }`}
-                    aria-label={t("certificates.approve")}
-                  >
-                    {loadingId === cert.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                  </button>
-                  <button
-                    onClick={() => handleHold(cert.id)}
-                    disabled={loadingId === cert.id}
-                    className="p-1.5 text-[#F97316] hover:bg-[#FFEDD5] rounded transition-colors disabled:opacity-50"
-                    aria-label={t("certificates.hold")}
-                  >
-                    <PauseCircle className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                {/* View Button */}
+                <button
+                  onClick={() => handlePreview(cert.id)}
+                  className="p-1.5 text-[#6B7280] hover:text-[#3B82F6] hover:bg-[#EFF6FF] rounded transition-colors"
+                  aria-label={t("certificates.preview")}
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Review All Link */}
-        <button className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline">
+        {/* View All Footer */}
+        <Link
+          href={`/${locale}/dashboard/manager/certificates`}
+          className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
+        >
           {t("certificates.reviewAll")} ({totalCount})
-          <ChevronRight className="w-4 h-4" />
-        </button>
+          <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+        </Link>
       </div>
     </div>
   );

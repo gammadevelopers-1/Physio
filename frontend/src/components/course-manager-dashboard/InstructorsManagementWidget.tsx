@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Star, ChevronRight, Users } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +19,8 @@ interface Instructor {
 interface InstructorsManagementWidgetProps {
   instructors: Instructor[];
 }
+
+const MAX_DISPLAY = 4;
 
 const InstructorsManagementWidget = ({
   instructors,
@@ -44,21 +47,56 @@ const InstructorsManagementWidget = ({
     },
   };
 
+  const totalCount = instructors.length;
+  const displayInstructors = instructors.slice(0, MAX_DISPLAY);
+
+  const statusCounts = useMemo(() => ({
+    available: instructors.filter((i) => i.status === "available").length,
+    busy: instructors.filter((i) => i.status === "busy").length,
+    overloaded: instructors.filter((i) => i.status === "overloaded").length,
+  }), [instructors]);
+
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 sm:p-5">
-        <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
-          <Users className="w-4 h-4 text-[#D4A520]" />
+      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB]">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
+            <Users className="w-4 h-4 text-[#D4A520]" />
+          </div>
+          <h3 className="text-[15px] font-semibold text-[#1F2937]">
+            {t("instructors.title")}
+          </h3>
         </div>
-        <h3 className="text-[15px] font-semibold text-[#1F2937]">
-          {t("instructors.title")}
-        </h3>
+        {totalCount > 0 && (
+          <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 bg-[#FEF3C7] text-[#D4A520] text-xs font-semibold rounded-full">
+            {totalCount}
+          </span>
+        )}
+      </div>
+
+      {/* Status Summary */}
+      <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-[#E5E7EB]">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
+          <span className="text-xs text-[#6B7280]">{t("instructors.available")}</span>
+          <span className="text-xs font-semibold text-[#1F2937]">{statusCounts.available}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#F97316]" />
+          <span className="text-xs text-[#6B7280]">{t("instructors.busy")}</span>
+          <span className="text-xs font-semibold text-[#1F2937]">{statusCounts.busy}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-[#EF4444]" />
+          <span className="text-xs text-[#6B7280]">{t("instructors.overloaded")}</span>
+          <span className="text-xs font-semibold text-[#1F2937]">{statusCounts.overloaded}</span>
+        </div>
       </div>
 
       {/* Instructors List */}
-      <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
-        {instructors.map((instructor) => {
+      <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-3">
+        {displayInstructors.map((instructor) => {
           const config = statusConfig[instructor.status];
 
           return (
@@ -73,7 +111,7 @@ const InstructorsManagementWidget = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-[#1F2937]">
+                <p className="text-[13px] font-medium text-[#1F2937] truncate">
                   {instructor.name}
                 </p>
                 <p className="text-[11px] text-[#6B7280]">
@@ -109,15 +147,17 @@ const InstructorsManagementWidget = ({
         })}
 
         {/* View All Link */}
-        <div className="text-center pt-3 border-t border-[#E5E7EB] mt-3">
-          <Link
-            href={`/${locale}/dashboard/manager/instructors`}
-            className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"
-          >
-            {t("instructors.manageAll")}
-            <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
-          </Link>
-        </div>
+        {totalCount > 0 && (
+          <div className="text-center pt-3 border-t border-[#E5E7EB] mt-3">
+            <Link
+              href={`/${locale}/dashboard/manager/instructors`}
+              className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"
+            >
+              {t("instructors.manageAll")}
+              <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4107,7 +4107,8 @@
       "scheduleTitle": "جدول أسبوعين",
       "noSessions": "لا توجد محاضرات",
       "overloadWarning": "هذا المدرب لديه {hours} ساعة مجدولة هذا الأسبوع",
-      "suggestAlternative": "يُنصح بتعيين {name} بدلاً منه (الأقل عبئاً)"
+      "suggestAlternative": "يُنصح بتعيين {name} بدلاً منه (الأقل عبئاً)",
+      "assignToCoursBtn": "تعيين لدورة"
     },
     "contentReviewPage": {
       "title": "مراجعة المحتوى",
@@ -4321,6 +4322,10 @@
       "flaggedBadge": "مُعلَّم",
       "flagForReview": "تعليم للمراجعة",
       "submissions": {
+        "tab": "التقديمات",
+        "selectAssessment": "اختيار التقييم",
+        "selectPlaceholder": "اختر تقييماً...",
+        "emptyDesc": "اختر تقييماً لعرض التقديمات",
         "student": "الطالب",
         "score": "الدرجة",
         "status": "الحالة",

@@ -21,6 +21,7 @@ interface ContentReviewItem {
 
 interface ContentReviewQueueProps {
   items: ContentReviewItem[];
+  totalCount?: number;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onPreview: (id: string) => void;
@@ -28,6 +29,7 @@ interface ContentReviewQueueProps {
 
 const ContentReviewQueue = ({
   items,
+  totalCount,
   onApprove,
   onReject,
   onPreview,
@@ -36,6 +38,8 @@ const ContentReviewQueue = ({
   const tA = useTranslations("accessibility");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  const displayCount = totalCount ?? items.length;
 
   const typeIcons: Record<string, { icon: typeof Video; bg: string; color: string }> = {
     video: { icon: Video, bg: "bg-[#DBEAFE]", color: "text-[#3B82F6]" },
@@ -49,33 +53,33 @@ const ContentReviewQueue = ({
   return (
     <div className="bg-white rounded-xl border border-[#E5E7EB]">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 sm:p-5">
+      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[#E5E7EB]">
         <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
           <ClipboardList className="w-4 h-4 text-[#D4A520]" />
         </div>
         <h3 className="text-[15px] font-semibold text-[#1F2937]">
           {t("contentReview.title")}
         </h3>
-        <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full">
-          {items.length}
+        <span className="bg-[#EF4444] text-white text-[11px] font-semibold px-2 py-0.5 rounded-full ms-auto">
+          {displayCount}
         </span>
       </div>
 
       {/* Items */}
-      <div className="px-4 sm:px-5 pb-4 sm:pb-5 space-y-3">
+      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-4 space-y-3">
         {items.map((item) => {
           const typeConfig = typeIcons[item.type] || defaultTypeIcon;
-          const allPassed = item.checklist.every((c) => c.passed);
+          const failedChecks = item.checklist.filter((c) => !c.passed);
 
           return (
             <div
               key={item.id}
               className="bg-[#F9FAFB] rounded-xl p-3.5 border border-[#E5E7EB]"
             >
-              {/* Header */}
-              <div className="flex items-center gap-3 mb-3">
+              {/* Header row */}
+              <div className="flex items-start gap-3 mb-2">
                 <div
-                  className={`w-9 h-9 ${typeConfig.bg} rounded-lg flex items-center justify-center`}
+                  className={`w-9 h-9 ${typeConfig.bg} rounded-lg flex items-center justify-center flex-shrink-0`}
                 >
                   <typeConfig.icon className={`w-4 h-4 ${typeConfig.color}`} />
                 </div>
@@ -83,27 +87,20 @@ const ContentReviewQueue = ({
                   <p className="text-[13px] font-medium text-[#1F2937] truncate">
                     {item.title}
                   </p>
-                  <p className="text-[11px] text-[#6B7280]">
+                  <p className="text-[11px] text-[#6B7280] truncate">
                     {item.courseName} • {item.submittedBy}
                   </p>
                 </div>
-              </div>
-
-              {/* Checklist */}
-              <div className="flex gap-1 mb-3">
-                {item.checklist.map((check) => (
-                  <div
-                    key={check.id}
-                    className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-semibold ${
-                      check.passed
-                        ? "bg-[#DCFCE7] text-[#22C55E]"
-                        : "bg-[#FEE2E2] text-[#EF4444]"
-                    }`}
-                    title={check.label}
-                  >
-                    {check.passed ? "✓" : "✗"}
-                  </div>
-                ))}
+                {/* Status label top-right */}
+                {failedChecks.length > 0 ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FEE2E2] text-[#EF4444] text-[10px] font-medium rounded-full flex-shrink-0 whitespace-nowrap">
+                    {failedChecks.map((c) => c.label).join(", ")} {isRTL ? "فاشل" : "Failed"}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#DCFCE7] text-[#22C55E] text-[10px] font-medium rounded-full flex-shrink-0 whitespace-nowrap">
+                    {isRTL ? "ناجح" : "Passed"}
+                  </span>
+                )}
               </div>
 
               {/* Actions */}

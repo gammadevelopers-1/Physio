@@ -622,7 +622,7 @@ const AssessmentsContent = () => {
                   }`}
                 >
                   <Users className="w-4 h-4" />
-                  Submissions
+                  {t("assessmentsPage.submissions.tab")}
                 </button>
               </div>
 
@@ -1135,14 +1135,14 @@ const AssessmentsContent = () => {
                   {/* Assessment Selector */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                     <label className="text-sm font-medium text-[#374151] block mb-2">
-                      Select Assessment
+                      {t("assessmentsPage.submissions.selectAssessment")}
                     </label>
                     <select
                       value={selectedSubmissionAssessment}
                       onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
                       className="w-full sm:w-80 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
-                      <option value="">Select an assessment...</option>
+                      <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
                       {assessments.map((a) => (
                         <option key={a.id} value={a.id}>{a.title}</option>
                       ))}
@@ -1152,7 +1152,7 @@ const AssessmentsContent = () => {
                   {!selectedSubmissionAssessment && (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
                       <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">Select an assessment to view submissions</p>
+                      <p className="text-sm text-[#6B7280]">{t("assessmentsPage.submissions.emptyDesc")}</p>
                     </div>
                   )}
 

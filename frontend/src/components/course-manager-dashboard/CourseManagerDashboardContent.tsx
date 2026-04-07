@@ -11,7 +11,6 @@ import CourseManagerKPICards from "./CourseManagerKPICards";
 import CatalogOverviewWidget from "./CatalogOverviewWidget";
 import ContentReviewQueue from "./ContentReviewQueue";
 import InstructorsManagementWidget from "./InstructorsManagementWidget";
-import NELCComplianceWidget from "./NELCComplianceWidget";
 import CourseStatsWidget from "./CourseStatsWidget";
 import UpcomingSessionsWidget from "./UpcomingSessionsWidget";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
@@ -78,15 +77,16 @@ const CourseManagerDashboardContent = () => {
 
   // Derive course stats from real data
   const activeCourses = courses.filter((c) => c.status === "active");
+  const enrolledCourses = courses.filter((c) => c.status === "active" || c.status === "completed");
   const courseStats = {
     activeCourses: activeCourses.length,
     draftCourses: courses.filter((c) => c.status === "draft").length,
     completedCourses: courses.filter((c) => c.status === "completed").length,
     avgCompletionRate:
-      activeCourses.length > 0
+      enrolledCourses.length > 0
         ? Math.round(
-            activeCourses.reduce((sum, c) => sum + c.completionRate, 0) /
-              activeCourses.length
+            enrolledCourses.reduce((sum, c) => sum + c.completionRate, 0) /
+              enrolledCourses.length
           )
         : 0,
     completionTrend: 0,
@@ -142,21 +142,23 @@ const CourseManagerDashboardContent = () => {
   );
 
   // Map upcoming sessions from summary
-  const upcomingSessions = (summary?.upcomingSessions || []).slice(0, 3).map((s) => {
+  const upcomingSessions = (summary?.upcomingSessions || []).map((s) => {
     const d = new Date(s.scheduledAt);
     const today = new Date();
     const isToday = d.toDateString() === today.toDateString();
+    const course = courses.find((c) => c.id === s.courseId);
     return {
       id: s.id,
       title: s.title,
-      time: d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      courseName: course?.title || "",
+      time: d.toLocaleTimeString(locale === "ar" ? "ar-SA" : undefined, { hour: "2-digit", minute: "2-digit" }),
       date: isToday
-        ? "Today"
-        : d.toLocaleDateString([], { month: "short", day: "numeric" }),
+        ? t("sessionsPage.today")
+        : d.toLocaleDateString(locale === "ar" ? "ar-SA" : undefined, { month: "short", day: "numeric" }),
       type: (s.type === "onsite" ? "onsite" : "zoom") as "zoom" | "onsite",
       location: s.venueAddress || undefined,
       enrolled: s.enrolledCount || 0,
-      capacity: 0,
+      capacity: course?.maxEnrollment || 0,
     };
   });
 
@@ -272,28 +274,23 @@ const CourseManagerDashboardContent = () => {
                       { id: "wcag", label: "WCAG", passed: item.wcagStatus === "pass" || item.wcagStatus === "compliant" || item.wcagStatus === "skipped" },
                     ],
                   }))}
+                  totalCount={reviewStats.pending + reviewStats.changesRequested}
                   onApprove={async (id) => {
                     try {
                       await approveReview(id);
-                      toast.success("Content approved");
-                    } catch { toast.error("Failed to approve"); }
+                      toast.success(t("contentReviewPage.approved"));
+                    } catch { toast.error(t("error.title")); }
                   }}
                   onReject={async (id) => {
                     try {
                       await rejectReview(id);
-                      toast.success("Content rejected");
-                    } catch { toast.error("Failed to reject"); }
+                      toast.success(t("contentReviewPage.rejected"));
+                    } catch { toast.error(t("error.title")); }
                   }}
-                  onPreview={() => {}}
+                  onPreview={() => router.push(`/${locale}/dashboard/manager/content-review`)}
                 />
               </div>
 
-              <div className="mb-6">
-                <NELCComplianceWidget
-                  compliance={{ percentage: 0, passed: 0, review: 0, failed: 0 }}
-                  reports={[]}
-                />
-              </div>
             </div>
 
             <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">

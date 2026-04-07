@@ -3898,7 +3898,8 @@
       "scheduleTitle": "2-Week Schedule",
       "noSessions": "No lectures",
       "overloadWarning": "This instructor has {hours}h scheduled this week",
-      "suggestAlternative": "Consider assigning to {name} instead (least loaded)"
+      "suggestAlternative": "Consider assigning to {name} instead (least loaded)",
+      "assignToCoursBtn": "Assign to Course"
     },
     "contentReviewPage": {
       "title": "Content Review",
@@ -4112,6 +4113,10 @@
       "flaggedBadge": "Flagged",
       "flagForReview": "Flag for Review",
       "submissions": {
+        "tab": "Submissions",
+        "selectAssessment": "Select Assessment",
+        "selectPlaceholder": "Select an assessment...",
+        "emptyDesc": "Select an assessment to view submissions",
         "student": "Student",
         "score": "Score",
         "status": "Status",

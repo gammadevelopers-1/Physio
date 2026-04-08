@@ -1278,7 +1278,7 @@ export const materialsApi = {
 // ===========================================
 // Reports API (binary file download)
 // ===========================================
-export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'course-catalog' | 'satisfaction' | 'instructor-performance' | 'nelc-compliance' | 'revenue';
+export type ReportType = 'attendance' | 'gradebook' | 'enrollment' | 'completion' | 'cme-eligibility';
 export type ReportFormat = 'csv' | 'pdf' | 'xlsx';
 
 export const reportsApi = {
@@ -1481,6 +1481,9 @@ export const courseManagerApi = {
     const qs = sp.toString();
     return api.get<SessionsResponse>(`/sessions${qs ? `?${qs}` : ''}`);
   },
+
+  createSession: (data: Record<string, unknown>) =>
+    api.post<CourseSession>('/sessions', data),
 
   getUpcomingSessions: () =>
     api.get<CourseSession[]>('/sessions/upcoming'),

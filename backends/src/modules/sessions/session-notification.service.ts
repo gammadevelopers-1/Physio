@@ -244,4 +244,92 @@ export class SessionNotificationService {
       );
     }
   }
+
+  /**
+   * Notify the course instructor when a manager creates a lecture for their course.
+   */
+  async notifyInstructorOfNewSession(
+    session: SessionContext,
+    instructorId: string,
+    managerId: string,
+  ): Promise<void> {
+    try {
+      // Get instructor details
+      const [instructor] = await db
+        .select({
+          email: users.email,
+          firstName: users.firstName,
+          language: users.language,
+        })
+        .from(users)
+        .where(eq(users.id, instructorId))
+        .limit(1);
+
+      if (!instructor) return;
+
+      // Get manager name
+      const [manager] = await db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, managerId))
+        .limit(1);
+
+      const managerName = manager
+        ? `${manager.firstName || ''} ${manager.lastName || ''}`.trim()
+        : 'Course Manager';
+
+      // Get course name
+      const [course] = await db
+        .select({ title: courses.title })
+        .from(courses)
+        .where(eq(courses.id, session.courseId))
+        .limit(1);
+
+      const courseName = course?.title || '';
+      const isAr = instructor.language === 'ar';
+      const scheduledDate = session.scheduledAt
+        ? new Date(session.scheduledAt).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
+
+      // In-app notification
+      await this.userNotificationsService.create({
+        recipientId: instructorId,
+        type: 'session_scheduled',
+        title: isAr
+          ? 'محاضرة جديدة مجدولة من مدير الدورات'
+          : 'New Lecture Scheduled by Manager',
+        message: isAr
+          ? `قام ${managerName} بجدولة محاضرة "${session.title}" لدورة "${courseName}" في ${scheduledDate}.`
+          : `${managerName} scheduled a lecture "${session.title}" for course "${courseName}" on ${scheduledDate}.`,
+        link: '/dashboard/instructor/sessions',
+      });
+
+      // Email notification
+      if (instructor.email) {
+        await this.emailService.sendSessionScheduled(
+          instructor.email,
+          {
+            recipientName: instructor.firstName || instructor.email,
+            sessionTitle: session.title,
+            courseName,
+            scheduledDate,
+            sessionType: (session.type as string) || 'zoom',
+            zoomLink: session.zoomLink || null,
+          },
+          (instructor.language === 'ar' ? 'ar' : 'en') as any,
+        );
+      }
+
+      this.logger.log(`Notified instructor ${instructorId} about manager-created session "${session.title}"`);
+    } catch (error) {
+      this.logger.error(`Failed to notify instructor about session "${session.title}"`, error);
+    }
+  }
 }

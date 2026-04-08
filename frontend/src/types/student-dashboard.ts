@@ -201,6 +201,7 @@ export interface StudentCertificate {
   reviewedAt: string | null;
   courseTitle: string;
   courseTitleAr: string | null;
+  cmeHours: number | null;
   instructorName: string;
 }
 

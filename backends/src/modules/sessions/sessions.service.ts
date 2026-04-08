@@ -199,6 +199,13 @@ export class SessionsService {
         .notifySessionEvent(session, 'session_scheduled')
         .catch(() => {});
 
+      // If created by manager, also notify the course instructor
+      if (isManager(user) && instructorId && instructorId !== user.id) {
+        this.sessionNotificationService
+          .notifyInstructorOfNewSession(session, instructorId, user.id)
+          .catch(() => {});
+      }
+
       return session;
     }
 

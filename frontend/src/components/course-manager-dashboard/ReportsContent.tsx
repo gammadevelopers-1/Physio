@@ -27,11 +27,7 @@ import {
   Loader2,
   AlertCircle,
   X,
-  Heart,
   Award,
-  Shield,
-  Layers,
-  DollarSign,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -100,44 +96,12 @@ const REPORT_TYPES: ReportTypeConfig[] = [
     supportsDateRange: false,
   },
   {
-    id: "course-catalog",
-    icon: Layers,
-    iconBg: "bg-[#FEF9C3]",
-    iconColor: "text-[#CA8A04]",
-    requiresCourse: false,
-    supportsDateRange: false,
-  },
-  {
-    id: "satisfaction",
-    icon: Heart,
-    iconBg: "bg-[#FEF3C7]",
-    iconColor: "text-[#F59E0B]",
-    requiresCourse: false,
-    supportsDateRange: false,
-  },
-  {
-    id: "instructor-performance",
+    id: "cme-eligibility",
     icon: Award,
-    iconBg: "bg-[#E0E7FF]",
-    iconColor: "text-[#8B5CF6]",
+    iconBg: "bg-[#FEF3C7]",
+    iconColor: "text-[#D97706]",
     requiresCourse: false,
     supportsDateRange: false,
-  },
-  {
-    id: "nelc-compliance",
-    icon: Shield,
-    iconBg: "bg-[#FEE2E2]",
-    iconColor: "text-[#EF4444]",
-    requiresCourse: false,
-    supportsDateRange: false,
-  },
-  {
-    id: "revenue",
-    icon: DollarSign,
-    iconBg: "bg-[#D1FAE5]",
-    iconColor: "text-[#059669]",
-    requiresCourse: false,
-    supportsDateRange: true,
   },
 ];
 

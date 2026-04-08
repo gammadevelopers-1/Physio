@@ -339,30 +339,8 @@ export class CertificatesService {
     // Compute eligibility
     const eligibility = await this.computeEligibility(courseId, studentId);
 
-    // When called from auto-create (course completion), skip eligibility checks
-    // — the manager will review and decide. Only block on manual student requests.
-    if (!skipEligibilityCheck) {
-      const [courseForType] = await db
-        .select({ deliveryType: courses.deliveryType })
-        .from(courses)
-        .where(eq(courses.id, courseId))
-        .limit(1);
-      const isSelfPacedCourse = courseForType?.deliveryType === 'self-paced';
-
-      if (!isSelfPacedCourse && parseFloat(eligibility.attendancePercent) < 70) {
-        throw new BadRequestException(
-          `Your attendance is ${eligibility.attendancePercent}% (minimum 70% required). You are not eligible for a certificate.`,
-        );
-      }
-
-      if (!eligibility.courseCompleted) {
-        throw new BadRequestException(
-          isSelfPacedCourse
-            ? 'You must complete all modules (100%) before requesting a certificate.'
-            : 'Course must be completed before requesting a certificate.',
-        );
-      }
-    }
+    // All certificate requests are accepted regardless of eligibility.
+    // Eligibility data is stored for the manager to review and decide.
 
     const [request] = await db
       .insert(certificateRequests)

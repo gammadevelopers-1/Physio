@@ -459,47 +459,77 @@ const StudentCourseDetailContent = () => {
                     </div>
                   )}
 
-                  {/* Course requirements met — show CME earned */}
+                  {/* Certificate Request — show for all completed courses */}
                   {data.enrollment.status === "completed" && (() => {
                     const dt = data.course.deliveryType;
                     const isSP = dt === "self-paced";
                     const isBlend = dt === "blended";
-                    if (isSP || isBlend) return data.enrollment.progress >= 100;
+                    const progressMet = isSP || isBlend ? data.enrollment.progress >= 100 : true;
                     const attPct = data.attendanceSummary?.percentage ?? 0;
-                    return attPct >= 70;
-                  })() && data.course.cmeHours && data.course.cmeHours > 0 && (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    const attendanceMet = isSP ? true : attPct >= 70;
+                    const cmeHours = data.course.cmeHours || 0;
+                    const isEligible = progressMet && attendanceMet;
+
+                    const reasons: string[] = [];
+                    if (!progressMet) reasons.push(locale === "ar" ? "لم يتم إكمال جميع الوحدات" : "Course modules not 100% complete");
+                    if (!attendanceMet) reasons.push(locale === "ar" ? `نسبة الحضور ${attPct}% (الحد الأدنى 70%)` : `Attendance ${attPct}% (minimum 70%)`);
+
+                    return (
+                      <div className={`${isEligible ? "bg-green-50 border-green-200" : "bg-amber-50 border-amber-200"} border rounded-xl p-4 mb-4`}>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 ${isEligible ? "bg-green-100" : "bg-amber-100"} rounded-lg flex items-center justify-center`}>
+                              <CheckCircle2 className={`w-5 h-5 ${isEligible ? "text-green-600" : "text-amber-600"}`} />
+                            </div>
+                            <div>
+                              {isEligible ? (
+                                <>
+                                  <p className="text-sm font-semibold text-green-800">
+                                    {locale === "ar"
+                                      ? `تهانينا! لقد اكتسبت ${cmeHours} ساعة تطوير مهني مستمر`
+                                      : `Congratulations! You have earned ${cmeHours} CME hours`}
+                                  </p>
+                                  <p className="text-xs text-green-600">
+                                    {locale === "ar" ? "اطلب شهادتك أدناه" : "Request your certificate below"}
+                                  </p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-sm font-semibold text-amber-800">
+                                    {locale === "ar"
+                                      ? `لم تستوفِ بعض المتطلبات — ${cmeHours > 0 ? "0" : "لا توجد"} ساعات CME`
+                                      : `Some requirements not met — ${cmeHours > 0 ? "0" : "No"} CME hours earned`}
+                                  </p>
+                                  <div className="mt-1 space-y-0.5">
+                                    {reasons.map((r, i) => (
+                                      <p key={i} className="text-xs text-amber-600">• {r}</p>
+                                    ))}
+                                  </div>
+                                  <p className="text-xs text-amber-500 mt-1">
+                                    {locale === "ar" ? "يمكنك طلب الشهادة وسيراجعها المدير" : "You can still request — the manager will review"}
+                                  </p>
+                                </>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-green-800">
-                              Congratulations! You have earned {data.course.cmeHours} CME hours
-                            </p>
-                            <p className="text-xs text-green-600">
-                              Request your certificate below
-                            </p>
-                          </div>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await studentApi.requestCertificate(data.course.id);
+                                toast.success(locale === "ar" ? "تم طلب الشهادة! في انتظار موافقة المدير." : "Certificate requested! Pending manager approval.");
+                              } catch (err: unknown) {
+                                const msg = err instanceof Error ? err.message : (locale === "ar" ? "فشل في طلب الشهادة" : "Failed to request certificate");
+                                toast.error(msg);
+                              }
+                            }}
+                            className={`px-4 py-2 ${isEligible ? "bg-green-600 hover:bg-green-700" : "bg-amber-600 hover:bg-amber-700"} text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex-shrink-0`}
+                          >
+                            {locale === "ar" ? "طلب شهادة" : "Request Certificate"}
+                          </button>
                         </div>
-                        <button
-                          onClick={async () => {
-                            try {
-                              await studentApi.requestCertificate(data.course.id);
-                              toast.success("Certificate requested! Pending manager approval.");
-                            } catch (err: unknown) {
-                              const msg = err instanceof Error ? err.message : "Failed to request certificate";
-                              toast.error(msg);
-                            }
-                          }}
-                          className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
-                        >
-                          Request Certificate
-                        </button>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Modules List */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">

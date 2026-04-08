@@ -185,7 +185,7 @@ function CertificateCard({
 
         {/* Course Title */}
         <h3
-          className={`text-sm sm:text-base font-semibold text-[#1F2937] mb-1 sm:mb-2 ${isRTL ? "text-right" : ""}`}
+          className={`text-sm sm:text-base font-semibold text-[#1F2937] mb-1 sm:mb-2 text-start`}
         >
           {isRTL && certificate.courseTitleAr
             ? certificate.courseTitleAr
@@ -194,7 +194,7 @@ function CertificateCard({
 
         {/* Date */}
         <p
-          className={`text-xs sm:text-sm text-[#6B7280] mb-3 ${isRTL ? "text-right" : ""}`}
+          className={`text-xs sm:text-sm text-[#6B7280] mb-3 text-start`}
         >
           {isApproved
             ? t("certifications.issuedOn", {
@@ -207,7 +207,7 @@ function CertificateCard({
 
         {/* Certificate ID (for approved) */}
         {isApproved && (
-          <p className={`text-xs font-mono text-[#002D87] bg-[#F0F7FF] px-2 py-1 rounded mb-3 inline-block ${isRTL ? "text-right" : ""}`}>
+          <p className={`text-xs font-mono text-[#002D87] bg-[#F0F7FF] px-2 py-1 rounded mb-3 inline-block text-start`}>
             {t("certifications.certificateId", { id: formatCertId(certificate.id) })}
           </p>
         )}
@@ -267,6 +267,25 @@ function CertificateCard({
               </button>
             </div>
           </>
+        )}
+
+        {/* CME Hours Info (for non-approved) */}
+        {!isApproved && certificate.cmeHours != null && certificate.cmeHours > 0 && (
+          <div className={`mt-2 p-3 rounded-lg border ${
+            certificate.attendancePercent && parseFloat(certificate.attendancePercent) >= 70 && certificate.assessmentPassed && certificate.courseCompleted
+              ? "bg-green-50 border-green-200"
+              : "bg-amber-50 border-amber-200"
+          }`}>
+            <p className={`text-sm font-semibold ${
+              certificate.attendancePercent && parseFloat(certificate.attendancePercent) >= 70 && certificate.assessmentPassed && certificate.courseCompleted
+                ? "text-green-800"
+                : "text-amber-800"
+            }`}>
+              {certificate.attendancePercent && parseFloat(certificate.attendancePercent) >= 70 && certificate.assessmentPassed && certificate.courseCompleted
+                ? (isRTL ? `${certificate.cmeHours} ساعة CME مستحقة` : `${certificate.cmeHours} CME hours earned`)
+                : (isRTL ? `0 ساعة CME مستحقة (من أصل ${certificate.cmeHours})` : `0 CME hours earned (out of ${certificate.cmeHours})`)}
+            </p>
+          </div>
         )}
 
         {/* Pending: eligibility checklist + message */}

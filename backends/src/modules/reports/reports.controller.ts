@@ -136,6 +136,28 @@ export class ReportsController {
     return new StreamableFile(result.buffer);
   }
 
+  // ─── CME Eligibility Report ────────────────────────────────
+
+  @Get('cme-eligibility')
+  async getCmeEligibilityReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('courseId') courseId?: string,
+    @Query('format') format?: string,
+    @Res({ passthrough: true }) res?: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.reportsService.generateCmeEligibilityReport(
+      user,
+      { courseId, format },
+    );
+
+    res!.set({
+      'Content-Type': result.contentType,
+      'Content-Disposition': `attachment; filename="${result.filename}"`,
+    });
+
+    return new StreamableFile(result.buffer);
+  }
+
   // ─── 5. Satisfaction Report ────────────────────────────────
 
   /**

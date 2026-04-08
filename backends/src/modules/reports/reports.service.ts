@@ -662,6 +662,147 @@ export class ReportsService {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // ─── CME Eligibility Report ──────────────────────────────
+  // ═══════════════════════════════════════════════════════════
+
+  async generateCmeEligibilityReport(
+    user: AuthenticatedUser,
+    params: { courseId?: string; format?: string },
+  ): Promise<ReportResult> {
+    const format = this.validateFormat(params.format);
+    const courseIds = await this.resolveCourseIds(user, params.courseId);
+    const metadata = await this.buildMetadata(user, params.courseId);
+
+    const headers = [
+      'Course',
+      'CME Hours',
+      'Student Name',
+      'Email',
+      'Enrollment Status',
+      'Attendance %',
+      'Assessment Passed',
+      'CME Earned',
+      'Reason (if not earned)',
+    ];
+
+    if (courseIds.length === 0) {
+      return this.formatReport('CME Eligibility Report', headers, [], format, metadata);
+    }
+
+    // Get all CME-accredited courses
+    const cmeCourses = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        cmeHours: courses.cmeHours,
+      })
+      .from(courses)
+      .where(inArray(courses.id, courseIds));
+
+    const rows: string[][] = [];
+
+    for (const course of cmeCourses) {
+      const cmeHours = course.cmeHours || 0;
+
+      // Get all enrollments for this course
+      const enrollmentData = await db
+        .select({
+          studentId: enrollments.studentId,
+          status: enrollments.status,
+          progress: enrollments.progress,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(enrollments)
+        .innerJoin(users, eq(enrollments.studentId, users.id))
+        .where(eq(enrollments.courseId, course.id))
+        .orderBy(asc(users.firstName));
+
+      for (const enrollment of enrollmentData) {
+        const studentName = `${enrollment.firstName || ''} ${enrollment.lastName || ''}`.trim();
+        const isCompleted = enrollment.status === 'completed' || (enrollment.progress ?? 0) >= 100;
+
+        // Attendance percentage for this student in this course's sessions
+        const courseSessions = await db
+          .select({ id: sessions.id })
+          .from(sessions)
+          .where(eq(sessions.courseId, course.id));
+
+        let attendancePercent = 0;
+        if (courseSessions.length > 0) {
+          const sessionIds = courseSessions.map((s) => s.id);
+          const [attStats] = await db
+            .select({
+              total: count(),
+              present: sql<number>`COUNT(CASE WHEN ${attendance.status} IN ('present', 'late') THEN 1 END)`,
+            })
+            .from(attendance)
+            .where(
+              and(
+                eq(attendance.studentId, enrollment.studentId),
+                inArray(attendance.sessionId, sessionIds),
+              ),
+            );
+          const totalAtt = Number(attStats?.total || 0);
+          const presentAtt = Number(attStats?.present || 0);
+          attendancePercent = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
+        }
+
+        // Assessment: check if student passed all assessments for this course
+        const courseAssessmentList = await db
+          .select({ id: assessments.id, passingMarks: assessments.passingMarks })
+          .from(assessments)
+          .where(eq(assessments.courseId, course.id));
+
+        let assessmentPassed = true;
+        let hasAssessments = courseAssessmentList.length > 0;
+        if (hasAssessments) {
+          for (const assessment of courseAssessmentList) {
+            const [bestSubmission] = await db
+              .select({ score: sql<number>`MAX(${submissions.score})` })
+              .from(submissions)
+              .where(
+                and(
+                  eq(submissions.assessmentId, assessment.id),
+                  eq(submissions.studentId, enrollment.studentId),
+                ),
+              );
+            const bestScore = Number(bestSubmission?.score || 0);
+            const passingScore = assessment.passingMarks || 0;
+            if (passingScore > 0 && bestScore < passingScore) {
+              assessmentPassed = false;
+            }
+          }
+        }
+
+        // Determine CME eligibility
+        const reasons: string[] = [];
+        if (!isCompleted) reasons.push('Course not completed');
+        if (attendancePercent < 75) reasons.push(`Attendance ${attendancePercent}% (min 75%)`);
+        if (hasAssessments && !assessmentPassed) reasons.push('Assessment not passed');
+        if (cmeHours === 0) reasons.push('No CME hours configured');
+
+        const eligible = reasons.length === 0 && cmeHours > 0;
+
+        rows.push([
+          course.title,
+          cmeHours.toString(),
+          studentName,
+          enrollment.email || '',
+          isCompleted ? 'Completed' : `In Progress (${enrollment.progress || 0}%)`,
+          `${attendancePercent}%`,
+          hasAssessments ? (assessmentPassed ? 'Yes' : 'No') : 'N/A',
+          eligible ? `Yes (${cmeHours}h)` : 'No',
+          eligible ? '' : reasons.join('; '),
+        ]);
+      }
+    }
+
+    return this.formatReport('CME Eligibility Report', headers, rows, format, metadata);
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // ─── Satisfaction Report ──────────────────────────────────
   // ═══════════════════════════════════════════════════════════
 

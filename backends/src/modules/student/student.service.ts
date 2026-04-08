@@ -2044,6 +2044,7 @@ export class StudentService {
         reviewedAt: certificateRequests.reviewedAt,
         courseTitle: courses.title,
         courseTitleAr: courses.titleAr,
+        cmeHours: courses.cmeHours,
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
           WHERE u.id = ${courses.instructorId}

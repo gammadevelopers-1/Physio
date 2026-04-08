@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
+import { toast } from "sonner";
 
 // 10-color palette for instructor color-coding
 const INSTRUCTOR_COLORS = [
@@ -41,6 +42,221 @@ const INSTRUCTOR_COLORS = [
   "border-s-[#14B8A6]", "border-s-[#F97316]", "border-s-[#6366F1]",
   "border-s-[#84CC16]",
 ];
+
+function ScheduleSessionModal({
+  courses,
+  onClose,
+  onScheduled,
+  t,
+}: {
+  courses: { id: string; title: string }[];
+  onClose: () => void;
+  onScheduled: () => void;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  const [courseId, setCourseId] = useState("");
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState<"zoom" | "onsite" | "hybrid">("zoom");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [durationHours, setDurationHours] = useState(1);
+  const [durationMins, setDurationMins] = useState(0);
+  const duration = durationHours * 60 + durationMins;
+  const [roomName, setRoomName] = useState("");
+  const [venueAddress, setVenueAddress] = useState("");
+  const [zoomLink, setZoomLink] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!courseId || !title.trim() || !date || !time) return;
+    const scheduledDate = new Date(`${date}T${time}`);
+    if (scheduledDate <= new Date()) {
+      toast.error(t("sessionsPage.form.pastTimeError") || "Cannot schedule in the past");
+      return;
+    }
+    if ((type === "onsite" || type === "hybrid") && !venueAddress.trim()) {
+      toast.error(t("sessionsPage.form.venueRequired") || "Venue address is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const data: Record<string, unknown> = {
+        courseId,
+        title: title.trim(),
+        type,
+        scheduledAt: scheduledDate.toISOString(),
+        localDate: date,
+        durationMinutes: duration,
+      };
+      if (type === "onsite" || type === "hybrid") {
+        if (roomName) data.roomName = roomName;
+        if (venueAddress) data.venueAddress = venueAddress;
+      }
+      if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
+        data.zoomLink = zoomLink.trim();
+      }
+      await courseManagerApi.createSession(data);
+      toast.success(t("sessionsPage.schedule.success") || "Lecture scheduled successfully");
+      onScheduled();
+    } catch (err: any) {
+      toast.error(err?.message || t("sessionsPage.schedule.error") || "Failed to schedule lecture");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+      <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+        <h2 className="text-lg font-semibold text-[#1F2937]">
+          {t("sessionsPage.scheduleSessionTitle")}
+        </h2>
+        <button onClick={onClose} className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors">
+          <X className="w-5 h-5 text-[#6B7280]" />
+        </button>
+      </div>
+      <div className="p-4 space-y-4">
+        {/* Course */}
+        <div>
+          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            {t("sessionsPage.form.course")} *
+          </label>
+          <select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+          >
+            <option value="">{t("sessionsPage.form.selectCourse")}</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Title */}
+        <div>
+          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            {t("sessionsPage.form.sessionTitle")} *
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
+            placeholder={t("sessionsPage.form.sessionTitlePlaceholder")}
+          />
+        </div>
+
+        {/* Date + Time */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              {t("sessionsPage.form.date")} *
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[#374151] mb-1.5">
+              {t("sessionsPage.form.time")} *
+            </label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Duration */}
+        <div>
+          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            {t("sessionsPage.form.duration") || "Duration"}
+          </label>
+          <div className="flex items-center gap-2">
+            <input type="number" min={0} value={durationHours} onChange={(e) => setDurationHours(Math.max(0, Number(e.target.value)))} className="w-20 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-center" />
+            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.hours") || "hrs"}</span>
+            <input type="number" min={0} max={59} value={durationMins} onChange={(e) => setDurationMins(Math.max(0, Math.min(59, Number(e.target.value))))} className="w-20 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-center" />
+            <span className="text-sm text-[#6B7280]">{t("sessionsPage.form.minutes") || "min"}</span>
+          </div>
+        </div>
+
+        {/* Session Type */}
+        <div>
+          <label className="block text-sm font-medium text-[#374151] mb-1.5">
+            {t("sessionsPage.form.sessionType") || "Session Type"}
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(["zoom", "onsite", "hybrid"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setType(opt)}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
+                  type === opt
+                    ? "border-2 border-[#3B82F6] bg-[#EFF6FF] text-[#3B82F6]"
+                    : "border border-[#E5E7EB] text-[#6B7280] hover:border-[#3B82F6]"
+                }`}
+              >
+                {opt === "zoom" && <Video className="w-5 h-5" />}
+                {opt === "onsite" && <MapPin className="w-5 h-5" />}
+                {opt === "hybrid" && <RefreshCw className="w-5 h-5" />}
+                <span className="text-xs font-medium">{t(`sessionsPage.type.${opt}`)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Zoom info */}
+        {(type === "zoom" || type === "hybrid") && (
+          <div className="flex items-start gap-2 p-3 bg-[#EFF6FF] rounded-lg">
+            <Video className="w-4 h-4 text-[#3B82F6] flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-[#1E40AF]">
+              {t("sessionsPage.zoomAutoCreate") || "Zoom meeting will be auto-created for the instructor."}
+            </p>
+          </div>
+        )}
+
+        {/* Venue fields */}
+        {(type === "onsite" || type === "hybrid") && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                {t("sessionsPage.form.roomName") || "Room Name"}
+              </label>
+              <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm" placeholder={t("sessionsPage.form.roomNamePlaceholder") || "e.g. Room 101"} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                {t("sessionsPage.form.venueAddress") || "Venue Address"} *
+              </label>
+              <input type="text" value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm" placeholder={t("sessionsPage.form.venueAddressPlaceholder") || "Enter venue address"} />
+            </div>
+          </>
+        )}
+      </div>
+      <div className="flex items-center justify-end gap-3 p-4 border-t border-[#E5E7EB]">
+        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors">
+          {t("sessionsPage.form.cancel")}
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={saving || !courseId || !title.trim() || !date || !time}
+          className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg disabled:opacity-50"
+        >
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+          {t("sessionsPage.form.schedule")}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // Extended session type with instructor + capacity fields from backend
 interface SessionWithInstructor {
@@ -135,6 +351,7 @@ const SessionsContent = () => {
     studentEmail?: string;
   }>>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   // Build dateRange for backend: "YYYY-MM-DD,YYYY-MM-DD"
   const dateRange = useMemo(() => {
@@ -587,6 +804,13 @@ const SessionsContent = () => {
                   <p className="text-sm text-[#6B7280] mt-1">{t("sessionsPage.subtitle")}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap">
+                  <button
+                    onClick={() => setShowScheduleModal(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    {t("sessionsPage.scheduleSession")}
+                  </button>
                   <div className="flex items-center bg-white border border-[#E5E7EB] rounded-lg p-1">
                     <button
                       onClick={() => setViewMode("list")}
@@ -833,6 +1057,18 @@ const SessionsContent = () => {
           </div>
         </div>
       </div>
+
+      {/* Schedule Session Modal */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => e.target === e.currentTarget && setShowScheduleModal(false)}>
+          <ScheduleSessionModal
+            courses={coursesList}
+            onClose={() => setShowScheduleModal(false)}
+            onScheduled={() => { setShowScheduleModal(false); refetch(); }}
+            t={t}
+          />
+        </div>
+      )}
 
       {/* Cancel Modal */}
       {cancelModal && (

@@ -22,6 +22,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   Users,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -168,6 +170,10 @@ const CreateCourseContent = () => {
   >([]);
   const [loadingTAs, setLoadingTAs] = useState(true);
   const [selectedTAId, setSelectedTAId] = useState("");
+  const [instructorDropdownOpen, setInstructorDropdownOpen] = useState(false);
+  const [instructorSearch, setInstructorSearch] = useState("");
+  const [taDropdownOpen, setTaDropdownOpen] = useState(false);
+  const [taSearch, setTaSearch] = useState("");
 
   // Submit
   const [submitting, setSubmitting] = useState(false);
@@ -694,7 +700,10 @@ const CreateCourseContent = () => {
               )}
 
               {/* Step 3: Team Assignment (Instructor + TA) */}
-              {currentStep === 3 && (
+              {currentStep === 3 && (() => {
+                const statusDot: Record<string, string> = { available: "bg-[#22C55E]", busy: "bg-[#F59E0B]", overloaded: "bg-[#EF4444]" };
+                const statusBadgeBg: Record<string, string> = { available: "bg-[#DCFCE7] text-[#065F46]", busy: "bg-[#FEF3C7] text-[#92400E]", overloaded: "bg-[#FEE2E2] text-[#991B1B]" };
+                return (
                 <div className="space-y-6">
                   {/* Instructor Section */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
@@ -706,54 +715,98 @@ const CreateCourseContent = () => {
                     {loadingInstructors ? (
                       <div className="flex items-center justify-center py-8">
                         <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
-                        <span className="ms-2 text-sm text-[#6B7280]">{t("createCourse.loadingInstructors")}</span>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[320px] overflow-y-auto">
-                        {instructors.map((inst) => {
-                          const name = [inst.firstName, inst.lastName].filter(Boolean).join(" ") || inst.email;
-                          const initials = inst.firstName && inst.lastName
-                            ? `${inst.firstName[0]}${inst.lastName[0]}`.toUpperCase()
-                            : name.substring(0, 2).toUpperCase();
-                          const isSelected = instructorId === inst.id;
-                          const statusColors: Record<string, string> = {
-                            available: "bg-[#22C55E]",
-                            busy: "bg-[#F59E0B]",
-                            overloaded: "bg-[#EF4444]",
-                          };
-
-                          return (
-                            <button
-                              key={inst.id}
-                              type="button"
-                              onClick={() => setInstructorId(inst.id)}
-                              className={`flex items-center gap-3 p-3 rounded-xl border-2 text-start transition-all ${
-                                isSelected
-                                  ? "border-[#3B82F6] bg-[#EFF6FF] shadow-sm"
-                                  : "border-[#E5E7EB] bg-white hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
-                              }`}
-                            >
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
-                                {initials}
+                      <div className="relative">
+                        {/* Selected display / trigger */}
+                        <button
+                          type="button"
+                          onClick={() => setInstructorDropdownOpen(!instructorDropdownOpen)}
+                          className="w-full flex items-center gap-3 p-3 border border-[#E5E7EB] rounded-xl bg-white hover:border-[#3B82F6] transition-colors text-start"
+                        >
+                          {selectedInstructor ? (
+                            <>
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                                {selectedInstructor.firstName && selectedInstructor.lastName
+                                  ? `${selectedInstructor.firstName[0]}${selectedInstructor.lastName[0]}`.toUpperCase()
+                                  : (selectedInstructor.email || "").substring(0, 2).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
-                                <p className="text-[11px] text-[#6B7280] truncate">{inst.email}</p>
+                                <p className="text-sm font-medium text-[#1F2937] truncate">
+                                  {[selectedInstructor.firstName, selectedInstructor.lastName].filter(Boolean).join(" ") || selectedInstructor.email}
+                                </p>
+                                <p className="text-[11px] text-[#6B7280] truncate">{selectedInstructor.email}</p>
                               </div>
-                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                {isSelected && (
-                                  <Check className="w-4 h-4 text-[#3B82F6]" />
-                                )}
-                                {inst.status && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#6B7280]">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${statusColors[inst.status] || "bg-[#9CA3AF]"}`} />
-                                    {t(`instructorsPage.status.${inst.status}` as Parameters<typeof t>[0])}
-                                  </span>
-                                )}
+                              {selectedInstructor.status && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusBadgeBg[selectedInstructor.status] || "bg-[#F3F4F6] text-[#6B7280]"}`}>
+                                  {t(`instructorsPage.status.${selectedInstructor.status}` as Parameters<typeof t>[0])}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-sm text-[#9CA3AF]">{t("createCourse.chooseInstructor")}</span>
+                          )}
+                          <ChevronDown className={`w-4 h-4 text-[#6B7280] ms-auto transition-transform ${instructorDropdownOpen ? "rotate-180" : ""}`} />
+                        </button>
+
+                        {/* Dropdown */}
+                        {instructorDropdownOpen && (
+                          <div className="absolute z-20 mt-1 w-full bg-white border border-[#E5E7EB] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
+                            {/* Search */}
+                            <div className="p-2 border-b border-[#E5E7EB]">
+                              <div className="relative">
+                                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <input
+                                  type="text"
+                                  value={instructorSearch}
+                                  onChange={(e) => setInstructorSearch(e.target.value)}
+                                  placeholder={isRTL ? "بحث..." : "Search..."}
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                  autoFocus
+                                />
                               </div>
-                            </button>
-                          );
-                        })}
+                            </div>
+                            <div className="overflow-y-auto max-h-[220px]">
+                              {instructors
+                                .filter((inst) => {
+                                  if (!instructorSearch) return true;
+                                  const q = instructorSearch.toLowerCase();
+                                  const name = [inst.firstName, inst.lastName].filter(Boolean).join(" ").toLowerCase();
+                                  return name.includes(q) || inst.email.toLowerCase().includes(q);
+                                })
+                                .map((inst) => {
+                                  const name = [inst.firstName, inst.lastName].filter(Boolean).join(" ") || inst.email;
+                                  const initials = inst.firstName && inst.lastName
+                                    ? `${inst.firstName[0]}${inst.lastName[0]}`.toUpperCase()
+                                    : name.substring(0, 2).toUpperCase();
+                                  const isSelected = instructorId === inst.id;
+                                  return (
+                                    <button
+                                      key={inst.id}
+                                      type="button"
+                                      onClick={() => { setInstructorId(inst.id); setInstructorDropdownOpen(false); setInstructorSearch(""); }}
+                                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-start transition-colors ${isSelected ? "bg-[#EFF6FF]" : "hover:bg-[#F9FAFB]"}`}
+                                    >
+                                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white text-[11px] font-semibold flex-shrink-0">
+                                        {initials}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
+                                        <p className="text-[11px] text-[#6B7280] truncate">{inst.email}</p>
+                                      </div>
+                                      {inst.status && (
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#6B7280] flex-shrink-0">
+                                          <span className={`w-2 h-2 rounded-full ${statusDot[inst.status] || "bg-[#9CA3AF]"}`} />
+                                          {t(`instructorsPage.status.${inst.status}` as Parameters<typeof t>[0])}
+                                        </span>
+                                      )}
+                                      {isSelected && <Check className="w-4 h-4 text-[#3B82F6] flex-shrink-0" />}
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -783,65 +836,93 @@ const CreateCourseContent = () => {
                     </div>
 
                     {selectedTA ? (
-                      <div className="p-4 bg-[#FFF8E6] border border-[#FDE68A] rounded-xl flex items-center justify-between">
+                      <div className="p-3 bg-[#FFF8E6] border border-[#FDE68A] rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center text-sm font-semibold text-[#92400E] flex-shrink-0">
-                            {(selectedTA.firstName?.[0] || "") + (selectedTA.lastName?.[0] || "").toUpperCase() || selectedTA.email.substring(0, 2).toUpperCase()}
+                          <div className="w-9 h-9 rounded-full bg-[#FEF3C7] flex items-center justify-center text-xs font-semibold text-[#92400E] flex-shrink-0">
+                            {selectedTA.firstName && selectedTA.lastName
+                              ? `${selectedTA.firstName[0]}${selectedTA.lastName[0]}`.toUpperCase()
+                              : (selectedTA.email || "").substring(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-[#1F2937]">
-                              {[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}
-                            </p>
-                            <p className="text-xs text-[#6B7280] mt-0.5">{selectedTA.email}</p>
+                            <p className="text-sm font-medium text-[#1F2937]">{[selectedTA.firstName, selectedTA.lastName].filter(Boolean).join(" ")}</p>
+                            <p className="text-[11px] text-[#6B7280]">{selectedTA.email}</p>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTAId("")}
-                          className="p-1.5 text-[#6B7280] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        >
+                        <button type="button" onClick={() => setSelectedTAId("")} className="p-1.5 text-[#6B7280] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
                     ) : loadingTAs ? (
                       <div className="flex items-center justify-center py-6">
                         <Loader2 className="w-5 h-5 text-[#6b4e24] animate-spin" />
-                        <span className="ms-2 text-sm text-[#6B7280]">{t("createCourse.loadingTAs")}</span>
                       </div>
-                    ) : availableTAs.length === 0 ? (
-                      <p className="text-sm text-[#9CA3AF] text-center py-4">
-                        {isRTL ? "لا يوجد مساعدو تدريس متاحون" : "No teaching assistants available"}
-                      </p>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto">
-                        {availableTAs.map((ta) => {
-                          const name = [ta.firstName, ta.lastName].filter(Boolean).join(" ") || ta.email;
-                          const initials = ta.firstName && ta.lastName
-                            ? `${ta.firstName[0]}${ta.lastName[0]}`.toUpperCase()
-                            : name.substring(0, 2).toUpperCase();
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setTaDropdownOpen(!taDropdownOpen)}
+                          className="w-full flex items-center gap-3 p-3 border border-[#E5E7EB] rounded-xl bg-white hover:border-[#D97706] transition-colors text-start"
+                        >
+                          <span className="text-sm text-[#9CA3AF]">{t("createCourse.noneSelected")}</span>
+                          <ChevronDown className={`w-4 h-4 text-[#6B7280] ms-auto transition-transform ${taDropdownOpen ? "rotate-180" : ""}`} />
+                        </button>
 
-                          return (
-                            <button
-                              key={ta.id}
-                              type="button"
-                              onClick={() => setSelectedTAId(ta.id)}
-                              className="flex items-center gap-3 p-3 rounded-xl border border-[#E5E7EB] bg-white hover:border-[#D1D5DB] hover:bg-[#F9FAFB] text-start transition-all"
-                            >
-                              <div className="w-9 h-9 rounded-full bg-[#FEF3C7] flex items-center justify-center text-xs font-semibold text-[#92400E] flex-shrink-0">
-                                {initials}
+                        {taDropdownOpen && (
+                          <div className="absolute z-20 mt-1 w-full bg-white border border-[#E5E7EB] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
+                            <div className="p-2 border-b border-[#E5E7EB]">
+                              <div className="relative">
+                                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
+                                <input
+                                  type="text"
+                                  value={taSearch}
+                                  onChange={(e) => setTaSearch(e.target.value)}
+                                  placeholder={isRTL ? "بحث..." : "Search..."}
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706]"
+                                  autoFocus
+                                />
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
-                                <p className="text-[11px] text-[#6B7280] truncate">{ta.email}</p>
-                              </div>
-                            </button>
-                          );
-                        })}
+                            </div>
+                            <div className="overflow-y-auto max-h-[220px]">
+                              {availableTAs.length === 0 ? (
+                                <p className="text-sm text-[#9CA3AF] text-center py-4">{isRTL ? "لا يوجد مساعدو تدريس" : "No TAs available"}</p>
+                              ) : availableTAs
+                                .filter((ta) => {
+                                  if (!taSearch) return true;
+                                  const q = taSearch.toLowerCase();
+                                  const name = [ta.firstName, ta.lastName].filter(Boolean).join(" ").toLowerCase();
+                                  return name.includes(q) || ta.email.toLowerCase().includes(q);
+                                })
+                                .map((ta) => {
+                                  const name = [ta.firstName, ta.lastName].filter(Boolean).join(" ") || ta.email;
+                                  const initials = ta.firstName && ta.lastName
+                                    ? `${ta.firstName[0]}${ta.lastName[0]}`.toUpperCase()
+                                    : name.substring(0, 2).toUpperCase();
+                                  return (
+                                    <button
+                                      key={ta.id}
+                                      type="button"
+                                      onClick={() => { setSelectedTAId(ta.id); setTaDropdownOpen(false); setTaSearch(""); }}
+                                      className="w-full flex items-center gap-3 px-3 py-2.5 text-start hover:bg-[#F9FAFB] transition-colors"
+                                    >
+                                      <div className="w-8 h-8 rounded-full bg-[#FEF3C7] flex items-center justify-center text-[11px] font-semibold text-[#92400E] flex-shrink-0">
+                                        {initials}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-[#1F2937] truncate">{name}</p>
+                                        <p className="text-[11px] text-[#6B7280] truncate">{ta.email}</p>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
-              )}
+                );
+              })()}
 
               {/* Step 4: Review & Submit */}
               {currentStep === 4 && (

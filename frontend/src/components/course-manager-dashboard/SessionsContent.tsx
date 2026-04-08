@@ -409,7 +409,7 @@ const SessionsContent = () => {
       );
     }).catch(() => {});
     courseManagerApi.getCourses({ limit: 200 }).then((res) => {
-      setCoursesList((res.data || []).map((c: { id: string; title: string }) => ({ id: c.id, title: c.title })));
+      setCoursesList((res.data || []).filter((c: any) => c.status === "active" && c.deliveryType !== "self-paced").map((c: { id: string; title: string }) => ({ id: c.id, title: c.title })));
     }).catch(() => {});
   }, []);
 
@@ -503,10 +503,14 @@ const SessionsContent = () => {
     if (!rescheduleModal || !rescheduleDate) return;
     setActionLoading(true);
     try {
-      await courseManagerApi.rescheduleSession(rescheduleModal.id, rescheduleDate);
+      const isoDate = new Date(rescheduleDate).toISOString();
+      await courseManagerApi.rescheduleSession(rescheduleModal.id, isoDate);
       setActionSuccess(true);
+      toast.success(isRTL ? "تم إعادة جدولة المحاضرة" : "Lecture rescheduled successfully");
       setTimeout(() => { setRescheduleModal(null); setRescheduleDate(""); setActionSuccess(false); refetch(); }, 1200);
-    } catch { /* ignore */ }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : (isRTL ? "فشل في إعادة الجدولة" : "Failed to reschedule"));
+    }
     setActionLoading(false);
   };
 
@@ -748,12 +752,14 @@ const SessionsContent = () => {
               </button>
               {actionDropdown === session.id && (
                 <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 py-1`}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
-                  >
-                    <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
-                  </button>
+                  {session.status === "completed" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
+                    >
+                      <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
+                    </button>
+                  )}
                   {(session.status === "scheduled" || session.status === "live") && (
                     <>
                       <button
@@ -763,17 +769,17 @@ const SessionsContent = () => {
                         <XCircle className="w-4 h-4" /> {t("sessionsPage.cancelSession")}
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); setRescheduleDate(session.scheduledAt.slice(0, 16)); }}
+                        onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); (() => { const d = new Date(session.scheduledAt); const local = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; setRescheduleDate(local); })(); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
                       >
                         <CalendarClock className="w-4 h-4" /> {t("sessionsPage.reschedule")}
                       </button>
-                      <button
+                      {false && <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setSubstituteModal({ id: session.id, title: session.title }); setSubstituteId(""); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"
                       >
                         <UserPlus className="w-4 h-4" /> {t("sessionsPage.assignSubstitute")}
-                      </button>
+                      </button>}
                     </>
                   )}
                 </div>
@@ -798,71 +804,67 @@ const SessionsContent = () => {
             <CourseManagerMobileSidebar manager={manager} />
 
             <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
                 <div>
                   <h1 className="text-2xl font-bold text-[#1F2937]">{t("sessionsPage.title")}</h1>
                   <p className="text-sm text-[#6B7280] mt-1">{t("sessionsPage.subtitle")}</p>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={() => setShowScheduleModal(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  {t("sessionsPage.scheduleSession")}
+                </button>
+              </div>
+
+              {/* Filters row */}
+              <div className="flex items-center gap-3 flex-wrap mb-6">
+                <div className="flex items-center bg-white border border-[#E5E7EB] rounded-lg p-1">
                   <button
-                    onClick={() => setShowScheduleModal(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                    onClick={() => setViewMode("list")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "btn-gold text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
                   >
-                    <CalendarDays className="w-4 h-4" />
-                    {t("sessionsPage.scheduleSession")}
+                    <List className="w-4 h-4" />
+                    {t("sessionsPage.listView")}
                   </button>
-                  <div className="flex items-center bg-white border border-[#E5E7EB] rounded-lg p-1">
-                    <button
-                      onClick={() => setViewMode("list")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "list" ? "btn-gold text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
-                    >
-                      <List className="w-4 h-4" />
-                      {t("sessionsPage.listView")}
-                    </button>
-                    <button
-                      onClick={() => setViewMode("calendar")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "calendar" ? "btn-gold text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
-                    >
-                      <Calendar className="w-4 h-4" />
-                      {t("sessionsPage.calendarView")}
-                    </button>
-                  </div>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                    className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
-                  >
-                    <option value="">{t("sessionsPage.allStatuses")}</option>
-                    <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
-                    <option value="live">{t("sessionsPage.statusLive")}</option>
-                    <option value="ended">{t("sessionsPage.statusEnded")}</option>
-                    <option value="completed">{t("sessionsPage.statusCompleted")}</option>
-                    <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
-                  </select>
-                  <select
-                    value={instructorFilter}
-                    onChange={(e) => { setInstructorFilter(e.target.value); setCurrentPage(1); }}
-                    className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
-                  >
-                    <option value="">{t("sessionsPage.allInstructors")}</option>
-                    {instructors.map((inst) => (
-                      <option key={inst.id} value={inst.id}>{inst.name}</option>
-                    ))}
-                  </select>
                   <button
-                    onClick={() => setShowMoreFilters(!showMoreFilters)}
-                    className="px-3 py-2 text-sm text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                    onClick={() => setViewMode("calendar")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === "calendar" ? "btn-gold text-white" : "text-[#6B7280] hover:text-[#1F2937]"}`}
                   >
-                    {showMoreFilters ? t("sessionsPage.lessFilters") : t("sessionsPage.moreFilters")}
+                    <Calendar className="w-4 h-4" />
+                    {t("sessionsPage.calendarView")}
                   </button>
-                  <ExportButton
-                    tableType="sessions"
-                    filters={{
-                      ...(statusFilter ? { status: statusFilter } : {}),
-                      ...(courseFilter ? { courseId: courseFilter } : {}),
-                    }}
-                  />
                 </div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+                  className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                >
+                  <option value="">{t("sessionsPage.allStatuses")}</option>
+                  <option value="scheduled">{t("sessionsPage.statusUpcoming")}</option>
+                  <option value="live">{t("sessionsPage.statusLive")}</option>
+                  <option value="ended">{t("sessionsPage.statusEnded")}</option>
+                  <option value="completed">{t("sessionsPage.statusCompleted")}</option>
+                  <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
+                </select>
+                <select
+                  value={instructorFilter}
+                  onChange={(e) => { setInstructorFilter(e.target.value); setCurrentPage(1); }}
+                  className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                >
+                  <option value="">{t("sessionsPage.allInstructors")}</option>
+                  {instructors.map((inst) => (
+                    <option key={inst.id} value={inst.id}>{inst.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowMoreFilters(!showMoreFilters)}
+                  className="px-3 py-2 text-sm text-[#3B82F6] border border-[#3B82F6] rounded-lg hover:bg-[#EFF6FF] transition-colors"
+                >
+                  {showMoreFilters ? t("sessionsPage.lessFilters") : t("sessionsPage.moreFilters")}
+                </button>
               </div>
 
               {/* Advanced Filters Panel */}
@@ -1007,18 +1009,19 @@ const SessionsContent = () => {
                         <ChevronDown className={`w-5 h-5 text-[#6B7280] transition-transform ${showPast ? "rotate-180" : ""}`} />
                       </button>
                       {showPast && (
-                        <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
-                          {pastSessions.map((session) => renderSessionRow(session, true, true))}
-                        </div>
+                        <>
+                          <div className="divide-y divide-[#E5E7EB] border-t border-[#E5E7EB]">
+                            {pastSessions.map((session) => renderSessionRow(session, true, true))}
+                          </div>
+                          {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 py-4 border-t border-[#E5E7EB]">
+                              <button disabled={currentPage <= 1} onClick={() => setCurrentPage((p) => p - 1)} className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50"><ChevronLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /></button>
+                              <span className="text-sm text-[#6B7280]">{currentPage} / {totalPages}</span>
+                              <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage((p) => p + 1)} className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50"><ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /></button>
+                            </div>
+                          )}
+                        </>
                       )}
-                    </div>
-                  )}
-
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-4">
-                      <button disabled={currentPage <= 1} onClick={() => setCurrentPage((p) => p - 1)} className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50"><ChevronLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /></button>
-                      <span className="text-sm text-[#6B7280]">{currentPage} / {totalPages}</span>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage((p) => p + 1)} className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50"><ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} /></button>
                     </div>
                   )}
                 </div>

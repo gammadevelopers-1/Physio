@@ -476,34 +476,6 @@ const ReportsContent = () => {
                 </div>
               </div>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {REPORT_TYPES.map((rt) => (
-                  <div
-                    key={rt.id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] p-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-lg ${rt.iconBg} flex items-center justify-center`}
-                      >
-                        <rt.icon className={`w-5 h-5 ${rt.iconColor}`} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-[#1F2937]">
-                          {t(`reportsPage.${rt.id}Report`)}
-                        </p>
-                        <p className="text-xs text-[#6B7280]">
-                          {rt.requiresCourse
-                            ? t("reportsPage.perCourse")
-                            : t("reportsPage.allOrPerCourse")}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
               {/* Global Filters */}
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                 <div className="flex flex-col md:flex-row gap-4">
@@ -630,172 +602,19 @@ const ReportsContent = () => {
                         </span>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleQuickGenerate(rt)}
-                          disabled={generatingReport === rt.id}
-                          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                            generatingReport === rt.id
-                              ? "bg-[#F3F4F6] text-[#9CA3AF] cursor-not-allowed"
-                              : "bg-[#EFF6FF] text-[#3B82F6] hover:bg-[#DBEAFE]"
-                          }`}
-                        >
-                          {generatingReport === rt.id ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              {t("reportsPage.generating")}
-                            </>
-                          ) : (
-                            <>
-                              <Download className="w-4 h-4" />
-                              {t("reportsPage.quickDownload")}
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => setExportModal(rt)}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
-                        >
-                          {t("reportsPage.customize")}
-                        </button>
-                      </div>
+                      {/* Download Action */}
+                      <button
+                        onClick={() => setExportModal(rt)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#EFF6FF] text-[#3B82F6] rounded-lg text-sm font-medium hover:bg-[#DBEAFE] transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        {t("reportsPage.exportReport")}
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Scheduled Reports */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
-                  <h3 className="text-sm font-semibold text-[#1F2937]">
-                    {t("reportsPage.scheduledReports")}
-                  </h3>
-                  <button
-                    onClick={() => setShowScheduleForm(!showScheduleForm)}
-                    className="text-sm font-medium text-[#3B82F6] hover:text-[#2563EB]"
-                  >
-                    {showScheduleForm ? t("reportsPage.cancel") : t("reportsPage.addSchedule")}
-                  </button>
-                </div>
-
-                {showScheduleForm && (
-                  <div className="p-4 border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <select
-                        value={scheduleForm.reportType}
-                        onChange={(e) => setScheduleForm({ ...scheduleForm, reportType: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm"
-                      >
-                        {REPORT_TYPES.map((rt) => (
-                          <option key={rt.id} value={rt.id}>{t(`reportsPage.${rt.id}Report`)}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={scheduleForm.frequency}
-                        onChange={(e) => setScheduleForm({ ...scheduleForm, frequency: e.target.value })}
-                        className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm"
-                      >
-                        <option value="daily">{t("reportsPage.daily")}</option>
-                        <option value="weekly">{t("reportsPage.weekly")}</option>
-                        <option value="monthly">{t("reportsPage.monthly")}</option>
-                      </select>
-                      <select
-                        value={scheduleForm.format}
-                        onChange={(e) => setScheduleForm({ ...scheduleForm, format: e.target.value })}
-                        className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm"
-                      >
-                        <option value="csv">CSV</option>
-                        <option value="pdf">PDF</option>
-                        <option value="xlsx">Excel</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 mt-3">
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-[#6B7280] mb-1">
-                          {t("reportsPage.recipientEmail")}
-                        </label>
-                        <input
-                          type="email"
-                          value={scheduleForm.email}
-                          onChange={(e) => setScheduleForm({ ...scheduleForm, email: e.target.value })}
-                          placeholder={t("reportsPage.recipientEmailPlaceholder")}
-                          className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                        />
-                      </div>
-                      <button
-                        onClick={handleCreateSchedule}
-                        className="self-end px-4 py-2 bg-[#3B82F6] text-white text-sm font-medium rounded-lg hover:bg-[#2563EB]"
-                      >
-                        {t("reportsPage.create")}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {scheduledReports.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <p className="text-sm text-[#6B7280]">{t("reportsPage.noSchedules")}</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-[#E5E7EB]">
-                    {scheduledReports.map((sr) => (
-                      <div key={sr.id} className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-2 h-2 rounded-full ${sr.enabled ? "bg-[#22C55E]" : "bg-[#D1D5DB]"}`} />
-                          <div>
-                            <p className="text-sm font-medium text-[#1F2937]">
-                              {t(`reportsPage.${sr.reportType}Report`)}
-                            </p>
-                            <p className="text-xs text-[#6B7280]">
-                              {sr.frequency} &middot; {sr.format.toUpperCase()}
-                              {sr.nextRunAt && ` \u00B7 Next: ${new Date(sr.nextRunAt).toLocaleDateString()}`}
-                            </p>
-                            {sr.recipientEmail && (
-                              <p className="text-xs text-[#3B82F6]">
-                                {t("reportsPage.emailDelivery")}: {sr.recipientEmail}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleToggleSchedule(sr.id, !sr.enabled)}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                              sr.enabled ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
-                            }`}
-                          >
-                            <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
-                              sr.enabled ? "translate-x-[18px]" : "translate-x-[3px]"
-                            }`} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteSchedule(sr.id)}
-                            className="p-1 text-[#9CA3AF] hover:text-[#EF4444] transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Audit note */}
-              <div className="bg-[#EFF6FF] rounded-xl border border-[#BFDBFE] p-4">
-                <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-[#1E40AF]">
-                      {t("reportsPage.auditTitle")}
-                    </p>
-                    <p className="text-sm text-[#3B82F6] mt-0.5">
-                      {t("reportsPage.auditDesc")}
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

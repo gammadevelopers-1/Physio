@@ -1693,9 +1693,12 @@ export class ReportsService {
     metadata?: ReportMetadata,
   ): Promise<ReportResult> {
     const date = new Date().toLocaleDateString('en-CA', { timeZone: this.activeTz });
+    // Build filename: courseName-reportType-date.ext
+    const courseMatch = metadata?.filters?.match(/^Course:\s*(.+)$/);
+    const coursePart = courseMatch ? courseMatch[1].trim().replace(/[^a-zA-Z0-9\u0600-\u06FF\s-]/g, '').replace(/\s+/g, '-') + '-' : '';
     const slug = title.toLowerCase().replace(/\s+/g, '-');
     const ext = format;
-    const filename = `${slug}-${date}.${ext}`;
+    const filename = `${coursePart}${slug}-${date}.${ext}`;
 
     let buffer: Buffer;
 

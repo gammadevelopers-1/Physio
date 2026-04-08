@@ -1504,8 +1504,8 @@ export const courseManagerApi = {
   cancelSessionOnBehalf: (sessionId: string, reason: string) =>
     api.post(`/sessions/${sessionId}/cancel-on-behalf`, { reason }),
 
-  rescheduleSession: (sessionId: string, scheduledAt: string, durationMinutes?: number) =>
-    api.patch(`/sessions/${sessionId}/reschedule`, { scheduledAt, durationMinutes }),
+  rescheduleSession: (sessionId: string, newScheduledAt: string, durationMinutes?: number) =>
+    api.post(`/sessions/${sessionId}/reschedule`, { reason: "Rescheduled by manager", newScheduledAt, newDurationMinutes: durationMinutes }),
 
   assignSubstitute: (sessionId: string, instructorId: string) =>
     api.patch(`/sessions/${sessionId}/assign-substitute`, { instructorId }),

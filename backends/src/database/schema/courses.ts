@@ -43,6 +43,13 @@ export const courses = pgTable(
     atRiskInactivityDays: integer('at_risk_inactivity_days').default(7),
     // Cohort
     cohort: varchar('cohort', { length: 100 }),
+    // Course-level assessment defaults (per-assessment can override)
+    assessmentProctoringEnabled: boolean('assessment_proctoring_enabled').default(false),
+    assessmentTimeLimitEnforced: boolean('assessment_time_limit_enforced').default(true),
+    assessmentMaxRetakes: integer('assessment_max_retakes').default(0),
+    assessmentRetakeCoolingHours: integer('assessment_retake_cooling_hours').default(24),
+    assessmentRetakeScorePolicy: varchar('assessment_retake_score_policy', { length: 20 }).default('highest'),
+    assessmentRetakeScope: varchar('assessment_retake_scope', { length: 20 }).default('full'),
     // Review workflow
     reviewNote: varchar('review_note', { length: 1000 }),
     reviewedBy: uuid('reviewed_by').references(() => users.id),

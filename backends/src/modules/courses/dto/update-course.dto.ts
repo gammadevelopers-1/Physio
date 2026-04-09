@@ -87,4 +87,33 @@ export class UpdateCourseDto {
   @IsString()
   @MaxLength(100)
   cohort?: string;
+
+  // Course-level assessment defaults
+  @IsOptional()
+  @IsBoolean()
+  assessmentProctoringEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  assessmentTimeLimitEnforced?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  assessmentMaxRetakes?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  assessmentRetakeCoolingHours?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['highest', 'latest', 'average'])
+  assessmentRetakeScorePolicy?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['full', 'failed_sections'])
+  assessmentRetakeScope?: string;
 }

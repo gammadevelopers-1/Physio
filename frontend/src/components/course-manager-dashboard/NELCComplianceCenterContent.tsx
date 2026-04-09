@@ -12,6 +12,8 @@ import {
   XCircle,
   AlertCircle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Download,
   Video,
@@ -327,6 +329,14 @@ const NELCComplianceCenterContent = () => {
     return result;
   }, [courses, search, statusFilter, deliveryFilter]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCourses = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, deliveryFilter]);
+
   const filteredVc = useMemo(() => {
     let result = virtualClasses;
     if (search) {
@@ -510,7 +520,7 @@ const NELCComplianceCenterContent = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E5E7EB]">
-                        {filtered.map((course) => {
+                        {paginatedCourses.map((course) => {
                           const config = STATUS_CONFIG[course.overallStatus];
                           const StatusIcon = config.icon;
                           const isExpanded = expandedCourse === course.courseId;
@@ -675,6 +685,25 @@ const NELCComplianceCenterContent = () => {
                       </tbody>
                     </table>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 p-4 border-t border-[#E5E7EB]">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                      </button>
+                      <span className="px-3 py-1 text-sm text-[#374151]">{currentPage} / {totalPages}</span>
+                      <button
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage >= totalPages}
+                        className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
               {/* Virtual Classes section removed — checks merged into course scorecard */}

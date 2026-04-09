@@ -21,15 +21,15 @@ import {
   ChevronUp,
   Check,
   X,
-  LayoutGrid,
-  CheckCircle2,
-  XCircle,
   Flag,
   Users,
   Eye,
+  BookOpen,
 } from "lucide-react";
 import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
-import ExportButton from "@/components/shared/ExportButton";
+import { toast } from "sonner";
+
+/* ────────── Interfaces ────────── */
 
 interface ProctoringRules {
   webcamRequired?: boolean;
@@ -47,35 +47,55 @@ interface SettingsForm {
   retakeScope: string;
 }
 
+interface CourseDefaults {
+  assessmentProctoringEnabled: boolean;
+  assessmentTimeLimitEnforced: boolean;
+  assessmentMaxRetakes: number;
+  assessmentRetakeCoolingHours: number;
+  assessmentRetakeScorePolicy: string;
+  assessmentRetakeScope: string;
+}
+
+interface CourseOption {
+  id: string;
+  title: string;
+  status?: string;
+}
+
+/* ────────── Component ────────── */
+
 const AssessmentsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
+
+  // Course selector
+  const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+  const [selectedCourseId, setSelectedCourseId] = useState("");
+
+  // Course-level defaults
+  const [courseDefaults, setCourseDefaults] = useState<CourseDefaults | null>(null);
+  const [courseDefaultsForm, setCourseDefaultsForm] = useState<CourseDefaults | null>(null);
+  const [defaultsOpen, setDefaultsOpen] = useState(false);
+  const [savingDefaults, setSavingDefaults] = useState(false);
+
+  // Assessments for selected course
+  const [assessments, setAssessments] = useState<AssessmentResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [assessments, setAssessments] = useState<AssessmentResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"assessments" | "blueprint" | "submissions">("assessments");
+  const [activeTab, setActiveTab] = useState<"assessments" | "submissions">("assessments");
 
-  // Settings panel state
+  // Per-assessment settings panel
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [settingsForm, setSettingsForm] = useState<SettingsForm | null>(null);
   const [saving, setSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
-
-  // Blueprint state
-  const [blueprintCourseId, setBlueprintCourseId] = useState<string>("");
-  const [blueprintData, setBlueprintData] = useState<Awaited<ReturnType<typeof courseManagerApi.getBlueprint>> | null>(null);
-  const [blueprintLoading, setBlueprintLoading] = useState(false);
-  const [courses, setCourses] = useState<Array<{ id: string; title: string }>>([]);
-
-  // Difficulty distribution state (per-assessment, fetched on demand in blueprint)
-  const [difficultyData, setDifficultyData] = useState<Record<string, { easy: number; medium: number; hard: number; unset: number; total: number }>>({});
 
   // Flag modal state
   const [flagModal, setFlagModal] = useState<{ assessmentId: string; title: string } | null>(null);
@@ -108,10 +128,55 @@ const AssessmentsContent = () => {
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [viewingSubmission, setViewingSubmission] = useState<typeof submissions[number] | null>(null);
 
+  /* ────────── Fetch courses ────────── */
+  useEffect(() => {
+    setCoursesLoading(true);
+    courseManagerApi
+      .getCourses({ limit: 200 })
+      .then((res) => {
+        const nonArchived = res.data
+          .filter((c: any) => c.status !== "archived")
+          .map((c: any) => ({ id: c.id, title: c.title, status: c.status }));
+        setCourses(nonArchived);
+      })
+      .catch(() => setCourses([]))
+      .finally(() => setCoursesLoading(false));
+  }, []);
+
+  /* ────────── Fetch course defaults when course selected ────────── */
+  useEffect(() => {
+    if (!selectedCourseId) {
+      setCourseDefaults(null);
+      setCourseDefaultsForm(null);
+      setAssessments([]);
+      return;
+    }
+    courseManagerApi
+      .getCourseDetail(selectedCourseId)
+      .then((res: any) => {
+        const d: CourseDefaults = {
+          assessmentProctoringEnabled: res.assessmentProctoringEnabled ?? false,
+          assessmentTimeLimitEnforced: res.assessmentTimeLimitEnforced ?? true,
+          assessmentMaxRetakes: res.assessmentMaxRetakes ?? 0,
+          assessmentRetakeCoolingHours: res.assessmentRetakeCoolingHours ?? 24,
+          assessmentRetakeScorePolicy: res.assessmentRetakeScorePolicy ?? "highest",
+          assessmentRetakeScope: res.assessmentRetakeScope ?? "full",
+        };
+        setCourseDefaults(d);
+        setCourseDefaultsForm({ ...d });
+      })
+      .catch(() => {
+        setCourseDefaults(null);
+        setCourseDefaultsForm(null);
+      });
+  }, [selectedCourseId]);
+
+  /* ────────── Fetch assessments for selected course ────────── */
   const fetchAssessments = useCallback(() => {
+    if (!selectedCourseId) return;
     setLoading(true);
     setError(null);
-    const params: Record<string, string> = {};
+    const params: Record<string, string> = { courseId: selectedCourseId };
     if (typeFilter !== "all") params.type = typeFilter;
     if (statusFilter !== "all") params.status = statusFilter;
     courseManagerApi
@@ -121,34 +186,19 @@ const AssessmentsContent = () => {
         setError(err instanceof Error ? err.message : "Failed to load assessments")
       )
       .finally(() => setLoading(false));
-  }, [typeFilter, statusFilter]);
+  }, [selectedCourseId, typeFilter, statusFilter]);
 
   useEffect(() => {
-    fetchAssessments();
-  }, [fetchAssessments]);
+    if (selectedCourseId) {
+      fetchAssessments();
+      setExpandedId(null);
+      setSettingsForm(null);
+      setSelectedSubmissionAssessment("");
+      setSubmissions([]);
+    }
+  }, [selectedCourseId, fetchAssessments]);
 
-  // Fetch courses for blueprint selector
-  useEffect(() => {
-    courseManagerApi.getCourses().then((res) => {
-      setCourses(res.data.map((c: { id: string; title: string }) => ({ id: c.id, title: c.title })));
-    }).catch(() => {});
-  }, []);
-
-  const fetchBlueprint = useCallback((courseId: string) => {
-    if (!courseId) return;
-    setBlueprintLoading(true);
-    courseManagerApi
-      .getBlueprint(courseId)
-      .then((res) => setBlueprintData(res))
-      .catch(() => setBlueprintData(null))
-      .finally(() => setBlueprintLoading(false));
-  }, []);
-
-  useEffect(() => {
-    if (blueprintCourseId) fetchBlueprint(blueprintCourseId);
-  }, [blueprintCourseId, fetchBlueprint]);
-
-  // Fetch submissions when an assessment is selected in the Submissions tab
+  /* ────────── Fetch submissions ────────── */
   useEffect(() => {
     if (!selectedSubmissionAssessment) {
       setSubmissions([]);
@@ -164,38 +214,37 @@ const AssessmentsContent = () => {
       .finally(() => setSubmissionsLoading(false));
   }, [selectedSubmissionAssessment]);
 
-  // Populate flaggedIds from fetched assessments (check for flaggedAt field)
+  /* ────────── Flagged IDs from assessments ────────── */
   useEffect(() => {
     const flagged = new Set<string>();
     for (const a of assessments) {
-      if (a.flaggedAt) {
-        flagged.add(a.id);
-      }
+      if (a.flaggedAt) flagged.add(a.id);
     }
     setFlaggedIds(flagged);
   }, [assessments]);
 
-  // Fetch difficulty distribution for all assessments in blueprint when data changes
-  useEffect(() => {
-    if (!blueprintData) return;
-    const allAssessmentIds = new Set<string>();
-    for (const row of blueprintData.matrix) {
-      for (const a of row.assessments) {
-        allAssessmentIds.add(a.assessmentId);
-      }
+  /* ────────── Handlers ────────── */
+
+  const handleSaveCourseDefaults = async () => {
+    if (!selectedCourseId || !courseDefaultsForm) return;
+    setSavingDefaults(true);
+    try {
+      await courseManagerApi.updateCourse(selectedCourseId, {
+        assessmentProctoringEnabled: courseDefaultsForm.assessmentProctoringEnabled,
+        assessmentTimeLimitEnforced: courseDefaultsForm.assessmentTimeLimitEnforced,
+        assessmentMaxRetakes: courseDefaultsForm.assessmentMaxRetakes,
+        assessmentRetakeCoolingHours: courseDefaultsForm.assessmentRetakeCoolingHours,
+        assessmentRetakeScorePolicy: courseDefaultsForm.assessmentRetakeScorePolicy,
+        assessmentRetakeScope: courseDefaultsForm.assessmentRetakeScope,
+      });
+      setCourseDefaults({ ...courseDefaultsForm });
+      toast.success(t("assessmentsPage.settings.saved"));
+    } catch {
+      toast.error(t("assessmentsPage.settings.error"));
+    } finally {
+      setSavingDefaults(false);
     }
-    for (const a of blueprintData.unlinkedAssessments) {
-      allAssessmentIds.add(a.assessmentId);
-    }
-    for (const id of allAssessmentIds) {
-      if (!difficultyData[id]) {
-        courseManagerApi.getDifficultyDistribution(id).then((data) => {
-          setDifficultyData((prev) => ({ ...prev, [id]: data }));
-        }).catch(() => {});
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blueprintData]);
+  };
 
   const handleFlag = async () => {
     if (!flagModal || !flagReason.trim()) return;
@@ -205,8 +254,9 @@ const AssessmentsContent = () => {
       setFlaggedIds((prev) => new Set(prev).add(flagModal.assessmentId));
       setFlagModal(null);
       setFlagReason("");
+      toast.success(t("assessmentsPage.flag.success") || "Flagged successfully");
     } catch {
-      // silently handle
+      toast.error(t("assessmentsPage.flag.error") || "Failed to flag");
     } finally {
       setFlagging(false);
     }
@@ -224,12 +274,74 @@ const AssessmentsContent = () => {
       });
       setOverrideModal(null);
       setOverrideForm({ studentId: "", overrideType: "time_extension", value: 30, reason: "" });
+      toast.success(t("assessmentsPage.override.success") || "Override granted");
     } catch {
-      alert(t("assessmentsPage.override.error"));
+      toast.error(t("assessmentsPage.override.error"));
     } finally {
       setOverrideSubmitting(false);
     }
   };
+
+  const toggleSettings = (assessment: AssessmentResponse) => {
+    if (expandedId === assessment.id) {
+      setExpandedId(null);
+      setSettingsForm(null);
+    } else {
+      setExpandedId(assessment.id);
+      setSettingsForm({
+        proctoringEnabled: assessment.proctoringEnabled ?? false,
+        proctoringRules: {
+          webcamRequired: assessment.proctoringRules?.webcamRequired ?? false,
+          browserLockdown: assessment.proctoringRules?.browserLockdown ?? false,
+          tabSwitchAlert: assessment.proctoringRules?.tabSwitchAlert ?? false,
+        },
+        timeLimitEnforced: assessment.timeLimitEnforced ?? true,
+        maxRetakes: assessment.maxRetakes ?? 0,
+        retakeCoolingHours: assessment.retakeCoolingHours ?? 24,
+        retakeScorePolicy: assessment.retakeScorePolicy ?? "highest",
+        retakeScope: assessment.retakeScope ?? "full",
+      });
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    if (!expandedId || !settingsForm) return;
+    setSaving(true);
+    try {
+      await instructorApi.updateAssessment(expandedId, {
+        proctoringEnabled: settingsForm.proctoringEnabled,
+        proctoringRules: settingsForm.proctoringRules,
+        timeLimitEnforced: settingsForm.timeLimitEnforced,
+        maxRetakes: settingsForm.maxRetakes,
+        retakeCoolingHours: settingsForm.retakeCoolingHours,
+        retakeScorePolicy: settingsForm.retakeScorePolicy,
+        retakeScope: settingsForm.retakeScope,
+      });
+      setAssessments((prev) =>
+        prev.map((a) =>
+          a.id === expandedId
+            ? {
+                ...a,
+                proctoringEnabled: settingsForm.proctoringEnabled,
+                proctoringRules: settingsForm.proctoringRules,
+                timeLimitEnforced: settingsForm.timeLimitEnforced,
+                maxRetakes: settingsForm.maxRetakes,
+                retakeCoolingHours: settingsForm.retakeCoolingHours,
+                retakeScorePolicy: settingsForm.retakeScorePolicy,
+                retakeScope: settingsForm.retakeScope,
+              }
+            : a
+        )
+      );
+      toast.success(t("assessmentsPage.settings.saved"));
+    } catch {
+      toast.error(t("assessmentsPage.settings.error"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ────────── Helpers ────────── */
 
   const filteredAssessments = assessments.filter((a) =>
     a.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -256,70 +368,20 @@ const AssessmentsContent = () => {
     return styles[status] || "bg-[#F3F4F6] text-[#6B7280]";
   };
 
-  const toggleSettings = (assessment: AssessmentResponse) => {
-    if (expandedId === assessment.id) {
-      setExpandedId(null);
-      setSettingsForm(null);
-      setSaveSuccess(null);
-    } else {
-      setExpandedId(assessment.id);
-      setSettingsForm({
-        proctoringEnabled: assessment.proctoringEnabled ?? false,
-        proctoringRules: {
-          webcamRequired: assessment.proctoringRules?.webcamRequired ?? false,
-          browserLockdown: assessment.proctoringRules?.browserLockdown ?? false,
-          tabSwitchAlert: assessment.proctoringRules?.tabSwitchAlert ?? false,
-        },
-        timeLimitEnforced: assessment.timeLimitEnforced ?? true,
-        maxRetakes: assessment.maxRetakes ?? 0,
-        retakeCoolingHours: assessment.retakeCoolingHours ?? 24,
-        retakeScorePolicy: assessment.retakeScorePolicy ?? "highest",
-        retakeScope: assessment.retakeScope ?? "full",
-      });
-      setSaveSuccess(null);
-    }
+  /** Check if an assessment overrides course defaults */
+  const hasOverride = (a: AssessmentResponse): boolean => {
+    if (!courseDefaults) return false;
+    return (
+      a.proctoringEnabled !== courseDefaults.assessmentProctoringEnabled ||
+      a.timeLimitEnforced !== courseDefaults.assessmentTimeLimitEnforced ||
+      a.maxRetakes !== courseDefaults.assessmentMaxRetakes ||
+      a.retakeCoolingHours !== courseDefaults.assessmentRetakeCoolingHours ||
+      a.retakeScorePolicy !== courseDefaults.assessmentRetakeScorePolicy ||
+      a.retakeScope !== courseDefaults.assessmentRetakeScope
+    );
   };
 
-  const handleSaveSettings = async () => {
-    if (!expandedId || !settingsForm) return;
-    setSaving(true);
-    setSaveSuccess(null);
-    try {
-      await instructorApi.updateAssessment(expandedId, {
-        proctoringEnabled: settingsForm.proctoringEnabled,
-        proctoringRules: settingsForm.proctoringRules,
-        timeLimitEnforced: settingsForm.timeLimitEnforced,
-        maxRetakes: settingsForm.maxRetakes,
-        retakeCoolingHours: settingsForm.retakeCoolingHours,
-        retakeScorePolicy: settingsForm.retakeScorePolicy,
-        retakeScope: settingsForm.retakeScope,
-      });
-      setSaveSuccess(expandedId);
-      // Update local state
-      setAssessments((prev) =>
-        prev.map((a) =>
-          a.id === expandedId
-            ? {
-                ...a,
-                proctoringEnabled: settingsForm.proctoringEnabled,
-                proctoringRules: settingsForm.proctoringRules,
-                timeLimitEnforced: settingsForm.timeLimitEnforced,
-                maxRetakes: settingsForm.maxRetakes,
-                retakeCoolingHours: settingsForm.retakeCoolingHours,
-                retakeScorePolicy: settingsForm.retakeScorePolicy,
-                retakeScope: settingsForm.retakeScope,
-              }
-            : a
-        )
-      );
-      setTimeout(() => setSaveSuccess(null), 3000);
-    } catch {
-      setSaveSuccess(null);
-      alert(t("assessmentsPage.settings.error"));
-    } finally {
-      setSaving(false);
-    }
-  };
+  /* ────────── Sub-components ────────── */
 
   const Toggle = ({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) => (
     <div className="flex items-center justify-between py-2">
@@ -340,193 +402,6 @@ const AssessmentsContent = () => {
     </div>
   );
 
-  const renderSettingsPanel = (assessmentId: string) => {
-    if (expandedId !== assessmentId || !settingsForm) return null;
-
-    return (
-      <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] px-4 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Proctoring Settings */}
-          <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Shield className="w-4 h-4 text-[#3B82F6]" />
-              <h4 className="text-sm font-semibold text-[#1F2937]">
-                {t("assessmentsPage.proctoring.title")}
-              </h4>
-            </div>
-            <div className="space-y-1">
-              <Toggle
-                checked={settingsForm.proctoringEnabled}
-                onChange={(v) =>
-                  setSettingsForm({ ...settingsForm, proctoringEnabled: v })
-                }
-                label={t("assessmentsPage.proctoring.enabled")}
-              />
-              {settingsForm.proctoringEnabled && (
-                <>
-                  <Toggle
-                    checked={settingsForm.proctoringRules.webcamRequired ?? false}
-                    onChange={(v) =>
-                      setSettingsForm({
-                        ...settingsForm,
-                        proctoringRules: { ...settingsForm.proctoringRules, webcamRequired: v },
-                      })
-                    }
-                    label={t("assessmentsPage.proctoring.webcamRequired")}
-                  />
-                  <Toggle
-                    checked={settingsForm.proctoringRules.browserLockdown ?? false}
-                    onChange={(v) =>
-                      setSettingsForm({
-                        ...settingsForm,
-                        proctoringRules: { ...settingsForm.proctoringRules, browserLockdown: v },
-                      })
-                    }
-                    label={t("assessmentsPage.proctoring.browserLockdown")}
-                  />
-                  <Toggle
-                    checked={settingsForm.proctoringRules.tabSwitchAlert ?? false}
-                    onChange={(v) =>
-                      setSettingsForm({
-                        ...settingsForm,
-                        proctoringRules: { ...settingsForm.proctoringRules, tabSwitchAlert: v },
-                      })
-                    }
-                    label={t("assessmentsPage.proctoring.tabSwitchAlert")}
-                  />
-                </>
-              )}
-              <Toggle
-                checked={settingsForm.timeLimitEnforced}
-                onChange={(v) =>
-                  setSettingsForm({ ...settingsForm, timeLimitEnforced: v })
-                }
-                label={t("assessmentsPage.proctoring.timeLimitEnforced")}
-              />
-            </div>
-          </div>
-
-          {/* Retake Rules */}
-          <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <RotateCcw className="w-4 h-4 text-[#8B5CF6]" />
-              <h4 className="text-sm font-semibold text-[#1F2937]">
-                {t("assessmentsPage.retake.title")}
-              </h4>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm text-[#374151] block mb-1">
-                  {t("assessmentsPage.retake.maxRetakes")}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={99}
-                  value={settingsForm.maxRetakes}
-                  onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      maxRetakes: Math.max(0, parseInt(e.target.value) || 0),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                />
-                {settingsForm.maxRetakes === 0 && (
-                  <p className="text-xs text-[#6B7280] mt-1">
-                    {t("assessmentsPage.retake.unlimited")}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="text-sm text-[#374151] block mb-1">
-                  {t("assessmentsPage.retake.coolingHours")}
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={720}
-                  value={settingsForm.retakeCoolingHours}
-                  onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      retakeCoolingHours: Math.max(0, parseInt(e.target.value) || 0),
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-[#374151] block mb-1">
-                  {t("assessmentsPage.retake.scorePolicy")}
-                </label>
-                <select
-                  value={settingsForm.retakeScorePolicy}
-                  onChange={(e) =>
-                    setSettingsForm({
-                      ...settingsForm,
-                      retakeScorePolicy: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                >
-                  <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
-                  <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
-                  <option value="average">{t("assessmentsPage.retake.policies.average")}</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm text-[#374151] block mb-1">
-                  {t("assessmentsPage.retake.scope")}
-                </label>
-                <select
-                  value={settingsForm.retakeScope}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, retakeScope: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                >
-                  <option value="full">{t("assessmentsPage.retake.scopeFull")}</option>
-                  <option value="failed_sections">{t("assessmentsPage.retake.scopeFailedSections")}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Save Button */}
-        <div className="flex items-center gap-3 mt-4">
-          <button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#93C5FD] text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Check className="w-4 h-4" />
-            )}
-            {saving ? t("assessmentsPage.settings.saving") : t("assessmentsPage.settings.save")}
-          </button>
-          <button
-            onClick={() => {
-              setExpandedId(null);
-              setSettingsForm(null);
-              setSaveSuccess(null);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-          {saveSuccess === assessmentId && (
-            <span className="text-sm text-[#22C55E] flex items-center gap-1">
-              <Check className="w-4 h-4" />
-              {t("assessmentsPage.settings.saved")}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const renderProctoringIndicators = (assessment: AssessmentResponse) => {
     const indicators = [];
     if (flaggedIds.has(assessment.id)) {
@@ -534,6 +409,14 @@ const AssessmentsContent = () => {
         <span key="flagged" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[#FFF7ED] text-[#EA580C]">
           <Flag className="w-3 h-3" />
           {t("assessmentsPage.flaggedBadge")}
+        </span>
+      );
+    }
+    if (hasOverride(assessment)) {
+      indicators.push(
+        <span key="override" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[#FEF3C7] text-[#D97706]">
+          <Settings className="w-3 h-3" />
+          {t("assessmentsPage.overrideBadge") || "Override"}
         </span>
       );
     }
@@ -558,6 +441,212 @@ const AssessmentsContent = () => {
     ) : null;
   };
 
+  /** Shared settings panel used for both course defaults and per-assessment */
+  const renderSettingsFields = (
+    form: SettingsForm,
+    setForm: (f: SettingsForm) => void,
+    courseHint?: CourseDefaults | null
+  ) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Proctoring Settings */}
+      <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Shield className="w-4 h-4 text-[#3B82F6]" />
+          <h4 className="text-sm font-semibold text-[#1F2937]">
+            {t("assessmentsPage.proctoring.title")}
+          </h4>
+        </div>
+        <div className="space-y-1">
+          <Toggle
+            checked={form.proctoringEnabled}
+            onChange={(v) => setForm({ ...form, proctoringEnabled: v })}
+            label={t("assessmentsPage.proctoring.enabled")}
+          />
+          {courseHint && (
+            <p className="text-xs text-[#9CA3AF]">
+              {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentProctoringEnabled ? t("assessmentsPage.settings.on") || "On" : t("assessmentsPage.settings.off") || "Off"}
+            </p>
+          )}
+          {form.proctoringEnabled && (
+            <>
+              <Toggle
+                checked={form.proctoringRules.webcamRequired ?? false}
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    proctoringRules: { ...form.proctoringRules, webcamRequired: v },
+                  })
+                }
+                label={t("assessmentsPage.proctoring.webcamRequired")}
+              />
+              <Toggle
+                checked={form.proctoringRules.browserLockdown ?? false}
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    proctoringRules: { ...form.proctoringRules, browserLockdown: v },
+                  })
+                }
+                label={t("assessmentsPage.proctoring.browserLockdown")}
+              />
+              <Toggle
+                checked={form.proctoringRules.tabSwitchAlert ?? false}
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    proctoringRules: { ...form.proctoringRules, tabSwitchAlert: v },
+                  })
+                }
+                label={t("assessmentsPage.proctoring.tabSwitchAlert")}
+              />
+            </>
+          )}
+          <Toggle
+            checked={form.timeLimitEnforced}
+            onChange={(v) => setForm({ ...form, timeLimitEnforced: v })}
+            label={t("assessmentsPage.proctoring.timeLimitEnforced")}
+          />
+          {courseHint && (
+            <p className="text-xs text-[#9CA3AF]">
+              {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentTimeLimitEnforced ? t("assessmentsPage.settings.on") || "On" : t("assessmentsPage.settings.off") || "Off"}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Retake Rules */}
+      <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <RotateCcw className="w-4 h-4 text-[#8B5CF6]" />
+          <h4 className="text-sm font-semibold text-[#1F2937]">
+            {t("assessmentsPage.retake.title")}
+          </h4>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm text-[#374151] block mb-1">
+              {t("assessmentsPage.retake.maxRetakes")}
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={99}
+              value={form.maxRetakes}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  maxRetakes: Math.max(0, parseInt(e.target.value) || 0),
+                })
+              }
+              placeholder={courseHint ? `${t("assessmentsPage.settings.courseDefault") || "Course default"}: ${courseHint.assessmentMaxRetakes}` : undefined}
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+            />
+            {form.maxRetakes === 0 && (
+              <p className="text-xs text-[#6B7280] mt-1">
+                {t("assessmentsPage.retake.unlimited")}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-sm text-[#374151] block mb-1">
+              {t("assessmentsPage.retake.coolingHours")}
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={720}
+              value={form.retakeCoolingHours}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  retakeCoolingHours: Math.max(0, parseInt(e.target.value) || 0),
+                })
+              }
+              placeholder={courseHint ? `${t("assessmentsPage.settings.courseDefault") || "Course default"}: ${courseHint.assessmentRetakeCoolingHours}` : undefined}
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-[#374151] block mb-1">
+              {t("assessmentsPage.retake.scorePolicy")}
+            </label>
+            <select
+              value={form.retakeScorePolicy}
+              onChange={(e) =>
+                setForm({ ...form, retakeScorePolicy: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            >
+              <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
+              <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
+              <option value="average">{t("assessmentsPage.retake.policies.average")}</option>
+            </select>
+            {courseHint && (
+              <p className="text-xs text-[#9CA3AF] mt-1">
+                {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentRetakeScorePolicy}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="text-sm text-[#374151] block mb-1">
+              {t("assessmentsPage.retake.scope")}
+            </label>
+            <select
+              value={form.retakeScope}
+              onChange={(e) => setForm({ ...form, retakeScope: e.target.value })}
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            >
+              <option value="full">{t("assessmentsPage.retake.scopeFull")}</option>
+              <option value="failed_sections">{t("assessmentsPage.retake.scopeFailedSections")}</option>
+            </select>
+            {courseHint && (
+              <p className="text-xs text-[#9CA3AF] mt-1">
+                {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentRetakeScope}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSettingsPanel = (assessmentId: string) => {
+    if (expandedId !== assessmentId || !settingsForm) return null;
+
+    return (
+      <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] px-4 py-4">
+        {renderSettingsFields(settingsForm, setSettingsForm, courseDefaults)}
+
+        {/* Save Button */}
+        <div className="flex items-center gap-3 mt-4">
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Check className="w-4 h-4" />
+            )}
+            {saving ? t("assessmentsPage.settings.saving") : t("assessmentsPage.settings.save")}
+          </button>
+          <button
+            onClick={() => {
+              setExpandedId(null);
+              setSettingsForm(null);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  /* ────────── Render ────────── */
+
   return (
     <>
       <CourseManagerNavbar manager={manager} />
@@ -571,6 +660,7 @@ const AssessmentsContent = () => {
             <CourseManagerMobileSidebar manager={manager} />
 
             <div className="flex-1 min-w-0">
+              {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h1 className="text-2xl font-bold text-[#1F2937]">
@@ -580,661 +670,586 @@ const AssessmentsContent = () => {
                     {t("assessmentsPage.subtitle")}
                   </p>
                 </div>
-                <ExportButton
-                  tableType="assessments"
-                  filters={{
-                    ...(typeFilter !== "all" ? { type: typeFilter } : {}),
-                    ...(statusFilter !== "all" ? { status: statusFilter } : {}),
-                  }}
-                />
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-1 bg-white rounded-xl border border-[#E5E7EB] p-1 mb-6">
-                <button
-                  onClick={() => setActiveTab("assessments")}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "assessments"
-                      ? "bg-[#3B82F6] text-white"
-                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
-                  }`}
-                >
-                  <FileText className="w-4 h-4" />
-                  {t("assessmentsPage.tabs.assessments")}
-                </button>
-                <button
-                  onClick={() => setActiveTab("blueprint")}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "blueprint"
-                      ? "bg-[#3B82F6] text-white"
-                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
-                  }`}
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                  {t("assessmentsPage.tabs.blueprint")}
-                </button>
-                <button
-                  onClick={() => setActiveTab("submissions")}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "submissions"
-                      ? "bg-[#3B82F6] text-white"
-                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
-                  }`}
-                >
-                  <Users className="w-4 h-4" />
-                  {t("assessmentsPage.submissions.tab")}
-                </button>
-              </div>
-
-              {activeTab === "assessments" && (
-              <>
-              {/* Stats Summary */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.total")}</p>
-                  <p className="text-2xl font-bold text-[#1F2937] mt-1">{assessments.length}</p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.active")}</p>
-                  <p className="text-2xl font-bold text-[#22C55E] mt-1">
-                    {assessments.filter((a) => a.status === "published" || a.status === "active").length}
-                  </p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-1">
-                    <Shield className="w-3 h-3 text-[#3B82F6]" />
-                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.proctoring.enabled")}</p>
-                  </div>
-                  <p className="text-2xl font-bold text-[#3B82F6] mt-1">
-                    {assessments.filter((a) => a.proctoringEnabled).length}
-                  </p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-1">
-                    <RotateCcw className="w-3 h-3 text-[#8B5CF6]" />
-                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.retake.title")}</p>
-                  </div>
-                  <p className="text-2xl font-bold text-[#8B5CF6] mt-1">
-                    {assessments.filter((a) => a.maxRetakes > 0).length}
-                  </p>
-                </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                  <div className="flex items-center gap-1">
-                    <Flag className="w-3 h-3 text-[#EA580C]" />
-                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.flagged")}</p>
-                  </div>
-                  <p className="text-2xl font-bold text-[#EA580C] mt-1">
-                    {flaggedIds.size}
-                  </p>
-                </div>
-              </div>
-
-              {/* Filters */}
+              {/* Course Selector */}
               <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 relative">
-                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
-                    <input
-                      type="text"
-                      placeholder={t("assessmentsPage.searchPlaceholder")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
-                    />
+                <label className="text-sm font-medium text-[#374151] block mb-2">
+                  {t("assessmentsPage.selectCourse") || "Select Course"}
+                </label>
+                {coursesLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-[#6B7280]">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t("dashboard.loading") || "Loading..."}
                   </div>
-                  <div className="flex gap-3">
-                    <select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      <option value="all">{t("assessmentsPage.filters.allTypes")}</option>
-                      <option value="quiz">{t("assessmentsPage.filters.quiz")}</option>
-                      <option value="exam">{t("assessmentsPage.filters.exam")}</option>
-                      <option value="assignment">{t("assessmentsPage.filters.assignment")}</option>
-                    </select>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      <option value="all">{t("assessmentsPage.filters.allStatus")}</option>
-                      <option value="draft">{t("assessmentsPage.filters.draft")}</option>
-                      <option value="published">Published</option>
-                      <option value="closed">Closed</option>
-                    </select>
-                  </div>
-                </div>
+                ) : (
+                  <select
+                    value={selectedCourseId}
+                    onChange={(e) => setSelectedCourseId(e.target.value)}
+                    className="w-full sm:w-96 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  >
+                    <option value="">{t("assessmentsPage.selectCoursePlaceholder") || "-- Select a course --"}</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>{c.title}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
-              {loading && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                  <table className="w-full">
-                    <tbody>
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <SkeletonTableRow key={i} cols={6} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                  <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
-                  <p className="text-sm text-[#6B7280] mb-4">{error}</p>
-                  <button
-                    onClick={fetchAssessments}
-                    className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    {t("dashboard.retry")}
-                  </button>
-                </div>
-              )}
-
-              {!loading && !error && filteredAssessments.length > 0 && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                  {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full table-fixed">
-                      <colgroup>
-                        <col className="w-[35%]" />
-                        <col className="w-[12%]" />
-                        <col className="w-[12%]" />
-                        <col className="w-[13%]" />
-                        <col className="w-[13%]" />
-                        <col className="w-[15%]" />
-                      </colgroup>
-                      <thead>
-                        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
-                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.type")}</th>
-                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.totalMarks")}</th>
-                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.passingMarks")}</th>
-                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.status")}</th>
-                          <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.actions")}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#E5E7EB]">
-                        {filteredAssessments.map((assessment) => {
-                          const badge = getStatusBadge(assessment.status);
-                          return (
-                          <tr key={assessment.id} className="group">
-                            <td colSpan={6} className="p-0">
-                              <table className="w-full table-fixed">
-                                <colgroup>
-                                  <col className="w-[35%]" />
-                                  <col className="w-[12%]" />
-                                  <col className="w-[12%]" />
-                                  <col className="w-[13%]" />
-                                  <col className="w-[13%]" />
-                                  <col className="w-[15%]" />
-                                </colgroup>
-                                <tbody>
-                                  <tr
-                                    className={`hover:bg-[#F9FAFB] transition-colors cursor-pointer ${
-                                      expandedId === assessment.id ? "bg-[#F9FAFB]" : ""
-                                    }`}
-                                    onClick={() => toggleSettings(assessment)}
-                                  >
-                                    <td className="px-4 py-3">
-                                      <p className="text-sm font-medium text-[#1F2937] truncate">{assessment.title}</p>
-                                      {assessment.durationMinutes && (
-                                        <p className="text-xs text-[#6B7280] mt-0.5">
-                                          {assessment.durationMinutes} min
-                                        </p>
-                                      )}
-                                      {renderProctoringIndicators(assessment)}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getTypeBadge(assessment.type)}`}>
-                                        {t(`assessmentsPage.type.${assessment.type}`)}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className="text-sm text-[#1F2937]">{assessment.totalMarks}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className="text-sm text-[#1F2937]">{assessment.passingMarks}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${badge}`}>
-                                        {t(`assessmentsPage.status.${assessment.status}`)}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            toggleSettings(assessment);
-                                          }}
-                                          className={`p-1.5 rounded-lg transition-colors ${
-                                            expandedId === assessment.id
-                                              ? "bg-[#3B82F6] text-white"
-                                              : "hover:bg-[#F3F4F6] text-[#6B7280]"
-                                          }`}
-                                          title={t("assessmentsPage.actions.configure")}
-                                        >
-                                          <Settings className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
-                                            courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
-                                              setOverrideStudents(res.data.map((e: any) => ({
-                                                id: e.studentId || e.userId || e.id,
-                                                name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
-                                              })));
-                                            }).catch(() => setOverrideStudents([]));
-                                          }}
-                                          className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                          title={t("assessmentsPage.override.title")}
-                                        >
-                                          <Shield className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                  {expandedId === assessment.id && (
-                                    <tr>
-                                      <td colSpan={6} className="p-0">
-                                        {renderSettingsPanel(assessment.id)}
-                                      </td>
-                                    </tr>
-                                  )}
-                                </tbody>
-                              </table>
-                            </td>
-                          </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile Cards */}
-                  <div className="md:hidden divide-y divide-[#E5E7EB]">
-                    {filteredAssessments.map((assessment) => (
-                      <div key={assessment.id}>
-                        <div className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <h3 className="text-sm font-medium text-[#1F2937]">{assessment.title}</h3>
-                              {assessment.durationMinutes && (
-                                <p className="text-xs text-[#6B7280] mt-0.5">{assessment.durationMinutes} min</p>
-                              )}
-                              {renderProctoringIndicators(assessment)}
-                            </div>
-                            <button
-                              onClick={() => toggleSettings(assessment)}
-                              className={`p-1.5 rounded-lg transition-colors ${
-                                expandedId === assessment.id
-                                  ? "bg-[#3B82F6] text-white"
-                                  : "hover:bg-[#F3F4F6] text-[#6B7280]"
-                              }`}
-                            >
-                              {expandedId === assessment.id ? (
-                                <ChevronUp className="w-4 h-4" />
-                              ) : (
-                                <ChevronDown className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getTypeBadge(assessment.type)}`}>
-                              {t(`assessmentsPage.type.${assessment.type}`)}
-                            </span>
-                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(assessment.status)}`}>
-                              {t(`assessmentsPage.status.${assessment.status}`)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-[#6B7280]">
-                            <span>{t("assessmentsPage.table.totalMarks")}: {assessment.totalMarks}</span>
-                            <span>{t("assessmentsPage.table.passingMarks")}: {assessment.passingMarks}</span>
-                          </div>
-                        </div>
-                        {renderSettingsPanel(assessment.id)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {!loading && !error && filteredAssessments.length === 0 && (
+              {/* Empty state when no course selected */}
+              {!selectedCourseId && (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-8 h-8 text-[#9CA3AF]" />
+                    <BookOpen className="w-8 h-8 text-[#9CA3AF]" />
                   </div>
                   <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
-                    {t("assessmentsPage.noAssessments")}
+                    {t("assessmentsPage.selectCoursePrompt") || "Select a course to view assessments"}
                   </h3>
                   <p className="text-sm text-[#6B7280]">
-                    {t("assessmentsPage.noAssessmentsDesc")}
+                    {t("assessmentsPage.selectCourseDesc") || "Choose a course from the dropdown above to manage its assessment settings and view individual assessments."}
                   </p>
                 </div>
               )}
-              </>
-              )}
 
-              {activeTab === "blueprint" && (
-                <div className="space-y-6">
-                  {/* Course Selector */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                    <label className="text-sm font-medium text-[#374151] block mb-2">
-                      {t("assessmentsPage.blueprint.selectCourse")}
-                    </label>
-                    <select
-                      value={blueprintCourseId}
-                      onChange={(e) => setBlueprintCourseId(e.target.value)}
-                      className="w-full sm:w-80 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              {/* Course selected: show content */}
+              {selectedCourseId && (
+                <>
+                  {/* Course Assessment Defaults (collapsible) */}
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6 overflow-hidden">
+                    <button
+                      onClick={() => setDefaultsOpen(!defaultsOpen)}
+                      className="w-full flex items-center justify-between px-4 py-4 hover:bg-[#F9FAFB] transition-colors"
                     >
-                      <option value="">{t("assessmentsPage.blueprint.selectCourse")}</option>
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>{c.title}</option>
-                      ))}
-                    </select>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
+                          <Settings className="w-5 h-5 text-[#3B82F6]" />
+                        </div>
+                        <div className="text-start">
+                          <h3 className="text-sm font-semibold text-[#1F2937]">
+                            {t("assessmentsPage.courseDefaults.title") || "Course Assessment Defaults"}
+                          </h3>
+                          <p className="text-xs text-[#6B7280]">
+                            {t("assessmentsPage.courseDefaults.subtitle") || "Default settings applied to all assessments in this course"}
+                          </p>
+                        </div>
+                      </div>
+                      {defaultsOpen ? (
+                        <ChevronUp className="w-5 h-5 text-[#6B7280]" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-[#6B7280]" />
+                      )}
+                    </button>
+
+                    {defaultsOpen && courseDefaultsForm && (
+                      <div className="border-t border-[#E5E7EB] px-4 py-4 bg-[#F9FAFB]">
+                        {renderSettingsFields(
+                          {
+                            proctoringEnabled: courseDefaultsForm.assessmentProctoringEnabled,
+                            proctoringRules: { webcamRequired: false, browserLockdown: false, tabSwitchAlert: false },
+                            timeLimitEnforced: courseDefaultsForm.assessmentTimeLimitEnforced,
+                            maxRetakes: courseDefaultsForm.assessmentMaxRetakes,
+                            retakeCoolingHours: courseDefaultsForm.assessmentRetakeCoolingHours,
+                            retakeScorePolicy: courseDefaultsForm.assessmentRetakeScorePolicy,
+                            retakeScope: courseDefaultsForm.assessmentRetakeScope,
+                          },
+                          (f) =>
+                            setCourseDefaultsForm({
+                              assessmentProctoringEnabled: f.proctoringEnabled,
+                              assessmentTimeLimitEnforced: f.timeLimitEnforced,
+                              assessmentMaxRetakes: f.maxRetakes,
+                              assessmentRetakeCoolingHours: f.retakeCoolingHours,
+                              assessmentRetakeScorePolicy: f.retakeScorePolicy,
+                              assessmentRetakeScope: f.retakeScope,
+                            }),
+                          null
+                        )}
+                        <div className="flex items-center gap-3 mt-4">
+                          <button
+                            onClick={handleSaveCourseDefaults}
+                            disabled={savingDefaults}
+                            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            {savingDefaults ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Check className="w-4 h-4" />
+                            )}
+                            {savingDefaults
+                              ? t("assessmentsPage.settings.saving")
+                              : t("assessmentsPage.courseDefaults.save") || "Save Defaults"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {!blueprintCourseId && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                      <LayoutGrid className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">{t("assessmentsPage.blueprint.noCourse")}</p>
-                    </div>
-                  )}
+                  {/* Tabs: Assessments | Submissions */}
+                  <div className="flex gap-1 bg-white rounded-xl border border-[#E5E7EB] p-1 mb-6">
+                    <button
+                      onClick={() => setActiveTab("assessments")}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === "assessments"
+                          ? "bg-[#3B82F6] text-white"
+                          : "text-[#6B7280] hover:bg-[#F3F4F6]"
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      {t("assessmentsPage.tabs.assessments")}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("submissions")}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === "submissions"
+                          ? "bg-[#3B82F6] text-white"
+                          : "text-[#6B7280] hover:bg-[#F3F4F6]"
+                      }`}
+                    >
+                      <Users className="w-4 h-4" />
+                      {t("assessmentsPage.submissions.tab")}
+                    </button>
+                  </div>
 
-                  {blueprintLoading && (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
-                    </div>
-                  )}
-
-                  {blueprintCourseId && !blueprintLoading && blueprintData && (
+                  {/* ═══════════ Assessments Tab ═══════════ */}
+                  {activeTab === "assessments" && (
                     <>
-                      {/* Coverage Summary */}
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
-                          <p className="text-3xl font-bold text-[#3B82F6]">{blueprintData.coveragePercent}%</p>
-                          <p className="text-xs text-[#6B7280] mt-1">{t("assessmentsPage.blueprint.coverage")}</p>
+                      {/* Stats Summary */}
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.total")}</p>
+                          <p className="text-2xl font-bold text-[#1F2937] mt-1">{assessments.length}</p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
-                          <p className="text-3xl font-bold text-[#1F2937]">{blueprintData.totalModules}</p>
-                          <p className="text-xs text-[#6B7280] mt-1">{t("assessmentsPage.blueprint.module")}</p>
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.active")}</p>
+                          <p className="text-2xl font-bold text-[#22C55E] mt-1">
+                            {assessments.filter((a) => a.status === "published" || a.status === "active").length}
+                          </p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
-                          <p className="text-3xl font-bold text-[#22C55E]">{blueprintData.coveredModules}</p>
-                          <p className="text-xs text-[#6B7280] mt-1">{t("assessmentsPage.blueprint.coveredModules")}</p>
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-1">
+                            <Shield className="w-3 h-3 text-[#3B82F6]" />
+                            <p className="text-xs text-[#6B7280]">{t("assessmentsPage.proctoring.enabled")}</p>
+                          </div>
+                          <p className="text-2xl font-bold text-[#3B82F6] mt-1">
+                            {assessments.filter((a) => a.proctoringEnabled).length}
+                          </p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
-                          <p className="text-3xl font-bold text-[#EF4444]">{blueprintData.gapModules}</p>
-                          <p className="text-xs text-[#6B7280] mt-1">{t("assessmentsPage.blueprint.gaps")}</p>
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-1">
+                            <RotateCcw className="w-3 h-3 text-[#8B5CF6]" />
+                            <p className="text-xs text-[#6B7280]">{t("assessmentsPage.retake.title")}</p>
+                          </div>
+                          <p className="text-2xl font-bold text-[#8B5CF6] mt-1">
+                            {assessments.filter((a) => a.maxRetakes > 0).length}
+                          </p>
                         </div>
-                        {/* Difficulty Distribution Summary */}
-                        {(() => {
-                          const allIds = [
-                            ...blueprintData.matrix.flatMap((r) => r.assessments.map((a) => a.assessmentId)),
-                            ...blueprintData.unlinkedAssessments.map((a) => a.assessmentId),
-                          ];
-                          const totals = { easy: 0, medium: 0, hard: 0 };
-                          let totalQ = 0;
-                          for (const id of allIds) {
-                            const d = difficultyData[id];
-                            if (d) {
-                              totals.easy += d.easy;
-                              totals.medium += d.medium;
-                              totals.hard += d.hard;
-                              totalQ += d.total;
-                            }
-                          }
-                          return (
-                            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                              <p className="text-xs text-[#6B7280] mb-2">{t("assessmentsPage.difficulty.title")}</p>
-                              {totalQ > 0 ? (
-                                <>
-                                  <div className="flex h-3 rounded-full overflow-hidden mb-2">
-                                    <div className="bg-[#22C55E]" style={{ width: `${(totals.easy / totalQ) * 100}%` }} />
-                                    <div className="bg-[#F59E0B]" style={{ width: `${(totals.medium / totalQ) * 100}%` }} />
-                                    <div className="bg-[#EF4444]" style={{ width: `${(totals.hard / totalQ) * 100}%` }} />
-                                  </div>
-                                  <div className="flex justify-between text-[10px] text-[#6B7280]">
-                                    <span className="text-[#22C55E]">{t("assessmentsPage.difficulty.easy")} {totals.easy}</span>
-                                    <span className="text-[#F59E0B]">{t("assessmentsPage.difficulty.medium")} {totals.medium}</span>
-                                    <span className="text-[#EF4444]">{t("assessmentsPage.difficulty.hard")} {totals.hard}</span>
-                                  </div>
-                                </>
-                              ) : (
-                                <p className="text-sm text-[#9CA3AF]">—</p>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-1">
+                            <Flag className="w-3 h-3 text-[#EA580C]" />
+                            <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.flagged")}</p>
+                          </div>
+                          <p className="text-2xl font-bold text-[#EA580C] mt-1">
+                            {flaggedIds.size}
+                          </p>
+                        </div>
                       </div>
 
-                      {/* Coverage Grid */}
-                      {blueprintData.totalModules === 0 ? (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                          <p className="text-sm text-[#6B7280]">{t("assessmentsPage.blueprint.noModules")}</p>
+                      {/* Filters */}
+                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+                        <div className="flex flex-col sm:flex-row gap-4">
+                          <div className="flex-1 relative">
+                            <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
+                            <input
+                              type="text"
+                              placeholder={t("assessmentsPage.searchPlaceholder")}
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                            />
+                          </div>
+                          <div className="flex gap-3">
+                            <select
+                              value={typeFilter}
+                              onChange={(e) => setTypeFilter(e.target.value)}
+                              className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            >
+                              <option value="all">{t("assessmentsPage.filters.allTypes")}</option>
+                              <option value="quiz">{t("assessmentsPage.filters.quiz")}</option>
+                              <option value="exam">{t("assessmentsPage.filters.exam")}</option>
+                              <option value="assignment">{t("assessmentsPage.filters.assignment")}</option>
+                            </select>
+                            <select
+                              value={statusFilter}
+                              onChange={(e) => setStatusFilter(e.target.value)}
+                              className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            >
+                              <option value="all">{t("assessmentsPage.filters.allStatus")}</option>
+                              <option value="draft">{t("assessmentsPage.filters.draft")}</option>
+                              <option value="published">Published</option>
+                              <option value="closed">Closed</option>
+                            </select>
+                          </div>
                         </div>
-                      ) : (
+                      </div>
+
+                      {/* Loading */}
+                      {loading && (
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                          <table className="w-full">
+                            <tbody>
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <SkeletonTableRow key={i} cols={6} />
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Error */}
+                      {error && (
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                          <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
+                          <p className="text-sm text-[#6B7280] mb-4">{error}</p>
+                          <button
+                            onClick={fetchAssessments}
+                            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                            {t("dashboard.retry")}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Assessments table */}
+                      {!loading && !error && filteredAssessments.length > 0 && (
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                          {/* Desktop Table */}
+                          <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full table-fixed">
+                              <colgroup>
+                                <col className="w-[35%]" />
+                                <col className="w-[12%]" />
+                                <col className="w-[12%]" />
+                                <col className="w-[13%]" />
+                                <col className="w-[13%]" />
+                                <col className="w-[15%]" />
+                              </colgroup>
+                              <thead>
+                                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                                  <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
+                                  <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.type")}</th>
+                                  <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.totalMarks")}</th>
+                                  <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.passingMarks")}</th>
+                                  <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.status")}</th>
+                                  <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.actions")}</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-[#E5E7EB]">
+                                {filteredAssessments.map((assessment) => {
+                                  const badge = getStatusBadge(assessment.status);
+                                  return (
+                                    <tr key={assessment.id} className="group">
+                                      <td colSpan={6} className="p-0">
+                                        <table className="w-full table-fixed">
+                                          <colgroup>
+                                            <col className="w-[35%]" />
+                                            <col className="w-[12%]" />
+                                            <col className="w-[12%]" />
+                                            <col className="w-[13%]" />
+                                            <col className="w-[13%]" />
+                                            <col className="w-[15%]" />
+                                          </colgroup>
+                                          <tbody>
+                                            <tr
+                                              className={`hover:bg-[#F9FAFB] transition-colors cursor-pointer ${
+                                                expandedId === assessment.id ? "bg-[#F9FAFB]" : ""
+                                              }`}
+                                              onClick={() => toggleSettings(assessment)}
+                                            >
+                                              <td className="px-4 py-3">
+                                                <p className="text-sm font-medium text-[#1F2937] truncate">{assessment.title}</p>
+                                                {assessment.durationMinutes && (
+                                                  <p className="text-xs text-[#6B7280] mt-0.5">
+                                                    {assessment.durationMinutes} min
+                                                  </p>
+                                                )}
+                                                {renderProctoringIndicators(assessment)}
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${getTypeBadge(assessment.type)}`}>
+                                                  {t(`assessmentsPage.type.${assessment.type}`)}
+                                                </span>
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <span className="text-sm text-[#1F2937]">{assessment.totalMarks}</span>
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <span className="text-sm text-[#1F2937]">{assessment.passingMarks}</span>
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-medium ${badge}`}>
+                                                  {t(`assessmentsPage.status.${assessment.status}`)}
+                                                </span>
+                                              </td>
+                                              <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1">
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      toggleSettings(assessment);
+                                                    }}
+                                                    className={`p-1.5 rounded-lg transition-colors ${
+                                                      expandedId === assessment.id
+                                                        ? "bg-[#3B82F6] text-white"
+                                                        : "hover:bg-[#F3F4F6] text-[#6B7280]"
+                                                    }`}
+                                                    title={t("assessmentsPage.actions.configure")}
+                                                  >
+                                                    <Settings className="w-4 h-4" />
+                                                  </button>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
+                                                      courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
+                                                        setOverrideStudents(res.data.map((e: any) => ({
+                                                          id: e.studentId || e.userId || e.id,
+                                                          name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
+                                                        })));
+                                                      }).catch(() => setOverrideStudents([]));
+                                                    }}
+                                                    className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                                    title={t("assessmentsPage.override.title")}
+                                                  >
+                                                    <Shield className="w-4 h-4" />
+                                                  </button>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setFlagModal({ assessmentId: assessment.id, title: assessment.title });
+                                                    }}
+                                                    className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                                    title={t("assessmentsPage.flagForReview")}
+                                                  >
+                                                    <Flag className="w-4 h-4" />
+                                                  </button>
+                                                </div>
+                                              </td>
+                                            </tr>
+                                            {expandedId === assessment.id && (
+                                              <tr>
+                                                <td colSpan={6} className="p-0">
+                                                  {renderSettingsPanel(assessment.id)}
+                                                </td>
+                                              </tr>
+                                            )}
+                                          </tbody>
+                                        </table>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Mobile Cards */}
+                          <div className="md:hidden divide-y divide-[#E5E7EB]">
+                            {filteredAssessments.map((assessment) => (
+                              <div key={assessment.id}>
+                                <div className="p-4">
+                                  <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                      <h3 className="text-sm font-medium text-[#1F2937]">{assessment.title}</h3>
+                                      {assessment.durationMinutes && (
+                                        <p className="text-xs text-[#6B7280] mt-0.5">{assessment.durationMinutes} min</p>
+                                      )}
+                                      {renderProctoringIndicators(assessment)}
+                                    </div>
+                                    <button
+                                      onClick={() => toggleSettings(assessment)}
+                                      className={`p-1.5 rounded-lg transition-colors ${
+                                        expandedId === assessment.id
+                                          ? "bg-[#3B82F6] text-white"
+                                          : "hover:bg-[#F3F4F6] text-[#6B7280]"
+                                      }`}
+                                    >
+                                      {expandedId === assessment.id ? (
+                                        <ChevronUp className="w-4 h-4" />
+                                      ) : (
+                                        <ChevronDown className="w-4 h-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 mb-3">
+                                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getTypeBadge(assessment.type)}`}>
+                                      {t(`assessmentsPage.type.${assessment.type}`)}
+                                    </span>
+                                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${getStatusBadge(assessment.status)}`}>
+                                      {t(`assessmentsPage.status.${assessment.status}`)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+                                    <span>{t("assessmentsPage.table.totalMarks")}: {assessment.totalMarks}</span>
+                                    <span>{t("assessmentsPage.table.passingMarks")}: {assessment.passingMarks}</span>
+                                  </div>
+                                  {/* Mobile action buttons */}
+                                  <div className="flex items-center gap-2 mt-3">
+                                    <button
+                                      onClick={() => {
+                                        setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
+                                        courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
+                                          setOverrideStudents(res.data.map((e: any) => ({
+                                            id: e.studentId || e.userId || e.id,
+                                            name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
+                                          })));
+                                        }).catch(() => setOverrideStudents([]));
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                      title={t("assessmentsPage.override.title")}
+                                    >
+                                      <Shield className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => setFlagModal({ assessmentId: assessment.id, title: assessment.title })}
+                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                      title={t("assessmentsPage.flagForReview")}
+                                    >
+                                      <Flag className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                                {renderSettingsPanel(assessment.id)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Empty state */}
+                      {!loading && !error && filteredAssessments.length === 0 && (
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                          <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
+                            <FileText className="w-8 h-8 text-[#9CA3AF]" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
+                            {t("assessmentsPage.noAssessments")}
+                          </h3>
+                          <p className="text-sm text-[#6B7280]">
+                            {t("assessmentsPage.noAssessmentsDesc")}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* ═══════════ Submissions Tab ═══════════ */}
+                  {activeTab === "submissions" && (
+                    <div className="space-y-6">
+                      {/* Assessment Selector */}
+                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <label className="text-sm font-medium text-[#374151] block mb-2">
+                          {t("assessmentsPage.submissions.selectAssessment")}
+                        </label>
+                        <select
+                          value={selectedSubmissionAssessment}
+                          onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
+                          className="w-full sm:w-80 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        >
+                          <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
+                          {assessments.map((a) => (
+                            <option key={a.id} value={a.id}>{a.title}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {!selectedSubmissionAssessment && (
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                          <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
+                          <p className="text-sm text-[#6B7280]">{t("assessmentsPage.submissions.emptyDesc")}</p>
+                        </div>
+                      )}
+
+                      {submissionsLoading && (
+                        <div className="flex items-center justify-center py-12">
+                          <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                        </div>
+                      )}
+
+                      {selectedSubmissionAssessment && !submissionsLoading && submissions.length === 0 && (
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                          <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
+                          <p className="text-sm text-[#6B7280]">{t("assessmentsPage.submissions.noSubmissions") || "No submissions yet for this assessment"}</p>
+                        </div>
+                      )}
+
+                      {selectedSubmissionAssessment && !submissionsLoading && submissions.length > 0 && (
                         <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
                                 <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
-                                    {t("assessmentsPage.blueprint.module")}
-                                  </th>
-                                  <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase">
-                                    {t("assessmentsPage.blueprint.coverage")}
-                                  </th>
-                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
-                                    {t("assessmentsPage.blueprint.linked")}
-                                  </th>
+                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.student")}</th>
+                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.score")}</th>
+                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.status")}</th>
+                                  <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.submitted")}</th>
+                                  <th className="px-4 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.actions")}</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[#E5E7EB]">
-                                {blueprintData.matrix.map((row) => (
-                                  <tr key={row.moduleId} className="hover:bg-[#F9FAFB]">
-                                    <td className="px-4 py-3">
-                                      <p className="text-sm font-medium text-[#1F2937]">{row.moduleTitle}</p>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                      {row.covered ? (
-                                        <CheckCircle2 className="w-5 h-5 text-[#22C55E] mx-auto" />
-                                      ) : (
-                                        <XCircle className="w-5 h-5 text-[#EF4444] mx-auto" />
-                                      )}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      {row.assessments.length > 0 ? (
-                                        <div className="space-y-1.5">
-                                          {row.assessments.map((a) => {
-                                            const d = difficultyData[a.assessmentId];
-                                            return (
-                                              <div key={a.assessmentId} className="flex items-center gap-2">
-                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${getTypeBadge(a.type)}`}>
-                                                  {a.title} ({a.questionCount} {t("assessmentsPage.blueprint.questions")})
-                                                </span>
-                                                {d && d.total > 0 && (
-                                                  <div className="flex h-1.5 w-16 rounded-full overflow-hidden" title={`E:${d.easy} M:${d.medium} H:${d.hard}`}>
-                                                    <div className="bg-[#22C55E]" style={{ width: `${(d.easy / d.total) * 100}%` }} />
-                                                    <div className="bg-[#F59E0B]" style={{ width: `${(d.medium / d.total) * 100}%` }} />
-                                                    <div className="bg-[#EF4444]" style={{ width: `${(d.hard / d.total) * 100}%` }} />
-                                                  </div>
-                                                )}
-                                                {flaggedIds.has(a.assessmentId) ? (
-                                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-[#EA580C]">
-                                                    <Flag className="w-3 h-3" />
-                                                    {t("assessmentsPage.flaggedBadge")}
-                                                  </span>
-                                                ) : d && d.total > 0 && (d.easy / d.total > 0.8 || d.medium / d.total > 0.8 || d.hard / d.total > 0.8) ? (
-                                                  <button
-                                                    onClick={(e) => { e.stopPropagation(); setFlagModal({ assessmentId: a.assessmentId, title: a.title }); }}
-                                                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-[#EA580C] bg-[#FFF7ED] hover:bg-[#FFEDD5] transition-colors"
-                                                    title={t("assessmentsPage.flagForReview")}
-                                                  >
-                                                    <Flag className="w-3 h-3" />
-                                                  </button>
-                                                ) : null}
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      ) : (
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-xs text-[#9CA3AF]">—</span>
-                                          <button
-                                            onClick={() => setFlagModal({ assessmentId: row.moduleId, title: row.moduleTitle })}
-                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-[#EA580C] bg-[#FFF7ED] hover:bg-[#FFEDD5] transition-colors"
-                                            title={t("assessmentsPage.flagForReview")}
-                                          >
-                                            <Flag className="w-3 h-3" />
-                                            {t("assessmentsPage.flagForReview")}
-                                          </button>
-                                        </div>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
+                                {submissions.map((sub) => {
+                                  const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
+                                  const isGraded = sub.status === "graded";
+                                  return (
+                                    <tr key={sub.id} className="hover:bg-[#F9FAFB] transition-colors">
+                                      <td className="px-4 py-3">
+                                        <p className="text-sm font-medium text-[#1F2937]">
+                                          {sub.studentFirstName} {sub.studentLastName}
+                                        </p>
+                                        <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        {sub.score !== null ? (
+                                          <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                                            {sub.score} / {sub.maxScore}
+                                          </span>
+                                        ) : (
+                                          <span className="text-sm text-[#9CA3AF]">--</span>
+                                        )}
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                          isGraded
+                                            ? "bg-[#DCFCE7] text-[#22C55E]"
+                                            : "bg-[#FEF3C7] text-[#D97706]"
+                                        }`}>
+                                          {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3">
+                                        <p className="text-sm text-[#6B7280]">
+                                          {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                        </p>
+                                      </td>
+                                      <td className="px-4 py-3 text-end">
+                                        <button
+                                          onClick={() => setViewingSubmission(sub)}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
+                                        >
+                                          <Eye className="w-3.5 h-3.5" />
+                                          {t("assessmentsPage.actions.view")}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
                         </div>
                       )}
-
-                      {/* Unlinked Assessments */}
-                      {blueprintData.unlinkedAssessments.length > 0 && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                          <h3 className="text-sm font-semibold text-[#1F2937] mb-2">
-                            {t("assessmentsPage.blueprint.unlinked")}
-                          </h3>
-                          <p className="text-xs text-[#6B7280] mb-3">
-                            {t("assessmentsPage.blueprint.unlinkedDesc")}
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {blueprintData.unlinkedAssessments.map((a) => (
-                              <span
-                                key={a.assessmentId}
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${getTypeBadge(a.type)}`}
-                              >
-                                {a.title} ({a.questionCount} {t("assessmentsPage.blueprint.questions")})
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-
-              {activeTab === "submissions" && (
-                <div className="space-y-6">
-                  {/* Assessment Selector */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                    <label className="text-sm font-medium text-[#374151] block mb-2">
-                      {t("assessmentsPage.submissions.selectAssessment")}
-                    </label>
-                    <select
-                      value={selectedSubmissionAssessment}
-                      onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
-                      className="w-full sm:w-80 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                    >
-                      <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
-                      {assessments.map((a) => (
-                        <option key={a.id} value={a.id}>{a.title}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {!selectedSubmissionAssessment && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                      <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">{t("assessmentsPage.submissions.emptyDesc")}</p>
                     </div>
                   )}
-
-                  {submissionsLoading && (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
-                    </div>
-                  )}
-
-                  {selectedSubmissionAssessment && !submissionsLoading && submissions.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                      <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
-                      <p className="text-sm text-[#6B7280]">No submissions yet for this assessment</p>
-                    </div>
-                  )}
-
-                  {selectedSubmissionAssessment && !submissionsLoading && submissions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.student")}</th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.score")}</th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.status")}</th>
-                              <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.submitted")}</th>
-                              <th className="px-4 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.actions")}</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#E5E7EB]">
-                            {submissions.map((sub) => {
-                              const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
-                              const isGraded = sub.status === "graded";
-                              return (
-                                <tr key={sub.id} className="hover:bg-[#F9FAFB] transition-colors">
-                                  <td className="px-4 py-3">
-                                    <p className="text-sm font-medium text-[#1F2937]">
-                                      {sub.studentFirstName} {sub.studentLastName}
-                                    </p>
-                                    <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    {sub.score !== null ? (
-                                      <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-                                        {sub.score} / {sub.maxScore}
-                                      </span>
-                                    ) : (
-                                      <span className="text-sm text-[#9CA3AF]">--</span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                      isGraded
-                                        ? "bg-[#DCFCE7] text-[#22C55E]"
-                                        : "bg-[#FEF3C7] text-[#D97706]"
-                                    }`}>
-                                      {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3">
-                                    <p className="text-sm text-[#6B7280]">
-                                      {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                                    </p>
-                                  </td>
-                                  <td className="px-4 py-3 text-end">
-                                    <button
-                                      onClick={() => setViewingSubmission(sub)}
-                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
-                                    >
-                                      <Eye className="w-3.5 h-3.5" />
-                                      {t("assessmentsPage.actions.view")}
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                </>
               )}
             </div>
           </div>
@@ -1251,7 +1266,7 @@ const AssessmentsContent = () => {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-[#1F2937]">Submission Details</h3>
+                <h3 className="text-lg font-semibold text-[#1F2937]">{t("assessmentsPage.submissions.details") || "Submission Details"}</h3>
                 <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
                   <X className="w-5 h-5 text-[#6B7280]" />
                 </button>
@@ -1270,13 +1285,13 @@ const AssessmentsContent = () => {
                 </div>
                 {assessment && (
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
-                    <p className="text-xs text-[#6B7280]">Assessment</p>
+                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.table.assessment")}</p>
                     <p className="text-sm font-medium text-[#1F2937]">{assessment.title}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
-                    <p className="text-xs text-[#6B7280]">Score</p>
+                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.score")}</p>
                     {sub.score !== null ? (
                       <p className={`text-lg font-bold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                         {sub.score} / {sub.maxScore}
@@ -1286,7 +1301,7 @@ const AssessmentsContent = () => {
                     )}
                   </div>
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
-                    <p className="text-xs text-[#6B7280]">Status</p>
+                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.status")}</p>
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
                       isGraded ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEF3C7] text-[#D97706]"
                     }`}>
@@ -1294,26 +1309,26 @@ const AssessmentsContent = () => {
                     </span>
                     {isPassed && sub.score !== null && (
                       <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#DCFCE7] text-[#22C55E]">
-                        Pass
+                        {t("assessmentsPage.submissions.pass") || "Pass"}
                       </span>
                     )}
                     {sub.score !== null && !isPassed && (
                       <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#FEE2E2] text-[#EF4444]">
-                        Fail
+                        {t("assessmentsPage.submissions.fail") || "Fail"}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
-                    <p className="text-xs text-[#6B7280]">Submitted</p>
+                    <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.submitted")}</p>
                     <p className="text-sm text-[#1F2937]">
                       {new Date(sub.submittedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                   {sub.gradedAt && (
                     <div className="p-3 bg-[#F9FAFB] rounded-lg">
-                      <p className="text-xs text-[#6B7280]">Graded</p>
+                      <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.graded")}</p>
                       <p className="text-sm text-[#1F2937]">
                         {new Date(sub.gradedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
@@ -1326,7 +1341,7 @@ const AssessmentsContent = () => {
                   onClick={() => setViewingSubmission(null)}
                   className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
                 >
-                  Close
+                  {t("assessmentsPage.submissions.close") || "Close"}
                 </button>
               </div>
             </div>
@@ -1419,7 +1434,7 @@ const AssessmentsContent = () => {
               <button
                 onClick={handleOverride}
                 disabled={overrideSubmitting || !overrideForm.studentId || !overrideForm.reason.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#93C5FD] text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {overrideSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                 {t("assessmentsPage.override.grant")}

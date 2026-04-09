@@ -19,8 +19,6 @@ import {
   BookOpen,
   Eye,
   FileText,
-  Shield,
-  Lock,
   GraduationCap,
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
@@ -30,7 +28,6 @@ import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useNELCCompliance } from "@/hooks/useNELCCompliance";
 import { nelcComplianceApi } from "@/lib/api";
-import ExportButton from "@/components/shared/ExportButton";
 
 interface VirtualClassSession {
   sessionId: string;
@@ -58,8 +55,6 @@ const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
   accessibility: Eye,
   virtual_classes: Video,
   assessment_quality: FileText,
-  policies: Shield,
-  data_protection: Lock,
   instructor_qualifications: GraduationCap,
 };
 
@@ -102,11 +97,30 @@ const RULE_NAME_AR: Record<string, string> = {
   instructor_qualifications: "مؤهلات المدرب",
   instructor_credentials: "أوراق اعتماد المدرب",
   instructor_workload: "عبء عمل المدرب",
+  bilingual_descriptions: "وصف ثنائي اللغة",
+  cme_hours_configured: "ساعات التعليم الطبي المستمر",
   enrollment_limit: "حد التسجيل",
   assistant_allocation: "تخصيص المساعدين",
   zoom_configuration: "إعدادات Zoom",
   scheduling: "الجدولة",
   attendance_tracking: "تتبع الحضور",
+  ta_allocation: "تخصيص مساعدي التدريس",
+  modules_count: "عدد الوحدات",
+  modules_with_materials: "وحدات بمحتوى",
+  wcag_status: "حالة WCAG",
+  video_transcripts: "نصوص الفيديو",
+  sessions_exist: "وجود محاضرات",
+  assessments_exist: "وجود تقييمات",
+  blueprint_coverage: "تغطية المخطط",
+  graded_submissions: "تقديمات مُقيمة",
+  instructor_role: "دور المدرب",
+  credentials_uploaded: "أوراق اعتماد مرفوعة",
+  instructor_assigned: "مدرب معين",
+  content_review_policy: "سياسة مراجعة المحتوى",
+  nelc_compliance_policy: "سياسة امتثال NELC",
+  role_approved: "الدور معتمد",
+  pdp_compliance: "امتثال حماية البيانات",
+  privacy_policy: "سياسة الخصوصية",
 };
 
 const CATEGORY_LABEL_AR: Record<string, string> = {
@@ -115,8 +129,6 @@ const CATEGORY_LABEL_AR: Record<string, string> = {
   "Virtual Classes": "الفصول الافتراضية",
   "Virtual Classes (N/A)": "الفصول الافتراضية (غير متاح)",
   "Assessment Quality": "جودة التقييم",
-  "Policies": "السياسات",
-  "Data Protection": "حماية البيانات",
   "Instructor Qualifications": "مؤهلات المدرب",
 };
 
@@ -157,6 +169,10 @@ const NELC_DETAIL_AR: [RegExp, string][] = [
   [/^No instructor assigned$/, "لم يتم تعيين مدرب"],
   [/^Instructor workload within limits.*$/, "عبء عمل المدرب ضمن الحدود"],
   [/^Instructor workload exceeds.*$/, "عبء عمل المدرب يتجاوز الحدود"],
+  [/^Course has EN \+ AR descriptions$/, "الدورة لديها وصف بالإنجليزية والعربية"],
+  [/^Missing Arabic description$/, "الوصف العربي مفقود"],
+  [/^CME hours configured: (\d+)$/, "ساعات التعليم الطبي المستمر: $1"],
+  [/^CME hours not configured$/, "لم يتم تحديد ساعات التعليم الطبي المستمر"],
   [/^Passed$/, "ناجح"],
   [/^Failed$/, "فاشل"],
   [/^Review$/, "مراجعة"],
@@ -175,6 +191,46 @@ const NELC_DETAIL_AR: [RegExp, string][] = [
   [/^Scheduled for (\d+) minutes$/, "مجدولة لمدة $1 دقيقة"],
   [/^No attendance records for completed session$/, "لا توجد سجلات حضور للمحاضرة المكتملة"],
   [/^(\d+) attendance records tracked$/, "$1 سجل حضور متتبع"],
+  // Course structure details
+  [/^(\d+) modules \(min 3\)$/, "$1 وحدات (الحد الأدنى 3)"],
+  [/^Only (\d+) module\(s\)$/, "$1 وحدة(وحدات) فقط"],
+  [/^(\d+) module\(s\) — modules are optional for (\w+) courses$/, "$1 وحدة(وحدات) — الوحدات اختيارية لدورات $2"],
+  [/^No modules — optional for (\w+) courses$/, "لا توجد وحدات — اختيارية لدورات $1"],
+  [/^All modules have materials$/, "جميع الوحدات لها محتوى"],
+  [/^(\d+) module\(s\) lack materials$/, "$1 وحدة(وحدات) بدون محتوى"],
+  [/^Course has EN \+ AR titles$/, "الدورة لها عنوان إنجليزي وعربي"],
+  [/^Missing Arabic title \(titleAr\)$/, "العنوان العربي مفقود"],
+  [/^Course has EN \+ AR descriptions$/, "الدورة لها وصف إنجليزي وعربي"],
+  [/^Missing Arabic description$/, "الوصف العربي مفقود"],
+  [/^CME hours configured: (\d+)h$/, "ساعات CME مُعدة: $1 ساعة"],
+  [/^No CME hours configured$/, "لم يتم تعيين ساعات CME"],
+  // Accessibility details
+  [/^(\d+)\/(\d+) materials WCAG compliant$/, "$1/$2 مواد متوافقة مع WCAG"],
+  [/^No videos to caption$/, "لا توجد فيديوهات للترجمة"],
+  [/^(\d+)\/(\d+) videos have captions$/, "$1/$2 فيديو لها ترجمة"],
+  [/^No videos$/, "لا توجد فيديوهات"],
+  [/^(\d+)\/(\d+) videos have transcripts$/, "$1/$2 فيديو لها نصوص مكتوبة"],
+  // Virtual classes details
+  [/^Not applicable for self-paced courses$/, "غير مطبق على الدورات الذاتية"],
+  [/^No sessions created yet$/, "لم يتم إنشاء محاضرات بعد"],
+  [/^(\d+)\/(\d+) virtual sessions configured$/, "$1/$2 محاضرة افتراضية مُعدة"],
+  [/^(\d+)\/(\d+) completed sessions have attendance$/, "$1/$2 محاضرة مكتملة لها حضور"],
+  [/^(\d+) TA\(s\) assigned, (\d+) required \((\d+) enrolled\)$/, "$1 مساعد(ين) معين، $2 مطلوب ($3 مسجل)"],
+  // Assessment details
+  [/^No assessments created$/, "لم يتم إنشاء تقييمات"],
+  [/^(\d+)% module coverage \((\d+)\/(\d+) modules\)$/, "$1% تغطية الوحدات ($2/$3 وحدة)"],
+  [/^(\d+)\/(\d+) published assessments have submissions$/, "$1/$2 تقييم منشور له تقديمات"],
+  // Instructor details
+  [/^Instructor has active instructor role$/, "المدرب لديه دور مدرب نشط"],
+  [/^User does not have instructor role assigned$/, "المستخدم ليس لديه دور مدرب معين"],
+  [/^Resume\/credentials on file$/, "السيرة الذاتية/أوراق الاعتماد مرفوعة"],
+  [/^No resume\/credentials uploaded$/, "لم يتم رفع سيرة ذاتية/أوراق اعتماد"],
+  [/^No instructor assigned to course$/, "لم يتم تعيين مدرب للدورة"],
+  // Policy details (legacy — may still appear from old data)
+  [/^Content review policy enabled$/, "سياسة مراجعة المحتوى مفعلة"],
+  [/^Content review policy not enabled$/, "سياسة مراجعة المحتوى غير مفعلة"],
+  [/^NELC compliance enforcement enabled$/, "تطبيق امتثال NELC مفعل"],
+  [/^NELC compliance enforcement not enabled$/, "تطبيق امتثال NELC غير مفعل"],
 ];
 
 function translateRule(rule: string, isArabic: boolean): string {
@@ -205,6 +261,7 @@ const NELCComplianceCenterContent = () => {
   const [activeTab, setActiveTab] = useState<"courses" | "virtualClasses">("courses");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "passed" | "review" | "failed">("all");
+  const [deliveryFilter, setDeliveryFilter] = useState<string>("all");
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [scorecards, setScorecards] = useState<Record<string, CourseScorecard>>({});
@@ -355,7 +412,6 @@ const NELCComplianceCenterContent = () => {
                     {t("nelc.subtitle")}
                   </p>
                 </div>
-                <ExportButton tableType="nelc-courses" />
               </div>
 
               {/* Summary Bar */}
@@ -378,31 +434,6 @@ const NELCComplianceCenterContent = () => {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="flex gap-1 mb-6 bg-white rounded-xl border border-[#E5E7EB] p-1">
-                <button
-                  onClick={() => setActiveTab("courses")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "courses"
-                      ? "bg-[#3B82F6] text-white"
-                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
-                  }`}
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  {t("nelc.coursesTab")}
-                </button>
-                <button
-                  onClick={() => setActiveTab("virtualClasses")}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === "virtualClasses"
-                      ? "bg-[#3B82F6] text-white"
-                      : "text-[#6B7280] hover:bg-[#F3F4F6]"
-                  }`}
-                >
-                  <Video className="w-4 h-4" />
-                  {t("nelc.virtualClassesTab")}
-                </button>
-              </div>
 
               {/* Search + Filter */}
               <div className="flex flex-col sm:flex-row gap-3 mb-6">
@@ -426,11 +457,20 @@ const NELCComplianceCenterContent = () => {
                   <option value="review">{t("nelc.review")}</option>
                   <option value="failed">{t("nelc.failed")}</option>
                 </select>
+                <select
+                  value={deliveryFilter}
+                  onChange={(e) => setDeliveryFilter(e.target.value)}
+                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                >
+                  <option value="all">{t("sessionsPage.allTypes")}</option>
+                  <option value="zoom">{t("coursesPage.delivery.zoom")}</option>
+                  <option value="onsite">{t("coursesPage.delivery.onsite")}</option>
+                  <option value="blended">{t("coursesPage.delivery.blended")}</option>
+                  <option value="self-paced">{t("coursesPage.delivery.selfPaced")}</option>
+                </select>
               </div>
 
               {/* Courses Tab Content */}
-              {activeTab === "courses" && (
-              <>
               {filtered.length === 0 ? (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -459,7 +499,7 @@ const NELCComplianceCenterContent = () => {
                             {t("nelc.vcStatus")}
                           </th>
                           <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase hidden sm:table-cell">
-                            {t("nelc.vcSession")}
+                            {t("nelc.vcComplianceChecks")}
                           </th>
                           <th className="px-4 py-3 text-center text-xs font-semibold text-[#6B7280] uppercase w-10">
                             &nbsp;
@@ -500,21 +540,12 @@ const NELCComplianceCenterContent = () => {
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 text-center hidden sm:table-cell">
-                                  <div className="flex items-center justify-center gap-2 text-xs">
-                                    <span className="text-[#22C55E] font-medium">
-                                      {course.summary.passed}
-                                    </span>
-                                    /
-                                    <span className="text-[#F59E0B] font-medium">
-                                      {course.summary.review}
-                                    </span>
-                                    /
-                                    <span className="text-[#EF4444] font-medium">
-                                      {course.summary.failed}
-                                    </span>
-                                    <span className="text-[#9CA3AF]">
-                                      ({course.summary.total})
-                                    </span>
+                                  <div className="flex items-center justify-center gap-1.5 text-xs">
+                                    <span className="text-[#22C55E] font-medium">{course.summary.passed}</span>
+                                    <span className="text-[#9CA3AF]">/</span>
+                                    <span className="text-[#F59E0B] font-medium">{course.summary.review}</span>
+                                    <span className="text-[#9CA3AF]">/</span>
+                                    <span className="text-[#EF4444] font-medium">{course.summary.failed}</span>
                                   </div>
                                 </td>
                                 <td className="px-4 py-3 text-center">
@@ -643,11 +674,8 @@ const NELCComplianceCenterContent = () => {
                   </div>
                 </div>
               )}
-              </>
-              )}
-
-              {/* Virtual Classes Tab Content */}
-              {activeTab === "virtualClasses" && (
+              {/* Virtual Classes section removed — checks merged into course scorecard */}
+              {false && (
                 <>
                   {vcLoading ? (
                     <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">

@@ -1893,6 +1893,8 @@ export class InstructorService {
         id: users.id,
         firstName: users.firstName,
         lastName: users.lastName,
+        firstNameAr: users.firstNameAr,
+        lastNameAr: users.lastNameAr,
         email: users.email,
         avatar: users.avatar,
         department: users.department,
@@ -2055,7 +2057,7 @@ export class InstructorService {
   async getInstructorPerformance(instructorId: string) {
     // Verify instructor exists
     const [instructor] = await db
-      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, email: users.email, avatar: users.avatar })
+      .select({ id: users.id, firstName: users.firstName, lastName: users.lastName, firstNameAr: users.firstNameAr, lastNameAr: users.lastNameAr, email: users.email, avatar: users.avatar })
       .from(users)
       .where(eq(users.id, instructorId))
       .limit(1);

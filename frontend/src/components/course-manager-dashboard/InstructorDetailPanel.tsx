@@ -60,6 +60,9 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
   const getName = () => {
     if (!data) return "";
+    if (isRTL && ((data.instructor as any).firstNameAr || (data.instructor as any).lastNameAr)) {
+      return [(data.instructor as any).firstNameAr, (data.instructor as any).lastNameAr].filter(Boolean).join(" ");
+    }
     return [data.instructor.firstName, data.instructor.lastName].filter(Boolean).join(" ") || data.instructor.email;
   };
 

@@ -31,6 +31,8 @@ interface RosterInstructor {
   id: string;
   firstName: string | null;
   lastName: string | null;
+  firstNameAr?: string | null;
+  lastNameAr?: string | null;
   email: string;
   avatar: string | null;
   department: string | null;
@@ -169,6 +171,9 @@ const InstructorsContent = () => {
   };
 
   const getName = (inst: RosterInstructor) => {
+    if (isRTL && (inst.firstNameAr || inst.lastNameAr)) {
+      return [inst.firstNameAr, inst.lastNameAr].filter(Boolean).join(" ");
+    }
     return [inst.firstName, inst.lastName].filter(Boolean).join(" ") || inst.email;
   };
 

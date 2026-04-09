@@ -321,7 +321,9 @@ const SettingsContent = () => {
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold text-[#1F2937]">
-                            {profileData.firstName} {profileData.lastName}
+                            {isRTL && (profileData.firstNameAr || profileData.lastNameAr)
+                              ? `${profileData.firstNameAr} ${profileData.lastNameAr}`.trim()
+                              : `${profileData.firstName} ${profileData.lastName}`.trim()}
                           </h3>
                           <p className="text-sm text-[#6B7280]">{profileData.email}</p>
                         </div>

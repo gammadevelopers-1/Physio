@@ -14,6 +14,8 @@ import {
   users,
   userPreferences,
   roleRequests,
+  userRoles,
+  roles,
   SESSION_STATUS,
   SESSION_TYPE,
   MATERIAL_STATUS,
@@ -264,13 +266,20 @@ export class NelcComplianceService {
     const results = [];
 
     for (const course of allCourses) {
-      const compliance = await this.getCourseCompliance(course.id);
+      const scorecard = await this.getCourseComplianceScorecard(course.id);
+      // Compute summary from scorecard categories (not just sessions)
+      const summary = {
+        passed: scorecard.categories.filter((c: any) => c.status === 'passed').length,
+        review: scorecard.categories.filter((c: any) => c.status === 'review').length,
+        failed: scorecard.categories.filter((c: any) => c.status === 'failed').length,
+        total: scorecard.categories.length,
+      };
       results.push({
         courseId: course.id,
         courseTitle: course.title,
         instructorName: instructorMap.get(course.instructorId!) || 'Unknown',
-        overallStatus: compliance.overallStatus,
-        summary: compliance.summary,
+        overallStatus: scorecard.overallStatus,
+        summary,
       });
     }
 
@@ -278,14 +287,12 @@ export class NelcComplianceService {
   }
 
   /**
-   * 7-category course-level scorecard per NELC spec:
-   * 1. Course Structure — modules, hours, bilingual content
+   * 5-category course-level scorecard per NELC spec:
+   * 1. Course Structure — modules, materials, bilingual content/descriptions, CME hours
    * 2. Accessibility — WCAG, captions, transcripts
-   * 3. Virtual Classes — enrollment limits, assistants, Zoom, attendance
+   * 3. Virtual Classes — Zoom configuration, attendance tracking
    * 4. Assessment Quality — blueprint coverage, graded submissions
-   * 5. Policies — content review + NELC compliance policies enabled
-   * 6. Data Protection — manual verification (defaults to 'review')
-   * 7. Instructor Qualifications — role request approved, credentials uploaded
+   * 5. Instructor Qualifications — role request approved, credentials uploaded
    */
   async getCourseComplianceScorecard(courseId: string) {
     // Fetch course
@@ -300,16 +307,13 @@ export class NelcComplianceService {
     }
 
     // Fetch related data in parallel
-    const [modules, materials, courseAssessments, courseSessions, enrollmentRows] = await Promise.all([
+    const [modules, materials, courseAssessments, courseSessions] = await Promise.all([
       db.select().from(courseModules).where(eq(courseModules.courseId, courseId)),
       db.select().from(courseMaterials).where(
         and(eq(courseMaterials.courseId, courseId), sql`${courseMaterials.status} != 'archived'`),
       ),
       db.select().from(assessments).where(eq(assessments.courseId, courseId)),
       db.select().from(sessions).where(eq(sessions.courseId, courseId)),
-      db.select({ count: count() }).from(enrollments).where(
-        and(eq(enrollments.courseId, courseId), eq(enrollments.status, 'active')),
-      ),
     ]);
 
     const categories: Array<{
@@ -344,16 +348,6 @@ export class NelcComplianceService {
       });
     }
 
-    const totalMinutes = modules.reduce((s, m) => s + (m.durationMinutes || 0), 0);
-    const classification = classifyCourse(course.startDate, course.endDate);
-    const nelcMinHours = classification === 'long' ? 25 : 5;
-    const totalHours = totalMinutes / 60;
-    structureChecks.push({
-      rule: 'hours_compliance',
-      status: totalHours >= nelcMinHours ? 'passed' : 'failed',
-      detail: `${totalHours.toFixed(1)}h / ${nelcMinHours}h minimum (${classification} course)`,
-    });
-
     const modulesWithMaterials = new Set(materials.filter((m) => m.moduleId).map((m) => m.moduleId));
     const modulesLackingMaterials = modules.filter((m) => !modulesWithMaterials.has(m.id));
     structureChecks.push({
@@ -368,6 +362,22 @@ export class NelcComplianceService {
       rule: 'bilingual_content',
       status: course.title && course.titleAr ? 'passed' : 'failed',
       detail: course.titleAr ? 'Course has EN + AR titles' : 'Missing Arabic title (titleAr)',
+    });
+
+    structureChecks.push({
+      rule: 'bilingual_descriptions',
+      status: course.description && course.descriptionAr ? 'passed' : 'failed',
+      detail: course.descriptionAr
+        ? 'Course has EN + AR descriptions'
+        : 'Missing Arabic description',
+    });
+
+    structureChecks.push({
+      rule: 'cme_hours_configured',
+      status: course.cmeHours && course.cmeHours > 0 ? 'passed' : 'review',
+      detail: course.cmeHours && course.cmeHours > 0
+        ? `CME hours configured: ${course.cmeHours}`
+        : 'CME hours not configured',
     });
 
     categories.push({
@@ -422,14 +432,6 @@ export class NelcComplianceService {
     } else if (courseSessions.length === 0) {
       vcChecks.push({ rule: 'sessions_exist', status: 'review', detail: 'No sessions created yet' });
     } else {
-      const enrolled = Number(enrollmentRows[0]?.count || 0);
-      const nelcMax = getNelcMaxEnrollment(classification);
-      vcChecks.push({
-        rule: 'enrollment_limit',
-        status: enrolled > nelcMax ? 'failed' : enrolled >= nelcMax * 0.9 ? 'review' : 'passed',
-        detail: `${enrolled}/${nelcMax} enrolled (${classification} course)`,
-      });
-
       const zoomSessions = courseSessions.filter(
         (s) => s.type === SESSION_TYPE.ZOOM || s.type === SESSION_TYPE.HYBRID,
       );
@@ -456,6 +458,28 @@ export class NelcComplianceService {
           status: tracked === completedSessions.length ? 'passed' : 'failed',
           detail: `${tracked}/${completedSessions.length} completed sessions have attendance`,
         });
+      }
+
+      // TA allocation check — required when enrollment exceeds thresholds
+      const enrolled = await db.select({ count: count() }).from(enrollments).where(
+        and(eq(enrollments.courseId, courseId), eq(enrollments.status, 'active')),
+      );
+      const enrolledCount = Number(enrolled[0]?.count || 0);
+      if (enrolledCount > 0 && courseSessions.length > 0) {
+        const requiredTAs = enrolledCount > 100 ? 2 : enrolledCount > 50 ? 1 : 0;
+        if (requiredTAs > 0) {
+          // Check if any session has TAs assigned
+          const [taCount] = await db
+            .select({ count: count() })
+            .from(sessionAssistants)
+            .where(sql`${sessionAssistants.sessionId} IN (${sql.join(courseSessions.map((s) => sql`${s.id}`), sql`, `)})`);
+          const assignedTAs = Number(taCount?.count || 0);
+          vcChecks.push({
+            rule: 'ta_allocation',
+            status: assignedTAs >= requiredTAs ? 'passed' : 'failed',
+            detail: `${assignedTAs} TA(s) assigned, ${requiredTAs} required (${enrolledCount} enrolled)`,
+          });
+        }
       }
     }
 
@@ -509,75 +533,31 @@ export class NelcComplianceService {
       checks: assessChecks,
     });
 
-    // ─── 5. Policies ───
-    const policyChecks: ComplianceCheck[] = [];
-    const [instructorPrefs] = course.instructorId
-      ? await db.select().from(userPreferences).where(eq(userPreferences.userId, course.instructorId)).limit(1)
-      : [null];
-
-    policyChecks.push({
-      rule: 'content_review_policy',
-      status: instructorPrefs?.policyRequireContentReview ? 'passed' : 'failed',
-      detail: instructorPrefs?.policyRequireContentReview
-        ? 'Content review policy enabled'
-        : 'Content review policy not enabled',
-    });
-
-    policyChecks.push({
-      rule: 'nelc_compliance_policy',
-      status: instructorPrefs?.policyEnforceNelcCompliance ? 'passed' : 'failed',
-      detail: instructorPrefs?.policyEnforceNelcCompliance
-        ? 'NELC compliance enforcement enabled'
-        : 'NELC compliance enforcement not enabled',
-    });
-
-    policyChecks.push({
-      rule: 'bilingual_descriptions',
-      status: course.description && course.descriptionAr ? 'passed' : 'failed',
-      detail: course.descriptionAr
-        ? 'Course has EN + AR descriptions'
-        : 'Missing Arabic description',
-    });
-
-    categories.push({
-      category: 'policies',
-      label: 'Policies',
-      icon: 'Shield',
-      status: this.calculateOverallStatus(policyChecks),
-      checks: policyChecks,
-    });
-
-    // ─── 6. Data Protection (manual verification — defaults to review) ───
-    categories.push({
-      category: 'data_protection',
-      label: 'Data Protection',
-      icon: 'Lock',
-      status: 'review',
-      checks: [
-        { rule: 'pdp_compliance', status: 'review', detail: 'Requires manual verification of personal data protection' },
-        { rule: 'data_retention', status: 'review', detail: 'Data retention policy requires manual review' },
-        { rule: 'privacy_policy', status: 'review', detail: 'Privacy policy and consent verification needed' },
-      ],
-    });
-
-    // ─── 7. Instructor Qualifications ───
+    // ─── 5. Instructor Qualifications ───
     const qualChecks: ComplianceCheck[] = [];
     if (course.instructorId) {
-      const [roleRequest] = await db
-        .select()
-        .from(roleRequests)
-        .where(and(eq(roleRequests.userId, course.instructorId), eq(roleRequests.requestedRole, 'INSTRUCTOR')))
+      // Check if user currently has the INSTRUCTOR role (not just request status)
+      const [hasRole] = await db
+        .select({ userId: userRoles.userId })
+        .from(userRoles)
+        .innerJoin(roles, eq(userRoles.roleId, roles.id))
+        .where(and(eq(userRoles.userId, course.instructorId), eq(roles.name, 'INSTRUCTOR')))
         .limit(1);
 
       qualChecks.push({
-        rule: 'role_approved',
-        status: roleRequest?.status === 'APPROVED' ? 'passed' : roleRequest ? 'review' : 'failed',
-        detail: roleRequest?.status === 'APPROVED'
-          ? 'Instructor role request approved'
-          : roleRequest
-            ? `Role request status: ${roleRequest.status}`
-            : 'No instructor role request found',
+        rule: 'instructor_role',
+        status: hasRole ? 'passed' : 'failed',
+        detail: hasRole
+          ? 'Instructor has active instructor role'
+          : 'User does not have instructor role assigned',
       });
+
+      // Check if instructor has credentials on file (from role request)
+      const [roleRequest] = await db
+        .select({ resumeFiles: roleRequests.resumeFiles })
+        .from(roleRequests)
+        .where(and(eq(roleRequests.userId, course.instructorId), eq(roleRequests.requestedRole, 'INSTRUCTOR')))
+        .limit(1);
 
       const hasResume = roleRequest?.resumeFiles && (Array.isArray(roleRequest.resumeFiles) ? (roleRequest.resumeFiles as any[]).length > 0 : true);
       qualChecks.push({

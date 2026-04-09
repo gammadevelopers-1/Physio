@@ -427,20 +427,6 @@ const SettingsContent = () => {
                               />
                             </div>
                           </div>
-                          <div>
-                            <label htmlFor="cm-department" className="block text-sm font-medium text-[#374151] mb-1.5">
-                              {t("settingsPage.profile.department")}
-                            </label>
-                            <input
-                              id="cm-department"
-                              type="text"
-                              value={profileData.department}
-                              onChange={(e) =>
-                                setProfileData({ ...profileData, department: e.target.value })
-                              }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                            />
-                          </div>
                         </div>
                       </div>
 
@@ -457,8 +443,9 @@ const SettingsContent = () => {
                             <select
                               id="cm-language"
                               value={locale}
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const newLocale = e.target.value;
+                                await profileApi.update({ language: newLocale }).catch(() => {});
                                 window.location.href = `/${newLocale}/dashboard/manager/settings`;
                               }}
                               className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}

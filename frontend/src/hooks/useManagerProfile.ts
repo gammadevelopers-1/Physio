@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useLocale } from "next-intl";
 import { useUser } from "@/contexts";
 import { courseManagerApi } from "@/lib/api";
 
@@ -15,6 +16,8 @@ export interface ManagerProfile {
 
 export function useManagerProfile(): ManagerProfile {
   const user = useUser();
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const [totalCourses, setTotalCourses] = useState(0);
   const [totalInstructors, setTotalInstructors] = useState(0);
   const [totalEnrollments, setTotalEnrollments] = useState(0);
@@ -45,7 +48,10 @@ export function useManagerProfile(): ManagerProfile {
   return useMemo(
     () => ({
       name: user
-        ? `${user.firstName || ""}${user.lastName ? " " + user.lastName : ""}`.trim() || user.email
+        ? (isRTL && (user.firstNameAr || user.lastNameAr)
+            ? `${user.firstNameAr || ""}${user.lastNameAr ? " " + user.lastNameAr : ""}`.trim()
+            : `${user.firstName || ""}${user.lastName ? " " + user.lastName : ""}`.trim()
+          ) || user.email
         : "",
       email: user?.email || "",
       totalCourses,
@@ -53,6 +59,6 @@ export function useManagerProfile(): ManagerProfile {
       totalEnrollments,
       avatar: user?.avatar || undefined,
     }),
-    [user, totalCourses, totalInstructors, totalEnrollments]
+    [user, totalCourses, totalInstructors, totalEnrollments, isRTL]
   );
 }

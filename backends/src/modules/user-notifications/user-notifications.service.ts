@@ -1,19 +1,49 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
+import { eq, and, desc, count, sql, inArray } from 'drizzle-orm';
 import { db } from '../../database';
 import {
   userNotifications,
   NewUserNotification,
 } from '../../database/schema';
+import { userPreferences } from '../../database/schema/user-preferences';
 
 @Injectable()
 export class UserNotificationsService {
   private readonly logger = new Logger(UserNotificationsService.name);
 
   /**
-   * Create a single notification
+   * Check if a user has in-app notifications enabled.
+   * Returns true if no preferences exist (default ON) or any push pref is true.
+   */
+  private async isInAppEnabled(userId: string): Promise<boolean> {
+    const [prefs] = await db
+      .select({
+        pushNewSession: userPreferences.pushNewSession,
+        pushStudentMessage: userPreferences.pushStudentMessage,
+        pushSystemUpdates: userPreferences.pushSystemUpdates,
+      })
+      .from(userPreferences)
+      .where(eq(userPreferences.userId, userId))
+      .limit(1);
+
+    // No preferences row = defaults (all ON)
+    if (!prefs) return true;
+
+    // If ANY push pref is true, in-app is enabled
+    return !!(prefs.pushNewSession || prefs.pushStudentMessage || prefs.pushSystemUpdates);
+  }
+
+  /**
+   * Create a single notification (respects user preferences)
    */
   async create(data: Omit<NewUserNotification, 'id' | 'createdAt'>) {
+    // Check if recipient has in-app notifications enabled
+    const enabled = await this.isInAppEnabled(data.recipientId);
+    if (!enabled) {
+      this.logger.log(`Skipping in-app notification for ${data.recipientId} — disabled by preference`);
+      return null;
+    }
+
     const [notif] = await db
       .insert(userNotifications)
       .values(data)
@@ -22,7 +52,7 @@ export class UserNotificationsService {
   }
 
   /**
-   * Create notifications for multiple recipients in a single INSERT
+   * Create notifications for multiple recipients (respects user preferences)
    */
   async createBulk(
     recipientIds: string[],
@@ -30,14 +60,38 @@ export class UserNotificationsService {
   ) {
     if (recipientIds.length === 0) return;
 
-    const values = recipientIds.map((recipientId) => ({
+    // Filter out users who have in-app notifications disabled
+    const prefs = await db
+      .select({
+        userId: userPreferences.userId,
+        pushNewSession: userPreferences.pushNewSession,
+        pushStudentMessage: userPreferences.pushStudentMessage,
+        pushSystemUpdates: userPreferences.pushSystemUpdates,
+      })
+      .from(userPreferences)
+      .where(inArray(userPreferences.userId, recipientIds));
+
+    const disabledUsers = new Set(
+      prefs
+        .filter((p) => !(p.pushNewSession || p.pushStudentMessage || p.pushSystemUpdates))
+        .map((p) => p.userId),
+    );
+
+    const enabledRecipients = recipientIds.filter((id) => !disabledUsers.has(id));
+
+    if (enabledRecipients.length === 0) {
+      this.logger.log(`All ${recipientIds.length} recipients have in-app notifications disabled — skipping`);
+      return;
+    }
+
+    const values = enabledRecipients.map((recipientId) => ({
       ...data,
       recipientId,
     }));
 
     await db.insert(userNotifications).values(values);
     this.logger.log(
-      `Created ${recipientIds.length} notification(s): ${data.title}`,
+      `Created ${enabledRecipients.length} notification(s) (${recipientIds.length - enabledRecipients.length} skipped): ${data.title}`,
     );
   }
 

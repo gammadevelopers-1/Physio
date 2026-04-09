@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { eq } from 'drizzle-orm';
+import { db } from '../../database';
+import { users } from '../../database/schema';
+import { userPreferences } from '../../database/schema/user-preferences';
 import { Resend } from 'resend';
 import * as nodemailer from 'nodemailer';
 import { getOtpEmailHtml, getOtpEmailText } from './templates/otp.template';
@@ -111,13 +115,62 @@ export class EmailService {
     }
   }
 
+  /**
+   * Check if a user (by email) has email notifications enabled.
+   * Returns true if no preferences exist (default ON) or any email pref is true.
+   * System emails (OTP, password reset) bypass this check — only notification emails check.
+   */
+  async isEmailEnabled(email: string): Promise<boolean> {
+    try {
+      const [user] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (!user) return true; // Unknown user — send anyway
+
+      const [prefs] = await db
+        .select({
+          emailNewStudent: userPreferences.emailNewStudent,
+          emailCourseComplete: userPreferences.emailCourseComplete,
+          emailAssessmentSubmit: userPreferences.emailAssessmentSubmit,
+          emailCertificateRequest: userPreferences.emailCertificateRequest,
+        })
+        .from(userPreferences)
+        .where(eq(userPreferences.userId, user.id))
+        .limit(1);
+
+      if (!prefs) return true; // No prefs row = defaults (all ON)
+
+      return !!(prefs.emailNewStudent || prefs.emailCourseComplete || prefs.emailAssessmentSubmit || prefs.emailCertificateRequest);
+    } catch {
+      return true; // On error, send anyway
+    }
+  }
+
   private async send(options: {
     to: string | string[];
     subject: string;
     html: string;
     text: string;
     attachments?: { filename: string; content: Buffer }[];
+    skipPreferenceCheck?: boolean;
   }): Promise<void> {
+    // Check email preferences (skip for system emails like OTP)
+    if (!options.skipPreferenceCheck) {
+      const recipients = Array.isArray(options.to) ? options.to : [options.to];
+      const enabledRecipients: string[] = [];
+      for (const email of recipients) {
+        if (await this.isEmailEnabled(email)) {
+          enabledRecipients.push(email);
+        } else {
+          this.logger.log(`Skipping email to ${email} — disabled by preference`);
+        }
+      }
+      if (enabledRecipients.length === 0) return;
+      options.to = enabledRecipients.length === 1 ? enabledRecipients[0] : enabledRecipients;
+    }
     const from =
       this.configService.get<string>('MAIL_FROM') ||
       'noreply@physioguidance.org';
@@ -726,6 +779,7 @@ export class EmailService {
         subject: t(s.passwordResetSubject, { code }),
         html: getPasswordResetHtml(code, locale),
         text: getPasswordResetText(code, locale),
+        skipPreferenceCheck: true,
       });
       this.logger.log(`Password reset email sent to ${to}`);
     } catch (error) {

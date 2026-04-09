@@ -4471,7 +4471,9 @@
         "twoFactor": "المصادقة الثنائية",
         "twoFactorDesc": "أضف طبقة إضافية من الأمان لحسابك",
         "activeSessions": "الجلسات النشطة",
-        "currentDevice": "الحالي"
+        "currentDevice": "الحالي",
+        "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+        "passwordError": "فشل في تغيير كلمة المرور"
       },
       "preferences": {
         "title": "التفضيلات",

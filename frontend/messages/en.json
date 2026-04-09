@@ -4262,7 +4262,9 @@
         "twoFactor": "Two-Factor Authentication",
         "twoFactorDesc": "Add an extra layer of security to your account",
         "activeSessions": "Active Sessions",
-        "currentDevice": "Current"
+        "currentDevice": "Current",
+        "passwordChanged": "Password changed successfully",
+        "passwordError": "Failed to change password"
       },
       "preferences": {
         "title": "Preferences",

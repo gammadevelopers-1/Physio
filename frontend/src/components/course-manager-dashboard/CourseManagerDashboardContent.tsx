@@ -133,9 +133,16 @@ const CourseManagerDashboardContent = () => {
         toast.success(t("catalog.statusChanged"));
         silentRefetch();
       } catch (err) {
-        toast.error(
-          err instanceof ApiError ? err.message : t("catalog.statusFailed")
-        );
+        if (err instanceof ApiError) {
+          const parsed = (() => { try { return JSON.parse(err.message); } catch { return null; } })();
+          if (parsed?.code === "PENDING_MATERIALS_BLOCK") {
+            toast.error(t("coursesPage.completionBlocked", { count: parsed.pendingCount }), { duration: 8000 });
+          } else {
+            toast.error(err.message);
+          }
+        } else {
+          toast.error(t("catalog.statusFailed"));
+        }
       }
     },
     [t, silentRefetch]

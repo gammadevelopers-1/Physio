@@ -126,7 +126,9 @@ const CoursesContent = () => {
       } catch (err) {
         if (err instanceof ApiError) {
           const parsed = (() => { try { return JSON.parse(err.message); } catch { return null; } })();
-          if (parsed?.pendingMaterials) {
+          if (parsed?.code === "PENDING_MATERIALS_BLOCK") {
+            toast.error(t("coursesPage.completionBlocked", { count: parsed.pendingCount }), { duration: 8000 });
+          } else if (parsed?.pendingMaterials) {
             toast.error(t("coursesPage.activationFailed"), {
               description: parsed.pendingMaterials.join(", "),
               duration: 8000,

@@ -3602,6 +3602,7 @@
       "statusChanged": "Course status updated successfully",
       "statusFailed": "Failed to update course status",
       "activationFailed": "Cannot activate course: some materials have not been reviewed yet.",
+      "completionBlocked": "Cannot complete course: {count} material(s) are still pending review. Please approve or reject all content first.",
       "actions": {
         "title": "Actions",
         "activate": "Activate",
@@ -3954,11 +3955,13 @@
         "pending": "Pending",
         "approved": "Approved",
         "rejected": "Rejected",
+        "changesRequested": "Changes Requested",
         "allTypes": "All Types",
         "video": "Video",
         "pdf": "PDF",
         "quiz": "Quiz",
-        "document": "Document"
+        "document": "Document",
+        "allCourses": "All Courses"
       },
       "status": {
         "pending": "Pending",

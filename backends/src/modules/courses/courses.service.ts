@@ -1197,6 +1197,28 @@ export class CoursesService {
       );
     }
 
+    // Block completion if there are unreviewed materials
+    const [pendingMaterials] = await db
+      .select({ count: count() })
+      .from(courseMaterials)
+      .where(
+        and(
+          eq(courseMaterials.courseId, courseId),
+          sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`,
+        ),
+      );
+
+    const pendingCount = Number(pendingMaterials?.count || 0);
+    if (pendingCount > 0) {
+      throw new BadRequestException(
+        JSON.stringify({
+          code: 'PENDING_MATERIALS_BLOCK',
+          pendingCount,
+          message: `Cannot complete course: ${pendingCount} material(s) are still pending review. Please approve or reject all content before completing the course.`,
+        }),
+      );
+    }
+
     const [updated] = await db
       .update(courses)
       .set({ status: COURSE_STATUS.COMPLETED, updatedAt: new Date() })

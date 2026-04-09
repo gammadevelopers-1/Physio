@@ -514,12 +514,13 @@ export class MaterialsService {
 
   /**
    * GET /materials/pending-review
-   * Returns all materials with status='pending_review'.
+   * Returns all reviewed/reviewable materials (pending, changes_requested, live, rejected).
+   * Content stays visible after action for audit compliance.
    * MANAGER/ADMIN see all, INSTRUCTOR sees own.
    */
   async findPendingReview(user: AuthenticatedUser) {
-    // Include both pending_review and changes_requested materials
-    const statusCondition = sql`${courseMaterials.status} IN ('pending_review', 'changes_requested')`;
+    // Show all content that has been through the review pipeline (exclude processing/archived/failed)
+    const statusCondition = sql`${courseMaterials.status} IN ('pending_review', 'changes_requested', 'live', 'failed')`;
 
     const conditions: ReturnType<typeof eq>[] = [statusCondition as any];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, useEffect, Fragment } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -26,7 +26,7 @@ import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useContentReview } from "@/hooks/useContentReview";
-import ExportButton from "@/components/shared/ExportButton";
+
 
 const TYPE_ICONS: Record<string, { icon: typeof Video; bg: string; color: string }> = {
   video: { icon: Video, bg: "bg-[#DBEAFE]", color: "text-[#3B82F6]" },
@@ -137,6 +137,10 @@ const ContentReviewContent = () => {
 
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("pending_review");
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [commentId, setCommentId] = useState<string | null>(null);
@@ -144,6 +148,8 @@ const ContentReviewContent = () => {
   const [commentAction, setCommentAction] = useState<"reject" | "changes_requested">("changes_requested");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
+
+  const courses = useMemo(() => Array.from(new Set(items.map(i => i.courseTitle))).sort(), [items]);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -156,11 +162,26 @@ const ContentReviewContent = () => {
           `${item.instructorFirstName || ""} ${item.instructorLastName || ""}`.toLowerCase().includes(q)
       );
     }
+    if (statusFilter !== "all") {
+      if (statusFilter === "rejected") {
+        result = result.filter((item) => item.status === "rejected" || item.status === "failed");
+      } else {
+        result = result.filter((item) => item.status === statusFilter);
+      }
+    }
     if (typeFilter !== "all") {
       result = result.filter((item) => item.type === typeFilter);
     }
+    if (courseFilter !== "all") {
+      result = result.filter((item) => item.courseTitle === courseFilter);
+    }
     return result;
-  }, [items, search, typeFilter]);
+  }, [items, search, statusFilter, typeFilter, courseFilter]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedItems = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, typeFilter, courseFilter]);
 
   const handleApprove = async (id: string) => {
     setActionLoading(id);
@@ -339,12 +360,9 @@ const ContentReviewContent = () => {
 
             <div className="flex-1 min-w-0">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-[#1F2937]">{t("contentReviewPage.title")}</h1>
-                  <p className="text-sm text-[#6B7280] mt-1">{t("contentReviewPage.subtitle")}</p>
-                </div>
-                <ExportButton tableType="content-review" />
+              <div className="mb-6">
+                <h1 className="text-2xl font-bold text-[#1F2937]">{t("contentReviewPage.title")}</h1>
+                <p className="text-sm text-[#6B7280] mt-1">{t("contentReviewPage.subtitle")}</p>
               </div>
 
               {/* Stats Cards — 4 cards */}
@@ -400,6 +418,17 @@ const ContentReviewContent = () => {
                   />
                 </div>
                 <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                >
+                  <option value="all">{t("contentReviewPage.filters.allStatus")}</option>
+                  <option value="pending_review">{t("contentReviewPage.filters.pending")}</option>
+                  <option value="changes_requested">{t("contentReviewPage.filters.changesRequested")}</option>
+                  <option value="live">{t("contentReviewPage.filters.approved")}</option>
+                  <option value="rejected">{t("contentReviewPage.filters.rejected")}</option>
+                </select>
+                <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
                   className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
@@ -408,6 +437,16 @@ const ContentReviewContent = () => {
                   <option value="video">{t("contentReviewPage.filters.video")}</option>
                   <option value="pdf">{t("contentReviewPage.filters.pdf")}</option>
                   <option value="document">{t("contentReviewPage.filters.document")}</option>
+                </select>
+                <select
+                  value={courseFilter}
+                  onChange={(e) => setCourseFilter(e.target.value)}
+                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                >
+                  <option value="all">{t("contentReviewPage.filters.allCourses")}</option>
+                  {courses.map((course) => (
+                    <option key={course} value={course}>{course}</option>
+                  ))}
                 </select>
               </div>
 
@@ -547,7 +586,7 @@ const ContentReviewContent = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E5E7EB]">
-                        {filtered.map((item) => {
+                        {paginatedItems.map((item) => {
                           const typeConfig = TYPE_ICONS[item.type] || TYPE_ICONS.document;
                           const TypeIcon = typeConfig.icon;
                           const instructorName = `${item.instructorFirstName || ""} ${item.instructorLastName || ""}`.trim();
@@ -556,6 +595,10 @@ const ContentReviewContent = () => {
                           const checklist = checklists[item.id];
                           const isChecklistLoading = checklistLoading[item.id];
                           const isChangesRequested = item.status === "changes_requested";
+                          const isApproved = item.status === "live";
+                          const isRejected = item.status === "rejected" || item.status === "failed";
+                          const isPending = item.status === "pending_review";
+                          const canAct = isPending || isChangesRequested;
 
                           return (
                             <Fragment key={item.id}>
@@ -596,6 +639,18 @@ const ContentReviewContent = () => {
                                             {t("contentReviewPage.status.changesRequested")}
                                           </span>
                                         )}
+                                        {isApproved && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#DCFCE7] text-[#22C55E] text-[10px] font-medium rounded-full">
+                                            <CheckCircle2 className="w-3 h-3" />
+                                            {t("contentReviewPage.stats.approved")}
+                                          </span>
+                                        )}
+                                        {isRejected && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FEE2E2] text-[#EF4444] text-[10px] font-medium rounded-full">
+                                            <XCircle className="w-3 h-3" />
+                                            {t("contentReviewPage.stats.rejected")}
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="flex items-center gap-2 mt-0.5">
                                         <p className="text-xs text-[#9CA3AF]">
@@ -634,45 +689,49 @@ const ContentReviewContent = () => {
                                   <p className="text-xs text-[#6B7280] whitespace-nowrap">{formatDate(item.createdAt)}</p>
                                 </td>
                                 <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
-                                  <div className="flex items-center justify-end gap-1 flex-nowrap">
-                                    <button
-                                      onClick={() => handleApprove(item.id)}
-                                      disabled={isActionLoading}
-                                      className="p-2 text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors disabled:opacity-50 group relative"
-                                      title={t("contentReviewPage.approve")}
-                                    >
-                                      {isActionLoading ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <CheckCircle2 className="w-4 h-4" />
-                                      )}
-                                      <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                        {t("contentReviewPage.approve")}
-                                      </span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleRequestChangesClick(item.id)}
-                                      disabled={isActionLoading}
-                                      className="p-2 text-[#D97706] hover:bg-[#FEF3C7] rounded-lg transition-colors disabled:opacity-50 group relative"
-                                      title={t("contentReviewPage.requestChanges")}
-                                    >
-                                      <MessageSquare className="w-4 h-4" />
-                                      <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                        {t("contentReviewPage.requestChanges")}
-                                      </span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectClick(item.id)}
-                                      disabled={isActionLoading}
-                                      className="p-2 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors disabled:opacity-50 group relative"
-                                      title={t("contentReviewPage.reject")}
-                                    >
-                                      <XCircle className="w-4 h-4" />
-                                      <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                        {t("contentReviewPage.reject")}
-                                      </span>
-                                    </button>
-                                  </div>
+                                  {canAct ? (
+                                    <div className="flex items-center justify-end gap-1 flex-nowrap">
+                                      <button
+                                        onClick={() => handleApprove(item.id)}
+                                        disabled={isActionLoading}
+                                        className="p-2 text-[#22C55E] hover:bg-[#DCFCE7] rounded-lg transition-colors disabled:opacity-50 group relative"
+                                        title={t("contentReviewPage.approve")}
+                                      >
+                                        {isActionLoading ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <CheckCircle2 className="w-4 h-4" />
+                                        )}
+                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                          {t("contentReviewPage.approve")}
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleRequestChangesClick(item.id)}
+                                        disabled={isActionLoading}
+                                        className="p-2 text-[#D97706] hover:bg-[#FEF3C7] rounded-lg transition-colors disabled:opacity-50 group relative"
+                                        title={t("contentReviewPage.requestChanges")}
+                                      >
+                                        <MessageSquare className="w-4 h-4" />
+                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                          {t("contentReviewPage.requestChanges")}
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleRejectClick(item.id)}
+                                        disabled={isActionLoading}
+                                        className="p-2 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-colors disabled:opacity-50 group relative"
+                                        title={t("contentReviewPage.reject")}
+                                      >
+                                        <XCircle className="w-4 h-4" />
+                                        <span className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 px-2 py-1 bg-[#1F2937] text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                          {t("contentReviewPage.reject")}
+                                        </span>
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-[#9CA3AF]">—</span>
+                                  )}
                                 </td>
                               </tr>
 
@@ -785,6 +844,13 @@ const ContentReviewContent = () => {
                       </tbody>
                     </table>
                   </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 p-4 border-t border-[#E5E7EB]">
+                      <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50">←</button>
+                      <span className="text-sm text-[#6B7280]">{currentPage} / {totalPages}</span>
+                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50">→</button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

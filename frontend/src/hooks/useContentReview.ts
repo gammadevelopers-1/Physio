@@ -98,7 +98,7 @@ export function useContentReview() {
 
   const approve = useCallback(async (id: string) => {
     await courseManagerApi.reviewMaterial(id, { decision: "approved" });
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, status: "live" } : item));
     setStats((prev) => ({
       ...prev,
       pending: Math.max(0, prev.pending - 1),
@@ -108,7 +108,7 @@ export function useContentReview() {
 
   const reject = useCallback(async (id: string, comment?: string) => {
     await courseManagerApi.reviewMaterial(id, { decision: "rejected", comment });
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, status: "rejected", reviewNote: comment || null } : item));
     setStats((prev) => ({
       ...prev,
       pending: Math.max(0, prev.pending - 1),
@@ -118,7 +118,7 @@ export function useContentReview() {
 
   const requestChanges = useCallback(async (id: string, comment: string) => {
     await courseManagerApi.reviewMaterial(id, { decision: "changes_requested", comment });
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems((prev) => prev.map((item) => item.id === id ? { ...item, status: "changes_requested", reviewNote: comment } : item));
     setStats((prev) => ({
       ...prev,
       pending: Math.max(0, prev.pending - 1),
@@ -128,7 +128,7 @@ export function useContentReview() {
 
   const bulkApprove = useCallback(async (ids: string[]) => {
     const result = await courseManagerApi.bulkReviewMaterials(ids, "approved");
-    setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setItems((prev) => prev.map((item) => ids.includes(item.id) ? { ...item, status: "live" } : item));
     setStats((prev) => ({
       ...prev,
       pending: Math.max(0, prev.pending - result.succeeded),
@@ -139,7 +139,7 @@ export function useContentReview() {
 
   const bulkReject = useCallback(async (ids: string[], comment: string) => {
     const result = await courseManagerApi.bulkReviewMaterials(ids, "rejected", comment);
-    setItems((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setItems((prev) => prev.map((item) => ids.includes(item.id) ? { ...item, status: "rejected", reviewNote: comment } : item));
     setStats((prev) => ({
       ...prev,
       pending: Math.max(0, prev.pending - result.succeeded),

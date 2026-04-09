@@ -1811,13 +1811,15 @@ export class ReportsService {
         doc.page.width - doc.page.margins.left - doc.page.margins.right;
       const startX = doc.page.margins.left;
 
-      // Smart column widths — wider for name/email, narrower for status/numbers
-      const wideColumns = new Set(['Student Name', 'Email', 'Instructor', 'Course', 'Session']);
+      // Smart column widths — wider for name/email/reason, narrower for status/numbers
+      const wideColumns = new Set(['Student Name', 'Student', 'Email', 'Instructor', 'Course', 'Session', 'Reason (if not earned)']);
+      const wrapColumns = new Set(['Reason (if not earned)']); // columns that allow text wrap
       const defaultColWidth = pageWidth / headers.length;
       const wideCount = headers.filter(h => wideColumns.has(h)).length;
       const narrowCount = headers.length - wideCount;
-      const wideWidth = wideCount > 0 ? (pageWidth * 0.55) / wideCount : defaultColWidth;
-      const narrowWidth = narrowCount > 0 ? (pageWidth * 0.45) / narrowCount : defaultColWidth;
+      const widePct = headers.length > 7 ? 0.6 : 0.55; // more space for wide cols in wide tables
+      const wideWidth = wideCount > 0 ? (pageWidth * widePct) / wideCount : defaultColWidth;
+      const narrowWidth = narrowCount > 0 ? (pageWidth * (1 - widePct)) / narrowCount : defaultColWidth;
       const colWidths = headers.map(h => wideColumns.has(h) ? wideWidth : narrowWidth);
       const getColX = (i: number) => startX + colWidths.slice(0, i).reduce((s, w) => s + w, 0);
 
@@ -1873,6 +1875,12 @@ export class ReportsService {
         'Completion Status': 'Status',
         'Join Time': 'Join',
         'Leave Time': 'Leave',
+        'Reason (if not earned)': 'Reason',
+        'Enrollment Status': 'Status',
+        'Assessment Passed': 'Assess.',
+        'CME Earned': 'CME',
+        'Attendance %': 'Att. %',
+        'CME Hours': 'Hours',
       };
 
       // ── Header row drawing helper ──
@@ -1899,6 +1907,15 @@ export class ReportsService {
 
       // ── Data rows ──
       for (const row of rows) {
+        // Calculate row height — check if any wrapping column has long text
+        const rowHeight = row.reduce((maxH, cell, i) => {
+          if (wrapColumns.has(headers[i]) && cell && cell.length > 30) {
+            const lines = Math.ceil(cell.length / 40);
+            return Math.max(maxH, lines * 8);
+          }
+          return maxH;
+        }, 10);
+
         // Page break check
         if (y > doc.page.height - doc.page.margins.bottom - 20) {
           drawFooter();
@@ -1909,6 +1926,7 @@ export class ReportsService {
 
         row.forEach((cell, i) => {
           const cellText = String(cell ?? '');
+          const allowWrap = wrapColumns.has(headers[i]);
           // Center-align numeric/short columns
           const centerColumns = new Set(['Min.', 'Att. %', 'Status', 'Total Minutes', 'Total Attendance %']);
           const align = centerColumns.has(headers[i]) ? 'center' as const : undefined;
@@ -1917,7 +1935,7 @@ export class ReportsService {
             doc.font('Amiri').fontSize(6.5);
             doc.text(cellText, getColX(i), y, {
               width: colWidths[i] - 2,
-              lineBreak: false,
+              lineBreak: allowWrap,
               align,
               features: ['rtla'],
             });
@@ -1925,12 +1943,12 @@ export class ReportsService {
           } else {
             doc.text(cellText, getColX(i), y, {
               width: colWidths[i] - 2,
-              lineBreak: false,
+              lineBreak: allowWrap,
               align,
             });
           }
         });
-        y += 12;
+        y += Math.max(rowHeight, 12);
       }
 
       // ── Footer on last page ──

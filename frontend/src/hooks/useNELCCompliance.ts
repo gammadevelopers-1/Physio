@@ -6,8 +6,10 @@ import { nelcComplianceApi } from "@/lib/api";
 interface CourseCompliance {
   courseId: string;
   courseTitle: string;
+  deliveryType?: string;
   instructorName: string;
   overallStatus: "passed" | "review" | "failed";
+  overallScore?: number;
   summary: { passed: number; review: number; failed: number; total: number };
 }
 
@@ -56,7 +58,9 @@ export function useNELCCompliance() {
   );
 
   const overallPercentage =
-    totals.total > 0 ? Math.round((totals.passed / totals.total) * 100) : 0;
+    courses.length > 0
+      ? Math.round(courses.reduce((sum, c) => sum + (c.overallScore || 0), 0) / courses.length)
+      : 0;
 
   return { courses, totals, overallPercentage, loading, error, refetch: fetchCompliance };
 }

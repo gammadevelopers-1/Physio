@@ -240,6 +240,7 @@ export class NelcComplianceService {
       .select({
         id: courses.id,
         title: courses.title,
+        deliveryType: courses.deliveryType,
         instructorId: courses.instructorId,
       })
       .from(courses)
@@ -277,8 +278,10 @@ export class NelcComplianceService {
       results.push({
         courseId: course.id,
         courseTitle: course.title,
+        deliveryType: course.deliveryType,
         instructorName: instructorMap.get(course.instructorId!) || 'Unknown',
         overallStatus: scorecard.overallStatus,
+        overallScore: scorecard.overallScore,
         summary,
       });
     }
@@ -585,11 +588,11 @@ export class NelcComplianceService {
     const passedCategories = categories.filter((c) => c.status === 'passed').length;
     const overallScore = Math.round((passedCategories / categories.length) * 100);
     const overallStatus: ComplianceStatus =
-      categories.some((c) => c.status === 'failed')
-        ? 'failed'
-        : categories.some((c) => c.status === 'review')
+      overallScore === 100
+        ? 'passed'
+        : overallScore >= 50
           ? 'review'
-          : 'passed';
+          : 'failed';
 
     return {
       courseId,

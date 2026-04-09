@@ -321,8 +321,11 @@ const NELCComplianceCenterContent = () => {
     if (statusFilter !== "all") {
       result = result.filter((c) => c.overallStatus === statusFilter);
     }
+    if (deliveryFilter !== "all") {
+      result = result.filter((c) => c.deliveryType === deliveryFilter);
+    }
     return result;
-  }, [courses, search, statusFilter]);
+  }, [courses, search, statusFilter, deliveryFilter]);
 
   const filteredVc = useMemo(() => {
     let result = virtualClasses;
@@ -466,7 +469,7 @@ const NELCComplianceCenterContent = () => {
                   <option value="zoom">{t("coursesPage.delivery.zoom")}</option>
                   <option value="onsite">{t("coursesPage.delivery.onsite")}</option>
                   <option value="blended">{t("coursesPage.delivery.blended")}</option>
-                  <option value="self-paced">{t("coursesPage.delivery.selfPaced")}</option>
+                  <option value="self-paced">{t("coursesPage.delivery.self-paced" as Parameters<typeof t>[0])}</option>
                 </select>
               </div>
 

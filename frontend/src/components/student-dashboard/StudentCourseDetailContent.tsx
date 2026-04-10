@@ -952,7 +952,7 @@ const StudentCourseDetailContent = () => {
                                 <div className="flex flex-col gap-1.5">
                                   {isGraded && (
                                     <Link
-                                      href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
+                                      href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}?review=true`}
                                       className="text-xs text-[#002D87] hover:underline"
                                     >
                                       {t("courseDetail.review")}
@@ -963,7 +963,7 @@ const StudentCourseDetailContent = () => {
                                       href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
                                       className="inline-flex items-center gap-1 text-xs font-semibold text-[#7C3AED] bg-[#F3E8FF] px-2 py-1 rounded-md hover:bg-[#E9D5FF] transition-colors"
                                     >
-                                      {t("courseDetail.startRetake") || "Start Retake"}
+                                      {t("courseDetail.startRetake")}
                                     </Link>
                                   )}
                                 </div>

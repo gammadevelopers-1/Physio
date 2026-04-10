@@ -1513,7 +1513,10 @@ export class StudentService {
     // plus any retake grants the manager has issued.
     const baseAttemptsAllowed = assessment.attemptsAllowed ?? 1;
     const effectiveAttemptsAllowed = baseAttemptsAllowed + totalGrants;
-    const maxAttemptsReached = totalAttempts >= effectiveAttemptsAllowed;
+    // If the student has an unused retake grant, they can always start
+    // another attempt — override maxAttemptsReached.
+    const maxAttemptsReached =
+      unusedGrants > 0 ? false : totalAttempts >= effectiveAttemptsAllowed;
 
     // Retake info — with the new model, canRetake is simply "an unused grant exists"
     let canRetake = unusedGrants > 0;

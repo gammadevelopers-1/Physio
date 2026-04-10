@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   AlertCircle,
@@ -43,8 +43,10 @@ const AssessmentContent = () => {
   const t = useTranslations("studentDashboard");
   const isRTL = locale === "ar";
   const params = useParams();
+  const searchParams = useSearchParams();
   const courseId = params.id as string;
   const assessmentId = params.assessmentId as string;
+  const openReview = searchParams.get("review") === "true";
 
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
@@ -359,6 +361,30 @@ const AssessmentContent = () => {
   }
 
   if (!assessment) return null;
+
+  // Auto-trigger review mode when navigating with ?review=true
+  // (e.g. clicking "Review" from the course card). Uses the latest graded
+  // submission's ID to load the review, without needing a fresh result.
+  useEffect(() => {
+    if (
+      openReview &&
+      assessment &&
+      !reviewMode &&
+      !reviewData &&
+      assessment.latestSubmission?.status === "graded" &&
+      assessment.latestSubmission.id
+    ) {
+      setReviewLoading(true);
+      studentApi
+        .getSubmissionReview(assessment.latestSubmission.id)
+        .then((data) => {
+          setReviewData(data);
+          setReviewMode(true);
+        })
+        .catch(() => {})
+        .finally(() => setReviewLoading(false));
+    }
+  }, [openReview, assessment, reviewMode, reviewData]);
 
   // ─── Max Attempts Reached — Show result + review option ───
   // But if canRetake is true (manager granted a retake), skip this and fall
@@ -1397,6 +1423,30 @@ const AssessmentContent = () => {
   }
 
   // ─── Assessment Taking UI ──────────────────────────────
+
+  // Guard: if questions array is empty (e.g. stale attempt data), show an
+  // error message instead of crashing on undefined property access.
+  if (assessment.questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+          <AlertCircle className="w-12 h-12 text-[#D4A520] mx-auto mb-4" />
+          <h2 className="text-lg font-bold text-[#1F2937] mb-2">
+            {t("assessment.noQuestionsAvailable") || "No questions available"}
+          </h2>
+          <p className="text-sm text-[#6B7280] mb-6">
+            {t("assessment.noQuestionsDesc") || "This assessment has no questions loaded. Please go back and try again."}
+          </p>
+          <Link
+            href={`/${locale}/dashboard/student/courses/${courseId}`}
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 btn-gold text-white text-sm font-medium rounded-lg"
+          >
+            {t("assessment.backToCourse")}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const question = assessment.questions[currentQuestion];
   const answeredCount = Object.keys(answers).length;

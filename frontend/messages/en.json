@@ -4091,7 +4091,11 @@
         "save": "Save Settings",
         "saving": "Saving...",
         "saved": "Settings saved successfully",
-        "error": "Failed to save settings"
+        "error": "Failed to save settings",
+        "courseDefault": "Course default",
+        "on": "On",
+        "off": "Off",
+        "cancel": "Cancel"
       },
       "tabs": {
         "assessments": "Assessments",
@@ -4127,6 +4131,16 @@
       },
       "flaggedBadge": "Flagged",
       "flagForReview": "Flag for Review",
+      "overrideBadge": "Override",
+      "selectCourse": "Select Course",
+      "selectCoursePlaceholder": "-- Select a course --",
+      "selectCoursePrompt": "Select a course to view assessments",
+      "selectCourseDesc": "Choose a course from the dropdown above to manage its assessment settings and view individual assessments.",
+      "courseDefaults": {
+        "title": "Course Assessment Defaults",
+        "subtitle": "Default settings applied to all assessments in this course. Per-assessment can override.",
+        "save": "Save Defaults"
+      },
       "submissions": {
         "tab": "Submissions",
         "selectAssessment": "Select Assessment",
@@ -4138,7 +4152,23 @@
         "submitted": "Submitted",
         "actions": "Actions",
         "graded": "Graded",
-        "pending": "Pending"
+        "pending": "Pending",
+        "details": "Submission Details",
+        "close": "Close",
+        "pass": "Pass",
+        "fail": "Fail",
+        "studentAnswers": "Student Answers",
+        "studentAnswer": "Student Answer",
+        "noAnswers": "No answers available",
+        "noAnswer": "(no answer)",
+        "instructorComment": "Instructor Comment",
+        "gradePending": "Student answers will be available after the instructor grades this submission."
+      },
+      "preview": {
+        "title": "Assessment Preview",
+        "noQuestions": "No questions added to this assessment yet",
+        "correctAnswer": "Correct Answer",
+        "loadError": "Failed to load questions"
       }
     },
     "reportsPage": {

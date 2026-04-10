@@ -1650,7 +1650,23 @@ export const courseManagerApi = {
       submittedAt: string;
       gradedAt: string | null;
       gradedBy: string | null;
+      answers?: Array<{ questionId: string; answer: string; isCorrect: boolean | null; marksAwarded: number | null }> | null;
+      instructorComment?: string | null;
     }>>(`/assessments/${assessmentId}/submissions`),
+
+  // Get questions for an assessment (for preview)
+  getAssessmentQuestions: (assessmentId: string) =>
+    api.get<Array<{
+      id: string;
+      assessmentId: string | null;
+      type: string;
+      questionText: string;
+      questionTextAr?: string;
+      options?: Array<{ text: string; textAr?: string; isCorrect: boolean }>;
+      correctAnswer?: string;
+      marks: number;
+      difficultyLevel?: string;
+    }>>(`/assessments/${assessmentId}/questions`),
 
   // Grade a submission
   gradeSubmission: (assessmentId: string, submissionId: string, grades: Array<{ questionId: string; score: number; comment?: string }>, overallComment?: string) =>

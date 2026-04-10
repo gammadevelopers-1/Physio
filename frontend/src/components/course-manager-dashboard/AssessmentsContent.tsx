@@ -124,9 +124,28 @@ const AssessmentsContent = () => {
     submittedAt: string;
     gradedAt: string | null;
     gradedBy: string | null;
+    answers?: Array<{ questionId: string; answer: string; isCorrect: boolean | null; marksAwarded: number | null }> | null;
+    instructorComment?: string | null;
   }>>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [viewingSubmission, setViewingSubmission] = useState<typeof submissions[number] | null>(null);
+
+  // Assessment preview state
+  const [previewAssessment, setPreviewAssessment] = useState<{ id: string; title: string } | null>(null);
+  const [previewQuestions, setPreviewQuestions] = useState<Array<{
+    id: string;
+    type: string;
+    questionText: string;
+    questionTextAr?: string;
+    options?: Array<{ text: string; textAr?: string; isCorrect: boolean }>;
+    correctAnswer?: string;
+    marks: number;
+    difficultyLevel?: string;
+  }>>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  // Submission preview questions cache (per submission view)
+  const [submissionQuestions, setSubmissionQuestions] = useState<typeof previewQuestions>([]);
+  const [submissionQuestionsLoading, setSubmissionQuestionsLoading] = useState(false);
 
   /* ────────── Fetch courses ────────── */
   useEffect(() => {
@@ -259,6 +278,33 @@ const AssessmentsContent = () => {
       toast.error(t("assessmentsPage.flag.error") || "Failed to flag");
     } finally {
       setFlagging(false);
+    }
+  };
+
+  // Load questions when viewing a graded submission
+  useEffect(() => {
+    if (viewingSubmission && viewingSubmission.status === "graded") {
+      setSubmissionQuestionsLoading(true);
+      courseManagerApi.getAssessmentQuestions(viewingSubmission.assessmentId)
+        .then((qs) => setSubmissionQuestions(qs))
+        .catch(() => setSubmissionQuestions([]))
+        .finally(() => setSubmissionQuestionsLoading(false));
+    } else {
+      setSubmissionQuestions([]);
+    }
+  }, [viewingSubmission]);
+
+  const handlePreviewAssessment = async (assessmentId: string, title: string) => {
+    setPreviewAssessment({ id: assessmentId, title });
+    setPreviewLoading(true);
+    try {
+      const questions = await courseManagerApi.getAssessmentQuestions(assessmentId);
+      setPreviewQuestions(questions);
+    } catch {
+      toast.error(t("assessmentsPage.preview.loadError") || "Failed to load questions");
+      setPreviewQuestions([]);
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -466,40 +512,6 @@ const AssessmentsContent = () => {
             <p className="text-xs text-[#9CA3AF]">
               {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentProctoringEnabled ? t("assessmentsPage.settings.on") || "On" : t("assessmentsPage.settings.off") || "Off"}
             </p>
-          )}
-          {form.proctoringEnabled && (
-            <>
-              <Toggle
-                checked={form.proctoringRules.webcamRequired ?? false}
-                onChange={(v) =>
-                  setForm({
-                    ...form,
-                    proctoringRules: { ...form.proctoringRules, webcamRequired: v },
-                  })
-                }
-                label={t("assessmentsPage.proctoring.webcamRequired")}
-              />
-              <Toggle
-                checked={form.proctoringRules.browserLockdown ?? false}
-                onChange={(v) =>
-                  setForm({
-                    ...form,
-                    proctoringRules: { ...form.proctoringRules, browserLockdown: v },
-                  })
-                }
-                label={t("assessmentsPage.proctoring.browserLockdown")}
-              />
-              <Toggle
-                checked={form.proctoringRules.tabSwitchAlert ?? false}
-                onChange={(v) =>
-                  setForm({
-                    ...form,
-                    proctoringRules: { ...form.proctoringRules, tabSwitchAlert: v },
-                  })
-                }
-                label={t("assessmentsPage.proctoring.tabSwitchAlert")}
-              />
-            </>
           )}
           <Toggle
             checked={form.timeLimitEnforced}
@@ -1009,6 +1021,16 @@ const AssessmentsContent = () => {
                                                   <button
                                                     onClick={(e) => {
                                                       e.stopPropagation();
+                                                      handlePreviewAssessment(assessment.id, assessment.title);
+                                                    }}
+                                                    className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                                    title={t("assessmentsPage.preview.title") || "Preview"}
+                                                  >
+                                                    <Eye className="w-4 h-4" />
+                                                  </button>
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
                                                       setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
                                                       courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
                                                         setOverrideStudents(res.data.map((e: any) => ({
@@ -1094,6 +1116,13 @@ const AssessmentsContent = () => {
                                   </div>
                                   {/* Mobile action buttons */}
                                   <div className="flex items-center gap-2 mt-3">
+                                    <button
+                                      onClick={() => handlePreviewAssessment(assessment.id, assessment.title)}
+                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
+                                      title={t("assessmentsPage.preview.title") || "Preview"}
+                                    >
+                                      <Eye className="w-4 h-4" />
+                                    </button>
                                     <button
                                       onClick={() => {
                                         setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
@@ -1263,15 +1292,15 @@ const AssessmentsContent = () => {
         const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
         const isGraded = sub.status === "graded";
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
-              <div className="flex items-center justify-between mb-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
                 <h3 className="text-lg font-semibold text-[#1F2937]">{t("assessmentsPage.submissions.details") || "Submission Details"}</h3>
                 <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
                   <X className="w-5 h-5 text-[#6B7280]" />
                 </button>
               </div>
-              <div className="space-y-4">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-[#EFF6FF] flex items-center justify-center">
                     <Users className="w-5 h-5 text-[#3B82F6]" />
@@ -1335,8 +1364,103 @@ const AssessmentsContent = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Student answers — only available after instructor grades */}
+                {isGraded && (
+                  <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+                    <h4 className="text-sm font-semibold text-[#1F2937] mb-3 flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-[#3B82F6]" />
+                      {t("assessmentsPage.submissions.studentAnswers") || "Student Answers"}
+                    </h4>
+                    {submissionQuestionsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 text-[#3B82F6] animate-spin" />
+                      </div>
+                    ) : submissionQuestions.length === 0 ? (
+                      <p className="text-sm text-[#9CA3AF] text-center py-4">
+                        {t("assessmentsPage.submissions.noAnswers") || "No answers available"}
+                      </p>
+                    ) : (
+                      <div className="space-y-3">
+                        {submissionQuestions.map((q, idx) => {
+                          const answerObj = sub.answers?.find((a) => a.questionId === q.id);
+                          const studentAnswer = answerObj?.answer || "";
+                          const marksAwarded = answerObj?.marksAwarded;
+                          const isCorrect = answerObj?.isCorrect;
+                          return (
+                            <div key={q.id} className="border border-[#E5E7EB] rounded-lg p-3">
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <div className="flex items-start gap-2 flex-1 min-w-0">
+                                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex-shrink-0">
+                                    {idx + 1}
+                                  </span>
+                                  <p className="text-sm text-[#1F2937] font-medium">
+                                    {isRTL && q.questionTextAr ? q.questionTextAr : q.questionText}
+                                  </p>
+                                </div>
+                                {marksAwarded != null && (
+                                  <span className={`text-xs font-semibold whitespace-nowrap ${isCorrect ? "text-[#22C55E]" : marksAwarded > 0 ? "text-[#D97706]" : "text-[#EF4444]"}`}>
+                                    {marksAwarded}/{q.marks}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="ms-7 space-y-2">
+                                <div className={`p-2 rounded-md text-sm ${
+                                  isCorrect === true ? "bg-[#DCFCE7] text-[#065F46]" :
+                                  isCorrect === false ? "bg-[#FEE2E2] text-[#991B1B]" :
+                                  "bg-[#F9FAFB] text-[#4B5563]"
+                                }`}>
+                                  <p className="text-[10px] uppercase font-semibold mb-1 opacity-70">
+                                    {t("assessmentsPage.submissions.studentAnswer") || "Student Answer"}
+                                  </p>
+                                  <p>{studentAnswer || (t("assessmentsPage.submissions.noAnswer") || "(no answer)")}</p>
+                                </div>
+                                {/* Show correct answer for comparison */}
+                                {q.options && q.options.length > 0 && (
+                                  <div className="p-2 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-sm">
+                                    <p className="text-[10px] uppercase font-semibold mb-1 opacity-70">
+                                      {t("assessmentsPage.preview.correctAnswer") || "Correct Answer"}
+                                    </p>
+                                    <p>{q.options.filter((o) => o.isCorrect).map((o) => isRTL && o.textAr ? o.textAr : o.text).join(", ")}</p>
+                                  </div>
+                                )}
+                                {q.correctAnswer && (!q.options || q.options.length === 0) && (
+                                  <div className="p-2 rounded-md bg-[#EFF6FF] text-[#1E40AF] text-sm">
+                                    <p className="text-[10px] uppercase font-semibold mb-1 opacity-70">
+                                      {t("assessmentsPage.preview.correctAnswer") || "Correct Answer"}
+                                    </p>
+                                    <p>{q.correctAnswer}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {sub.instructorComment && (
+                      <div className="mt-4 p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg">
+                        <p className="text-[10px] uppercase font-semibold text-[#92400E] mb-1">
+                          {t("assessmentsPage.submissions.instructorComment") || "Instructor Comment"}
+                        </p>
+                        <p className="text-sm text-[#78350F]">{sub.instructorComment}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!isGraded && (
+                  <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+                    <div className="p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-[#92400E]">
+                        {t("assessmentsPage.submissions.gradePending") || "Student answers will be available after the instructor grades this submission."}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-end p-6 border-t border-[#E5E7EB]">
                 <button
                   onClick={() => setViewingSubmission(null)}
                   className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
@@ -1439,6 +1563,102 @@ const AssessmentsContent = () => {
                 {overrideSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                 {t("assessmentsPage.override.grant")}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Preview Modal — shows questions + correct answers for manager */}
+      {previewAssessment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-[#3B82F6]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#1F2937]">{t("assessmentsPage.preview.title") || "Assessment Preview"}</h3>
+                  <p className="text-xs text-[#6B7280]">{previewAssessment.title}</p>
+                </div>
+              </div>
+              <button onClick={() => { setPreviewAssessment(null); setPreviewQuestions([]); }} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
+                <X className="w-5 h-5 text-[#6B7280]" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {previewLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin" />
+                </div>
+              ) : previewQuestions.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="w-12 h-12 text-[#D1D5DB] mx-auto mb-3" />
+                  <p className="text-sm text-[#6B7280]">{t("assessmentsPage.preview.noQuestions") || "No questions added to this assessment yet"}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {previewQuestions.map((q, idx) => (
+                    <div key={q.id} className="border border-[#E5E7EB] rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#3B82F6] text-white text-xs font-bold">
+                              {idx + 1}
+                            </span>
+                            <span className="text-[10px] uppercase font-semibold text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                              {q.type.replace(/_/g, " ")}
+                            </span>
+                            {q.difficultyLevel && (
+                              <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded ${
+                                q.difficultyLevel === "easy" ? "bg-[#DCFCE7] text-[#22C55E]" :
+                                q.difficultyLevel === "medium" ? "bg-[#FEF3C7] text-[#D97706]" :
+                                "bg-[#FEE2E2] text-[#EF4444]"
+                              }`}>
+                                {q.difficultyLevel}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-[#1F2937] font-medium">{isRTL && q.questionTextAr ? q.questionTextAr : q.questionText}</p>
+                        </div>
+                        <span className="text-xs font-semibold text-[#6B7280] whitespace-nowrap">{q.marks} {t("assessmentsPage.table.marks") || "marks"}</span>
+                      </div>
+
+                      {/* Multiple choice / single choice options */}
+                      {q.options && q.options.length > 0 && (
+                        <div className="space-y-2 mt-3">
+                          {q.options.map((opt, oi) => (
+                            <div
+                              key={oi}
+                              className={`flex items-center gap-2 p-2.5 rounded-lg border ${
+                                opt.isCorrect ? "bg-[#DCFCE7] border-[#22C55E]" : "bg-[#F9FAFB] border-[#E5E7EB]"
+                              }`}
+                            >
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                opt.isCorrect ? "bg-[#22C55E]" : "bg-[#E5E7EB]"
+                              }`}>
+                                {opt.isCorrect && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <span className={`text-sm ${opt.isCorrect ? "text-[#065F46] font-medium" : "text-[#4B5563]"}`}>
+                                {isRTL && opt.textAr ? opt.textAr : opt.text}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* True/false or short answer */}
+                      {q.correctAnswer && (!q.options || q.options.length === 0) && (
+                        <div className="mt-3 p-3 bg-[#DCFCE7] border border-[#22C55E] rounded-lg">
+                          <p className="text-[10px] uppercase font-semibold text-[#22C55E] mb-1">{t("assessmentsPage.preview.correctAnswer") || "Correct Answer"}</p>
+                          <p className="text-sm text-[#065F46] font-medium">{q.correctAnswer}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

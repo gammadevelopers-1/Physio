@@ -2836,11 +2836,11 @@ const AssessmentsContent = () => {
                                                 <div className="flex items-center gap-2">
                                                   <span className="inline-flex items-center gap-1 text-xs text-[#7C3AED]">
                                                     <RotateCcw className="w-3 h-3" />
-                                                    {t("assessments.retakeLabel") || "Retake"} {(sub.attemptNumber ?? 1) - 1}
+                                                    {t("assessments.retakeLabel", { n: (sub.attemptNumber ?? 1) - 1 })}
                                                   </span>
                                                   {sub.isEffective && (
                                                     <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
-                                                      {t("assessments.effectiveLabel") || "Effective"}
+                                                      {t("assessments.effective")}
                                                     </span>
                                                   )}
                                                 </div>
@@ -2922,11 +2922,11 @@ const AssessmentsContent = () => {
                                                       <div className="flex items-center gap-1.5 mt-0.5">
                                                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#F3E8FF] text-[#7C3AED]">
                                                           <RotateCcw className="w-2.5 h-2.5" />
-                                                          {sorted.length} {t("assessments.submissionAttempts") || "attempts"}
+                                                          {sorted.length} {t("assessments.attempts")}
                                                         </span>
                                                         {effectiveRow.isEffective && (
                                                           <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
-                                                            {t("assessments.effectiveLabel") || "Effective"}
+                                                            {t("assessments.effective")}
                                                           </span>
                                                         )}
                                                       </div>

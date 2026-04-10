@@ -4209,7 +4209,8 @@
         "noAnswers": "No answers available",
         "noAnswer": "(no answer)",
         "instructorComment": "Instructor Comment",
-        "gradePending": "Student answers will be available after the instructor grades this submission."
+        "gradePending": "Student answers will be available after the instructor grades this submission.",
+        "noSubmissions": "No submissions yet for this assessment"
       },
       "preview": {
         "title": "Assessment Preview",

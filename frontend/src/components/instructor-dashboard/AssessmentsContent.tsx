@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
@@ -45,6 +45,8 @@ import {
   AlertTriangle,
   Save,
   Info,
+  ChevronUp,
+  RotateCcw,
 } from "lucide-react";
 
 /* ──────────────────────── Modal Overlay ──────────────────────── */
@@ -1546,6 +1548,7 @@ const AssessmentsContent = () => {
   const [submissions, setSubmissions] = useState<AssessmentSubmission[]>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState("all");
+  const [expandedRetakeStudents, setExpandedRetakeStudents] = useState<Set<string>>(new Set());
   const [gradeModalData, setGradeModalData] = useState<{
     submission: AssessmentSubmission;
     questions: AssessmentQuestion[];
@@ -2812,85 +2815,153 @@ const AssessmentsContent = () => {
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-[#E5E7EB]">
-                                    {(submissionStatusFilter === "all"
-                                      ? submissions
-                                      : submissions.filter((s) => s.status === submissionStatusFilter)
-                                    ).map((sub) => {
-                                      const pct = sub.percentage
-                                        ? parseFloat(sub.percentage)
-                                        : 0;
-                                      return (
-                                        <tr key={sub.id} className="hover:bg-[#F9FAFB]">
-                                          <td className="py-3">
-                                            <div className="flex items-center gap-3">
-                                              <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
-                                                {(sub.studentFirstName?.[0] || "")
-                                                  .toUpperCase()}
-                                                {(sub.studentLastName?.[0] || "")
-                                                  .toUpperCase()}
-                                              </div>
-                                              <div>
-                                                <span className="text-sm text-[#1F2937]">
-                                                  {sub.studentFirstName} {sub.studentLastName}
+                                    {(() => {
+                                      const filtered = submissionStatusFilter === "all"
+                                        ? submissions
+                                        : submissions.filter((s) => s.status === submissionStatusFilter);
+                                      // Group by student
+                                      const grouped = new Map<string, typeof submissions>();
+                                      for (const sub of filtered) {
+                                        const list = grouped.get(sub.studentId);
+                                        if (list) list.push(sub);
+                                        else grouped.set(sub.studentId, [sub]);
+                                      }
+
+                                      const renderRow = (sub: AssessmentSubmission, isNested: boolean) => {
+                                        const pct = sub.percentage ? parseFloat(sub.percentage) : 0;
+                                        return (
+                                          <tr key={sub.id} className={`hover:bg-[#F9FAFB] ${isNested ? "bg-[#FAFAFA]" : ""}`}>
+                                            <td className={`py-3 ${isNested ? "ps-14" : ""}`}>
+                                              {isNested ? (
+                                                <div className="flex items-center gap-2">
+                                                  <span className="inline-flex items-center gap-1 text-xs text-[#7C3AED]">
+                                                    <RotateCcw className="w-3 h-3" />
+                                                    {t("assessments.retakeLabel") || "Retake"} {(sub.attemptNumber ?? 1) - 1}
+                                                  </span>
+                                                  {sub.isEffective && (
+                                                    <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+                                                      {t("assessments.effectiveLabel") || "Effective"}
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <div className="flex items-center gap-3">
+                                                  <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                                                    {(sub.studentFirstName?.[0] || "").toUpperCase()}
+                                                    {(sub.studentLastName?.[0] || "").toUpperCase()}
+                                                  </div>
+                                                  <div>
+                                                    <span className="text-sm text-[#1F2937]">{sub.studentFirstName} {sub.studentLastName}</span>
+                                                    <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </td>
+                                            <td className="py-3">
+                                              <span className={`text-sm font-semibold ${pct >= 80 ? "text-[#22C55E]" : pct >= 60 ? "text-[#EAB308]" : "text-[#EF4444]"}`}>
+                                                {sub.score ?? 0}/{sub.totalMarks ?? 0}
+                                              </span>
+                                            </td>
+                                            <td className="py-3"><span className="text-sm text-[#374151]">{pct.toFixed(1)}%</span></td>
+                                            <td className="py-3"><span className="text-sm text-[#6B7280]">{formatDate(sub.submittedAt)}</span></td>
+                                            <td className="py-3">
+                                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getSubmissionStatusStyle(sub.status)}`}>
+                                                {sub.status === "graded" && <CheckCircle className="w-3 h-3" />}
+                                                {sub.status === "submitted" && <Clock className="w-3 h-3" />}
+                                                {getSubmissionStatusLabel(sub.status)}
+                                              </span>
+                                            </td>
+                                            <td className="py-3">
+                                              {(sub.status === "submitted" || sub.status === "graded") && (
+                                                <button onClick={() => handleOpenGradeModal(sub)} className="flex items-center gap-1 px-3 py-1.5 text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors text-sm font-medium">
+                                                  <Edit3 className="w-4 h-4" />
+                                                  {sub.status === "submitted" ? t("assessments.grade") : t("assessments.review")}
+                                                </button>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      };
+
+                                      return Array.from(grouped.entries()).map(([studentId, attempts]) => {
+                                        const sorted = [...attempts].sort((a, b) => (a.attemptNumber ?? 1) - (b.attemptNumber ?? 1));
+                                        const effectiveRow = sorted.find((s) => s.isEffective) || sorted[sorted.length - 1];
+                                        const retakeRows = sorted.filter((s) => s.id !== effectiveRow.id);
+                                        const hasRetakes = retakeRows.length > 0;
+                                        const isExpanded = expandedRetakeStudents.has(studentId);
+                                        const pct = effectiveRow.percentage ? parseFloat(effectiveRow.percentage) : 0;
+
+                                        return (
+                                          <React.Fragment key={studentId}>
+                                            <tr className="hover:bg-[#F9FAFB]">
+                                              <td className="py-3">
+                                                <div className="flex items-center gap-3">
+                                                  {hasRetakes && (
+                                                    <button
+                                                      onClick={() => {
+                                                        setExpandedRetakeStudents((prev) => {
+                                                          const next = new Set(prev);
+                                                          if (next.has(studentId)) next.delete(studentId);
+                                                          else next.add(studentId);
+                                                          return next;
+                                                        });
+                                                      }}
+                                                      className="p-0.5 hover:bg-[#F3F4F6] rounded flex-shrink-0"
+                                                    >
+                                                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[#6B7280]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#6B7280]" />}
+                                                    </button>
+                                                  )}
+                                                  <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                                                    {(effectiveRow.studentFirstName?.[0] || "").toUpperCase()}
+                                                    {(effectiveRow.studentLastName?.[0] || "").toUpperCase()}
+                                                  </div>
+                                                  <div>
+                                                    <span className="text-sm text-[#1F2937]">{effectiveRow.studentFirstName} {effectiveRow.studentLastName}</span>
+                                                    <p className="text-xs text-[#9CA3AF]">{effectiveRow.studentEmail}</p>
+                                                    {hasRetakes && (
+                                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#F3E8FF] text-[#7C3AED]">
+                                                          <RotateCcw className="w-2.5 h-2.5" />
+                                                          {sorted.length} {t("assessments.submissionAttempts") || "attempts"}
+                                                        </span>
+                                                        {effectiveRow.isEffective && (
+                                                          <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+                                                            {t("assessments.effectiveLabel") || "Effective"}
+                                                          </span>
+                                                        )}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </td>
+                                              <td className="py-3">
+                                                <span className={`text-sm font-semibold ${pct >= 80 ? "text-[#22C55E]" : pct >= 60 ? "text-[#EAB308]" : "text-[#EF4444]"}`}>
+                                                  {effectiveRow.score ?? 0}/{effectiveRow.totalMarks ?? 0}
                                                 </span>
-                                                <p className="text-xs text-[#9CA3AF]">
-                                                  {sub.studentEmail}
-                                                </p>
-                                              </div>
-                                            </div>
-                                          </td>
-                                          <td className="py-3">
-                                            <span
-                                              className={`text-sm font-semibold ${
-                                                pct >= 80
-                                                  ? "text-[#22C55E]"
-                                                  : pct >= 60
-                                                    ? "text-[#EAB308]"
-                                                    : "text-[#EF4444]"
-                                              }`}
-                                            >
-                                              {sub.score ?? 0}/{sub.totalMarks ?? 0}
-                                            </span>
-                                          </td>
-                                          <td className="py-3">
-                                            <span className="text-sm text-[#374151]">
-                                              {pct.toFixed(1)}%
-                                            </span>
-                                          </td>
-                                          <td className="py-3">
-                                            <span className="text-sm text-[#6B7280]">
-                                              {formatDate(sub.submittedAt)}
-                                            </span>
-                                          </td>
-                                          <td className="py-3">
-                                            <span
-                                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getSubmissionStatusStyle(sub.status)}`}
-                                            >
-                                              {sub.status === "graded" && (
-                                                <CheckCircle className="w-3 h-3" />
-                                              )}
-                                              {sub.status === "submitted" && (
-                                                <Clock className="w-3 h-3" />
-                                              )}
-                                              {getSubmissionStatusLabel(sub.status)}
-                                            </span>
-                                          </td>
-                                          <td className="py-3">
-                                            {(sub.status === "submitted" || sub.status === "graded") && (
-                                              <button
-                                                onClick={() => handleOpenGradeModal(sub)}
-                                                className="flex items-center gap-1 px-3 py-1.5 text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors text-sm font-medium"
-                                              >
-                                                <Edit3 className="w-4 h-4" />
-                                                {sub.status === "submitted"
-                                                  ? t("assessments.grade")
-                                                  : t("assessments.review")}
-                                              </button>
-                                            )}
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
+                                              </td>
+                                              <td className="py-3"><span className="text-sm text-[#374151]">{pct.toFixed(1)}%</span></td>
+                                              <td className="py-3"><span className="text-sm text-[#6B7280]">{formatDate(effectiveRow.submittedAt)}</span></td>
+                                              <td className="py-3">
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getSubmissionStatusStyle(effectiveRow.status)}`}>
+                                                  {effectiveRow.status === "graded" && <CheckCircle className="w-3 h-3" />}
+                                                  {effectiveRow.status === "submitted" && <Clock className="w-3 h-3" />}
+                                                  {getSubmissionStatusLabel(effectiveRow.status)}
+                                                </span>
+                                              </td>
+                                              <td className="py-3">
+                                                {(effectiveRow.status === "submitted" || effectiveRow.status === "graded") && (
+                                                  <button onClick={() => handleOpenGradeModal(effectiveRow)} className="flex items-center gap-1 px-3 py-1.5 text-[#3B82F6] hover:bg-[#EFF6FF] rounded-lg transition-colors text-sm font-medium">
+                                                    <Edit3 className="w-4 h-4" />
+                                                    {effectiveRow.status === "submitted" ? t("assessments.grade") : t("assessments.review")}
+                                                  </button>
+                                                )}
+                                              </td>
+                                            </tr>
+                                            {isExpanded && retakeRows.map((sub) => renderRow(sub, true))}
+                                          </React.Fragment>
+                                        );
+                                      });
+                                    })()}
                                   </tbody>
                                 </table>
                               </div>

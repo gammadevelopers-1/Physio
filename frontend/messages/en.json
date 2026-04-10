@@ -4196,6 +4196,8 @@
         "notSubmittedNotice": "This student did not submit before the deadline and was auto-graded as 0.",
         "attemptOfTotal": "Attempt {n}/{total}",
         "effective": "Effective",
+        "attempts": "attempts",
+        "retakeLabel": "Retake {n}",
         "details": "Submission Details",
         "close": "Close",
         "pass": "Pass",

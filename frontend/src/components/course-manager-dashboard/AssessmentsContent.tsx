@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
@@ -144,6 +144,8 @@ const AssessmentsContent = () => {
   }>>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [viewingSubmission, setViewingSubmission] = useState<typeof submissions[number] | null>(null);
+  // Tracks which student groups are expanded to show retake rows
+  const [expandedRetakeStudents, setExpandedRetakeStudents] = useState<Set<string>>(new Set());
 
   // Allow retake modal state
   const [retakeModal, setRetakeModal] = useState<{
@@ -1249,93 +1251,83 @@ const AssessmentsContent = () => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[#E5E7EB]">
-                                {submissions.map((sub, idx) => {
-                                  const subAssessment = assessments.find((a) => a.id === sub.assessmentId);
-                                  const passingMarks = subAssessment?.passingMarks ?? 0;
-                                  const totalMarks = sub.totalMarks ?? subAssessment?.totalMarks ?? 0;
-                                  // Auto-graded "not submitted" row: deadline missed, no submission timestamp
-                                  const isNotSubmitted = sub.submittedAt === null && sub.status === "graded";
-                                  const isPassed = !isNotSubmitted && sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
-                                  const isGraded = sub.status === "graded";
-                                  const isRetake = (sub.attemptNumber ?? 1) > 1;
-                                  const hasMultipleAttempts = (sub.totalAttempts ?? 1) > 1;
-                                  // First row of a student bucket — used to add a top border
-                                  const prev = idx > 0 ? submissions[idx - 1] : null;
-                                  const isFirstOfStudent = !prev || prev.studentId !== sub.studentId;
-                                  return (
-                                    <tr
-                                      key={sub.id}
-                                      className={`hover:bg-[#F9FAFB] transition-colors ${
-                                        !isFirstOfStudent ? "bg-[#FAFAFA]" : ""
-                                      }`}
-                                    >
-                                      <td className="px-4 py-3">
-                                        <p className="text-sm font-medium text-[#1F2937]">
-                                          {sub.studentFirstName} {sub.studentLastName}
-                                        </p>
-                                        <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
-                                        {hasMultipleAttempts && (
-                                          <div className="flex items-center gap-1.5 mt-1">
-                                            <span
-                                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                                                isRetake
-                                                  ? "bg-[#F3E8FF] text-[#7C3AED]"
-                                                  : "bg-[#F3F4F6] text-[#6B7280]"
-                                              }`}
-                                            >
-                                              {isRetake ? <RotateCcw className="w-2.5 h-2.5" /> : null}
-                                              {t("assessmentsPage.submissions.attemptOfTotal", {
-                                                n: sub.attemptNumber ?? 1,
-                                                total: sub.totalAttempts ?? 1,
-                                              }) || `Attempt ${sub.attemptNumber ?? 1}/${sub.totalAttempts ?? 1}`}
-                                            </span>
-                                            {sub.isEffective && (
-                                              <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
-                                                {t("assessmentsPage.submissions.effective") || "Effective"}
+                                {(() => {
+                                  // Group submissions by student — show ONE primary row per student,
+                                  // with retake versions nested/collapsible below.
+                                  const grouped = new Map<string, typeof submissions>();
+                                  for (const sub of submissions) {
+                                    const list = grouped.get(sub.studentId);
+                                    if (list) list.push(sub);
+                                    else grouped.set(sub.studentId, [sub]);
+                                  }
+
+                                  const renderSubRow = (sub: typeof submissions[number], isNested: boolean) => {
+                                    const subAssessment = assessments.find((a) => a.id === sub.assessmentId);
+                                    const passingMarks = subAssessment?.passingMarks ?? 0;
+                                    const totalMarks = sub.totalMarks ?? subAssessment?.totalMarks ?? 0;
+                                    const isNotSubmitted = sub.submittedAt === null && sub.status === "graded";
+                                    const isPassed = !isNotSubmitted && sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
+                                    const isGraded = sub.status === "graded";
+                                    return (
+                                      <tr
+                                        key={sub.id}
+                                        className={`hover:bg-[#F9FAFB] transition-colors ${isNested ? "bg-[#FAFAFA]" : ""}`}
+                                      >
+                                        <td className={`px-4 py-3 ${isNested ? "ps-10" : ""}`}>
+                                          {isNested ? (
+                                            <div className="flex items-center gap-2">
+                                              <span className="inline-flex items-center gap-1 text-xs text-[#7C3AED]">
+                                                <RotateCcw className="w-3 h-3" />
+                                                {t("assessmentsPage.submissions.retakeLabel", { n: (sub.attemptNumber ?? 1) - 1 }) ||
+                                                  `Retake ${(sub.attemptNumber ?? 1) - 1}`}
                                               </span>
-                                            )}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {isNotSubmitted ? (
-                                          <span className="text-sm font-semibold text-[#EF4444]">
-                                            0 / {totalMarks}
-                                          </span>
-                                        ) : sub.score !== null ? (
-                                          <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-                                            {sub.score} / {totalMarks}
-                                          </span>
-                                        ) : (
-                                          <span className="text-sm text-[#9CA3AF]">--</span>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                          isNotSubmitted
-                                            ? "bg-[#FEE2E2] text-[#DC2626]"
-                                            : isGraded
-                                              ? "bg-[#DCFCE7] text-[#22C55E]"
+                                              {sub.isEffective && (
+                                                <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+                                                  {t("assessmentsPage.submissions.effective") || "Effective"}
+                                                </span>
+                                              )}
+                                            </div>
+                                          ) : (
+                                            <>
+                                              <p className="text-sm font-medium text-[#1F2937]">
+                                                {sub.studentFirstName} {sub.studentLastName}
+                                              </p>
+                                              <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
+                                            </>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          {isNotSubmitted ? (
+                                            <span className="text-sm font-semibold text-[#EF4444]">0 / {totalMarks}</span>
+                                          ) : sub.score !== null ? (
+                                            <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                                              {sub.score} / {totalMarks}
+                                            </span>
+                                          ) : (
+                                            <span className="text-sm text-[#9CA3AF]">--</span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                            isNotSubmitted ? "bg-[#FEE2E2] text-[#DC2626]"
+                                              : isGraded ? "bg-[#DCFCE7] text-[#22C55E]"
                                               : "bg-[#FEF3C7] text-[#D97706]"
-                                        }`}>
-                                          {isNotSubmitted
-                                            ? (t("assessmentsPage.submissions.notSubmitted") || "Not submitted")
-                                            : isGraded
-                                              ? t("assessmentsPage.submissions.graded")
-                                              : t("assessmentsPage.submissions.pending")}
-                                        </span>
-                                      </td>
-                                      <td className="px-4 py-3">
-                                        {sub.submittedAt ? (
-                                          <p className="text-sm text-[#6B7280]">
-                                            {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                                          </p>
-                                        ) : (
-                                          <p className="text-sm text-[#9CA3AF]">—</p>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-3 text-end">
-                                        <div className="inline-flex items-center gap-1.5">
+                                          }`}>
+                                            {isNotSubmitted
+                                              ? (t("assessmentsPage.submissions.notSubmitted") || "Not submitted")
+                                              : isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
+                                          </span>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                          {sub.submittedAt ? (
+                                            <p className="text-sm text-[#6B7280]">
+                                              {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                            </p>
+                                          ) : (
+                                            <p className="text-sm text-[#9CA3AF]">—</p>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-3 text-end">
                                           <button
                                             onClick={() => setViewingSubmission(sub)}
                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
@@ -1343,44 +1335,154 @@ const AssessmentsContent = () => {
                                             <Eye className="w-3.5 h-3.5" />
                                             {t("assessmentsPage.actions.view")}
                                           </button>
-                                          {canEdit && isGraded && subAssessment && (
-                                            sub.hasUnusedRetakeGrant ? (
-                                              <span
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#9CA3AF] bg-[#F3F4F6] rounded-md cursor-not-allowed"
-                                                title={
-                                                  t("assessmentsPage.retakeModal.pendingTooltip") ||
-                                                  "Retake already granted — waiting for the student to submit"
-                                                }
-                                              >
-                                                <RotateCcw className="w-3.5 h-3.5" />
-                                                {t("assessmentsPage.retakeModal.pending") || "Retake pending"}
+                                        </td>
+                                      </tr>
+                                    );
+                                  };
+
+                                  return Array.from(grouped.entries()).map(([studentId, attempts]) => {
+                                    // Sort chronologically
+                                    const sorted = [...attempts].sort(
+                                      (a, b) => (a.attemptNumber ?? 1) - (b.attemptNumber ?? 1),
+                                    );
+                                    // The primary row is the effective attempt, or the latest
+                                    const effectiveRow = sorted.find((s) => s.isEffective) || sorted[sorted.length - 1];
+                                    const retakeRows = sorted.filter((s) => s.id !== effectiveRow.id);
+                                    const hasRetakes = retakeRows.length > 0;
+                                    const isExpanded = expandedRetakeStudents.has(studentId);
+                                    const subAssessment = assessments.find((a) => a.id === effectiveRow.assessmentId);
+                                    const passingMarks = subAssessment?.passingMarks ?? 0;
+                                    const totalMarks = effectiveRow.totalMarks ?? subAssessment?.totalMarks ?? 0;
+                                    const isNotSubmitted = effectiveRow.submittedAt === null && effectiveRow.status === "graded";
+                                    const isPassed = !isNotSubmitted && effectiveRow.score !== null && passingMarks > 0 && effectiveRow.score >= passingMarks;
+                                    const isGraded = effectiveRow.status === "graded";
+                                    const anyGraded = sorted.some((s) => s.status === "graded");
+
+                                    return (
+                                      <React.Fragment key={studentId}>
+                                        {/* Primary row */}
+                                        <tr className="hover:bg-[#F9FAFB] transition-colors">
+                                          <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                              {hasRetakes && (
+                                                <button
+                                                  onClick={() => {
+                                                    setExpandedRetakeStudents((prev) => {
+                                                      const next = new Set(prev);
+                                                      if (next.has(studentId)) next.delete(studentId);
+                                                      else next.add(studentId);
+                                                      return next;
+                                                    });
+                                                  }}
+                                                  className="p-0.5 hover:bg-[#F3F4F6] rounded"
+                                                >
+                                                  {isExpanded ? (
+                                                    <ChevronUp className="w-3.5 h-3.5 text-[#6B7280]" />
+                                                  ) : (
+                                                    <ChevronDown className="w-3.5 h-3.5 text-[#6B7280]" />
+                                                  )}
+                                                </button>
+                                              )}
+                                              <div>
+                                                <p className="text-sm font-medium text-[#1F2937]">
+                                                  {effectiveRow.studentFirstName} {effectiveRow.studentLastName}
+                                                </p>
+                                                <p className="text-xs text-[#9CA3AF]">{effectiveRow.studentEmail}</p>
+                                                {hasRetakes && (
+                                                  <div className="flex items-center gap-1.5 mt-1">
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#F3E8FF] text-[#7C3AED]">
+                                                      <RotateCcw className="w-2.5 h-2.5" />
+                                                      {sorted.length} {t("assessmentsPage.submissions.attempts") || "attempts"}
+                                                    </span>
+                                                    {effectiveRow.isEffective && (
+                                                      <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+                                                        {t("assessmentsPage.submissions.effective") || "Effective"}
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            {isNotSubmitted ? (
+                                              <span className="text-sm font-semibold text-[#EF4444]">0 / {totalMarks}</span>
+                                            ) : effectiveRow.score !== null ? (
+                                              <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                                                {effectiveRow.score} / {totalMarks}
                                               </span>
                                             ) : (
+                                              <span className="text-sm text-[#9CA3AF]">--</span>
+                                            )}
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                              isNotSubmitted ? "bg-[#FEE2E2] text-[#DC2626]"
+                                                : isGraded ? "bg-[#DCFCE7] text-[#22C55E]"
+                                                : "bg-[#FEF3C7] text-[#D97706]"
+                                            }`}>
+                                              {isNotSubmitted
+                                                ? (t("assessmentsPage.submissions.notSubmitted") || "Not submitted")
+                                                : isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
+                                            </span>
+                                          </td>
+                                          <td className="px-4 py-3">
+                                            {effectiveRow.submittedAt ? (
+                                              <p className="text-sm text-[#6B7280]">
+                                                {new Date(effectiveRow.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                              </p>
+                                            ) : (
+                                              <p className="text-sm text-[#9CA3AF]">—</p>
+                                            )}
+                                          </td>
+                                          <td className="px-4 py-3 text-end">
+                                            <div className="inline-flex items-center gap-1.5">
                                               <button
-                                                onClick={() => {
-                                                  setRetakeModal({
-                                                    submissionId: sub.id,
-                                                    assessmentId: sub.assessmentId,
-                                                    studentId: sub.studentId,
-                                                    studentName: `${sub.studentFirstName} ${sub.studentLastName}`.trim(),
-                                                    assessmentTitle: subAssessment.title,
-                                                    isAssignment: subAssessment.type === "assignment",
-                                                  });
-                                                  setRetakeForm({ reason: "", newDueDate: "" });
-                                                }}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#7C3AED] bg-[#F3E8FF] rounded-md hover:bg-[#E9D5FF] transition-colors"
-                                                title={t("assessmentsPage.retakeModal.title") || "Allow retake"}
+                                                onClick={() => setViewingSubmission(effectiveRow)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
                                               >
-                                                <RotateCcw className="w-3.5 h-3.5" />
-                                                {t("assessmentsPage.retakeModal.button") || "Allow Retake"}
+                                                <Eye className="w-3.5 h-3.5" />
+                                                {t("assessmentsPage.actions.view")}
                                               </button>
-                                            )
-                                          )}
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
+                                              {canEdit && anyGraded && subAssessment && (
+                                                effectiveRow.hasUnusedRetakeGrant ? (
+                                                  <span
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#9CA3AF] bg-[#F3F4F6] rounded-md cursor-not-allowed"
+                                                    title={t("assessmentsPage.retakeModal.pendingTooltip") || "Retake already granted — waiting for the student to submit"}
+                                                  >
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    {t("assessmentsPage.retakeModal.pending") || "Retake pending"}
+                                                  </span>
+                                                ) : (
+                                                  <button
+                                                    onClick={() => {
+                                                      setRetakeModal({
+                                                        submissionId: effectiveRow.id,
+                                                        assessmentId: effectiveRow.assessmentId,
+                                                        studentId: effectiveRow.studentId,
+                                                        studentName: `${effectiveRow.studentFirstName} ${effectiveRow.studentLastName}`.trim(),
+                                                        assessmentTitle: subAssessment.title,
+                                                        isAssignment: subAssessment.type === "assignment",
+                                                      });
+                                                      setRetakeForm({ reason: "", newDueDate: "" });
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#7C3AED] bg-[#F3E8FF] rounded-md hover:bg-[#E9D5FF] transition-colors"
+                                                    title={t("assessmentsPage.retakeModal.title") || "Allow retake"}
+                                                  >
+                                                    <RotateCcw className="w-3.5 h-3.5" />
+                                                    {t("assessmentsPage.retakeModal.button") || "Allow Retake"}
+                                                  </button>
+                                                )
+                                              )}
+                                            </div>
+                                          </td>
+                                        </tr>
+                                        {/* Nested retake rows (expanded) */}
+                                        {isExpanded && retakeRows.map((sub) => renderSubRow(sub, true))}
+                                      </React.Fragment>
+                                    );
+                                  });
+                                })()}
                               </tbody>
                             </table>
                           </div>

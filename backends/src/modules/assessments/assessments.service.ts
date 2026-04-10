@@ -226,10 +226,12 @@ export class AssessmentsService {
     const subCountMap = new Map<string, number>();
 
     if (assessmentIds.length > 0) {
+      // Count unique students who have at least one submission (not total
+      // rows, which includes retakes). This drives the "Submissions" KPI.
       const subCounts = await db
         .select({
           assessmentId: submissions.assessmentId,
-          cnt: count(),
+          cnt: sql<number>`COUNT(DISTINCT ${submissions.studentId})`,
         })
         .from(submissions)
         .where(inArray(submissions.assessmentId, assessmentIds))

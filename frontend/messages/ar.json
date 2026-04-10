@@ -4405,6 +4405,8 @@
         "notSubmittedNotice": "لم يقدم هذا الطالب التقييم قبل الموعد النهائي وتم تقييمه تلقائياً بصفر.",
         "attemptOfTotal": "المحاولة {n}/{total}",
         "effective": "المعتمدة",
+        "attempts": "محاولات",
+        "retakeLabel": "الإعادة {n}",
         "details": "تفاصيل التقديم",
         "close": "إغلاق",
         "pass": "ناجح",

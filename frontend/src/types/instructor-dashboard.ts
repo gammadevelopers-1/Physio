@@ -283,6 +283,11 @@ export interface AssessmentSubmission {
   submissionFiles?: AssessmentFile[];
   instructorComment?: string | null;
   questionComments?: Record<string, string>;
+  // Retake grouping annotations
+  attemptNumber?: number;
+  totalAttempts?: number;
+  isEffective?: boolean;
+  hasUnusedRetakeGrant?: boolean;
 }
 
 // ─── Item Analysis ──────────────────────────────────────────

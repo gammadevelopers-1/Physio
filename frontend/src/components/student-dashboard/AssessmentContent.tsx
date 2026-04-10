@@ -361,7 +361,9 @@ const AssessmentContent = () => {
   if (!assessment) return null;
 
   // ─── Max Attempts Reached — Show result + review option ───
-  if (assessment.maxAttemptsReached && !result && !reviewMode) {
+  // But if canRetake is true (manager granted a retake), skip this and fall
+  // through to the start screen so the student can begin the new attempt.
+  if (assessment.maxAttemptsReached && !assessment.canRetake && !result && !reviewMode) {
     const sub = assessment.latestSubmission;
     const isGraded = sub?.status === "graded";
     const score = sub?.score ?? 0;

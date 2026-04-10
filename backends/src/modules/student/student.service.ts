@@ -1528,6 +1528,9 @@ export class StudentService {
     } | null = null;
 
     if (totalAttempts > 0) {
+      // Use createdAt as fallback for rows with null submittedAt (auto-zero
+      // "not submitted" rows). This ensures the actual latest attempt wins,
+      // not the auto-zero whose null submittedAt sorts unpredictably.
       const [latestSub] = await db
         .select({
           id: submissions.id,
@@ -1543,7 +1546,7 @@ export class StudentService {
             sql`${submissions.status} IN ('graded', 'submitted')`,
           ),
         )
-        .orderBy(desc(submissions.submittedAt))
+        .orderBy(sql`COALESCE(${submissions.submittedAt}, ${submissions.createdAt}) DESC`)
         .limit(1);
 
       latestSubmission = latestSub || null;

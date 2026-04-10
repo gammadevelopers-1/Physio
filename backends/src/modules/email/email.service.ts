@@ -85,6 +85,11 @@ import {
   type RetakeGrantedParams,
 } from './templates/retake-granted.template';
 import {
+  getTimeExtensionGrantedHtml,
+  getTimeExtensionGrantedText,
+  type TimeExtensionGrantedParams,
+} from './templates/time-extension-granted.template';
+import {
   getEnrollmentConfirmationHtml,
   getEnrollmentConfirmationText,
 } from './templates/enrollment-confirmation.template';
@@ -789,6 +794,33 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send retake granted email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  async sendTimeExtensionGranted(
+    to: string,
+    params: TimeExtensionGrantedParams,
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: t(s.timeExtensionSubject, {
+          minutes: String(params.minutes),
+          title: params.assessmentTitle,
+        }),
+        html: getTimeExtensionGrantedHtml(params, locale),
+        text: getTimeExtensionGrantedText(params, locale),
+      });
+      this.logger.log(
+        `Time extension email sent to ${to} for "${params.assessmentTitle}" (+${params.minutes} min)`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send time extension email to ${to}`,
         error,
       );
     }

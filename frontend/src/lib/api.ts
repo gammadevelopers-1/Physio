@@ -1656,6 +1656,7 @@ export const courseManagerApi = {
       attemptNumber?: number;
       totalAttempts?: number;
       isEffective?: boolean;
+      hasUnusedRetakeGrant?: boolean;
     }>>(`/assessments/${assessmentId}/submissions`),
 
   // Get questions for an assessment (for preview)

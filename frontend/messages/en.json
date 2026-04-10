@@ -4064,7 +4064,9 @@
         "cancel": "Cancel",
         "confirm": "Allow Retake",
         "success": "Retake granted",
-        "error": "Failed to grant retake"
+        "error": "Failed to grant retake",
+        "pending": "Retake pending",
+        "pendingTooltip": "Retake already granted — waiting for the student to submit"
       },
       "actions": {
         "view": "View",
@@ -4097,7 +4099,7 @@
         "scopeFailedSections": "Failed Sections Only"
       },
       "override": {
-        "title": "Emergency Override",
+        "title": "Grant Extra Time",
         "selectStudent": "Select Student",
         "type": "Override Type",
         "timeExtension": "Time Extension",
@@ -4106,11 +4108,12 @@
         "attempts": "Additional Attempts",
         "value": "Value",
         "reason": "Reason",
-        "reasonPlaceholder": "Describe the emergency reason...",
+        "reasonPlaceholder": "Describe the reason for the extra time...",
         "cancel": "Cancel",
-        "grant": "Grant Override",
-        "success": "Override granted successfully",
-        "error": "Failed to grant override"
+        "grant": "Grant Extra Time",
+        "success": "Extra time granted",
+        "error": "Failed to grant extra time",
+        "timeExtensionHint": "Grants extra minutes on the timer (or extends the assignment deadline by the same minutes). For an extra attempt, use \"Allow Retake\" instead."
       },
       "settings": {
         "save": "Save Settings",

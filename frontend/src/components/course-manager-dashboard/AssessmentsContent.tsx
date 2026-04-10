@@ -140,6 +140,7 @@ const AssessmentsContent = () => {
     attemptNumber?: number;
     totalAttempts?: number;
     isEffective?: boolean;
+    hasUnusedRetakeGrant?: boolean;
   }>>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [viewingSubmission, setViewingSubmission] = useState<typeof submissions[number] | null>(null);
@@ -1343,24 +1344,37 @@ const AssessmentsContent = () => {
                                             {t("assessmentsPage.actions.view")}
                                           </button>
                                           {canEdit && isGraded && subAssessment && (
-                                            <button
-                                              onClick={() => {
-                                                setRetakeModal({
-                                                  submissionId: sub.id,
-                                                  assessmentId: sub.assessmentId,
-                                                  studentId: sub.studentId,
-                                                  studentName: `${sub.studentFirstName} ${sub.studentLastName}`.trim(),
-                                                  assessmentTitle: subAssessment.title,
-                                                  isAssignment: subAssessment.type === "assignment",
-                                                });
-                                                setRetakeForm({ reason: "", newDueDate: "" });
-                                              }}
-                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#7C3AED] bg-[#F3E8FF] rounded-md hover:bg-[#E9D5FF] transition-colors"
-                                              title={t("assessmentsPage.retakeModal.title") || "Allow retake"}
-                                            >
-                                              <RotateCcw className="w-3.5 h-3.5" />
-                                              {t("assessmentsPage.retakeModal.button") || "Allow Retake"}
-                                            </button>
+                                            sub.hasUnusedRetakeGrant ? (
+                                              <span
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#9CA3AF] bg-[#F3F4F6] rounded-md cursor-not-allowed"
+                                                title={
+                                                  t("assessmentsPage.retakeModal.pendingTooltip") ||
+                                                  "Retake already granted — waiting for the student to submit"
+                                                }
+                                              >
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                {t("assessmentsPage.retakeModal.pending") || "Retake pending"}
+                                              </span>
+                                            ) : (
+                                              <button
+                                                onClick={() => {
+                                                  setRetakeModal({
+                                                    submissionId: sub.id,
+                                                    assessmentId: sub.assessmentId,
+                                                    studentId: sub.studentId,
+                                                    studentName: `${sub.studentFirstName} ${sub.studentLastName}`.trim(),
+                                                    assessmentTitle: subAssessment.title,
+                                                    isAssignment: subAssessment.type === "assignment",
+                                                  });
+                                                  setRetakeForm({ reason: "", newDueDate: "" });
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#7C3AED] bg-[#F3E8FF] rounded-md hover:bg-[#E9D5FF] transition-colors"
+                                                title={t("assessmentsPage.retakeModal.title") || "Allow retake"}
+                                              >
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                {t("assessmentsPage.retakeModal.button") || "Allow Retake"}
+                                              </button>
+                                            )
                                           )}
                                         </div>
                                       </td>
@@ -1633,26 +1647,15 @@ const AssessmentsContent = () => {
                   ))}
                 </select>
               </div>
-              {/* Override Type */}
-              <div>
-                <label className="text-sm font-medium text-[#374151] block mb-1">
-                  {t("assessmentsPage.override.type")}
-                </label>
-                <div className="flex gap-3">
-                  <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm" style={{ borderColor: overrideForm.overrideType === 'time_extension' ? '#3B82F6' : '#E5E7EB', background: overrideForm.overrideType === 'time_extension' ? '#EFF6FF' : 'white' }}>
-                    <input type="radio" name="overrideType" value="time_extension" checked={overrideForm.overrideType === 'time_extension'} onChange={(e) => setOverrideForm({ ...overrideForm, overrideType: e.target.value, value: 30 })} className="sr-only" />
-                    {t("assessmentsPage.override.timeExtension")}
-                  </label>
-                  <label className="flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer text-sm" style={{ borderColor: overrideForm.overrideType === 'extra_attempts' ? '#3B82F6' : '#E5E7EB', background: overrideForm.overrideType === 'extra_attempts' ? '#EFF6FF' : 'white' }}>
-                    <input type="radio" name="overrideType" value="extra_attempts" checked={overrideForm.overrideType === 'extra_attempts'} onChange={(e) => setOverrideForm({ ...overrideForm, overrideType: e.target.value, value: 1 })} className="sr-only" />
-                    {t("assessmentsPage.override.extraAttempts")}
-                  </label>
-                </div>
-              </div>
+              {/* Helper text — extra attempts are handled by Allow Retake now */}
+              <p className="text-xs text-[#6B7280]">
+                {t("assessmentsPage.override.timeExtensionHint") ||
+                  "Grants extra minutes on the timer (or extends the assignment deadline by the same minutes). For an extra attempt, use \"Allow Retake\" instead."}
+              </p>
               {/* Value */}
               <div>
                 <label className="text-sm font-medium text-[#374151] block mb-1">
-                  {overrideForm.overrideType === 'time_extension' ? t("assessmentsPage.override.minutes") : t("assessmentsPage.override.attempts")}
+                  {t("assessmentsPage.override.minutes")}
                 </label>
                 <input
                   type="number"

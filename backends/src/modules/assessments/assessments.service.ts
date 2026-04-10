@@ -724,6 +724,34 @@ export class AssessmentsService {
     if (assessment.type === 'assignment') {
       if (!assessment.dueDate || now <= new Date(assessment.dueDate)) return;
 
+      // Consume any unused retake grants whose effective deadline has passed.
+      // This covers the case where the manager granted a retake but the
+      // student never opened the assignment — the grant should not block
+      // future retake grants forever.
+      const expiredGrants = await db
+        .select({
+          id: assessmentRetakeGrants.id,
+          newDueDate: assessmentRetakeGrants.newDueDate,
+        })
+        .from(assessmentRetakeGrants)
+        .where(
+          and(
+            eq(assessmentRetakeGrants.assessmentId, assessmentId),
+            sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+          ),
+        );
+      for (const g of expiredGrants) {
+        const effectiveDue = g.newDueDate
+          ? new Date(g.newDueDate)
+          : new Date(assessment.dueDate);
+        if (now > effectiveDue) {
+          await db
+            .update(assessmentRetakeGrants)
+            .set({ usedAt: now })
+            .where(eq(assessmentRetakeGrants.id, g.id));
+        }
+      }
+
       const enrolledStudents = await db
         .select({ studentId: enrollments.studentId })
         .from(enrollments)
@@ -874,6 +902,44 @@ export class AssessmentsService {
           instructorComment: 'Auto-submitted: time expired',
         })
         .where(eq(submissions.id, draft.id));
+
+      // If this expired draft was a retake (the student already had a graded
+      // submission before this draft was created), consume the most recent
+      // unused grant so the manager can issue a new one if they want to.
+      const [priorTerminal] = await db
+        .select({ id: submissions.id })
+        .from(submissions)
+        .where(
+          and(
+            eq(submissions.assessmentId, assessmentId),
+            eq(submissions.studentId, draft.studentId),
+            eq(submissions.status, 'graded'),
+            sql`${submissions.id} != ${draft.id}`,
+            sql`${submissions.submittedAt} IS NOT NULL`,
+            sql`${submissions.submittedAt} < ${draft.startedAt}`,
+          ),
+        )
+        .limit(1);
+      if (priorTerminal) {
+        const [grantToConsume] = await db
+          .select({ id: assessmentRetakeGrants.id })
+          .from(assessmentRetakeGrants)
+          .where(
+            and(
+              eq(assessmentRetakeGrants.assessmentId, assessmentId),
+              eq(assessmentRetakeGrants.studentId, draft.studentId),
+              sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+            ),
+          )
+          .orderBy(desc(assessmentRetakeGrants.createdAt))
+          .limit(1);
+        if (grantToConsume) {
+          await db
+            .update(assessmentRetakeGrants)
+            .set({ usedAt: now })
+            .where(eq(assessmentRetakeGrants.id, grantToConsume.id));
+        }
+      }
     }
   }
 
@@ -921,11 +987,27 @@ export class AssessmentsService {
     for (const row of data) {
       perStudentTotal.set(row.studentId, (perStudentTotal.get(row.studentId) || 0) + 1);
     }
+
+    // Look up which students have an unused retake grant pending so the
+    // frontend can disable the "Allow Retake" button (one outstanding retake
+    // at a time per student).
+    const pendingGrants = await db
+      .select({ studentId: assessmentRetakeGrants.studentId })
+      .from(assessmentRetakeGrants)
+      .where(
+        and(
+          eq(assessmentRetakeGrants.assessmentId, assessmentId),
+          sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+        ),
+      );
+    const studentsWithPendingGrant = new Set(pendingGrants.map((g) => g.studentId));
+
     const perStudentSeen = new Map<string, number>();
     type AnnotatedRow = (typeof data)[number] & {
       attemptNumber: number;
       totalAttempts: number;
       isEffective: boolean;
+      hasUnusedRetakeGrant: boolean;
     };
     const annotated: AnnotatedRow[] = data.map((row) => {
       const idx = (perStudentSeen.get(row.studentId) || 0) + 1;
@@ -935,6 +1017,7 @@ export class AssessmentsService {
         attemptNumber: idx,
         totalAttempts: perStudentTotal.get(row.studentId) || 1,
         isEffective: false,
+        hasUnusedRetakeGrant: studentsWithPendingGrant.has(row.studentId),
       };
     });
 
@@ -1519,14 +1602,16 @@ export class AssessmentsService {
   // ─── Emergency Overrides ─────────────────────────────────
 
   /**
-   * Grant an emergency override (time extension or extra attempts) for a student.
+   * Grant an emergency override (currently only time_extension is enforced).
+   * Fires student email + in-app and instructor in-app notifications when the
+   * grant is created.
    */
   async createOverride(
     assessmentId: string,
     user: AuthenticatedUser,
     data: { studentId: string; overrideType: string; value: number; reason: string; expiresAt?: string },
   ) {
-    await this.verifyAssessmentAccess(assessmentId, user);
+    const assessment = await this.verifyAssessmentAccess(assessmentId, user);
 
     const [override] = await db
       .insert(assessmentOverrides)
@@ -1541,7 +1626,126 @@ export class AssessmentsService {
       })
       .returning();
 
+    // Fire notifications for time extensions (the only override type the
+    // system actually enforces). Best-effort — failures are logged.
+    if (data.overrideType === 'time_extension') {
+      this.notifyTimeExtensionGranted(
+        assessment,
+        data.studentId,
+        user.id,
+        data.value,
+        data.reason || null,
+      ).catch((err) =>
+        this.logger.warn(`Failed to send time extension notifications: ${err.message}`),
+      );
+    }
+
     return override;
+  }
+
+  /**
+   * Sends time-extension notifications:
+   * - Student: in-app + email (en/ar based on user.language)
+   * - Instructor: in-app only (en/ar based on user.language)
+   */
+  private async notifyTimeExtensionGranted(
+    assessment: { id: string; title: string; courseId: string; type: string },
+    studentId: string,
+    managerId: string,
+    minutes: number,
+    reason: string | null,
+  ): Promise<void> {
+    const [studentRow, managerRow, courseRow] = await Promise.all([
+      db
+        .select({
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          language: users.language,
+        })
+        .from(users)
+        .where(eq(users.id, studentId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, managerId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      db
+        .select({
+          title: courses.title,
+          titleAr: courses.titleAr,
+          instructorId: courses.instructorId,
+        })
+        .from(courses)
+        .where(eq(courses.id, assessment.courseId))
+        .limit(1)
+        .then((rows) => rows[0]),
+    ]);
+
+    if (!studentRow || !courseRow) return;
+
+    const studentName =
+      `${studentRow.firstName || ''} ${studentRow.lastName || ''}`.trim() || 'Student';
+    const managerName = managerRow
+      ? `${managerRow.firstName || ''} ${managerRow.lastName || ''}`.trim() || 'Manager'
+      : 'Manager';
+
+    const studentIsAr = studentRow.language === 'ar';
+    const studentLocale: EmailLocale = studentIsAr ? 'ar' : 'en';
+    const courseName = (studentIsAr && courseRow.titleAr) || courseRow.title;
+
+    // ── In-app: student ────────────────────────────────────
+    await this.userNotificationsService.create({
+      recipientId: studentId,
+      type: 'time_extension_granted',
+      title: studentIsAr ? 'تم منحك وقتاً إضافياً' : 'Extra Time Granted',
+      message: studentIsAr
+        ? `منحك مدير الدورة ${minutes} دقيقة إضافية لـ "${assessment.title}"`
+        : `Your course manager has granted you ${minutes} extra minutes for "${assessment.title}"`,
+      link: `/dashboard/student/assessments/${assessment.id}`,
+      entityType: 'assessment',
+      entityId: assessment.id,
+    });
+
+    // ── Email: student ─────────────────────────────────────
+    if (studentRow.email) {
+      await this.emailService.sendTimeExtensionGranted(
+        studentRow.email,
+        {
+          studentName,
+          assessmentTitle: assessment.title,
+          courseName,
+          minutes,
+          reason,
+        },
+        studentLocale,
+      );
+    }
+
+    // ── In-app: instructor ─────────────────────────────────
+    if (courseRow.instructorId) {
+      const [instructorRow] = await db
+        .select({ language: users.language })
+        .from(users)
+        .where(eq(users.id, courseRow.instructorId))
+        .limit(1);
+      const instrIsAr = instructorRow?.language === 'ar';
+
+      await this.userNotificationsService.create({
+        recipientId: courseRow.instructorId,
+        type: 'time_extension_granted_by_manager',
+        title: instrIsAr ? 'تم منح وقت إضافي' : 'Extra Time Granted',
+        message: instrIsAr
+          ? `منح ${managerName} الطالب ${studentName} ${minutes} دقيقة إضافية لـ "${assessment.title}"`
+          : `${managerName} granted ${studentName} ${minutes} extra minutes for "${assessment.title}"`,
+        link: `/dashboard/instructor/assessments`,
+        entityType: 'assessment',
+        entityId: assessment.id,
+      });
+    }
   }
 
   /**
@@ -1614,6 +1818,26 @@ export class AssessmentsService {
     if (!existing) {
       throw new BadRequestException(
         'A retake can only be granted after the first attempt has been graded.',
+      );
+    }
+
+    // Block duplicate grants: only one outstanding retake at a time per student.
+    // The manager must wait for the student to actually submit (or for the
+    // backfill to expire the abandoned attempt) before granting another.
+    const [pendingGrant] = await db
+      .select({ id: assessmentRetakeGrants.id })
+      .from(assessmentRetakeGrants)
+      .where(
+        and(
+          eq(assessmentRetakeGrants.assessmentId, assessmentId),
+          eq(assessmentRetakeGrants.studentId, data.studentId),
+          sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+        ),
+      )
+      .limit(1);
+    if (pendingGrant) {
+      throw new BadRequestException(
+        'This student already has an unused retake. Wait until the new attempt is graded before granting another retake.',
       );
     }
 

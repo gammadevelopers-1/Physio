@@ -26,6 +26,7 @@ import {
   NELC_EVENT_TYPE,
   videoWatchEvents,
   assessmentRetakeGrants,
+  assessmentOverrides,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
@@ -1323,6 +1324,59 @@ export class StudentService {
 
   // ─── Assessment Taking ─────────────────────────────────
 
+  /**
+   * Sums "active" time-extension override minutes granted to this student for
+   * this assessment. An override is considered active until the student
+   * finalizes a submission after the override was granted (which "consumes"
+   * the extension). Drafts (in_progress) and not-submitted auto-zero rows
+   * (submittedAt = null) do NOT consume overrides.
+   *
+   * Logic: an override is active if there is no submission with
+   * submittedAt > override.createdAt for this (student, assessment).
+   */
+  private async getActiveTimeExtensionMinutes(
+    assessmentId: string,
+    studentId: string,
+  ): Promise<number> {
+    const overrides = await db
+      .select({
+        value: assessmentOverrides.value,
+        createdAt: assessmentOverrides.createdAt,
+      })
+      .from(assessmentOverrides)
+      .where(
+        and(
+          eq(assessmentOverrides.assessmentId, assessmentId),
+          eq(assessmentOverrides.studentId, studentId),
+          eq(assessmentOverrides.overrideType, 'time_extension'),
+        ),
+      );
+    if (overrides.length === 0) return 0;
+
+    // Find the most recent terminal submission (graded with a real submittedAt)
+    const [lastTerminal] = await db
+      .select({ submittedAt: submissions.submittedAt })
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          sql`${submissions.status} IN ('graded', 'submitted')`,
+          sql`${submissions.submittedAt} IS NOT NULL`,
+        ),
+      )
+      .orderBy(desc(submissions.submittedAt))
+      .limit(1);
+
+    const lastTerminalAt = lastTerminal?.submittedAt
+      ? new Date(lastTerminal.submittedAt).getTime()
+      : 0;
+
+    return overrides
+      .filter((o) => new Date(o.createdAt).getTime() > lastTerminalAt)
+      .reduce((sum, o) => sum + (o.value || 0), 0);
+  }
+
   async getAssessmentForStudent(studentId: string, assessmentId: string) {
     // Get the assessment
     const [assessment] = await db
@@ -1526,14 +1580,30 @@ export class StudentService {
       }
     }
 
-    // For assignments, the effective deadline is either the per-student override
-    // from an active retake grant, or the assessment's global dueDate.
-    const effectiveDueDate =
+    // Pull any active time-extension override minutes for this student.
+    // These extend the effective duration (timer) AND, for assignments with
+    // a deadline, push the deadline back by the same number of minutes.
+    const extensionMinutes = await this.getActiveTimeExtensionMinutes(
+      assessmentId,
+      studentId,
+    );
+    const effectiveDurationMinutes = assessment.durationMinutes
+      ? assessment.durationMinutes + extensionMinutes
+      : assessment.durationMinutes;
+
+    // For assignments, the effective deadline is the per-student override
+    // from a retake grant, OR the assessment's global dueDate, possibly
+    // extended by any time-extension override minutes.
+    const baseDueDate =
       isAssignment && activeUnusedGrant?.newDueDate
         ? new Date(activeUnusedGrant.newDueDate)
         : assessment.dueDate
           ? new Date(assessment.dueDate)
           : null;
+    const effectiveDueDate =
+      isAssignment && baseDueDate && extensionMinutes > 0
+        ? new Date(baseDueDate.getTime() + extensionMinutes * 60_000)
+        : baseDueDate;
     const pastDeadline =
       isAssignment && effectiveDueDate ? new Date() > effectiveDueDate : false;
     // If time limit is not enforced, the deadline is advisory and does not block submission.
@@ -1555,7 +1625,10 @@ export class StudentService {
       type: assessment.type,
       totalMarks: assessment.totalMarks,
       passingMarks: assessment.passingMarks,
-      durationMinutes: assessment.durationMinutes,
+      // durationMinutes returned to the client INCLUDES active time extensions
+      // so the front-end timer naturally counts down from the extended value.
+      durationMinutes: effectiveDurationMinutes,
+      timeExtensionMinutes: extensionMinutes > 0 ? extensionMinutes : undefined,
       attemptsAllowed: effectiveAttemptsAllowed,
       attemptsTaken: totalAttempts,
       currentAttemptNumber,
@@ -1642,13 +1715,20 @@ export class StudentService {
     // ─── Time limit enforcement ───────────────────────────
     // Assignment past deadline: reject. Auto-zero rows are created lazily by the
     // manager getSubmissions read path (see assessments.service.backfillExpiredSubmissions).
-    // If a retake grant has a per-student newDueDate, that overrides assessment.dueDate.
+    // The effective deadline = (retake grant newDueDate OR base dueDate) plus
+    // any active time-extension override minutes.
     if (assessment.type === 'assignment' && assessment.timeLimitEnforced) {
-      const effectiveDueDate = activeRetakeGrant?.newDueDate
+      const baseDue = activeRetakeGrant?.newDueDate
         ? new Date(activeRetakeGrant.newDueDate)
         : assessment.dueDate
           ? new Date(assessment.dueDate)
           : null;
+      const extMin = baseDue
+        ? await this.getActiveTimeExtensionMinutes(assessmentId, studentId)
+        : 0;
+      const effectiveDueDate = baseDue
+        ? new Date(baseDue.getTime() + extMin * 60_000)
+        : null;
       if (effectiveDueDate && new Date() > effectiveDueDate) {
         throw new BadRequestException(
           'The deadline for this assignment has passed. Submission is no longer accepted.',
@@ -1656,10 +1736,11 @@ export class StudentService {
       }
     }
 
-    // Quiz/exam: if the draft has been around longer than durationMinutes, the
-    // student is past their window. Reject the fresh answers (closes refresh-to-reset
-    // exploit). The expired draft will be lazily finalized using the previously
-    // saved answers when the manager opens the submissions list.
+    // Quiz/exam: if the draft has been around longer than (durationMinutes +
+    // any active time-extension overrides), the student is past their window.
+    // Reject the fresh answers (closes refresh-to-reset exploit). The expired
+    // draft will be lazily finalized using the previously saved answers when
+    // the manager opens the submissions list.
     if (
       (assessment.type === 'quiz' || assessment.type === 'exam') &&
       assessment.timeLimitEnforced &&
@@ -1677,8 +1758,13 @@ export class StudentService {
         )
         .limit(1);
       if (draft?.startedAt) {
+        const extensionMinutes = await this.getActiveTimeExtensionMinutes(
+          assessmentId,
+          studentId,
+        );
         const elapsedMs = Date.now() - new Date(draft.startedAt).getTime();
-        const allowedMs = assessment.durationMinutes * 60 * 1000;
+        const allowedMs =
+          (assessment.durationMinutes + extensionMinutes) * 60 * 1000;
         // Allow a 10-second grace window for clock skew / network latency
         if (elapsedMs > allowedMs + 10_000) {
           throw new BadRequestException(
@@ -1891,11 +1977,17 @@ export class StudentService {
         )
         .orderBy(desc(assessmentRetakeGrants.createdAt))
         .limit(1);
-      const effectiveDue = activeGrant?.newDueDate
+      const baseDue = activeGrant?.newDueDate
         ? new Date(activeGrant.newDueDate)
         : assessmentRow.dueDate
           ? new Date(assessmentRow.dueDate)
           : null;
+      const extMin = baseDue
+        ? await this.getActiveTimeExtensionMinutes(assessmentId, studentId)
+        : 0;
+      const effectiveDue = baseDue
+        ? new Date(baseDue.getTime() + extMin * 60_000)
+        : null;
       if (effectiveDue && new Date() > effectiveDue) {
         throw new BadRequestException(
           'The deadline for this assignment has passed.',
@@ -1934,40 +2026,11 @@ export class StudentService {
       return { submissionId: existing.id, saved: true };
     }
 
-    // New draft. If the student has prior graded submissions AND has an unused
-    // retake grant, claim the most recent grant now (mark usedAt) so an
-    // abandoned-then-lazy-finalized retake still consumes its grant.
-    const [priorSub] = await db
-      .select({ id: submissions.id })
-      .from(submissions)
-      .where(
-        and(
-          eq(submissions.assessmentId, assessmentId),
-          eq(submissions.studentId, studentId),
-          sql`${submissions.status} IN ('graded', 'submitted')`,
-        ),
-      )
-      .limit(1);
-    if (priorSub) {
-      const [grantToClaim] = await db
-        .select({ id: assessmentRetakeGrants.id })
-        .from(assessmentRetakeGrants)
-        .where(
-          and(
-            eq(assessmentRetakeGrants.assessmentId, assessmentId),
-            eq(assessmentRetakeGrants.studentId, studentId),
-            sql`${assessmentRetakeGrants.usedAt} IS NULL`,
-          ),
-        )
-        .orderBy(desc(assessmentRetakeGrants.createdAt))
-        .limit(1);
-      if (grantToClaim) {
-        await db
-          .update(assessmentRetakeGrants)
-          .set({ usedAt: new Date() })
-          .where(eq(assessmentRetakeGrants.id, grantToClaim.id));
-      }
-    }
+    // NOTE: we intentionally do NOT mark a retake grant as used here. Grants
+    // are only consumed when the student actually finalizes a submission
+    // (submitAssessment / submitAssignmentFiles) or when the lazy backfill
+    // expires an abandoned draft. This prevents a manager from being able to
+    // re-grant retakes mid-attempt.
 
     const [draft] = await db
       .insert(submissions)
@@ -2102,13 +2165,19 @@ export class StudentService {
       .orderBy(desc(assessmentRetakeGrants.createdAt))
       .limit(1);
 
-    // Deadline check — honors per-student override if a retake grant supplies one
+    // Deadline check — honors per-student override AND time-extension overrides
     if (assessment.timeLimitEnforced) {
-      const effectiveDue = activeRetakeGrant?.newDueDate
+      const baseDue = activeRetakeGrant?.newDueDate
         ? new Date(activeRetakeGrant.newDueDate)
         : assessment.dueDate
           ? new Date(assessment.dueDate)
           : null;
+      const extMin = baseDue
+        ? await this.getActiveTimeExtensionMinutes(assessmentId, studentId)
+        : 0;
+      const effectiveDue = baseDue
+        ? new Date(baseDue.getTime() + extMin * 60_000)
+        : null;
       if (effectiveDue && new Date() > effectiveDue) {
         throw new BadRequestException('Deadline has passed');
       }

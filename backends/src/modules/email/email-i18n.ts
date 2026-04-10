@@ -164,6 +164,13 @@ const strings = {
   retakeGrantedNewDeadline:    { en: 'New deadline:',                   ar: 'الموعد النهائي الجديد:' },
   retakeGrantedCta:            { en: 'Log in to start the retake.',     ar: 'سجل الدخول لبدء إعادة التقييم.' },
 
+  /* ── Time extension granted ──────────────────────────── */
+  timeExtensionSubject:        { en: '{minutes} extra minutes granted: {title}', ar: 'تم منحك {minutes} دقيقة إضافية: {title}' },
+  timeExtensionTitle:          { en: 'Extra Time Granted',              ar: 'تم منحك وقتاً إضافياً' },
+  timeExtensionBody:           { en: 'Your course manager has granted you extra time for the following assessment:', ar: 'منحك مدير الدورة وقتاً إضافياً للتقييم التالي:' },
+  timeExtensionMinutesLabel:   { en: 'Extra minutes:',                  ar: 'الدقائق الإضافية:' },
+  timeExtensionCta:            { en: 'Log in to use your extra time.',  ar: 'سجل الدخول لاستخدام الوقت الإضافي.' },
+
   /* ── At-risk reminder ────────────────────────────────── */
   atRiskSubject:               { en: 'Course Progress Reminder - {course}', ar: 'تذكير بتقدم الدورة - {course}' },
   atRiskTitle:                 { en: 'Course Progress Reminder',            ar: 'تذكير بتقدم الدورة' },

@@ -131,13 +131,30 @@ const AssessmentsContent = () => {
     score: number | null;
     totalMarks: number | null;
     percentage: number | null;
-    submittedAt: string;
+    // Null for auto-graded "not submitted" rows (deadline missed)
+    submittedAt: string | null;
     gradedAt?: string | null;
     answers?: Array<{ questionId: string; answer: string; isCorrect: boolean | null; marksAwarded: number | null }> | null;
     instructorComment?: string | null;
+    // Retake annotations from backend
+    attemptNumber?: number;
+    totalAttempts?: number;
+    isEffective?: boolean;
   }>>([]);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [viewingSubmission, setViewingSubmission] = useState<typeof submissions[number] | null>(null);
+
+  // Allow retake modal state
+  const [retakeModal, setRetakeModal] = useState<{
+    submissionId: string;
+    assessmentId: string;
+    studentId: string;
+    studentName: string;
+    assessmentTitle: string;
+    isAssignment: boolean;
+  } | null>(null);
+  const [retakeForm, setRetakeForm] = useState({ reason: "", newDueDate: "" });
+  const [retakeSubmitting, setRetakeSubmitting] = useState(false);
 
   // Assessment preview state
   const [previewAssessment, setPreviewAssessment] = useState<{ id: string; title: string } | null>(null);
@@ -316,6 +333,41 @@ const AssessmentsContent = () => {
       setPreviewQuestions([]);
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const handleAllowRetake = async () => {
+    if (!retakeModal) return;
+    setRetakeSubmitting(true);
+    try {
+      await courseManagerApi.allowRetake(retakeModal.assessmentId, {
+        studentId: retakeModal.studentId,
+        reason: retakeForm.reason.trim() || undefined,
+        newDueDate:
+          retakeModal.isAssignment && retakeForm.newDueDate
+            ? retakeForm.newDueDate + ":00+03:00"
+            : undefined,
+      });
+      toast.success(t("assessmentsPage.retakeModal.success") || "Retake granted");
+      setRetakeModal(null);
+      setRetakeForm({ reason: "", newDueDate: "" });
+      // Refresh submissions so any new attempt shows up
+      if (selectedSubmissionAssessment) {
+        courseManagerApi
+          .getSubmissions(selectedSubmissionAssessment)
+          .then((res) => {
+            const arr = Array.isArray(res)
+              ? res
+              : ((res as unknown as { data?: typeof submissions })?.data ?? []);
+            setSubmissions(arr);
+          })
+          .catch(() => {});
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || t("assessmentsPage.retakeModal.error") || "Failed to grant retake");
+    } finally {
+      setRetakeSubmitting(false);
     }
   };
 
@@ -516,14 +568,6 @@ const AssessmentsContent = () => {
         </span>
       );
     }
-    if (assessment.maxRetakes > 0) {
-      indicators.push(
-        <span key="retake" className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-[#F3E8FF] text-[#8B5CF6]">
-          <RotateCcw className="w-3 h-3" />
-          {assessment.maxRetakes}x
-        </span>
-      );
-    }
     return indicators.length > 0 ? (
       <div className="flex flex-wrap gap-1 mt-1">{indicators}</div>
     ) : null;
@@ -558,7 +602,7 @@ const AssessmentsContent = () => {
         </div>
       </div>
 
-      {/* Retake Rules */}
+      {/* Retake Score Policy */}
       <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
         <div className="flex items-center gap-2 mb-3">
           <RotateCcw className="w-4 h-4 text-[#8B5CF6]" />
@@ -566,89 +610,30 @@ const AssessmentsContent = () => {
             {t("assessmentsPage.retake.title")}
           </h4>
         </div>
-        <div className="space-y-3">
-          <div>
-            <label className="text-sm text-[#374151] block mb-1">
-              {t("assessmentsPage.retake.maxRetakes")}
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={99}
-              value={form.maxRetakes}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  maxRetakes: Math.max(0, parseInt(e.target.value) || 0),
-                })
-              }
-              placeholder={courseHint ? `${t("assessmentsPage.settings.courseDefault") || "Course default"}: ${courseHint.assessmentMaxRetakes}` : undefined}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-            />
-            {form.maxRetakes === 0 && (
-              <p className="text-xs text-[#6B7280] mt-1">
-                {t("assessmentsPage.retake.unlimited")}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="text-sm text-[#374151] block mb-1">
-              {t("assessmentsPage.retake.coolingHours")}
-            </label>
-            <input
-              type="number"
-              min={0}
-              max={720}
-              value={form.retakeCoolingHours}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  retakeCoolingHours: Math.max(0, parseInt(e.target.value) || 0),
-                })
-              }
-              placeholder={courseHint ? `${t("assessmentsPage.settings.courseDefault") || "Course default"}: ${courseHint.assessmentRetakeCoolingHours}` : undefined}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-[#374151] block mb-1">
-              {t("assessmentsPage.retake.scorePolicy")}
-            </label>
-            <select
-              value={form.retakeScorePolicy}
-              onChange={(e) =>
-                setForm({ ...form, retakeScorePolicy: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-            >
-              <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
-              <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
-              <option value="average">{t("assessmentsPage.retake.policies.average")}</option>
-            </select>
-            {courseHint && (
-              <p className="text-xs text-[#9CA3AF] mt-1">
-                {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentRetakeScorePolicy}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="text-sm text-[#374151] block mb-1">
-              {t("assessmentsPage.retake.scope")}
-            </label>
-            <select
-              value={form.retakeScope}
-              onChange={(e) => setForm({ ...form, retakeScope: e.target.value })}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-            >
-              <option value="full">{t("assessmentsPage.retake.scopeFull")}</option>
-              <option value="failed_sections">{t("assessmentsPage.retake.scopeFailedSections")}</option>
-            </select>
-            {courseHint && (
-              <p className="text-xs text-[#9CA3AF] mt-1">
-                {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentRetakeScope}
-              </p>
-            )}
-          </div>
+        <p className="text-xs text-[#6B7280] mb-3">
+          {t("assessmentsPage.retake.scorePolicyDesc") ||
+            "Retakes are granted per-student from the submissions list. This policy decides which attempt counts in the gradebook."}
+        </p>
+        <div>
+          <label className="text-sm text-[#374151] block mb-1">
+            {t("assessmentsPage.retake.scorePolicy")}
+          </label>
+          <select
+            value={form.retakeScorePolicy}
+            onChange={(e) =>
+              setForm({ ...form, retakeScorePolicy: e.target.value })
+            }
+            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+          >
+            <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
+            <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
+            <option value="average">{t("assessmentsPage.retake.policies.average")}</option>
+          </select>
+          {courseHint && (
+            <p className="text-xs text-[#9CA3AF] mt-1">
+              {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentRetakeScorePolicy}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -881,7 +866,7 @@ const AssessmentsContent = () => {
                   {activeTab === "assessments" && (
                     <>
                       {/* Stats Summary */}
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                           <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.total")}</p>
                           <p className="text-2xl font-bold text-[#1F2937] mt-1">{assessments.length}</p>
@@ -894,20 +879,11 @@ const AssessmentsContent = () => {
                         </div>
                         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
                           <div className="flex items-center gap-1">
-                            <Shield className="w-3 h-3 text-[#3B82F6]" />
-                            <p className="text-xs text-[#6B7280]">{t("assessmentsPage.proctoring.enabled")}</p>
+                            <Users className="w-3 h-3 text-[#3B82F6]" />
+                            <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.submissions") || "Submissions"}</p>
                           </div>
                           <p className="text-2xl font-bold text-[#3B82F6] mt-1">
-                            {assessments.filter((a) => a.proctoringEnabled).length}
-                          </p>
-                        </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-                          <div className="flex items-center gap-1">
-                            <RotateCcw className="w-3 h-3 text-[#8B5CF6]" />
-                            <p className="text-xs text-[#6B7280]">{t("assessmentsPage.retake.title")}</p>
-                          </div>
-                          <p className="text-2xl font-bold text-[#8B5CF6] mt-1">
-                            {assessments.filter((a) => a.maxRetakes > 0).length}
+                            {assessments.reduce((sum, a) => sum + (a.submissionCount ?? 0), 0)}
                           </p>
                         </div>
                         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
@@ -1272,22 +1248,60 @@ const AssessmentsContent = () => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[#E5E7EB]">
-                                {submissions.map((sub) => {
+                                {submissions.map((sub, idx) => {
                                   const subAssessment = assessments.find((a) => a.id === sub.assessmentId);
                                   const passingMarks = subAssessment?.passingMarks ?? 0;
                                   const totalMarks = sub.totalMarks ?? subAssessment?.totalMarks ?? 0;
-                                  const isPassed = sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
+                                  // Auto-graded "not submitted" row: deadline missed, no submission timestamp
+                                  const isNotSubmitted = sub.submittedAt === null && sub.status === "graded";
+                                  const isPassed = !isNotSubmitted && sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
                                   const isGraded = sub.status === "graded";
+                                  const isRetake = (sub.attemptNumber ?? 1) > 1;
+                                  const hasMultipleAttempts = (sub.totalAttempts ?? 1) > 1;
+                                  // First row of a student bucket — used to add a top border
+                                  const prev = idx > 0 ? submissions[idx - 1] : null;
+                                  const isFirstOfStudent = !prev || prev.studentId !== sub.studentId;
                                   return (
-                                    <tr key={sub.id} className="hover:bg-[#F9FAFB] transition-colors">
+                                    <tr
+                                      key={sub.id}
+                                      className={`hover:bg-[#F9FAFB] transition-colors ${
+                                        !isFirstOfStudent ? "bg-[#FAFAFA]" : ""
+                                      }`}
+                                    >
                                       <td className="px-4 py-3">
                                         <p className="text-sm font-medium text-[#1F2937]">
                                           {sub.studentFirstName} {sub.studentLastName}
                                         </p>
                                         <p className="text-xs text-[#9CA3AF]">{sub.studentEmail}</p>
+                                        {hasMultipleAttempts && (
+                                          <div className="flex items-center gap-1.5 mt-1">
+                                            <span
+                                              className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                                isRetake
+                                                  ? "bg-[#F3E8FF] text-[#7C3AED]"
+                                                  : "bg-[#F3F4F6] text-[#6B7280]"
+                                              }`}
+                                            >
+                                              {isRetake ? <RotateCcw className="w-2.5 h-2.5" /> : null}
+                                              {t("assessmentsPage.submissions.attemptOfTotal", {
+                                                n: sub.attemptNumber ?? 1,
+                                                total: sub.totalAttempts ?? 1,
+                                              }) || `Attempt ${sub.attemptNumber ?? 1}/${sub.totalAttempts ?? 1}`}
+                                            </span>
+                                            {sub.isEffective && (
+                                              <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#DCFCE7] text-[#15803D]">
+                                                {t("assessmentsPage.submissions.effective") || "Effective"}
+                                              </span>
+                                            )}
+                                          </div>
+                                        )}
                                       </td>
                                       <td className="px-4 py-3">
-                                        {sub.score !== null ? (
+                                        {isNotSubmitted ? (
+                                          <span className="text-sm font-semibold text-[#EF4444]">
+                                            0 / {totalMarks}
+                                          </span>
+                                        ) : sub.score !== null ? (
                                           <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                                             {sub.score} / {totalMarks}
                                           </span>
@@ -1297,26 +1311,58 @@ const AssessmentsContent = () => {
                                       </td>
                                       <td className="px-4 py-3">
                                         <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                          isGraded
-                                            ? "bg-[#DCFCE7] text-[#22C55E]"
-                                            : "bg-[#FEF3C7] text-[#D97706]"
+                                          isNotSubmitted
+                                            ? "bg-[#FEE2E2] text-[#DC2626]"
+                                            : isGraded
+                                              ? "bg-[#DCFCE7] text-[#22C55E]"
+                                              : "bg-[#FEF3C7] text-[#D97706]"
                                         }`}>
-                                          {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
+                                          {isNotSubmitted
+                                            ? (t("assessmentsPage.submissions.notSubmitted") || "Not submitted")
+                                            : isGraded
+                                              ? t("assessmentsPage.submissions.graded")
+                                              : t("assessmentsPage.submissions.pending")}
                                         </span>
                                       </td>
                                       <td className="px-4 py-3">
-                                        <p className="text-sm text-[#6B7280]">
-                                          {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
-                                        </p>
+                                        {sub.submittedAt ? (
+                                          <p className="text-sm text-[#6B7280]">
+                                            {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                          </p>
+                                        ) : (
+                                          <p className="text-sm text-[#9CA3AF]">—</p>
+                                        )}
                                       </td>
                                       <td className="px-4 py-3 text-end">
-                                        <button
-                                          onClick={() => setViewingSubmission(sub)}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
-                                        >
-                                          <Eye className="w-3.5 h-3.5" />
-                                          {t("assessmentsPage.actions.view")}
-                                        </button>
+                                        <div className="inline-flex items-center gap-1.5">
+                                          <button
+                                            onClick={() => setViewingSubmission(sub)}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#3B82F6] bg-[#EFF6FF] rounded-md hover:bg-[#DBEAFE] transition-colors"
+                                          >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            {t("assessmentsPage.actions.view")}
+                                          </button>
+                                          {canEdit && isGraded && subAssessment && (
+                                            <button
+                                              onClick={() => {
+                                                setRetakeModal({
+                                                  submissionId: sub.id,
+                                                  assessmentId: sub.assessmentId,
+                                                  studentId: sub.studentId,
+                                                  studentName: `${sub.studentFirstName} ${sub.studentLastName}`.trim(),
+                                                  assessmentTitle: subAssessment.title,
+                                                  isAssignment: subAssessment.type === "assignment",
+                                                });
+                                                setRetakeForm({ reason: "", newDueDate: "" });
+                                              }}
+                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#7C3AED] bg-[#F3E8FF] rounded-md hover:bg-[#E9D5FF] transition-colors"
+                                              title={t("assessmentsPage.retakeModal.title") || "Allow retake"}
+                                            >
+                                              <RotateCcw className="w-3.5 h-3.5" />
+                                              {t("assessmentsPage.retakeModal.button") || "Allow Retake"}
+                                            </button>
+                                          )}
+                                        </div>
                                       </td>
                                     </tr>
                                   );
@@ -1341,7 +1387,8 @@ const AssessmentsContent = () => {
         const assessment = assessments.find((a) => a.id === sub.assessmentId);
         const passingMarks = assessment?.passingMarks ?? 0;
         const totalMarks = sub.totalMarks ?? assessment?.totalMarks ?? 0;
-        const isPassed = sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
+        const isNotSubmitted = sub.submittedAt === null && sub.status === "graded";
+        const isPassed = !isNotSubmitted && sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
         const isGraded = sub.status === "graded";
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -1373,7 +1420,11 @@ const AssessmentsContent = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
                     <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.score")}</p>
-                    {sub.score !== null ? (
+                    {isNotSubmitted ? (
+                      <p className="text-lg font-bold text-[#EF4444]">
+                        0 / {totalMarks}
+                      </p>
+                    ) : sub.score !== null ? (
                       <p className={`text-lg font-bold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
                         {sub.score} / {totalMarks}
                       </p>
@@ -1383,29 +1434,41 @@ const AssessmentsContent = () => {
                   </div>
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
                     <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.status")}</p>
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
-                      isGraded ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEF3C7] text-[#D97706]"
-                    }`}>
-                      {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
-                    </span>
-                    {isPassed && sub.score !== null && (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#DCFCE7] text-[#22C55E]">
-                        {t("assessmentsPage.submissions.pass") || "Pass"}
+                    {isNotSubmitted ? (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 bg-[#FEE2E2] text-[#DC2626]">
+                        {t("assessmentsPage.submissions.notSubmitted") || "Not submitted"}
                       </span>
-                    )}
-                    {sub.score !== null && !isPassed && (
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#FEE2E2] text-[#EF4444]">
-                        {t("assessmentsPage.submissions.fail") || "Fail"}
-                      </span>
+                    ) : (
+                      <>
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                          isGraded ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEF3C7] text-[#D97706]"
+                        }`}>
+                          {isGraded ? t("assessmentsPage.submissions.graded") : t("assessmentsPage.submissions.pending")}
+                        </span>
+                        {isPassed && sub.score !== null && (
+                          <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#DCFCE7] text-[#22C55E]">
+                            {t("assessmentsPage.submissions.pass") || "Pass"}
+                          </span>
+                        )}
+                        {sub.score !== null && !isPassed && (
+                          <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 ms-1 bg-[#FEE2E2] text-[#EF4444]">
+                            {t("assessmentsPage.submissions.fail") || "Fail"}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-3 bg-[#F9FAFB] rounded-lg">
                     <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.submitted")}</p>
-                    <p className="text-sm text-[#1F2937]">
-                      {new Date(sub.submittedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </p>
+                    {sub.submittedAt ? (
+                      <p className="text-sm text-[#1F2937]">
+                        {new Date(sub.submittedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-[#9CA3AF]">—</p>
+                    )}
                   </div>
                   {sub.gradedAt && (
                     <div className="p-3 bg-[#F9FAFB] rounded-lg">
@@ -1417,8 +1480,21 @@ const AssessmentsContent = () => {
                   )}
                 </div>
 
-                {/* Student answers — only available after instructor grades */}
-                {isGraded && (
+                {/* Not-submitted notice — replaces the answers section for auto-zero rows */}
+                {isNotSubmitted && (
+                  <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+                    <div className="p-3 bg-[#FEE2E2] border border-[#FCA5A5] rounded-lg flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-[#DC2626] flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-[#991B1B]">
+                        {t("assessmentsPage.submissions.notSubmittedNotice") ||
+                          "This student did not submit before the deadline and was auto-graded as 0."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Student answers — only available after instructor grades, and skip for not-submitted */}
+                {isGraded && !isNotSubmitted && (
                   <div className="border-t border-[#E5E7EB] pt-4 mt-4">
                     <h4 className="text-sm font-semibold text-[#1F2937] mb-3 flex items-center gap-2">
                       <Eye className="w-4 h-4 text-[#3B82F6]" />
@@ -1711,6 +1787,88 @@ const AssessmentsContent = () => {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Allow Retake Modal */}
+      {retakeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-[#F3E8FF] flex items-center justify-center">
+                <RotateCcw className="w-5 h-5 text-[#7C3AED]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#1F2937]">
+                  {t("assessmentsPage.retakeModal.title") || "Allow retake"}
+                </h3>
+                <p className="text-sm text-[#6B7280]">
+                  {retakeModal.studentName} · {retakeModal.assessmentTitle}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <p className="text-sm text-[#4B5563]">
+                {t("assessmentsPage.retakeModal.desc") ||
+                  "Grant this student one extra attempt at this assessment. The student and the instructor will be notified."}
+              </p>
+              {retakeModal.isAssignment && (
+                <div>
+                  <label className="text-sm font-medium text-[#374151] block mb-1">
+                    {t("assessmentsPage.retakeModal.newDeadline") || "New deadline"}{" "}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={retakeForm.newDueDate}
+                    onChange={(e) => setRetakeForm({ ...retakeForm, newDueDate: e.target.value })}
+                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
+                    required
+                  />
+                </div>
+              )}
+              <div>
+                <label className="text-sm font-medium text-[#374151] block mb-1">
+                  {t("assessmentsPage.retakeModal.reason") || "Reason (optional)"}
+                </label>
+                <textarea
+                  value={retakeForm.reason}
+                  onChange={(e) => setRetakeForm({ ...retakeForm, reason: e.target.value })}
+                  rows={3}
+                  placeholder={
+                    t("assessmentsPage.retakeModal.reasonPlaceholder") ||
+                    "e.g. Student requested another attempt after low score"
+                  }
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3 justify-end mt-6">
+              <button
+                onClick={() => {
+                  setRetakeModal(null);
+                  setRetakeForm({ reason: "", newDueDate: "" });
+                }}
+                className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+              >
+                {t("assessmentsPage.retakeModal.cancel") || "Cancel"}
+              </button>
+              <button
+                onClick={handleAllowRetake}
+                disabled={
+                  retakeSubmitting || (retakeModal.isAssignment && !retakeForm.newDueDate)
+                }
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:bg-[#C4B5FD] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {retakeSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4" />
+                )}
+                {t("assessmentsPage.retakeModal.confirm") || "Allow Retake"}
+              </button>
             </div>
           </div>
         </div>

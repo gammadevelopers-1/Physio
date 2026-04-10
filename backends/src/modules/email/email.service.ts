@@ -80,6 +80,11 @@ import {
   getAssessmentSubmittedText,
 } from './templates/assessment-submitted.template';
 import {
+  getRetakeGrantedHtml,
+  getRetakeGrantedText,
+  type RetakeGrantedParams,
+} from './templates/retake-granted.template';
+import {
   getEnrollmentConfirmationHtml,
   getEnrollmentConfirmationText,
 } from './templates/enrollment-confirmation.template';
@@ -760,6 +765,30 @@ export class EmailService {
     } catch (error) {
       this.logger.error(
         `Failed to send assessment submission email to ${to}`,
+        error,
+      );
+    }
+  }
+
+  async sendRetakeGranted(
+    to: string,
+    params: RetakeGrantedParams,
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const s = getEmailStrings(locale);
+      await this.send({
+        to,
+        subject: t(s.retakeGrantedSubject, { title: params.assessmentTitle }),
+        html: getRetakeGrantedHtml(params, locale),
+        text: getRetakeGrantedText(params, locale),
+      });
+      this.logger.log(
+        `Retake granted email sent to ${to} for "${params.assessmentTitle}"`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to send retake granted email to ${to}`,
         error,
       );
     }

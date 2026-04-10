@@ -57,6 +57,10 @@ const AssessmentContent = () => {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  // ISO timestamp when this attempt started — used to resume the timer correctly
+  // after refresh/close. Set from the existing draft, otherwise initialized when
+  // the student clicks "Start".
+  const [draftStartedAt, setDraftStartedAt] = useState<string | null>(null);
 
   // Step 1: Start screen
   const [assessmentStarted, setAssessmentStarted] = useState(false);
@@ -115,6 +119,12 @@ const AssessmentContent = () => {
             savedAnswers[a.questionId] = a.answer;
           });
           setAnswers(savedAnswers);
+          if (progress.startedAt) {
+            setDraftStartedAt(progress.startedAt);
+            // Auto-resume so the student doesn't see the Start screen again
+            // (otherwise refreshing would reset the timer to full duration)
+            setAssessmentStarted(true);
+          }
         }
       } catch {
         // ignore — no saved progress
@@ -123,12 +133,19 @@ const AssessmentContent = () => {
     loadProgress();
   }, [assessment, assessmentId, assessmentStarted]);
 
-  // Start timer only when assessment starts
+  // Start the timer when the assessment starts. Resume from draftStartedAt
+  // (if we recovered an in-progress draft) or from "now" for a fresh attempt.
   useEffect(() => {
-    if (assessmentStarted && assessment?.durationMinutes && timeLeft === null) {
-      setTimeLeft(assessment.durationMinutes * 60);
+    if (!assessmentStarted || !assessment?.durationMinutes || timeLeft !== null) return;
+    const totalSeconds = assessment.durationMinutes * 60;
+    if (draftStartedAt) {
+      const elapsedSec = Math.floor((Date.now() - new Date(draftStartedAt).getTime()) / 1000);
+      setTimeLeft(Math.max(0, totalSeconds - elapsedSec));
+    } else {
+      setDraftStartedAt(new Date().toISOString());
+      setTimeLeft(totalSeconds);
     }
-  }, [assessmentStarted, assessment, timeLeft]);
+  }, [assessmentStarted, assessment, timeLeft, draftStartedAt]);
 
   // Timer countdown
   useEffect(() => {
@@ -147,9 +164,15 @@ const AssessmentContent = () => {
     return () => clearInterval(interval);
   }, [timeLeft, result]);
 
-  // Auto-submit when time runs out
+  // Auto-submit when time runs out — only if time limit is enforced
   useEffect(() => {
-    if (timeLeft === 0 && !result && !submitting && assessment) {
+    if (
+      timeLeft === 0 &&
+      !result &&
+      !submitting &&
+      assessment &&
+      assessment.timeLimitEnforced !== false
+    ) {
       handleSubmit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1192,14 +1215,28 @@ const AssessmentContent = () => {
 
           {/* Title + Badge */}
           <div className="mb-6">
-            <span
-              className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium mb-3 ${badge.color}`}
-            >
-              {badge.label}
-            </span>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span
+                className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${badge.color}`}
+              >
+                {badge.label}
+              </span>
+              {assessment.isRetakeAttempt && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#F3E8FF] text-[#7C3AED]">
+                  {t("assessment.retakeAttempt", { number: assessment.currentAttemptNumber ?? 2 }) ||
+                    `Attempt ${assessment.currentAttemptNumber ?? 2} (Retake)`}
+                </span>
+              )}
+            </div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1F2937]">
               {assessment.title}
             </h1>
+            {assessment.isRetakeAttempt && (
+              <p className="mt-2 text-sm text-[#6B21A8]">
+                {t("assessment.retakeAttemptDesc") ||
+                  "Your course manager has granted you another attempt at this assessment."}
+              </p>
+            )}
           </div>
 
           {/* Info Grid */}
@@ -1349,17 +1386,29 @@ const AssessmentContent = () => {
             {timeLeft !== null && (
               <div
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${
-                  timeLeft < 60
-                    ? "bg-red-50 text-[#DC2626]"
-                    : timeLeft < 300
-                      ? "bg-yellow-50 text-[#D4A520]"
-                      : "bg-[#F3F4F6] text-[#4B5563]"
+                  assessment?.timeLimitEnforced === false
+                    ? "bg-[#F3F4F6] text-[#4B5563]"
+                    : timeLeft < 60
+                      ? "bg-red-50 text-[#DC2626]"
+                      : timeLeft < 300
+                        ? "bg-yellow-50 text-[#D4A520]"
+                        : "bg-[#F3F4F6] text-[#4B5563]"
                 }`}
+                title={
+                  assessment?.timeLimitEnforced === false
+                    ? t("assessment.timerAdvisory") || "Timer is advisory — you can keep going past zero"
+                    : undefined
+                }
               >
                 <Clock className="w-4 h-4" />
                 <span className="text-sm font-medium">
-                  {formatTime(timeLeft)}
+                  {formatTime(Math.max(0, timeLeft))}
                 </span>
+                {assessment?.timeLimitEnforced === false && (
+                  <span className="text-[10px] uppercase font-semibold opacity-70">
+                    {t("assessment.advisory") || "Advisory"}
+                  </span>
+                )}
               </div>
             )}
 

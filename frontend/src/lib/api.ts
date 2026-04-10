@@ -1648,9 +1648,14 @@ export const courseManagerApi = {
       score: number | null;
       totalMarks: number | null;
       percentage: number | null;
-      submittedAt: string;
+      // Null for auto-graded "not submitted" rows
+      submittedAt: string | null;
       answers?: Array<{ questionId: string; answer: string; isCorrect: boolean | null; marksAwarded: number | null }> | null;
       instructorComment?: string | null;
+      // Retake grouping annotations
+      attemptNumber?: number;
+      totalAttempts?: number;
+      isEffective?: boolean;
     }>>(`/assessments/${assessmentId}/submissions`),
 
   // Get questions for an assessment (for preview)
@@ -1688,6 +1693,13 @@ export const courseManagerApi = {
   // Emergency override
   createOverride: (assessmentId: string, data: { studentId: string; overrideType: string; value: number; reason: string }) =>
     api.post(`/assessments/${assessmentId}/override`, data),
+
+  // Allow a student to retake an assessment (manager only)
+  allowRetake: (assessmentId: string, data: { studentId: string; reason?: string; newDueDate?: string }) =>
+    api.post<{ id: string; assessmentId: string; studentId: string; createdAt: string }>(
+      `/assessments/${assessmentId}/allow-retake`,
+      data,
+    ),
 
   getOverrides: (assessmentId: string) =>
     api.get<Array<{ id: string; assessmentId: string; studentId: string; overrideType: string; value: number; reason: string; grantedBy: string; expiresAt: string | null; createdAt: string; studentFirstName?: string; studentLastName?: string; granterFirstName?: string; granterLastName?: string }>>(`/assessments/${assessmentId}/overrides`),

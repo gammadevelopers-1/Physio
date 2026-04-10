@@ -28,6 +28,7 @@ export * from './assessments';
 export * from './questions';
 export * from './submissions';
 export * from './assessment-overrides';
+export * from './assessment-retake-grants';
 
 // Course Material schemas
 export * from './course-materials';

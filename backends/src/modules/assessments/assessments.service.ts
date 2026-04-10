@@ -34,6 +34,13 @@ import { SubmitAssessmentDto } from './dto/submit-assessment.dto';
 import { GradeSubmissionDto } from './dto/grade-submission.dto';
 import { UserNotificationsService } from '../user-notifications/user-notifications.service';
 import { StorageService } from '../storage/storage.service';
+import { EmailService } from '../email/email.service';
+import { assessmentRetakeGrants } from '../../database/schema/assessment-retake-grants';
+import type { EmailLocale } from '../email/email-i18n';
+import {
+  computeEffectiveScoresByGroup,
+  type AttemptForPolicy,
+} from '../../common/score-policy';
 
 const ASSIGNMENT_ALLOWED_MIMES = [
   'application/pdf',
@@ -56,6 +63,7 @@ export class AssessmentsService {
   constructor(
     private readonly userNotificationsService: UserNotificationsService,
     private readonly storageService: StorageService,
+    private readonly emailService: EmailService,
   ) {}
 
   // ─── Role helpers ─────────────────────────────────────────
@@ -83,6 +91,19 @@ export class AssessmentsService {
   async create(user: AuthenticatedUser, dto: CreateAssessmentDto) {
     await this.verifyCourseAccess(dto.courseId, user);
 
+    // Inherit course-level assessment defaults at creation time
+    const [course] = await db
+      .select({
+        assessmentTimeLimitEnforced: courses.assessmentTimeLimitEnforced,
+        assessmentMaxRetakes: courses.assessmentMaxRetakes,
+        assessmentRetakeCoolingHours: courses.assessmentRetakeCoolingHours,
+        assessmentRetakeScorePolicy: courses.assessmentRetakeScorePolicy,
+        assessmentRetakeScope: courses.assessmentRetakeScope,
+      })
+      .from(courses)
+      .where(eq(courses.id, dto.courseId))
+      .limit(1);
+
     // Enforce 1 attempt for quiz/exam
     const attemptsAllowed =
       dto.type === 'quiz' || dto.type === 'exam'
@@ -103,6 +124,12 @@ export class AssessmentsService {
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         instructions: dto.instructions,
         randomizeOrder: dto.type === 'quiz' || dto.type === 'exam' ? true : (dto.randomizeOrder ?? false),
+        // Inherit course defaults so the manager's policy applies to new assessments
+        timeLimitEnforced: course?.assessmentTimeLimitEnforced ?? true,
+        maxRetakes: course?.assessmentMaxRetakes ?? 0,
+        retakeCoolingHours: course?.assessmentRetakeCoolingHours ?? 24,
+        retakeScorePolicy: course?.assessmentRetakeScorePolicy ?? 'highest',
+        retakeScope: course?.assessmentRetakeScope ?? 'full',
       })
       .returning();
 
@@ -672,12 +699,195 @@ export class AssessmentsService {
   }
 
   /**
+   * Lazy backfill for expired assessments. Idempotent.
+   * - Assignment past dueDate (with timeLimitEnforced): every enrolled student who
+   *   hasn't submitted gets a real graded row with score=0. Existing in_progress
+   *   drafts are also marked as 0 (missed deadline).
+   * - Quiz/exam in_progress drafts past startedAt+durationMinutes: auto-graded
+   *   using whatever answers were saved, marked as submitted/graded.
+   * Called from getSubmissions so the manager always sees the truth on read.
+   * NOTE: a nightly cron version of this is intentionally deferred — see
+   * memory/feedback_assessment_expiry_lazy_on_read.md.
+   */
+  private async backfillExpiredSubmissions(assessmentId: string): Promise<void> {
+    const [assessment] = await db
+      .select()
+      .from(assessments)
+      .where(eq(assessments.id, assessmentId))
+      .limit(1);
+
+    if (!assessment || !assessment.timeLimitEnforced) return;
+
+    const now = new Date();
+
+    // ─── Assignment branch ─────────────────────────────────
+    if (assessment.type === 'assignment') {
+      if (!assessment.dueDate || now <= new Date(assessment.dueDate)) return;
+
+      const enrolledStudents = await db
+        .select({ studentId: enrollments.studentId })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, assessment.courseId),
+            sql`${enrollments.status} IN ('active', 'completed')`,
+          ),
+        );
+      if (enrolledStudents.length === 0) return;
+
+      const existingSubs = await db
+        .select({
+          id: submissions.id,
+          studentId: submissions.studentId,
+          status: submissions.status,
+        })
+        .from(submissions)
+        .where(eq(submissions.assessmentId, assessmentId));
+      const existingByStudent = new Map(
+        existingSubs.map((s) => [s.studentId, s]),
+      );
+
+      const totalMarks = assessment.totalMarks;
+      const missedComment = 'Auto-graded: not submitted by deadline';
+
+      for (const { studentId } of enrolledStudents) {
+        const existing = existingByStudent.get(studentId);
+        if (!existing) {
+          // Never opened the assignment — create a real 0-mark row
+          await db.insert(submissions).values({
+            assessmentId,
+            studentId,
+            answers: [],
+            score: 0,
+            totalMarks,
+            percentage: '0',
+            startedAt: null,
+            submittedAt: null,
+            status: 'graded',
+            instructorComment: missedComment,
+          });
+        } else if (existing.status === 'in_progress') {
+          // Started a draft but never submitted — mark as missed
+          await db
+            .update(submissions)
+            .set({
+              score: 0,
+              totalMarks,
+              percentage: '0',
+              submittedAt: null,
+              status: 'graded',
+              instructorComment: missedComment,
+            })
+            .where(eq(submissions.id, existing.id));
+        }
+        // else: already submitted/graded — leave alone
+      }
+      return;
+    }
+
+    // ─── Quiz/Exam branch ──────────────────────────────────
+    if (assessment.type !== 'quiz' && assessment.type !== 'exam') return;
+    if (!assessment.durationMinutes) return;
+
+    const staleDrafts = await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.status, 'in_progress'),
+        ),
+      );
+    if (staleDrafts.length === 0) return;
+
+    const allowedMs = assessment.durationMinutes * 60 * 1000;
+    const expiredDrafts = staleDrafts.filter(
+      (d) => d.startedAt && now.getTime() - new Date(d.startedAt).getTime() > allowedMs,
+    );
+    if (expiredDrafts.length === 0) return;
+
+    const assessmentQuestions = await db
+      .select()
+      .from(questions)
+      .where(eq(questions.assessmentId, assessmentId));
+    const questionMap = new Map(assessmentQuestions.map((q) => [q.id, q]));
+    // Total possible marks across the whole assessment (not just answered ones)
+    const fullTotalMarks = assessmentQuestions.reduce((sum, q) => sum + q.marks, 0);
+
+    for (const draft of expiredDrafts) {
+      const draftAnswers = (draft.answers as SubmissionAnswer[]) || [];
+      let totalScore = 0;
+
+      const gradedAnswers: SubmissionAnswer[] = draftAnswers.map((a) => {
+        const q = questionMap.get(a.questionId);
+        if (!q) {
+          return { questionId: a.questionId, answer: a.answer, isCorrect: null, marksAwarded: 0 };
+        }
+
+        if (q.type === 'mcq' || q.type === 'true_false') {
+          let isCorrect = false;
+          if (q.options && Array.isArray(q.options)) {
+            const correctOptions = (q.options as QuestionOption[]).filter((opt) => opt.isCorrect);
+            if (q.type === 'mcq' && correctOptions.length > 1) {
+              try {
+                const selected: string[] = JSON.parse(a.answer);
+                const correctTexts = correctOptions.map((o) => o.text);
+                isCorrect =
+                  selected.length === correctTexts.length &&
+                  selected.every((s) => correctTexts.includes(s));
+              } catch {
+                isCorrect = false;
+              }
+            } else {
+              const selectedOption = (q.options as QuestionOption[]).find((opt) => opt.text === a.answer);
+              isCorrect = selectedOption?.isCorrect === true;
+            }
+          } else if (q.correctAnswer) {
+            isCorrect =
+              a.answer.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
+          }
+          if (isCorrect) totalScore += q.marks;
+          return {
+            questionId: a.questionId,
+            answer: a.answer,
+            isCorrect,
+            marksAwarded: isCorrect ? q.marks : 0,
+          };
+        }
+        // Essay/short_answer — needs manual grading
+        return { questionId: a.questionId, answer: a.answer, isCorrect: null, marksAwarded: null };
+      });
+
+      const hasManualGrading = gradedAnswers.some((a) => a.isCorrect === null);
+      const percentage =
+        fullTotalMarks > 0 ? ((totalScore / fullTotalMarks) * 100).toFixed(2) : '0';
+
+      await db
+        .update(submissions)
+        .set({
+          answers: gradedAnswers,
+          score: totalScore,
+          totalMarks: fullTotalMarks,
+          percentage,
+          submittedAt: now,
+          status: hasManualGrading ? 'submitted' : 'graded',
+          instructorComment: 'Auto-submitted: time expired',
+        })
+        .where(eq(submissions.id, draft.id));
+    }
+  }
+
+  /**
    * List submissions for an assessment.
    * - Instructor: only for their own courses' assessments.
    * - Admin: any assessment.
    */
   async getSubmissions(assessmentId: string, user: AuthenticatedUser) {
     const assessment = await this.verifyAssessmentAccess(assessmentId, user);
+
+    // Lazy backfill: finalize expired drafts and create auto-zero rows for
+    // missed assignments. Idempotent and safe to call on every read.
+    await this.backfillExpiredSubmissions(assessmentId);
 
     const data = await db
       .select({
@@ -689,6 +899,7 @@ export class AssessmentsService {
         percentage: submissions.percentage,
         startedAt: submissions.startedAt,
         submittedAt: submissions.submittedAt,
+        createdAt: submissions.createdAt,
         status: submissions.status,
         answers: submissions.answers,
         submissionFiles: submissions.submissionFiles,
@@ -700,12 +911,60 @@ export class AssessmentsService {
       .from(submissions)
       .innerJoin(users, eq(submissions.studentId, users.id))
       .where(eq(submissions.assessmentId, assessmentId))
-      .orderBy(desc(submissions.submittedAt));
+      // Order by student then chronological so we can number attempts
+      .orderBy(asc(submissions.studentId), asc(submissions.createdAt));
+
+    // ─── Annotate attempt numbers ──────────────────────────
+    // For each (student) bucket, number rows starting at 1. The total per
+    // student is also attached so the UI can render "Attempt X of Y".
+    const perStudentTotal = new Map<string, number>();
+    for (const row of data) {
+      perStudentTotal.set(row.studentId, (perStudentTotal.get(row.studentId) || 0) + 1);
+    }
+    const perStudentSeen = new Map<string, number>();
+    type AnnotatedRow = (typeof data)[number] & {
+      attemptNumber: number;
+      totalAttempts: number;
+      isEffective: boolean;
+    };
+    const annotated: AnnotatedRow[] = data.map((row) => {
+      const idx = (perStudentSeen.get(row.studentId) || 0) + 1;
+      perStudentSeen.set(row.studentId, idx);
+      return {
+        ...row,
+        attemptNumber: idx,
+        totalAttempts: perStudentTotal.get(row.studentId) || 1,
+        isEffective: false,
+      };
+    });
+
+    // ─── Apply score policy to mark the "effective" attempt ─
+    // For 'highest' / 'latest' the effective row is the one whose score the
+    // gradebook should use. For 'average' no single row wins; the UI should
+    // compute the average separately if it wants to display it.
+    const policy = assessment.retakeScorePolicy || 'highest';
+    const attemptsForPolicy: (AttemptForPolicy & { studentId: string })[] = annotated.map((r) => ({
+      id: r.id,
+      score: r.score,
+      orderedAt: r.submittedAt || r.createdAt,
+      studentId: r.studentId,
+    }));
+    const effectiveByStudent = computeEffectiveScoresByGroup(
+      attemptsForPolicy,
+      (a) => a.studentId,
+      policy,
+    );
+    for (const row of annotated) {
+      const eff = effectiveByStudent.get(row.studentId);
+      if (eff?.effectiveAttempt && eff.effectiveAttempt.id === row.id) {
+        row.isEffective = true;
+      }
+    }
 
     // For TAs: strip scores/grades unless assessment is closed (results published)
     if (user.roles.includes('TEACHING_ASSISTANT') && !isGlobalAdmin(user)) {
       const gradesPublished = assessment.status === 'closed';
-      return data.map((row) => ({
+      return annotated.map((row) => ({
         ...row,
         score: gradesPublished ? row.score : null,
         totalMarks: gradesPublished ? row.totalMarks : null,
@@ -714,7 +973,7 @@ export class AssessmentsService {
       }));
     }
 
-    return data;
+    return annotated;
   }
 
   /**
@@ -1317,6 +1576,184 @@ export class AssessmentsService {
       .orderBy(desc(assessmentOverrides.createdAt));
 
     return data;
+  }
+
+  /**
+   * Manager grants a student a retake on this assessment.
+   * - Requires manager role (enforced at controller).
+   * - The student must already have a graded submission (or an auto-zero
+   *   "not submitted" row) — i.e. the first attempt has run its course.
+   * - Inserts a row in `assessment_retake_grants` which `getAssessmentForStudent`
+   *   uses to unlock another attempt.
+   * - For assignments, an optional `newDueDate` is stored on the grant and
+   *   used as the per-student deadline.
+   * - Fires email + in-app notification to the student, plus an in-app
+   *   notification to the course instructor.
+   */
+  async allowRetake(
+    assessmentId: string,
+    user: AuthenticatedUser,
+    data: { studentId: string; reason?: string; newDueDate?: string },
+  ) {
+    const assessment = await this.verifyAssessmentAccess(assessmentId, user);
+
+    // The student must have at least one terminal submission (graded) before
+    // a retake can be granted. This includes auto-zero "not submitted" rows,
+    // since those are also stored as status='graded'.
+    const [existing] = await db
+      .select({ id: submissions.id })
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, data.studentId),
+          eq(submissions.status, 'graded'),
+        ),
+      )
+      .limit(1);
+    if (!existing) {
+      throw new BadRequestException(
+        'A retake can only be granted after the first attempt has been graded.',
+      );
+    }
+
+    // Insert the retake grant row.
+    const newDueDate =
+      assessment.type === 'assignment' && data.newDueDate
+        ? new Date(data.newDueDate)
+        : null;
+
+    const [grant] = await db
+      .insert(assessmentRetakeGrants)
+      .values({
+        assessmentId,
+        studentId: data.studentId,
+        grantedBy: user.id,
+        reason: data.reason || null,
+        newDueDate,
+      })
+      .returning();
+
+    // Fire notifications (best-effort — failures are logged, not propagated).
+    this.notifyRetakeGranted(assessment, data.studentId, user.id, data.reason || null, newDueDate)
+      .catch((err) => this.logger.warn(`Failed to send retake notifications: ${err.message}`));
+
+    return grant;
+  }
+
+  /**
+   * Sends the two retake-granted notifications:
+   * - Student: in-app + email (en/ar based on user.language)
+   * - Instructor: in-app only (en/ar based on user.language)
+   */
+  private async notifyRetakeGranted(
+    assessment: { id: string; title: string; courseId: string; type: string },
+    studentId: string,
+    managerId: string,
+    reason: string | null,
+    newDueDate: Date | null,
+  ): Promise<void> {
+    // Look up student, manager, and course in parallel
+    const [studentRow, managerRow, courseRow] = await Promise.all([
+      db
+        .select({
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          language: users.language,
+        })
+        .from(users)
+        .where(eq(users.id, studentId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      db
+        .select({ firstName: users.firstName, lastName: users.lastName })
+        .from(users)
+        .where(eq(users.id, managerId))
+        .limit(1)
+        .then((rows) => rows[0]),
+      db
+        .select({
+          title: courses.title,
+          titleAr: courses.titleAr,
+          instructorId: courses.instructorId,
+        })
+        .from(courses)
+        .where(eq(courses.id, assessment.courseId))
+        .limit(1)
+        .then((rows) => rows[0]),
+    ]);
+
+    if (!studentRow || !courseRow) return;
+
+    const studentName =
+      `${studentRow.firstName || ''} ${studentRow.lastName || ''}`.trim() || 'Student';
+    const managerName = managerRow
+      ? `${managerRow.firstName || ''} ${managerRow.lastName || ''}`.trim() || 'Manager'
+      : 'Manager';
+
+    const studentIsAr = studentRow.language === 'ar';
+    const studentLocale: EmailLocale = studentIsAr ? 'ar' : 'en';
+    const courseName = (studentIsAr && courseRow.titleAr) || courseRow.title;
+
+    // ── In-app: student ────────────────────────────────────
+    await this.userNotificationsService.create({
+      recipientId: studentId,
+      type: 'retake_granted',
+      title: studentIsAr ? 'تم منحك فرصة إعادة التقييم' : 'Retake Granted',
+      message: studentIsAr
+        ? `منحك مدير الدورة فرصة لإعادة "${assessment.title}"`
+        : `Your course manager has granted you a retake for "${assessment.title}"`,
+      link: `/dashboard/student/assessments/${assessment.id}`,
+      entityType: 'assessment',
+      entityId: assessment.id,
+    });
+
+    // ── Email: student ─────────────────────────────────────
+    if (studentRow.email) {
+      const newDueDateStr = newDueDate
+        ? newDueDate.toLocaleString(studentIsAr ? 'ar-SA' : 'en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : null;
+      await this.emailService.sendRetakeGranted(
+        studentRow.email,
+        {
+          studentName,
+          assessmentTitle: assessment.title,
+          courseName,
+          reason,
+          newDueDate: newDueDateStr,
+        },
+        studentLocale,
+      );
+    }
+
+    // ── In-app: instructor ─────────────────────────────────
+    if (courseRow.instructorId) {
+      const [instructorRow] = await db
+        .select({ language: users.language })
+        .from(users)
+        .where(eq(users.id, courseRow.instructorId))
+        .limit(1);
+      const instrIsAr = instructorRow?.language === 'ar';
+
+      await this.userNotificationsService.create({
+        recipientId: courseRow.instructorId,
+        type: 'retake_allowed',
+        title: instrIsAr ? 'تم السماح بإعادة التقييم' : 'Retake Allowed',
+        message: instrIsAr
+          ? `سمح ${managerName} لـ ${studentName} بإعادة "${assessment.title}"`
+          : `${managerName} allowed ${studentName} to retake "${assessment.title}"`,
+        link: `/dashboard/instructor/assessments`,
+        entityType: 'assessment',
+        entityId: assessment.id,
+      });
+    }
   }
 
   // ─── Helpers ──────────────────────────────────────────────

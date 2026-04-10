@@ -391,6 +391,13 @@ export interface CourseDetailResponse {
   cohort: string | null;
   createdAt: string;
   updatedAt: string;
+  // Course-level assessment defaults (set by manager)
+  assessmentTimeLimitEnforced?: boolean;
+  assessmentProctoringEnabled?: boolean;
+  assessmentMaxRetakes?: number;
+  assessmentRetakeCoolingHours?: number;
+  assessmentRetakeScorePolicy?: string;
+  assessmentRetakeScope?: string;
   modules: CourseModule[];
 }
 

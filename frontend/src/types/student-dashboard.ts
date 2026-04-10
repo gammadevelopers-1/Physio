@@ -358,6 +358,11 @@ export interface StudentAssessment {
     score: number | null;
   } | null;
   instructions?: string | null;
+  // Time limit policy — false means duration/dueDate is advisory only
+  timeLimitEnforced?: boolean;
+  // Retake info — set when manager has granted an extra attempt
+  currentAttemptNumber?: number; // 1 for original, 2+ for retakes
+  isRetakeAttempt?: boolean; // true when this attempt is consuming an unused grant
   questions: AssessmentQuestion[];
   // Assignment-specific
   dueDate?: string | null;

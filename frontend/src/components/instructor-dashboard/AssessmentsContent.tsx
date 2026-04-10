@@ -44,6 +44,7 @@ import {
   RefreshCw,
   AlertTriangle,
   Save,
+  Info,
 } from "lucide-react";
 
 /* ──────────────────────── Modal Overlay ──────────────────────── */
@@ -86,6 +87,7 @@ const CreateAssessmentModal = ({
   const [instructions, setInstructions] = useState("");
   const [moduleId, setModuleId] = useState("");
   const [courseModules, setCourseModules] = useState<{ id: string; title: string }[]>([]);
+  const [courseTimeLimitEnforced, setCourseTimeLimitEnforced] = useState<boolean>(true);
   const [saving, setSaving] = useState(false);
   const isAssignment = type === "assignment";
 
@@ -93,8 +95,11 @@ const CreateAssessmentModal = ({
     if (!courseId) { setCourseModules([]); setModuleId(""); return; }
     let cancelled = false;
     instructorApi.getCourseDetail(courseId).then((data) => {
-      if (!cancelled && data?.modules) {
-        setCourseModules(data.modules.map((m: { id: string; title: string }) => ({ id: m.id, title: m.title })));
+      if (!cancelled) {
+        if (data?.modules) {
+          setCourseModules(data.modules.map((m: { id: string; title: string }) => ({ id: m.id, title: m.title })));
+        }
+        setCourseTimeLimitEnforced(data?.assessmentTimeLimitEnforced ?? true);
       }
     }).catch(() => { if (!cancelled) setCourseModules([]); });
     setModuleId("");
@@ -240,6 +245,21 @@ const CreateAssessmentModal = ({
               </div>
             )}
           </div>
+          {!courseTimeLimitEnforced && (
+            <div className="flex items-start gap-2 p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">
+              <Info className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-[#92400E]">
+                <p className="font-semibold">
+                  {t("assessments.timeLimitAdvisoryTitle") || "Time limit is advisory for this course"}
+                </p>
+                <p className="mt-0.5">
+                  {isAssignment
+                    ? (t("assessments.timeLimitAdvisoryAssignmentDesc") || "The course manager has disabled deadline enforcement. Students may submit after the deadline.")
+                    : (t("assessments.timeLimitAdvisoryQuizDesc") || "The course manager has disabled time enforcement. Students will not be auto-submitted when the timer ends.")}
+                </p>
+              </div>
+            </div>
+          )}
           {isAssignment && (
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-1">
@@ -504,6 +524,21 @@ const EditAssessmentModal = ({
               </div>
             )}
           </div>
+          {assessment.timeLimitEnforced === false && (
+            <div className="flex items-start gap-2 p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">
+              <Info className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-[#92400E]">
+                <p className="font-semibold">
+                  {t("assessments.timeLimitAdvisoryTitle") || "Time limit is advisory for this assessment"}
+                </p>
+                <p className="mt-0.5">
+                  {editIsAssignment
+                    ? (t("assessments.timeLimitAdvisoryAssignmentDesc") || "Deadline enforcement is disabled. Students may submit after the deadline.")
+                    : (t("assessments.timeLimitAdvisoryQuizDesc") || "Time enforcement is disabled. Students will not be auto-submitted when the timer ends.")}
+                </p>
+              </div>
+            </div>
+          )}
           {editIsAssignment && (
             <div>
               <label className="block text-sm font-medium text-[#374151] mb-1">

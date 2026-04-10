@@ -25,8 +25,10 @@ import {
   COURSE_STATUS,
   NELC_EVENT_TYPE,
   videoWatchEvents,
+  assessmentRetakeGrants,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
+import { computeEffectiveScore } from '../../common/score-policy';
 import { ThresholdEvaluationService } from '../course-assistants/threshold-evaluation.service';
 import type { AssessmentFile } from '../../database/schema/assessments';
 import { randomUUID } from 'crypto';
@@ -617,6 +619,7 @@ export class StudentService {
         passingMarks: assessments.passingMarks,
         durationMinutes: assessments.durationMinutes,
         attemptsAllowed: assessments.attemptsAllowed,
+        retakeScorePolicy: assessments.retakeScorePolicy,
         moduleId: assessments.moduleId,
         dueDate: assessments.dueDate,
       })
@@ -641,6 +644,7 @@ export class StudentService {
           percentage: submissions.percentage,
           status: submissions.status,
           submittedAt: submissions.submittedAt,
+          createdAt: submissions.createdAt,
         })
         .from(submissions)
         .where(
@@ -654,16 +658,46 @@ export class StudentService {
         );
     }
 
-    // Build submission map
-    const submissionMap = new Map<string, any>();
+    // Group submissions by assessment, then apply each assessment's score
+    // policy to pick the effective attempt. Previously this used a Map that
+    // silently overwrote on collision (arbitrary pick) when the student had
+    // multiple attempts (retakes).
+    const submissionsByAssessment = new Map<string, any[]>();
     for (const sub of studentSubmissions) {
-      submissionMap.set(sub.assessmentId, sub);
+      const list = submissionsByAssessment.get(sub.assessmentId);
+      if (list) list.push(sub);
+      else submissionsByAssessment.set(sub.assessmentId, [sub]);
     }
 
-    const assessmentsWithStatus = courseAssessments.map((a) => ({
-      ...a,
-      submission: submissionMap.get(a.id) || null,
-    }));
+    const assessmentsWithStatus = courseAssessments.map((a) => {
+      const attempts = submissionsByAssessment.get(a.id) || [];
+      if (attempts.length === 0) return { ...a, submission: null };
+      const eff = computeEffectiveScore(
+        attempts.map((s) => ({
+          id: s.id,
+          score: s.score,
+          orderedAt: s.submittedAt || s.createdAt,
+        })),
+        a.retakeScorePolicy || 'highest',
+      );
+      let chosen: any | null = null;
+      if (eff.isAggregate) {
+        // For 'average', synthesize a row using the aggregate score and the
+        // most recent submission's metadata so the student progress UI keeps
+        // working without leaking the multi-attempt details.
+        const mostRecent = [...attempts].sort(
+          (x, y) =>
+            new Date(y.submittedAt || y.createdAt).getTime() -
+            new Date(x.submittedAt || x.createdAt).getTime(),
+        )[0];
+        chosen = { ...mostRecent, score: eff.score };
+      } else if (eff.effectiveAttempt) {
+        chosen = attempts.find((s) => s.id === eff.effectiveAttempt!.id) || null;
+      } else {
+        chosen = attempts[0];
+      }
+      return { ...a, submission: chosen };
+    });
 
     // Attendance summary — only finalized (completed) sessions visible to students
     const [attSummary] = await db
@@ -1352,15 +1386,39 @@ export class StudentService {
       );
     const totalAttempts = Number(allSubmissionsResult[0]?.count || 0);
 
-    const maxAttemptsReached =
-      assessment.attemptsAllowed != null &&
-      totalAttempts >= assessment.attemptsAllowed;
+    // Count retake grants for this student so we can extend attemptsAllowed.
+    // Each grant adds exactly one extra attempt.
+    const retakeGrantRows = await db
+      .select({
+        id: assessmentRetakeGrants.id,
+        usedAt: assessmentRetakeGrants.usedAt,
+        newDueDate: assessmentRetakeGrants.newDueDate,
+        createdAt: assessmentRetakeGrants.createdAt,
+      })
+      .from(assessmentRetakeGrants)
+      .where(
+        and(
+          eq(assessmentRetakeGrants.assessmentId, assessmentId),
+          eq(assessmentRetakeGrants.studentId, studentId),
+        ),
+      )
+      .orderBy(desc(assessmentRetakeGrants.createdAt));
+    const totalGrants = retakeGrantRows.length;
+    const unusedGrants = retakeGrantRows.filter((g) => !g.usedAt).length;
+    // Most recent unused grant — its newDueDate (if any) overrides the assessment dueDate
+    const activeUnusedGrant = retakeGrantRows.find((g) => !g.usedAt) || null;
 
-    // Retake info — compute canRetake and retakeAvailableAt
-    let canRetake = false;
-    let retakeAvailableAt: string | null = null;
+    // Effective attempts allowed = baseline (assessment.attemptsAllowed, default 1)
+    // plus any retake grants the manager has issued.
+    const baseAttemptsAllowed = assessment.attemptsAllowed ?? 1;
+    const effectiveAttemptsAllowed = baseAttemptsAllowed + totalGrants;
+    const maxAttemptsReached = totalAttempts >= effectiveAttemptsAllowed;
 
-    // Fetch latest submission for review/retake info
+    // Retake info — with the new model, canRetake is simply "an unused grant exists"
+    let canRetake = unusedGrants > 0;
+    const retakeAvailableAt: string | null = null;
+
+    // Fetch latest submission for review info
     let latestSubmission: {
       id: string;
       status: string;
@@ -1388,20 +1446,6 @@ export class StudentService {
         .limit(1);
 
       latestSubmission = latestSub || null;
-      const lastSubmittedAt = latestSub?.submittedAt;
-      const attemptsRemaining = assessment.attemptsAllowed
-        ? assessment.attemptsAllowed - totalAttempts
-        : Infinity;
-
-      if (attemptsRemaining > 0 && lastSubmittedAt) {
-        const coolingMs =
-          (assessment.retakeCoolingHours || 0) * 60 * 60 * 1000;
-        const availAt = new Date(lastSubmittedAt.getTime() + coolingMs);
-        retakeAvailableAt = availAt.toISOString();
-        canRetake = new Date() >= availAt;
-      } else if (attemptsRemaining > 0 && !lastSubmittedAt) {
-        canRetake = true;
-      }
     }
 
     // Get questions — omit correctAnswer for student view
@@ -1482,10 +1526,28 @@ export class StudentService {
       }
     }
 
-    const pastDeadline = isAssignment && assessment.dueDate
-      ? new Date() > new Date(assessment.dueDate)
-      : false;
-    const canSubmit = isAssignment ? !pastDeadline && totalAttempts === 0 : undefined;
+    // For assignments, the effective deadline is either the per-student override
+    // from an active retake grant, or the assessment's global dueDate.
+    const effectiveDueDate =
+      isAssignment && activeUnusedGrant?.newDueDate
+        ? new Date(activeUnusedGrant.newDueDate)
+        : assessment.dueDate
+          ? new Date(assessment.dueDate)
+          : null;
+    const pastDeadline =
+      isAssignment && effectiveDueDate ? new Date() > effectiveDueDate : false;
+    // If time limit is not enforced, the deadline is advisory and does not block submission.
+    const deadlineBlocks = pastDeadline && assessment.timeLimitEnforced;
+    // For assignments: student can submit if (a) within deadline AND (b) either
+    // they haven't submitted yet OR they have an unused retake grant.
+    const canSubmit = isAssignment
+      ? !deadlineBlocks && (totalAttempts === 0 || unusedGrants > 0)
+      : undefined;
+
+    // The next attempt the student is about to start: total submissions + 1.
+    // First attempt = 1, retakes = 2, 3, 4...
+    const currentAttemptNumber = totalAttempts + 1;
+    const isRetakeAttempt = totalAttempts > 0 && unusedGrants > 0;
 
     return {
       id: assessment.id,
@@ -1494,13 +1556,17 @@ export class StudentService {
       totalMarks: assessment.totalMarks,
       passingMarks: assessment.passingMarks,
       durationMinutes: assessment.durationMinutes,
-      attemptsAllowed: assessment.attemptsAllowed,
+      attemptsAllowed: effectiveAttemptsAllowed,
       attemptsTaken: totalAttempts,
+      currentAttemptNumber,
+      isRetakeAttempt,
       canRetake,
       retakeAvailableAt,
       maxAttemptsReached,
       randomizeOrder: assessment.randomizeOrder,
       questionsPerAttempt: assessment.questionsPerAttempt,
+      // Time limit policy — false means duration/dueDate is advisory only
+      timeLimitEnforced: assessment.timeLimitEnforced,
       latestSubmission: latestSubmission
         ? {
             id: latestSubmission.id,
@@ -1513,7 +1579,9 @@ export class StudentService {
       // Assignment-specific fields
       ...(isAssignment && {
         assignmentFiles: assessment.assignmentFiles || [],
-        dueDate: assessment.dueDate?.toISOString() || null,
+        // Show the effective deadline (per-student override if any) so the
+        // student sees the correct cutoff in the UI.
+        dueDate: effectiveDueDate?.toISOString() || null,
         instructions: assessment.instructions || null,
         canSubmit,
       }),
@@ -1551,6 +1619,73 @@ export class StudentService {
 
     if (!enrollment) {
       throw new BadRequestException('You must be enrolled in the course');
+    }
+
+    // Look up any unused retake grant — its newDueDate (if any) overrides
+    // the assessment's global dueDate for this student.
+    const [activeRetakeGrant] = await db
+      .select({
+        id: assessmentRetakeGrants.id,
+        newDueDate: assessmentRetakeGrants.newDueDate,
+      })
+      .from(assessmentRetakeGrants)
+      .where(
+        and(
+          eq(assessmentRetakeGrants.assessmentId, assessmentId),
+          eq(assessmentRetakeGrants.studentId, studentId),
+          sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+        ),
+      )
+      .orderBy(desc(assessmentRetakeGrants.createdAt))
+      .limit(1);
+
+    // ─── Time limit enforcement ───────────────────────────
+    // Assignment past deadline: reject. Auto-zero rows are created lazily by the
+    // manager getSubmissions read path (see assessments.service.backfillExpiredSubmissions).
+    // If a retake grant has a per-student newDueDate, that overrides assessment.dueDate.
+    if (assessment.type === 'assignment' && assessment.timeLimitEnforced) {
+      const effectiveDueDate = activeRetakeGrant?.newDueDate
+        ? new Date(activeRetakeGrant.newDueDate)
+        : assessment.dueDate
+          ? new Date(assessment.dueDate)
+          : null;
+      if (effectiveDueDate && new Date() > effectiveDueDate) {
+        throw new BadRequestException(
+          'The deadline for this assignment has passed. Submission is no longer accepted.',
+        );
+      }
+    }
+
+    // Quiz/exam: if the draft has been around longer than durationMinutes, the
+    // student is past their window. Reject the fresh answers (closes refresh-to-reset
+    // exploit). The expired draft will be lazily finalized using the previously
+    // saved answers when the manager opens the submissions list.
+    if (
+      (assessment.type === 'quiz' || assessment.type === 'exam') &&
+      assessment.timeLimitEnforced &&
+      assessment.durationMinutes
+    ) {
+      const [draft] = await db
+        .select({ startedAt: submissions.startedAt })
+        .from(submissions)
+        .where(
+          and(
+            eq(submissions.assessmentId, assessmentId),
+            eq(submissions.studentId, studentId),
+            eq(submissions.status, 'in_progress'),
+          ),
+        )
+        .limit(1);
+      if (draft?.startedAt) {
+        const elapsedMs = Date.now() - new Date(draft.startedAt).getTime();
+        const allowedMs = assessment.durationMinutes * 60 * 1000;
+        // Allow a 10-second grace window for clock skew / network latency
+        if (elapsedMs > allowedMs + 10_000) {
+          throw new BadRequestException(
+            'The time limit for this assessment has expired. Your previous answers have been saved and will be graded.',
+          );
+        }
+      }
     }
 
     // Get questions with correct answers for grading
@@ -1681,6 +1816,15 @@ export class StudentService {
       submission = inserted;
     }
 
+    // If this submission is consuming a retake grant, mark it as used so the
+    // student doesn't get an unbounded number of attempts from one grant.
+    if (activeRetakeGrant) {
+      await db
+        .update(assessmentRetakeGrants)
+        .set({ usedAt: new Date() })
+        .where(eq(assessmentRetakeGrants.id, activeRetakeGrant.id));
+    }
+
     // Enrich graded answers with question details for per-question breakdown
     const enrichedAnswers = gradedAnswers.map((a) => {
       const q = questionMap.get(a.questionId);
@@ -1723,6 +1867,42 @@ export class StudentService {
     answersData: { questionId: string; answer: string }[],
     questionOrder?: string[],
   ) {
+    // Block draft saves past assignment deadline when enforced.
+    // Check per-student retake-grant deadline override first.
+    const [assessmentRow] = await db
+      .select({
+        type: assessments.type,
+        dueDate: assessments.dueDate,
+        timeLimitEnforced: assessments.timeLimitEnforced,
+      })
+      .from(assessments)
+      .where(eq(assessments.id, assessmentId))
+      .limit(1);
+    if (assessmentRow?.type === 'assignment' && assessmentRow.timeLimitEnforced) {
+      const [activeGrant] = await db
+        .select({ newDueDate: assessmentRetakeGrants.newDueDate })
+        .from(assessmentRetakeGrants)
+        .where(
+          and(
+            eq(assessmentRetakeGrants.assessmentId, assessmentId),
+            eq(assessmentRetakeGrants.studentId, studentId),
+            sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+          ),
+        )
+        .orderBy(desc(assessmentRetakeGrants.createdAt))
+        .limit(1);
+      const effectiveDue = activeGrant?.newDueDate
+        ? new Date(activeGrant.newDueDate)
+        : assessmentRow.dueDate
+          ? new Date(assessmentRow.dueDate)
+          : null;
+      if (effectiveDue && new Date() > effectiveDue) {
+        throw new BadRequestException(
+          'The deadline for this assignment has passed.',
+        );
+      }
+    }
+
     const draftAnswers: SubmissionAnswer[] = answersData.map((a) => ({
       questionId: a.questionId,
       answer: a.answer,
@@ -1752,6 +1932,41 @@ export class StudentService {
         .set(updateData)
         .where(eq(submissions.id, existing.id));
       return { submissionId: existing.id, saved: true };
+    }
+
+    // New draft. If the student has prior graded submissions AND has an unused
+    // retake grant, claim the most recent grant now (mark usedAt) so an
+    // abandoned-then-lazy-finalized retake still consumes its grant.
+    const [priorSub] = await db
+      .select({ id: submissions.id })
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assessmentId, assessmentId),
+          eq(submissions.studentId, studentId),
+          sql`${submissions.status} IN ('graded', 'submitted')`,
+        ),
+      )
+      .limit(1);
+    if (priorSub) {
+      const [grantToClaim] = await db
+        .select({ id: assessmentRetakeGrants.id })
+        .from(assessmentRetakeGrants)
+        .where(
+          and(
+            eq(assessmentRetakeGrants.assessmentId, assessmentId),
+            eq(assessmentRetakeGrants.studentId, studentId),
+            sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+          ),
+        )
+        .orderBy(desc(assessmentRetakeGrants.createdAt))
+        .limit(1);
+      if (grantToClaim) {
+        await db
+          .update(assessmentRetakeGrants)
+          .set({ usedAt: new Date() })
+          .where(eq(assessmentRetakeGrants.id, grantToClaim.id));
+      }
     }
 
     const [draft] = await db
@@ -1868,9 +2083,35 @@ export class StudentService {
       throw new BadRequestException('This endpoint is only for assignment submissions');
     }
 
-    // Deadline check
-    if (assessment.dueDate && new Date() > new Date(assessment.dueDate)) {
-      throw new BadRequestException('Deadline has passed');
+    // Look up an unused retake grant. If present, the student has been
+    // authorized for one extra attempt and the grant may carry a per-student
+    // newDueDate that overrides the assessment's global dueDate.
+    const [activeRetakeGrant] = await db
+      .select({
+        id: assessmentRetakeGrants.id,
+        newDueDate: assessmentRetakeGrants.newDueDate,
+      })
+      .from(assessmentRetakeGrants)
+      .where(
+        and(
+          eq(assessmentRetakeGrants.assessmentId, assessmentId),
+          eq(assessmentRetakeGrants.studentId, studentId),
+          sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+        ),
+      )
+      .orderBy(desc(assessmentRetakeGrants.createdAt))
+      .limit(1);
+
+    // Deadline check — honors per-student override if a retake grant supplies one
+    if (assessment.timeLimitEnforced) {
+      const effectiveDue = activeRetakeGrant?.newDueDate
+        ? new Date(activeRetakeGrant.newDueDate)
+        : assessment.dueDate
+          ? new Date(assessment.dueDate)
+          : null;
+      if (effectiveDue && new Date() > effectiveDue) {
+        throw new BadRequestException('Deadline has passed');
+      }
     }
 
     // Verify enrollment
@@ -1890,7 +2131,10 @@ export class StudentService {
       throw new BadRequestException('You must be enrolled in the course');
     }
 
-    // Check no existing submitted/graded submission (1 attempt)
+    // Check existing terminal submissions. The student is allowed 1 baseline
+    // attempt + 1 attempt per retake grant. The total grants count includes
+    // both used and unused grants since used grants represent attempts already
+    // consumed by submissions.
     const [existingSub] = await db
       .select({ count: count() })
       .from(submissions)
@@ -1901,8 +2145,21 @@ export class StudentService {
           sql`${submissions.status} IN ('submitted', 'graded')`,
         ),
       );
+    const existingCount = Number(existingSub?.count || 0);
 
-    if (existingSub && Number(existingSub.count) > 0) {
+    // Total grants ever issued for this student on this assessment
+    const allGrants = await db
+      .select({ id: assessmentRetakeGrants.id })
+      .from(assessmentRetakeGrants)
+      .where(
+        and(
+          eq(assessmentRetakeGrants.assessmentId, assessmentId),
+          eq(assessmentRetakeGrants.studentId, studentId),
+        ),
+      );
+    const allowedAttempts = 1 + allGrants.length;
+
+    if (existingCount >= allowedAttempts) {
       throw new BadRequestException('You have already submitted this assignment');
     }
 
@@ -1943,6 +2200,14 @@ export class StudentService {
         status: 'submitted',
       })
       .returning();
+
+    // If this is a retake (consumed an unused grant), mark the grant as used.
+    if (activeRetakeGrant) {
+      await db
+        .update(assessmentRetakeGrants)
+        .set({ usedAt: new Date() })
+        .where(eq(assessmentRetakeGrants.id, activeRetakeGrant.id));
+    }
 
     // Notify instructor about assignment submission (fire-and-forget)
     this.notifyInstructorOfSubmission(

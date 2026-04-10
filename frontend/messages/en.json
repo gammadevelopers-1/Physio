@@ -1797,6 +1797,10 @@
       "question": "Question",
       "mark": "mark",
       "marks": "marks",
+      "advisory": "Advisory",
+      "timerAdvisory": "Timer is advisory — you can keep going past zero",
+      "retakeAttempt": "Attempt {number} (Retake)",
+      "retakeAttemptDesc": "Your course manager has granted you another attempt at this assessment.",
       "typeAnswer": "Type your answer here...",
       "uploadFile": "Click to upload a file",
       "fileUploaded": "File uploaded successfully",
@@ -2730,6 +2734,9 @@
       "title": "Assessments",
       "subtitle": "Create and manage course assessments",
       "createNew": "Create Assessment",
+      "timeLimitAdvisoryTitle": "Time limit is advisory",
+      "timeLimitAdvisoryQuizDesc": "Time enforcement is disabled. Students will not be auto-submitted when the timer ends.",
+      "timeLimitAdvisoryAssignmentDesc": "Deadline enforcement is disabled. Students may submit after the deadline.",
       "searchPlaceholder": "Search assessments...",
       "filters": "Filters",
       "allCourses": "All Courses",
@@ -4004,6 +4011,7 @@
         "avgScore": "Avg Score",
         "avgCompletion": "Avg Completion",
         "active": "Active Assessments",
+        "submissions": "Submissions",
         "flagged": "Flagged"
       },
       "filters": {
@@ -4041,6 +4049,22 @@
         "marks": "marks",
         "status": "Status",
         "actions": "Actions"
+      },
+      "readOnly": {
+        "title": "Read-only mode",
+        "desc": "This course is no longer editable. Settings, assessments and per-student grants cannot be modified."
+      },
+      "retakeModal": {
+        "title": "Allow retake",
+        "button": "Allow Retake",
+        "desc": "Grant this student one extra attempt at this assessment. The student and the instructor will be notified.",
+        "newDeadline": "New deadline",
+        "reason": "Reason (optional)",
+        "reasonPlaceholder": "e.g. Student requested another attempt after low score",
+        "cancel": "Cancel",
+        "confirm": "Allow Retake",
+        "success": "Retake granted",
+        "error": "Failed to grant retake"
       },
       "actions": {
         "view": "View",
@@ -4154,6 +4178,10 @@
         "actions": "Actions",
         "graded": "Graded",
         "pending": "Pending",
+        "notSubmitted": "Not submitted",
+        "notSubmittedNotice": "This student did not submit before the deadline and was auto-graded as 0.",
+        "attemptOfTotal": "Attempt {n}/{total}",
+        "effective": "Effective",
         "details": "Submission Details",
         "close": "Close",
         "pass": "Pass",

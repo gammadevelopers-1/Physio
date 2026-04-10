@@ -21,6 +21,7 @@ import {
 import { courseMaterials } from '../../database/schema/course-materials';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager, isTA } from '../../common/role-helpers';
+import { computeEffectiveScore } from '../../common/score-policy';
 import { NelcComplianceService } from '../nelc-compliance/nelc-compliance.service';
 import { AuditLogService } from '../audit-logs/audit-logs.service';
 
@@ -867,14 +868,49 @@ export class ReportsService {
       const presentAtt = Number(attStats?.present || 0);
       const attRate = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
 
-      // Avg assessment score
-      const [scoreStats] = await db
+      // Avg assessment score — applies each assessment's retakeScorePolicy to
+      // pick the effective attempt per (student, assessment) before averaging.
+      // Naive AVG(submissions.score) double-counts retakes and breaks the
+      // metric whenever a student has multiple attempts.
+      const courseSubs = await db
         .select({
-          avgScore: sql<number>`ROUND(AVG(${submissions.score}::numeric), 1)`,
+          id: submissions.id,
+          assessmentId: submissions.assessmentId,
+          studentId: submissions.studentId,
+          score: submissions.score,
+          submittedAt: submissions.submittedAt,
+          createdAt: submissions.createdAt,
+          retakeScorePolicy: assessments.retakeScorePolicy,
         })
         .from(submissions)
         .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
         .where(eq(assessments.courseId, course.courseId));
+
+      // Group by (assessmentId, studentId) and pick the effective attempt
+      const grouped = new Map<string, typeof courseSubs>();
+      for (const s of courseSubs) {
+        const key = `${s.assessmentId}::${s.studentId}`;
+        const list = grouped.get(key);
+        if (list) list.push(s);
+        else grouped.set(key, [s]);
+      }
+      const effectiveScores: number[] = [];
+      for (const [, attempts] of grouped) {
+        const policy = attempts[0].retakeScorePolicy || 'highest';
+        const eff = computeEffectiveScore(
+          attempts.map((a) => ({
+            id: a.id,
+            score: a.score,
+            orderedAt: a.submittedAt || a.createdAt,
+          })),
+          policy,
+        );
+        if (eff.score !== null) effectiveScores.push(eff.score);
+      }
+      const avgEffective =
+        effectiveScores.length > 0
+          ? Math.round((effectiveScores.reduce((a, b) => a + b, 0) / effectiveScores.length) * 10) / 10
+          : null;
 
       rows.push([
         course.title,
@@ -882,7 +918,7 @@ export class ReportsService {
         String(completedCount),
         `${completionRate}%`,
         `${attRate}%`,
-        scoreStats?.avgScore != null ? String(scoreStats.avgScore) : 'N/A',
+        avgEffective != null ? String(avgEffective) : 'N/A',
       ]);
     }
 

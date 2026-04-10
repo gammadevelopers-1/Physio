@@ -375,6 +375,25 @@ export class AssessmentsController {
     return this.assessmentsService.getOverrides(assessmentId, user);
   }
 
+  // ─── Retake Grants ───────────────────────────────────────
+
+  /**
+   * POST /assessments/:id/allow-retake — Manager grants a retake to a student.
+   * Body: { studentId, reason?, newDueDate? }  (newDueDate only for assignments)
+   * The student gets one extra attempt; an in-app + email notification fires
+   * to the student, plus an in-app notification to the course instructor.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/allow-retake')
+  @HttpCode(HttpStatus.CREATED)
+  async allowRetake(
+    @Param('id') assessmentId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { studentId: string; reason?: string; newDueDate?: string },
+  ) {
+    return this.assessmentsService.allowRetake(assessmentId, user, body);
+  }
+
   // ─── Blueprint Coverage ──────────────────────────────────
 
   /**

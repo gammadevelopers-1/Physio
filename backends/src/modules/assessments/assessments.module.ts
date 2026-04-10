@@ -5,9 +5,10 @@ import { AssessmentsService } from './assessments.service';
 import { AuthModule } from '../auth/auth.module';
 import { UserNotificationsModule } from '../user-notifications/user-notifications.module';
 import { StorageModule } from '../storage/storage.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [AuthModule, UserNotificationsModule, StorageModule],
+  imports: [AuthModule, UserNotificationsModule, StorageModule, EmailModule],
   controllers: [AssessmentsController, AssessmentExtrasController],
   providers: [AssessmentsService],
   exports: [AssessmentsService],

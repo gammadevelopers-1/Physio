@@ -156,6 +156,14 @@ const strings = {
   studentLabel:                { en: 'Student:',                        ar: 'الطالب:' },
   assessmentLabel:             { en: 'Assessment:',                     ar: 'التقييم:' },
 
+  /* ── Retake granted ──────────────────────────────────── */
+  retakeGrantedSubject:        { en: 'You have been granted a retake: {title}', ar: 'تم منحك فرصة إعادة التقييم: {title}' },
+  retakeGrantedTitle:          { en: 'Retake Granted',                  ar: 'تم منحك فرصة إعادة التقييم' },
+  retakeGrantedBody:           { en: 'Your course manager has granted you a retake for the following assessment:', ar: 'منحك مدير الدورة فرصة لإعادة التقييم التالي:' },
+  retakeGrantedReasonLabel:    { en: 'Reason:',                         ar: 'السبب:' },
+  retakeGrantedNewDeadline:    { en: 'New deadline:',                   ar: 'الموعد النهائي الجديد:' },
+  retakeGrantedCta:            { en: 'Log in to start the retake.',     ar: 'سجل الدخول لبدء إعادة التقييم.' },
+
   /* ── At-risk reminder ────────────────────────────────── */
   atRiskSubject:               { en: 'Course Progress Reminder - {course}', ar: 'تذكير بتقدم الدورة - {course}' },
   atRiskTitle:                 { en: 'Course Progress Reminder',            ar: 'تذكير بتقدم الدورة' },

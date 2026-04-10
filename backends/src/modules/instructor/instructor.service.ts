@@ -26,6 +26,7 @@ import {
 } from '../../database/schema';
 import { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { isGlobalAdmin, isManager } from '../../common/role-helpers';
+import { computeEffectiveScore } from '../../common/score-policy';
 import { CoursesService } from '../courses/courses.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { CertificatesService } from '../certificates/certificates.service';
@@ -1235,13 +1236,16 @@ export class InstructorService {
     // Get all assessment scores
     const studentScores = await db
       .select({
+        id: submissions.id,
         assessmentId: assessments.id,
         courseId: assessments.courseId,
         title: assessments.title,
         maxScore: assessments.totalMarks,
+        retakeScorePolicy: assessments.retakeScorePolicy,
         score: submissions.score,
         percentage: submissions.percentage,
         submittedAt: submissions.submittedAt,
+        createdAt: submissions.createdAt,
       })
       .from(submissions)
       .innerJoin(assessments, eq(submissions.assessmentId, assessments.id))
@@ -1254,13 +1258,43 @@ export class InstructorService {
       )
       .orderBy(desc(submissions.submittedAt));
 
-    // Deduplicate: keep latest submission per assessment
-    const seenAssessments = new Set<string>();
-    const dedupedScores = studentScores.filter((s) => {
-      if (seenAssessments.has(s.assessmentId)) return false;
-      seenAssessments.add(s.assessmentId);
-      return true;
-    });
+    // Group by assessment, then apply each assessment's score policy to pick
+    // the effective attempt. The previous code naively kept the latest, which
+    // silently broke when policy was 'highest' or 'average'.
+    const byAssessment = new Map<string, typeof studentScores>();
+    for (const s of studentScores) {
+      const list = byAssessment.get(s.assessmentId);
+      if (list) list.push(s);
+      else byAssessment.set(s.assessmentId, [s]);
+    }
+    const dedupedScores: typeof studentScores = [];
+    for (const [, attempts] of byAssessment) {
+      const policy = attempts[0].retakeScorePolicy || 'highest';
+      const eff = computeEffectiveScore(
+        attempts.map((a) => ({
+          id: a.id,
+          score: a.score,
+          orderedAt: a.submittedAt || a.createdAt,
+        })),
+        policy,
+      );
+      if (eff.isAggregate) {
+        // For 'average', synthesize a row using the aggregate score and the
+        // most recent submission's metadata so the UI still shows a row.
+        const mostRecent = [...attempts].sort(
+          (a, b) =>
+            new Date(b.submittedAt || b.createdAt).getTime() -
+            new Date(a.submittedAt || a.createdAt).getTime(),
+        )[0];
+        dedupedScores.push({ ...mostRecent, score: eff.score });
+      } else if (eff.effectiveAttempt) {
+        const winner = attempts.find((a) => a.id === eff.effectiveAttempt!.id);
+        if (winner) dedupedScores.push(winner);
+      } else if (attempts[0]) {
+        // No scored attempts — fall back to the first row (will show null score)
+        dedupedScores.push(attempts[0]);
+      }
+    }
 
     // Batch-fetch class averages
     const assessmentIds = dedupedScores.map((s) => s.assessmentId);

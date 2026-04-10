@@ -4038,6 +4038,7 @@
         "avgScore": "Avg Score",
         "totalMarks": "Total Marks",
         "passingMarks": "Passing Marks",
+        "marks": "marks",
         "status": "Status",
         "actions": "Actions"
       },

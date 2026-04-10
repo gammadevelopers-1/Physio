@@ -25,8 +25,17 @@ import {
   Users,
   Eye,
   BookOpen,
+  MoreVertical,
+  Lock,
 } from "lucide-react";
 import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 /* ────────── Interfaces ────────── */
@@ -120,10 +129,10 @@ const AssessmentsContent = () => {
     assessmentId: string;
     status: string;
     score: number | null;
-    maxScore: number;
+    totalMarks: number | null;
+    percentage: number | null;
     submittedAt: string;
-    gradedAt: string | null;
-    gradedBy: string | null;
+    gradedAt?: string | null;
     answers?: Array<{ questionId: string; answer: string; isCorrect: boolean | null; marksAwarded: number | null }> | null;
     instructorComment?: string | null;
   }>>([]);
@@ -153,10 +162,8 @@ const AssessmentsContent = () => {
     courseManagerApi
       .getCourses({ limit: 200 })
       .then((res) => {
-        const nonArchived = res.data
-          .filter((c: any) => c.status !== "archived")
-          .map((c: any) => ({ id: c.id, title: c.title, status: c.status }));
-        setCourses(nonArchived);
+        const all = res.data.map((c) => ({ id: c.id, title: c.title, status: c.status }));
+        setCourses(all);
       })
       .catch(() => setCourses([]))
       .finally(() => setCoursesLoading(false));
@@ -172,14 +179,15 @@ const AssessmentsContent = () => {
     }
     courseManagerApi
       .getCourseDetail(selectedCourseId)
-      .then((res: any) => {
+      .then((res) => {
+        const r = res as unknown as Partial<CourseDefaults>;
         const d: CourseDefaults = {
-          assessmentProctoringEnabled: res.assessmentProctoringEnabled ?? false,
-          assessmentTimeLimitEnforced: res.assessmentTimeLimitEnforced ?? true,
-          assessmentMaxRetakes: res.assessmentMaxRetakes ?? 0,
-          assessmentRetakeCoolingHours: res.assessmentRetakeCoolingHours ?? 24,
-          assessmentRetakeScorePolicy: res.assessmentRetakeScorePolicy ?? "highest",
-          assessmentRetakeScope: res.assessmentRetakeScope ?? "full",
+          assessmentProctoringEnabled: r.assessmentProctoringEnabled ?? false,
+          assessmentTimeLimitEnforced: r.assessmentTimeLimitEnforced ?? true,
+          assessmentMaxRetakes: r.assessmentMaxRetakes ?? 0,
+          assessmentRetakeCoolingHours: r.assessmentRetakeCoolingHours ?? 24,
+          assessmentRetakeScorePolicy: r.assessmentRetakeScorePolicy ?? "highest",
+          assessmentRetakeScope: r.assessmentRetakeScope ?? "full",
         };
         setCourseDefaults(d);
         setCourseDefaultsForm({ ...d });
@@ -227,7 +235,10 @@ const AssessmentsContent = () => {
     courseManagerApi
       .getSubmissions(selectedSubmissionAssessment)
       .then((res) => {
-        setSubmissions(Array.isArray(res) ? res : (res as any).data ?? []);
+        const arr = Array.isArray(res)
+          ? res
+          : ((res as unknown as { data?: typeof submissions })?.data ?? []);
+        setSubmissions(arr);
       })
       .catch(() => setSubmissions([]))
       .finally(() => setSubmissionsLoading(false));
@@ -306,6 +317,30 @@ const AssessmentsContent = () => {
     } finally {
       setPreviewLoading(false);
     }
+  };
+
+  const openOverrideModal = (assessmentId: string, title: string, courseId: string) => {
+    setOverrideModal({ assessmentId, title });
+    setOverrideStudents([]);
+    courseManagerApi
+      .getEnrollments({ courseId })
+      .then((res) => {
+        // Backend returns array directly; defensively handle wrapped { data: [...] } too
+        const list = Array.isArray(res)
+          ? res
+          : ((res as unknown as { data?: unknown[] })?.data ?? []);
+        setOverrideStudents(
+          (list as Array<Record<string, unknown>>).map((e) => ({
+            id: String(e.studentId || e.userId || e.id || ""),
+            name:
+              `${(e.studentFirstName as string) || (e.firstName as string) || ""} ${(e.studentLastName as string) || (e.lastName as string) || ""}`.trim() ||
+              (e.studentEmail as string) ||
+              (e.email as string) ||
+              "Unknown",
+          })),
+        );
+      })
+      .catch(() => setOverrideStudents([]));
   };
 
   const handleOverride = async () => {
@@ -388,6 +423,13 @@ const AssessmentsContent = () => {
   };
 
   /* ────────── Helpers ────────── */
+
+  // Selected course (used for permission checks)
+  const selectedCourse = courses.find((c) => c.id === selectedCourseId) || null;
+  // Only draft and active courses can be edited
+  const canEdit = selectedCourse
+    ? selectedCourse.status === "draft" || selectedCourse.status === "active"
+    : false;
 
   const filteredAssessments = assessments.filter((a) =>
     a.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -494,25 +536,15 @@ const AssessmentsContent = () => {
     courseHint?: CourseDefaults | null
   ) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Proctoring Settings */}
+      {/* Time Settings */}
       <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-[#3B82F6]" />
           <h4 className="text-sm font-semibold text-[#1F2937]">
-            {t("assessmentsPage.proctoring.title")}
+            {t("assessmentsPage.proctoring.timeLimitEnforced")}
           </h4>
         </div>
         <div className="space-y-1">
-          <Toggle
-            checked={form.proctoringEnabled}
-            onChange={(v) => setForm({ ...form, proctoringEnabled: v })}
-            label={t("assessmentsPage.proctoring.enabled")}
-          />
-          {courseHint && (
-            <p className="text-xs text-[#9CA3AF]">
-              {t("assessmentsPage.settings.courseDefault") || "Course default"}: {courseHint.assessmentProctoringEnabled ? t("assessmentsPage.settings.on") || "On" : t("assessmentsPage.settings.off") || "Off"}
-            </p>
-          )}
           <Toggle
             checked={form.timeLimitEnforced}
             onChange={(v) => setForm({ ...form, timeLimitEnforced: v })}
@@ -627,22 +659,26 @@ const AssessmentsContent = () => {
 
     return (
       <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] px-4 py-4">
-        {renderSettingsFields(settingsForm, setSettingsForm, courseDefaults)}
+        <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60 pointer-events-none" : ""}>
+          {renderSettingsFields(settingsForm, setSettingsForm, courseDefaults)}
+        </fieldset>
 
         {/* Save Button */}
         <div className="flex items-center gap-3 mt-4">
-          <button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-          >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Check className="w-4 h-4" />
-            )}
-            {saving ? t("assessmentsPage.settings.saving") : t("assessmentsPage.settings.save")}
-          </button>
+          {canEdit && (
+            <button
+              onClick={handleSaveSettings}
+              disabled={saving}
+              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              {saving ? t("assessmentsPage.settings.saving") : t("assessmentsPage.settings.save")}
+            </button>
+          )}
           <button
             onClick={() => {
               setExpandedId(null);
@@ -726,6 +762,22 @@ const AssessmentsContent = () => {
               {/* Course selected: show content */}
               {selectedCourseId && (
                 <>
+                  {/* Read-only banner for completed/archived courses */}
+                  {!canEdit && selectedCourse && (
+                    <div className="bg-[#FEF3C7] border border-[#FDE68A] rounded-xl p-4 mb-6 flex items-start gap-3">
+                      <Lock className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-[#92400E]">
+                          {t("assessmentsPage.readOnly.title") || "Read-only mode"}
+                        </p>
+                        <p className="text-xs text-[#B45309] mt-0.5">
+                          {t("assessmentsPage.readOnly.desc") ||
+                            `This course is ${selectedCourse.status}. Settings, assessments and per-student grants cannot be modified.`}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Course Assessment Defaults (collapsible) */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6 overflow-hidden">
                     <button
@@ -754,6 +806,7 @@ const AssessmentsContent = () => {
 
                     {defaultsOpen && courseDefaultsForm && (
                       <div className="border-t border-[#E5E7EB] px-4 py-4 bg-[#F9FAFB]">
+                        <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60 pointer-events-none" : ""}>
                         {renderSettingsFields(
                           {
                             proctoringEnabled: courseDefaultsForm.assessmentProctoringEnabled,
@@ -775,22 +828,25 @@ const AssessmentsContent = () => {
                             }),
                           null
                         )}
-                        <div className="flex items-center gap-3 mt-4">
-                          <button
-                            onClick={handleSaveCourseDefaults}
-                            disabled={savingDefaults}
-                            className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            {savingDefaults ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Check className="w-4 h-4" />
-                            )}
-                            {savingDefaults
-                              ? t("assessmentsPage.settings.saving")
-                              : t("assessmentsPage.courseDefaults.save") || "Save Defaults"}
-                          </button>
-                        </div>
+                        </fieldset>
+                        {canEdit && (
+                          <div className="flex items-center gap-3 mt-4">
+                            <button
+                              onClick={handleSaveCourseDefaults}
+                              disabled={savingDefaults}
+                              className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              {savingDefaults ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Check className="w-4 h-4" />
+                              )}
+                              {savingDefaults
+                                ? t("assessmentsPage.settings.saving")
+                                : t("assessmentsPage.courseDefaults.save") || "Save Defaults"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1002,59 +1058,43 @@ const AssessmentsContent = () => {
                                                   {t(`assessmentsPage.status.${assessment.status}`)}
                                                 </span>
                                               </td>
-                                              <td className="px-4 py-3">
-                                                <div className="flex items-center gap-1">
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      toggleSettings(assessment);
-                                                    }}
-                                                    className={`p-1.5 rounded-lg transition-colors ${
-                                                      expandedId === assessment.id
-                                                        ? "bg-[#3B82F6] text-white"
-                                                        : "hover:bg-[#F3F4F6] text-[#6B7280]"
-                                                    }`}
-                                                    title={t("assessmentsPage.actions.configure")}
-                                                  >
-                                                    <Settings className="w-4 h-4" />
-                                                  </button>
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handlePreviewAssessment(assessment.id, assessment.title);
-                                                    }}
-                                                    className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                                    title={t("assessmentsPage.preview.title") || "Preview"}
-                                                  >
-                                                    <Eye className="w-4 h-4" />
-                                                  </button>
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
-                                                      courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
-                                                        setOverrideStudents(res.data.map((e: any) => ({
-                                                          id: e.studentId || e.userId || e.id,
-                                                          name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
-                                                        })));
-                                                      }).catch(() => setOverrideStudents([]));
-                                                    }}
-                                                    className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                                    title={t("assessmentsPage.override.title")}
-                                                  >
-                                                    <Shield className="w-4 h-4" />
-                                                  </button>
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      setFlagModal({ assessmentId: assessment.id, title: assessment.title });
-                                                    }}
-                                                    className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                                    title={t("assessmentsPage.flagForReview")}
-                                                  >
-                                                    <Flag className="w-4 h-4" />
-                                                  </button>
-                                                </div>
+                                              <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenu>
+                                                  <DropdownMenuTrigger asChild>
+                                                    <button
+                                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                                      title={t("assessmentsPage.table.actions")}
+                                                    >
+                                                      <MoreVertical className="w-4 h-4" />
+                                                    </button>
+                                                  </DropdownMenuTrigger>
+                                                  <DropdownMenuContent align={isRTL ? "start" : "end"}>
+                                                    <DropdownMenuItem onSelect={() => handlePreviewAssessment(assessment.id, assessment.title)}>
+                                                      <Eye className="w-4 h-4" />
+                                                      {t("assessmentsPage.preview.title") || "Preview"}
+                                                    </DropdownMenuItem>
+                                                    {canEdit && (
+                                                      <>
+                                                        <DropdownMenuItem onSelect={() => toggleSettings(assessment)}>
+                                                          <Settings className="w-4 h-4" />
+                                                          {t("assessmentsPage.actions.configure")}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onSelect={() => openOverrideModal(assessment.id, assessment.title, assessment.courseId)}>
+                                                          <Shield className="w-4 h-4" />
+                                                          {t("assessmentsPage.override.title")}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem
+                                                          danger
+                                                          onSelect={() => setFlagModal({ assessmentId: assessment.id, title: assessment.title })}
+                                                        >
+                                                          <Flag className="w-4 h-4" />
+                                                          {t("assessmentsPage.flagForReview")}
+                                                        </DropdownMenuItem>
+                                                      </>
+                                                    )}
+                                                  </DropdownMenuContent>
+                                                </DropdownMenu>
                                               </td>
                                             </tr>
                                             {expandedId === assessment.id && (
@@ -1114,37 +1154,44 @@ const AssessmentsContent = () => {
                                     <span>{t("assessmentsPage.table.totalMarks")}: {assessment.totalMarks}</span>
                                     <span>{t("assessmentsPage.table.passingMarks")}: {assessment.passingMarks}</span>
                                   </div>
-                                  {/* Mobile action buttons */}
-                                  <div className="flex items-center gap-2 mt-3">
-                                    <button
-                                      onClick={() => handlePreviewAssessment(assessment.id, assessment.title)}
-                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                      title={t("assessmentsPage.preview.title") || "Preview"}
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setOverrideModal({ assessmentId: assessment.id, title: assessment.title });
-                                        courseManagerApi.getEnrollments({ courseId: assessment.courseId }).then((res) => {
-                                          setOverrideStudents(res.data.map((e: any) => ({
-                                            id: e.studentId || e.userId || e.id,
-                                            name: `${e.studentFirstName || e.firstName || ''} ${e.studentLastName || e.lastName || ''}`.trim() || e.studentEmail || e.email || 'Unknown',
-                                          })));
-                                        }).catch(() => setOverrideStudents([]));
-                                      }}
-                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                      title={t("assessmentsPage.override.title")}
-                                    >
-                                      <Shield className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => setFlagModal({ assessmentId: assessment.id, title: assessment.title })}
-                                      className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors"
-                                      title={t("assessmentsPage.flagForReview")}
-                                    >
-                                      <Flag className="w-4 h-4" />
-                                    </button>
+                                  {/* Mobile actions */}
+                                  <div className="flex items-center mt-3">
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <button
+                                          className="p-1.5 rounded-lg hover:bg-[#F3F4F6] text-[#6B7280] transition-colors focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                          title={t("assessmentsPage.table.actions")}
+                                        >
+                                          <MoreVertical className="w-4 h-4" />
+                                        </button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align={isRTL ? "start" : "end"}>
+                                        <DropdownMenuItem onSelect={() => handlePreviewAssessment(assessment.id, assessment.title)}>
+                                          <Eye className="w-4 h-4" />
+                                          {t("assessmentsPage.preview.title") || "Preview"}
+                                        </DropdownMenuItem>
+                                        {canEdit && (
+                                          <>
+                                            <DropdownMenuItem onSelect={() => toggleSettings(assessment)}>
+                                              <Settings className="w-4 h-4" />
+                                              {t("assessmentsPage.actions.configure")}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onSelect={() => openOverrideModal(assessment.id, assessment.title, assessment.courseId)}>
+                                              <Shield className="w-4 h-4" />
+                                              {t("assessmentsPage.override.title")}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                              danger
+                                              onSelect={() => setFlagModal({ assessmentId: assessment.id, title: assessment.title })}
+                                            >
+                                              <Flag className="w-4 h-4" />
+                                              {t("assessmentsPage.flagForReview")}
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </div>
                                 </div>
                                 {renderSettingsPanel(assessment.id)}
@@ -1226,7 +1273,10 @@ const AssessmentsContent = () => {
                               </thead>
                               <tbody className="divide-y divide-[#E5E7EB]">
                                 {submissions.map((sub) => {
-                                  const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
+                                  const subAssessment = assessments.find((a) => a.id === sub.assessmentId);
+                                  const passingMarks = subAssessment?.passingMarks ?? 0;
+                                  const totalMarks = sub.totalMarks ?? subAssessment?.totalMarks ?? 0;
+                                  const isPassed = sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
                                   const isGraded = sub.status === "graded";
                                   return (
                                     <tr key={sub.id} className="hover:bg-[#F9FAFB] transition-colors">
@@ -1239,7 +1289,7 @@ const AssessmentsContent = () => {
                                       <td className="px-4 py-3">
                                         {sub.score !== null ? (
                                           <span className={`text-sm font-semibold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-                                            {sub.score} / {sub.maxScore}
+                                            {sub.score} / {totalMarks}
                                           </span>
                                         ) : (
                                           <span className="text-sm text-[#9CA3AF]">--</span>
@@ -1289,7 +1339,9 @@ const AssessmentsContent = () => {
       {viewingSubmission && (() => {
         const sub = viewingSubmission;
         const assessment = assessments.find((a) => a.id === sub.assessmentId);
-        const isPassed = sub.score !== null && sub.maxScore > 0 && sub.score >= sub.maxScore * 0.6;
+        const passingMarks = assessment?.passingMarks ?? 0;
+        const totalMarks = sub.totalMarks ?? assessment?.totalMarks ?? 0;
+        const isPassed = sub.score !== null && passingMarks > 0 && sub.score >= passingMarks;
         const isGraded = sub.status === "graded";
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -1323,7 +1375,7 @@ const AssessmentsContent = () => {
                     <p className="text-xs text-[#6B7280]">{t("assessmentsPage.submissions.score")}</p>
                     {sub.score !== null ? (
                       <p className={`text-lg font-bold ${isPassed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
-                        {sub.score} / {sub.maxScore}
+                        {sub.score} / {totalMarks}
                       </p>
                     ) : (
                       <p className="text-lg font-bold text-[#9CA3AF]">--</p>

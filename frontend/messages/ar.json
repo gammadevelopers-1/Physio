@@ -4247,6 +4247,7 @@
         "avgScore": "متوسط الدرجة",
         "totalMarks": "الدرجة الكلية",
         "passingMarks": "درجة النجاح",
+        "marks": "درجة",
         "status": "الحالة",
         "actions": "الإجراءات"
       },

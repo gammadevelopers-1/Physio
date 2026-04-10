@@ -1646,10 +1646,9 @@ export const courseManagerApi = {
       assessmentId: string;
       status: string;
       score: number | null;
-      maxScore: number;
+      totalMarks: number | null;
+      percentage: number | null;
       submittedAt: string;
-      gradedAt: string | null;
-      gradedBy: string | null;
       answers?: Array<{ questionId: string; answer: string; isCorrect: boolean | null; marksAwarded: number | null }> | null;
       instructorComment?: string | null;
     }>>(`/assessments/${assessmentId}/submissions`),
@@ -1695,7 +1694,7 @@ export const courseManagerApi = {
 
   // Enrollments for a course
   getEnrollments: (params: { courseId: string }) =>
-    api.get<{ data: CourseEnrollment[] }>(`/courses/${params.courseId}/enrollments`),
+    api.get<CourseEnrollment[]>(`/courses/${params.courseId}/enrollments`),
 
   // Course detail (single course with modules)
   getCourseDetail: (courseId: string) =>

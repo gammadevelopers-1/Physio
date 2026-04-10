@@ -660,9 +660,7 @@ export class StudentService {
     }
 
     // Group submissions by assessment, then apply each assessment's score
-    // policy to pick the effective attempt. Previously this used a Map that
-    // silently overwrote on collision (arbitrary pick) when the student had
-    // multiple attempts (retakes).
+    // policy to pick the effective attempt.
     const submissionsByAssessment = new Map<string, any[]>();
     for (const sub of studentSubmissions) {
       const list = submissionsByAssessment.get(sub.assessmentId);
@@ -670,34 +668,83 @@ export class StudentService {
       else submissionsByAssessment.set(sub.assessmentId, [sub]);
     }
 
+    // Batch-fetch unused retake grants for this student on all assessments
+    // in this course so we can set canRetake per card.
+    const retakeGrantsForCourse =
+      assessmentIds.length > 0
+        ? await db
+            .select({
+              assessmentId: assessmentRetakeGrants.assessmentId,
+              usedAt: assessmentRetakeGrants.usedAt,
+            })
+            .from(assessmentRetakeGrants)
+            .where(
+              and(
+                eq(assessmentRetakeGrants.studentId, studentId),
+                sql`${assessmentRetakeGrants.assessmentId} IN (${sql.join(
+                  assessmentIds.map((id) => sql`${id}`),
+                  sql`, `,
+                )})`,
+                sql`${assessmentRetakeGrants.usedAt} IS NULL`,
+              ),
+            )
+        : [];
+    const unusedGrantsByAssessment = new Set(
+      retakeGrantsForCourse.map((g) => g.assessmentId),
+    );
+
     const assessmentsWithStatus = courseAssessments.map((a) => {
       const attempts = submissionsByAssessment.get(a.id) || [];
-      if (attempts.length === 0) return { ...a, submission: null };
-      const eff = computeEffectiveScore(
-        attempts.map((s) => ({
-          id: s.id,
-          score: s.score,
-          orderedAt: s.submittedAt || s.createdAt,
-        })),
-        a.retakeScorePolicy || 'highest',
+      const policy = a.retakeScorePolicy || 'highest';
+      const canRetake = unusedGrantsByAssessment.has(a.id);
+
+      // Build annotated allAttempts array sorted by chronological order
+      const sorted = [...attempts].sort(
+        (x, y) =>
+          new Date(x.submittedAt || x.createdAt).getTime() -
+          new Date(y.submittedAt || y.createdAt).getTime(),
       );
+      const eff = sorted.length > 0
+        ? computeEffectiveScore(
+            sorted.map((s) => ({
+              id: s.id,
+              score: s.score,
+              orderedAt: s.submittedAt || s.createdAt,
+            })),
+            policy,
+          )
+        : null;
+      const allAttempts = sorted.map((s, idx) => ({
+        id: s.id,
+        attemptNumber: idx + 1,
+        score: s.score,
+        totalMarks: s.totalMarks,
+        percentage: s.percentage,
+        status: s.status,
+        submittedAt: s.submittedAt?.toISOString?.() ?? s.submittedAt,
+        isEffective: !!(eff?.effectiveAttempt && eff.effectiveAttempt.id === s.id),
+      }));
+
+      // Pick the effective submission for the summary card (backwards compat)
       let chosen: any | null = null;
-      if (eff.isAggregate) {
-        // For 'average', synthesize a row using the aggregate score and the
-        // most recent submission's metadata so the student progress UI keeps
-        // working without leaking the multi-attempt details.
-        const mostRecent = [...attempts].sort(
-          (x, y) =>
-            new Date(y.submittedAt || y.createdAt).getTime() -
-            new Date(x.submittedAt || x.createdAt).getTime(),
-        )[0];
-        chosen = { ...mostRecent, score: eff.score };
-      } else if (eff.effectiveAttempt) {
-        chosen = attempts.find((s) => s.id === eff.effectiveAttempt!.id) || null;
-      } else {
-        chosen = attempts[0];
+      if (sorted.length > 0 && eff) {
+        if (eff.isAggregate) {
+          const mostRecent = sorted[sorted.length - 1];
+          chosen = { ...mostRecent, score: eff.score };
+        } else if (eff.effectiveAttempt) {
+          chosen = sorted.find((s) => s.id === eff.effectiveAttempt!.id) || null;
+        } else {
+          chosen = sorted[0];
+        }
       }
-      return { ...a, submission: chosen };
+
+      return {
+        ...a,
+        submission: chosen,
+        canRetake,
+        retakeScorePolicy: policy,
+        allAttempts,
+      };
     });
 
     // Attendance summary — only finalized (completed) sessions visible to students
@@ -1619,14 +1666,56 @@ export class StudentService {
     const currentAttemptNumber = totalAttempts + 1;
     const isRetakeAttempt = totalAttempts > 0 && unusedGrants > 0;
 
+    // Build all-attempts list so the student can review every past attempt
+    const allTerminalSubs = totalAttempts > 0
+      ? await db
+          .select({
+            id: submissions.id,
+            score: submissions.score,
+            totalMarks: submissions.totalMarks,
+            percentage: submissions.percentage,
+            status: submissions.status,
+            submittedAt: submissions.submittedAt,
+            createdAt: submissions.createdAt,
+          })
+          .from(submissions)
+          .where(
+            and(
+              eq(submissions.assessmentId, assessmentId),
+              eq(submissions.studentId, studentId),
+              sql`${submissions.status} IN ('graded', 'submitted')`,
+            ),
+          )
+          .orderBy(asc(submissions.createdAt))
+      : [];
+    const policy = assessment.retakeScorePolicy || 'highest';
+    const effResult = allTerminalSubs.length > 0
+      ? computeEffectiveScore(
+          allTerminalSubs.map((s) => ({
+            id: s.id,
+            score: s.score,
+            orderedAt: s.submittedAt || s.createdAt,
+          })),
+          policy,
+        )
+      : null;
+    const allAttempts = allTerminalSubs.map((s, idx) => ({
+      id: s.id,
+      attemptNumber: idx + 1,
+      score: s.score,
+      totalMarks: s.totalMarks,
+      percentage: s.percentage ? Number(s.percentage) : null,
+      status: s.status,
+      submittedAt: s.submittedAt?.toISOString?.() ?? null,
+      isEffective: !!(effResult?.effectiveAttempt && effResult.effectiveAttempt.id === s.id),
+    }));
+
     return {
       id: assessment.id,
       title: assessment.title,
       type: assessment.type,
       totalMarks: assessment.totalMarks,
       passingMarks: assessment.passingMarks,
-      // durationMinutes returned to the client INCLUDES active time extensions
-      // so the front-end timer naturally counts down from the extended value.
       durationMinutes: effectiveDurationMinutes,
       timeExtensionMinutes: extensionMinutes > 0 ? extensionMinutes : undefined,
       attemptsAllowed: effectiveAttemptsAllowed,
@@ -1638,8 +1727,9 @@ export class StudentService {
       maxAttemptsReached,
       randomizeOrder: assessment.randomizeOrder,
       questionsPerAttempt: assessment.questionsPerAttempt,
-      // Time limit policy — false means duration/dueDate is advisory only
       timeLimitEnforced: assessment.timeLimitEnforced,
+      retakeScorePolicy: policy,
+      allAttempts,
       latestSubmission: latestSubmission
         ? {
             id: latestSubmission.id,

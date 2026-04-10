@@ -1136,6 +1136,82 @@ const AssessmentContent = () => {
             </div>
           )}
 
+          {/* Past attempts history — visible if the student has multiple attempts */}
+          {assessment.allAttempts && assessment.allAttempts.length > 0 && (
+            <div className="mb-6 text-start">
+              <h3 className="text-sm font-semibold text-[#1F2937] mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#6B7280]" />
+                {t("assessment.attemptsHistory") || "Attempts History"}
+                {assessment.retakeScorePolicy && (
+                  <span className="text-[10px] uppercase font-semibold text-[#6B7280] bg-[#F3F4F6] px-2 py-0.5 rounded">
+                    {assessment.retakeScorePolicy === "average"
+                      ? (t("assessment.policyAverage") || "Average of all attempts")
+                      : assessment.retakeScorePolicy === "latest"
+                        ? (t("assessment.policyLatest") || "Latest attempt counts")
+                        : (t("assessment.policyHighest") || "Highest score counts")}
+                  </span>
+                )}
+              </h3>
+              <div className="space-y-2">
+                {assessment.allAttempts.map((attempt) => {
+                  const passed = attempt.score !== null && assessment.passingMarks > 0 && attempt.score >= assessment.passingMarks;
+                  const isNotSubmitted = attempt.submittedAt === null && attempt.status === "graded";
+                  return (
+                    <div
+                      key={attempt.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border ${
+                        attempt.isEffective ? "border-[#7C3AED] bg-[#F5F3FF]" : "border-[#E5E7EB] bg-[#F9FAFB]"
+                      }`}
+                    >
+                      <div className="flex-shrink-0">
+                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${
+                          attempt.attemptNumber === 1 ? "bg-[#EFF6FF] text-[#3B82F6]" : "bg-[#F3E8FF] text-[#7C3AED]"
+                        }`}>
+                          {attempt.attemptNumber}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#1F2937]">
+                          {attempt.attemptNumber === 1
+                            ? (t("assessment.originalAttempt") || "Original attempt")
+                            : (t("assessment.retakeNum", { n: attempt.attemptNumber - 1 }) || `Retake ${attempt.attemptNumber - 1}`)}
+                        </p>
+                        <p className="text-xs text-[#6B7280]">
+                          {isNotSubmitted
+                            ? (t("assessment.notSubmittedLabel") || "Not submitted")
+                            : attempt.submittedAt
+                              ? new Date(attempt.submittedAt).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", {
+                                  month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit",
+                                })
+                              : "—"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {attempt.score !== null ? (
+                          <span className={`text-sm font-semibold ${passed ? "text-[#22C55E]" : "text-[#EF4444]"}`}>
+                            {attempt.score}/{attempt.totalMarks}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-[#9CA3AF]">—</span>
+                        )}
+                        {attempt.isEffective && (
+                          <span className="text-[10px] font-semibold text-[#7C3AED] bg-[#EDE9FE] px-1.5 py-0.5 rounded">
+                            {t("assessment.effective") || "Effective"}
+                          </span>
+                        )}
+                        {assessment.retakeScorePolicy === "average" && attempt.score !== null && (
+                          <span className="text-[10px] font-semibold text-[#6B7280] bg-[#F3F4F6] px-1.5 py-0.5 rounded">
+                            {t("assessment.includedInAvg") || "In avg"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex flex-col gap-3">
             <Link
@@ -1144,6 +1220,17 @@ const AssessmentContent = () => {
             >
               {t("assessment.backToCourse")}
             </Link>
+
+            {/* Retake button — prominent, above review */}
+            {assessment.canRetake && (
+              <button
+                onClick={handleRetake}
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {t("assessment.startRetake") || "Start Retake"}
+              </button>
+            )}
 
             {/* Review button (only for graded) */}
             {result.status === "graded" && (
@@ -1160,33 +1247,6 @@ const AssessmentContent = () => {
                 {t("assessment.reviewAnswers")}
               </button>
             )}
-
-            {/* Retake button */}
-            {assessment.canRetake && (
-              <button
-                onClick={handleRetake}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 border border-[#E5E7EB] text-[#4B5563] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
-              >
-                <RotateCcw className="w-4 h-4" />
-                {t("assessment.retake")}
-              </button>
-            )}
-
-            {/* Retake not yet available */}
-            {assessment.retakeAvailableAt &&
-              !assessment.canRetake &&
-              assessment.attemptsTaken <
-                (assessment.attemptsAllowed || Infinity) && (
-                <p className="text-xs text-[#6B7280]">
-                  {t("assessment.retakeAvailableAt", {
-                    date: new Date(
-                      assessment.retakeAvailableAt
-                    ).toLocaleString(
-                      locale === "ar" ? "ar-SA" : "en-US"
-                    ),
-                  })}
-                </p>
-              )}
           </div>
         </div>
       </div>

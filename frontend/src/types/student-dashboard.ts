@@ -92,6 +92,17 @@ export interface CourseSession {
   venueAddress: string | null;
 }
 
+export interface AttemptSummary {
+  id: string;
+  attemptNumber: number;
+  score: number | null;
+  totalMarks: number | null;
+  percentage: number | null;
+  status: string;
+  submittedAt: string | null;
+  isEffective: boolean;
+}
+
 export interface CourseAssessmentWithSubmission {
   id: string;
   title: string;
@@ -102,6 +113,8 @@ export interface CourseAssessmentWithSubmission {
   attemptsAllowed: number;
   moduleId?: string | null;
   dueDate?: string | null;
+  canRetake?: boolean;
+  retakeScorePolicy?: string;
   submission: {
     id: string;
     assessmentId: string;
@@ -111,6 +124,7 @@ export interface CourseAssessmentWithSubmission {
     status: string;
     submittedAt: string | null;
   } | null;
+  allAttempts?: AttemptSummary[];
 }
 
 export interface StudentAttendanceRecord {
@@ -363,6 +377,8 @@ export interface StudentAssessment {
   // Retake info — set when manager has granted an extra attempt
   currentAttemptNumber?: number; // 1 for original, 2+ for retakes
   isRetakeAttempt?: boolean; // true when this attempt is consuming an unused grant
+  retakeScorePolicy?: string; // 'highest' | 'latest' | 'average'
+  allAttempts?: AttemptSummary[]; // all past graded/submitted attempts
   questions: AssessmentQuestion[];
   // Assignment-specific
   dueDate?: string | null;

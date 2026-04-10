@@ -949,14 +949,24 @@ const StudentCourseDetailContent = () => {
                                         : t("courseDetail.pendingGrading")}
                                   </p>
                                 </div>
-                                {isGraded && (
-                                  <Link
-                                    href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
-                                    className="text-xs text-[#002D87] hover:underline"
-                                  >
-                                    {t("courseDetail.review")}
-                                  </Link>
-                                )}
+                                <div className="flex flex-col gap-1.5">
+                                  {isGraded && (
+                                    <Link
+                                      href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
+                                      className="text-xs text-[#002D87] hover:underline"
+                                    >
+                                      {t("courseDetail.review")}
+                                    </Link>
+                                  )}
+                                  {assessment.canRetake && (
+                                    <Link
+                                      href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${assessment.id}`}
+                                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#7C3AED] bg-[#F3E8FF] px-2 py-1 rounded-md hover:bg-[#E9D5FF] transition-colors"
+                                    >
+                                      {t("courseDetail.startRetake") || "Start Retake"}
+                                    </Link>
+                                  )}
+                                </div>
                               </div>
                             ) : isExpiredAssignment ? (
                               <span className="text-xs font-medium text-[#EA580C] px-2 py-1 bg-orange-100 rounded flex-shrink-0">

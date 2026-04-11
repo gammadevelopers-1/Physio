@@ -752,7 +752,7 @@ const SessionsContent = () => {
               </button>
               {actionDropdown === session.id && (
                 <div className={`absolute ${isRTL ? "left-0" : "right-0"} top-full mt-1 w-48 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 py-1`}>
-                  {session.status === "completed" && (
+                  {(session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB]"

@@ -14,6 +14,7 @@ import type { InstructorListItem } from "@/lib/api";
 import type { CourseDetailResponse } from "@/types/instructor-dashboard";
 import {
   ArrowLeft,
+  ArrowRight,
   Save,
   Loader2,
   ImagePlus,
@@ -253,7 +254,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   onClick={() => router.back()}
                   className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  {locale === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {t("editCourse.backToCourse")}
                 </button>
                 <h1 className="text-2xl font-bold text-[#1F2937]">

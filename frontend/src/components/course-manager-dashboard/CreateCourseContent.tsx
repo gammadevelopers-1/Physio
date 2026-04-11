@@ -400,7 +400,7 @@ const CreateCourseContent = () => {
                   onClick={() => router.back()}
                   className="inline-flex items-center gap-1.5 text-sm text-[#6B7280] hover:text-[#1F2937] mb-4 transition-colors"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {t("createCourse.backToCourses")}
                 </button>
                 <h1 className="text-2xl font-bold text-[#1F2937]">
@@ -1124,7 +1124,7 @@ const CreateCourseContent = () => {
                   onClick={currentStep === 1 ? () => router.back() : goBack}
                   className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                 >
-                  <ArrowLeft className="w-4 h-4" />
+                  {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {currentStep === 1
                     ? t("createCourse.cancel")
                     : t("createCourse.back")}
@@ -1137,7 +1137,7 @@ const CreateCourseContent = () => {
                     className="inline-flex items-center gap-1.5 px-5 py-2.5 btn-gold text-white text-sm font-medium rounded-lg transition-colors"
                   >
                     {t("createCourse.next")}
-                    <ArrowRight className="w-4 h-4" />
+                    {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                   </button>
                 ) : (
                   <button

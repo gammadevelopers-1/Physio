@@ -126,14 +126,14 @@ export default function CaptionEditor({
             onClick={() => setTab("editor")}
             className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "editor" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"}`}
           >
-            <FileText className="w-4 h-4 inline mr-1.5" />
+            <FileText className="w-4 h-4 inline me-1.5" />
             {t("captions.editorTab")}
           </button>
           <button
             onClick={() => setTab("upload")}
             className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "upload" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"}`}
           >
-            <Upload className="w-4 h-4 inline mr-1.5" />
+            <Upload className="w-4 h-4 inline me-1.5" />
             {t("captions.uploadTab")}
           </button>
         </div>
@@ -198,7 +198,7 @@ export default function CaptionEditor({
               <Upload className="w-12 h-12 text-[#D1D5DB] mb-4" />
               <p className="text-sm text-[#6B7280] mb-4">{t("captions.uploadDesc")}</p>
               <label className="px-4 py-2.5 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] cursor-pointer">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin inline mr-1.5" /> : <Upload className="w-4 h-4 inline mr-1.5" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin inline me-1.5" /> : <Upload className="w-4 h-4 inline me-1.5" />}
                 {t("captions.selectFile")}
                 <input
                   ref={fileRef}

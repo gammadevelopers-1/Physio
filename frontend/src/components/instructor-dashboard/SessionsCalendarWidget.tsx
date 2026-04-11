@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ChevronLeft,
   ChevronRight,
@@ -49,6 +49,8 @@ const SessionsCalendarWidget = ({
   readOnly = false,
 }: SessionsCalendarWidgetProps) => {
   const t = useTranslations("instructorDashboard");
+  const locale = useLocale();
+  const isRTL = locale === "ar";
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
 
@@ -279,7 +281,7 @@ const SessionsCalendarWidget = ({
             className="p-1.5 sm:p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
             aria-label="Previous week"
           >
-            <ChevronLeft className="w-4 h-4" />
+            {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
           <span className="text-sm font-medium text-[#374151] min-w-[120px] text-center">
             {headerDate}
@@ -289,7 +291,7 @@ const SessionsCalendarWidget = ({
             className="p-1.5 sm:p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
             aria-label="Next week"
           >
-            <ChevronRight className="w-4 h-4" />
+            {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
           {currentWeekOffset !== 0 && (
             <button

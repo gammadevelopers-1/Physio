@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   MoreVertical,
+  ChevronLeft,
   ChevronRight,
   AlertTriangle,
   Mail,
@@ -257,7 +258,7 @@ const AtRiskLearners = ({
           className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
         >
           {t("atRisk.viewAll")} ({totalCount})
-          <ChevronRight className="w-4 h-4" />
+          {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
       </div>
 

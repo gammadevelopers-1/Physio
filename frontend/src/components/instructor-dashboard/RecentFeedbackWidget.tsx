@@ -1,7 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Star, MessageSquare, ChevronRight } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import { Star, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface FeedbackItem {
   id: string;
@@ -26,6 +26,7 @@ const RecentFeedbackWidget = ({
   feedbackItems,
 }: RecentFeedbackWidgetProps) => {
   const t = useTranslations("instructorDashboard");
+  const locale = useLocale();
 
   // Render star rating
   const renderStars = (rating: number, size: "sm" | "lg" = "sm") => {
@@ -198,7 +199,7 @@ const RecentFeedbackWidget = ({
         {/* View All Link */}
         <button className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline">
           {t("feedback.viewAll")}
-          <ChevronRight className="w-4 h-4" />
+          {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </button>
       </div>
     </div>

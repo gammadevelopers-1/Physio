@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
-import { BarChart3, ChevronRight, TrendingUp } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, TrendingUp } from "lucide-react";
 
 interface AssessmentScore {
   id: string;
@@ -202,7 +202,7 @@ const AssessmentAnalysisWidget = ({
             className="w-full flex items-center justify-center gap-1 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
           >
             {t("assessmentAnalysis.viewItemAnalysis")}
-            <ChevronRight className="w-4 h-4" />
+            {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
         </div>
       </div>

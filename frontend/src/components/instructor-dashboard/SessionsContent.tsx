@@ -2143,17 +2143,93 @@ const SessionsContent = () => {
   };
 
   // Calendar helpers
-  const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
-  const monthNames = locale === "ar"
-    ? ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
-    : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  const dayNames = locale === "ar"
-    ? ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"]
+  const isRTL = locale === "ar";
+
+  // ── Hijri calendar helpers (Umm al-Qura) ──
+  const hijriFormatter = useMemo(() => new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", { day: "numeric", month: "numeric", year: "numeric" }), []);
+  const getHijriParts = (date: Date) => {
+    const parts = hijriFormatter.formatToParts(date);
+    return {
+      day: parseInt(parts.find((p) => p.type === "day")?.value || "0"),
+      month: parseInt(parts.find((p) => p.type === "month")?.value || "0"),
+      year: parseInt(parts.find((p) => p.type === "year")?.value || "0"),
+    };
+  };
+  const getHijriMonthStart = (date: Date): Date => {
+    const d = new Date(date);
+    while (getHijriParts(d).day > 1) d.setDate(d.getDate() - 1);
+    return d;
+  };
+  const getHijriMonthDays = (date: Date): Date[] => {
+    const start = getHijriMonthStart(date);
+    const { month } = getHijriParts(start);
+    const days: Date[] = [];
+    const d = new Date(start);
+    while (getHijriParts(d).month === month) {
+      days.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
+    return days;
+  };
+  const hijriMonthNames = [
+    "محرّم", "صفر", "ربيع الأول", "ربيع الثاني",
+    "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
+    "رمضان", "شوّال", "ذو القعدة", "ذو الحجة",
+  ];
+
+  // ── Calendar computations (Hijri when RTL, Gregorian otherwise) ──
+  const calendarData = useMemo(() => {
+    if (isRTL) {
+      const hijriDays = getHijriMonthDays(calendarDate);
+      const firstDay = hijriDays[0];
+      const { month, year } = getHijriParts(firstDay);
+      return {
+        daysInMonth: hijriDays.length,
+        firstDayOfMonth: firstDay.getDay(),
+        headerLabel: `${hijriMonthNames[month - 1]} ${year}`,
+        getGregorianDate: (dayIndex: number) => hijriDays[dayIndex - 1],
+      };
+    }
+    const daysInMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate();
+    const firstDayOfMonth = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay();
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return {
+      daysInMonth,
+      firstDayOfMonth,
+      headerLabel: `${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`,
+      getGregorianDate: (dayIndex: number) => new Date(calendarDate.getFullYear(), calendarDate.getMonth(), dayIndex),
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendarDate, isRTL]);
+
+  const dayNames = isRTL
+    ? ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+  const goToPrevMonth = () => {
+    if (isRTL) {
+      const start = getHijriMonthStart(calendarDate);
+      const prev = new Date(start);
+      prev.setDate(prev.getDate() - 1);
+      setCalendarDate(prev);
+    } else {
+      setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1));
+    }
+  };
+  const goToNextMonth = () => {
+    if (isRTL) {
+      const days = getHijriMonthDays(calendarDate);
+      const nextDay = new Date(days[days.length - 1]);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setCalendarDate(nextDay);
+    } else {
+      setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1));
+    }
+  };
+
   const getSessionsForDate = (day: number) => {
-    const dateStr = `${calendarDate.getFullYear()}-${String(calendarDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const gDate = calendarData.getGregorianDate(day);
+    const dateStr = `${gDate.getFullYear()}-${String(gDate.getMonth() + 1).padStart(2, "0")}-${String(gDate.getDate()).padStart(2, "0")}`;
     return filteredSessions.filter((s) => getDateStr(s.scheduledAt) === dateStr);
   };
 
@@ -2373,19 +2449,19 @@ const SessionsContent = () => {
                   {/* Calendar Header */}
                   <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
                     <button
-                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
+                      onClick={goToPrevMonth}
                       className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                     >
-                      <ChevronLeft className="w-5 h-5 text-[#6B7280]" />
+                      {isRTL ? <ChevronRight className="w-5 h-5 text-[#6B7280]" /> : <ChevronLeft className="w-5 h-5 text-[#6B7280]" />}
                     </button>
                     <h2 className="text-lg font-semibold text-[#1F2937]">
-                      {monthNames[calendarDate.getMonth()]} {calendarDate.getFullYear()}
+                      {calendarData.headerLabel}
                     </h2>
                     <button
-                      onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
+                      onClick={goToNextMonth}
                       className="p-2 hover:bg-[#F3F4F6] rounded-lg transition-colors"
                     >
-                      <ChevronRight className="w-5 h-5 text-[#6B7280]" />
+                      {isRTL ? <ChevronLeft className="w-5 h-5 text-[#6B7280]" /> : <ChevronRight className="w-5 h-5 text-[#6B7280]" />}
                     </button>
                   </div>
 
@@ -2419,16 +2495,17 @@ const SessionsContent = () => {
                     ))}
 
                     {/* Empty cells */}
-                    {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                    {Array.from({ length: calendarData.firstDayOfMonth }).map((_, i) => (
                       <div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[#E5E7EB] bg-[#F9FAFB]" />
                     ))}
 
                     {/* Days */}
-                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                    {Array.from({ length: calendarData.daysInMonth }).map((_, i) => {
                       const day = i + 1;
                       const daySessions = getSessionsForDate(day);
+                      const gDate = calendarData.getGregorianDate(day);
                       const now = new Date();
-                      const isToday = now.getDate() === day && now.getMonth() === calendarDate.getMonth() && now.getFullYear() === calendarDate.getFullYear();
+                      const isToday = gDate.getDate() === now.getDate() && gDate.getMonth() === now.getMonth() && gDate.getFullYear() === now.getFullYear();
 
                       return (
                         <div

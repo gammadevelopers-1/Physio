@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ClipboardList, ChevronRight, Clock } from "lucide-react";
+import { ClipboardList, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { DashboardPendingSubmission } from "@/types/instructor-dashboard";
 import Link from "next/link";
 import { useLocale } from "next-intl";
@@ -111,7 +111,7 @@ const AssessmentsNeedingAttention = ({
           className="w-full flex items-center justify-center gap-1 mt-4 py-2.5 text-sm font-medium text-[#3B82F6] hover:underline"
         >
           {t("needsGrading.viewAll")} ({totalCount})
-          <ChevronRight className="w-4 h-4" />
+          {locale === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </Link>
       </div>
     </div>

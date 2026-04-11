@@ -27,6 +27,8 @@ import {
   BookOpen,
   MoreVertical,
   Lock,
+  ClipboardList,
+  BarChart3,
 } from "lucide-react";
 import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
 import {
@@ -176,17 +178,30 @@ const AssessmentsContent = () => {
   const [submissionQuestions, setSubmissionQuestions] = useState<typeof previewQuestions>([]);
   const [submissionQuestionsLoading, setSubmissionQuestionsLoading] = useState(false);
 
-  /* ────────── Fetch courses ────────── */
+  // All-courses aggregate assessments (for overview when no course selected)
+  const [allAssessments, setAllAssessments] = useState<AssessmentResponse[]>([]);
+  const [allAssessmentsLoading, setAllAssessmentsLoading] = useState(true);
+
+  /* ────────── Fetch courses + all assessments on mount ────────── */
   useEffect(() => {
     setCoursesLoading(true);
-    courseManagerApi
-      .getCourses({ limit: 200 })
-      .then((res) => {
-        const all = res.data.map((c) => ({ id: c.id, title: c.title, status: c.status }));
-        setCourses(all);
+    setAllAssessmentsLoading(true);
+    Promise.all([
+      courseManagerApi.getCourses({ limit: 200 }),
+      courseManagerApi.getAssessments({ limit: 200 }),
+    ])
+      .then(([coursesRes, assessmentsRes]) => {
+        setCourses(coursesRes.data.map((c) => ({ id: c.id, title: c.title, status: c.status })));
+        setAllAssessments(assessmentsRes.data);
       })
-      .catch(() => setCourses([]))
-      .finally(() => setCoursesLoading(false));
+      .catch(() => {
+        setCourses([]);
+        setAllAssessments([]);
+      })
+      .finally(() => {
+        setCoursesLoading(false);
+        setAllAssessmentsLoading(false);
+      });
   }, []);
 
   /* ────────── Fetch course defaults when course selected ────────── */
@@ -724,7 +739,7 @@ const AssessmentsContent = () => {
                     onChange={(e) => setSelectedCourseId(e.target.value)}
                     className="w-full sm:w-96 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                   >
-                    <option value="">{t("assessmentsPage.selectCoursePlaceholder") || "-- Select a course --"}</option>
+                    <option value="">{t("assessmentsPage.allCourses") || "All Courses"}</option>
                     {courses.map((c) => (
                       <option key={c.id} value={c.id}>{c.title}</option>
                     ))}
@@ -732,19 +747,115 @@ const AssessmentsContent = () => {
                 )}
               </div>
 
-              {/* Empty state when no course selected */}
+              {/* Overview dashboard when no course selected */}
               {!selectedCourseId && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                  <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BookOpen className="w-8 h-8 text-[#9CA3AF]" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
-                    {t("assessmentsPage.selectCoursePrompt") || "Select a course to view assessments"}
-                  </h3>
-                  <p className="text-sm text-[#6B7280]">
-                    {t("assessmentsPage.selectCourseDesc") || "Choose a course from the dropdown above to manage its assessment settings and view individual assessments."}
-                  </p>
-                </div>
+                <>
+                  {allAssessmentsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#a37f49]" />
+                    </div>
+                  ) : (
+                    <>
+                      {/* Stats Cards */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
+                              <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold text-[#1F2937]">{allAssessments.length}</p>
+                              <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.total") || "Total Assessments"}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
+                              <Check className="w-5 h-5 text-[#22C55E]" />
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold text-[#1F2937]">
+                                {allAssessments.filter((a) => a.status === "published").length}
+                              </p>
+                              <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.active") || "Published"}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[#EDE9FE] flex items-center justify-center">
+                              <Users className="w-5 h-5 text-[#7C3AED]" />
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold text-[#1F2937]">
+                                {allAssessments.reduce((sum, a) => sum + (a.submissionCount ?? 0), 0)}
+                              </p>
+                              <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.submissions") || "Submissions"}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center">
+                              <BarChart3 className="w-5 h-5 text-[#D97706]" />
+                            </div>
+                            <div>
+                              <p className="text-2xl font-bold text-[#1F2937]">{courses.length}</p>
+                              <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.courses") || "Courses"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Assessments by Course */}
+                      <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-[#1F2937] mb-3">
+                          {t("assessmentsPage.byCourse") || "Assessments by Course"}
+                        </h3>
+                        {courses.length === 0 ? (
+                          <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                            <BookOpen className="w-8 h-8 text-[#9CA3AF] mx-auto mb-2" />
+                            <p className="text-sm text-[#6B7280]">{t("assessmentsPage.noCourses") || "No courses found"}</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {courses.map((course) => {
+                              const courseAssessments = allAssessments.filter((a) => a.courseId === course.id);
+                              const published = courseAssessments.filter((a) => a.status === "published").length;
+                              const totalSubs = courseAssessments.reduce((s, a) => s + (a.submissionCount ?? 0), 0);
+                              return (
+                                <button
+                                  key={course.id}
+                                  onClick={() => setSelectedCourseId(course.id)}
+                                  className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-start hover:border-[#3B82F6] hover:shadow-sm transition-all group"
+                                >
+                                  <h4 className="text-sm font-semibold text-[#1F2937] mb-3 truncate group-hover:text-[#3B82F6] transition-colors">
+                                    {course.title}
+                                  </h4>
+                                  <div className="flex items-center gap-4 text-xs text-[#6B7280]">
+                                    <span className="flex items-center gap-1">
+                                      <ClipboardList className="w-3.5 h-3.5" />
+                                      {courseAssessments.length} {t("assessmentsPage.assessmentsLabel") || "assessments"}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Check className="w-3.5 h-3.5 text-[#22C55E]" />
+                                      {published} {t("assessmentsPage.stats.active") || "published"}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Users className="w-3.5 h-3.5 text-[#7C3AED]" />
+                                      {totalSubs}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
               )}
 
               {/* Course selected: show content */}

@@ -4229,8 +4229,13 @@
         "avgCompletion": "متوسط الإكمال",
         "active": "التقييمات النشطة",
         "submissions": "التسليمات",
-        "flagged": "مُعلَّمة"
+        "flagged": "مُعلَّمة",
+        "courses": "الدورات"
       },
+      "allCourses": "جميع الدورات",
+      "byCourse": "التقييمات حسب الدورة",
+      "noCourses": "لا توجد دورات",
+      "assessmentsLabel": "تقييمات",
       "filters": {
         "allTypes": "جميع الأنواع",
         "quiz": "اختبار قصير",

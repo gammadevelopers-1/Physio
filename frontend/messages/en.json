@@ -4020,8 +4020,13 @@
         "avgCompletion": "Avg Completion",
         "active": "Active Assessments",
         "submissions": "Submissions",
-        "flagged": "Flagged"
+        "flagged": "Flagged",
+        "courses": "Courses"
       },
+      "allCourses": "All Courses",
+      "byCourse": "Assessments by Course",
+      "noCourses": "No courses found",
+      "assessmentsLabel": "assessments",
       "filters": {
         "allTypes": "All Types",
         "quiz": "Quiz",

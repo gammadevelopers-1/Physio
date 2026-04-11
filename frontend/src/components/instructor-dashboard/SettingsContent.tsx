@@ -18,11 +18,9 @@ import {
   User as UserIcon,
   Shield,
   Bell,
-  Settings,
   Pencil,
   Mail,
   Phone,
-  MapPin,
   Globe,
   Key,
   Eye,
@@ -60,18 +58,18 @@ const SettingsContent = () => {
   }, [avatarMenuOpen, closeAvatarMenu]);
 
   const [activeTab, setActiveTab] = useState<
-    "profile" | "security" | "notifications" | "preferences"
+    "profile" | "security" | "notifications"
   >("profile");
 
   // Profile State — initialized from authenticated user
   const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
+    firstNameAr: "",
+    lastNameAr: "",
     email: "",
     phone: "",
-    location: "",
     language: "en",
-    bio: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -82,10 +80,10 @@ const SettingsContent = () => {
         ...prev,
         firstName: user.firstName || "",
         lastName: user.lastName || "",
+        firstNameAr: (user as any).firstNameAr || "",
+        lastNameAr: (user as any).lastNameAr || "",
         email: user.email,
         phone: user.phone || "",
-        bio: (user as any).bio || "",
-        location: (user as any).location || "",
         language: (user as any).language || "en",
       }));
     }
@@ -129,9 +127,9 @@ const SettingsContent = () => {
       await profileApi.update({
         firstName: profileData.firstName,
         lastName: profileData.lastName,
+        firstNameAr: profileData.firstNameAr,
+        lastNameAr: profileData.lastNameAr,
         phone: profileData.phone,
-        bio: profileData.bio,
-        location: profileData.location,
         language: newLang,
       });
       await refreshUser();
@@ -183,81 +181,50 @@ const SettingsContent = () => {
     }
   };
 
-  // Notification State
-  const [notifications, setNotifications] = useState({
-    emailNewStudent: true,
-    emailCourseComplete: true,
-    emailAssessmentSubmit: false,
-    emailCertificateRequest: true,
-    pushNewSession: true,
-    pushStudentMessage: true,
-    pushSystemUpdates: false,
-    digestWeekly: true,
-    digestMonthly: false,
-  });
+  // Notification State — simplified: email toggle + push toggle
+  const [emailNotificationsOn, setEmailNotificationsOn] = useState(true);
+  const [pushNotificationsOn, setPushNotificationsOn] = useState(true);
+  const [notificationsLoaded, setNotificationsLoaded] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
 
-  // Preferences State
-  const [preferences, setPreferences] = useState({
-    dateFormat: "DD/MM/YYYY",
-    timeFormat: "12h",
-    timezone: "Asia/Riyadh",
-  });
-  const [savingPreferences, setSavingPreferences] = useState(false);
-
-  // Fetch preferences from API on mount
+  // Load notification preferences on mount
   useEffect(() => {
-    const fetchPreferences = async () => {
-      try {
-        const prefs = await preferencesApi.get();
-        if (prefs) {
-          setNotifications((prev) => ({
-            ...prev,
-            emailNewStudent: (prefs as any).emailNewStudent ?? prev.emailNewStudent,
-            emailCourseComplete: (prefs as any).emailCourseComplete ?? prev.emailCourseComplete,
-            emailAssessmentSubmit: (prefs as any).emailAssessmentSubmit ?? prev.emailAssessmentSubmit,
-            emailCertificateRequest: (prefs as any).emailCertificateRequest ?? prev.emailCertificateRequest,
-            pushNewSession: (prefs as any).pushNewSession ?? prev.pushNewSession,
-            pushStudentMessage: (prefs as any).pushStudentMessage ?? prev.pushStudentMessage,
-            pushSystemUpdates: (prefs as any).pushSystemUpdates ?? prev.pushSystemUpdates,
-            digestWeekly: (prefs as any).digestWeekly ?? prev.digestWeekly,
-            digestMonthly: (prefs as any).digestMonthly ?? prev.digestMonthly,
-          }));
-          setPreferences((prev) => ({
-            ...prev,
-            dateFormat: (prefs as any).dateFormat ?? prev.dateFormat,
-            timeFormat: (prefs as any).timeFormat ?? prev.timeFormat,
-            timezone: (prefs as any).timezone ?? prev.timezone,
-          }));
-        }
-      } catch {
-        // Silently fail — use defaults
-      }
-    };
-    fetchPreferences();
+    preferencesApi.get().then((prefs) => {
+      const anyEmail =
+        !!(prefs as any).emailNewStudent ||
+        !!(prefs as any).emailCourseComplete ||
+        !!(prefs as any).emailAssessmentSubmit ||
+        !!(prefs as any).emailCertificateRequest;
+      const anyPush =
+        !!(prefs as any).pushNewSession ||
+        !!(prefs as any).pushStudentMessage ||
+        !!(prefs as any).pushSystemUpdates;
+      setEmailNotificationsOn(anyEmail);
+      setPushNotificationsOn(anyPush);
+      setNotificationsLoaded(true);
+    }).catch(() => {
+      setNotificationsLoaded(true);
+    });
   }, []);
 
   const handleSaveNotifications = async () => {
     setSavingNotifications(true);
     try {
-      await preferencesApi.updateNotifications(notifications as unknown as Record<string, boolean>);
+      const payload: Record<string, boolean> = {
+        emailNewStudent: emailNotificationsOn,
+        emailCourseComplete: emailNotificationsOn,
+        emailAssessmentSubmit: emailNotificationsOn,
+        emailCertificateRequest: emailNotificationsOn,
+        pushNewSession: pushNotificationsOn,
+        pushStudentMessage: pushNotificationsOn,
+        pushSystemUpdates: pushNotificationsOn,
+      };
+      await preferencesApi.updateNotifications(payload);
       toast.success(t("settings.notificationsSaved") || "Notification preferences saved");
     } catch {
-      toast.error("Failed to save notification preferences");
+      toast.error(t("settings.notificationsError") || "Failed to save notification preferences");
     } finally {
       setSavingNotifications(false);
-    }
-  };
-
-  const handleSavePreferences = async () => {
-    setSavingPreferences(true);
-    try {
-      await preferencesApi.updateUi(preferences as unknown as Record<string, unknown>);
-      toast.success(t("settings.preferencesSaved") || "Preferences saved");
-    } catch {
-      toast.error("Failed to save preferences");
-    } finally {
-      setSavingPreferences(false);
     }
   };
 
@@ -265,7 +232,6 @@ const SettingsContent = () => {
     { id: "profile" as const, label: t("settings.tabProfile"), icon: UserIcon },
     { id: "security" as const, label: t("settings.tabSecurity"), icon: Shield },
     { id: "notifications" as const, label: t("settings.tabNotifications"), icon: Bell },
-    { id: "preferences" as const, label: t("settings.tabPreferences"), icon: Settings },
   ];
 
   return (
@@ -374,7 +340,9 @@ const SettingsContent = () => {
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold text-[#1F2937]">
-                            {profileData.firstName} {profileData.lastName}
+                            {isRTL && (profileData.firstNameAr || profileData.lastNameAr)
+                              ? `${profileData.firstNameAr} ${profileData.lastNameAr}`.trim()
+                              : `${profileData.firstName} ${profileData.lastName}`.trim()}
                           </h3>
                           <p className="text-sm text-[#6B7280]">{profileData.email}</p>
                         </div>
@@ -410,6 +378,36 @@ const SettingsContent = () => {
                               value={profileData.lastName}
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastName: e.target.value })
+                              }
+                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="instructor-first-name-ar" className="block text-sm font-medium text-[#374151] mb-1.5">
+                              {t("settings.firstNameAr") || "First Name (Arabic)"}
+                            </label>
+                            <input
+                              id="instructor-first-name-ar"
+                              type="text"
+                              dir="rtl"
+                              value={profileData.firstNameAr}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, firstNameAr: e.target.value })
+                              }
+                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="instructor-last-name-ar" className="block text-sm font-medium text-[#374151] mb-1.5">
+                              {t("settings.lastNameAr") || "Last Name (Arabic)"}
+                            </label>
+                            <input
+                              id="instructor-last-name-ar"
+                              type="text"
+                              dir="rtl"
+                              value={profileData.lastNameAr}
+                              onChange={(e) =>
+                                setProfileData({ ...profileData, lastNameAr: e.target.value })
                               }
                               className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             />
@@ -451,25 +449,6 @@ const SettingsContent = () => {
                             </div>
                           </div>
                           <div>
-                            <label htmlFor="instructor-location" className="block text-sm font-medium text-[#374151] mb-1.5">
-                              {t("settings.location")}
-                            </label>
-                            <div className="relative">
-                              <MapPin
-                                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`}
-                              />
-                              <input
-                                id="instructor-location"
-                                type="text"
-                                value={profileData.location}
-                                onChange={(e) =>
-                                  setProfileData({ ...profileData, location: e.target.value })
-                                }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
-                              />
-                            </div>
-                          </div>
-                          <div>
                             <label htmlFor="instructor-language" className="block text-sm font-medium text-[#374151] mb-1.5">
                               {t("settings.language")}
                             </label>
@@ -491,22 +470,6 @@ const SettingsContent = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Bio */}
-                      <div>
-                        <label htmlFor="instructor-bio" className="block text-sm font-medium text-[#374151] mb-1.5">
-                          {t("settings.bio")}
-                        </label>
-                        <textarea
-                          id="instructor-bio"
-                          value={profileData.bio}
-                          onChange={(e) =>
-                            setProfileData({ ...profileData, bio: e.target.value })
-                          }
-                          rows={4}
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
-                        />
                       </div>
 
                       {/* Save Button */}
@@ -635,239 +598,83 @@ const SettingsContent = () => {
                   {/* Notifications Tab */}
                   {activeTab === "notifications" && (
                     <div className="space-y-6">
-                      {/* Email Notifications */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.emailNotifications")}
-                        </h4>
-                        <div className="space-y-3">
-                          {[
-                            { key: "emailNewStudent", label: t("settings.notifyNewStudent") },
-                            { key: "emailCourseComplete", label: t("settings.notifyCourseComplete") },
-                            { key: "emailAssessmentSubmit", label: t("settings.notifyAssessmentSubmit") },
-                            { key: "emailCertificateRequest", label: t("settings.notifyCertificateRequest") },
-                          ].map((item) => (
-                            <div
-                              key={item.key}
-                              className="flex items-center justify-between py-2"
-                            >
-                              <span className="text-sm text-[#374151]">{item.label}</span>
-                              <button
-                                onClick={() =>
-                                  setNotifications({
-                                    ...notifications,
-                                    [item.key]: !notifications[item.key as keyof typeof notifications],
-                                  })
-                                }
-                                className={`relative w-10 h-5 rounded-full transition-colors ${
-                                  notifications[item.key as keyof typeof notifications]
-                                    ? "bg-[#3B82F6]"
-                                    : "bg-[#E5E7EB]"
-                                }`}
-                              >
-                                <span
-                                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-                                    notifications[item.key as keyof typeof notifications]
-                                      ? isRTL
-                                        ? "left-0.5"
-                                        : "right-0.5"
-                                      : isRTL
-                                        ? "right-0.5"
-                                        : "left-0.5"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          ))}
+                      {!notificationsLoaded ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="w-6 h-6 animate-spin text-[#a37f49]" />
                         </div>
-                      </div>
-
-                      {/* Push Notifications */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.pushNotifications")}
-                        </h4>
-                        <div className="space-y-3">
-                          {[
-                            { key: "pushNewSession", label: t("settings.notifyNewSession") },
-                            { key: "pushStudentMessage", label: t("settings.notifyStudentMessage") },
-                            { key: "pushSystemUpdates", label: t("settings.notifySystemUpdates") },
-                          ].map((item) => (
-                            <div
-                              key={item.key}
-                              className="flex items-center justify-between py-2"
-                            >
-                              <span className="text-sm text-[#374151]">{item.label}</span>
-                              <button
-                                onClick={() =>
-                                  setNotifications({
-                                    ...notifications,
-                                    [item.key]: !notifications[item.key as keyof typeof notifications],
-                                  })
-                                }
-                                className={`relative w-10 h-5 rounded-full transition-colors ${
-                                  notifications[item.key as keyof typeof notifications]
-                                    ? "bg-[#3B82F6]"
-                                    : "bg-[#E5E7EB]"
-                                }`}
-                              >
-                                <span
-                                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-                                    notifications[item.key as keyof typeof notifications]
-                                      ? isRTL
-                                        ? "left-0.5"
-                                        : "right-0.5"
-                                      : isRTL
-                                        ? "right-0.5"
-                                        : "left-0.5"
-                                  }`}
-                                />
-                              </button>
+                      ) : (
+                        <>
+                          {/* Email Notifications Toggle */}
+                          <div className="flex items-center justify-between py-2">
+                            <div>
+                              <span className="text-sm font-medium text-[#374151]">
+                                {t("settings.emailNotifications")}
+                              </span>
+                              <p className="text-xs text-[#6B7280]">
+                                {t("settings.emailNotificationsDesc") || "Receive email notifications for important updates"}
+                              </p>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Digest */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
-                        <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
-                          {t("settings.emailDigest")}
-                        </h4>
-                        <div className="space-y-3">
-                          {[
-                            { key: "digestWeekly", label: t("settings.weeklyDigest") },
-                            { key: "digestMonthly", label: t("settings.monthlyDigest") },
-                          ].map((item) => (
-                            <div
-                              key={item.key}
-                              className="flex items-center justify-between py-2"
+                            <button
+                              onClick={() => setEmailNotificationsOn(!emailNotificationsOn)}
+                              className={`relative w-10 h-5 rounded-full transition-colors ${
+                                emailNotificationsOn ? "bg-[#3B82F6]" : "bg-[#E5E7EB]"
+                              }`}
                             >
-                              <span className="text-sm text-[#374151]">{item.label}</span>
-                              <button
-                                onClick={() =>
-                                  setNotifications({
-                                    ...notifications,
-                                    [item.key]: !notifications[item.key as keyof typeof notifications],
-                                  })
-                                }
-                                className={`relative w-10 h-5 rounded-full transition-colors ${
-                                  notifications[item.key as keyof typeof notifications]
-                                    ? "bg-[#3B82F6]"
-                                    : "bg-[#E5E7EB]"
+                              <span
+                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                  emailNotificationsOn
+                                    ? isRTL ? "left-0.5" : "right-0.5"
+                                    : isRTL ? "right-0.5" : "left-0.5"
                                 }`}
-                              >
-                                <span
-                                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-                                    notifications[item.key as keyof typeof notifications]
-                                      ? isRTL
-                                        ? "left-0.5"
-                                        : "right-0.5"
-                                      : isRTL
-                                        ? "right-0.5"
-                                        : "left-0.5"
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                              />
+                            </button>
+                          </div>
 
-                      {/* Save Notifications Button */}
-                      <div className="pt-6 border-t border-[#E5E7EB] flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSaveNotifications}
-                          disabled={savingNotifications}
-                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                        >
-                          <Save className="w-4 h-4" />
-                          {savingNotifications
-                            ? (t("settings.savingNotifications") || "Saving...")
-                            : (t("settings.saveNotifications") || "Save Notifications")}
-                        </button>
-                      </div>
+                          {/* In-app Notifications Toggle */}
+                          <div className="flex items-center justify-between py-2 pt-6 border-t border-[#E5E7EB]">
+                            <div>
+                              <span className="text-sm font-medium text-[#374151]">
+                                {t("settings.pushNotifications")}
+                              </span>
+                              <p className="text-xs text-[#6B7280]">
+                                {t("settings.pushNotificationsDesc") || "Receive in-app push notifications"}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => setPushNotificationsOn(!pushNotificationsOn)}
+                              className={`relative w-10 h-5 rounded-full transition-colors ${
+                                pushNotificationsOn ? "bg-[#3B82F6]" : "bg-[#E5E7EB]"
+                              }`}
+                            >
+                              <span
+                                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+                                  pushNotificationsOn
+                                    ? isRTL ? "left-0.5" : "right-0.5"
+                                    : isRTL ? "right-0.5" : "left-0.5"
+                                }`}
+                              />
+                            </button>
+                          </div>
+
+                          <div className="flex justify-end pt-4">
+                            <button
+                              onClick={handleSaveNotifications}
+                              disabled={savingNotifications}
+                              className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            >
+                              {savingNotifications ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Save className="w-4 h-4" />
+                              )}
+                              {t("settings.saveChanges")}
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
-                  {/* Preferences Tab */}
-                  {activeTab === "preferences" && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                          <label htmlFor="instructor-pref-date-format" className="block text-sm font-medium text-[#374151] mb-1.5">
-                            {t("settings.dateFormat")}
-                          </label>
-                          <select
-                            id="instructor-pref-date-format"
-                            value={preferences.dateFormat}
-                            onChange={(e) =>
-                              setPreferences({ ...preferences, dateFormat: e.target.value })
-                            }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                          >
-                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label htmlFor="instructor-pref-time-format" className="block text-sm font-medium text-[#374151] mb-1.5">
-                            {t("settings.timeFormat")}
-                          </label>
-                          <select
-                            id="instructor-pref-time-format"
-                            value={preferences.timeFormat}
-                            onChange={(e) =>
-                              setPreferences({ ...preferences, timeFormat: e.target.value })
-                            }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                          >
-                            <option value="12h">{t("settings.time12h")}</option>
-                            <option value="24h">{t("settings.time24h")}</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label htmlFor="instructor-pref-timezone" className="block text-sm font-medium text-[#374151] mb-1.5">
-                            {t("settings.timezone")}
-                          </label>
-                          <select
-                            id="instructor-pref-timezone"
-                            value={preferences.timezone}
-                            onChange={(e) =>
-                              setPreferences({ ...preferences, timezone: e.target.value })
-                            }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                          >
-                            <option value="Asia/Riyadh">Saudi Arabia (UTC+3)</option>
-                            <option value="Asia/Dubai">UAE / Gulf (UTC+4)</option>
-                            <option value="Asia/Kuwait">Kuwait (UTC+3)</option>
-                            <option value="Africa/Cairo">Egypt (UTC+2)</option>
-                            <option value="Asia/Amman">Jordan (UTC+3)</option>
-                            <option value="Asia/Beirut">Lebanon (UTC+2)</option>
-                            <option value="Europe/London">UK (GMT/BST)</option>
-                            <option value="Europe/Paris">Central Europe (CET)</option>
-                            <option value="America/New_York">Eastern US (ET)</option>
-                            <option value="UTC">UTC</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSavePreferences}
-                          disabled={savingPreferences}
-                          className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                        >
-                          <Save className="w-4 h-4" />
-                          {savingPreferences
-                            ? (t("settings.loadingPreferences") || "Saving...")
-                            : t("settings.savePreferences")}
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                 </div>
               </div>

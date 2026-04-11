@@ -3121,7 +3121,10 @@
       "randomizeOrder": "ترتيب عشوائي للأسئلة",
       "randomizeOrderHelp": "سيرى كل طالب الأسئلة بترتيب عشوائي مختلف",
       "questionsPerAttempt": "عدد الأسئلة لكل محاولة",
-      "questionsPerAttemptHelp": "عدد الأسئلة المعروضة لكل محاولة (اتركه فارغاً لعرض الكل)"
+      "questionsPerAttemptHelp": "عدد الأسئلة المعروضة لكل محاولة (اتركه فارغاً لعرض الكل)",
+      "retakeLabel": "الإعادة {n}",
+      "effective": "المعتمدة",
+      "attempts": "محاولات"
     },
     "common": {
       "timeMinutesAgo": "منذ {count} د",

@@ -309,6 +309,30 @@ const AssessmentContent = () => {
     }
   }, [assessment, assignmentUploading, assignmentFiles, assessmentId]);
 
+  // Auto-trigger review mode when navigating with ?review=true
+  // (e.g. clicking "Review" from the course card). Uses the latest graded
+  // submission's ID to load the review, without needing a fresh result.
+  useEffect(() => {
+    if (
+      openReview &&
+      assessment &&
+      !reviewMode &&
+      !reviewData &&
+      assessment.latestSubmission?.status === "graded" &&
+      assessment.latestSubmission.id
+    ) {
+      setReviewLoading(true);
+      studentApi
+        .getSubmissionReview(assessment.latestSubmission.id)
+        .then((data) => {
+          setReviewData(data);
+          setReviewMode(true);
+        })
+        .catch(() => {})
+        .finally(() => setReviewLoading(false));
+    }
+  }, [openReview, assessment, reviewMode, reviewData]);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -361,30 +385,6 @@ const AssessmentContent = () => {
   }
 
   if (!assessment) return null;
-
-  // Auto-trigger review mode when navigating with ?review=true
-  // (e.g. clicking "Review" from the course card). Uses the latest graded
-  // submission's ID to load the review, without needing a fresh result.
-  useEffect(() => {
-    if (
-      openReview &&
-      assessment &&
-      !reviewMode &&
-      !reviewData &&
-      assessment.latestSubmission?.status === "graded" &&
-      assessment.latestSubmission.id
-    ) {
-      setReviewLoading(true);
-      studentApi
-        .getSubmissionReview(assessment.latestSubmission.id)
-        .then((data) => {
-          setReviewData(data);
-          setReviewMode(true);
-        })
-        .catch(() => {})
-        .finally(() => setReviewLoading(false));
-    }
-  }, [openReview, assessment, reviewMode, reviewData]);
 
   // ─── Max Attempts Reached — Show result + review option ───
   // But if canRetake is true (manager granted a retake), skip this and fall

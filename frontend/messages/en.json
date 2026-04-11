@@ -2939,7 +2939,10 @@
       "randomizeOrder": "Randomize question order",
       "randomizeOrderHelp": "Each student will see questions in a different random order",
       "questionsPerAttempt": "Questions per attempt",
-      "questionsPerAttemptHelp": "Number of questions shown per attempt (leave empty for all)"
+      "questionsPerAttemptHelp": "Number of questions shown per attempt (leave empty for all)",
+      "retakeLabel": "Retake {n}",
+      "effective": "Effective",
+      "attempts": "attempts"
     },
     "common": {
       "timeMinutesAgo": "{count}m ago",

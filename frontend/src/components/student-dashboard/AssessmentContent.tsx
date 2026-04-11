@@ -81,6 +81,7 @@ const AssessmentContent = () => {
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewData, setReviewData] = useState<SubmissionReview | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewAttemptId, setReviewAttemptId] = useState<string | null>(null);
 
   // Assignment-specific state
   const [assignmentFiles, setAssignmentFiles] = useState<File[]>([]);
@@ -277,9 +278,25 @@ const AssessmentContent = () => {
       const data = await studentApi.getSubmissionReview(result.submissionId);
       setReviewData(data);
       setReviewMode(true);
+      setReviewAttemptId(result.submissionId);
       setCurrentQuestion(0);
     } catch {
       // silently fail
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleSwitchAttemptReview = async (submissionId: string) => {
+    if (submissionId === reviewAttemptId) return;
+    setReviewLoading(true);
+    try {
+      const data = await studentApi.getSubmissionReview(submissionId);
+      setReviewData(data);
+      setReviewAttemptId(submissionId);
+      setCurrentQuestion(0);
+    } catch {
+      toast.error(t("assessment.reviewLoadError") || "Could not load this attempt's review");
     } finally {
       setReviewLoading(false);
     }
@@ -322,6 +339,7 @@ const AssessmentContent = () => {
       assessment.latestSubmission.id
     ) {
       setReviewLoading(true);
+      setReviewAttemptId(assessment.latestSubmission.id);
       studentApi
         .getSubmissionReview(assessment.latestSubmission.id)
         .then((data) => {
@@ -386,6 +404,16 @@ const AssessmentContent = () => {
 
   if (!assessment) return null;
 
+  // When navigating with ?review=true, show a spinner while review data loads
+  // instead of flashing the start/attempt screen.
+  if (openReview && !reviewMode && !reviewData) {
+    return (
+      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
+      </div>
+    );
+  }
+
   // ─── Max Attempts Reached — Show result + review option ───
   // But if canRetake is true (manager granted a retake), skip this and fall
   // through to the start screen so the student can begin the new attempt.
@@ -445,6 +473,7 @@ const AssessmentContent = () => {
               <button
                 onClick={() => {
                   setReviewLoading(true);
+                  setReviewAttemptId(sub.id);
                   studentApi.getSubmissionReview(sub.id).then((data) => {
                     setReviewData(data);
                     setReviewMode(true);
@@ -478,12 +507,12 @@ const AssessmentContent = () => {
           <div className="bg-white border-b border-[#E5E7EB] px-4 py-3">
             <div className="max-w-[700px] mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <button
-                  onClick={() => { setReviewMode(false); }}
+                <Link
+                  href={`/${locale}/dashboard/student/courses/${courseId}`}
                   className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
                 >
                   <BackIcon className="w-5 h-5 text-[#4B5563]" />
-                </button>
+                </Link>
                 <h1 className="text-sm sm:text-base font-semibold text-[#1F2937]">
                   {assessment.title} — {t("assessment.reviewAnswers")}
                 </h1>
@@ -814,6 +843,12 @@ const AssessmentContent = () => {
     const studentAnswer = reviewData.answers.find(
       (a) => a.questionId === reviewQuestion?.id
     );
+    const reviewableAttempts = (assessment.allAttempts || []).filter(
+      (a) => a.status === "graded"
+    );
+    const currentAttempt = reviewableAttempts.find(
+      (a) => a.id === reviewAttemptId
+    );
 
     return (
       <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
@@ -821,15 +856,12 @@ const AssessmentContent = () => {
         <div className="bg-white border-b border-[#E5E7EB] px-4 py-3">
           <div className="max-w-[900px] mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setReviewMode(false);
-                  setCurrentQuestion(0);
-                }}
+              <Link
+                href={`/${locale}/dashboard/student/courses/${courseId}`}
                 className="p-1.5 rounded-lg hover:bg-[#F3F4F6] transition-colors"
               >
                 <BackIcon className="w-5 h-5 text-[#4B5563]" />
-              </button>
+              </Link>
               <h1 className="text-sm sm:text-base font-semibold text-[#1F2937]">
                 {assessment.title} — {t("assessment.reviewAnswers")}
               </h1>
@@ -841,7 +873,51 @@ const AssessmentContent = () => {
           </div>
         </div>
 
-        <div className="max-w-[900px] mx-auto px-4 py-6 sm:py-8">
+        {/* Attempt Selector */}
+        {reviewableAttempts.length > 1 && (
+          <div className="bg-white border-b border-[#E5E7EB] px-4 py-2">
+            <div className="max-w-[900px] mx-auto flex items-center gap-2 overflow-x-auto">
+              {reviewableAttempts.map((attempt) => {
+                const isActive = attempt.id === reviewAttemptId;
+                const pct = attempt.percentage != null ? attempt.percentage.toFixed(1) : "—";
+                return (
+                  <button
+                    key={attempt.id}
+                    onClick={() => handleSwitchAttemptReview(attempt.id)}
+                    disabled={reviewLoading}
+                    className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 ${
+                      isActive
+                        ? "bg-[#002D87] text-white"
+                        : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#E5E7EB]"
+                    }`}
+                  >
+                    {attempt.attemptNumber === 1
+                      ? (t("assessment.originalAttempt") || "Original")
+                      : (t("assessment.retakeNum", { n: attempt.attemptNumber - 1 }) || `Retake ${attempt.attemptNumber - 1}`)}
+                    <span className={isActive ? "text-white/80" : "text-[#9CA3AF]"}>
+                      {attempt.score ?? "—"}/{attempt.totalMarks ?? assessment.totalMarks} ({pct}%)
+                    </span>
+                    {attempt.isEffective && (
+                      <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${
+                        isActive ? "bg-white/20 text-white" : "bg-[#DCFCE7] text-[#15803D]"
+                      }`}>
+                        {t("assessment.effective") || "Effective"}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-[900px] mx-auto px-4 py-6 sm:py-8 relative">
+          {/* Loading overlay when switching attempts */}
+          {reviewLoading && (
+            <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-xl">
+              <Loader2 className="w-6 h-6 text-[#9CA3AF] animate-spin" />
+            </div>
+          )}
           {/* Instructor Overall Comment */}
           {reviewData.instructorComment && currentQuestion === 0 && (
             <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-5 mb-6">

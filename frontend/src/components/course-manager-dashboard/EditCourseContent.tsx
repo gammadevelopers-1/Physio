@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
+import DatePicker from "@/components/ui/DatePicker";
 
 interface EditCourseContentProps {
   courseId: string;
@@ -480,24 +481,20 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       <label htmlFor="edit-start-date" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.startDate")}
                       </label>
-                      <input
+                      <DatePicker
                         id="edit-start-date"
-                        type="date"
                         value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        onChange={setStartDate}
                       />
                     </div>
                     <div>
                       <label htmlFor="edit-end-date" className="block text-sm font-medium text-[#374151] mb-1">
                         {t("createCourse.endDate")}
                       </label>
-                      <input
+                      <DatePicker
                         id="edit-end-date"
-                        type="date"
                         value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        onChange={setEndDate}
                       />
                     </div>
                   </div>

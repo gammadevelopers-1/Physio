@@ -10,6 +10,7 @@ import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useAuth, useUser } from "@/contexts/AuthContext";
 import { profileApi, preferencesApi } from "@/lib/api";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { useSecuritySettings } from "@/components/shared/useSecuritySettings";
 import TwoFactorToggle from "@/components/shared/TwoFactorToggle";
 import TrustedDevicesSection from "@/components/shared/TrustedDevicesSection";
@@ -34,6 +35,7 @@ const SettingsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { calendarFormat, setCalendarFormat } = useCalendarPreference();
   const manager = useManagerProfile();
   const { refreshUser } = useAuth();
   const user = useUser();
@@ -457,6 +459,40 @@ const SettingsContent = () => {
                             </select>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Calendar Preference */}
+                      <div className="pt-4 border-t border-[#E5E7EB]">
+                        <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
+                          {t("settingsPage.profile.calendarType") || "Calendar Type"}
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCalendarFormat("gregorian")}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                              calendarFormat === "gregorian"
+                                ? "bg-[#002D87] text-white border-[#002D87]"
+                                : "bg-white text-[#374151] border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                            }`}
+                          >
+                            {t("settingsPage.profile.gregorian") || "Gregorian"} (ميلادي)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCalendarFormat("hijri")}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                              calendarFormat === "hijri"
+                                ? "bg-[#002D87] text-white border-[#002D87]"
+                                : "bg-white text-[#374151] border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                            }`}
+                          >
+                            {t("settingsPage.profile.hijri") || "Hijri"} (هجري)
+                          </button>
+                        </div>
+                        <p className="text-xs text-[#6B7280] mt-1.5">
+                          {t("settingsPage.profile.calendarTypeDesc") || "Applies to all dates across the system"}
+                        </p>
                       </div>
 
                       {/* Save Button */}

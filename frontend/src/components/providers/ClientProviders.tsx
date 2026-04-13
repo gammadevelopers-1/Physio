@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts';
+import { CalendarProvider } from '@/contexts/CalendarContext';
 
 interface ClientProvidersProps {
   children: ReactNode;
@@ -11,7 +12,9 @@ interface ClientProvidersProps {
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <AuthProvider>
+      <CalendarProvider>
       {children}
+      </CalendarProvider>
       <Toaster
         position="top-right"
         richColors

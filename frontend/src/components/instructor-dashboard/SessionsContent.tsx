@@ -7,6 +7,9 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import DatePicker from "@/components/ui/DatePicker";
 import { instructorApi, zoomAttendanceApi, courseAssistantsApi, type ThresholdStatus } from "@/lib/api";
 import type {
   CourseSession,
@@ -46,15 +49,6 @@ import {
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────
-
-function formatSessionDate(iso: string, locale: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 function formatSessionTime(iso: string, locale: string): string {
   const d = new Date(iso);
@@ -1288,12 +1282,10 @@ function ScheduleSessionModal({
             <label className="block text-sm font-medium text-[#374151] mb-1.5">
               {t("sessionsPage.form.date")} *
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={setDate}
               min={new Date().toISOString().split("T")[0]}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
             />
           </div>
           <div>
@@ -1468,6 +1460,7 @@ function SessionCard({
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
+  const { calendarFormat } = useCalendarPreference();
   const getStatusBadge = (status: string) => {
     const styles: Record<string, { bg: string; text: string; label: string }> = {
       scheduled: { bg: "bg-[#EFF6FF]", text: "text-[#3B82F6]", label: t("sessionsPage.statusUpcoming") },
@@ -1539,7 +1532,7 @@ function SessionCard({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-xs text-[#6B7280]">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              {formatSessionDate(session.scheduledAt, locale)}
+              {formatDateHijri(session.scheduledAt, calendarFormat, { locale })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
@@ -1762,12 +1755,10 @@ function EditSessionModal({
             <label className="block text-sm font-medium text-[#374151] mb-1.5">
               {t("sessionsPage.form.date")}
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={setDate}
               min={new Date().toISOString().split("T")[0]}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
             />
           </div>
           <div>
@@ -2144,6 +2135,8 @@ const SessionsContent = () => {
 
   // Calendar helpers
   const isRTL = locale === "ar";
+  const { calendarFormat, setCalendarFormat } = useCalendarPreference();
+  const useHijri = calendarFormat === "hijri";
 
   // ── Hijri calendar helpers (Umm al-Qura) ──
   const hijriFormatter = useMemo(() => new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", { day: "numeric", month: "numeric", year: "numeric" }), []);
@@ -2177,9 +2170,9 @@ const SessionsContent = () => {
     "رمضان", "شوّال", "ذو القعدة", "ذو الحجة",
   ];
 
-  // ── Calendar computations (Hijri when RTL, Gregorian otherwise) ──
+  // ── Calendar computations (Hijri when toggled, Gregorian otherwise) ──
   const calendarData = useMemo(() => {
-    if (isRTL) {
+    if (useHijri) {
       const hijriDays = getHijriMonthDays(calendarDate);
       const firstDay = hijriDays[0];
       const { month, year } = getHijriParts(firstDay);
@@ -2200,14 +2193,14 @@ const SessionsContent = () => {
       getGregorianDate: (dayIndex: number) => new Date(calendarDate.getFullYear(), calendarDate.getMonth(), dayIndex),
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calendarDate, isRTL]);
+  }, [calendarDate, useHijri]);
 
-  const dayNames = isRTL
+  const dayNames = useHijri
     ? ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const goToPrevMonth = () => {
-    if (isRTL) {
+    if (useHijri) {
       const start = getHijriMonthStart(calendarDate);
       const prev = new Date(start);
       prev.setDate(prev.getDate() - 1);
@@ -2217,7 +2210,7 @@ const SessionsContent = () => {
     }
   };
   const goToNextMonth = () => {
-    if (isRTL) {
+    if (useHijri) {
       const days = getHijriMonthDays(calendarDate);
       const nextDay = new Date(days[days.length - 1]);
       nextDay.setDate(nextDay.getDate() + 1);
@@ -2384,19 +2377,15 @@ const SessionsContent = () => {
                   <option value="completed">{t("sessionsPage.statusCompleted")}</option>
                   <option value="cancelled">{t("sessionsPage.statusCancelled")}</option>
                 </select>
-                <input
-                  type="date"
+                <DatePicker
                   value={filterDateFrom}
-                  onChange={(e) => setFilterDateFrom(e.target.value)}
-                  className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
-                  aria-label={t("sessionsPage.dateFrom")}
+                  onChange={setFilterDateFrom}
+                  id="filter-date-from"
                 />
-                <input
-                  type="date"
+                <DatePicker
                   value={filterDateTo}
-                  onChange={(e) => setFilterDateTo(e.target.value)}
-                  className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm bg-white"
-                  aria-label={t("sessionsPage.dateTo")}
+                  onChange={setFilterDateTo}
+                  id="filter-date-to"
                 />
                 {(filterDateFrom || filterDateTo) && (
                   <button
@@ -2465,24 +2454,32 @@ const SessionsContent = () => {
                     </button>
                   </div>
 
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 px-4 py-2 border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                    <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
-                      {t("sessionsPage.statusUpcoming")}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-                      {t("sessionsPage.statusLive")}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
-                      {t("sessionsPage.statusCompleted")}
-                    </span>
-                    <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-[#9CA3AF]" />
-                      {t("sessionsPage.statusCancelled")}
-                    </span>
+                  {/* Calendar type toggle + Legend */}
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
+                        {t("sessionsPage.statusUpcoming")}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                        {t("sessionsPage.statusLive")}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#22C55E]" />
+                        {t("sessionsPage.statusCompleted")}
+                      </span>
+                      <span className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#9CA3AF]" />
+                        {t("sessionsPage.statusCancelled")}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[#E5E7EB] hover:bg-white transition-colors text-[#374151]"
+                    >
+                      {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
+                    </button>
                   </div>
 
                   {/* Calendar Grid */}
@@ -2589,7 +2586,7 @@ const SessionsContent = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">New Date *</label>
-                  <input type="date" value={rescheduleForm.date} onChange={(e) => setRescheduleForm(d => ({ ...d, date: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]" />
+                  <DatePicker value={rescheduleForm.date} onChange={(v) => setRescheduleForm(d => ({ ...d, date: v }))} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">New Time *</label>

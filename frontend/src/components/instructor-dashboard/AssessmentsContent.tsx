@@ -6,6 +6,9 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import DateTimePicker from "@/components/ui/DateTimePicker";
 import { instructorApi, ApiError } from "@/lib/api";
 import { toast } from "sonner";
 import type {
@@ -237,12 +240,9 @@ const CreateAssessmentModal = ({
                 <label className="block text-sm font-medium text-[#374151] mb-1">
                   {t("assessments.deadline") || "Deadline"} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-                  required
+                  onChange={setDueDate}
                 />
               </div>
             )}
@@ -517,11 +517,9 @@ const EditAssessmentModal = ({
                 <label className="block text-sm font-medium text-[#374151] mb-1">
                   {t("assessments.deadline") || "Deadline"}
                 </label>
-                <input
-                  type="datetime-local"
+                <DateTimePicker
                   value={editDueDate}
-                  onChange={(e) => setEditDueDate(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  onChange={setEditDueDate}
                 />
               </div>
             )}
@@ -1509,6 +1507,7 @@ const AssessmentsContent = () => {
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { calendarFormat } = useCalendarPreference();
 
   // Global state
   const [activeTab, setActiveTab] = useState<
@@ -1906,10 +1905,7 @@ const AssessmentsContent = () => {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString(
-      locale === "ar" ? "ar-SA" : "en-US",
-      { month: "short", day: "numeric", year: "numeric" }
-    );
+    return formatDateHijri(dateStr, calendarFormat, { locale });
   };
 
   /* ─── Tabs ───────────────────────────────────── */

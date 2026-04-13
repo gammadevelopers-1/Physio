@@ -31,6 +31,9 @@ import {
   BarChart3,
 } from "lucide-react";
 import SkeletonTableRow from "@/components/shared/SkeletonTableRow";
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -79,6 +82,7 @@ const AssessmentsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { calendarFormat } = useCalendarPreference();
   const manager = useManagerProfile();
 
   // Course selector
@@ -1432,7 +1436,7 @@ const AssessmentsContent = () => {
                                         <td className="px-4 py-3">
                                           {sub.submittedAt ? (
                                             <p className="text-sm text-[#6B7280]">
-                                              {new Date(sub.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                              {formatDateHijri(sub.submittedAt, calendarFormat, { locale })}
                                             </p>
                                           ) : (
                                             <p className="text-sm text-[#9CA3AF]">—</p>
@@ -1540,7 +1544,7 @@ const AssessmentsContent = () => {
                                           <td className="px-4 py-3">
                                             {effectiveRow.submittedAt ? (
                                               <p className="text-sm text-[#6B7280]">
-                                                {new Date(effectiveRow.submittedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                                                {formatDateHijri(effectiveRow.submittedAt, calendarFormat, { locale })}
                                               </p>
                                             ) : (
                                               <p className="text-sm text-[#9CA3AF]">—</p>
@@ -2036,12 +2040,9 @@ const AssessmentsContent = () => {
                     {t("assessmentsPage.retakeModal.newDeadline") || "New deadline"}{" "}
                     <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={retakeForm.newDueDate}
-                    onChange={(e) => setRetakeForm({ ...retakeForm, newDueDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED]"
-                    required
+                    onChange={(v) => setRetakeForm({ ...retakeForm, newDueDate: v })}
                   />
                 </div>
               )}

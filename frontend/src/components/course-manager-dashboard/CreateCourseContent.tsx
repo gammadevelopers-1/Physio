@@ -25,6 +25,9 @@ import {
   ChevronDown,
   Search,
 } from "lucide-react";
+import DatePicker from "@/components/ui/DatePicker";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -131,6 +134,7 @@ const CreateCourseContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const tA = useTranslations("accessibility");
   const isRTL = locale === "ar";
+  const { calendarFormat } = useCalendarPreference();
 
   // Wizard step
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
@@ -354,16 +358,7 @@ const CreateCourseContent = () => {
   const selectClass = `${inputClass} bg-white`;
 
   const formatDate = (dateStr: string) => {
-    if (!dateStr) return "\u2014";
-    try {
-      return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatDateHijri(dateStr, calendarFormat, { locale });
   };
 
   const getDeliveryTypeLabel = (dt: string) => {
@@ -580,28 +575,22 @@ const CreateCourseContent = () => {
                         <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.startDate")} *
                         </label>
-                        <input
+                        <DatePicker
                           id="start-date"
-                          type="date"
                           value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
+                          onChange={setStartDate}
                           min={new Date().toISOString().split("T")[0]}
-                          className={inputClass}
-                          required
                         />
                       </div>
                       <div>
                         <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
                           {t("createCourse.endDate")} *
                         </label>
-                        <input
+                        <DatePicker
                           id="end-date"
-                          type="date"
                           value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
+                          onChange={setEndDate}
                           min={startDate || new Date().toISOString().split("T")[0]}
-                          className={inputClass}
-                          required
                         />
                       </div>
                       <div>

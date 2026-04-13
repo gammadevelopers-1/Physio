@@ -29,6 +29,7 @@ import {
   X,
   Award,
 } from "lucide-react";
+import DatePicker from "@/components/ui/DatePicker";
 
 /* ------------------------------------------------------------------ */
 /*  Modal Overlay                                                      */
@@ -218,22 +219,18 @@ function ExportModal({
                 <label className="block text-sm font-medium text-[#374151] mb-1.5">
                   {t("reportsPage.dateFrom")}
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  onChange={setDateFrom}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1.5">
                   {t("reportsPage.dateTo")}
                 </label>
-                <input
-                  type="date"
+                <DatePicker
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  onChange={setDateTo}
                 />
               </div>
             </div>

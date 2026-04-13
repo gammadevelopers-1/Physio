@@ -10,6 +10,8 @@ import InstructorNavbar from "./InstructorNavbar";
 import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
+import DatePicker from "@/components/ui/DatePicker";
+import DateTimePicker from "@/components/ui/DateTimePicker";
 import CourseAssistantsSuggestPanel from "./CourseAssistantsSuggestPanel";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
@@ -1626,20 +1628,18 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.startDate")}</label>
-                              <input
-                                type="date"
+                              <DatePicker
                                 value={settingsForm.startDate}
+                                onChange={() => {}}
                                 disabled
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               />
                             </div>
                             <div>
                               <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.endDate")}</label>
-                              <input
-                                type="date"
+                              <DatePicker
                                 value={settingsForm.endDate}
+                                onChange={() => {}}
                                 disabled
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               />
                             </div>
                           </div>
@@ -1935,11 +1935,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.scheduledDate")} *</label>
-                  <input
-                    type="datetime-local"
+                  <DateTimePicker
                     value={sessionForm.scheduledAt}
-                    onChange={(e) => setSessionForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    onChange={(v) => setSessionForm((f) => ({ ...f, scheduledAt: v }))}
                   />
                 </div>
                 <div>
@@ -2053,11 +2051,9 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">New Date *</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={rescheduleData.newDate}
-                    onChange={(e) => setRescheduleData(d => ({ ...d, newDate: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    onChange={(v) => setRescheduleData(d => ({ ...d, newDate: v }))}
                   />
                 </div>
                 <div>

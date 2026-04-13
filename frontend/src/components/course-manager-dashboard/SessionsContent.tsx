@@ -6,6 +6,7 @@ import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { useCourseManagerSessions } from "@/hooks/useCourseManagerSessions";
 import { courseManagerApi, courseAssistantsApi, reportsApi, type ThresholdStatus } from "@/lib/api";
 import {
@@ -33,6 +34,9 @@ import {
 } from "lucide-react";
 import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
+import DatePicker from "@/components/ui/DatePicker";
+import DateTimePicker from "@/components/ui/DateTimePicker";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { toast } from "sonner";
 
 // 10-color palette for instructor color-coding
@@ -153,12 +157,10 @@ function ScheduleSessionModal({
             <label className="block text-sm font-medium text-[#374151] mb-1.5">
               {t("sessionsPage.form.date")} *
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={setDate}
               min={new Date().toISOString().split("T")[0]}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
             />
           </div>
           <div>
@@ -304,6 +306,8 @@ const SessionsContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { calendarFormat, setCalendarFormat } = useCalendarPreference();
+  const useHijri = calendarFormat === "hijri";
   const manager = useManagerProfile();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -472,8 +476,7 @@ const SessionsContent = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+    return formatDateHijri(dateStr, calendarFormat, { locale });
   };
 
   const formatTime = (dateStr: string, durationMins: number) => {
@@ -583,9 +586,9 @@ const SessionsContent = () => {
     "رمضان", "شوّال", "ذو القعدة", "ذو الحجة",
   ];
 
-  // ── Calendar computations (Hijri when RTL, Gregorian otherwise) ──
+  // ── Calendar computations (Hijri when toggled, Gregorian otherwise) ──
   const calendarData = useMemo(() => {
-    if (isRTL) {
+    if (useHijri) {
       const hijriDays = getHijriMonthDays(selectedDate);
       const firstDay = hijriDays[0];
       const { month, year } = getHijriParts(firstDay);
@@ -593,9 +596,7 @@ const SessionsContent = () => {
         daysInMonth: hijriDays.length,
         firstDayOfMonth: firstDay.getDay(),
         headerLabel: `${hijriMonthNames[month - 1]} ${year}`,
-        // Map calendar day index (1-based) to Gregorian date for session lookup
         getGregorianDate: (dayIndex: number) => hijriDays[dayIndex - 1],
-        isHijri: true,
       };
     }
     const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
@@ -606,12 +607,11 @@ const SessionsContent = () => {
       firstDayOfMonth,
       headerLabel: `${monthNames[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`,
       getGregorianDate: (dayIndex: number) => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), dayIndex),
-      isHijri: false,
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, isRTL]);
+  }, [selectedDate, useHijri]);
 
-  const dayNames = isRTL
+  const dayNames = useHijri
     ? ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"]
     : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -623,7 +623,7 @@ const SessionsContent = () => {
 
   // Navigate to next/prev month (Hijri-aware)
   const goToPrevMonth = () => {
-    if (isRTL) {
+    if (useHijri) {
       const start = getHijriMonthStart(selectedDate);
       const prev = new Date(start);
       prev.setDate(prev.getDate() - 1); // last day of previous Hijri month
@@ -633,10 +633,10 @@ const SessionsContent = () => {
     }
   };
   const goToNextMonth = () => {
-    if (isRTL) {
+    if (useHijri) {
       const days = getHijriMonthDays(selectedDate);
       const nextDay = new Date(days[days.length - 1]);
-      nextDay.setDate(nextDay.getDate() + 1); // first day of next Hijri month
+      nextDay.setDate(nextDay.getDate() + 1);
       setSelectedDate(nextDay);
     } else {
       setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1));
@@ -899,20 +899,16 @@ const SessionsContent = () => {
                     </div>
                     <div>
                       <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.dateFrom")}</label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={dateFrom}
-                        onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                        onChange={(v) => { setDateFrom(v); setCurrentPage(1); }}
                       />
                     </div>
                     <div>
                       <label className="block text-xs text-[#6B7280] mb-1">{t("sessionsPage.dateTo")}</label>
-                      <input
-                        type="date"
+                      <DatePicker
                         value={dateTo}
-                        onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
-                        className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm bg-white"
+                        onChange={(v) => { setDateTo(v); setCurrentPage(1); }}
                       />
                     </div>
                   </div>
@@ -1030,9 +1026,17 @@ const SessionsContent = () => {
               {!loading && !error && viewMode === "calendar" && (
                 <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
                   <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
-                    <button onClick={goToPrevMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg"><ChevronLeft className={`w-5 h-5 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`} /></button>
+                    <button onClick={goToPrevMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronRight className="w-5 h-5 text-[#6B7280]" /> : <ChevronLeft className="w-5 h-5 text-[#6B7280]" />}</button>
                     <h2 className="text-lg font-semibold text-[#1F2937]">{calendarData.headerLabel}</h2>
-                    <button onClick={goToNextMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg"><ChevronRight className={`w-5 h-5 text-[#6B7280] ${isRTL ? "rotate-180" : ""}`} /></button>
+                    <button onClick={goToNextMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[#6B7280]" /> : <ChevronRight className="w-5 h-5 text-[#6B7280]" />}</button>
+                  </div>
+                  <div className="flex items-center justify-end px-4 py-2 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                    <button
+                      onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[#E5E7EB] hover:bg-white transition-colors text-[#374151]"
+                    >
+                      {useHijri ? (t("sessionsPage.gregorian") || "Gregorian") : (t("sessionsPage.hijri") || "Hijri")}
+                    </button>
                   </div>
                   <div className="grid grid-cols-7">
                     {dayNames.map((day) => (<div key={day} className="p-3 text-center text-xs font-medium text-[#6B7280] border-b border-[#E5E7EB]">{day}</div>))}
@@ -1123,12 +1127,12 @@ const SessionsContent = () => {
             ) : (
               <>
                 <p className="text-sm text-[#6B7280] mb-3">Reschedule &quot;{rescheduleModal.title}&quot;:</p>
-                <input
-                  type="datetime-local"
-                  value={rescheduleDate}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] outline-none"
-                />
+                <div className="mb-4">
+                  <DateTimePicker
+                    value={rescheduleDate}
+                    onChange={setRescheduleDate}
+                  />
+                </div>
                 <div className="flex justify-end gap-3">
                   <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">Close</button>
                   <button onClick={handleReschedule} disabled={!rescheduleDate || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">

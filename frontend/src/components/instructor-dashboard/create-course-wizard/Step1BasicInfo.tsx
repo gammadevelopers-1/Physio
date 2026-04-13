@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { instructorApi } from "@/lib/api";
+import DatePicker from "@/components/ui/DatePicker";
 import type { WizardState, WizardAction } from "./CreateCourseWizard";
 
 interface Step1Props {
@@ -120,25 +121,21 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               <label htmlFor="start-date" className="block text-sm font-medium text-[#374151] mb-1">
                 {t("startDate")}
               </label>
-              <input
+              <DatePicker
                 id="start-date"
-                type="date"
                 value={state.startDate}
-                onChange={(e) => dispatch({ type: "SET_FIELD", field: "startDate", value: e.target.value })}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                onChange={(v) => dispatch({ type: "SET_FIELD", field: "startDate", value: v })}
               />
             </div>
             <div>
               <label htmlFor="end-date" className="block text-sm font-medium text-[#374151] mb-1">
                 {t("endDate")}
               </label>
-              <input
+              <DatePicker
                 id="end-date"
-                type="date"
                 value={state.endDate}
+                onChange={(v) => dispatch({ type: "SET_FIELD", field: "endDate", value: v })}
                 min={state.startDate || undefined}
-                onChange={(e) => dispatch({ type: "SET_FIELD", field: "endDate", value: e.target.value })}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
               />
             </div>
             <div>

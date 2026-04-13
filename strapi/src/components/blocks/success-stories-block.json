@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_blocks_success_stories_blocks",
+  "info": {
+    "displayName": "Success Stories Block",
+    "icon": "trophy",
+    "description": "Student/patient case studies and success stories"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "stories": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.success-story-item"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["grid", "carousel"],
+      "default": "grid"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

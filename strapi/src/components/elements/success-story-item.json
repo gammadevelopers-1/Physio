@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_elements_success_story_items",
+  "info": {
+    "displayName": "Success Story Item",
+    "description": "A case study or success story entry"
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "role": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "story": {
+      "type": "text",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "metric": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "metricValue": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

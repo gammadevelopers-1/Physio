@@ -4,6 +4,9 @@ import PolicyPageLayout from "@/components/PolicyPageLayout";
 import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getPrivacyPolicyPageData } from "@/lib/strapi";
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { hasDynamicZoneBlocks } from "@/lib/strapi/block-utils";
+import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function PrivacyPolicy({
   params,
@@ -85,15 +88,23 @@ export default async function PrivacyPolicy({
   const pageTitle = policyPage?.title || t("title");
   const pageLastUpdated = policyPage?.lastUpdated || t("lastUpdated");
 
+  const useDynamicZone = hasDynamicZoneBlocks(policyPage?.blocks);
+
+  const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
+
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
-      <PolicyPageLayout
-        title={pageTitle}
-        lastUpdated={pageLastUpdated}
-        sections={sections}
-        isRTL={isRTL}
-      />
+      {useDynamicZone ? (
+        <BlockRenderer blocks={policyPage!.blocks!} sideLoadedData={sideLoadedData} />
+      ) : (
+        <PolicyPageLayout
+          title={pageTitle}
+          lastUpdated={pageLastUpdated}
+          sections={sections}
+          isRTL={isRTL}
+        />
+      )}
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
     </main>
   );

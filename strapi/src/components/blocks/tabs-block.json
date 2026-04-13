@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_blocks_tabs_blocks",
+  "info": {
+    "displayName": "Tabs Block",
+    "icon": "folder",
+    "description": "Tabbed content sections"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "tabs": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.tab-item"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["horizontal", "vertical"],
+      "default": "horizontal"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

@@ -4,6 +4,9 @@ import BecomeTrainer from "@/components/BecomeTrainer";
 import PartnersContent from "@/components/PartnersContent";
 import { setRequestLocale } from "next-intl/server";
 import { getPartnersPageData } from "@/lib/strapi";
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { hasDynamicZoneBlocks } from "@/lib/strapi/block-utils";
+import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function AcademicPartnersPage({
   params,
@@ -21,14 +24,22 @@ export default async function AcademicPartnersPage({
     footerLinks,
   } = await getPartnersPageData(locale);
 
+  const useDynamicZone = hasDynamicZoneBlocks(partnersPage?.blocks);
+
+  const sideLoadedData: SideLoadedData = { partners: partners || [], featuredCourses: [], instructors: [], testimonials: [] };
+
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      {useDynamicZone ? (
+        <BlockRenderer blocks={partnersPage!.blocks!} sideLoadedData={sideLoadedData} />
+      ) : (
+        <>
+          <PartnersContent partners={partners} strapiData={partnersPage} />
 
-      <PartnersContent partners={partners} strapiData={partnersPage} />
-
-      <BecomeTrainer />
-
+          <BecomeTrainer />
+        </>
+      )}
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
     </main>
   );

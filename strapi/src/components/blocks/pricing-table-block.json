@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_blocks_pricing_table_blocks",
+  "info": {
+    "displayName": "Pricing Table Block",
+    "icon": "tag",
+    "description": "Pricing plans comparison table"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "plans": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.comparison-column"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

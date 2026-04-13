@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_blocks_breadcrumb_blocks",
+  "info": {
+    "displayName": "Breadcrumb Block",
+    "icon": "ellipsis-h",
+    "description": "Custom breadcrumb trail navigation"
+  },
+  "attributes": {
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.button-link"
+    },
+    "separator": {
+      "type": "string",
+      "default": "/"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

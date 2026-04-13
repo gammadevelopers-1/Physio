@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_blocks_comparison_table_blocks",
+  "info": {
+    "displayName": "Comparison Table Block",
+    "icon": "columns",
+    "description": "Side-by-side plan, course, or certification comparison"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "columns": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.comparison-column"
+    },
+    "featureLabels": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

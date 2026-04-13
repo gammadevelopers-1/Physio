@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_elements_accordion_items",
+  "info": {
+    "displayName": "Accordion Item",
+    "description": "A collapsible content section with title and rich text body"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "content": {
+      "type": "richtext",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "defaultOpen": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

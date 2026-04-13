@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_blocks_partners_strips",
+  "info": {
+    "displayName": "Partners Strip",
+    "icon": "handshake",
+    "description": "Marquee carousel of partner logos from Partners collection"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

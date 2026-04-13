@@ -1,0 +1,40 @@
+{
+  "collectionName": "components_blocks_instructors_grids",
+  "info": {
+    "displayName": "Instructors Grid",
+    "icon": "users",
+    "description": "Grid of instructor avatars from Instructors collection"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "filterSection": {
+      "type": "enumeration",
+      "enum": ["all", "expert", "minds"],
+      "default": "all"
+    },
+    "showHomepageOnly": {
+      "type": "boolean",
+      "default": true
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

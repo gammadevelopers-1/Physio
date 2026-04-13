@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_blocks_before_after_blocks",
+  "info": {
+    "displayName": "Before After Block",
+    "icon": "arrows-alt-h",
+    "description": "Before/after image comparison slider"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "beforeImage": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "afterImage": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    },
+    "beforeLabel": {
+      "type": "string",
+      "default": "Before",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "afterLabel": {
+      "type": "string",
+      "default": "After",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

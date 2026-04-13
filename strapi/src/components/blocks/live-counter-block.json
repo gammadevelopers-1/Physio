@@ -1,0 +1,36 @@
+{
+  "collectionName": "components_blocks_live_counter_blocks",
+  "info": {
+    "displayName": "Live Counter Block",
+    "icon": "sort-numeric-up",
+    "description": "Animated counters for key metrics"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "counters": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.counter-item"
+    },
+    "animationDuration": {
+      "type": "integer",
+      "default": 2000
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

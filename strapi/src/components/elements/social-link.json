@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_elements_social_links",
+  "info": {
+    "displayName": "Social Link",
+    "description": "A social media embed link"
+  },
+  "attributes": {
+    "platform": {
+      "type": "enumeration",
+      "enum": ["instagram", "twitter", "linkedin", "facebook", "youtube", "tiktok"],
+      "required": true
+    },
+    "embedUrl": {
+      "type": "string",
+      "required": true
+    },
+    "caption": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

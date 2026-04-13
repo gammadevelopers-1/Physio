@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_elements_cpd_tiers",
+  "info": {
+    "displayName": "CPD Tier",
+    "description": "A CPD points tier/category"
+  },
+  "attributes": {
+    "category": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "points": {
+      "type": "integer",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    }
+  }
+}

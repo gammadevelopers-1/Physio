@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_elements_tab_items",
+  "info": {
+    "displayName": "Tab Item",
+    "description": "A tab with label and rich text content"
+  },
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "content": {
+      "type": "richtext",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

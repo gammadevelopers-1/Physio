@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_elements_learning_outcome_items",
+  "info": {
+    "displayName": "Learning Outcome Item",
+    "description": "A single learning outcome with checkmark"
+  },
+  "attributes": {
+    "text": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

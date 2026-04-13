@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_blocks_cards_grids",
+  "info": {
+    "displayName": "Cards Grid",
+    "icon": "grid",
+    "description": "Grid of content cards"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "columns": {
+      "type": "enumeration",
+      "enum": ["2", "3", "4"],
+      "default": "3"
+    },
+    "cards": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.card-item"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

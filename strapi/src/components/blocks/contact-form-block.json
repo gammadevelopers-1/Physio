@@ -1,0 +1,120 @@
+{
+  "collectionName": "components_blocks_contact_form_blocks",
+  "info": {
+    "displayName": "Contact Form Block",
+    "icon": "envelope",
+    "description": "Contact form with issue types, contact info, and map"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "subtitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formFullNameLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formEmailLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formIssueTypeLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formSelectOptionLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formPhoneLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formSubjectLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formDescriptionLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formCharactersLeftLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "formSubmitLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "issueTypeTechnicalSupport": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "issueTypeBillingIssue": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "issueTypeCourseInquiry": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "issueTypePartnership": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "issueTypeOther": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "generalInquiryLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "generalInquiryEmail": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "technicalSupportLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "technicalSupportPhone": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "address": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "getDirectionsLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "loadingMapText": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "mapLatitude": {
+      "type": "float",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "mapLongitude": {
+      "type": "float",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "mapPopupText": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

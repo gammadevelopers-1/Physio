@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_blocks_accreditation_badges_blocks",
+  "info": {
+    "displayName": "Accreditation Badges Block",
+    "icon": "shield-alt",
+    "description": "Row of certification and accreditation logos with links"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "badges": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "badgeLinks": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": ["row", "grid"],
+      "default": "row"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": ["all", "desktop-only", "mobile-only"],
+      "default": "all"
+    }
+  }
+}

@@ -1,22 +1,18 @@
-// import type { Core } from '@strapi/strapi';
+import type { Core } from '@strapi/strapi';
 
 export default {
-  /**
-   * An asynchronous register function that runs before
-   * your application is initialized.
-   *
-   * This gives you an opportunity to extend code.
-   */
-  register(/* { strapi }: { strapi: Core.Strapi } */) {},
+  register() {},
 
-  /**
-   * An asynchronous bootstrap function that runs before
-   * your application gets started.
-   *
-   * This gives you an opportunity to set up your data model,
-   * run jobs, or perform some special logic.
-   *
-   * To seed data, use the script: node scripts/seed-content.js
-   */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    // Auto-create Arabic locale if it doesn't exist
+    const localeService = strapi.plugin('i18n').service('locales');
+    const existingLocales = await localeService.find();
+    const hasArabic = existingLocales.some(
+      (l: { code: string }) => l.code === 'ar'
+    );
+    if (!hasArabic) {
+      await localeService.create({ code: 'ar', name: 'Arabic (ar)' });
+      strapi.log.info('Created Arabic (ar) locale');
+    }
+  },
 };

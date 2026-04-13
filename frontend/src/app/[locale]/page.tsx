@@ -11,6 +11,9 @@ import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import { getHomePageData } from "@/lib/strapi";
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { hasDynamicZoneBlocks } from "@/lib/strapi/block-utils";
+import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function Home({
   params,
@@ -25,24 +28,42 @@ export default async function Home({
     homePage,
     siteSettings,
     partners,
+    featuredCourses,
     instructors,
     testimonials,
     navbarLinks,
     footerLinks,
   } = await getHomePageData(locale);
 
+  const useDynamicZone = hasDynamicZoneBlocks(homePage?.blocks);
+
+  const sideLoadedData: SideLoadedData = {
+    partners: partners || [],
+    featuredCourses: featuredCourses || [],
+    instructors: instructors || [],
+    testimonials: testimonials || [],
+  };
+
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
-      <Hero data={homePage} />
-      <Partners partners={partners} sectionTitle={homePage?.partnersSectionTitle} />
-      <FeaturedCourses sectionData={homePage} />
-      <BecomeTrainer data={homePage} />
-      <ExpertInstructors instructors={instructors} sectionData={homePage} />
-      <Testimonials testimonials={testimonials} sectionData={homePage} />
-      {/* CTASection and Footer only shown on desktop (1024px+) */}
+      {useDynamicZone ? (
+        <BlockRenderer blocks={homePage!.blocks!} sideLoadedData={sideLoadedData} />
+      ) : (
+        <>
+          <Hero data={homePage} />
+          <Partners partners={partners} sectionTitle={homePage?.partnersSectionTitle} />
+          <FeaturedCourses sectionData={homePage} />
+          <BecomeTrainer data={homePage} />
+          <ExpertInstructors instructors={instructors} sectionData={homePage} />
+          <Testimonials testimonials={testimonials} sectionData={homePage} />
+          {/* CTASection and Footer only shown on desktop (1024px+) */}
+          <div className="hidden lg:block">
+            <CTASection data={homePage} />
+          </div>
+        </>
+      )}
       <div className="hidden lg:block">
-        <CTASection data={homePage} />
         <Footer
           siteSettings={siteSettings}
           footerLinks={footerLinks}

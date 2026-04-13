@@ -5,7 +5,7 @@ import {
   PayloadTooLargeException,
   Logger,
 } from '@nestjs/common';
-import { eq, and, desc, asc, isNull, sql, count, inArray, sum, or } from 'drizzle-orm';
+import { eq, and, desc, asc, isNull, sql, count, inArray, sum, or, type SQL } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { db } from '../../database';
 import {
@@ -560,21 +560,31 @@ export class MaterialsService {
       .where(and(...conditions))
       .orderBy(desc(courseMaterials.createdAt));
 
-    // Get counts by status for stats
+    // Get counts by status for stats — scoped to the same courses as the data query
+    const scopeConditions: SQL[] = [];
+    if (!isManagerOrAbove(user)) {
+      scopeConditions.push(eq(courseMaterials.uploadedBy, user.id));
+    }
+    if (isManager(user)) {
+      scopeConditions.push(
+        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+      );
+    }
+
     const [pendingCount] = await db
       .select({ count: count() })
       .from(courseMaterials)
-      .where(eq(courseMaterials.status, MATERIAL_STATUS.PENDING_REVIEW));
+      .where(and(eq(courseMaterials.status, MATERIAL_STATUS.PENDING_REVIEW), ...scopeConditions));
 
     const [changesRequestedCount] = await db
       .select({ count: count() })
       .from(courseMaterials)
-      .where(eq(courseMaterials.status, MATERIAL_STATUS.CHANGES_REQUESTED));
+      .where(and(eq(courseMaterials.status, MATERIAL_STATUS.CHANGES_REQUESTED), ...scopeConditions));
 
     const [approvedCount] = await db
       .select({ count: count() })
       .from(courseMaterials)
-      .where(eq(courseMaterials.status, MATERIAL_STATUS.LIVE));
+      .where(and(eq(courseMaterials.status, MATERIAL_STATUS.LIVE), ...scopeConditions));
 
     const [rejectedCount] = await db
       .select({ count: count() })
@@ -583,6 +593,7 @@ export class MaterialsService {
         and(
           eq(courseMaterials.status, MATERIAL_STATUS.FAILED),
           sql`${courseMaterials.reviewedBy} IS NOT NULL`,
+          ...scopeConditions,
         ),
       );
 

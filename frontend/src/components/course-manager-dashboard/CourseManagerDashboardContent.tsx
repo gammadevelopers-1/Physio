@@ -274,7 +274,7 @@ const CourseManagerDashboardContent = () => {
 
               <div className="mb-6">
                 <ContentReviewQueue
-                  items={reviewItems.slice(0, 3).map((item) => ({
+                  items={reviewItems.filter((item) => item.status === "pending_review" || item.status === "changes_requested").slice(0, 3).map((item) => ({
                     id: item.id,
                     type: item.type,
                     title: item.title,

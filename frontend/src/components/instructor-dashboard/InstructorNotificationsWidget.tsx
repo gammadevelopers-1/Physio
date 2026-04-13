@@ -1,6 +1,8 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDate as formatDateHijri, type CalendarFormat } from "@/lib/hijri";
 import { Bell, Clock } from "lucide-react";
 
 interface Notification {
@@ -19,7 +21,7 @@ interface InstructorNotificationsWidgetProps {
   onClearAll?: () => void;
 }
 
-function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslations>): string {
+function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslations>, calendarFormat: CalendarFormat, locale: string): string {
   try {
     const date = new Date(isoString);
     const now = new Date();
@@ -33,7 +35,7 @@ function formatRelativeDate(isoString: string, tN: ReturnType<typeof useTranslat
     if (diffHours < 24) return tN("hoursAgo", { h: diffHours });
     if (diffDays < 7) return tN("daysAgo", { d: diffDays });
 
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return formatDateHijri(date, calendarFormat, { locale });
   } catch {
     return "";
   }
@@ -48,6 +50,8 @@ const InstructorNotificationsWidget = ({
   const t = useTranslations("instructorDashboard");
   const tN = useTranslations("notifications");
   const tA = useTranslations("accessibility");
+  const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -130,7 +134,7 @@ const InstructorNotificationsWidget = ({
               <div className="flex items-center gap-1 mt-1.5">
                 <Clock className="w-3 h-3 text-[#9CA3AF]" />
                 <span className="text-[11px] text-[#9CA3AF]">
-                  {formatRelativeDate(notification.date, tN)}
+                  {formatRelativeDate(notification.date, tN, calendarFormat, locale)}
                 </span>
               </div>
             </div>

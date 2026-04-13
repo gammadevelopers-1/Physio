@@ -21,11 +21,14 @@ import CertificateQueue from "@/components/instructor-dashboard/CertificateQueue
 import { transformToCertificateQueue } from "@/lib/instructor-dashboard-transforms";
 import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const tA = useTranslations("accessibility");
   const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const router = useRouter();
   const manager = useManagerProfile();
   const { summary, courses, instructors, loading, error, refetch, silentRefetch } =
@@ -161,7 +164,7 @@ const CourseManagerDashboardContent = () => {
       time: d.toLocaleTimeString(locale === "ar" ? "ar-SA" : undefined, { hour: "2-digit", minute: "2-digit" }),
       date: isToday
         ? t("sessionsPage.today")
-        : d.toLocaleDateString(locale === "ar" ? "ar-SA" : undefined, { month: "short", day: "numeric" }),
+        : formatDateHijri(d, calendarFormat, { locale }),
       type: (s.type === "onsite" ? "onsite" : "zoom") as "zoom" | "onsite",
       location: s.venueAddress || undefined,
       enrolled: s.enrolledCount || 0,

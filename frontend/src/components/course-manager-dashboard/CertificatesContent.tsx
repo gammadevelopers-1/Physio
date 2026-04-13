@@ -8,6 +8,8 @@ import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { courseManagerApi } from "@/lib/api";
 import { toast } from "sonner";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import type {
   InstructorCourse,
   CertificateRequestResponse,
@@ -57,6 +59,8 @@ interface ReviewModalProps {
 }
 
 const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t }: ReviewModalProps) => {
+  const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const [note, setNote] = useState(cert.reviewNote || "");
   const [processing, setProcessing] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -134,7 +138,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               <div>
                 <p className="text-sm font-medium text-[#1F2937]">{studentName}</p>
                 <p className="text-xs text-[#6B7280]">{cert.studentEmail}</p>
-                <p className="text-xs text-[#9CA3AF]">{t("certificates.requested")}: {new Date(cert.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs text-[#9CA3AF]">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
               </div>
             </div>
           </div>
@@ -312,6 +316,7 @@ const CertificatesContent = () => {
   const manager = useManagerProfile();
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const isRTL = locale === "ar";
 
   // Data
@@ -876,7 +881,7 @@ const CertificatesContent = () => {
                                     </div>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className="text-sm text-[#6B7280]">{new Date(cert.createdAt).toLocaleDateString()}</span>
+                                    <span className="text-sm text-[#6B7280]">{formatDateHijri(cert.createdAt, calendarFormat, { locale })}</span>
                                   </td>
                                   <td className="px-4 py-4">
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusStyle(cert.status)}`}>
@@ -1010,7 +1015,7 @@ const CertificatesContent = () => {
                               </div>
                             </div>
 
-                            <p className="text-xs text-[#9CA3AF] mb-3">{t("certificates.requested")}: {new Date(cert.createdAt).toLocaleDateString()}</p>
+                            <p className="text-xs text-[#9CA3AF] mb-3">{t("certificates.requested")}: {formatDateHijri(cert.createdAt, calendarFormat, { locale })}</p>
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">

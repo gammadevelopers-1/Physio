@@ -11,6 +11,8 @@ import InstructorSidebar from "./InstructorSidebar";
 import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDate as formatDateHijri, type CalendarFormat } from "@/lib/hijri";
 import { useInstructorCourses } from "@/hooks/useInstructorCourses";
 import { instructorApi } from "@/lib/api";
 import {
@@ -55,7 +57,7 @@ const CourseCardSkeleton = () => (
   </div>
 );
 
-function formatNextSession(isoDate: string | null): string | null {
+function formatNextSession(isoDate: string | null, calendarFormat: CalendarFormat, locale: string): string | null {
   if (!isoDate) return null;
   const date = new Date(isoDate);
   const now = new Date();
@@ -77,7 +79,7 @@ function formatNextSession(isoDate: string | null): string | null {
 
   if (diffDays === 0) return `Today, ${timeStr}`;
   if (diffDays === 1) return `Tomorrow, ${timeStr}`;
-  return `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${timeStr}`;
+  return `${formatDateHijri(date, calendarFormat, { locale })}, ${timeStr}`;
 }
 
 const MyCoursesContent = () => {
@@ -85,6 +87,7 @@ const MyCoursesContent = () => {
   const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("instructorDashboard");
+  const { calendarFormat } = useCalendarPreference();
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const debounceRef = useRef<NodeJS.Timeout>(undefined);
@@ -328,7 +331,7 @@ const MyCoursesContent = () => {
                           locale === "ar" && course.titleAr
                             ? course.titleAr
                             : course.title;
-                        const nextSession = formatNextSession(course.nextSessionAt);
+                        const nextSession = formatNextSession(course.nextSessionAt, calendarFormat, locale);
                         const thumbnailSrc =
                           course.thumbnail || "/student_dashboard/courses/image 473.svg";
 
@@ -361,11 +364,11 @@ const MyCoursesContent = () => {
                                 <div className="flex items-center gap-1.5 text-xs text-[#6B7280] mb-2">
                                   <Calendar className="w-3.5 h-3.5" />
                                   {course.startDate
-                                    ? new Date(course.startDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    ? formatDateHijri(course.startDate, calendarFormat, { locale })
                                     : "—"}
                                   {" – "}
                                   {course.endDate
-                                    ? new Date(course.endDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric", year: "numeric" })
+                                    ? formatDateHijri(course.endDate, calendarFormat, { locale })
                                     : t("courses.ongoing")}
                                 </div>
                               )}
@@ -471,10 +474,10 @@ const MyCoursesContent = () => {
                                 )}
                                 {course.startDate && (
                                   <span className="flex items-center gap-1">
-                                    {new Date(course.startDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" })}
+                                    {formatDateHijri(course.startDate, calendarFormat, { locale })}
                                     {" – "}
                                     {course.endDate
-                                      ? new Date(course.endDate).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" })
+                                      ? formatDateHijri(course.endDate, calendarFormat, { locale })
                                       : t("courses.ongoing")}
                                   </span>
                                 )}

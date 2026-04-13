@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { getHijriParts, hijriMonthNames, hijriMonthNamesEn, gregorianMonthNames, gregorianMonthNamesAr } from "@/lib/hijri";
 import {
   ChevronLeft,
   ChevronRight,
@@ -51,6 +53,7 @@ const SessionsCalendarWidget = ({
   const t = useTranslations("instructorDashboard");
   const locale = useLocale();
   const isRTL = locale === "ar";
+  const { calendarFormat } = useCalendarPreference();
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
 
@@ -129,15 +132,27 @@ const SessionsCalendarWidget = ({
     const lastDay = weekDays[6]?.date;
     if (!firstDay || !lastDay) return "";
 
-    const firstMonth = firstDay.toLocaleDateString("en-US", { month: "short" });
-    const lastMonth = lastDay.toLocaleDateString("en-US", { month: "short" });
-    const year = firstDay.getFullYear();
+    let firstMonth: string;
+    let lastMonth: string;
+    let year: number;
+
+    if (calendarFormat === "hijri") {
+      const firstParts = getHijriParts(firstDay);
+      const lastParts = getHijriParts(lastDay);
+      firstMonth = locale === "ar" ? hijriMonthNames[firstParts.month - 1] : hijriMonthNamesEn[firstParts.month - 1];
+      lastMonth = locale === "ar" ? hijriMonthNames[lastParts.month - 1] : hijriMonthNamesEn[lastParts.month - 1];
+      year = firstParts.year;
+    } else {
+      firstMonth = locale === "ar" ? gregorianMonthNamesAr[firstDay.getMonth()] : gregorianMonthNames[firstDay.getMonth()];
+      lastMonth = locale === "ar" ? gregorianMonthNamesAr[lastDay.getMonth()] : gregorianMonthNames[lastDay.getMonth()];
+      year = firstDay.getFullYear();
+    }
 
     if (firstMonth === lastMonth) {
       return `${firstMonth} ${year}`;
     }
     return `${firstMonth} - ${lastMonth} ${year}`;
-  }, [weekDays]);
+  }, [weekDays, calendarFormat, locale]);
 
   const getSessionStyle = (session: CalendarSession) => {
     if (session.status === "completed") {

@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, Fragment } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { toast } from "sonner";
 import {
   FileText,
@@ -117,6 +119,7 @@ function translateLabel(label: string, isArabic: boolean): string {
 const ContentReviewContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const {
@@ -282,8 +285,7 @@ const ContentReviewContent = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return formatDateHijri(dateStr, calendarFormat, { locale });
   };
 
   const formatSize = (bytes: number | null) => {

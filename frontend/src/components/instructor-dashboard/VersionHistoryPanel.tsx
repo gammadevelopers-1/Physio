@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { materialsApi } from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -45,6 +47,8 @@ export default function VersionHistoryPanel({
   onRollback,
 }: VersionHistoryPanelProps) {
   const t = useTranslations("instructorDashboard");
+  const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolling, setRolling] = useState<string | null>(null);
@@ -164,7 +168,7 @@ export default function VersionHistoryPanel({
                     <p className="text-sm font-medium text-[#374151] mt-2 truncate">{v.title}</p>
                   )}
                   <div className="flex items-center gap-4 mt-1 text-xs text-[#6B7280]">
-                    <span>{new Date(v.createdAt).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                    <span>{formatDateHijri(v.createdAt, calendarFormat, { locale, includeTime: true })}</span>
                     <span>{formatSize(v.fileSize)}</span>
                     {v.mimeType && <span>{v.mimeType.split("/").pop()}</span>}
                   </div>

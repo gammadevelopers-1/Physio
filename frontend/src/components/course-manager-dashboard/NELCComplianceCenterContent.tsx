@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect, useCallback, Fragment } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import {
   ShieldCheck,
   Search,
@@ -256,6 +258,7 @@ function translateNelcDetail(detail: string, isArabic: boolean): string {
 const NELCComplianceCenterContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const isRTL = locale === "ar";
   const manager = useManagerProfile();
   const { courses, totals, overallPercentage, loading, error, refetch } = useNELCCompliance();
@@ -775,7 +778,7 @@ const NELCComplianceCenterContent = () => {
                                       <p className="text-sm font-medium text-[#1F2937]">{vc.sessionTitle}</p>
                                       <p className="text-xs text-[#6B7280]">
                                         {vc.scheduledAt
-                                          ? new Date(vc.scheduledAt).toLocaleDateString()
+                                          ? formatDateHijri(vc.scheduledAt, calendarFormat, { locale })
                                           : "—"}{" "}
                                         · {vc.durationMinutes}min
                                       </p>

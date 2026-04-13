@@ -15,6 +15,9 @@ import DateTimePicker from "@/components/ui/DateTimePicker";
 import CourseAssistantsSuggestPanel from "./CourseAssistantsSuggestPanel";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import type { CalendarFormat } from "@/lib/hijri";
 import { useInstructorCourseDetail } from "@/hooks/useInstructorCourseDetail";
 import { instructorApi, materialsApi } from "@/lib/api";
 import type { CourseModule, CourseSession, CourseMaterialResponse } from "@/types/instructor-dashboard";
@@ -96,13 +99,9 @@ const CourseDetailSkeleton = () => (
 
 // ─── Helpers ───────────────────────────────────────────────────
 
-function formatDate(iso: string | null): string {
+function formatDateLocal(iso: string | null, calendarFormat: CalendarFormat, locale: string): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return formatDateHijri(iso, calendarFormat, { locale });
 }
 
 function formatDuration(startDate: string | null, endDate: string | null): string {
@@ -123,11 +122,11 @@ function formatSessionTime(iso: string, durationMinutes: number): string {
   return `${start.toLocaleTimeString("en-US", timeOpts)} - ${end.toLocaleTimeString("en-US", timeOpts)}`;
 }
 
-function formatSessionDate(iso: string): string {
+function formatSessionDateLocal(iso: string, calendarFormat: CalendarFormat, locale: string): string {
   const d = new Date(iso);
   const today = new Date();
   if (d.toDateString() === today.toDateString()) return "Today";
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return formatDateHijri(iso, calendarFormat, { locale });
 }
 
 function getModuleIcon(type: string) {
@@ -179,6 +178,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("instructorDashboard");
+  const { calendarFormat } = useCalendarPreference();
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   const { course, enrollments, sessions, loading, error, refetch } =
@@ -933,11 +933,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.startDate")}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">{formatDate(course.startDate)}</p>
+                              <p className="text-sm font-medium text-[#1F2937]">{formatDateLocal(course.startDate, calendarFormat, locale)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.endDate")}</p>
-                              <p className="text-sm font-medium text-[#1F2937]">{formatDate(course.endDate)}</p>
+                              <p className="text-sm font-medium text-[#1F2937]">{formatDateLocal(course.endDate, calendarFormat, locale)}</p>
                             </div>
                             <div className="p-4 bg-[#F9FAFB] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.cmeHoursLabel") || "CME/CPD Hours"}</p>
@@ -1248,7 +1248,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           </p>
                                           <p className="text-[11px] text-[#9CA3AF]">{enrollment.studentEmail}</p>
                                         </td>
-                                        <td className="px-3 py-3 text-xs text-[#6B7280]">{formatDate(enrollment.enrolledAt)}</td>
+                                        <td className="px-3 py-3 text-xs text-[#6B7280]">{formatDateLocal(enrollment.enrolledAt, calendarFormat, locale)}</td>
                                         <td className="px-3 py-3">
                                           <div className="flex items-center gap-2">
                                             <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
@@ -1268,7 +1268,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           </span>
                                         </td>
                                         <td className="px-3 py-3 text-xs text-[#9CA3AF]">
-                                          {enrollment.lastAccessedAt ? formatDate(enrollment.lastAccessedAt) : "—"}
+                                          {enrollment.lastAccessedAt ? formatDateLocal(enrollment.lastAccessedAt, calendarFormat, locale) : "—"}
                                         </td>
                                         <td className="px-2 py-3 text-center">
                                           <Link
@@ -1346,7 +1346,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     </span>
                                   </div>
                                   <p className="text-xs text-[#6B7280]">
-                                    {formatSessionDate(session.scheduledAt)} &bull;{" "}
+                                    {formatSessionDateLocal(session.scheduledAt, calendarFormat, locale)} &bull;{" "}
                                     {formatSessionTime(session.scheduledAt, session.durationMinutes)}
                                     {" "}&bull; {session.durationMinutes} {t("courseDetail.minutes")}
                                   </p>

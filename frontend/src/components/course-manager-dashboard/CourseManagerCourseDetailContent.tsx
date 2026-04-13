@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { formatDate as formatDateHijri } from "@/lib/hijri";
+import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { toast } from "sonner";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { courseManagerApi } from "@/lib/api";
@@ -84,6 +86,7 @@ const CourseManagerCourseDetailContent = ({
 }: CourseManagerCourseDetailContentProps) => {
   const t = useTranslations("courseManagerDashboard");
   const locale = useLocale();
+  const { calendarFormat } = useCalendarPreference();
   const isRTL = locale === "ar";
   const router = useRouter();
   const manager = useManagerProfile();
@@ -343,11 +346,7 @@ const CourseManagerCourseDetailContent = ({
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "—";
-    return new Date(dateStr).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return formatDateHijri(dateStr, calendarFormat, { locale });
   };
 
   const BackArrow = isRTL ? ArrowRight : ArrowLeft;

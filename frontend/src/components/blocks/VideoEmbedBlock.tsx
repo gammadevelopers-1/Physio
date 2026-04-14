@@ -4,7 +4,7 @@ import type {
   VideoEmbedBlockData,
   SideLoadedData,
 } from "@/lib/strapi/types";
-import { getStrapiMediaUrl } from "@/lib/strapi";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
 interface VideoEmbedBlockProps {
   data: VideoEmbedBlockData;

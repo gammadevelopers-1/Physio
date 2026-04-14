@@ -4,7 +4,7 @@ import CertificationsContent from "@/components/CertificationsContent";
 import { setRequestLocale } from "next-intl/server";
 import { getCertificationsPageData } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
-import { hasDynamicZoneBlocks } from "@/lib/strapi/block-utils";
+import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function CertificationsPage({
@@ -22,18 +22,17 @@ export default async function CertificationsPage({
     footerLinks,
   } = await getCertificationsPageData(locale);
 
-  const useDynamicZone = hasDynamicZoneBlocks(certificationsPage?.blocks);
+  const blocks = certificationsPage?.blocks;
 
   const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
 
   return (
     <main id="main-content" className="min-h-screen bg-white pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
-      {useDynamicZone ? (
-        <BlockRenderer blocks={certificationsPage!.blocks!} sideLoadedData={sideLoadedData} />
-      ) : (
-        <CertificationsContent strapiData={certificationsPage} />
-      )}
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
+      <CertificationsContent strapiData={certificationsPage} />
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
     </main>
   );

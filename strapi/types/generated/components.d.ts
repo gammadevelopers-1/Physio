@@ -17,6 +17,19 @@ export interface BlocksAccordionBlock extends Struct.ComponentSchema {
         };
       }>;
     items: Schema.Attribute.Component<'elements.accordion-item', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -51,6 +64,19 @@ export interface BlocksAccreditationBadgesBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -75,6 +101,19 @@ export interface BlocksAnchorLinksBlock extends Struct.ComponentSchema {
   };
   attributes: {
     links: Schema.Attribute.Component<'elements.anchor-link-item', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     sticky: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -115,6 +154,19 @@ export interface BlocksAnnouncementBannerBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     textColor: Schema.Attribute.String;
     variant: Schema.Attribute.Enumeration<
       ['info', 'warning', 'success', 'promotion']
@@ -157,6 +209,19 @@ export interface BlocksBeforeAfterBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -188,6 +253,19 @@ export interface BlocksBlogPostsGridBlock extends Struct.ComponentSchema {
       }>;
     filterByCategory: Schema.Attribute.String;
     maxItems: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<6>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -217,6 +295,19 @@ export interface BlocksBreadcrumbBlock extends Struct.ComponentSchema {
   };
   attributes: {
     items: Schema.Attribute.Component<'elements.button-link', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     separator: Schema.Attribute.String & Schema.Attribute.DefaultTo<'/'>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
@@ -242,6 +333,19 @@ export interface BlocksCardsGrid extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -320,6 +424,19 @@ export interface BlocksCertificationCardsBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     scfhsAccreditationLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -433,6 +550,19 @@ export interface BlocksComparisonTableBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -461,6 +591,19 @@ export interface BlocksComplianceBadgeBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -616,6 +759,19 @@ export interface BlocksContactFormBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     subtitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -690,6 +846,19 @@ export interface BlocksCountdownTimerBlock extends Struct.ComponentSchema {
         };
       }> &
       Schema.Attribute.DefaultTo<'Minutes'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     secondsLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -744,6 +913,19 @@ export interface BlocksCoursePreviewBlock extends Struct.ComponentSchema {
         };
       }>;
     enrollUrl: Schema.Attribute.String;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     previewImage: Schema.Attribute.Media<'images'>;
     previewVideo: Schema.Attribute.Media<'videos'>;
     previewVideoUrl: Schema.Attribute.String;
@@ -792,6 +974,19 @@ export interface BlocksCpdCalculatorBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     tiers: Schema.Attribute.Component<'elements.cpd-tier', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -829,6 +1024,19 @@ export interface BlocksCtaBanner extends Struct.ComponentSchema {
         };
       }>;
     image: Schema.Attribute.Media<'images'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -862,6 +1070,19 @@ export interface BlocksCurriculumOutlineBlock extends Struct.ComponentSchema {
         };
       }>;
     modules: Schema.Attribute.Component<'elements.curriculum-module', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -898,6 +1119,19 @@ export interface BlocksDownloadResourcesBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     resources: Schema.Attribute.Component<'elements.download-item', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -912,6 +1146,30 @@ export interface BlocksDownloadResourcesBlock extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksFaQs extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_fa_qs';
+  info: {
+    displayName: 'FAQs';
+    icon: 'attachment';
+  };
+  attributes: {
+    faqs: Schema.Attribute.Component<'blocks.faqs', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
+  };
+}
+
 export interface BlocksFaqAccordion extends Struct.ComponentSchema {
   collectionName: 'components_blocks_faq_accordions';
   info: {
@@ -921,6 +1179,19 @@ export interface BlocksFaqAccordion extends Struct.ComponentSchema {
   };
   attributes: {
     items: Schema.Attribute.Component<'shared.faq-item', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     subtitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -940,6 +1211,28 @@ export interface BlocksFaqAccordion extends Struct.ComponentSchema {
   };
 }
 
+export interface BlocksFaqs extends Struct.ComponentSchema {
+  collectionName: 'components_blocks_faqs';
+  info: {
+    displayName: 'FAQS';
+  };
+  attributes: {
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
+  };
+}
+
 export interface BlocksFeaturedCoursesGrid extends Struct.ComponentSchema {
   collectionName: 'components_blocks_featured_courses_grids';
   info: {
@@ -955,6 +1248,19 @@ export interface BlocksFeaturedCoursesGrid extends Struct.ComponentSchema {
         };
       }>;
     maxItems: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<4>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1032,6 +1338,19 @@ export interface BlocksFeedbackFormBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -1065,6 +1384,19 @@ export interface BlocksHeroBanner extends Struct.ComponentSchema {
         };
       }>;
     partnerLogos: Schema.Attribute.Media<'images', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -1109,6 +1441,19 @@ export interface BlocksImageGalleryBlock extends Struct.ComponentSchema {
       }>;
     enableLightbox: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     images: Schema.Attribute.Media<'images', true> & Schema.Attribute.Required;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1158,6 +1503,19 @@ export interface BlocksInstructorSpotlightBlock extends Struct.ComponentSchema {
         };
       }>;
     photo: Schema.Attribute.Media<'images'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     socialLinks: Schema.Attribute.Text;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1190,6 +1548,19 @@ export interface BlocksInstructorsGrid extends Struct.ComponentSchema {
       }>;
     filterSection: Schema.Attribute.Enumeration<['all', 'expert', 'minds']> &
       Schema.Attribute.DefaultTo<'all'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     showHomepageOnly: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;
     title: Schema.Attribute.String &
@@ -1229,6 +1600,19 @@ export interface BlocksLearningOutcomesBlock extends Struct.ComponentSchema {
       'elements.learning-outcome-item',
       true
     >;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1261,6 +1645,19 @@ export interface BlocksLiveCounterBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1284,6 +1681,19 @@ export interface BlocksLogoStrip extends Struct.ComponentSchema {
   attributes: {
     enableMarquee: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     logos: Schema.Attribute.Media<'images', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1319,6 +1729,19 @@ export interface BlocksNewsletterBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     privacyNote: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1359,6 +1782,19 @@ export interface BlocksPartnersStrip extends Struct.ComponentSchema {
     icon: 'handshake';
   };
   attributes: {
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1394,6 +1830,19 @@ export interface BlocksPdfViewerBlock extends Struct.ComponentSchema {
       }>;
     height: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<600>;
     pdfFile: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     showDownloadButton: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;
     title: Schema.Attribute.String &
@@ -1423,6 +1872,19 @@ export interface BlocksPolicySectionsBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     sections: Schema.Attribute.Component<'shared.policy-section', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
@@ -1453,6 +1915,19 @@ export interface BlocksPricingTableBlock extends Struct.ComponentSchema {
         };
       }>;
     plans: Schema.Attribute.Component<'elements.comparison-column', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1483,6 +1958,19 @@ export interface BlocksRelatedPagesBlock extends Struct.ComponentSchema {
         };
       }>;
     pages: Schema.Attribute.Component<'elements.related-page-item', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1513,6 +2001,19 @@ export interface BlocksRichTextBlock extends Struct.ComponentSchema {
       }>;
     maxWidth: Schema.Attribute.Enumeration<['narrow', 'medium', 'full']> &
       Schema.Attribute.DefaultTo<'medium'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
     > &
@@ -1533,6 +2034,19 @@ export interface BlocksSectionHeaderBlock extends Struct.ComponentSchema {
     anchorId: Schema.Attribute.String;
     headingLevel: Schema.Attribute.Enumeration<['h1', 'h2', 'h3', 'h4']> &
       Schema.Attribute.DefaultTo<'h2'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     showDivider: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
     subtitle: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
@@ -1570,6 +2084,19 @@ export interface BlocksSocialFeedBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     posts: Schema.Attribute.Component<'elements.social-link', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1598,6 +2125,19 @@ export interface BlocksSpacerBlock extends Struct.ComponentSchema {
       ['small', 'medium', 'large', 'extra-large']
     > &
       Schema.Attribute.DefaultTo<'medium'>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     showDivider: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     visibility: Schema.Attribute.Enumeration<
       ['all', 'desktop-only', 'mobile-only']
@@ -1621,6 +2161,19 @@ export interface BlocksStatsNumbersBlock extends Struct.ComponentSchema {
         };
       }>;
     items: Schema.Attribute.Component<'elements.stat-item', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1649,6 +2202,19 @@ export interface BlocksStudentProgressBlock extends Struct.ComponentSchema {
         };
       }>;
     metrics: Schema.Attribute.Component<'elements.progress-metric', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1678,6 +2244,19 @@ export interface BlocksSuccessStoriesBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     stories: Schema.Attribute.Component<'elements.success-story-item', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1702,6 +2281,19 @@ export interface BlocksTabsBlock extends Struct.ComponentSchema {
     icon: 'folder';
   };
   attributes: {
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     tabs: Schema.Attribute.Component<'elements.tab-item', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1732,6 +2324,19 @@ export interface BlocksTestimonialsCarousel extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1759,6 +2364,19 @@ export interface BlocksTimelineBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     steps: Schema.Attribute.Component<'elements.timeline-item', true>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1826,6 +2444,19 @@ export interface BlocksTrainerFormBlock extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     profileAttachCVLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2037,6 +2668,19 @@ export interface BlocksTreatmentGalleryBlock extends Struct.ComponentSchema {
       }>;
     filterByCategory: Schema.Attribute.Boolean &
       Schema.Attribute.DefaultTo<true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     techniques: Schema.Attribute.Component<
       'elements.treatment-technique-item',
       true
@@ -2075,6 +2719,19 @@ export interface BlocksUpcomingEventsBlock extends Struct.ComponentSchema {
         };
       }>;
     events: Schema.Attribute.Component<'elements.event-item', true>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2112,6 +2769,19 @@ export interface BlocksVideoEmbed extends Struct.ComponentSchema {
           localized: true;
         };
       }>;
+    position: Schema.Attribute.Enumeration<
+      [
+        'top',
+        'after-section-1',
+        'after-section-2',
+        'after-section-3',
+        'after-section-4',
+        'after-section-5',
+        'after-section-6',
+        'bottom',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'bottom'>;
     title: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2728,7 +3398,9 @@ declare module '@strapi/strapi' {
       'blocks.cta-banner': BlocksCtaBanner;
       'blocks.curriculum-outline-block': BlocksCurriculumOutlineBlock;
       'blocks.download-resources-block': BlocksDownloadResourcesBlock;
+      'blocks.fa-qs': BlocksFaQs;
       'blocks.faq-accordion': BlocksFaqAccordion;
+      'blocks.faqs': BlocksFaqs;
       'blocks.featured-courses-grid': BlocksFeaturedCoursesGrid;
       'blocks.feedback-form-block': BlocksFeedbackFormBlock;
       'blocks.hero-banner': BlocksHeroBanner;

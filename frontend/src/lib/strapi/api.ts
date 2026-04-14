@@ -44,11 +44,73 @@ const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
   'populate[blocks][on][blocks.video-embed][populate][videoFile]': 'true',
   'populate[blocks][on][blocks.logo-strip][populate][logos]': 'true',
   'populate[blocks][on][blocks.faq-accordion][populate][items]': 'true',
+  'populate[blocks][on][blocks.accordion-block][populate][items]': 'true',
+  'populate[blocks][on][blocks.live-counter-block][populate][counters]': 'true',
   'populate[blocks][on][blocks.policy-sections-block][populate][sections]': 'true',
   'populate[blocks][on][blocks.contact-form-block][populate]': '*',
   'populate[blocks][on][blocks.feedback-form-block][populate]': '*',
   'populate[blocks][on][blocks.trainer-form-block][populate]': '*',
   'populate[blocks][on][blocks.certification-cards-block][populate]': '*',
+  // Accreditation Badges Block - has media (badges)
+  'populate[blocks][on][blocks.accreditation-badges-block][populate][badges]': 'true',
+  // Anchor Links Block - has repeatable component (links)
+  'populate[blocks][on][blocks.anchor-links-block][populate][links]': 'true',
+  // Announcement Banner Block - flat scalars only
+  'populate[blocks][on][blocks.announcement-banner-block][populate]': '*',
+  // Before After Block - has media (beforeImage, afterImage)
+  'populate[blocks][on][blocks.before-after-block][populate][beforeImage]': 'true',
+  'populate[blocks][on][blocks.before-after-block][populate][afterImage]': 'true',
+  // Blog Posts Grid Block - flat scalars only
+  'populate[blocks][on][blocks.blog-posts-grid-block][populate]': '*',
+  // Breadcrumb Block - has repeatable component (items)
+  'populate[blocks][on][blocks.breadcrumb-block][populate][items]': 'true',
+  // Comparison Table Block - has repeatable component (columns)
+  'populate[blocks][on][blocks.comparison-table-block][populate][columns]': 'true',
+  // Compliance Badge Block - has repeatable component with media
+  'populate[blocks][on][blocks.compliance-badge-block][populate][badges][populate]': '*',
+  // Countdown Timer Block - has repeatable component (buttons)
+  'populate[blocks][on][blocks.countdown-timer-block][populate][buttons]': 'true',
+  // Course Preview Block - has media (previewVideo, previewImage)
+  'populate[blocks][on][blocks.course-preview-block][populate][previewVideo]': 'true',
+  'populate[blocks][on][blocks.course-preview-block][populate][previewImage]': 'true',
+  // CPD Calculator Block - has repeatable component (tiers)
+  'populate[blocks][on][blocks.cpd-calculator-block][populate][tiers]': 'true',
+  // Curriculum Outline Block - has repeatable component (modules)
+  'populate[blocks][on][blocks.curriculum-outline-block][populate][modules]': 'true',
+  // Download Resources Block - has repeatable component with media
+  'populate[blocks][on][blocks.download-resources-block][populate][resources][populate]': '*',
+  // Image Gallery Block - has media (images)
+  'populate[blocks][on][blocks.image-gallery-block][populate][images]': 'true',
+  // Instructor Spotlight Block - has media (photo)
+  'populate[blocks][on][blocks.instructor-spotlight-block][populate][photo]': 'true',
+  // Learning Outcomes Block - has repeatable component (outcomes)
+  'populate[blocks][on][blocks.learning-outcomes-block][populate][outcomes]': 'true',
+  // Newsletter Block - flat scalars only
+  'populate[blocks][on][blocks.newsletter-block][populate]': '*',
+  // PDF Viewer Block - has media (pdfFile)
+  'populate[blocks][on][blocks.pdf-viewer-block][populate][pdfFile]': 'true',
+  // Pricing Table Block - has repeatable component (plans)
+  'populate[blocks][on][blocks.pricing-table-block][populate][plans]': 'true',
+  // Related Pages Block - has repeatable component with media
+  'populate[blocks][on][blocks.related-pages-block][populate][pages][populate]': '*',
+  // Section Header Block - flat scalars only
+  'populate[blocks][on][blocks.section-header-block][populate]': '*',
+  // Social Feed Block - has repeatable component (posts)
+  'populate[blocks][on][blocks.social-feed-block][populate][posts]': 'true',
+  // Spacer Block - flat scalars only
+  'populate[blocks][on][blocks.spacer-block][populate]': '*',
+  // Student Progress Block - has repeatable component (metrics)
+  'populate[blocks][on][blocks.student-progress-block][populate][metrics]': 'true',
+  // Success Stories Block - has repeatable component with media
+  'populate[blocks][on][blocks.success-stories-block][populate][stories][populate]': '*',
+  // Tabs Block - has repeatable component (tabs)
+  'populate[blocks][on][blocks.tabs-block][populate][tabs]': 'true',
+  // Timeline Block - has repeatable component (steps)
+  'populate[blocks][on][blocks.timeline-block][populate][steps]': 'true',
+  // Treatment Gallery Block - has repeatable component with media
+  'populate[blocks][on][blocks.treatment-gallery-block][populate][techniques][populate]': '*',
+  // Upcoming Events Block - has repeatable component with media
+  'populate[blocks][on][blocks.upcoming-events-block][populate][events][populate]': '*',
   'populate[ogImage]': 'true',
 };
 

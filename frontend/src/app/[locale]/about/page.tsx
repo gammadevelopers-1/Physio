@@ -8,7 +8,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getTranslations } from "next-intl/server";
 import { getAboutPageData, getStrapiMediaUrl } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
-import { hasDynamicZoneBlocks } from "@/lib/strapi/block-utils";
+import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function AboutPage({
@@ -30,8 +30,7 @@ export default async function AboutPage({
     footerLinks,
   } = await getAboutPageData(locale);
 
-  const useDynamicZone = hasDynamicZoneBlocks(data?.blocks);
-
+  const blocks = data?.blocks;
   const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
 
   // Helper: check if image is from an external source (Strapi)
@@ -68,11 +67,9 @@ export default async function AboutPage({
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
-      {useDynamicZone ? (
-        <BlockRenderer blocks={data!.blocks!} sideLoadedData={sideLoadedData} />
-      ) : (
-        <>
-          {/* About Hero Section */}
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
+
+          {/* Section 1: About Hero Section */}
           <section className="bg-[var(--surface-intense)]">
             <div className={`flex flex-col lg:flex-row min-h-[400px] lg:min-h-[600px] ${isRTL ? "lg:flex-row-reverse" : ""}`}>
               {/* Left Content */}
@@ -143,8 +140,9 @@ export default async function AboutPage({
               </div>
             </div>
           </section>
+          <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
 
-          {/* Compliance & Standards Section */}
+          {/* Section 2: Compliance & Standards Section */}
           <section className="bg-[#EEF3F7] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
             <div className={`flex flex-col items-center justify-center max-w-[800px] mx-auto text-center ${isRTL ? "text-right" : ""}`}>
               <h2 className="text-[var(--on-surface-default)] mb-6 md:mb-8 text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px] text-center w-full">
@@ -182,8 +180,9 @@ export default async function AboutPage({
               </Link>
             </div>
           </section>
+          <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-2')} sideLoadedData={sideLoadedData} />
 
-          {/* Learning Experience Section */}
+          {/* Section 3: Learning Experience Section */}
           <section className="bg-[var(--surface-intense)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
             <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
               <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">
@@ -312,8 +311,9 @@ export default async function AboutPage({
               </div>
             </div>
           </section>
+          <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-3')} sideLoadedData={sideLoadedData} />
 
-          {/* Platform Capabilities Section */}
+          {/* Section 4: Platform Capabilities Section */}
           <section className="bg-[#EEF3F7] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
             <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
               <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">
@@ -463,8 +463,7 @@ export default async function AboutPage({
               </div>
             </div>
           </section>
-        </>
-      )}
+          <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
 
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />

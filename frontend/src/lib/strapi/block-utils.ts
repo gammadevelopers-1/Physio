@@ -1,5 +1,15 @@
 import type { DynamicZoneBlock } from './types';
 
+export type BlockPosition =
+  | 'top'
+  | 'after-section-1'
+  | 'after-section-2'
+  | 'after-section-3'
+  | 'after-section-4'
+  | 'after-section-5'
+  | 'after-section-6'
+  | 'bottom';
+
 /**
  * Type guard to narrow a DynamicZoneBlock to a specific block type.
  * Usage: if (isBlockType(block, 'blocks.hero-banner')) { block.title }
@@ -9,6 +19,18 @@ export function isBlockType<T extends DynamicZoneBlock['__component']>(
   componentName: T
 ): block is Extract<DynamicZoneBlock, { __component: T }> {
   return block.__component === componentName;
+}
+
+/**
+ * Get all dynamic zone blocks assigned to a specific position.
+ * Returns an empty array if no blocks match or blocks is null/undefined.
+ */
+export function getBlocksAtPosition(
+  blocks: DynamicZoneBlock[] | null | undefined,
+  position: BlockPosition
+): DynamicZoneBlock[] {
+  if (!Array.isArray(blocks)) return [];
+  return blocks.filter((b) => (b as any).position === position);
 }
 
 /**

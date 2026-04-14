@@ -8,31 +8,66 @@
   "attributes": {
     "title": {
       "type": "string",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "description": {
       "type": "text",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "badges": {
       "type": "media",
       "multiple": true,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "badgeLinks": {
       "type": "text",
-      "pluginOptions": { "i18n": { "localized": false } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "variant": {
       "type": "enumeration",
-      "enum": ["row", "grid"],
+      "enum": [
+        "row",
+        "grid"
+      ],
       "default": "row"
     },
     "visibility": {
       "type": "enumeration",
-      "enum": ["all", "desktop-only", "mobile-only"],
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
       "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
     }
   }
 }

@@ -1791,89 +1791,6 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
   };
 }
 
-export interface ApiFeaturedCourseFeaturedCourse
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'featured_courses';
-  info: {
-    description: 'Featured courses on home page';
-    displayName: 'Featured Course';
-    pluralName: 'featured-courses';
-    singularName: 'featured-course';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    cmeHoursLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    courseType: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    date: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    hours: Schema.Attribute.Integer & Schema.Attribute.Required;
-    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::featured-course.featured-course'
-    >;
-    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    price: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    title: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    vectorImage: Schema.Attribute.Media<'images'>;
-    viewDetailsLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-  };
-}
-
 export interface ApiFeedbackPageFeedbackPage extends Struct.SingleTypeSchema {
   collectionName: 'feedback_pages';
   info: {
@@ -3847,7 +3764,6 @@ declare module '@strapi/strapi' {
       'api::certifications-page.certifications-page': ApiCertificationsPageCertificationsPage;
       'api::contact-page.contact-page': ApiContactPageContactPage;
       'api::faq-page.faq-page': ApiFaqPageFaqPage;
-      'api::featured-course.featured-course': ApiFeaturedCourseFeaturedCourse;
       'api::feedback-page.feedback-page': ApiFeedbackPageFeedbackPage;
       'api::home-page.home-page': ApiHomePageHomePage;
       'api::instructor.instructor': ApiInstructorInstructor;

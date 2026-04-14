@@ -36,8 +36,6 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
     fetchCourses();
   }, []);
 
-  if (courses.length === 0) return null;
-
   return (
     <section className="bg-white px-4 xl:px-[64px] py-16 xl:py-[96px] overflow-hidden">
       <div className="flex flex-col gap-5 xl:gap-[40px] items-center justify-center w-full max-w-[1440px] mx-auto">
@@ -80,32 +78,53 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
           </p>
         </div>
 
-        {/* Desktop Courses Grid - 4 columns (1280px+) */}
-        <div className="hidden xl:flex bg-white flex-col gap-[64px] items-start w-full">
-          <div
-            className="grid grid-cols-4 gap-[32px] w-full"
-            dir={isRTL ? "rtl" : "ltr"}
-          >
-            {courses.map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                isRTL={isRTL}
-              />
-            ))}
-          </div>
-        </div>
+        {courses.length > 0 ? (
+          <>
+            {/* Desktop Courses Grid - 4 columns (1280px+) */}
+            <div className="hidden xl:flex bg-white flex-col gap-[64px] items-start w-full">
+              <div
+                className="grid grid-cols-4 gap-[32px] w-full"
+                dir={isRTL ? "rtl" : "ltr"}
+              >
+                {courses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    isRTL={isRTL}
+                  />
+                ))}
+              </div>
+            </div>
 
-        {/* Mobile/Tablet Course Cards - Stacked vertically */}
-        <div className="flex xl:hidden flex-col gap-8 items-start w-full">
-          {courses.map((course) => (
-            <MobileCourseCard
-              key={course.id}
-              course={course}
-              isRTL={isRTL}
-            />
-          ))}
-        </div>
+            {/* Mobile/Tablet Course Cards - Stacked vertically */}
+            <div className="flex xl:hidden flex-col gap-8 items-start w-full">
+              {courses.map((course) => (
+                <MobileCourseCard
+                  key={course.id}
+                  course={course}
+                  isRTL={isRTL}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          /* Empty state when no courses available */
+          <div className="flex flex-col items-center justify-center py-12 xl:py-16 gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-[var(--surface-container-low)] flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--on-surface-variant)]">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+                <path d="M8 7h6" />
+                <path d="M8 11h4" />
+              </svg>
+            </div>
+            <p className="text-[var(--on-surface-variant)] text-lg leading-7">
+              {locale === "ar" ? "البرامج التدريبية قادمة قريبًا" : "Training programs coming soon"}
+            </p>
+            <p className="text-[var(--on-surface-variant)] text-sm opacity-70">
+              {locale === "ar" ? "نعمل على إعداد برامج تدريبية متميزة لكم" : "We are preparing outstanding training programs for you"}
+            </p>
+          </div>
+        )}
 
         {/* View All Button */}
         <Link

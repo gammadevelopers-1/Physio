@@ -22,9 +22,12 @@ services:
     container_name: physio-frontend
     ports:
       - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+      - STRAPI_INTERNAL_URL=http://host.docker.internal:1337
     volumes:
       - ./frontend/src:/app/src:delegated
       - ./frontend/public:/app/public:delegated

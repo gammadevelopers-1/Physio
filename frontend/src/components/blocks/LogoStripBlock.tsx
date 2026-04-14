@@ -5,7 +5,7 @@ import type {
   LogoStripBlockData,
   SideLoadedData,
 } from "@/lib/strapi/types";
-import { getStrapiMediaUrl } from "@/lib/strapi";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import { Marquee } from "@/components/ui/marquee";
 
 interface LogoStripBlockProps {

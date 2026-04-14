@@ -67,48 +67,25 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
 
           {/* Nav Links - Hidden on mobile/tablet */}
           <div className="hidden lg:flex items-center gap-8">
-            <Link
-              href={`/${locale}`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("home")}
-            </Link>
-
-            {/* Courses Link */}
-            <Link
-              href={`/${locale}/courses`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("courses")}
-            </Link>
-
-            <Link
-              href={`/${locale}/become-trainer`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("becomeTrainer")}
-            </Link>
-
-            <Link
-              href={`/${locale}/archived`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("archive")}
-            </Link>
-
-            <Link
-              href={`/${locale}/blogs`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("blogs")}
-            </Link>
-
-            <Link
-              href={`/${locale}/about`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("about")}
-            </Link>
+            {navLinks.length > 0 ? (
+              navLinks.map((link) => (
+                <Link
+                  key={link.id}
+                  href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
+                  className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
+                >
+                  {link.label}
+                </Link>
+              ))
+            ) : (
+              <>
+                <Link href={`/${locale}`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("home")}</Link>
+                <Link href={`/${locale}/about`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("about")}</Link>
+                <Link href={`/${locale}/courses`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("courses")}</Link>
+                <Link href={`/${locale}/become-trainer`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("becomeTrainer")}</Link>
+                <Link href={`/${locale}/blogs`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("blogs")}</Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -180,54 +157,26 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
         <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg">
           <div className="flex flex-col px-4 py-4">
             {/* Mobile Nav Links */}
-            <Link
-              href={`/${locale}`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("home")}
-            </Link>
-
-            {/* Courses Link */}
-            <Link
-              href={`/${locale}/courses`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("courses")}
-            </Link>
-
-            <Link
-              href={`/${locale}/become-trainer`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("becomeTrainer")}
-            </Link>
-
-            <Link
-              href={`/${locale}/archived`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("archive")}
-            </Link>
-
-            <Link
-              href={`/${locale}/blogs`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("blogs")}
-            </Link>
-
-            <Link
-              href={`/${locale}/about`}
-              className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {t("about")}
-            </Link>
+            {navLinks.length > 0 ? (
+              navLinks.map((link) => (
+                <Link
+                  key={link.id}
+                  href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
+                  className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))
+            ) : (
+              <>
+                <Link href={`/${locale}`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("home")}</Link>
+                <Link href={`/${locale}/about`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("about")}</Link>
+                <Link href={`/${locale}/courses`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("courses")}</Link>
+                <Link href={`/${locale}/become-trainer`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("becomeTrainer")}</Link>
+                <Link href={`/${locale}/blogs`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("blogs")}</Link>
+              </>
+            )}
 
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 pt-4">

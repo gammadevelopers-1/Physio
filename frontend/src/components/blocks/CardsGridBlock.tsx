@@ -4,7 +4,7 @@ import type {
   CardsGridBlockData,
   SideLoadedData,
 } from "@/lib/strapi/types";
-import { getStrapiMediaUrl } from "@/lib/strapi";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
 interface CardsGridBlockProps {
   data: CardsGridBlockData;

@@ -1,0 +1,58 @@
+{
+  "collectionName": "components_blocks_accordion_blocks",
+  "info": {
+    "displayName": "Accordion Block",
+    "icon": "list",
+    "description": "Generic collapsible sections with rich text content"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.accordion-item"
+    },
+    "allowMultipleOpen": {
+      "type": "boolean",
+      "default": false
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
+      "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  }
+}

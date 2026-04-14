@@ -28,6 +28,92 @@ import type {
 // Re-export media URL helper
 export { getStrapiMediaUrl };
 
+/** Common populate params for dynamic zone blocks on all pages */
+const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
+  'populate[blocks][on][blocks.hero-banner][populate]': '*',
+  'populate[blocks][on][blocks.partners-strip][populate]': '*',
+  'populate[blocks][on][blocks.featured-courses-grid][populate]': '*',
+  'populate[blocks][on][blocks.cta-banner][populate][buttons]': 'true',
+  'populate[blocks][on][blocks.cta-banner][populate][image]': 'true',
+  'populate[blocks][on][blocks.cta-banner][populate][backgroundImage]': 'true',
+  'populate[blocks][on][blocks.instructors-grid][populate]': '*',
+  'populate[blocks][on][blocks.testimonials-carousel][populate]': '*',
+  'populate[blocks][on][blocks.rich-text-block][populate]': '*',
+  'populate[blocks][on][blocks.stats-numbers-block][populate][items]': 'true',
+  'populate[blocks][on][blocks.cards-grid][populate][cards][populate]': '*',
+  'populate[blocks][on][blocks.video-embed][populate][videoFile]': 'true',
+  'populate[blocks][on][blocks.logo-strip][populate][logos]': 'true',
+  'populate[blocks][on][blocks.faq-accordion][populate][items]': 'true',
+  'populate[blocks][on][blocks.accordion-block][populate][items]': 'true',
+  'populate[blocks][on][blocks.live-counter-block][populate][counters]': 'true',
+  'populate[blocks][on][blocks.policy-sections-block][populate][sections]': 'true',
+  'populate[blocks][on][blocks.contact-form-block][populate]': '*',
+  'populate[blocks][on][blocks.feedback-form-block][populate]': '*',
+  'populate[blocks][on][blocks.trainer-form-block][populate]': '*',
+  'populate[blocks][on][blocks.certification-cards-block][populate]': '*',
+  // Accreditation Badges Block - has media (badges)
+  'populate[blocks][on][blocks.accreditation-badges-block][populate][badges]': 'true',
+  // Anchor Links Block - has repeatable component (links)
+  'populate[blocks][on][blocks.anchor-links-block][populate][links]': 'true',
+  // Announcement Banner Block - flat scalars only
+  'populate[blocks][on][blocks.announcement-banner-block][populate]': '*',
+  // Before After Block - has media (beforeImage, afterImage)
+  'populate[blocks][on][blocks.before-after-block][populate][beforeImage]': 'true',
+  'populate[blocks][on][blocks.before-after-block][populate][afterImage]': 'true',
+  // Blog Posts Grid Block - flat scalars only
+  'populate[blocks][on][blocks.blog-posts-grid-block][populate]': '*',
+  // Breadcrumb Block - has repeatable component (items)
+  'populate[blocks][on][blocks.breadcrumb-block][populate][items]': 'true',
+  // Comparison Table Block - has repeatable component (columns)
+  'populate[blocks][on][blocks.comparison-table-block][populate][columns]': 'true',
+  // Compliance Badge Block - has repeatable component with media
+  'populate[blocks][on][blocks.compliance-badge-block][populate][badges][populate]': '*',
+  // Countdown Timer Block - has repeatable component (buttons)
+  'populate[blocks][on][blocks.countdown-timer-block][populate][buttons]': 'true',
+  // Course Preview Block - has media (previewVideo, previewImage)
+  'populate[blocks][on][blocks.course-preview-block][populate][previewVideo]': 'true',
+  'populate[blocks][on][blocks.course-preview-block][populate][previewImage]': 'true',
+  // CPD Calculator Block - has repeatable component (tiers)
+  'populate[blocks][on][blocks.cpd-calculator-block][populate][tiers]': 'true',
+  // Curriculum Outline Block - has repeatable component (modules)
+  'populate[blocks][on][blocks.curriculum-outline-block][populate][modules]': 'true',
+  // Download Resources Block - has repeatable component with media
+  'populate[blocks][on][blocks.download-resources-block][populate][resources][populate]': '*',
+  // Image Gallery Block - has media (images)
+  'populate[blocks][on][blocks.image-gallery-block][populate][images]': 'true',
+  // Instructor Spotlight Block - has media (photo)
+  'populate[blocks][on][blocks.instructor-spotlight-block][populate][photo]': 'true',
+  // Learning Outcomes Block - has repeatable component (outcomes)
+  'populate[blocks][on][blocks.learning-outcomes-block][populate][outcomes]': 'true',
+  // Newsletter Block - flat scalars only
+  'populate[blocks][on][blocks.newsletter-block][populate]': '*',
+  // PDF Viewer Block - has media (pdfFile)
+  'populate[blocks][on][blocks.pdf-viewer-block][populate][pdfFile]': 'true',
+  // Pricing Table Block - has repeatable component (plans)
+  'populate[blocks][on][blocks.pricing-table-block][populate][plans]': 'true',
+  // Related Pages Block - has repeatable component with media
+  'populate[blocks][on][blocks.related-pages-block][populate][pages][populate]': '*',
+  // Section Header Block - flat scalars only
+  'populate[blocks][on][blocks.section-header-block][populate]': '*',
+  // Social Feed Block - has repeatable component (posts)
+  'populate[blocks][on][blocks.social-feed-block][populate][posts]': 'true',
+  // Spacer Block - flat scalars only
+  'populate[blocks][on][blocks.spacer-block][populate]': '*',
+  // Student Progress Block - has repeatable component (metrics)
+  'populate[blocks][on][blocks.student-progress-block][populate][metrics]': 'true',
+  // Success Stories Block - has repeatable component with media
+  'populate[blocks][on][blocks.success-stories-block][populate][stories][populate]': '*',
+  // Tabs Block - has repeatable component (tabs)
+  'populate[blocks][on][blocks.tabs-block][populate][tabs]': 'true',
+  // Timeline Block - has repeatable component (steps)
+  'populate[blocks][on][blocks.timeline-block][populate][steps]': 'true',
+  // Treatment Gallery Block - has repeatable component with media
+  'populate[blocks][on][blocks.treatment-gallery-block][populate][techniques][populate]': '*',
+  // Upcoming Events Block - has repeatable component with media
+  'populate[blocks][on][blocks.upcoming-events-block][populate][events][populate]': '*',
+  'populate[ogImage]': 'true',
+};
+
 /**
  * Fetch home page content
  */
@@ -37,6 +123,7 @@ export async function getHomePage(locale: string = 'en'): Promise<HomePage | nul
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[heroVideo]': 'true',
         'populate[becomeTrainerImage]': 'true',
         'populate[ctaBackgroundImage]': 'true',
@@ -210,6 +297,7 @@ export async function getAboutPage(locale: string = 'en'): Promise<AboutPage | n
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[heroImage]': 'true',
         'populate[heroImageMobile]': 'true',
         'populate[learningCard1Image]': 'true',
@@ -257,6 +345,7 @@ export async function getBecomeTrainerPage(locale: string = 'en'): Promise<Becom
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -296,6 +385,7 @@ export async function getPrivacyPolicyPage(locale: string = 'en'): Promise<Polic
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[sections]': 'true',
       },
     }
@@ -312,6 +402,7 @@ export async function getTermsPage(locale: string = 'en'): Promise<PolicyPage | 
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[sections]': 'true',
       },
     }
@@ -328,6 +419,7 @@ export async function getLearningPoliciesPage(locale: string = 'en'): Promise<Po
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[sections]': 'true',
       },
     }
@@ -452,6 +544,7 @@ export async function getContactPage(locale: string = 'en'): Promise<ContactPage
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -491,6 +584,7 @@ export async function getFeedbackPage(locale: string = 'en'): Promise<FeedbackPa
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -530,6 +624,7 @@ export async function getCertificationsPage(locale: string = 'en'): Promise<Cert
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[nelcLogo]': 'true',
         'populate[scfhsLogo]': 'true',
         'populate[certificateImage]': 'true',
@@ -572,6 +667,7 @@ export async function getNELCPage(locale: string = 'en'): Promise<NELCPage | nul
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[nelcLogo]': 'true',
         'populate[governanceImage]': 'true',
         'populate[technologyImage]': 'true',
@@ -788,6 +884,7 @@ export async function getPartnersPage(locale: string = 'en'): Promise<PartnersPa
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -830,6 +927,7 @@ export async function getInstructorsPage(locale: string = 'en'): Promise<Instruc
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
       },
     }
   );
@@ -872,6 +970,7 @@ export async function getFAQPage(locale: string = 'en'): Promise<FAQPage | null>
     {
       params: {
         locale,
+        ...BLOCKS_POPULATE_PARAMS,
         'populate[items]': 'true',
       },
     }

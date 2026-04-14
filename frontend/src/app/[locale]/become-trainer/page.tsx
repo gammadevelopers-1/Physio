@@ -4,6 +4,9 @@ import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
 import { setRequestLocale } from "next-intl/server";
 import { getBecomeTrainerPageData } from "@/lib/strapi";
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
+import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function BecomeTrainerPage({
   params,
@@ -20,9 +23,14 @@ export default async function BecomeTrainerPage({
     footerLinks,
   } = await getBecomeTrainerPageData(locale);
 
+  const blocks = data?.blocks;
+
+  const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
+
   return (
     <main id="main-content" className="min-h-screen bg-[#EEF3F7]">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <BecomeTrainerForm
         pageTitle={data?.pageTitle}
         profileSectionTitle={data?.profileSectionTitle}
@@ -63,6 +71,8 @@ export default async function BecomeTrainerPage({
         yesButtonLabel={data?.yesButtonLabel}
         noButtonLabel={data?.noButtonLabel}
       />
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />
     </main>

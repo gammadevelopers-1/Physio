@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_elements_anchor_link_items",
+  "info": {
+    "displayName": "Anchor Link Item",
+    "description": "An anchor link for in-page navigation"
+  },
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "anchorId": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

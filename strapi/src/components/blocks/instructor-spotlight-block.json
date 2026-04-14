@@ -1,0 +1,93 @@
+{
+  "collectionName": "components_blocks_instructor_spotlight_blocks",
+  "info": {
+    "displayName": "Instructor Spotlight Block",
+    "icon": "user-tie",
+    "description": "Featured single instructor with bio, credentials, and photo"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "instructorName": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "instructorRole": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "bio": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "credentials": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "socialLinks": {
+      "type": "text"
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": [
+        "side-by-side",
+        "centered"
+      ],
+      "default": "side-by-side"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
+      "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  }
+}

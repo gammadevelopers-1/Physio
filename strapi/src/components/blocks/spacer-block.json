@@ -1,0 +1,51 @@
+{
+  "collectionName": "components_blocks_spacer_blocks",
+  "info": {
+    "displayName": "Spacer Block",
+    "icon": "arrows-alt-v",
+    "description": "Visual spacing or divider between blocks"
+  },
+  "attributes": {
+    "height": {
+      "type": "enumeration",
+      "enum": [
+        "small",
+        "medium",
+        "large",
+        "extra-large"
+      ],
+      "default": "medium"
+    },
+    "showDivider": {
+      "type": "boolean",
+      "default": false
+    },
+    "dividerColor": {
+      "type": "string",
+      "default": "#e5e7eb"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
+      "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  }
+}

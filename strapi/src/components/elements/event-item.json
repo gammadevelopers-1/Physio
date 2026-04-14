@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_elements_event_items",
+  "info": {
+    "displayName": "Event Item",
+    "description": "An upcoming event or webinar entry"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "date": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime"
+    },
+    "location": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "registrationUrl": {
+      "type": "string"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    }
+  }
+}

@@ -16,6 +16,88 @@
     }
   },
   "attributes": {
+    "blocks": {
+      "type": "dynamiczone",
+      "components": [
+        "blocks.accordion-block",
+        "blocks.accreditation-badges-block",
+        "blocks.anchor-links-block",
+        "blocks.announcement-banner-block",
+        "blocks.before-after-block",
+        "blocks.blog-posts-grid-block",
+        "blocks.breadcrumb-block",
+        "blocks.cards-grid",
+        "blocks.certification-cards-block",
+        "blocks.comparison-table-block",
+        "blocks.compliance-badge-block",
+        "blocks.contact-form-block",
+        "blocks.countdown-timer-block",
+        "blocks.course-preview-block",
+        "blocks.cpd-calculator-block",
+        "blocks.cta-banner",
+        "blocks.curriculum-outline-block",
+        "blocks.download-resources-block",
+        "blocks.faq-accordion",
+        "blocks.featured-courses-grid",
+        "blocks.feedback-form-block",
+        "blocks.hero-banner",
+        "blocks.image-gallery-block",
+        "blocks.instructor-spotlight-block",
+        "blocks.instructors-grid",
+        "blocks.learning-outcomes-block",
+        "blocks.live-counter-block",
+        "blocks.logo-strip",
+        "blocks.newsletter-block",
+        "blocks.partners-strip",
+        "blocks.pdf-viewer-block",
+        "blocks.policy-sections-block",
+        "blocks.pricing-table-block",
+        "blocks.related-pages-block",
+        "blocks.rich-text-block",
+        "blocks.section-header-block",
+        "blocks.social-feed-block",
+        "blocks.spacer-block",
+        "blocks.stats-numbers-block",
+        "blocks.student-progress-block",
+        "blocks.success-stories-block",
+        "blocks.tabs-block",
+        "blocks.testimonials-carousel",
+        "blocks.timeline-block",
+        "blocks.trainer-form-block",
+        "blocks.treatment-gallery-block",
+        "blocks.upcoming-events-block",
+        "blocks.video-embed"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "metaTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "metaDescription": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "ogImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
     "heroTitle": {
       "type": "string",
       "required": true,
@@ -262,49 +344,65 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "learningCard1ImageMobile": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "learningCard2Image": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "learningCard2ImageMobile": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "learningCard3Image": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "learningCard3ImageMobile": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "heroImage": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     },
     "heroImageMobile": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": ["images"]
+      "allowedTypes": [
+        "images"
+      ]
     }
   }
 }

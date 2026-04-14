@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_elements_comparison_columns",
+  "info": {
+    "displayName": "Comparison Column",
+    "description": "A column in a comparison table"
+  },
+  "attributes": {
+    "heading": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "highlighted": {
+      "type": "boolean",
+      "default": false
+    },
+    "price": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "features": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "buttonLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "buttonUrl": {
+      "type": "string"
+    }
+  }
+}

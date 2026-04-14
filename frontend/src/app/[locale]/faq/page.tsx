@@ -3,6 +3,9 @@ import Footer from "@/components/Footer";
 import FAQContent from "@/components/FAQContent";
 import { setRequestLocale } from "next-intl/server";
 import { getFAQPageData } from "@/lib/strapi";
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
+import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function FAQPage({
   params,
@@ -19,12 +22,17 @@ export default async function FAQPage({
     footerLinks,
   } = await getFAQPageData(locale);
 
+  const blocks = faqPage?.blocks;
+
+  const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
+
   return (
     <main id="main-content" className="min-h-screen bg-[var(--surface-intense)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
-
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <FAQContent strapiData={faqPage} />
-
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
+      <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
     </main>
   );

@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_elements_counter_items",
+  "info": {
+    "displayName": "Counter Item",
+    "description": "An animated counter with value, label, and optional suffix"
+  },
+  "attributes": {
+    "value": {
+      "type": "integer",
+      "required": true
+    },
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "suffix": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "prefix": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

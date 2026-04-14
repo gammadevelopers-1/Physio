@@ -1,6 +1,9 @@
 // Strapi API Client
 
-const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+// Server-side URL for API calls (supports Docker internal networking)
+const STRAPI_URL = process.env.STRAPI_INTERNAL_URL || process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+// Browser-facing URL for media (images, videos). Falls back to localhost in dev.
+const STRAPI_PUBLIC_URL = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 interface FetchOptions extends RequestInit {
@@ -88,8 +91,8 @@ export function getStrapiMediaUrl(url: string | null | undefined): string {
     return url;
   }
 
-  // Otherwise, prepend Strapi URL
-  return `${STRAPI_URL}${url}`;
+  // Otherwise, prepend the public Strapi URL (browser-accessible)
+  return `${STRAPI_PUBLIC_URL}${url}`;
 }
 
 /**

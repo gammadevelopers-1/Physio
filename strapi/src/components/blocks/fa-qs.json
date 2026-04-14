@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_blocks_fa_qs",
+  "info": {
+    "displayName": "FAQs",
+    "icon": "attachment"
+  },
+  "options": {},
+  "attributes": {
+    "faqs": {
+      "type": "component",
+      "component": "blocks.faqs",
+      "repeatable": true
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  },
+  "config": {}
+}

@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_elements_download_items",
+  "info": {
+    "displayName": "Download Item",
+    "description": "A downloadable resource file"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["files", "images"]
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}

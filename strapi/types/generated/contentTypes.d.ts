@@ -447,6 +447,63 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     capabilitiesSubtitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -645,6 +702,19 @@ export interface ApiAboutPageAboutPage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::about-page.about-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -694,6 +764,63 @@ export interface ApiBecomeTrainerPageBecomeTrainerPage
           localized: true;
         };
       }>;
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     cancelButtonLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -708,12 +835,25 @@ export interface ApiBecomeTrainerPageBecomeTrainerPage
       'oneToMany',
       'api::become-trainer-page.become-trainer-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     noButtonLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     pageTitle: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -1044,6 +1184,63 @@ export interface ApiCertificationsPageCertificationsPage
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     breadcrumb: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1084,6 +1281,18 @@ export interface ApiCertificationsPageCertificationsPage
       'oneToMany',
       'api::certifications-page.certifications-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     nelcDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1109,6 +1318,7 @@ export interface ApiCertificationsPageCertificationsPage
           localized: true;
         };
       }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     scfhsAccreditationLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1218,6 +1428,63 @@ export interface ApiContactPageContactPage extends Struct.SingleTypeSchema {
   };
   attributes: {
     address: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1357,6 +1624,19 @@ export interface ApiContactPageContactPage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     subtitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1406,6 +1686,63 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1421,6 +1758,19 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::faq-page.faq-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     subtitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -1441,89 +1791,6 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
   };
 }
 
-export interface ApiFeaturedCourseFeaturedCourse
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'featured_courses';
-  info: {
-    description: 'Featured courses on home page';
-    displayName: 'Featured Course';
-    pluralName: 'featured-courses';
-    singularName: 'featured-course';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: true;
-    };
-  };
-  attributes: {
-    cmeHoursLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    courseType: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    date: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    description: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    hours: Schema.Attribute.Integer & Schema.Attribute.Required;
-    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    locale: Schema.Attribute.String;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::featured-course.featured-course'
-    >;
-    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    price: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    slug: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    title: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    vectorImage: Schema.Attribute.Media<'images'>;
-    viewDetailsLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-  };
-}
-
 export interface ApiFeedbackPageFeedbackPage extends Struct.SingleTypeSchema {
   collectionName: 'feedback_pages';
   info: {
@@ -1540,6 +1807,63 @@ export interface ApiFeedbackPageFeedbackPage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1596,6 +1920,19 @@ export interface ApiFeedbackPageFeedbackPage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::feedback-page.feedback-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
@@ -1641,6 +1978,63 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
       }>;
     becomeTrainerImage: Schema.Attribute.Media<'images'>;
     becomeTrainerTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1745,6 +2139,19 @@ export interface ApiHomePageHomePage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::home-page.home-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     partnersSectionTitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1844,6 +2251,63 @@ export interface ApiInstructorsPageInstructorsPage
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1858,12 +2322,25 @@ export interface ApiInstructorsPageInstructorsPage
           localized: true;
         };
       }>;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     mindsBehindTitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1889,6 +2366,63 @@ export interface ApiLearningPoliciesPageLearningPoliciesPage
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1903,6 +2437,19 @@ export interface ApiLearningPoliciesPageLearningPoliciesPage
       'oneToMany',
       'api::learning-policies-page.learning-policies-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     sections: Schema.Attribute.Component<'shared.policy-section', true> &
       Schema.Attribute.SetPluginOptions<{
@@ -1988,6 +2535,63 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     complianceDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -2071,7 +2675,20 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::nelc-page.nelc-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     nelcLogo: Schema.Attribute.Media<'images'>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     statusLabel: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
@@ -2164,6 +2781,63 @@ export interface ApiPartnersPagePartnersPage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -2172,6 +2846,19 @@ export interface ApiPartnersPagePartnersPage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::partners-page.partners-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
@@ -2204,6 +2891,63 @@ export interface ApiPrivacyPolicyPagePrivacyPolicyPage
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -2218,6 +2962,19 @@ export interface ApiPrivacyPolicyPagePrivacyPolicyPage
       'oneToMany',
       'api::privacy-policy-page.privacy-policy-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     sections: Schema.Attribute.Component<'shared.policy-section', true> &
       Schema.Attribute.SetPluginOptions<{
@@ -2330,6 +3087,63 @@ export interface ApiTermsPageTermsPage extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -2344,6 +3158,19 @@ export interface ApiTermsPageTermsPage extends Struct.SingleTypeSchema {
       'oneToMany',
       'api::terms-page.terms-page'
     >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
     sections: Schema.Attribute.Component<'shared.policy-section', true> &
       Schema.Attribute.SetPluginOptions<{
@@ -2937,7 +3764,6 @@ declare module '@strapi/strapi' {
       'api::certifications-page.certifications-page': ApiCertificationsPageCertificationsPage;
       'api::contact-page.contact-page': ApiContactPageContactPage;
       'api::faq-page.faq-page': ApiFaqPageFaqPage;
-      'api::featured-course.featured-course': ApiFeaturedCourseFeaturedCourse;
       'api::feedback-page.feedback-page': ApiFeedbackPageFeedbackPage;
       'api::home-page.home-page': ApiHomePageHomePage;
       'api::instructor.instructor': ApiInstructorInstructor;

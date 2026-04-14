@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_elements_compliance_badge_items",
+  "info": {
+    "displayName": "Compliance Badge Item",
+    "description": "A regulatory compliance badge"
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "badgeImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "verificationUrl": {
+      "type": "string"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "pending", "expired"],
+      "default": "active"
+    }
+  }
+}

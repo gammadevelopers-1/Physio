@@ -1,0 +1,79 @@
+{
+  "collectionName": "components_blocks_image_gallery_blocks",
+  "info": {
+    "displayName": "Image Gallery Block",
+    "icon": "images",
+    "description": "Image gallery with grid or carousel layout"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "variant": {
+      "type": "enumeration",
+      "enum": [
+        "grid",
+        "carousel",
+        "masonry"
+      ],
+      "default": "grid"
+    },
+    "columns": {
+      "type": "enumeration",
+      "enum": [
+        "2",
+        "3",
+        "4"
+      ],
+      "default": "3"
+    },
+    "enableLightbox": {
+      "type": "boolean",
+      "default": true
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
+      "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  }
+}

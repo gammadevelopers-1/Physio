@@ -1,0 +1,76 @@
+{
+  "collectionName": "components_blocks_blog_posts_grid_blocks",
+  "info": {
+    "displayName": "Blog Posts Grid Block",
+    "icon": "newspaper",
+    "description": "Grid of recent blog posts from Blog Post collection"
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "maxItems": {
+      "type": "integer",
+      "default": 6
+    },
+    "viewAllLabel": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "viewAllUrl": {
+      "type": "string",
+      "default": "/blog"
+    },
+    "filterByCategory": {
+      "type": "string"
+    },
+    "columns": {
+      "type": "enumeration",
+      "enum": [
+        "2",
+        "3"
+      ],
+      "default": "3"
+    },
+    "visibility": {
+      "type": "enumeration",
+      "enum": [
+        "all",
+        "desktop-only",
+        "mobile-only"
+      ],
+      "default": "all"
+    },
+    "position": {
+      "type": "enumeration",
+      "enum": [
+        "top",
+        "after-section-1",
+        "after-section-2",
+        "after-section-3",
+        "after-section-4",
+        "after-section-5",
+        "after-section-6",
+        "bottom"
+      ],
+      "default": "bottom"
+    }
+  }
+}

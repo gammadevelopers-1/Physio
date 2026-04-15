@@ -234,6 +234,22 @@ export class CertificatesService {
    * Returns limited public info about an approved certificate.
    */
   async verifyCertificate(certId: string) {
+    // Support both full UUID and PG-XXXXXXXX short format
+    let lookupId = certId;
+    if (certId.toUpperCase().startsWith('PG-')) {
+      // Extract the short hex from PG-31034DEC → 31034dec
+      const shortHex = certId.slice(3).toLowerCase();
+      // Find full UUID that starts with this prefix
+      const [match] = await db
+        .select({ id: certificateRequests.id })
+        .from(certificateRequests)
+        .where(sql`${certificateRequests.id}::text LIKE ${shortHex + '%'}`)
+        .limit(1);
+      if (match) {
+        lookupId = match.id;
+      }
+    }
+
     const [cert] = await db
       .select({
         id: certificateRequests.id,
@@ -250,7 +266,7 @@ export class CertificatesService {
       .from(certificateRequests)
       .innerJoin(courses, eq(certificateRequests.courseId, courses.id))
       .innerJoin(users, eq(certificateRequests.studentId, users.id))
-      .where(eq(certificateRequests.id, certId))
+      .where(eq(certificateRequests.id, lookupId))
       .limit(1);
 
     if (!cert) {

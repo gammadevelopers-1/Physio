@@ -1001,3 +1001,28 @@ export async function getFAQPageData(locale: string = 'en') {
     footerLinks,
   };
 }
+
+/**
+ * Fetch a dynamic page by slug
+ */
+export async function getDynamicPage(slug: string, locale: string = 'en') {
+  const response = await fetchStrapi<StrapiResponse<any[]>>(
+    '/pages',
+    {
+      params: {
+        locale,
+        'filters[slug][$eq]': slug,
+        ...BLOCKS_POPULATE_PARAMS,
+      },
+    }
+  );
+  const page = response?.data?.[0] || null;
+
+  const [siteSettings, navbarLinks, footerLinks] = await Promise.all([
+    getSiteSettings(locale),
+    getNavbarLinks(locale),
+    getFooterLinks(locale),
+  ]);
+
+  return { page, siteSettings, navbarLinks, footerLinks };
+}

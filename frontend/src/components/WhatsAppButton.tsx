@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useLocale } from "next-intl";
 
 interface WhatsAppButtonProps {
-  phoneNumber?: string;
+  phoneNumber?: string | null;
 }
 
 const WhatsAppButton = ({ phoneNumber }: WhatsAppButtonProps) => {

@@ -7,6 +7,8 @@ import { getDynamicPage } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import type { SideLoadedData } from "@/lib/strapi/types";
 
+export const dynamic = "force-dynamic";
+
 export default async function DynamicPage({
   params,
 }: {

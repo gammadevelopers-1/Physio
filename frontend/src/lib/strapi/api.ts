@@ -111,8 +111,10 @@ const BLOCKS_POPULATE_PARAMS: Record<string, string> = {
   'populate[blocks][on][blocks.treatment-gallery-block][populate][techniques][populate]': '*',
   // Upcoming Events Block - has repeatable component with media
   'populate[blocks][on][blocks.upcoming-events-block][populate][events][populate]': '*',
-  'populate[ogImage]': 'true',
 };
+
+// Separate populate for ogImage — only for single-type pages that have this field
+const OG_IMAGE_POPULATE = { 'populate[ogImage]': 'true' };
 
 /**
  * Fetch home page content
@@ -124,6 +126,7 @@ export async function getHomePage(locale: string = 'en'): Promise<HomePage | nul
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[heroVideo]': 'true',
         'populate[becomeTrainerImage]': 'true',
         'populate[ctaBackgroundImage]': 'true',
@@ -298,6 +301,7 @@ export async function getAboutPage(locale: string = 'en'): Promise<AboutPage | n
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[heroImage]': 'true',
         'populate[heroImageMobile]': 'true',
         'populate[learningCard1Image]': 'true',
@@ -346,6 +350,7 @@ export async function getBecomeTrainerPage(locale: string = 'en'): Promise<Becom
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
       },
     }
   );
@@ -386,6 +391,7 @@ export async function getPrivacyPolicyPage(locale: string = 'en'): Promise<Polic
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[sections]': 'true',
       },
     }
@@ -403,6 +409,7 @@ export async function getTermsPage(locale: string = 'en'): Promise<PolicyPage | 
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[sections]': 'true',
       },
     }
@@ -420,6 +427,7 @@ export async function getLearningPoliciesPage(locale: string = 'en'): Promise<Po
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[sections]': 'true',
       },
     }
@@ -545,6 +553,7 @@ export async function getContactPage(locale: string = 'en'): Promise<ContactPage
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
       },
     }
   );
@@ -585,6 +594,7 @@ export async function getFeedbackPage(locale: string = 'en'): Promise<FeedbackPa
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
       },
     }
   );
@@ -625,6 +635,7 @@ export async function getCertificationsPage(locale: string = 'en'): Promise<Cert
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[nelcLogo]': 'true',
         'populate[scfhsLogo]': 'true',
         'populate[certificateImage]': 'true',
@@ -668,6 +679,7 @@ export async function getNELCPage(locale: string = 'en'): Promise<NELCPage | nul
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[nelcLogo]': 'true',
         'populate[governanceImage]': 'true',
         'populate[technologyImage]': 'true',
@@ -885,6 +897,7 @@ export async function getPartnersPage(locale: string = 'en'): Promise<PartnersPa
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
       },
     }
   );
@@ -928,6 +941,7 @@ export async function getInstructorsPage(locale: string = 'en'): Promise<Instruc
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
       },
     }
   );
@@ -971,6 +985,7 @@ export async function getFAQPage(locale: string = 'en'): Promise<FAQPage | null>
       params: {
         locale,
         ...BLOCKS_POPULATE_PARAMS,
+        ...OG_IMAGE_POPULATE,
         'populate[items]': 'true',
       },
     }

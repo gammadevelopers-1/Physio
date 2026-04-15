@@ -234,19 +234,24 @@ export class CertificatesService {
    * Returns limited public info about an approved certificate.
    */
   async verifyCertificate(certId: string) {
-    // Support both full UUID and PG-XXXXXXXX short format
+    // Support both full UUID and exact PG-XXXXXXXX (8 hex chars) format
     let lookupId = certId;
     if (certId.toUpperCase().startsWith('PG-')) {
-      // Extract the short hex from PG-31034DEC → 31034dec
       const shortHex = certId.slice(3).toLowerCase();
-      // Find full UUID that starts with this prefix
+      // Must be exactly 8 hex characters to match
+      if (!/^[0-9a-f]{8}$/i.test(shortHex)) {
+        throw new NotFoundException('Certificate not found');
+      }
+      // Find UUID that starts with this exact 8-char prefix
       const [match] = await db
         .select({ id: certificateRequests.id })
         .from(certificateRequests)
-        .where(sql`${certificateRequests.id}::text LIKE ${shortHex + '%'}`)
+        .where(sql`LEFT(${certificateRequests.id}::text, 8) = ${shortHex}`)
         .limit(1);
       if (match) {
         lookupId = match.id;
+      } else {
+        throw new NotFoundException('Certificate not found');
       }
     }
 

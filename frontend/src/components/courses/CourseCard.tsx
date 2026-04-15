@@ -9,8 +9,7 @@ import {
   Clock,
   ArrowRight,
   ArrowLeft,
-  Award,
-  ShoppingCart,
+  Banknote,
 } from "lucide-react";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
@@ -61,14 +60,22 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         : null;
 
   const price = course.price ?? 0;
+  const isFree = price === 0;
 
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="flex flex-col w-full group"
+      className="flex flex-col w-full group h-full"
     >
-      {/* Card Header - Blue/gray area with title, thumbnail, badges */}
+      {/* Card Header - with title, thumbnail (design cut), badges */}
       <div className="relative bg-[#eef3f7] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
+        {/* Course Full pill */}
+        {course.isFull && (
+          <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-20 bg-red-600 text-white text-[11px] font-semibold px-3 py-1 rounded-full`}>
+            {t("card.courseFull")}
+          </div>
+        )}
+
         {/* Title */}
         <p
           className={`text-[#06080b] font-semibold text-[18px] leading-[24px] max-w-[55%] z-10 line-clamp-3 ${isRTL ? "text-right ml-auto" : "text-left"}`}
@@ -76,28 +83,33 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
           {title}
         </p>
 
-        {/* Thumbnail - positioned to the right */}
-        {course.thumbnail && (
+        {/* Thumbnail - design cut: extends beyond card boundary */}
+        {course.thumbnail ? (
           <div
-            className={`absolute top-1/2 -translate-y-1/2 w-[140px] h-[180px] ${isRTL ? "left-2" : "right-2"}`}
+            className={`absolute top-0 bottom-0 w-[55%] ${isRTL ? "left-0" : "right-0"}`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={course.thumbnail}
               alt=""
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-r-2xl"
+              style={{
+                maskImage: isRTL
+                  ? "linear-gradient(to left, transparent 0%, black 30%)"
+                  : "linear-gradient(to right, transparent 0%, black 30%)",
+                WebkitMaskImage: isRTL
+                  ? "linear-gradient(to left, transparent 0%, black 30%)"
+                  : "linear-gradient(to right, transparent 0%, black 30%)",
+              }}
             />
           </div>
-        )}
+        ) : null}
 
-        {/* Bottom row - delivery badge + cart icon */}
-        <div className="flex items-center justify-between w-full z-10">
+        {/* Bottom row - delivery badge only */}
+        <div className="flex items-center w-full z-10">
           <div className="flex items-center gap-1.5 bg-[#0b0f17] rounded-full px-3 py-1.5">
             <DeliveryIcon className="w-3.5 h-3.5 text-white" strokeWidth={1.5} />
             <span className="text-white text-[12px] font-medium">{deliveryLabel}</span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
-            <ShoppingCart className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
           </div>
         </div>
       </div>
@@ -121,12 +133,15 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
         {description}
       </p>
 
-      {/* Footer: Price + View Details */}
+      {/* Spacer to push footer to bottom */}
+      <div className="flex-1" />
+
+      {/* Footer: Price (SAR icon) + View Details - always at bottom */}
       <div className={`flex items-center justify-between mt-3 ${isRTL ? "flex-row-reverse" : ""}`}>
         <div className="flex items-center gap-1">
-          <Award className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
+          <Banknote className="w-4 h-4 text-[#4a4c4f]" strokeWidth={1.5} />
           <span className="text-[#06080b] text-[14px] font-semibold">
-            {price === 0 ? t("card.free") : `${price}`}
+            {isFree ? t("card.free") : `${price} SAR`}
           </span>
         </div>
         <span className={`flex items-center gap-1 text-[#06080b] text-[14px] font-medium group-hover:text-[#a37f49] transition-colors ${isRTL ? "flex-row-reverse" : ""}`}>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { ChevronRight, ChevronLeft, Home, Play, FileCheck, CloudUpload } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
@@ -131,29 +132,14 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
           <div className="bg-[#EEF3F7] rounded-[24px] p-6 md:p-12 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* Verification Form */}
-              <div className="w-full md:w-1/2 flex items-center justify-center">
-                <div className="bg-white rounded-xl p-6 w-full max-w-[400px]">
-                  <div className="flex flex-col gap-1 mb-5">
-                    <h3 className="font-semibold text-[#171717] text-[16px]">
-                      {s("verificationTitle", "verification.title")}
-                    </h3>
-                    <p className="text-[#737373] text-[14px]">
-                      {s("verificationSubtitle", "verification.subtitle")}
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-5">
-                    <input
-                      type="text"
-                      placeholder={s("verificationPlaceholder", "verification.placeholder")}
-                      className={`w-full h-[48px] px-4 border border-[#C8D5E1] rounded-lg text-[14px] text-[#C8D5E1] focus:outline-none focus:border-[#a37f49] ${isRTL ? "text-right" : "text-left"}`}
-                      dir={isRTL ? "rtl" : "ltr"}
-                    />
-                    <button className="w-full h-[40px] text-white rounded-xl text-sm font-medium btn-gold">
-                      {s("verificationButtonLabel", "verification.button")}
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <CertificateVerifyForm
+                isRTL={isRTL}
+                locale={locale}
+                titleLabel={s("verificationTitle", "verification.title")}
+                subtitleLabel={s("verificationSubtitle", "verification.subtitle")}
+                placeholderLabel={s("verificationPlaceholder", "verification.placeholder")}
+                buttonLabel={s("verificationButtonLabel", "verification.button")}
+              />
 
               {/* Certificate Image */}
               <div className="w-full md:w-1/2">
@@ -247,5 +233,130 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
     </>
   );
 };
+
+function CertificateVerifyForm({
+  isRTL,
+  locale,
+  titleLabel,
+  subtitleLabel,
+  placeholderLabel,
+  buttonLabel,
+}: {
+  isRTL: boolean;
+  locale: string;
+  titleLabel: string;
+  subtitleLabel: string;
+  placeholderLabel: string;
+  buttonLabel: string;
+}) {
+  const [certInput, setCertInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
+
+  const handleVerify = async () => {
+    const trimmed = certInput.trim();
+    if (!trimmed) return;
+
+    setLoading(true);
+    setToast(null);
+
+    try {
+      // The input could be:
+      // - Full UUID: 31034dec-8bb3-48b4-aca3-df399d46af49
+      // - Certificate ID format: PG-31034DEC
+      // The API accepts the UUID, so extract it from PG- format if needed
+      let certId = trimmed;
+
+      // If user entered PG-XXXXXXXX format, we need to find the full UUID
+      // Try calling the API with the input as-is first (could be UUID)
+      const res = await fetch(`/api/certificates/verify/${certId}`);
+
+      if (!res.ok) {
+        setToast({
+          message: locale === "ar"
+            ? "لم يتم العثور على الشهادة. يرجى التحقق من المعرف والمحاولة مرة أخرى."
+            : "Certificate not found. Please check the ID and try again.",
+          type: "error",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.verified && data.status === "approved") {
+        // Open verified public page in new tab
+        window.open(`/${locale}/verify/${data.id}`, "_blank");
+      } else {
+        setToast({
+          message: locale === "ar"
+            ? "الشهادة غير معتمدة أو لم تتم الموافقة عليها بعد."
+            : "Certificate is not approved or not yet verified.",
+          type: "error",
+        });
+      }
+    } catch {
+      setToast({
+        message: locale === "ar"
+          ? "حدث خطأ أثناء التحقق. يرجى المحاولة لاحقاً."
+          : "An error occurred during verification. Please try again later.",
+        type: "error",
+      });
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="w-full md:w-1/2 flex items-center justify-center">
+      <div className="bg-white rounded-xl p-6 w-full max-w-[400px]">
+        <div className="flex flex-col gap-1 mb-5">
+          <h3 className="font-semibold text-[#171717] text-[16px]">
+            {titleLabel}
+          </h3>
+          <p className="text-[#737373] text-[14px]">
+            {subtitleLabel}
+          </p>
+        </div>
+        <div className="flex flex-col gap-5">
+          <input
+            type="text"
+            value={certInput}
+            onChange={(e) => setCertInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+            placeholder={placeholderLabel}
+            className={`w-full h-[48px] px-4 border border-[#C8D5E1] rounded-lg text-[14px] text-[#171717] placeholder:text-[#C8D5E1] focus:outline-none focus:border-[#a37f49] ${isRTL ? "text-right" : "text-left"}`}
+            dir={isRTL ? "rtl" : "ltr"}
+          />
+          <button
+            onClick={handleVerify}
+            disabled={loading || !certInput.trim()}
+            className="w-full h-[40px] text-white rounded-xl text-sm font-medium btn-gold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {locale === "ar" ? "جارٍ التحقق..." : "Verifying..."}
+              </span>
+            ) : (
+              buttonLabel
+            )}
+          </button>
+        </div>
+
+        {/* Toast notification */}
+        {toast && (
+          <div className={`mt-4 p-3 rounded-lg text-[13px] ${
+            toast.type === "error"
+              ? "bg-red-50 text-red-700 border border-red-200"
+              : "bg-green-50 text-green-700 border border-green-200"
+          }`}>
+            {toast.message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default CertificationsContent;

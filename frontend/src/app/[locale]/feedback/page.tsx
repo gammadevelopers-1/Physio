@@ -37,7 +37,7 @@ export default async function FeedbackPage({
       <div className="hidden lg:block">
         <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       </div>
-      <WhatsAppButton />
+      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
     </main>
   );
 }

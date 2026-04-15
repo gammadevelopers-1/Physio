@@ -31,7 +31,7 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
       />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />
-      <WhatsAppButton />
+      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
     </main>
   );
 }

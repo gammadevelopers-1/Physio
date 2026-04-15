@@ -3,13 +3,19 @@
 import Image from "next/image";
 import { useLocale } from "next-intl";
 
-const WhatsAppButton = () => {
+interface WhatsAppButtonProps {
+  phoneNumber?: string;
+}
+
+const WhatsAppButton = ({ phoneNumber }: WhatsAppButtonProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
   const handleWhatsAppClick = () => {
-    // Replace with actual WhatsApp number
-    window.open("https://wa.me/966920035022", "_blank");
+    const number = phoneNumber || "966920035022";
+    // Strip leading 0 and non-digits, ensure international format
+    const cleaned = number.replace(/\D/g, "").replace(/^0+/, "");
+    window.open(`https://wa.me/${cleaned}`, "_blank");
   };
 
   return (

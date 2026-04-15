@@ -21,7 +21,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ loc
       <BlogDetailContent blogPost={blogPost} latestBlogs={latestBlogs} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />
-      <WhatsAppButton />
+      <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />
     </main>
   );
 }

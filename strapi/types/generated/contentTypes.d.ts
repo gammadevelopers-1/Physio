@@ -1791,6 +1791,89 @@ export interface ApiFaqPageFaqPage extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiFeaturedCourseFeaturedCourse
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'featured_courses';
+  info: {
+    description: 'Featured courses on home page';
+    displayName: 'Featured Course';
+    pluralName: 'featured-courses';
+    singularName: 'featured-course';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    cmeHoursLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    courseType: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    date: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hours: Schema.Attribute.Integer & Schema.Attribute.Required;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::featured-course.featured-course'
+    >;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
+    price: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    vectorImage: Schema.Attribute.Media<'images'>;
+    viewDetailsLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface ApiFeedbackPageFeedbackPage extends Struct.SingleTypeSchema {
   collectionName: 'feedback_pages';
   info: {
@@ -2710,6 +2793,107 @@ export interface ApiNelcPageNelcPage extends Struct.SingleTypeSchema {
       }>;
     technologyImage: Schema.Attribute.Media<'images'>;
     technologyTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiPagePage extends Struct.CollectionTypeSchema {
+  collectionName: 'pages';
+  info: {
+    description: 'Dynamic pages created from the CMS';
+    displayName: 'Page';
+    pluralName: 'pages';
+    singularName: 'page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::page.page'>;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -3764,6 +3948,7 @@ declare module '@strapi/strapi' {
       'api::certifications-page.certifications-page': ApiCertificationsPageCertificationsPage;
       'api::contact-page.contact-page': ApiContactPageContactPage;
       'api::faq-page.faq-page': ApiFaqPageFaqPage;
+      'api::featured-course.featured-course': ApiFeaturedCourseFeaturedCourse;
       'api::feedback-page.feedback-page': ApiFeedbackPageFeedbackPage;
       'api::home-page.home-page': ApiHomePageHomePage;
       'api::instructor.instructor': ApiInstructorInstructor;
@@ -3771,6 +3956,7 @@ declare module '@strapi/strapi' {
       'api::learning-policies-page.learning-policies-page': ApiLearningPoliciesPageLearningPoliciesPage;
       'api::navigation-link.navigation-link': ApiNavigationLinkNavigationLink;
       'api::nelc-page.nelc-page': ApiNelcPageNelcPage;
+      'api::page.page': ApiPagePage;
       'api::partner.partner': ApiPartnerPartner;
       'api::partners-page.partners-page': ApiPartnersPagePartnersPage;
       'api::privacy-policy-page.privacy-policy-page': ApiPrivacyPolicyPagePrivacyPolicyPage;

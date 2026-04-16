@@ -651,6 +651,93 @@ const CourseDetailContent = () => {
 
                 {/* Notices (from course content) */}
                 {renderNotices()}
+
+                {/* Course Details — placed in left column to fill space next to pricing card */}
+                <div className="bg-white rounded-2xl p-8 mb-8 mt-6">
+                  <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
+
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                    {apiCourse.enrollmentDeadline && (
+                      <div className="flex items-start gap-3">
+                        <Calendar className="w-5 h-5 text-[#71717A] mt-0.5" />
+                        <div className={isRTL ? "text-right" : "text-left"}>
+                          <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
+                          <p className="text-sm text-[#71717A]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <Globe className="w-5 h-5 text-[#71717A] mt-0.5" />
+                      <div className={isRTL ? "text-right" : "text-left"}>
+                        <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.language")}</p>
+                        <p className="text-sm text-[#71717A]">{getLanguageLabel()}</p>
+                      </div>
+                    </div>
+                    {apiCourse.startDate && (
+                      <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                        <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
+                        <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
+                        <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
+                      </div>
+                    )}
+                    {apiCourse.endDate && (
+                      <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                        <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
+                        <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
+                        <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
+                      </div>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <Clock className="w-5 h-5 text-[#71717A] mt-0.5" />
+                      <div className={isRTL ? "text-right" : "text-left"}>
+                        <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.duration")}</p>
+                        <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Video className="w-5 h-5 text-[#71717A] mt-0.5" />
+                      <div className={isRTL ? "text-right" : "text-left"}>
+                        <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                        <p className="text-sm text-[#71717A]">{getDeliveryLabel()}</p>
+                      </div>
+                    </div>
+                    {apiCmeAccredited && (
+                      <div className="flex items-start gap-3">
+                        <Award className="w-5 h-5 text-[#71717A] mt-0.5" />
+                        <div className={isRTL ? "text-right" : "text-left"}>
+                          <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                          <p className="text-sm text-[#71717A]">{apiCmeHours} {t("courseDetails.hours")}</p>
+                        </div>
+                      </div>
+                    )}
+                    {showVenue && getVenue() && (
+                      <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                        <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
+                        <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
+                        <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Target Audience — inline */}
+                  {getTargetAudience().length > 0 && (
+                    <div className={`mt-6 pt-6 border-t border-[#E5E7EB] ${isRTL ? "text-right" : "text-left"}`}>
+                      <p className="text-sm font-semibold text-[#06080b] mb-3">
+                        {t("targetAudience") || "Target Audience"}
+                      </p>
+                      <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
+                        {getTargetAudience().map((item, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 rounded-full bg-[#F4F4F5] text-[#4a4c4f] text-xs font-medium"
+                          >
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Pricing Card */}
@@ -845,95 +932,9 @@ const CourseDetailContent = () => {
           </div>
         </div>
 
-        {/* Course Details Section */}
+        {/* Content Sections (below hero) */}
         <section className="px-16 pt-2 pb-12">
           <div className="max-w-[1200px] mx-auto">
-            <div className="bg-white rounded-2xl p-8 mb-8">
-              <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
-
-              <div className="grid grid-cols-2 gap-x-12 gap-y-6">
-                {apiCourse.enrollmentDeadline && (
-                  <div className="flex items-start gap-3">
-                    <Calendar className="w-5 h-5 text-[#71717A] mt-0.5" />
-                    <div className={isRTL ? "text-right" : "text-left"}>
-                      <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
-                      <p className="text-sm text-[#71717A]">{formatDate(apiCourse.enrollmentDeadline)}</p>
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-start gap-3">
-                  <Globe className="w-5 h-5 text-[#71717A] mt-0.5" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.language")}</p>
-                    <p className="text-sm text-[#71717A]">{getLanguageLabel()}</p>
-                  </div>
-                </div>
-                {apiCourse.startDate && (
-                  <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                    <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                    <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
-                    <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
-                  </div>
-                )}
-                {apiCourse.endDate && (
-                  <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                    <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                    <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
-                    <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
-                  </div>
-                )}
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-[#71717A] mt-0.5" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.duration")}</p>
-                    <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Video className="w-5 h-5 text-[#71717A] mt-0.5" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
-                    <p className="text-sm text-[#71717A]">{getDeliveryLabel()}</p>
-                  </div>
-                </div>
-                {apiCmeAccredited && (
-                  <div className="flex items-start gap-3">
-                    <Award className="w-5 h-5 text-[#71717A] mt-0.5" />
-                    <div className={isRTL ? "text-right" : "text-left"}>
-                      <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
-                      <p className="text-sm text-[#71717A]">{apiCmeHours} {t("courseDetails.hours")}</p>
-                    </div>
-                  </div>
-                )}
-                {showVenue && getVenue() && (
-                  <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                    <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                    <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
-                    <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Target Audience — inline in course details */}
-              {getTargetAudience().length > 0 && (
-                <div className={`mt-6 pt-6 border-t border-[#E5E7EB] ${isRTL ? "text-right" : "text-left"}`}>
-                  <p className="text-sm font-semibold text-[#06080b] mb-3">
-                    {t("targetAudience") || "Target Audience"}
-                  </p>
-                  <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
-                    {getTargetAudience().map((item, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 rounded-full bg-[#F4F4F5] text-[#4a4c4f] text-xs font-medium"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Overview */}
             {renderOverview(false)}
 

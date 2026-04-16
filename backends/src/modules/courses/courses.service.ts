@@ -1656,7 +1656,12 @@ export class CoursesService {
     this.addOwnershipCondition(conditions, user);
 
     const [course] = await db
-      .select({ id: courses.id, status: courses.status })
+      .select({
+        id: courses.id,
+        status: courses.status,
+        enrollmentDeadline: courses.enrollmentDeadline,
+        startDate: courses.startDate,
+      })
       .from(courses)
       .where(and(...conditions))
       .limit(1);

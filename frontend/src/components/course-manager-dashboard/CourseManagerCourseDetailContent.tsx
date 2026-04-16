@@ -333,7 +333,7 @@ const CourseManagerCourseDetailContent = ({
   };
 
   const getRegistrationBadge = () => {
-    if (course.status !== "active") return null;
+    if (!course || course.status !== "active") return null;
     const deadline = (course as any).enrollmentDeadline;
     if (!deadline) return null;
     const isOpen = new Date(deadline) > new Date();

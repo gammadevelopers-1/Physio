@@ -338,6 +338,7 @@ export interface ContactPage {
   mapLatitude: number | null;
   mapLongitude: number | null;
   mapPopupText: string | null;
+  showMap: boolean | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

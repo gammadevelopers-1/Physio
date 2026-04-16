@@ -505,6 +505,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
         </div>
 
         {/* Map Section */}
+        {(strapiData?.showMap !== false) && (
         <div
           className="flex flex-col justify-center items-center w-full mt-10 md:mt-20"
           style={{
@@ -526,6 +527,7 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
             />
           </div>
         </div>
+        )}
       </div>
     </section>
   );

@@ -55,6 +55,27 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [originalInstructorId, setOriginalInstructorId] = useState("");
   const [cohort, setCohort] = useState("");
 
+  // Content Details
+  const [overview, setOverview] = useState("");
+  const [overviewAr, setOverviewAr] = useState("");
+  const [objectives, setObjectives] = useState<string[]>([]);
+  const [objectivesAr, setObjectivesAr] = useState<string[]>([]);
+  const [features, setFeatures] = useState<string[]>([]);
+  const [featuresAr, setFeaturesAr] = useState<string[]>([]);
+  const [targetAudience, setTargetAudience] = useState<string[]>([]);
+  const [targetAudienceAr, setTargetAudienceAr] = useState<string[]>([]);
+  const [requirements, setRequirements] = useState("");
+  const [requirementsAr, setRequirementsAr] = useState("");
+  const [notices, setNotices] = useState("");
+  const [noticesAr, setNoticesAr] = useState("");
+
+  // Pricing & venue
+  const [price, setPrice] = useState("");
+  const [venue, setVenue] = useState("");
+  const [venueAr, setVenueAr] = useState("");
+  const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
+  const [language, setLanguage] = useState("en");
+
   // Thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
@@ -83,6 +104,30 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         setInstructorId(courseData.instructorId);
         setOriginalInstructorId(courseData.instructorId);
         setCohort(courseData.cohort || "");
+
+        // Content Details
+        setOverview((courseData as any).overview || "");
+        setOverviewAr((courseData as any).overviewAr || "");
+        setObjectives((courseData as any).objectives || []);
+        setObjectivesAr((courseData as any).objectivesAr || []);
+        setFeatures((courseData as any).features || []);
+        setFeaturesAr((courseData as any).featuresAr || []);
+        setTargetAudience((courseData as any).targetAudience || []);
+        setTargetAudienceAr((courseData as any).targetAudienceAr || []);
+        setRequirements((courseData as any).requirements || "");
+        setRequirementsAr((courseData as any).requirementsAr || "");
+        setNotices((courseData as any).notices || "");
+        setNoticesAr((courseData as any).noticesAr || "");
+
+        // Pricing & venue
+        setPrice((courseData as any).price?.toString() || "");
+        setVenue((courseData as any).venue || "");
+        setVenueAr((courseData as any).venueAr || "");
+        if ((courseData as any).enrollmentDeadline) {
+          setEnrollmentDeadline((courseData as any).enrollmentDeadline.split("T")[0]);
+        }
+        setLanguage((courseData as any).language || "en");
+
         if (courseData.startDate) {
           setStartDate(courseData.startDate.split("T")[0]);
         }
@@ -160,6 +205,34 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
       if (cohort.trim()) payload.cohort = cohort.trim();
+
+      // Content Details
+      const cleanArray = (arr: string[]) => arr.filter(s => s.trim()).map(s => s.trim());
+      if (overview.trim()) payload.overview = overview.trim();
+      if (overviewAr.trim()) payload.overviewAr = overviewAr.trim();
+      const objList = cleanArray(objectives);
+      if (objList.length) payload.objectives = objList;
+      const objListAr = cleanArray(objectivesAr);
+      if (objListAr.length) payload.objectivesAr = objListAr;
+      const featList = cleanArray(features);
+      if (featList.length) payload.features = featList;
+      const featListAr = cleanArray(featuresAr);
+      if (featListAr.length) payload.featuresAr = featListAr;
+      const taList = cleanArray(targetAudience);
+      if (taList.length) payload.targetAudience = taList;
+      const taListAr = cleanArray(targetAudienceAr);
+      if (taListAr.length) payload.targetAudienceAr = taListAr;
+      if (requirements.trim()) payload.requirements = requirements.trim();
+      if (requirementsAr.trim()) payload.requirementsAr = requirementsAr.trim();
+      if (notices.trim()) payload.notices = notices.trim();
+      if (noticesAr.trim()) payload.noticesAr = noticesAr.trim();
+
+      // Pricing & venue
+      if (venue.trim()) payload.venue = venue.trim();
+      if (venueAr.trim()) payload.venueAr = venueAr.trim();
+      if (price) payload.price = Number(price);
+      if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
+      if (language !== 'en') payload.language = language;
 
       await courseManagerApi.updateCourse(courseId, payload);
 
@@ -375,6 +448,234 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   )}
                 </div>
 
+                {/* Course Content */}
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                    Content Details
+                  </h2>
+                  <div className="space-y-4">
+                    {/* Overview */}
+                    <div>
+                      <label htmlFor="edit-overview" className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
+                      <textarea
+                        id="edit-overview"
+                        value={overview}
+                        onChange={(e) => setOverview(e.target.value)}
+                        rows={4}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        placeholder="Course overview..."
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-overview-ar" className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
+                      <textarea
+                        id="edit-overview-ar"
+                        value={overviewAr}
+                        onChange={(e) => setOverviewAr(e.target.value)}
+                        rows={4}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        dir="rtl"
+                        placeholder="..."
+                      />
+                    </div>
+
+                    {/* Objectives */}
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (English)</label>
+                      {objectives.map((obj, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={obj}
+                            onChange={(e) => {
+                              const next = [...objectives];
+                              next[i] = e.target.value;
+                              setObjectives(next);
+                            }}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            placeholder={`Objective ${i + 1}`}
+                          />
+                          <button type="button" onClick={() => setObjectives(objectives.filter((_, j) => j !== i))}
+                            className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setObjectives([...objectives, ""])}
+                        className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (Arabic)</label>
+                      {objectivesAr.map((obj, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={obj}
+                            onChange={(e) => {
+                              const next = [...objectivesAr];
+                              next[i] = e.target.value;
+                              setObjectivesAr(next);
+                            }}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            dir="rtl"
+                            placeholder={`${i + 1}`}
+                          />
+                          <button type="button" onClick={() => setObjectivesAr(objectivesAr.filter((_, j) => j !== i))}
+                            className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setObjectivesAr([...objectivesAr, ""])}
+                        className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                    </div>
+
+                    {/* Features */}
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Features (English)</label>
+                      {features.map((feat, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={feat}
+                            onChange={(e) => {
+                              const next = [...features];
+                              next[i] = e.target.value;
+                              setFeatures(next);
+                            }}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            placeholder={`Feature ${i + 1}`}
+                          />
+                          <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
+                            className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setFeatures([...features, ""])}
+                        className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Features (Arabic)</label>
+                      {featuresAr.map((feat, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={feat}
+                            onChange={(e) => {
+                              const next = [...featuresAr];
+                              next[i] = e.target.value;
+                              setFeaturesAr(next);
+                            }}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            dir="rtl"
+                            placeholder={`${i + 1}`}
+                          />
+                          <button type="button" onClick={() => setFeaturesAr(featuresAr.filter((_, j) => j !== i))}
+                            className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setFeaturesAr([...featuresAr, ""])}
+                        className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                    </div>
+
+                    {/* Target Audience */}
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (English)</label>
+                      {targetAudience.map((item, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={item}
+                            onChange={(e) => {
+                              const next = [...targetAudience];
+                              next[i] = e.target.value;
+                              setTargetAudience(next);
+                            }}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            placeholder={`Audience ${i + 1}`}
+                          />
+                          <button type="button" onClick={() => setTargetAudience(targetAudience.filter((_, j) => j !== i))}
+                            className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setTargetAudience([...targetAudience, ""])}
+                        className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (Arabic)</label>
+                      {targetAudienceAr.map((item, i) => (
+                        <div key={i} className="flex gap-2 mb-2">
+                          <input
+                            type="text"
+                            value={item}
+                            onChange={(e) => {
+                              const next = [...targetAudienceAr];
+                              next[i] = e.target.value;
+                              setTargetAudienceAr(next);
+                            }}
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            dir="rtl"
+                            placeholder={`${i + 1}`}
+                          />
+                          <button type="button" onClick={() => setTargetAudienceAr(targetAudienceAr.filter((_, j) => j !== i))}
+                            className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setTargetAudienceAr([...targetAudienceAr, ""])}
+                        className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                    </div>
+
+                    {/* Requirements — only for onsite/blended */}
+                    {(deliveryType === 'onsite' || deliveryType === 'blended') && (
+                      <>
+                        <div>
+                          <label htmlFor="edit-requirements" className="block text-sm font-medium text-[#374151] mb-1">Requirements (English)</label>
+                          <textarea
+                            id="edit-requirements"
+                            value={requirements}
+                            onChange={(e) => setRequirements(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                            placeholder="Course requirements..."
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="edit-requirements-ar" className="block text-sm font-medium text-[#374151] mb-1">Requirements (Arabic)</label>
+                          <textarea
+                            id="edit-requirements-ar"
+                            value={requirementsAr}
+                            onChange={(e) => setRequirementsAr(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                            dir="rtl"
+                            placeholder="..."
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Notices */}
+                    <div>
+                      <label htmlFor="edit-notices" className="block text-sm font-medium text-[#374151] mb-1">Notices (English)</label>
+                      <textarea
+                        id="edit-notices"
+                        value={notices}
+                        onChange={(e) => setNotices(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        placeholder="Important notices..."
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-notices-ar" className="block text-sm font-medium text-[#374151] mb-1">Notices (Arabic)</label>
+                      <textarea
+                        id="edit-notices-ar"
+                        value={noticesAr}
+                        onChange={(e) => setNoticesAr(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        dir="rtl"
+                        placeholder="..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 {/* Instructor Assignment */}
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
@@ -497,6 +798,76 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         onChange={setEndDate}
                       />
                     </div>
+                    <div>
+                      <label htmlFor="edit-price" className="block text-sm font-medium text-[#374151] mb-1">
+                        Price (SAR)
+                      </label>
+                      <input
+                        id="edit-price"
+                        type="number"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        placeholder="0"
+                        min={0}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
+                        Enrollment Deadline
+                      </label>
+                      <DatePicker
+                        id="edit-enrollment-deadline"
+                        value={enrollmentDeadline}
+                        onChange={setEnrollmentDeadline}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="edit-language" className="block text-sm font-medium text-[#374151] mb-1">
+                        Language
+                      </label>
+                      <select
+                        id="edit-language"
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      >
+                        <option value="en">English</option>
+                        <option value="ar">Arabic</option>
+                        <option value="both">Both</option>
+                      </select>
+                    </div>
+                    {(deliveryType === 'onsite' || deliveryType === 'blended') && (
+                      <>
+                        <div>
+                          <label htmlFor="edit-venue" className="block text-sm font-medium text-[#374151] mb-1">
+                            Venue (English)
+                          </label>
+                          <input
+                            id="edit-venue"
+                            type="text"
+                            value={venue}
+                            onChange={(e) => setVenue(e.target.value)}
+                            placeholder="Venue name or address"
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="edit-venue-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                            Venue (Arabic)
+                          </label>
+                          <input
+                            id="edit-venue-ar"
+                            type="text"
+                            value={venueAr}
+                            onChange={(e) => setVenueAr(e.target.value)}
+                            placeholder="..."
+                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            dir="rtl"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 

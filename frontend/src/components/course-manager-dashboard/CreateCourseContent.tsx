@@ -29,7 +29,7 @@ import DatePicker from "@/components/ui/DatePicker";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3 | 4 | 5;
 
 function StepIndicator({
   currentStep,
@@ -40,9 +40,10 @@ function StepIndicator({
 }) {
   const steps = [
     { number: 1, label: t("createCourse.wizardStep1") },
-    { number: 2, label: t("createCourse.wizardStep2") },
-    { number: 3, label: t("createCourse.wizardStep3") },
-    { number: 4, label: t("createCourse.wizardStep5") },
+    { number: 2, label: "Content Details" },
+    { number: 3, label: t("createCourse.wizardStep2") },
+    { number: 4, label: t("createCourse.wizardStep3") },
+    { number: 5, label: t("createCourse.wizardStep5") },
   ];
 
   return (
@@ -156,12 +157,31 @@ const CreateCourseContent = () => {
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Step 2: Schedule & NELC Config
+  // Step 2: Content Details
+  const [overview, setOverview] = useState("");
+  const [overviewAr, setOverviewAr] = useState("");
+  const [objectives, setObjectives] = useState<string[]>([]);
+  const [objectivesAr, setObjectivesAr] = useState<string[]>([]);
+  const [features, setFeatures] = useState<string[]>([]);
+  const [featuresAr, setFeaturesAr] = useState<string[]>([]);
+  const [targetAudience, setTargetAudience] = useState<string[]>([]);
+  const [targetAudienceAr, setTargetAudienceAr] = useState<string[]>([]);
+  const [requirements, setRequirements] = useState("");
+  const [requirementsAr, setRequirementsAr] = useState("");
+  const [notices, setNotices] = useState("");
+  const [noticesAr, setNoticesAr] = useState("");
+
+  // Step 3: Schedule & Pricing
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [maxEnrollment, setMaxEnrollment] = useState("");
   const [cmeHours, setCmeHours] = useState("");
   const [cohort, setCohort] = useState("");
+  const [price, setPrice] = useState("");
+  const [venue, setVenue] = useState("");
+  const [venueAr, setVenueAr] = useState("");
+  const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
+  const [language, setLanguage] = useState("en");
   // NELC compliance flags — always enabled, shown as static indicators
   const nelcAccreditation = true;
   const bilingualContent = true;
@@ -247,7 +267,10 @@ const CreateCourseContent = () => {
           return false;
         }
         return true;
-      case 2: {
+      case 2:
+        // Content Details — all optional
+        return true;
+      case 3: {
         const today = new Date().toISOString().split("T")[0];
         if (!startDate) {
           toast.error(t("createCourse.startDate") + " is required");
@@ -271,7 +294,7 @@ const CreateCourseContent = () => {
         }
         return true;
       }
-      case 3:
+      case 4:
         if (!instructorId) {
           toast.error(t("createCourse.instructorRequired"));
           return false;
@@ -290,7 +313,7 @@ const CreateCourseContent = () => {
   }, [deliveryType]);
 
   const goNext = () => {
-    if (validateStep(currentStep) && currentStep < 4) {
+    if (validateStep(currentStep) && currentStep < 5) {
       const next = (currentStep + 1) as WizardStep;
       setCurrentStep(next);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -306,7 +329,9 @@ const CreateCourseContent = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3) || !validateStep(4)) return;
+
+    const cleanArray = (arr: string[]) => arr.filter(s => s.trim()).map(s => s.trim());
 
     setSubmitting(true);
     try {
@@ -327,6 +352,33 @@ const CreateCourseContent = () => {
       if (startDate) payload.startDate = new Date(startDate).toISOString();
       if (endDate) payload.endDate = new Date(endDate).toISOString();
       if (cohort.trim()) payload.cohort = cohort.trim();
+
+      // Content Details fields
+      if (overview.trim()) payload.overview = overview.trim();
+      if (overviewAr.trim()) payload.overviewAr = overviewAr.trim();
+      const objList = cleanArray(objectives);
+      if (objList.length) payload.objectives = objList;
+      const objListAr = cleanArray(objectivesAr);
+      if (objListAr.length) payload.objectivesAr = objListAr;
+      const featList = cleanArray(features);
+      if (featList.length) payload.features = featList;
+      const featListAr = cleanArray(featuresAr);
+      if (featListAr.length) payload.featuresAr = featListAr;
+      const taList = cleanArray(targetAudience);
+      if (taList.length) payload.targetAudience = taList;
+      const taListAr = cleanArray(targetAudienceAr);
+      if (taListAr.length) payload.targetAudienceAr = taListAr;
+      if (requirements.trim()) payload.requirements = requirements.trim();
+      if (requirementsAr.trim()) payload.requirementsAr = requirementsAr.trim();
+      if (notices.trim()) payload.notices = notices.trim();
+      if (noticesAr.trim()) payload.noticesAr = noticesAr.trim();
+
+      // Pricing & venue fields
+      if (venue.trim()) payload.venue = venue.trim();
+      if (venueAr.trim()) payload.venueAr = venueAr.trim();
+      if (price) payload.price = Number(price);
+      if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
+      if (language !== 'en') payload.language = language;
 
       const created = await courseManagerApi.createCourse(payload);
 
@@ -562,8 +614,234 @@ const CreateCourseContent = () => {
                 </div>
               )}
 
-              {/* Step 2: Schedule & NELC Config */}
+              {/* Step 2: Content Details */}
               {currentStep === 2 && (
+                <div className="space-y-6">
+                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                    <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
+                      Content Details
+                    </h2>
+                    <div className="space-y-4">
+                      {/* Overview */}
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
+                        <textarea
+                          value={overview}
+                          onChange={(e) => setOverview(e.target.value)}
+                          rows={4}
+                          className={`${inputClass} resize-none`}
+                          placeholder="Course overview..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
+                        <textarea
+                          value={overviewAr}
+                          onChange={(e) => setOverviewAr(e.target.value)}
+                          rows={4}
+                          className={`${inputClass} resize-none`}
+                          dir="rtl"
+                          placeholder="..."
+                        />
+                      </div>
+
+                      {/* Objectives */}
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (English)</label>
+                        {objectives.map((obj, i) => (
+                          <div key={i} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={obj}
+                              onChange={(e) => {
+                                const next = [...objectives];
+                                next[i] = e.target.value;
+                                setObjectives(next);
+                              }}
+                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              placeholder={`Objective ${i + 1}`}
+                            />
+                            <button type="button" onClick={() => setObjectives(objectives.filter((_, j) => j !== i))}
+                              className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setObjectives([...objectives, ""])}
+                          className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (Arabic)</label>
+                        {objectivesAr.map((obj, i) => (
+                          <div key={i} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={obj}
+                              onChange={(e) => {
+                                const next = [...objectivesAr];
+                                next[i] = e.target.value;
+                                setObjectivesAr(next);
+                              }}
+                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              dir="rtl"
+                              placeholder={`${i + 1}`}
+                            />
+                            <button type="button" onClick={() => setObjectivesAr(objectivesAr.filter((_, j) => j !== i))}
+                              className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setObjectivesAr([...objectivesAr, ""])}
+                          className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                      </div>
+
+                      {/* Features */}
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Features (English)</label>
+                        {features.map((feat, i) => (
+                          <div key={i} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={feat}
+                              onChange={(e) => {
+                                const next = [...features];
+                                next[i] = e.target.value;
+                                setFeatures(next);
+                              }}
+                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              placeholder={`Feature ${i + 1}`}
+                            />
+                            <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
+                              className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setFeatures([...features, ""])}
+                          className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Features (Arabic)</label>
+                        {featuresAr.map((feat, i) => (
+                          <div key={i} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={feat}
+                              onChange={(e) => {
+                                const next = [...featuresAr];
+                                next[i] = e.target.value;
+                                setFeaturesAr(next);
+                              }}
+                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              dir="rtl"
+                              placeholder={`${i + 1}`}
+                            />
+                            <button type="button" onClick={() => setFeaturesAr(featuresAr.filter((_, j) => j !== i))}
+                              className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setFeaturesAr([...featuresAr, ""])}
+                          className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                      </div>
+
+                      {/* Target Audience */}
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (English)</label>
+                        {targetAudience.map((item, i) => (
+                          <div key={i} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={item}
+                              onChange={(e) => {
+                                const next = [...targetAudience];
+                                next[i] = e.target.value;
+                                setTargetAudience(next);
+                              }}
+                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              placeholder={`Audience ${i + 1}`}
+                            />
+                            <button type="button" onClick={() => setTargetAudience(targetAudience.filter((_, j) => j !== i))}
+                              className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setTargetAudience([...targetAudience, ""])}
+                          className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (Arabic)</label>
+                        {targetAudienceAr.map((item, i) => (
+                          <div key={i} className="flex gap-2 mb-2">
+                            <input
+                              type="text"
+                              value={item}
+                              onChange={(e) => {
+                                const next = [...targetAudienceAr];
+                                next[i] = e.target.value;
+                                setTargetAudienceAr(next);
+                              }}
+                              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                              dir="rtl"
+                              placeholder={`${i + 1}`}
+                            />
+                            <button type="button" onClick={() => setTargetAudienceAr(targetAudienceAr.filter((_, j) => j !== i))}
+                              className="text-red-500 text-sm px-2">{"\u2715"}</button>
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => setTargetAudienceAr([...targetAudienceAr, ""])}
+                          className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                      </div>
+
+                      {/* Requirements — only for onsite/blended */}
+                      {(deliveryType === 'onsite' || deliveryType === 'blended') && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-[#374151] mb-1">Requirements (English)</label>
+                            <textarea
+                              value={requirements}
+                              onChange={(e) => setRequirements(e.target.value)}
+                              rows={3}
+                              className={`${inputClass} resize-none`}
+                              placeholder="Course requirements..."
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#374151] mb-1">Requirements (Arabic)</label>
+                            <textarea
+                              value={requirementsAr}
+                              onChange={(e) => setRequirementsAr(e.target.value)}
+                              rows={3}
+                              className={`${inputClass} resize-none`}
+                              dir="rtl"
+                              placeholder="..."
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {/* Notices */}
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Notices (English)</label>
+                        <textarea
+                          value={notices}
+                          onChange={(e) => setNotices(e.target.value)}
+                          rows={3}
+                          className={`${inputClass} resize-none`}
+                          placeholder="Important notices..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">Notices (Arabic)</label>
+                        <textarea
+                          value={noticesAr}
+                          onChange={(e) => setNoticesAr(e.target.value)}
+                          rows={3}
+                          className={`${inputClass} resize-none`}
+                          dir="rtl"
+                          placeholder="..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Schedule & Pricing */}
+              {currentStep === 3 && (
                 <div className="space-y-6">
                   {/* Schedule */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
@@ -651,6 +929,77 @@ const CreateCourseContent = () => {
                           {t("createCourse.cohortHint")}
                         </p>
                       </div>
+                      <div>
+                        <label htmlFor="price" className="block text-sm font-medium text-[#374151] mb-1">
+                          Price (SAR)
+                        </label>
+                        <input
+                          id="price"
+                          type="number"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          placeholder="0"
+                          min={0}
+                          className={inputClass}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
+                          Enrollment Deadline
+                        </label>
+                        <DatePicker
+                          id="enrollment-deadline"
+                          value={enrollmentDeadline}
+                          onChange={setEnrollmentDeadline}
+                          min={new Date().toISOString().split("T")[0]}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="language" className="block text-sm font-medium text-[#374151] mb-1">
+                          Language
+                        </label>
+                        <select
+                          id="language"
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          className={selectClass}
+                        >
+                          <option value="en">English</option>
+                          <option value="ar">Arabic</option>
+                          <option value="both">Both</option>
+                        </select>
+                      </div>
+                      {(deliveryType === 'onsite' || deliveryType === 'blended') && (
+                        <>
+                          <div>
+                            <label htmlFor="venue" className="block text-sm font-medium text-[#374151] mb-1">
+                              Venue (English)
+                            </label>
+                            <input
+                              id="venue"
+                              type="text"
+                              value={venue}
+                              onChange={(e) => setVenue(e.target.value)}
+                              placeholder="Venue name or address"
+                              className={inputClass}
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor="venue-ar" className="block text-sm font-medium text-[#374151] mb-1">
+                              Venue (Arabic)
+                            </label>
+                            <input
+                              id="venue-ar"
+                              type="text"
+                              value={venueAr}
+                              onChange={(e) => setVenueAr(e.target.value)}
+                              placeholder="..."
+                              className={inputClass}
+                              dir="rtl"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -688,8 +1037,8 @@ const CreateCourseContent = () => {
                 </div>
               )}
 
-              {/* Step 3: Team Assignment (Instructor + TA) */}
-              {currentStep === 3 && (() => {
+              {/* Step 4: Team Assignment (Instructor + TA) */}
+              {currentStep === 4 && (() => {
                 const statusDot: Record<string, string> = { available: "bg-[#22C55E]", busy: "bg-[#F59E0B]", overloaded: "bg-[#EF4444]" };
                 const statusBadgeBg: Record<string, string> = { available: "bg-[#DCFCE7] text-[#065F46]", busy: "bg-[#FEF3C7] text-[#92400E]", overloaded: "bg-[#FEE2E2] text-[#991B1B]" };
                 return (
@@ -913,8 +1262,8 @@ const CreateCourseContent = () => {
                 );
               })()}
 
-              {/* Step 4: Review & Submit */}
-              {currentStep === 4 && (
+              {/* Step 5: Review & Submit */}
+              {currentStep === 5 && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
@@ -983,6 +1332,113 @@ const CreateCourseContent = () => {
                         </dl>
                       </div>
 
+                      {/* Content Details */}
+                      {(overview || overviewAr || objectives.some(s => s.trim()) || objectivesAr.some(s => s.trim()) || features.some(s => s.trim()) || featuresAr.some(s => s.trim()) || targetAudience.some(s => s.trim()) || targetAudienceAr.some(s => s.trim()) || requirements || requirementsAr || notices || noticesAr) && (
+                        <div className="border border-[#E5E7EB] rounded-lg p-4">
+                          <h3 className="text-sm font-semibold text-[#374151] mb-3">
+                            Content Details
+                          </h3>
+                          <dl className="space-y-3 text-sm">
+                            {overview && (
+                              <div>
+                                <dt className="text-[#6B7280]">Overview (English)</dt>
+                                <dd className="font-medium text-[#1F2937] whitespace-pre-line">{overview}</dd>
+                              </div>
+                            )}
+                            {overviewAr && (
+                              <div>
+                                <dt className="text-[#6B7280]">Overview (Arabic)</dt>
+                                <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{overviewAr}</dd>
+                              </div>
+                            )}
+                            {objectives.some(s => s.trim()) && (
+                              <div>
+                                <dt className="text-[#6B7280]">Objectives (English)</dt>
+                                <dd>
+                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                    {objectives.filter(s => s.trim()).map((o, i) => <li key={i}>{o}</li>)}
+                                  </ul>
+                                </dd>
+                              </div>
+                            )}
+                            {objectivesAr.some(s => s.trim()) && (
+                              <div>
+                                <dt className="text-[#6B7280]">Objectives (Arabic)</dt>
+                                <dd dir="rtl">
+                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                    {objectivesAr.filter(s => s.trim()).map((o, i) => <li key={i}>{o}</li>)}
+                                  </ul>
+                                </dd>
+                              </div>
+                            )}
+                            {features.some(s => s.trim()) && (
+                              <div>
+                                <dt className="text-[#6B7280]">Features (English)</dt>
+                                <dd>
+                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                    {features.filter(s => s.trim()).map((f, i) => <li key={i}>{f}</li>)}
+                                  </ul>
+                                </dd>
+                              </div>
+                            )}
+                            {featuresAr.some(s => s.trim()) && (
+                              <div>
+                                <dt className="text-[#6B7280]">Features (Arabic)</dt>
+                                <dd dir="rtl">
+                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                    {featuresAr.filter(s => s.trim()).map((f, i) => <li key={i}>{f}</li>)}
+                                  </ul>
+                                </dd>
+                              </div>
+                            )}
+                            {targetAudience.some(s => s.trim()) && (
+                              <div>
+                                <dt className="text-[#6B7280]">Target Audience (English)</dt>
+                                <dd>
+                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                    {targetAudience.filter(s => s.trim()).map((a, i) => <li key={i}>{a}</li>)}
+                                  </ul>
+                                </dd>
+                              </div>
+                            )}
+                            {targetAudienceAr.some(s => s.trim()) && (
+                              <div>
+                                <dt className="text-[#6B7280]">Target Audience (Arabic)</dt>
+                                <dd dir="rtl">
+                                  <ul className="list-disc list-inside text-[#1F2937]">
+                                    {targetAudienceAr.filter(s => s.trim()).map((a, i) => <li key={i}>{a}</li>)}
+                                  </ul>
+                                </dd>
+                              </div>
+                            )}
+                            {requirements && (
+                              <div>
+                                <dt className="text-[#6B7280]">Requirements (English)</dt>
+                                <dd className="font-medium text-[#1F2937] whitespace-pre-line">{requirements}</dd>
+                              </div>
+                            )}
+                            {requirementsAr && (
+                              <div>
+                                <dt className="text-[#6B7280]">Requirements (Arabic)</dt>
+                                <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{requirementsAr}</dd>
+                              </div>
+                            )}
+                            {notices && (
+                              <div>
+                                <dt className="text-[#6B7280]">Notices (English)</dt>
+                                <dd className="font-medium text-[#1F2937] whitespace-pre-line">{notices}</dd>
+                              </div>
+                            )}
+                            {noticesAr && (
+                              <div>
+                                <dt className="text-[#6B7280]">Notices (Arabic)</dt>
+                                <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{noticesAr}</dd>
+                              </div>
+                            )}
+                          </dl>
+                        </div>
+                      )}
+
                       {/* Schedule & NELC */}
                       <div className="border border-[#E5E7EB] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
@@ -1030,6 +1486,36 @@ const CreateCourseContent = () => {
                               <dd className="font-medium text-[#1F2937]">
                                 {cohort}
                               </dd>
+                            </div>
+                          )}
+                          {price && (
+                            <div>
+                              <dt className="text-[#6B7280]">Price (SAR)</dt>
+                              <dd className="font-medium text-[#1F2937]">{price}</dd>
+                            </div>
+                          )}
+                          {enrollmentDeadline && (
+                            <div>
+                              <dt className="text-[#6B7280]">Enrollment Deadline</dt>
+                              <dd className="font-medium text-[#1F2937]">{formatDate(enrollmentDeadline)}</dd>
+                            </div>
+                          )}
+                          {language !== 'en' && (
+                            <div>
+                              <dt className="text-[#6B7280]">Language</dt>
+                              <dd className="font-medium text-[#1F2937]">{language === 'ar' ? 'Arabic' : language === 'both' ? 'Both' : 'English'}</dd>
+                            </div>
+                          )}
+                          {(deliveryType === 'onsite' || deliveryType === 'blended') && venue && (
+                            <div>
+                              <dt className="text-[#6B7280]">Venue</dt>
+                              <dd className="font-medium text-[#1F2937]">{venue}</dd>
+                            </div>
+                          )}
+                          {(deliveryType === 'onsite' || deliveryType === 'blended') && venueAr && (
+                            <div>
+                              <dt className="text-[#6B7280]">Venue (Arabic)</dt>
+                              <dd className="font-medium text-[#1F2937]" dir="rtl">{venueAr}</dd>
                             </div>
                           )}
                           <div className="sm:col-span-2 flex items-center gap-4 flex-wrap">
@@ -1119,7 +1605,7 @@ const CreateCourseContent = () => {
                     : t("createCourse.back")}
                 </button>
 
-                {currentStep < 4 ? (
+                {currentStep < 5 ? (
                   <button
                     type="button"
                     onClick={goNext}

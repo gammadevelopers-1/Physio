@@ -10,6 +10,7 @@ import {
   check,
   boolean,
   numeric,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 import { users } from './users';
@@ -43,6 +44,21 @@ export const courses = pgTable(
     atRiskInactivityDays: integer('at_risk_inactivity_days').default(7),
     // Cohort
     cohort: varchar('cohort', { length: 100 }),
+    // Course content fields (managed by course manager)
+    overview: text('overview'),
+    overviewAr: text('overview_ar'),
+    objectives: jsonb('objectives').$type<string[]>(),
+    objectivesAr: jsonb('objectives_ar').$type<string[]>(),
+    features: jsonb('features').$type<string[]>(),
+    featuresAr: jsonb('features_ar').$type<string[]>(),
+    targetAudience: jsonb('target_audience').$type<string[]>(),
+    targetAudienceAr: jsonb('target_audience_ar').$type<string[]>(),
+    requirements: text('requirements'),
+    requirementsAr: text('requirements_ar'),
+    notices: text('notices'),
+    noticesAr: text('notices_ar'),
+    venue: varchar('venue', { length: 255 }),
+    venueAr: varchar('venue_ar', { length: 255 }),
     // Course-level assessment defaults (per-assessment can override)
     assessmentProctoringEnabled: boolean('assessment_proctoring_enabled').default(false),
     assessmentTimeLimitEnforced: boolean('assessment_time_limit_enforced').default(true),

@@ -5,6 +5,7 @@ import {
   IsIn,
   IsBoolean,
   IsNumber,
+  IsArray,
   MaxLength,
   Min,
   IsDateString,
@@ -87,6 +88,71 @@ export class UpdateCourseDto {
   @IsString()
   @MaxLength(100)
   cohort?: string;
+
+  // Course content fields
+  @IsOptional()
+  @IsString()
+  overview?: string;
+
+  @IsOptional()
+  @IsString()
+  overviewAr?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  objectives?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  objectivesAr?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  features?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  featuresAr?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetAudience?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetAudienceAr?: string[];
+
+  @IsOptional()
+  @IsString()
+  requirements?: string;
+
+  @IsOptional()
+  @IsString()
+  requirementsAr?: string;
+
+  @IsOptional()
+  @IsString()
+  notices?: string;
+
+  @IsOptional()
+  @IsString()
+  noticesAr?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  venue?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  venueAr?: string;
 
   // Course-level assessment defaults
   @IsOptional()

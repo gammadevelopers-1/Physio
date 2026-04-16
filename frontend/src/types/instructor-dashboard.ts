@@ -681,6 +681,33 @@ export interface InterventionRecord {
 
 // ─── Public Course Listing ──────────────────────────────────
 
+export interface PublicCourseSession {
+  id: string;
+  title: string;
+  type: string;
+  scheduledAt: string;
+  durationMinutes: number;
+  venueAddress: string | null;
+  roomName: string | null;
+  status: string;
+}
+
+export interface PublicCourseModule {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  orderIndex: number;
+  type: string;
+  durationMinutes: number | null;
+}
+
+export interface PublicCourseRating {
+  rating: number;
+  reviewText: string | null;
+  createdAt: string;
+  studentName: string;
+}
+
 export interface PublicCourse {
   id: string;
   title: string;
@@ -705,6 +732,25 @@ export interface PublicCourse {
   remainingSeats: number;
   isFull: boolean;
   sessionCount: number;
+  // Content fields
+  overview: string | null;
+  overviewAr: string | null;
+  objectives: string[] | null;
+  objectivesAr: string[] | null;
+  features: string[] | null;
+  featuresAr: string[] | null;
+  targetAudience: string[] | null;
+  targetAudienceAr: string[] | null;
+  requirements: string | null;
+  requirementsAr: string | null;
+  notices: string | null;
+  noticesAr: string | null;
+  venue: string | null;
+  venueAr: string | null;
+  // Related data
+  sessions: PublicCourseSession[];
+  modules: PublicCourseModule[];
+  ratings: PublicCourseRating[];
 }
 
 export interface PublicCoursesResponse {

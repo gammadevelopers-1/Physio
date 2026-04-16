@@ -20,9 +20,9 @@ import {
   ShoppingCart,
   Video,
   Award,
+  AlertTriangle,
 } from "lucide-react";
 import { CourseCard, MobileCourseCard } from "@/components/courses";
-import { courseDetails } from "@/data/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,15 +40,7 @@ const CourseDetailContent = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const course = courseDetails.find((c) => c.slug === slug) || courseDetails[0];
-  const [selectedCity, setSelectedCity] = useState(course.schedules[0]?.city || "");
-  const [selectedMonth, setSelectedMonth] = useState(isRTL ? "فبراير" : "February");
-  const [selectedDate, setSelectedDate] = useState(
-    course.schedules[0]?.dates[0]?.date || ""
-  );
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
-  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
 
   // Fetch real course data from API
   const [apiCourse, setApiCourse] = useState<PublicCourse | null>(null);
@@ -114,80 +106,302 @@ const CourseDetailContent = () => {
       .catch(() => setRelatedCourses([]));
   }, [slug]);
 
-  // Get dates for selected city
-  const citySchedule = course.schedules.find((s) => s.city === selectedCity);
-  const availableDates = citySchedule?.dates || [];
+  // Locale-aware helpers
+  const getTitle = () => isRTL && apiCourse?.titleAr ? apiCourse.titleAr : (apiCourse?.title || "");
+  const getDescription = () => isRTL && apiCourse?.descriptionAr ? apiCourse.descriptionAr : (apiCourse?.description || "");
+  const getOverview = () => isRTL && apiCourse?.overviewAr ? apiCourse.overviewAr : (apiCourse?.overview || "");
+  const getObjectives = () => isRTL && apiCourse?.objectivesAr?.length ? apiCourse.objectivesAr : (apiCourse?.objectives || []);
+  const getFeatures = () => isRTL && apiCourse?.featuresAr?.length ? apiCourse.featuresAr : (apiCourse?.features || []);
+  const getTargetAudience = () => isRTL && apiCourse?.targetAudienceAr?.length ? apiCourse.targetAudienceAr : (apiCourse?.targetAudience || []);
+  const getRequirements = () => isRTL && apiCourse?.requirementsAr ? apiCourse.requirementsAr : (apiCourse?.requirements || "");
+  const getNotices = () => isRTL && apiCourse?.noticesAr ? apiCourse.noticesAr : (apiCourse?.notices || "");
+  const getVenue = () => isRTL && apiCourse?.venueAr ? apiCourse.venueAr : (apiCourse?.venue || "");
 
-  const months = isRTL
-    ? ["يناير", "فبراير", "مارس", "أبريل"]
-    : ["January", "February", "March", "April"];
+  // Delivery-type based section visibility
+  const dt = apiCourse?.deliveryType || "";
+  const showSessions = dt === "zoom" || dt === "onsite" || dt === "blended";
+  const showModules = dt === "self-paced" || dt === "blended";
+  const showVenue = dt === "onsite" || dt === "blended";
+  const showRequirements = (dt === "onsite" || dt === "blended") && !!getRequirements();
 
-  // Get translated course data — prefer real API data over mock
-  const getCourseTitle = () => {
-    if (isRTL) {
-      if (apiCourse?.titleAr) return apiCourse.titleAr;
-      try {
-        return tCourses(`courses.${course.slug}.title`);
-      } catch {
-        return apiCourse?.title || course.title;
-      }
-    }
-    return apiCourse?.title || course.title;
+  // Language label helper
+  const getLanguageLabel = () => {
+    const lang = apiCourse?.language || "en";
+    if (lang === "ar") return t("languages.arabic");
+    if (lang === "both") return `${t("languages.english")} / ${t("languages.arabic")}`;
+    return t("languages.english");
   };
 
-  const getCourseDescription = () => {
-    if (isRTL) {
-      try {
-        return tCourses(`courses.${course.slug}.description`);
-      } catch {
-        return course.fullDescription;
-      }
-    }
-    return course.fullDescription;
+  // Date formatting helper
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString(
+      locale === "ar" ? "ar-SA" : "en-US",
+      { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
+    );
   };
 
-  // Get translated city name
-  const getTranslatedCity = (city: string) => {
-    if (isRTL) {
-      const cityMap: { [key: string]: string } = {
-        "Jeddah": "جدة",
-        "Riyadh": "الرياض",
-        "Dammam": "الدمام",
-        "Al Madinah Al Munawwarah": "المدينة المنورة"
-      };
-      return cityMap[city] || city;
-    }
-    return city;
-  };
-
-  // Get translated whatYouWillLearn items
-  const getWhatYouWillLearn = (): string[] => {
-    if (isRTL) {
-      try {
-        const items = tCourses.raw(`courses.${course.slug}.whatYouWillLearn`);
-        if (Array.isArray(items)) {
-          return items;
-        }
-      } catch {
-        // Fall back to English if translation not found
-      }
-    }
-    return course.whatYouWillLearn;
-  };
-
-  // Get translated full description
-  const getFullDescription = () => {
-    if (isRTL) {
-      try {
-        return tCourses(`courses.${course.slug}.fullDescription`);
-      } catch {
-        return course.fullDescription;
-      }
-    }
-    return course.fullDescription;
+  // Delivery type label
+  const getDeliveryLabel = () => {
+    if (dt === "zoom") return isRTL ? "عبر الإنترنت" : "Live Online";
+    if (dt === "onsite") return isRTL ? "حضوري" : "On-site";
+    if (dt === "blended") return isRTL ? "مدمج" : "Blended";
+    if (dt === "self-paced") return isRTL ? "ذاتي" : "Self-paced";
+    return dt;
   };
 
   const ChevronIcon = isRTL ? ChevronLeft : ChevronRight;
+
+  // Loading state
+  if (!apiCourse) {
+    return (
+      <div className="min-h-screen bg-[var(--surface)] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[#a37f49] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  // Language tags renderer
+  const renderLanguageTags = (sizeClass: string = "text-sm") => {
+    const lang = apiCourse.language || "en";
+    return (
+      <div className={`flex items-center gap-3 ${isRTL ? "justify-start" : ""}`}>
+        {(lang === "en" || lang === "both") && (
+          <div className="flex items-center gap-1.5">
+            <Globe className="w-4 h-4 text-[#71717A]" />
+            <span className={`${sizeClass} text-[#06080b]`}>{t("languages.english")}</span>
+          </div>
+        )}
+        {lang === "both" && <div className="w-px h-4 bg-[#D4D4D8]" />}
+        {(lang === "ar" || lang === "both") && (
+          <div className="flex items-center gap-1.5">
+            <Globe className="w-4 h-4 text-[#71717A]" />
+            <span className={`${sizeClass} text-[#06080b]`}>{t("languages.arabic")}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Sessions section renderer
+  const renderSessions = (isMobile: boolean = false) => {
+    if (!showSessions || !apiCourse.sessions.length) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
+        <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+          {t("schedule") || "Schedule"}
+        </h2>
+        <div className="flex flex-col gap-3">
+          {apiCourse.sessions.map((session) => (
+            <div key={session.id} className="flex items-center justify-between p-3 bg-[#f4f4f5] rounded-lg">
+              <div>
+                <p className="font-medium text-[14px]">{session.title}</p>
+                <p className="text-[13px] text-[#6B7280]">
+                  {new Date(session.scheduledAt).toLocaleDateString(
+                    locale === "ar" ? "ar-SA" : "en-US",
+                    { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
+                  )}
+                  {" · "}{session.durationMinutes} min
+                </p>
+                {session.venueAddress && (
+                  <p className="text-[12px] text-[#9CA3AF]">{session.venueAddress}</p>
+                )}
+              </div>
+              <span className={`text-[11px] px-2 py-1 rounded-full ${
+                session.type === "zoom" ? "bg-blue-100 text-blue-700" :
+                session.type === "onsite" ? "bg-green-100 text-green-700" :
+                "bg-purple-100 text-purple-700"
+              }`}>{session.type}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Modules section renderer
+  const renderModules = (isMobile: boolean = false) => {
+    if (!showModules || !apiCourse.modules.length) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
+        <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+          {t("contents") || "Contents"} ({apiCourse.modules.length})
+        </h2>
+        <div className="flex flex-col divide-y divide-[var(--outline-subtle)]">
+          {apiCourse.modules.map((mod, i) => (
+            <div key={mod.id} className="flex items-center gap-3 py-3">
+              <span className="text-[13px] text-[#9CA3AF] w-6">{i + 1}.</span>
+              <span className="text-[14px]">{isRTL && mod.titleAr ? mod.titleAr : mod.title}</span>
+              {mod.durationMinutes && (
+                <span className={`text-[12px] text-[#9CA3AF] ${isRTL ? "mr-auto" : "ml-auto"}`}>{mod.durationMinutes} min</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Overview section renderer
+  const renderOverview = (isMobile: boolean = false) => {
+    const overview = getOverview();
+    if (!overview) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+          {t("description.title")}
+        </h2>
+        <p className={`text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+          {showFullDescription
+            ? overview
+            : overview.slice(0, isMobile ? 200 : 300) + (overview.length > (isMobile ? 200 : 300) ? "..." : "")}
+        </p>
+        {overview.length > (isMobile ? 200 : 300) && (
+          <button
+            onClick={() => setShowFullDescription(!showFullDescription)}
+            className={`flex items-center gap-1 text-[#06080b] text-sm font-medium ${isRTL ? "flex-row-reverse" : ""}`}
+          >
+            {showFullDescription ? t("description.viewLess") : t("description.viewMore")}
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFullDescription ? "rotate-180" : ""}`} />
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  // Objectives section renderer
+  const renderObjectives = (isMobile: boolean = false) => {
+    const objectives = getObjectives();
+    if (!objectives.length) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+          {t("whatYouWillLearn.title")}
+        </h2>
+        <div className={isMobile ? "space-y-3" : "space-y-4"}>
+          {objectives.map((item, index) => (
+            <div key={index} className={`flex items-start ${isMobile ? "gap-2.5" : "gap-3"}`}>
+              <Check className={`${isMobile ? "w-4 h-4" : "w-5 h-5"} text-[#06080b] flex-shrink-0 mt-0.5`} />
+              <p className={`text-[#06080b] ${isMobile ? "text-sm" : "text-base"} ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Target audience section renderer
+  const renderTargetAudience = (isMobile: boolean = false) => {
+    const audience = getTargetAudience();
+    if (!audience.length) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+          {t("targetAudience") || "Target Audience"}
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {audience.map((item, index) => (
+            <span
+              key={index}
+              className="inline-flex items-center px-3 py-1.5 bg-[#F4F4F5] text-[#4a4c4f] text-sm rounded-full"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Requirements section renderer
+  const renderRequirements = (isMobile: boolean = false) => {
+    if (!showRequirements) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
+          {t("requirements") || "Requirements"}
+        </h2>
+        <p className={`text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+          {getRequirements()}
+        </p>
+      </div>
+    );
+  };
+
+  // Notices section renderer
+  const renderNotices = (isMobile: boolean = false) => {
+    const notices = getNotices();
+    if (!notices) return null;
+    return (
+      <div className={`bg-[#FFFBEB] border border-[#FDE68A] ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-6 mb-8"}`}>
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className={`font-semibold text-[#92400E] ${isMobile ? "text-sm" : "text-base"} mb-1`}>
+              {t("notices") || "Important Notice"}
+            </h3>
+            <p className={`text-[#92400E] ${isMobile ? "text-xs" : "text-sm"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+              {notices}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Reviews section renderer
+  const renderReviews = (isMobile: boolean = false) => {
+    if (!apiCourse.ratings.length) return null;
+    return (
+      <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
+        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
+          {t("statsBar.reviews")} ({apiCourse.totalRatings})
+        </h2>
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-3xl font-bold text-[#06080b]">{apiCourse.avgRating.toFixed(1)}</span>
+          <div>
+            <div className={`flex items-center gap-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-[#71717A]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
+          </div>
+        </div>
+        <div className="flex flex-col divide-y divide-[#E5E7EB]">
+          {apiCourse.ratings.map((review, index) => (
+            <div key={index} className="py-4 first:pt-0 last:pb-0">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-[14px] text-[#06080b]">{review.studentName}</p>
+                <p className="text-[12px] text-[#9CA3AF]">
+                  {new Date(review.createdAt).toLocaleDateString(
+                    locale === "ar" ? "ar-SA" : "en-US",
+                    { day: "numeric", month: "short", year: "numeric" }
+                  )}
+                </p>
+              </div>
+              <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3 h-3 ${i < review.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                  />
+                ))}
+              </div>
+              {review.reviewText && (
+                <p className={`text-[13px] text-[#4a4c4f] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+                  {review.reviewText}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -211,7 +425,7 @@ const CourseDetailContent = () => {
                     {t("breadcrumb.courses")}
                   </Link>
                   <ChevronIcon className="w-4 h-4" />
-                  <span className="text-[#06080b]">{getCourseTitle()}</span>
+                  <span className="text-[#06080b]">{getTitle()}</span>
                 </div>
 
                 {/* Title */}
@@ -219,21 +433,15 @@ const CourseDetailContent = () => {
                   className={`font-bold text-[#06080b] mb-4 ${isRTL ? "text-right" : "text-left"}`}
                   style={{ fontSize: "40px", lineHeight: "1.2" }}
                 >
-                  {getCourseTitle()}
+                  {getTitle()}
                 </h1>
-                <p className={`text-[#4a4c4f] text-lg mb-6 ${isRTL ? "text-right" : "text-left"}`}>{course.subtitle}</p>
+                {getDescription() && (
+                  <p className={`text-[#4a4c4f] text-lg mb-6 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
+                )}
 
                 {/* Language Tags */}
-                <div className={`flex items-center gap-3 mb-8 ${isRTL ? "justify-start" : ""}`}>
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-[#71717A]" />
-                    <span className="text-sm text-[#06080b]">{t("languages.english")}</span>
-                  </div>
-                  <div className="w-px h-4 bg-[#D4D4D8]" />
-                  <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-[#71717A]" />
-                    <span className="text-sm text-[#06080b]">{t("languages.arabic")}</span>
-                  </div>
+                <div className="mb-8">
+                  {renderLanguageTags("text-sm")}
                 </div>
 
                 {/* Stats Bar with gradient left border */}
@@ -248,20 +456,20 @@ const CourseDetailContent = () => {
                       </p>
                     </div>
                     <div className={`flex-1 px-8 ${isRTL ? "border-l-2" : "border-r-2"} border-[#E5E7EB] text-center`}>
-                      <p className="font-bold text-[#06080b] text-xl mb-1">{course.rating}</p>
+                      <p className="font-bold text-[#06080b] text-xl mb-1">{apiCourse.avgRating.toFixed(1)}</p>
                       <div className={`flex items-center justify-center gap-0.5 mb-1 ${isRTL ? "flex-row-reverse" : ""}`}>
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-4 h-4 ${i < Math.floor(course.rating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                            className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
                           />
                         ))}
                       </div>
-                      <p className="text-xs text-[#71717A]">{course.reviews} {t("statsBar.reviews")}</p>
+                      <p className="text-xs text-[#71717A]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
                     </div>
                     <div className={`flex-1 ${isRTL ? "pr-8" : "pl-8"} text-center`}>
                       <Users className="w-5 h-5 text-[#71717A] mx-auto mb-1" />
-                      <p className="font-bold text-[#06080b] text-xl">{course.students}+</p>
+                      <p className="font-bold text-[#06080b] text-xl">{apiCourse.enrolledCount}+</p>
                       <p className="text-xs text-[#71717A]">{t("statsBar.learners")}</p>
                     </div>
                   </div>
@@ -296,99 +504,8 @@ const CourseDetailContent = () => {
                   </div>
                 )}
 
-                {/* Select City and Month */}
-                <div className="relative bg-white shadow-sm rounded-xl overflow-hidden mb-6">
-                  <div className={`p-6 ${isRTL ? "pr-7" : "pl-7"}`}>
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="font-semibold text-[#06080b] text-lg">
-                        {t("selectCityMonth.title")}
-                      </h3>
-                      <div className="flex gap-3">
-                        {/* City Dropdown */}
-                        <div className="relative">
-                          <button
-                            onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                            className="flex items-center justify-between gap-4 px-4 py-2.5 border border-[#C8D5E1] rounded-lg min-w-[150px] text-sm bg-white"
-                          >
-                            <span>{getTranslatedCity(selectedCity)}</span>
-                            <ChevronDown className="w-4 h-4 text-[#71717A]" />
-                          </button>
-                          {cityDropdownOpen && (
-                            <div className={`absolute top-full ${isRTL ? "right-0" : "left-0"} mt-1 w-full bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-10`}>
-                              {course.schedules.map((schedule) => (
-                                <button
-                                  key={schedule.city}
-                                  onClick={() => {
-                                    setSelectedCity(schedule.city);
-                                    setCityDropdownOpen(false);
-                                  }}
-                                  className={`w-full px-4 py-2 ${isRTL ? "text-right" : "text-left"} text-sm hover:bg-[#F4F4F5]`}
-                                >
-                                  {getTranslatedCity(schedule.city)}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Month Dropdown */}
-                        <div className="relative">
-                          <button
-                            onClick={() => setMonthDropdownOpen(!monthDropdownOpen)}
-                            className="flex items-center justify-between gap-4 px-4 py-2.5 border border-[#C8D5E1] rounded-lg min-w-[150px] text-sm bg-white"
-                          >
-                            <span>{selectedMonth}</span>
-                            <ChevronDown className="w-4 h-4 text-[#71717A]" />
-                          </button>
-                          {monthDropdownOpen && (
-                            <div className={`absolute top-full ${isRTL ? "right-0" : "left-0"} mt-1 w-full bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-10`}>
-                              {months.map((month) => (
-                                <button
-                                  key={month}
-                                  onClick={() => {
-                                    setSelectedMonth(month);
-                                    setMonthDropdownOpen(false);
-                                  }}
-                                  className={`w-full px-4 py-2 ${isRTL ? "text-right" : "text-left"} text-sm hover:bg-[#F4F4F5]`}
-                                >
-                                  {month}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Date Cards */}
-                    <div className="grid grid-cols-3 gap-4">
-                      {availableDates.map((dateItem, index) => (
-                        <button
-                          key={dateItem.date}
-                          onClick={() => setSelectedDate(dateItem.date)}
-                          className={`relative flex items-center justify-between p-4 ${isRTL ? "pr-5" : "pl-5"} rounded-xl overflow-hidden transition-colors ${
-                            selectedDate === dateItem.date
-                              ? "bg-[#FFFBEB]"
-                              : "bg-[#F4F4F5]"
-                          }`}
-                        >
-                          <div
-                            className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1`}
-                            style={{ background: selectedDate === dateItem.date ? "linear-gradient(180deg, #8E690A 0%, #6B4F08 100%)" : "#C8D5E1" }}
-                          />
-                          <div className={isRTL ? "text-right" : "text-left"}>
-                            <p className="font-semibold text-[#06080b] text-base">{getTranslatedCity(selectedCity)}</p>
-                            <p className="text-sm text-[#71717A]">{dateItem.date}</p>
-                          </div>
-                          <div className="flex items-center gap-1 text-[#71717A]">
-                            <Users className="w-4 h-4" />
-                            <span className="text-sm">{index}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                {/* Sessions Section */}
+                {renderSessions(false)}
 
                 {/* Registration Note */}
                 <div className={`bg-[#FBE9E9] rounded-lg p-4 text-sm text-[#DC2626] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
@@ -404,8 +521,8 @@ const CourseDetailContent = () => {
                     <div className="relative h-[200px] rounded-xl overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={apiCourse?.thumbnail || "/blogs/blog-hero.png"}
-                        alt={getCourseTitle()}
+                        src={apiCourse.thumbnail || "/blogs/blog-hero.png"}
+                        alt={getTitle()}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -415,16 +532,32 @@ const CourseDetailContent = () => {
                   <div className="flex items-center gap-2 px-4 py-4">
                     <div className="flex items-center gap-1.5 border border-[#E5E7EB] rounded-lg px-3 py-1.5">
                       <Video className="w-3.5 h-3.5 text-[#4a4c4f]" />
-                      <span className="text-[#4a4c4f] text-xs">{isRTL ? tCourses("card.liveOnline") : course.type}</span>
+                      <span className="text-[#4a4c4f] text-xs">{getDeliveryLabel()}</span>
                     </div>
                     <div className="flex items-center gap-1.5 border border-[#E5E7EB] rounded-lg px-3 py-1.5">
                       <Clock className="w-3.5 h-3.5 text-[#4a4c4f]" />
-                      <span className="text-[#4a4c4f] text-xs">{course.hours}</span>
+                      <span className="text-[#4a4c4f] text-xs">{apiCourse.totalHours || apiCourse.cmeHours} {t("courseDetails.hours")}</span>
                     </div>
-                    <div className="border border-[#E5E7EB] rounded-lg px-3 py-1.5">
-                      <span className="text-[#4a4c4f] text-xs">{course.certification}</span>
-                    </div>
+                    {apiCmeAccredited && (
+                      <div className="border border-[#E5E7EB] rounded-lg px-3 py-1.5">
+                        <span className="text-[#4a4c4f] text-xs">CME</span>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Features in sidebar */}
+                  {getFeatures().length > 0 && (
+                    <div className="px-4 pb-3">
+                      <div className="space-y-2">
+                        {getFeatures().map((feature, index) => (
+                          <div key={index} className="flex items-start gap-2">
+                            <Check className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0 mt-0.5" />
+                            <span className="text-[#4a4c4f] text-xs">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Price */}
                   <div className="px-4 pb-5">
@@ -585,82 +718,73 @@ const CourseDetailContent = () => {
               <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
 
               <div className="grid grid-cols-2 gap-x-12 gap-y-6">
-                <div className="flex items-start gap-3">
-                  <Calendar className="w-5 h-5 text-[#71717A] mt-0.5" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
-                    <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
-                    <p className="text-sm text-[#71717A]">24 Jan 2026 (2:47 PM)</p>
+                {apiCourse.enrollmentDeadline && (
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-5 h-5 text-[#71717A] mt-0.5" />
+                    <div className={isRTL ? "text-right" : "text-left"}>
+                      <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
+                      <p className="text-sm text-[#71717A]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                    </div>
                   </div>
-                </div>
-                <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                  <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                  <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.city")}</p>
-                  <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{getTranslatedCity(selectedCity) || (isRTL ? "المدينة المنورة" : "Al Madinah Al Munawwarah")}</p>
-                </div>
+                )}
                 <div className="flex items-start gap-3">
                   <Globe className="w-5 h-5 text-[#71717A] mt-0.5" />
                   <div className={isRTL ? "text-right" : "text-left"}>
                     <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.language")}</p>
-                    <p className="text-sm text-[#71717A]">{course.language}</p>
+                    <p className="text-sm text-[#71717A]">{getLanguageLabel()}</p>
                   </div>
                 </div>
-                <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                  <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                  <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
-                  <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>25 Jan 2026 (10:59 AM)</p>
-                </div>
+                {apiCourse.startDate && (
+                  <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                    <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
+                    <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.startTime")}</p>
+                    <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.startDate)}</p>
+                  </div>
+                )}
+                {apiCourse.endDate && (
+                  <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                    <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
+                    <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
+                    <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{formatDate(apiCourse.endDate)}</p>
+                  </div>
+                )}
                 <div className="flex items-start gap-3">
-                  <Users className="w-5 h-5 text-[#71717A] mt-0.5" />
+                  <Clock className="w-5 h-5 text-[#71717A] mt-0.5" />
                   <div className={isRTL ? "text-right" : "text-left"}>
                     <p className="text-sm font-semibold text-[#06080b]">{t("courseDetails.duration")}</p>
-                    <p className="text-sm text-[#71717A]">{course.duration}</p>
+                    <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                   </div>
                 </div>
-                <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                  <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                  <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.endTime")}</p>
-                  <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>26 Jan 2026 (4:00 PM)</p>
-                </div>
-                <div></div>
-                <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
-                  <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
-                  <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
-                  <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>Physio Guidance</p>
-                </div>
+                {showVenue && getVenue() && (
+                  <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
+                    <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
+                    <p className={`text-sm font-semibold text-[#06080b] ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.venue")}</p>
+                    <p className={`text-sm text-[#71717A] ${isRTL ? "text-right" : "text-left"}`}>{getVenue()}</p>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* What You'll Learn */}
-            <div className="bg-white rounded-2xl p-8 mb-8">
-              <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>
-                {t("whatYouWillLearn.title")}
-              </h2>
-              <div className="space-y-4">
-                {getWhatYouWillLearn().map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-[#06080b] flex-shrink-0 mt-0.5" />
-                    <p className={`text-[#06080b] text-base ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Objectives (What You'll Learn) */}
+            {renderObjectives(false)}
 
-            {/* Description */}
-            <div className="bg-white rounded-2xl p-8">
-              <h2 className={`font-bold text-[#06080b] text-xl mb-4 ${isRTL ? "text-right" : "text-left"}`}>{t("description.title")}</h2>
-              <p className={`text-[#4a4c4f] text-base leading-relaxed mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-                {showFullDescription
-                  ? getFullDescription()
-                  : getFullDescription().slice(0, 300) + "..."}
-              </p>
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className={`flex items-center gap-1 text-[#06080b] text-sm font-medium ${isRTL ? "flex-row-reverse" : ""}`}
-              >
-                {showFullDescription ? t("description.viewLess") : t("description.viewMore")}
-                <ChevronDown className={`w-4 h-4 transition-transform ${showFullDescription ? "rotate-180" : ""}`} />
-              </button>
-            </div>
+            {/* Overview (Description) */}
+            {renderOverview(false)}
+
+            {/* Modules */}
+            {renderModules(false)}
+
+            {/* Target Audience */}
+            {renderTargetAudience(false)}
+
+            {/* Requirements */}
+            {renderRequirements(false)}
+
+            {/* Notices */}
+            {renderNotices(false)}
+
+            {/* Reviews */}
+            {renderReviews(false)}
           </div>
         </section>
 
@@ -702,7 +826,7 @@ const CourseDetailContent = () => {
             <ChevronIcon className="w-3 h-3 flex-shrink-0" />
             <Link href="/courses" className="flex-shrink-0">{t("breadcrumb.courses")}</Link>
             <ChevronIcon className="w-3 h-3 flex-shrink-0" />
-            <span className="text-[#06080b] truncate">{getCourseTitle()}</span>
+            <span className="text-[#06080b] truncate">{getTitle()}</span>
           </div>
         </div>
 
@@ -712,21 +836,15 @@ const CourseDetailContent = () => {
             className={`font-bold text-[#06080b] mb-2 ${isRTL ? "text-right" : "text-left"}`}
             style={{ fontSize: "24px", lineHeight: "1.3" }}
           >
-            {getCourseTitle()}
+            {getTitle()}
           </h1>
-          <p className={`text-[#4a4c4f] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>{course.subtitle}</p>
+          {getDescription() && (
+            <p className={`text-[#4a4c4f] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>{getDescription()}</p>
+          )}
 
           {/* Language Tags */}
-          <div className={`flex items-center gap-3 mb-6 ${isRTL ? "justify-start" : ""}`}>
-            <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-[#71717A]" />
-              <span className="text-xs text-[#06080b]">{t("languages.english")}</span>
-            </div>
-            <div className="w-px h-3 bg-[#D4D4D8]" />
-            <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-[#71717A]" />
-              <span className="text-xs text-[#06080b]">{t("languages.arabic")}</span>
-            </div>
+          <div className="mb-6">
+            {renderLanguageTags("text-xs")}
           </div>
 
           {/* Stats */}
@@ -737,20 +855,20 @@ const CourseDetailContent = () => {
             />
             <div className={`flex items-center p-3 ${isRTL ? "pr-4" : "pl-4"}`}>
               <div className={`flex-1 text-center ${isRTL ? "border-l" : "border-r"} border-[#E5E7EB]`}>
-                <p className="font-bold text-[#06080b]">{course.rating}</p>
+                <p className="font-bold text-[#06080b]">{apiCourse.avgRating.toFixed(1)}</p>
                 <div className={`flex items-center justify-center gap-0.5 mb-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-3 h-3 ${i < Math.floor(course.rating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                      className={`w-3 h-3 ${i < Math.floor(apiCourse.avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
                     />
                   ))}
                 </div>
-                <p className="text-[10px] text-[#71717A]">{course.reviews} {t("statsBar.reviews")}</p>
+                <p className="text-[10px] text-[#71717A]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
               </div>
               <div className="flex-1 text-center">
                 <Users className="w-4 h-4 text-[#71717A] mx-auto mb-0.5" />
-                <p className="font-bold text-[#06080b]">{course.students}+</p>
+                <p className="font-bold text-[#06080b]">{apiCourse.enrolledCount}+</p>
                 <p className="text-[10px] text-[#71717A]">{t("statsBar.learners")}</p>
               </div>
             </div>
@@ -901,72 +1019,8 @@ const CourseDetailContent = () => {
             </div>
           )}
 
-          {/* City Selection */}
-          <div className="relative bg-white rounded-xl overflow-hidden mb-4">
-            <div
-              className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1`}
-              style={{ background: "linear-gradient(180deg, #AB842F 0%, #8E690A 100%)" }}
-            />
-            <div className={`p-4 ${isRTL ? "pr-5" : "pl-5"}`}>
-              <h3 className={`font-semibold text-[#06080b] text-base mb-3 ${isRTL ? "text-right" : "text-left"}`}>
-                {t("selectCityMonth.title")}
-              </h3>
-              <div className="flex gap-2 mb-4">
-                <select
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className={`flex-1 px-3 py-2 border border-[#C8D5E1] rounded-lg text-sm ${isRTL ? "text-right" : "text-left"}`}
-                  dir={isRTL ? "rtl" : "ltr"}
-                >
-                  {course.schedules.map((schedule) => (
-                    <option key={schedule.city} value={schedule.city}>
-                      {getTranslatedCity(schedule.city)}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className={`flex-1 px-3 py-2 border border-[#C8D5E1] rounded-lg text-sm ${isRTL ? "text-right" : "text-left"}`}
-                  dir={isRTL ? "rtl" : "ltr"}
-                >
-                  {months.map((month) => (
-                    <option key={month} value={month}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Date Cards */}
-              <div className="grid grid-cols-2 gap-2">
-                {availableDates.slice(0, 4).map((dateItem, index) => (
-                  <button
-                    key={dateItem.date}
-                    onClick={() => setSelectedDate(dateItem.date)}
-                    className={`relative flex items-center justify-between p-3 ${isRTL ? "pr-4" : "pl-4"} rounded-lg overflow-hidden ${
-                      selectedDate === dateItem.date
-                        ? "bg-[#FFFBEB]"
-                        : "bg-[#F4F4F5]"
-                    }`}
-                  >
-                    <div
-                      className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1`}
-                      style={{ background: selectedDate === dateItem.date ? "linear-gradient(180deg, #8E690A 0%, #6B4F08 100%)" : "#C8D5E1" }}
-                    />
-                    <div className={isRTL ? "text-right" : "text-left"}>
-                      <p className="font-semibold text-[#06080b] text-xs">{getTranslatedCity(selectedCity)}</p>
-                      <p className="text-[10px] text-[#71717A]">{dateItem.date}</p>
-                    </div>
-                    <div className="flex items-center gap-1 text-[#71717A]">
-                      <Users className="w-3 h-3" />
-                      <span className="text-xs">{index}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+          {/* Sessions Section — mobile */}
+          {renderSessions(true)}
 
           {/* Registration Note */}
           <div className={`bg-[#FBE9E9] rounded-lg p-3 text-xs text-[#DC2626] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
@@ -979,66 +1033,61 @@ const CourseDetailContent = () => {
           <div className="bg-white rounded-xl p-4 mb-4">
             <h2 className={`font-bold text-[#06080b] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
             <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-4 h-4 text-[#71717A]" />
-                <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
-                  <p className="text-sm text-[#71717A]">24 Jan 2026</p>
+              {apiCourse.enrollmentDeadline && (
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-[#71717A]" />
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.registrationDeadline")}</p>
+                    <p className="text-sm text-[#71717A]">{formatDate(apiCourse.enrollmentDeadline)}</p>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex items-center gap-3">
                 <Globe className="w-4 h-4 text-[#71717A]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.language")}</p>
-                  <p className="text-sm text-[#71717A]">{course.language}</p>
+                  <p className="text-sm text-[#71717A]">{getLanguageLabel()}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="w-4 h-4 text-[#71717A]" />
                 <div className={isRTL ? "text-right" : "text-left"}>
                   <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.duration")}</p>
-                  <p className="text-sm text-[#71717A]">{course.duration}</p>
+                  <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-4 h-4 text-[#71717A]" />
-                <div className={isRTL ? "text-right" : "text-left"}>
-                  <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.venue")}</p>
-                  <p className="text-sm text-[#71717A]">Physio Guidance</p>
+              {showVenue && getVenue() && (
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-4 h-4 text-[#71717A]" />
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <p className="text-xs font-semibold text-[#06080b]">{t("courseDetails.venue")}</p>
+                    <p className="text-sm text-[#71717A]">{getVenue()}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
-          {/* What You'll Learn */}
-          <div className="bg-white rounded-xl p-4 mb-4">
-            <h2 className={`font-bold text-[#06080b] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{t("whatYouWillLearn.title")}</h2>
-            <div className="space-y-3">
-              {getWhatYouWillLearn().map((item, index) => (
-                <div key={index} className="flex items-start gap-2.5">
-                  <Check className="w-4 h-4 text-[#06080b] flex-shrink-0 mt-0.5" />
-                  <p className={`text-[#06080b] text-sm ${isRTL ? "text-right" : "text-left"}`}>{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Objectives (What You'll Learn) — mobile */}
+          {renderObjectives(true)}
 
-          {/* Description */}
-          <div className="bg-white rounded-xl p-4">
-            <h2 className={`font-bold text-[#06080b] text-lg mb-3 ${isRTL ? "text-right" : "text-left"}`}>{t("description.title")}</h2>
-            <p className={`text-[#4a4c4f] text-sm leading-relaxed mb-3 ${isRTL ? "text-right" : "text-left"}`}>
-              {showFullDescription
-                ? getFullDescription()
-                : getFullDescription().slice(0, 200) + "..."}
-            </p>
-            <button
-              onClick={() => setShowFullDescription(!showFullDescription)}
-              className={`flex items-center gap-1 text-[#06080b] text-sm font-medium ${isRTL ? "flex-row-reverse" : ""}`}
-            >
-              {showFullDescription ? t("description.viewLess") : t("description.viewMore")}
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFullDescription ? "rotate-180" : ""}`} />
-            </button>
-          </div>
+          {/* Overview (Description) — mobile */}
+          {renderOverview(true)}
+
+          {/* Modules — mobile */}
+          {renderModules(true)}
+
+          {/* Target Audience — mobile */}
+          {renderTargetAudience(true)}
+
+          {/* Requirements — mobile */}
+          {renderRequirements(true)}
+
+          {/* Notices — mobile */}
+          {renderNotices(true)}
+
+          {/* Reviews — mobile */}
+          {renderReviews(true)}
         </section>
 
         {/* Related Courses */}

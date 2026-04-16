@@ -448,6 +448,20 @@ export class CoursesService {
         language: courses.language,
         startDate: courses.startDate,
         endDate: courses.endDate,
+        overview: courses.overview,
+        overviewAr: courses.overviewAr,
+        objectives: courses.objectives,
+        objectivesAr: courses.objectivesAr,
+        features: courses.features,
+        featuresAr: courses.featuresAr,
+        targetAudience: courses.targetAudience,
+        targetAudienceAr: courses.targetAudienceAr,
+        requirements: courses.requirements,
+        requirementsAr: courses.requirementsAr,
+        notices: courses.notices,
+        noticesAr: courses.noticesAr,
+        venue: courses.venue,
+        venueAr: courses.venueAr,
         enrolledCount: sql<number>`(
           SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
@@ -484,6 +498,70 @@ export class CoursesService {
       throw new NotFoundException('Course not found');
     }
 
+    // Fetch sessions for non-self-paced courses
+    let sessionsList: Array<{
+      id: string; title: string; type: string;
+      scheduledAt: Date; durationMinutes: number;
+      venueAddress: string | null; roomName: string | null; status: string;
+    }> = [];
+    if (data.deliveryType !== 'self-paced') {
+      sessionsList = await db
+        .select({
+          id: sessions.id,
+          title: sessions.title,
+          type: sessions.type,
+          scheduledAt: sessions.scheduledAt,
+          durationMinutes: sessions.durationMinutes,
+          venueAddress: sessions.venueAddress,
+          roomName: sessions.roomName,
+          status: sessions.status,
+        })
+        .from(sessions)
+        .where(
+          and(
+            eq(sessions.courseId, courseId),
+            inArray(sessions.status, ['scheduled', 'live', 'completed']),
+          ),
+        )
+        .orderBy(asc(sessions.scheduledAt));
+    }
+
+    // Fetch modules for self-paced and blended courses
+    let modulesList: Array<{
+      id: string; title: string; titleAr: string | null;
+      orderIndex: number; type: string; durationMinutes: number | null;
+    }> = [];
+    if (data.deliveryType === 'self-paced' || data.deliveryType === 'blended') {
+      modulesList = await db
+        .select({
+          id: courseModules.id,
+          title: courseModules.title,
+          titleAr: courseModules.titleAr,
+          orderIndex: courseModules.orderIndex,
+          type: courseModules.type,
+          durationMinutes: courseModules.durationMinutes,
+        })
+        .from(courseModules)
+        .where(eq(courseModules.courseId, courseId))
+        .orderBy(asc(courseModules.orderIndex));
+    }
+
+    // Fetch top 5 recent reviews
+    const ratingsList = await db
+      .select({
+        rating: courseRatings.rating,
+        reviewText: courseRatings.reviewText,
+        createdAt: courseRatings.createdAt,
+        studentName: sql<string>`(
+          SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
+          WHERE u.id = ${courseRatings.studentId}
+        )`,
+      })
+      .from(courseRatings)
+      .where(eq(courseRatings.courseId, courseId))
+      .orderBy(desc(courseRatings.createdAt))
+      .limit(5);
+
     const isSelfPaced = data.deliveryType === 'self-paced';
     let effectiveMax: number | null;
     if (isSelfPaced) {
@@ -501,6 +579,9 @@ export class CoursesService {
       price: data.price ? Number(data.price) : 0,
       remainingSeats,
       isFull: effectiveMax !== null ? remainingSeats === 0 : false,
+      sessions: sessionsList,
+      modules: modulesList,
+      ratings: ratingsList,
     };
   }
 

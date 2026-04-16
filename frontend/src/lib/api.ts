@@ -1397,6 +1397,23 @@ export interface CreateCourseManagerData {
   endDate?: string;
   instructorId: string;
   cohort?: string;
+  overview?: string;
+  overviewAr?: string;
+  objectives?: string[];
+  objectivesAr?: string[];
+  features?: string[];
+  featuresAr?: string[];
+  targetAudience?: string[];
+  targetAudienceAr?: string[];
+  requirements?: string;
+  requirementsAr?: string;
+  notices?: string;
+  noticesAr?: string;
+  price?: number;
+  venue?: string;
+  venueAr?: string;
+  enrollmentDeadline?: string;
+  language?: string;
 }
 
 export interface SessionsParams {

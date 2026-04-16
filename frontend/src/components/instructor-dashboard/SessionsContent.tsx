@@ -10,6 +10,7 @@ import { useInstructorProfile } from "@/hooks/useInstructorProfile";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import DatePicker from "@/components/ui/DatePicker";
+import { CitySelect } from "@/components/ui/CitySelect";
 import { instructorApi, zoomAttendanceApi, courseAssistantsApi, type ThresholdStatus } from "@/lib/api";
 import type {
   CourseSession,
@@ -1147,6 +1148,7 @@ function ScheduleSessionModal({
   const duration = durationHours * 60 + durationMins;
   const [roomName, setRoomName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
+  const [city, setCity] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [saving, setSaving] = useState(false);
   const [conflict, setConflict] = useState<string | null>(null);
@@ -1204,6 +1206,7 @@ function ScheduleSessionModal({
       if (type === "onsite" || type === "hybrid") {
         if (roomName) data.roomName = roomName;
         if (venueAddress) data.venueAddress = venueAddress;
+        if (city) data.city = city;
       }
       if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
         data.zoomLink = zoomLink.trim();
@@ -1400,6 +1403,16 @@ function ScheduleSessionModal({
                 onChange={(e) => setVenueAddress(e.target.value)}
                 className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
                 placeholder={t("sessionsPage.form.venueAddressPlaceholder")}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                {t("sessionsPage.form.city")}
+              </label>
+              <CitySelect
+                value={city}
+                onChange={setCity}
+                placeholder={t("sessionsPage.form.cityPlaceholder")}
               />
             </div>
           </>
@@ -1661,6 +1674,7 @@ function EditSessionModal({
   const duration = durationHours * 60 + durationMins;
   const [roomName, setRoomName] = useState(session.roomName || "");
   const [venueAddress, setVenueAddress] = useState(session.venueAddress || "");
+  const [city, setCity] = useState(session.city || "");
   const [saving, setSaving] = useState(false);
   const [conflict, setConflict] = useState<string | null>(null);
 
@@ -1716,6 +1730,7 @@ function EditSessionModal({
       if (session.type === "onsite" || session.type === "hybrid") {
         data.roomName = roomName || null;
         data.venueAddress = venueAddress || null;
+        data.city = city || null;
       }
       await instructorApi.updateSession(session.id, data);
       toast.success(t("sessionsPage.editModal.success"));
@@ -1830,6 +1845,16 @@ function EditSessionModal({
                 value={venueAddress}
                 onChange={(e) => setVenueAddress(e.target.value)}
                 className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                {t("sessionsPage.form.city")}
+              </label>
+              <CitySelect
+                value={city}
+                onChange={setCity}
+                placeholder={t("sessionsPage.form.cityPlaceholder")}
               />
             </div>
           </>

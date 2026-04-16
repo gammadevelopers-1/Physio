@@ -36,6 +36,7 @@ import SkeletonCard from "@/components/shared/SkeletonCard";
 import ExportButton from "@/components/shared/ExportButton";
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
+import { CitySelect } from "@/components/ui/CitySelect";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { toast } from "sonner";
 
@@ -68,6 +69,7 @@ function ScheduleSessionModal({
   const duration = durationHours * 60 + durationMins;
   const [roomName, setRoomName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
+  const [city, setCity] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -95,6 +97,7 @@ function ScheduleSessionModal({
       if (type === "onsite" || type === "hybrid") {
         if (roomName) data.roomName = roomName;
         if (venueAddress) data.venueAddress = venueAddress;
+        if (city) data.city = city;
       }
       if ((type === "zoom" || type === "hybrid") && zoomLink.trim()) {
         data.zoomLink = zoomLink.trim();
@@ -239,6 +242,16 @@ function ScheduleSessionModal({
                 {t("sessionsPage.form.venueAddress") || "Venue Address"} *
               </label>
               <input type="text" value={venueAddress} onChange={(e) => setVenueAddress(e.target.value)} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm" placeholder={t("sessionsPage.form.venueAddressPlaceholder") || "Enter venue address"} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#374151] mb-1.5">
+                {t("sessionsPage.form.city") || "City"}
+              </label>
+              <CitySelect
+                value={city}
+                onChange={setCity}
+                placeholder={t("sessionsPage.form.cityPlaceholder") || "Select city"}
+              />
             </div>
           </>
         )}

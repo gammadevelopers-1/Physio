@@ -16,7 +16,6 @@ import {
   MapPin,
   Check,
   Share2,
-  Heart,
   ShoppingCart,
   Video,
   Award,
@@ -27,6 +26,8 @@ import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
 import { studentApi } from "@/lib/api";
+import { formatDuration } from "@/lib/utils";
+import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
 
 const CourseDetailContent = () => {
@@ -62,6 +63,36 @@ const CourseDetailContent = () => {
     success: boolean;
     message: string;
   } | null>(null);
+  const [shareTooltip, setShareTooltip] = useState(false);
+  const [sessionFilterCity, setSessionFilterCity] = useState<string>("");
+  const [sessionFilterMonth, setSessionFilterMonth] = useState<string>("");
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+    const shareTitle = apiCourse?.title || "";
+
+    // Try native share API first (mobile)
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await (navigator as any).share({
+          title: shareTitle,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // User cancelled or failed — fall through to clipboard
+      }
+    }
+
+    // Fallback: copy URL to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareTooltip(true);
+      setTimeout(() => setShareTooltip(false), 2000);
+    } catch {
+      // Clipboard API failed (old browsers)
+    }
+  };
 
   // Derive pricing/capacity from API data
   const apiPrice = apiCourse?.price ?? 0;
@@ -119,7 +150,8 @@ const CourseDetailContent = () => {
 
   // Delivery-type based section visibility
   const dt = apiCourse?.deliveryType || "";
-  const showSessions = dt === "zoom" || dt === "onsite" || dt === "blended";
+  // Sessions list shown only for onsite/blended (zoom-only courses hide lectures list)
+  const showSessions = dt === "onsite" || dt === "blended";
   const showModules = dt === "self-paced" || dt === "blended";
   const showVenue = dt === "onsite" || dt === "blended";
   const showRequirements = (dt === "onsite" || dt === "blended") && !!getRequirements();
@@ -186,34 +218,145 @@ const CourseDetailContent = () => {
   // Sessions section renderer
   const renderSessions = (isMobile: boolean = false) => {
     if (!showSessions || !apiCourse.sessions.length) return null;
+
+    // Extract unique cities and months from sessions
+    const uniqueCities = Array.from(
+      new Set(
+        apiCourse.sessions
+          .filter((s) => s.city)
+          .map((s) => s.city as string),
+      ),
+    );
+    const uniqueMonths = Array.from(
+      new Set(
+        apiCourse.sessions.map((s) => {
+          const d = new Date(s.scheduledAt);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        }),
+      ),
+    ).sort();
+
+    // Show city filter only if onsite/blended AND at least one session has a city
+    const showCityFilter = (apiCourse.deliveryType === "onsite" || apiCourse.deliveryType === "blended") && uniqueCities.length > 0;
+    const showMonthFilter = uniqueMonths.length > 1;
+
+    // Filter sessions
+    const filteredSessions = apiCourse.sessions.filter((s) => {
+      if (sessionFilterCity && s.city !== sessionFilterCity) return false;
+      if (sessionFilterMonth) {
+        const d = new Date(s.scheduledAt);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        if (key !== sessionFilterMonth) return false;
+      }
+      return true;
+    });
+
+    const monthLabel = (key: string) => {
+      const [year, month] = key.split("-");
+      const date = new Date(Number(year), Number(month) - 1, 1);
+      return date.toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+        month: "long",
+        year: "numeric",
+      });
+    };
+
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
         <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
           {t("schedule") || "Schedule"}
         </h2>
-        <div className="flex flex-col gap-3">
-          {apiCourse.sessions.map((session) => (
-            <div key={session.id} className="flex items-center justify-between p-3 bg-[#f4f4f5] rounded-lg">
-              <div>
-                <p className="font-medium text-[14px]">{session.title}</p>
-                <p className="text-[13px] text-[#6B7280]">
-                  {new Date(session.scheduledAt).toLocaleDateString(
-                    locale === "ar" ? "ar-SA" : "en-US",
-                    { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
-                  )}
-                  {" · "}{session.durationMinutes} min
-                </p>
-                {session.venueAddress && (
-                  <p className="text-[12px] text-[#9CA3AF]">{session.venueAddress}</p>
-                )}
+
+        {/* Filters */}
+        {(showCityFilter || showMonthFilter) && (
+          <div className={`flex flex-wrap gap-3 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
+            {showCityFilter && (
+              <div className="flex flex-col gap-1">
+                <label className="text-[12px] text-[#6B7280] font-medium">
+                  {locale === "ar" ? "المدينة" : "City"}
+                </label>
+                <select
+                  value={sessionFilterCity}
+                  onChange={(e) => setSessionFilterCity(e.target.value)}
+                  className="px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                >
+                  <option value="">{locale === "ar" ? "كل المدن" : "All cities"}</option>
+                  {uniqueCities.map((city) => (
+                    <option key={city} value={city}>
+                      {getCityLabel(city, locale)}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <span className={`text-[11px] px-2 py-1 rounded-full ${
-                session.type === "zoom" ? "bg-blue-100 text-blue-700" :
-                session.type === "onsite" ? "bg-green-100 text-green-700" :
-                "bg-purple-100 text-purple-700"
-              }`}>{session.type}</span>
+            )}
+            {showMonthFilter && (
+              <div className="flex flex-col gap-1">
+                <label className="text-[12px] text-[#6B7280] font-medium">
+                  {locale === "ar" ? "الشهر" : "Month"}
+                </label>
+                <select
+                  value={sessionFilterMonth}
+                  onChange={(e) => setSessionFilterMonth(e.target.value)}
+                  className="px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                >
+                  <option value="">{locale === "ar" ? "كل الأشهر" : "All months"}</option>
+                  {uniqueMonths.map((m) => (
+                    <option key={m} value={m}>
+                      {monthLabel(m)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {(sessionFilterCity || sessionFilterMonth) && (
+              <button
+                onClick={() => {
+                  setSessionFilterCity("");
+                  setSessionFilterMonth("");
+                }}
+                className="self-end px-3 py-2 text-sm text-[#6B7280] hover:text-[#1F2937] underline"
+              >
+                {locale === "ar" ? "مسح" : "Clear"}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {filteredSessions.length === 0 ? (
+            <div className="text-center py-6 text-sm text-[#9CA3AF]">
+              {locale === "ar"
+                ? "لا توجد جلسات تطابق المرشحات"
+                : "No sessions match your filters"}
             </div>
-          ))}
+          ) : (
+            filteredSessions.map((session) => (
+              <div key={session.id} className={`flex items-center justify-between p-3 bg-[#f4f4f5] rounded-lg ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className={isRTL ? "text-right" : "text-left"}>
+                  <p className="font-medium text-[14px]">{session.title}</p>
+                  <p className="text-[13px] text-[#6B7280]">
+                    {new Date(session.scheduledAt).toLocaleDateString(
+                      locale === "ar" ? "ar-SA" : "en-US",
+                      { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }
+                    )}
+                    {" · "}{formatDuration(session.durationMinutes, locale)}
+                  </p>
+                  {session.city && (
+                    <p className="text-[12px] text-[#6B7280] font-medium">
+                      {getCityLabel(session.city, locale)}
+                    </p>
+                  )}
+                  {session.venueAddress && (
+                    <p className="text-[12px] text-[#9CA3AF]">{session.venueAddress}</p>
+                  )}
+                </div>
+                <span className={`text-[11px] px-2 py-1 rounded-full ${
+                  session.type === "zoom" ? "bg-blue-100 text-blue-700" :
+                  session.type === "onsite" ? "bg-green-100 text-green-700" :
+                  "bg-purple-100 text-purple-700"
+                }`}>{session.type}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     );
@@ -222,49 +365,76 @@ const CourseDetailContent = () => {
   // Modules section renderer
   const renderModules = (isMobile: boolean = false) => {
     if (!showModules || !apiCourse.modules.length) return null;
+    const totalCount = apiCourse.modules.length;
+    const totalMinutes = apiCourse.modules.reduce((sum, m) => sum + (m.durationMinutes || 0), 0);
+    const previewModules = apiCourse.modules.slice(0, 2);
+    const remaining = totalCount - previewModules.length;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
-        <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-          {t("contents") || "Contents"} ({apiCourse.modules.length})
-        </h2>
-        <div className="flex flex-col divide-y divide-[var(--outline-subtle)]">
-          {apiCourse.modules.map((mod, i) => (
-            <div key={mod.id} className="flex items-center gap-3 py-3">
-              <span className="text-[13px] text-[#9CA3AF] w-6">{i + 1}.</span>
-              <span className="text-[14px]">{isRTL && mod.titleAr ? mod.titleAr : mod.title}</span>
-              {mod.durationMinutes && (
-                <span className={`text-[12px] text-[#9CA3AF] ${isRTL ? "mr-auto" : "ml-auto"}`}>{mod.durationMinutes} min</span>
+        <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold`}>
+            {t("contents") || "Contents"} {totalCount}
+          </h2>
+          {totalMinutes > 0 && (
+            <span className="text-[13px] text-[#9CA3AF]">
+              {formatDuration(totalMinutes, locale)} {locale === "ar" ? "من المحتوى" : "of content"}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-col gap-3">
+          {previewModules.map((mod, i) => (
+            <div key={mod.id} className="border border-[var(--outline-subtle)] rounded-lg overflow-hidden">
+              <div className={`flex items-center justify-between p-3 bg-[#F9FAFB] ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <span className="text-[13px] text-[#9CA3AF] font-medium">{i + 1}.</span>
+                  <span className="text-[14px] font-medium text-[#06080b]">
+                    {isRTL && mod.titleAr ? mod.titleAr : mod.title}
+                  </span>
+                </div>
+                {mod.durationMinutes && (
+                  <span className="text-[12px] text-[#9CA3AF]">{formatDuration(mod.durationMinutes, locale)}</span>
+                )}
+              </div>
+              {mod.materials && mod.materials.length > 0 && (
+                <div className="flex flex-col divide-y divide-[var(--outline-subtle)]">
+                  {mod.materials.map((mat) => (
+                    <div key={mat.id} className={`flex items-center gap-2 p-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                      <span className="text-[11px] text-[#9CA3AF] uppercase bg-[#F3F4F6] px-2 py-0.5 rounded">{mat.type}</span>
+                      <span className="text-[13px] text-[#4a4c4f]">{mat.title}</span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           ))}
+          {remaining > 0 && (
+            <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg text-center">
+              <p className="text-[13px] text-[#6B7280]">
+                {locale === "ar"
+                  ? `${remaining} وحدات إضافية متاحة عند التسجيل`
+                  : `${remaining} more ${remaining === 1 ? "module" : "modules"} available after enrollment`}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
   };
 
-  // Overview section renderer
+  // Overview section renderer — renders HTML from rich text editor
   const renderOverview = (isMobile: boolean = false) => {
     const overview = getOverview();
     if (!overview) return null;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
-          {t("description.title")}
+          {t("overview") || "Overview"}
         </h2>
-        <p className={`text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-          {showFullDescription
-            ? overview
-            : overview.slice(0, isMobile ? 200 : 300) + (overview.length > (isMobile ? 200 : 300) ? "..." : "")}
-        </p>
-        {overview.length > (isMobile ? 200 : 300) && (
-          <button
-            onClick={() => setShowFullDescription(!showFullDescription)}
-            className={`flex items-center gap-1 text-[#06080b] text-sm font-medium ${isRTL ? "flex-row-reverse" : ""}`}
-          >
-            {showFullDescription ? t("description.viewLess") : t("description.viewMore")}
-            <ChevronDown className={`w-4 h-4 transition-transform ${showFullDescription ? "rotate-180" : ""}`} />
-          </button>
-        )}
+        <div
+          className={`course-overview-content text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}
+          dir={isRTL ? "rtl" : "ltr"}
+          dangerouslySetInnerHTML={{ __html: overview }}
+        />
       </div>
     );
   };
@@ -349,17 +519,15 @@ const CourseDetailContent = () => {
     );
   };
 
-  // Reviews section renderer
+  // Reviews section renderer — always shows, with empty state
   const renderReviews = (isMobile: boolean = false) => {
-    if (!apiCourse.ratings.length) return null;
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
-        <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
-          {t("statsBar.reviews")} ({apiCourse.totalRatings})
-        </h2>
-        <div className="flex items-center gap-3 mb-6">
-          <span className="text-3xl font-bold text-[#06080b]">{apiCourse.avgRating.toFixed(1)}</span>
-          <div>
+        <div className={`flex items-center justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""}`}>
+          <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg" : "text-xl"}`}>
+            {t("reviews")}
+          </h2>
+          <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
             <div className={`flex items-center gap-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
               {[...Array(5)].map((_, i) => (
                 <Star
@@ -368,37 +536,48 @@ const CourseDetailContent = () => {
                 />
               ))}
             </div>
-            <p className="text-xs text-[#71717A]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
+            <span className="text-sm text-[#71717A]">({apiCourse.totalRatings} {t("reviews")})</span>
           </div>
         </div>
-        <div className="flex flex-col divide-y divide-[#E5E7EB]">
-          {apiCourse.ratings.map((review, index) => (
-            <div key={index} className="py-4 first:pt-0 last:pb-0">
-              <div className="flex items-center justify-between mb-2">
-                <p className="font-medium text-[14px] text-[#06080b]">{review.studentName}</p>
-                <p className="text-[12px] text-[#9CA3AF]">
-                  {new Date(review.createdAt).toLocaleDateString(
-                    locale === "ar" ? "ar-SA" : "en-US",
-                    { day: "numeric", month: "short", year: "numeric" }
-                  )}
-                </p>
+        {apiCourse.ratings.length > 0 ? (
+          <div className="flex flex-col divide-y divide-[#E5E7EB]">
+            {apiCourse.ratings.map((review, index) => (
+              <div key={index} className="py-4 first:pt-0 last:pb-0">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-[14px] text-[#06080b]">{review.studentName}</p>
+                  <p className="text-[12px] text-[#9CA3AF]">
+                    {new Date(review.createdAt).toLocaleDateString(
+                      locale === "ar" ? "ar-SA" : "en-US",
+                      { day: "numeric", month: "short", year: "numeric" }
+                    )}
+                  </p>
+                </div>
+                <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-3 h-3 ${i < review.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                    />
+                  ))}
+                </div>
+                {review.reviewText && (
+                  <p className={`text-[13px] text-[#4a4c4f] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+                    {review.reviewText}
+                  </p>
+                )}
               </div>
-              <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${i < review.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
-                  />
-                ))}
-              </div>
-              {review.reviewText && (
-                <p className={`text-[13px] text-[#4a4c4f] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
-                  {review.reviewText}
-                </p>
-              )}
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
+              <Star className="w-7 h-7 text-[#9CA3AF]" />
             </div>
-          ))}
-        </div>
+            <p className="text-sm text-[#9CA3AF]">
+              {locale === "ar" ? "لا توجد تقييمات بعد" : "No Reviews Yet"}
+            </p>
+          </div>
+        )}
       </div>
     );
   };
@@ -444,46 +623,9 @@ const CourseDetailContent = () => {
                   {renderLanguageTags("text-sm")}
                 </div>
 
-                {/* Stats Bar with gradient left border */}
-                <div className="relative bg-white shadow-sm rounded-xl overflow-hidden mb-8">
-                  <div className={`flex items-center p-5 ${isRTL ? "pr-6" : "pl-6"}`}>
-                    <div className={`${isRTL ? "pl-8" : "pr-8"} w-[65%] border-[#E5E7EB]`}>
-                      <p className="text-sm text-[#4a4c4f]">
-                        {t("statsBar.accessCourses")}{" "}
-                        <Link href="/pricing" className="text-[#06080b] underline font-medium">
-                          {t("statsBar.seePlans")}
-                        </Link>
-                      </p>
-                    </div>
-                    <div className={`flex-1 px-8 ${isRTL ? "border-l-2" : "border-r-2"} border-[#E5E7EB] text-center`}>
-                      <p className="font-bold text-[#06080b] text-xl mb-1">{apiCourse.avgRating.toFixed(1)}</p>
-                      <div className={`flex items-center justify-center gap-0.5 mb-1 ${isRTL ? "flex-row-reverse" : ""}`}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < Math.floor(apiCourse.avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-xs text-[#71717A]">{apiCourse.totalRatings} {t("statsBar.reviews")}</p>
-                    </div>
-                    <div className={`flex-1 ${isRTL ? "pr-8" : "pl-8"} text-center`}>
-                      <Users className="w-5 h-5 text-[#71717A] mx-auto mb-1" />
-                      <p className="font-bold text-[#06080b] text-xl">{apiCourse.enrolledCount}+</p>
-                      <p className="text-xs text-[#71717A]">{t("statsBar.learners")}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* CME + Seats + Sessions Info Bar */}
-                {(apiCmeAccredited || apiSessionCount > 0 || apiRemainingSeats !== null) && (
+                {/* Seats + Sessions Info Bar */}
+                {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
                   <div className={`flex flex-wrap items-center gap-3 mb-6 ${isRTL ? "justify-start" : ""}`}>
-                    {apiCmeAccredited && (
-                      <div className="flex items-center gap-1.5 bg-[#FEF3C7] text-[#92400E] px-3 py-1.5 rounded-full text-sm font-medium">
-                        <Award className="w-4 h-4" />
-                        {apiCmeHours} CME {t("courseDetails.hours")}
-                      </div>
-                    )}
                     {apiSessionCount > 0 && (
                       <div className="flex items-center gap-1.5 bg-[#F3F4F6] text-[#4a4c4f] px-3 py-1.5 rounded-full text-sm">
                         <Video className="w-4 h-4" />
@@ -507,10 +649,8 @@ const CourseDetailContent = () => {
                 {/* Sessions Section */}
                 {renderSessions(false)}
 
-                {/* Registration Note */}
-                <div className={`bg-[#FBE9E9] rounded-lg p-4 text-sm text-[#DC2626] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
-                  {t("registrationNote")}
-                </div>
+                {/* Notices (from course content) */}
+                {renderNotices()}
               </div>
 
               {/* Pricing Card */}
@@ -529,22 +669,6 @@ const CourseDetailContent = () => {
                   </div>
 
                   {/* Tags */}
-                  <div className="flex items-center gap-2 px-4 py-4">
-                    <div className="flex items-center gap-1.5 border border-[#E5E7EB] rounded-lg px-3 py-1.5">
-                      <Video className="w-3.5 h-3.5 text-[#4a4c4f]" />
-                      <span className="text-[#4a4c4f] text-xs">{getDeliveryLabel()}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 border border-[#E5E7EB] rounded-lg px-3 py-1.5">
-                      <Clock className="w-3.5 h-3.5 text-[#4a4c4f]" />
-                      <span className="text-[#4a4c4f] text-xs">{apiCourse.totalHours || apiCourse.cmeHours} {t("courseDetails.hours")}</span>
-                    </div>
-                    {apiCmeAccredited && (
-                      <div className="border border-[#E5E7EB] rounded-lg px-3 py-1.5">
-                        <span className="text-[#4a4c4f] text-xs">CME</span>
-                      </div>
-                    )}
-                  </div>
-
                   {/* Features in sidebar */}
                   {getFeatures().length > 0 && (
                     <div className="px-4 pb-3">
@@ -572,13 +696,19 @@ const CourseDetailContent = () => {
                           </>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button className="p-2.5 rounded-full bg-[#F4F4F5] hover:bg-[#E5E7EB] transition-colors">
+                      <div className="flex items-center gap-2 relative">
+                        <button
+                          onClick={handleShare}
+                          className="p-2.5 rounded-full bg-[#F4F4F5] hover:bg-[#E5E7EB] transition-colors"
+                          aria-label="Share course"
+                        >
                           <Share2 className="w-4 h-4 text-[#4a4c4f]" />
                         </button>
-                        <button className="p-2.5 rounded-full bg-[#F4F4F5] hover:bg-[#E5E7EB] transition-colors">
-                          <Heart className="w-4 h-4 text-[#4a4c4f]" />
-                        </button>
+                        {shareTooltip && (
+                          <span className="absolute -bottom-8 right-0 bg-[#06080b] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                            {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -755,6 +885,22 @@ const CourseDetailContent = () => {
                     <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                   </div>
                 </div>
+                <div className="flex items-start gap-3">
+                  <Video className="w-5 h-5 text-[#71717A] mt-0.5" />
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                    <p className="text-sm text-[#71717A]">{getDeliveryLabel()}</p>
+                  </div>
+                </div>
+                {apiCmeAccredited && (
+                  <div className="flex items-start gap-3">
+                    <Award className="w-5 h-5 text-[#71717A] mt-0.5" />
+                    <div className={isRTL ? "text-right" : "text-left"}>
+                      <p className="text-sm font-semibold text-[#06080b]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                      <p className="text-sm text-[#71717A]">{apiCmeHours} {t("courseDetails.hours")}</p>
+                    </div>
+                  </div>
+                )}
                 {showVenue && getVenue() && (
                   <div className={`relative bg-[#F4F4F5] rounded-lg p-3 ${isRTL ? "pr-5" : "pl-5"} overflow-hidden`}>
                     <div className={`absolute ${isRTL ? "right-0" : "left-0"} top-0 bottom-0 w-1 bg-[#C8D5E1]`} />
@@ -765,23 +911,23 @@ const CourseDetailContent = () => {
               </div>
             </div>
 
+            {/* Target Audience */}
+            {renderTargetAudience(false)}
+
+            {/* Overview */}
+            {renderOverview(false)}
+
             {/* Objectives (What You'll Learn) */}
             {renderObjectives(false)}
 
-            {/* Overview (Description) */}
-            {renderOverview(false)}
-
-            {/* Modules */}
+            {/* Modules / Contents */}
             {renderModules(false)}
-
-            {/* Target Audience */}
-            {renderTargetAudience(false)}
 
             {/* Requirements */}
             {renderRequirements(false)}
 
             {/* Notices */}
-            {renderNotices(false)}
+            {renderNotices()}
 
             {/* Reviews */}
             {renderReviews(false)}
@@ -887,15 +1033,35 @@ const CourseDetailContent = () => {
                   </>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <button className="p-2 rounded-full bg-[#F4F4F5]">
+              <div className="flex items-center gap-2 relative">
+                <button
+                  onClick={handleShare}
+                  className="p-2 rounded-full bg-[#F4F4F5] hover:bg-[#E5E7EB]"
+                  aria-label="Share course"
+                >
                   <Share2 className="w-4 h-4 text-[#4a4c4f]" />
                 </button>
-                <button className="p-2 rounded-full bg-[#F4F4F5]">
-                  <Heart className="w-4 h-4 text-[#4a4c4f]" />
-                </button>
+                {shareTooltip && (
+                  <span className="absolute -bottom-8 right-0 bg-[#06080b] text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    {locale === "ar" ? "تم نسخ الرابط" : "Link copied"}
+                  </span>
+                )}
               </div>
             </div>
+
+            {/* Features */}
+            {getFeatures().length > 0 && (
+              <div className="mb-4 pb-4 border-b border-[#E5E7EB]">
+                <div className="space-y-2">
+                  {getFeatures().map((feature, index) => (
+                    <div key={index} className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse text-right" : ""}`}>
+                      <Check className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0 mt-0.5" />
+                      <span className="text-[#4a4c4f] text-xs">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tabby Payment — only for PAID courses */}
             {!apiIsFree && (
@@ -993,14 +1159,8 @@ const CourseDetailContent = () => {
           </div>
 
           {/* CME + Seats Info — mobile */}
-          {(apiCmeAccredited || apiSessionCount > 0 || apiRemainingSeats !== null) && (
+          {(apiSessionCount > 0 || apiRemainingSeats !== null) && (
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {apiCmeAccredited && (
-                <div className="flex items-center gap-1 bg-[#FEF3C7] text-[#92400E] px-2.5 py-1 rounded-full text-xs font-medium">
-                  <Award className="w-3.5 h-3.5" />
-                  {apiCmeHours} CME
-                </div>
-              )}
               {apiSessionCount > 0 && (
                 <div className="flex items-center gap-1 bg-[#F3F4F6] text-[#4a4c4f] px-2.5 py-1 rounded-full text-xs">
                   <Video className="w-3.5 h-3.5" />
@@ -1022,10 +1182,8 @@ const CourseDetailContent = () => {
           {/* Sessions Section — mobile */}
           {renderSessions(true)}
 
-          {/* Registration Note */}
-          <div className={`bg-[#FBE9E9] rounded-lg p-3 text-xs text-[#DC2626] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
-            {t("registrationNote")}
-          </div>
+          {/* Notices (from course content) */}
+          {renderNotices()}
         </section>
 
         {/* Course Details */}
@@ -1056,6 +1214,22 @@ const CourseDetailContent = () => {
                   <p className="text-sm text-[#71717A]">{apiCourse.totalHours} {t("courseDetails.hours")}</p>
                 </div>
               </div>
+              <div className="flex items-center gap-3">
+                <Video className="w-4 h-4 text-[#71717A]" />
+                <div className={isRTL ? "text-right" : "text-left"}>
+                  <p className="text-xs font-semibold text-[#06080b]">{locale === "ar" ? "نوع التقديم" : "Delivery Type"}</p>
+                  <p className="text-sm text-[#71717A]">{getDeliveryLabel()}</p>
+                </div>
+              </div>
+              {apiCmeAccredited && (
+                <div className="flex items-center gap-3">
+                  <Award className="w-4 h-4 text-[#71717A]" />
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <p className="text-xs font-semibold text-[#06080b]">{locale === "ar" ? "ساعات CME" : "CME Hours"}</p>
+                    <p className="text-sm text-[#71717A]">{apiCmeHours} {t("courseDetails.hours")}</p>
+                  </div>
+                </div>
+              )}
               {showVenue && getVenue() && (
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-[#71717A]" />
@@ -1068,17 +1242,17 @@ const CourseDetailContent = () => {
             </div>
           </div>
 
+          {/* Target Audience — mobile */}
+          {renderTargetAudience(true)}
+
+          {/* Overview — mobile */}
+          {renderOverview(true)}
+
           {/* Objectives (What You'll Learn) — mobile */}
           {renderObjectives(true)}
 
-          {/* Overview (Description) — mobile */}
-          {renderOverview(true)}
-
-          {/* Modules — mobile */}
+          {/* Modules / Contents — mobile */}
           {renderModules(true)}
-
-          {/* Target Audience — mobile */}
-          {renderTargetAudience(true)}
 
           {/* Requirements — mobile */}
           {renderRequirements(true)}

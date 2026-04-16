@@ -83,24 +83,16 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
           {title}
         </p>
 
-        {/* Thumbnail - design cut: extends beyond card boundary */}
+        {/* Thumbnail */}
         {course.thumbnail ? (
           <div
-            className={`absolute top-0 bottom-0 w-[55%] ${isRTL ? "left-0" : "right-0"}`}
+            className={`absolute top-0 bottom-0 w-[50%] ${isRTL ? "left-0 rounded-l-2xl" : "right-0 rounded-r-2xl"} overflow-hidden`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={course.thumbnail}
               alt=""
-              className="w-full h-full object-cover rounded-r-2xl"
-              style={{
-                maskImage: isRTL
-                  ? "linear-gradient(to left, transparent 0%, black 30%)"
-                  : "linear-gradient(to right, transparent 0%, black 30%)",
-                WebkitMaskImage: isRTL
-                  ? "linear-gradient(to left, transparent 0%, black 30%)"
-                  : "linear-gradient(to right, transparent 0%, black 30%)",
-              }}
+              className="w-full h-full object-cover"
             />
           </div>
         ) : null}

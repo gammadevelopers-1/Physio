@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
+import { formatDuration } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import InstructorNavbar from "./InstructorNavbar";
@@ -12,6 +13,7 @@ import InstructorMobileSidebar from "./InstructorMobileSidebar";
 import DashboardError from "./DashboardError";
 import DatePicker from "@/components/ui/DatePicker";
 import DateTimePicker from "@/components/ui/DateTimePicker";
+import { CitySelect } from "@/components/ui/CitySelect";
 import CourseAssistantsSuggestPanel from "./CourseAssistantsSuggestPanel";
 import NELCScorecardPanel from "@/components/shared/NELCScorecardPanel";
 import { useInstructorProfile } from "@/hooks/useInstructorProfile";
@@ -244,6 +246,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     meetingId: "",
     roomName: "",
     venueAddress: "",
+    city: "",
   });
   const [sessionSaving, setSessionSaving] = useState(false);
   const [cancelModal, setCancelModal] = useState<{
@@ -533,7 +536,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const openAddSession = () => {
     setSessionForm({
       title: "", type: "zoom", scheduledAt: "", durationHours: 1, durationMins: 0,
-      zoomLink: "", meetingId: "", roomName: "", venueAddress: "",
+      zoomLink: "", meetingId: "", roomName: "", venueAddress: "", city: "",
     });
     setSessionModal({ open: true, editing: null });
   };
@@ -549,6 +552,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       meetingId: session.meetingId || "",
       roomName: session.roomName || "",
       venueAddress: session.venueAddress || "",
+      city: session.city || "",
     });
     setSessionModal({ open: true, editing: session });
   };
@@ -571,6 +575,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
       if (sessionForm.type === "onsite" || sessionForm.type === "hybrid") {
         if (sessionForm.roomName) data.roomName = sessionForm.roomName;
         if (sessionForm.venueAddress) data.venueAddress = sessionForm.venueAddress;
+        if (sessionForm.city) data.city = sessionForm.city;
       }
 
       if (sessionModal.editing) {
@@ -998,7 +1003,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   </span>
                                   {mod.durationMinutes && (
                                     <span className="text-xs text-[#6B7280] ml-2">
-                                      {mod.durationMinutes} {t("courseDetail.minutes")}
+                                      {formatDuration(mod.durationMinutes, locale)}
                                     </span>
                                   )}
                                   <ChevronDown
@@ -1052,7 +1057,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     {mod.durationMinutes && (
                                       <span className="flex items-center gap-1">
                                         <Clock className="w-3.5 h-3.5" />
-                                        {mod.durationMinutes} {t("courseDetail.minutes")}
+                                        {formatDuration(mod.durationMinutes, locale)}
                                       </span>
                                     )}
                                     {mod.titleAr && (
@@ -1963,16 +1968,26 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
               </div>
               {(sessionForm.type === "onsite" || sessionForm.type === "hybrid") && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.roomName")}</label>
-                    <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.roomName")}</label>
+                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.venueAddress")}</label>
+                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.venueAddress")}</label>
-                    <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                    <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.city")}</label>
+                    <CitySelect
+                      value={sessionForm.city}
+                      onChange={(v) => setSessionForm((f) => ({ ...f, city: v }))}
+                      placeholder={t("courseDetail.cityPlaceholder")}
+                    />
                   </div>
-                </div>
+                </>
               )}
             </div>
             <div className="flex justify-end gap-3 mt-6">

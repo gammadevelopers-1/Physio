@@ -33,6 +33,7 @@ export const sessions = pgTable(
     meetingId: varchar('meeting_id', { length: 100 }),
     roomName: varchar('room_name', { length: 255 }),
     venueAddress: text('venue_address'),
+    city: varchar('city', { length: 100 }),
     status: varchar('status', { length: 20 }).notNull().default('scheduled'),
     actualStartedAt: timestamp('actual_started_at'),
     actualEndedAt: timestamp('actual_ended_at'),

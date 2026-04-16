@@ -78,6 +78,11 @@ export class CreateSessionDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
   localDate?: string;
 
   @IsOptional()

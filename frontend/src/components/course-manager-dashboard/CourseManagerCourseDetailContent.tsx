@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { formatDuration } from "@/lib/utils";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 import { toast } from "sonner";
@@ -331,6 +332,22 @@ const CourseManagerCourseDetailContent = ({
     }
   };
 
+  const getRegistrationBadge = () => {
+    if (course.status !== "active") return null;
+    const deadline = (course as any).enrollmentDeadline;
+    if (!deadline) return null;
+    const isOpen = new Date(deadline) > new Date();
+    return isOpen ? (
+      <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#DCFCE7] text-[#16A34A]">
+        Registration Open
+      </span>
+    ) : (
+      <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEE2E2] text-[#DC2626]">
+        Registration Closed
+      </span>
+    );
+  };
+
   const getDeliveryIcon = (type: string) => {
     switch (type) {
       case "zoom":
@@ -416,6 +433,7 @@ const CourseManagerCourseDetailContent = ({
                             {course.title}
                           </h1>
                           {getStatusBadge(course.status)}
+                          {getRegistrationBadge()}
                         </div>
                         {course.titleAr && (
                           <p className="text-sm text-[#6B7280] mb-1" dir="rtl">
@@ -642,7 +660,7 @@ const CourseManagerCourseDetailContent = ({
                                 {mod.durationMinutes && (
                                   <span className="text-xs text-[#6B7280] flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
-                                    {mod.durationMinutes} {t("courseDetail.minutes")}
+                                    {formatDuration(mod.durationMinutes, locale)}
                                   </span>
                                 )}
                                 <span className="px-2 py-0.5 text-xs rounded bg-[#F3F4F6] text-[#6B7280] capitalize">
@@ -667,7 +685,7 @@ const CourseManagerCourseDetailContent = ({
                                   <div>
                                     <span className="text-[#6B7280]">{t("courseDetail.moduleDuration")}:</span>{" "}
                                     <span className="text-[#1F2937]">
-                                      {mod.durationMinutes ? `${mod.durationMinutes} ${t("courseDetail.minutes")}` : "—"}
+                                      {mod.durationMinutes ? formatDuration(mod.durationMinutes, locale) : "—"}
                                     </span>
                                   </div>
                                 </div>

@@ -19,6 +19,7 @@ export interface DashboardSession {
   meetingId: string | null;
   roomName: string | null;
   venueAddress: string | null;
+  city: string | null;
   status: string;
   enrolledCount: number;
   courseThumbnail: string | null;
@@ -418,6 +419,7 @@ export interface CourseSession {
   meetingId: string | null;
   roomName: string | null;
   venueAddress: string | null;
+  city: string | null;
   status: 'scheduled' | 'live' | 'ended' | 'completed' | 'cancelled' | 'missed' | 'rescheduled';
   actualStartedAt: string | null;
   actualEndedAt: string | null;
@@ -689,7 +691,15 @@ export interface PublicCourseSession {
   durationMinutes: number;
   venueAddress: string | null;
   roomName: string | null;
+  city: string | null;
   status: string;
+}
+
+export interface PublicCourseMaterial {
+  id: string;
+  title: string;
+  type: string;
+  orderIndex: number;
 }
 
 export interface PublicCourseModule {
@@ -699,6 +709,7 @@ export interface PublicCourseModule {
   orderIndex: number;
   type: string;
   durationMinutes: number | null;
+  materials?: PublicCourseMaterial[];
 }
 
 export interface PublicCourseRating {

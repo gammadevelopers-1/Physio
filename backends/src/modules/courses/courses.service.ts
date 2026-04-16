@@ -84,6 +84,15 @@ export class CoursesService {
         ? dto.instructorId
         : user.id;
 
+    // Validate enrollment deadline is before start date
+    if (dto.enrollmentDeadline && dto.startDate) {
+      const deadline = new Date(dto.enrollmentDeadline);
+      const start = new Date(dto.startDate);
+      if (deadline >= start) {
+        throw new BadRequestException('Enrollment deadline must be before the course start date');
+      }
+    }
+
     // Auto-set managerId based on role
     let managerId: string | null = null;
     if (isManager(user)) {
@@ -114,6 +123,21 @@ export class CoursesService {
         startDate: dto.startDate,
         endDate: dto.endDate,
         cohort: dto.cohort,
+        // Content fields
+        overview: dto.overview,
+        overviewAr: dto.overviewAr,
+        objectives: dto.objectives,
+        objectivesAr: dto.objectivesAr,
+        features: dto.features,
+        featuresAr: dto.featuresAr,
+        targetAudience: dto.targetAudience,
+        targetAudienceAr: dto.targetAudienceAr,
+        requirements: dto.requirements,
+        requirementsAr: dto.requirementsAr,
+        notices: dto.notices,
+        noticesAr: dto.noticesAr,
+        venue: dto.venue,
+        venueAr: dto.venueAr,
       })
       .returning();
 
@@ -276,6 +300,29 @@ export class CoursesService {
     const conditions: ReturnType<typeof eq>[] = [
       eq(courses.status, COURSE_STATUS.ACTIVE),
     ];
+
+    // Hide courses where enrollment deadline has passed
+    conditions.push(
+      or(
+        sql`${courses.enrollmentDeadline} IS NULL`,
+        sql`${courses.enrollmentDeadline} > NOW()`,
+      ) as any,
+    );
+
+    // Hide courses that are full (enrolled count >= maxEnrollment)
+    // If maxEnrollment is NULL, use NELC default (2000 for non-self-paced)
+    conditions.push(
+      sql`(
+        CASE
+          WHEN ${courses.maxEnrollment} IS NOT NULL THEN
+            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < ${courses.maxEnrollment}
+          WHEN ${courses.deliveryType} = 'self-paced' THEN
+            TRUE
+          ELSE
+            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < 2000
+        END
+      )` as any,
+    );
 
     if (params.delivery) {
       conditions.push(eq(courses.deliveryType, params.delivery));
@@ -490,6 +537,22 @@ export class CoursesService {
             eq(courses.status, COURSE_STATUS.ACTIVE),
             eq(courses.status, COURSE_STATUS.COMPLETED),
           ),
+          // Hide if enrollment deadline has passed
+          or(
+            sql`${courses.enrollmentDeadline} IS NULL`,
+            sql`${courses.enrollmentDeadline} > NOW()`,
+          ),
+          // Hide if course is full
+          sql`(
+            CASE
+              WHEN ${courses.maxEnrollment} IS NOT NULL THEN
+                (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < ${courses.maxEnrollment}
+              WHEN ${courses.deliveryType} = 'self-paced' THEN
+                TRUE
+              ELSE
+                (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < 2000
+            END
+          )`,
         ),
       )
       .limit(1);
@@ -502,7 +565,7 @@ export class CoursesService {
     let sessionsList: Array<{
       id: string; title: string; type: string;
       scheduledAt: Date; durationMinutes: number;
-      venueAddress: string | null; roomName: string | null; status: string;
+      venueAddress: string | null; roomName: string | null; city: string | null; status: string;
     }> = [];
     if (data.deliveryType !== 'self-paced') {
       sessionsList = await db
@@ -514,6 +577,7 @@ export class CoursesService {
           durationMinutes: sessions.durationMinutes,
           venueAddress: sessions.venueAddress,
           roomName: sessions.roomName,
+          city: sessions.city,
           status: sessions.status,
         })
         .from(sessions)
@@ -530,6 +594,7 @@ export class CoursesService {
     let modulesList: Array<{
       id: string; title: string; titleAr: string | null;
       orderIndex: number; type: string; durationMinutes: number | null;
+      materials?: Array<{ id: string; title: string; type: string; orderIndex: number }>;
     }> = [];
     if (data.deliveryType === 'self-paced' || data.deliveryType === 'blended') {
       modulesList = await db
@@ -544,6 +609,42 @@ export class CoursesService {
         .from(courseModules)
         .where(eq(courseModules.courseId, courseId))
         .orderBy(asc(courseModules.orderIndex));
+
+      // For the first 2 modules, attach their materials (preview)
+      const previewModuleIds = modulesList.slice(0, 2).map((m) => m.id);
+      if (previewModuleIds.length > 0) {
+        const allMaterials = await db
+          .select({
+            id: courseMaterials.id,
+            title: courseMaterials.title,
+            type: courseMaterials.type,
+            orderIndex: courseMaterials.orderIndex,
+            moduleId: courseMaterials.moduleId,
+          })
+          .from(courseMaterials)
+          .where(
+            and(
+              inArray(courseMaterials.moduleId, previewModuleIds),
+              eq(courseMaterials.status, 'live'),
+            ),
+          )
+          .orderBy(asc(courseMaterials.orderIndex));
+
+        // Group materials by module
+        const materialsByModule = new Map<string, typeof allMaterials>();
+        for (const mat of allMaterials) {
+          if (!mat.moduleId) continue;
+          if (!materialsByModule.has(mat.moduleId)) {
+            materialsByModule.set(mat.moduleId, []);
+          }
+          materialsByModule.get(mat.moduleId)!.push(mat);
+        }
+
+        modulesList = modulesList.map((mod, i) => ({
+          ...mod,
+          materials: i < 2 ? (materialsByModule.get(mod.id) || []).map(({ id, title, type, orderIndex }) => ({ id, title, type, orderIndex })) : undefined,
+        }));
+      }
     }
 
     // Fetch top 5 recent reviews
@@ -659,6 +760,20 @@ export class CoursesService {
       throw new ForbiddenException(
         'You can only edit courses in draft or changes requested status',
       );
+    }
+
+    // Validate enrollment deadline changes
+    if (dto.enrollmentDeadline !== undefined) {
+      // If course already has a deadline that has passed, block edits to it
+      if (existing.enrollmentDeadline && new Date(existing.enrollmentDeadline) < new Date()) {
+        throw new BadRequestException('Cannot modify enrollment deadline after it has passed');
+      }
+      // Validate new deadline is before start date
+      const newDeadline = new Date(dto.enrollmentDeadline);
+      const startDate = dto.startDate ? new Date(dto.startDate) : (existing.startDate ? new Date(existing.startDate) : null);
+      if (startDate && newDeadline >= startDate) {
+        throw new BadRequestException('Enrollment deadline must be before the course start date');
+      }
     }
 
     const { price, enrollmentDeadline, ...restDto } = dto;

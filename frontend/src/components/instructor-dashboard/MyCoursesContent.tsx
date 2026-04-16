@@ -348,7 +348,7 @@ const MyCoursesContent = () => {
                                 className="object-cover"
                                 unoptimized={thumbnailSrc.startsWith("http")}
                               />
-                              <div className="absolute top-3 left-3 flex gap-2">
+                              <div className="absolute top-3 left-3 flex flex-wrap gap-2">
                                 <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${getStatusBadge(course.status)}`}>
                                   {t(`courses.status.${course.status}`)}
                                 </span>
@@ -356,6 +356,11 @@ const MyCoursesContent = () => {
                                   {getDeliveryIcon(course.deliveryType)}
                                   {t(`courses.delivery.${course.deliveryType}`)}
                                 </span>
+                                {course.status === "active" && (course as any).enrollmentDeadline && new Date((course as any).enrollmentDeadline) > new Date() && (
+                                  <span className="px-2.5 py-1 rounded-md text-xs font-medium bg-[#DCFCE7] text-[#16A34A]">
+                                    Registration Open
+                                  </span>
+                                )}
                               </div>
                             </div>
                             <div className="p-4 flex flex-col flex-1">

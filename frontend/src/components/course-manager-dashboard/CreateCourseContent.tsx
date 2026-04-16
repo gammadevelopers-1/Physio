@@ -26,6 +26,7 @@ import {
   Search,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { formatDate as formatDateHijri } from "@/lib/hijri";
 import { useCalendarPreference } from "@/contexts/CalendarContext";
 
@@ -625,23 +626,19 @@ const CreateCourseContent = () => {
                       {/* Overview */}
                       <div>
                         <label className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
-                        <textarea
+                        <RichTextEditor
                           value={overview}
-                          onChange={(e) => setOverview(e.target.value)}
-                          rows={4}
-                          className={`${inputClass} resize-none`}
+                          onChange={setOverview}
                           placeholder="Course overview..."
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
-                        <textarea
+                        <RichTextEditor
                           value={overviewAr}
-                          onChange={(e) => setOverviewAr(e.target.value)}
-                          rows={4}
-                          className={`${inputClass} resize-none`}
-                          dir="rtl"
+                          onChange={setOverviewAr}
                           placeholder="..."
+                          dir="rtl"
                         />
                       </div>
 

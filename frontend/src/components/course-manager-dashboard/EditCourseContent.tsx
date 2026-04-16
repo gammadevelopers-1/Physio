@@ -23,6 +23,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import DatePicker from "@/components/ui/DatePicker";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 interface EditCourseContentProps {
   courseId: string;
@@ -456,26 +457,20 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   <div className="space-y-4">
                     {/* Overview */}
                     <div>
-                      <label htmlFor="edit-overview" className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
-                      <textarea
-                        id="edit-overview"
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
+                      <RichTextEditor
                         value={overview}
-                        onChange={(e) => setOverview(e.target.value)}
-                        rows={4}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        onChange={setOverview}
                         placeholder="Course overview..."
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-overview-ar" className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
-                      <textarea
-                        id="edit-overview-ar"
+                      <label className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
+                      <RichTextEditor
                         value={overviewAr}
-                        onChange={(e) => setOverviewAr(e.target.value)}
-                        rows={4}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
-                        dir="rtl"
+                        onChange={setOverviewAr}
                         placeholder="..."
+                        dir="rtl"
                       />
                     </div>
 

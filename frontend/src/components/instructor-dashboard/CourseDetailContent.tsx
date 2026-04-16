@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { formatDuration } from "@/lib/utils";
+import { formatDuration as formatDurationMinutes } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import InstructorNavbar from "./InstructorNavbar";
@@ -1003,7 +1003,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                   </span>
                                   {mod.durationMinutes && (
                                     <span className="text-xs text-[#6B7280] ml-2">
-                                      {formatDuration(mod.durationMinutes, locale)}
+                                      {formatDurationMinutes(mod.durationMinutes, locale)}
                                     </span>
                                   )}
                                   <ChevronDown
@@ -1057,7 +1057,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     {mod.durationMinutes && (
                                       <span className="flex items-center gap-1">
                                         <Clock className="w-3.5 h-3.5" />
-                                        {formatDuration(mod.durationMinutes, locale)}
+                                        {formatDurationMinutes(mod.durationMinutes, locale)}
                                       </span>
                                     )}
                                     {mod.titleAr && (

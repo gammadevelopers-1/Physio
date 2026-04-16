@@ -183,6 +183,7 @@ const CreateCourseContent = () => {
   const [venueAr, setVenueAr] = useState("");
   const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
   const [language, setLanguage] = useState("en");
+  const [showContents, setShowContents] = useState(true);
   // NELC compliance flags — always enabled, shown as static indicators
   const nelcAccreditation = true;
   const bilingualContent = true;
@@ -380,6 +381,10 @@ const CreateCourseContent = () => {
       if (price) payload.price = Number(price);
       if (enrollmentDeadline) payload.enrollmentDeadline = enrollmentDeadline;
       if (language !== 'en') payload.language = language;
+      // Only send showContents for self-paced/blended courses
+      if (deliveryType === 'self-paced' || deliveryType === 'blended') {
+        payload.showContents = showContents;
+      }
 
       const created = await courseManagerApi.createCourse(payload);
 
@@ -832,6 +837,27 @@ const CreateCourseContent = () => {
                           placeholder="..."
                         />
                       </div>
+
+                      {/* Show Contents toggle — only for self-paced and blended */}
+                      {(deliveryType === 'self-paced' || deliveryType === 'blended') && (
+                        <div className="pt-3 border-t border-[#E5E7EB]">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={showContents}
+                              onChange={(e) => setShowContents(e.target.checked)}
+                              className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-[#374151]">Show Contents on public page</p>
+                              <p className="text-xs text-[#6B7280] mt-0.5">
+                                When enabled, the first 2 modules are visible as a preview on the course detail page.
+                                Turn off to hide the entire Contents section from public.
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

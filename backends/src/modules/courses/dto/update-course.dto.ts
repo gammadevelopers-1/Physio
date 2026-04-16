@@ -154,6 +154,10 @@ export class UpdateCourseDto {
   @MaxLength(255)
   venueAr?: string;
 
+  @IsOptional()
+  @IsBoolean()
+  showContents?: boolean;
+
   // Course-level assessment defaults
   @IsOptional()
   @IsBoolean()

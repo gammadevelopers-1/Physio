@@ -138,6 +138,7 @@ export class CoursesService {
         noticesAr: dto.noticesAr,
         venue: dto.venue,
         venueAr: dto.venueAr,
+        showContents: dto.showContents,
       })
       .returning();
 
@@ -509,6 +510,7 @@ export class CoursesService {
         noticesAr: courses.noticesAr,
         venue: courses.venue,
         venueAr: courses.venueAr,
+        showContents: courses.showContents,
         enrolledCount: sql<number>`(
           SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
@@ -596,7 +598,7 @@ export class CoursesService {
       orderIndex: number; type: string; durationMinutes: number | null;
       materials?: Array<{ id: string; title: string; type: string; orderIndex: number }>;
     }> = [];
-    if (data.deliveryType === 'self-paced' || data.deliveryType === 'blended') {
+    if ((data.deliveryType === 'self-paced' || data.deliveryType === 'blended') && data.showContents !== false) {
       modulesList = await db
         .select({
           id: courseModules.id,

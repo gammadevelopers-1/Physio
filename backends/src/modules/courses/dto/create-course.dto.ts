@@ -167,4 +167,8 @@ export class CreateCourseDto {
   @IsString()
   @MaxLength(255)
   venueAr?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  showContents?: boolean;
 }

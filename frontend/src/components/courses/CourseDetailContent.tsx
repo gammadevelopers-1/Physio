@@ -152,7 +152,7 @@ const CourseDetailContent = () => {
   const dt = apiCourse?.deliveryType || "";
   // Sessions list shown only for onsite/blended (zoom-only courses hide lectures list)
   const showSessions = dt === "onsite" || dt === "blended";
-  const showModules = dt === "self-paced" || dt === "blended";
+  const showModules = (dt === "self-paced" || dt === "blended") && apiCourse?.showContents !== false;
   const showVenue = dt === "onsite" || dt === "blended";
   const showRequirements = (dt === "onsite" || dt === "blended") && !!getRequirements();
 
@@ -411,8 +411,8 @@ const CourseDetailContent = () => {
             <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg text-center">
               <p className="text-[13px] text-[#6B7280]">
                 {locale === "ar"
-                  ? `${remaining} وحدات إضافية متاحة عند التسجيل`
-                  : `${remaining} more ${remaining === 1 ? "module" : "modules"} available after enrollment`}
+                  ? "المزيد من المحتوى متاح عند التسجيل"
+                  : "More content available after enrollment"}
               </p>
             </div>
           )}
@@ -668,15 +668,19 @@ const CourseDetailContent = () => {
                     </div>
                   </div>
 
-                  {/* Tags */}
                   {/* Features in sidebar */}
                   {getFeatures().length > 0 && (
-                    <div className="px-4 pb-3">
-                      <div className="space-y-2">
+                    <div className="px-5 pt-5 pb-4">
+                      <h3 className={`text-[15px] font-semibold text-[#06080b] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                        {locale === "ar" ? "المميزات" : "Features"}
+                      </h3>
+                      <div className="flex flex-col gap-3">
                         {getFeatures().map((feature, index) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <Check className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0 mt-0.5" />
-                            <span className="text-[#4a4c4f] text-xs">{feature}</span>
+                          <div key={index} className={`flex items-start gap-2.5 ${isRTL ? "flex-row-reverse text-right" : ""}`}>
+                            <div className="w-5 h-5 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Check className="w-3 h-3 text-[#16A34A]" strokeWidth={3} />
+                            </div>
+                            <span className="text-[#4a4c4f] text-[13px] leading-[18px]">{feature}</span>
                           </div>
                         ))}
                       </div>
@@ -842,7 +846,7 @@ const CourseDetailContent = () => {
         </div>
 
         {/* Course Details Section */}
-        <section className="px-16 py-12">
+        <section className="px-16 pt-2 pb-12">
           <div className="max-w-[1200px] mx-auto">
             <div className="bg-white rounded-2xl p-8 mb-8">
               <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
@@ -909,10 +913,26 @@ const CourseDetailContent = () => {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Target Audience */}
-            {renderTargetAudience(false)}
+              {/* Target Audience — inline in course details */}
+              {getTargetAudience().length > 0 && (
+                <div className={`mt-6 pt-6 border-t border-[#E5E7EB] ${isRTL ? "text-right" : "text-left"}`}>
+                  <p className="text-sm font-semibold text-[#06080b] mb-3">
+                    {t("targetAudience") || "Target Audience"}
+                  </p>
+                  <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
+                    {getTargetAudience().map((item, idx) => (
+                      <span
+                        key={idx}
+                        className="px-3 py-1 rounded-full bg-[#F4F4F5] text-[#4a4c4f] text-xs font-medium"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Overview */}
             {renderOverview(false)}
@@ -925,9 +945,6 @@ const CourseDetailContent = () => {
 
             {/* Requirements */}
             {renderRequirements(false)}
-
-            {/* Notices */}
-            {renderNotices()}
 
             {/* Reviews */}
             {renderReviews(false)}
@@ -1052,11 +1069,16 @@ const CourseDetailContent = () => {
             {/* Features */}
             {getFeatures().length > 0 && (
               <div className="mb-4 pb-4 border-b border-[#E5E7EB]">
-                <div className="space-y-2">
+                <h3 className={`text-sm font-semibold text-[#06080b] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
+                  {locale === "ar" ? "المميزات" : "Features"}
+                </h3>
+                <div className="flex flex-col gap-2.5">
                   {getFeatures().map((feature, index) => (
                     <div key={index} className={`flex items-start gap-2 ${isRTL ? "flex-row-reverse text-right" : ""}`}>
-                      <Check className="w-3.5 h-3.5 text-[#16A34A] flex-shrink-0 mt-0.5" />
-                      <span className="text-[#4a4c4f] text-xs">{feature}</span>
+                      <div className="w-4 h-4 rounded-full bg-[#DCFCE7] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-2.5 h-2.5 text-[#16A34A]" strokeWidth={3} />
+                      </div>
+                      <span className="text-[#4a4c4f] text-xs leading-[16px]">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -1240,10 +1262,25 @@ const CourseDetailContent = () => {
                 </div>
               )}
             </div>
+            {/* Target Audience — inline in course details (mobile) */}
+            {getTargetAudience().length > 0 && (
+              <div className={`mt-4 pt-4 border-t border-[#E5E7EB] ${isRTL ? "text-right" : "text-left"}`}>
+                <p className="text-xs font-semibold text-[#06080b] mb-2">
+                  {t("targetAudience") || "Target Audience"}
+                </p>
+                <div className={`flex flex-wrap gap-1.5 ${isRTL ? "justify-end" : "justify-start"}`}>
+                  {getTargetAudience().map((item, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-1 rounded-full bg-[#F4F4F5] text-[#4a4c4f] text-xs font-medium"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-
-          {/* Target Audience — mobile */}
-          {renderTargetAudience(true)}
 
           {/* Overview — mobile */}
           {renderOverview(true)}
@@ -1256,9 +1293,6 @@ const CourseDetailContent = () => {
 
           {/* Requirements — mobile */}
           {renderRequirements(true)}
-
-          {/* Notices — mobile */}
-          {renderNotices(true)}
 
           {/* Reviews — mobile */}
           {renderReviews(true)}

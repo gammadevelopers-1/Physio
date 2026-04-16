@@ -59,6 +59,7 @@ export const courses = pgTable(
     noticesAr: text('notices_ar'),
     venue: varchar('venue', { length: 255 }),
     venueAr: varchar('venue_ar', { length: 255 }),
+    showContents: boolean('show_contents').default(true),
     // Course-level assessment defaults (per-assessment can override)
     assessmentProctoringEnabled: boolean('assessment_proctoring_enabled').default(false),
     assessmentTimeLimitEnforced: boolean('assessment_time_limit_enforced').default(true),

@@ -15,7 +15,19 @@ import { Loader2 } from "lucide-react";
 const DELIVERY_TYPES = ["zoom", "onsite", "blended"];
 const CERTIFICATIONS = ["BHA", "NHA", "SCFHS"];
 
-const CoursesPageContent = () => {
+interface CoursesPageContentProps {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  emptyStateTitle?: string;
+  emptyStateMessage?: string;
+}
+
+const CoursesPageContent = ({
+  heroTitle,
+  heroSubtitle,
+  emptyStateTitle,
+  emptyStateMessage,
+}: CoursesPageContentProps = {}) => {
   const t = useTranslations("coursesPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
@@ -182,10 +194,10 @@ const CoursesPageContent = () => {
                 className="font-semibold text-[#06080b] mb-2"
                 style={{ fontSize: "48px" }}
               >
-                {t("title")}
+                {heroTitle || t("title")}
               </h1>
               <p className="text-[#4a4c4f]" style={{ fontSize: "20px" }}>
-                {t("subtitle")}
+                {heroSubtitle || t("subtitle")}
               </p>
             </div>
 
@@ -221,8 +233,13 @@ const CoursesPageContent = () => {
                   </>
                 ) : (
                   <div className="text-center py-16">
+                    {emptyStateTitle && (
+                      <p className="text-[#06080b] text-xl font-semibold mb-2">
+                        {emptyStateTitle}
+                      </p>
+                    )}
                     <p className="text-[#4a4c4f] text-lg">
-                      {t("noCoursesFound")}
+                      {emptyStateMessage || t("noCoursesFound")}
                     </p>
                   </div>
                 )}
@@ -246,9 +263,9 @@ const CoursesPageContent = () => {
               className="font-semibold text-[#06080b] mb-1"
               style={{ fontSize: "24px" }}
             >
-              {t("title")}
+              {heroTitle || t("title")}
             </h1>
-            <p className="text-[#4a4c4f] text-sm">{t("subtitle")}</p>
+            <p className="text-[#4a4c4f] text-sm">{heroSubtitle || t("subtitle")}</p>
           </div>
 
           {/* Filters */}
@@ -281,8 +298,13 @@ const CoursesPageContent = () => {
             </>
           ) : (
             <div className="text-center py-12">
+              {emptyStateTitle && (
+                <p className="text-[#06080b] text-lg font-semibold mb-2">
+                  {emptyStateTitle}
+                </p>
+              )}
               <p className="text-[#4a4c4f] text-base">
-                {t("noCoursesFound")}
+                {emptyStateMessage || t("noCoursesFound")}
               </p>
             </div>
           )}

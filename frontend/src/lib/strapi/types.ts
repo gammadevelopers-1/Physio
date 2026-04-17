@@ -539,6 +539,36 @@ export interface FAQPage {
   publishedAt: string;
 }
 
+export interface CoursesPage {
+  id: number;
+  documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  heroTitle: string | null;
+  heroSubtitle: string | null;
+  emptyStateTitle: string | null;
+  emptyStateMessage: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
+export interface CourseDetailPage {
+  id: number;
+  documentId: string;
+  blocks: DynamicZoneBlock[] | null;
+  noReviewsText: string | null;
+  moreContentText: string | null;
+  relatedCoursesTitle: string | null;
+  relatedCoursesSubtitle: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
 // ============================================
 // Dynamic Zone Block Types
 // ============================================

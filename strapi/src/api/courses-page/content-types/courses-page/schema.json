@@ -1,0 +1,97 @@
+{
+  "kind": "singleType",
+  "collectionName": "courses_pages",
+  "info": {
+    "singularName": "courses-page",
+    "pluralName": "courses-pages",
+    "displayName": "Courses Page",
+    "description": "Content for the public /courses listing page"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "heroTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "heroSubtitle": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "emptyStateTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "emptyStateMessage": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "metaTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "metaDescription": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "blocks": {
+      "type": "dynamiczone",
+      "components": [
+        "blocks.accordion-block",
+        "blocks.accreditation-badges-block",
+        "blocks.anchor-links-block",
+        "blocks.announcement-banner-block",
+        "blocks.before-after-block",
+        "blocks.blog-posts-grid-block",
+        "blocks.breadcrumb-block",
+        "blocks.cards-grid",
+        "blocks.certification-cards-block",
+        "blocks.comparison-table-block",
+        "blocks.compliance-badge-block",
+        "blocks.contact-form-block",
+        "blocks.countdown-timer-block",
+        "blocks.course-preview-block",
+        "blocks.cpd-calculator-block",
+        "blocks.cta-banner",
+        "blocks.curriculum-outline-block",
+        "blocks.download-resources-block",
+        "blocks.faq-accordion",
+        "blocks.featured-courses-grid",
+        "blocks.feedback-form-block",
+        "blocks.hero-banner",
+        "blocks.image-gallery-block",
+        "blocks.instructor-spotlight-block",
+        "blocks.instructors-grid",
+        "blocks.learning-outcomes-block",
+        "blocks.live-counter-block",
+        "blocks.logo-strip",
+        "blocks.newsletter-block",
+        "blocks.partners-strip",
+        "blocks.pdf-viewer-block",
+        "blocks.policy-sections-block",
+        "blocks.pricing-table-block",
+        "blocks.related-pages-block",
+        "blocks.rich-text-block",
+        "blocks.section-header-block",
+        "blocks.social-feed-block",
+        "blocks.spacer-block",
+        "blocks.stats-numbers-block",
+        "blocks.student-progress-block",
+        "blocks.success-stories-block",
+        "blocks.tabs-block",
+        "blocks.testimonials-carousel",
+        "blocks.timeline-block",
+        "blocks.trainer-form-block",
+        "blocks.treatment-gallery-block",
+        "blocks.upcoming-events-block",
+        "blocks.video-embed"
+      ]
+    }
+  }
+}

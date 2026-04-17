@@ -1638,6 +1638,13 @@ export interface ApiContactPageContactPage extends Struct.SingleTypeSchema {
       }>;
     ogImage: Schema.Attribute.Media<'images'>;
     publishedAt: Schema.Attribute.DateTime;
+    showMap: Schema.Attribute.Boolean &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.DefaultTo<true>;
     subtitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1663,6 +1670,235 @@ export interface ApiContactPageContactPage extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCourseDetailPageCourseDetailPage
+  extends Struct.SingleTypeSchema {
+  collectionName: 'course_detail_pages';
+  info: {
+    description: 'Global content for all course detail pages (dynamic zone blocks + empty states)';
+    displayName: 'Course Detail Page';
+    pluralName: 'course-detail-pages';
+    singularName: 'course-detail-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::course-detail-page.course-detail-page'
+    >;
+    moreContentText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    noReviewsText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    relatedCoursesSubtitle: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    relatedCoursesTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCoursesPageCoursesPage extends Struct.SingleTypeSchema {
+  collectionName: 'courses_pages';
+  info: {
+    description: 'Content for the public /courses listing page';
+    displayName: 'Courses Page';
+    pluralName: 'courses-pages';
+    singularName: 'courses-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    blocks: Schema.Attribute.DynamicZone<
+      [
+        'blocks.accordion-block',
+        'blocks.accreditation-badges-block',
+        'blocks.anchor-links-block',
+        'blocks.announcement-banner-block',
+        'blocks.before-after-block',
+        'blocks.blog-posts-grid-block',
+        'blocks.breadcrumb-block',
+        'blocks.cards-grid',
+        'blocks.certification-cards-block',
+        'blocks.comparison-table-block',
+        'blocks.compliance-badge-block',
+        'blocks.contact-form-block',
+        'blocks.countdown-timer-block',
+        'blocks.course-preview-block',
+        'blocks.cpd-calculator-block',
+        'blocks.cta-banner',
+        'blocks.curriculum-outline-block',
+        'blocks.download-resources-block',
+        'blocks.faq-accordion',
+        'blocks.featured-courses-grid',
+        'blocks.feedback-form-block',
+        'blocks.hero-banner',
+        'blocks.image-gallery-block',
+        'blocks.instructor-spotlight-block',
+        'blocks.instructors-grid',
+        'blocks.learning-outcomes-block',
+        'blocks.live-counter-block',
+        'blocks.logo-strip',
+        'blocks.newsletter-block',
+        'blocks.partners-strip',
+        'blocks.pdf-viewer-block',
+        'blocks.policy-sections-block',
+        'blocks.pricing-table-block',
+        'blocks.related-pages-block',
+        'blocks.rich-text-block',
+        'blocks.section-header-block',
+        'blocks.social-feed-block',
+        'blocks.spacer-block',
+        'blocks.stats-numbers-block',
+        'blocks.student-progress-block',
+        'blocks.success-stories-block',
+        'blocks.tabs-block',
+        'blocks.testimonials-carousel',
+        'blocks.timeline-block',
+        'blocks.trainer-form-block',
+        'blocks.treatment-gallery-block',
+        'blocks.upcoming-events-block',
+        'blocks.video-embed',
+      ]
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    emptyStateMessage: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    emptyStateTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroSubtitle: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::courses-page.courses-page'
+    >;
+    metaDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -3947,6 +4183,8 @@ declare module '@strapi/strapi' {
       'api::blog-post.blog-post': ApiBlogPostBlogPost;
       'api::certifications-page.certifications-page': ApiCertificationsPageCertificationsPage;
       'api::contact-page.contact-page': ApiContactPageContactPage;
+      'api::course-detail-page.course-detail-page': ApiCourseDetailPageCourseDetailPage;
+      'api::courses-page.courses-page': ApiCoursesPageCoursesPage;
       'api::faq-page.faq-page': ApiFaqPageFaqPage;
       'api::featured-course.featured-course': ApiFeaturedCourseFeaturedCourse;
       'api::feedback-page.feedback-page': ApiFeedbackPageFeedbackPage;

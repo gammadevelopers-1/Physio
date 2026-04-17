@@ -30,7 +30,19 @@ import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
 
-const CourseDetailContent = () => {
+interface CourseDetailContentProps {
+  noReviewsText?: string;
+  moreContentText?: string;
+  relatedCoursesTitle?: string;
+  relatedCoursesSubtitle?: string;
+}
+
+const CourseDetailContent = ({
+  noReviewsText,
+  moreContentText,
+  relatedCoursesTitle,
+  relatedCoursesSubtitle,
+}: CourseDetailContentProps = {}) => {
   const t = useTranslations("courseDetailPage");
   const tCourses = useTranslations("coursesPage");
   const locale = useLocale();
@@ -410,9 +422,9 @@ const CourseDetailContent = () => {
           {remaining > 0 && (
             <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg text-center">
               <p className="text-[13px] text-[#6B7280]">
-                {locale === "ar"
+                {moreContentText || (locale === "ar"
                   ? "المزيد من المحتوى متاح عند التسجيل"
-                  : "More content available after enrollment"}
+                  : "More content available after enrollment")}
               </p>
             </div>
           )}
@@ -574,7 +586,7 @@ const CourseDetailContent = () => {
               <Star className="w-7 h-7 text-[#9CA3AF]" />
             </div>
             <p className="text-sm text-[#9CA3AF]">
-              {locale === "ar" ? "لا توجد تقييمات بعد" : "No Reviews Yet"}
+              {noReviewsText || (locale === "ar" ? "لا توجد تقييمات بعد" : "No Reviews Yet")}
             </p>
           </div>
         )}
@@ -956,7 +968,7 @@ const CourseDetailContent = () => {
         <section className="px-16 py-16 bg-white">
           <div className="max-w-[1200px] mx-auto">
             <h2 className="font-bold text-[#06080b] text-center mb-10" style={{ fontSize: "36px" }}>
-              {t("relatedCourses.title")}
+              {relatedCoursesTitle || t("relatedCourses.title")}
             </h2>
 
             <div className="grid grid-cols-4 gap-6">
@@ -1302,10 +1314,10 @@ const CourseDetailContent = () => {
         {/* Related Courses */}
         <section className="px-4 py-8 bg-white">
           <h2 className="font-bold text-[#06080b] text-center mb-1" style={{ fontSize: "24px" }}>
-            {t("relatedCourses.title")}
+            {relatedCoursesTitle || t("relatedCourses.title")}
           </h2>
           <p className="text-[#4a4c4f] text-center text-sm mb-6">
-            {t("relatedCourses.subtitle")}
+            {relatedCoursesSubtitle || t("relatedCourses.subtitle")}
           </p>
 
           <div className="flex flex-col gap-6">

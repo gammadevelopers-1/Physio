@@ -21,6 +21,8 @@ import type {
   PartnersPage,
   InstructorsPage,
   FAQPage,
+  CoursesPage,
+  CourseDetailPage,
   StrapiSingleResponse,
   StrapiResponse,
 } from './types';
@@ -1040,4 +1042,49 @@ export async function getDynamicPage(slug: string, locale: string = 'en') {
   ]);
 
   return { page, siteSettings, navbarLinks, footerLinks };
+}
+
+/**
+ * Fetch Courses Page (listing page content)
+ */
+export async function getCoursesPage(locale: string = 'en'): Promise<CoursesPage | null> {
+  const response = await fetchStrapi<StrapiSingleResponse<CoursesPage>>(
+    '/courses-page',
+    {
+      params: {
+        locale,
+        ...BLOCKS_POPULATE_PARAMS,
+      },
+    }
+  );
+  return response?.data || null;
+}
+
+/**
+ * Fetch all data for the courses listing page
+ */
+export async function getCoursesPageData(locale: string = 'en') {
+  const [coursesPage, siteSettings, navbarLinks, footerLinks] = await Promise.all([
+    getCoursesPage(locale),
+    getSiteSettings(locale),
+    getNavbarLinks(locale),
+    getFooterLinks(locale),
+  ]);
+  return { coursesPage, siteSettings, navbarLinks, footerLinks };
+}
+
+/**
+ * Fetch Course Detail Page (global blocks for all course detail pages)
+ */
+export async function getCourseDetailPage(locale: string = 'en'): Promise<CourseDetailPage | null> {
+  const response = await fetchStrapi<StrapiSingleResponse<CourseDetailPage>>(
+    '/course-detail-page',
+    {
+      params: {
+        locale,
+        ...BLOCKS_POPULATE_PARAMS,
+      },
+    }
+  );
+  return response?.data || null;
 }

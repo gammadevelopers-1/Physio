@@ -1415,6 +1415,7 @@ export interface CreateCourseManagerData {
   enrollmentDeadline?: string;
   language?: string;
   showContents?: boolean;
+  sectionsOrder?: string[];
 }
 
 export interface SessionsParams {

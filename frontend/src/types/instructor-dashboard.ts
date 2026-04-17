@@ -759,6 +759,7 @@ export interface PublicCourse {
   venue: string | null;
   venueAr: string | null;
   showContents: boolean | null;
+  sectionsOrder: string[] | null;
   // Related data
   sessions: PublicCourseSession[];
   modules: PublicCourseModule[];

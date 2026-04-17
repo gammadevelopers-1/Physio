@@ -563,6 +563,16 @@ export interface CourseDetailPage {
   moreContentText: string | null;
   relatedCoursesTitle: string | null;
   relatedCoursesSubtitle: string | null;
+  overviewHeading: string | null;
+  objectivesHeading: string | null;
+  featuresHeading: string | null;
+  contentsHeading: string | null;
+  scheduleHeading: string | null;
+  requirementsHeading: string | null;
+  noticesHeading: string | null;
+  reviewsHeading: string | null;
+  targetAudienceHeading: string | null;
+  courseDetailsHeading: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

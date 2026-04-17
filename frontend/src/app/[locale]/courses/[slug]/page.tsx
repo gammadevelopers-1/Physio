@@ -43,6 +43,16 @@ export default async function CourseDetailPage({
         moreContentText={courseDetailPage?.moreContentText || undefined}
         relatedCoursesTitle={courseDetailPage?.relatedCoursesTitle || undefined}
         relatedCoursesSubtitle={courseDetailPage?.relatedCoursesSubtitle || undefined}
+        overviewHeading={courseDetailPage?.overviewHeading || undefined}
+        objectivesHeading={courseDetailPage?.objectivesHeading || undefined}
+        featuresHeading={courseDetailPage?.featuresHeading || undefined}
+        contentsHeading={courseDetailPage?.contentsHeading || undefined}
+        scheduleHeading={courseDetailPage?.scheduleHeading || undefined}
+        requirementsHeading={courseDetailPage?.requirementsHeading || undefined}
+        noticesHeading={courseDetailPage?.noticesHeading || undefined}
+        reviewsHeading={courseDetailPage?.reviewsHeading || undefined}
+        targetAudienceHeading={courseDetailPage?.targetAudienceHeading || undefined}
+        courseDetailsHeading={courseDetailPage?.courseDetailsHeading || undefined}
       />
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />

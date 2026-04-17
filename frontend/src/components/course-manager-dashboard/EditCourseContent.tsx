@@ -77,6 +77,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
   const [language, setLanguage] = useState("en");
   const [showContents, setShowContents] = useState(true);
+  const [sectionsOrder, setSectionsOrder] = useState<string[]>(["overview", "objectives", "contents", "requirements", "reviews"]);
 
   // Thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -130,6 +131,10 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         }
         setLanguage((courseData as any).language || "en");
         setShowContents((courseData as any).showContents !== false);
+        const savedOrder = (courseData as any).sectionsOrder;
+        if (Array.isArray(savedOrder) && savedOrder.length > 0) {
+          setSectionsOrder(savedOrder);
+        }
 
         if (courseData.startDate) {
           setStartDate(courseData.startDate.split("T")[0]);
@@ -240,6 +245,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       if (deliveryType === 'self-paced' || deliveryType === 'blended') {
         payload.showContents = showContents;
       }
+      payload.sectionsOrder = sectionsOrder;
 
       await courseManagerApi.updateCourse(courseId, payload);
 
@@ -695,6 +701,65 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         </label>
                       </div>
                     )}
+
+                    {/* Section order */}
+                    <div className="pt-3 border-t border-[#E5E7EB]">
+                      <p className="text-sm font-medium text-[#374151] mb-1">Section order on public page</p>
+                      <p className="text-xs text-[#6B7280] mb-3">
+                        Reorder how sections appear. Sections with no data are hidden automatically.
+                      </p>
+                      <div className="flex flex-col gap-1.5">
+                        {sectionsOrder.map((key, idx) => {
+                          const labels: Record<string, string> = {
+                            overview: "Overview",
+                            objectives: "Objectives (What You'll Learn)",
+                            contents: "Contents / Modules",
+                            requirements: "Requirements",
+                            reviews: "Reviews",
+                          };
+                          const moveUp = () => {
+                            if (idx === 0) return;
+                            const next = [...sectionsOrder];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            setSectionsOrder(next);
+                          };
+                          const moveDown = () => {
+                            if (idx === sectionsOrder.length - 1) return;
+                            const next = [...sectionsOrder];
+                            [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                            setSectionsOrder(next);
+                          };
+                          return (
+                            <div key={key} className="flex items-center gap-2 px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg">
+                              <span className="text-xs text-[#9CA3AF] font-medium w-5">{idx + 1}.</span>
+                              <span className="text-sm text-[#374151] flex-1">{labels[key] || key}</span>
+                              <button
+                                type="button"
+                                onClick={moveUp}
+                                disabled={idx === 0}
+                                className="p-1 rounded hover:bg-[#E5E7EB] disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move up"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
+                                  <polyline points="18 15 12 9 6 15"></polyline>
+                                </svg>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={moveDown}
+                                disabled={idx === sectionsOrder.length - 1}
+                                className="p-1 rounded hover:bg-[#E5E7EB] disabled:opacity-30 disabled:cursor-not-allowed"
+                                title="Move down"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
+                                  <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

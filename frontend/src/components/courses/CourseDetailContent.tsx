@@ -35,6 +35,16 @@ interface CourseDetailContentProps {
   moreContentText?: string;
   relatedCoursesTitle?: string;
   relatedCoursesSubtitle?: string;
+  overviewHeading?: string;
+  objectivesHeading?: string;
+  featuresHeading?: string;
+  contentsHeading?: string;
+  scheduleHeading?: string;
+  requirementsHeading?: string;
+  noticesHeading?: string;
+  reviewsHeading?: string;
+  targetAudienceHeading?: string;
+  courseDetailsHeading?: string;
 }
 
 const CourseDetailContent = ({
@@ -42,6 +52,16 @@ const CourseDetailContent = ({
   moreContentText,
   relatedCoursesTitle,
   relatedCoursesSubtitle,
+  overviewHeading,
+  objectivesHeading,
+  featuresHeading,
+  contentsHeading,
+  scheduleHeading,
+  requirementsHeading,
+  noticesHeading,
+  reviewsHeading,
+  targetAudienceHeading,
+  courseDetailsHeading,
 }: CourseDetailContentProps = {}) => {
   const t = useTranslations("courseDetailPage");
   const tCourses = useTranslations("coursesPage");
@@ -275,7 +295,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
         <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-          {t("schedule") || "Schedule"}
+          {scheduleHeading || t("schedule") || "Schedule"}
         </h2>
 
         {/* Filters */}
@@ -385,7 +405,7 @@ const CourseDetailContent = ({
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl border border-[var(--outline-subtle)] p-6 mb-8"}`}>
         <div className={`flex items-center justify-between mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
           <h2 className={`${isMobile ? "text-lg" : "text-[20px]"} font-semibold`}>
-            {t("contents") || "Contents"} {totalCount}
+            {contentsHeading || t("contents") || "Contents"} {totalCount}
           </h2>
           {totalMinutes > 0 && (
             <span className="text-[13px] text-[#9CA3AF]">
@@ -440,7 +460,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
-          {t("overview") || "Overview"}
+          {overviewHeading || t("overview") || "Overview"}
         </h2>
         <div
           className={`course-overview-content text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}
@@ -458,7 +478,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
-          {t("whatYouWillLearn.title")}
+          {objectivesHeading || t("whatYouWillLearn.title")}
         </h2>
         <div className={isMobile ? "space-y-3" : "space-y-4"}>
           {objectives.map((item, index) => (
@@ -479,7 +499,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-4" : "text-xl mb-6"} ${isRTL ? "text-right" : "text-left"}`}>
-          {t("targetAudience") || "Target Audience"}
+          {targetAudienceHeading || t("targetAudience") || "Target Audience"}
         </h2>
         <div className="flex flex-wrap gap-2">
           {audience.map((item, index) => (
@@ -501,7 +521,7 @@ const CourseDetailContent = ({
     return (
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg mb-3" : "text-xl mb-4"} ${isRTL ? "text-right" : "text-left"}`}>
-          {t("requirements") || "Requirements"}
+          {requirementsHeading || t("requirements") || "Requirements"}
         </h2>
         <p className={`text-[#4a4c4f] ${isMobile ? "text-sm" : "text-base"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
           {getRequirements()}
@@ -520,7 +540,7 @@ const CourseDetailContent = ({
           <AlertTriangle className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" />
           <div>
             <h3 className={`font-semibold text-[#92400E] ${isMobile ? "text-sm" : "text-base"} mb-1`}>
-              {t("notices") || "Important Notice"}
+              {noticesHeading || t("notices") || "Important Notice"}
             </h3>
             <p className={`text-[#92400E] ${isMobile ? "text-xs" : "text-sm"} leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
               {notices}
@@ -537,7 +557,7 @@ const CourseDetailContent = ({
       <div className={`bg-white ${isMobile ? "rounded-xl p-4 mb-4" : "rounded-2xl p-8 mb-8"}`}>
         <div className={`flex items-center justify-between mb-6 ${isRTL ? "flex-row-reverse" : ""}`}>
           <h2 className={`font-bold text-[#06080b] ${isMobile ? "text-lg" : "text-xl"}`}>
-            {t("reviews")}
+            {reviewsHeading || t("reviews")}
           </h2>
           <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
             <div className={`flex items-center gap-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
@@ -666,7 +686,7 @@ const CourseDetailContent = ({
 
                 {/* Course Details — placed in left column to fill space next to pricing card */}
                 <div className="bg-white rounded-2xl p-8 mb-8 mt-6">
-                  <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
+                  <h2 className={`font-bold text-[#06080b] text-xl mb-6 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
 
                   <div className="grid grid-cols-2 gap-x-12 gap-y-6">
                     {apiCourse.enrollmentDeadline && (
@@ -735,7 +755,7 @@ const CourseDetailContent = ({
                   {getTargetAudience().length > 0 && (
                     <div className={`mt-6 pt-6 border-t border-[#E5E7EB] ${isRTL ? "text-right" : "text-left"}`}>
                       <p className="text-sm font-semibold text-[#06080b] mb-3">
-                        {t("targetAudience") || "Target Audience"}
+                        {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                       </p>
                       <div className={`flex flex-wrap gap-2 ${isRTL ? "justify-end" : "justify-start"}`}>
                         {getTargetAudience().map((item, idx) => (
@@ -771,7 +791,7 @@ const CourseDetailContent = ({
                   {getFeatures().length > 0 && (
                     <div className="px-5 pt-5 pb-4">
                       <h3 className={`text-[15px] font-semibold text-[#06080b] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
-                        {locale === "ar" ? "المميزات" : "Features"}
+                        {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
                       </h3>
                       <div className="flex flex-col gap-3">
                         {getFeatures().map((feature, index) => (
@@ -947,20 +967,20 @@ const CourseDetailContent = ({
         {/* Content Sections (below hero) */}
         <section className="px-16 pt-2 pb-12">
           <div className="max-w-[1200px] mx-auto">
-            {/* Overview */}
-            {renderOverview(false)}
-
-            {/* Objectives (What You'll Learn) */}
-            {renderObjectives(false)}
-
-            {/* Modules / Contents */}
-            {renderModules(false)}
-
-            {/* Requirements */}
-            {renderRequirements(false)}
-
-            {/* Reviews */}
-            {renderReviews(false)}
+            {(() => {
+              const defaultOrder = ["overview", "objectives", "contents", "requirements", "reviews"];
+              const order = (apiCourse.sectionsOrder && apiCourse.sectionsOrder.length > 0)
+                ? apiCourse.sectionsOrder
+                : defaultOrder;
+              const sectionMap: Record<string, React.ReactNode> = {
+                overview: <div key="overview">{renderOverview(false)}</div>,
+                objectives: <div key="objectives">{renderObjectives(false)}</div>,
+                contents: <div key="contents">{renderModules(false)}</div>,
+                requirements: <div key="requirements">{renderRequirements(false)}</div>,
+                reviews: <div key="reviews">{renderReviews(false)}</div>,
+              };
+              return order.map((key) => sectionMap[key] || null).filter(Boolean);
+            })()}
           </div>
         </section>
 
@@ -1083,7 +1103,7 @@ const CourseDetailContent = ({
             {getFeatures().length > 0 && (
               <div className="mb-4 pb-4 border-b border-[#E5E7EB]">
                 <h3 className={`text-sm font-semibold text-[#06080b] mb-3 ${isRTL ? "text-right" : "text-left"}`}>
-                  {locale === "ar" ? "المميزات" : "Features"}
+                  {featuresHeading || (locale === "ar" ? "المميزات" : "Features")}
                 </h3>
                 <div className="flex flex-col gap-2.5">
                   {getFeatures().map((feature, index) => (
@@ -1224,7 +1244,7 @@ const CourseDetailContent = ({
         {/* Course Details */}
         <section className="px-4 py-6">
           <div className="bg-white rounded-xl p-4 mb-4">
-            <h2 className={`font-bold text-[#06080b] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{t("courseDetails.title")}</h2>
+            <h2 className={`font-bold text-[#06080b] text-lg mb-4 ${isRTL ? "text-right" : "text-left"}`}>{courseDetailsHeading || t("courseDetails.title")}</h2>
             <div className="space-y-4">
               {apiCourse.enrollmentDeadline && (
                 <div className="flex items-center gap-3">
@@ -1279,7 +1299,7 @@ const CourseDetailContent = ({
             {getTargetAudience().length > 0 && (
               <div className={`mt-4 pt-4 border-t border-[#E5E7EB] ${isRTL ? "text-right" : "text-left"}`}>
                 <p className="text-xs font-semibold text-[#06080b] mb-2">
-                  {t("targetAudience") || "Target Audience"}
+                  {targetAudienceHeading || t("targetAudience") || "Target Audience"}
                 </p>
                 <div className={`flex flex-wrap gap-1.5 ${isRTL ? "justify-end" : "justify-start"}`}>
                   {getTargetAudience().map((item, idx) => (
@@ -1295,20 +1315,20 @@ const CourseDetailContent = ({
             )}
           </div>
 
-          {/* Overview — mobile */}
-          {renderOverview(true)}
-
-          {/* Objectives (What You'll Learn) — mobile */}
-          {renderObjectives(true)}
-
-          {/* Modules / Contents — mobile */}
-          {renderModules(true)}
-
-          {/* Requirements — mobile */}
-          {renderRequirements(true)}
-
-          {/* Reviews — mobile */}
-          {renderReviews(true)}
+          {(() => {
+            const defaultOrder = ["overview", "objectives", "contents", "requirements", "reviews"];
+            const order = (apiCourse.sectionsOrder && apiCourse.sectionsOrder.length > 0)
+              ? apiCourse.sectionsOrder
+              : defaultOrder;
+            const sectionMap: Record<string, React.ReactNode> = {
+              overview: <div key="overview">{renderOverview(true)}</div>,
+              objectives: <div key="objectives">{renderObjectives(true)}</div>,
+              contents: <div key="contents">{renderModules(true)}</div>,
+              requirements: <div key="requirements">{renderRequirements(true)}</div>,
+              reviews: <div key="reviews">{renderReviews(true)}</div>,
+            };
+            return order.map((key) => sectionMap[key] || null).filter(Boolean);
+          })()}
         </section>
 
         {/* Related Courses */}

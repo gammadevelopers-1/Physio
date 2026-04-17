@@ -32,6 +32,46 @@
       "type": "text",
       "pluginOptions": { "i18n": { "localized": true } }
     },
+    "overviewHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "objectivesHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "featuresHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "contentsHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "scheduleHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "requirementsHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "noticesHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "reviewsHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "targetAudienceHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "courseDetailsHeading": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
     "blocks": {
       "type": "dynamiczone",
       "components": [

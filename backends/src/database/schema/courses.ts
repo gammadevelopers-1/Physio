@@ -60,6 +60,7 @@ export const courses = pgTable(
     venue: varchar('venue', { length: 255 }),
     venueAr: varchar('venue_ar', { length: 255 }),
     showContents: boolean('show_contents').default(true),
+    sectionsOrder: jsonb('sections_order').$type<string[]>(),
     // Course-level assessment defaults (per-assessment can override)
     assessmentProctoringEnabled: boolean('assessment_proctoring_enabled').default(false),
     assessmentTimeLimitEnforced: boolean('assessment_time_limit_enforced').default(true),

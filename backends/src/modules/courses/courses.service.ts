@@ -139,6 +139,7 @@ export class CoursesService {
         venue: dto.venue,
         venueAr: dto.venueAr,
         showContents: dto.showContents,
+        sectionsOrder: dto.sectionsOrder,
       })
       .returning();
 
@@ -511,6 +512,7 @@ export class CoursesService {
         venue: courses.venue,
         venueAr: courses.venueAr,
         showContents: courses.showContents,
+        sectionsOrder: courses.sectionsOrder,
         enrolledCount: sql<number>`(
           SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),

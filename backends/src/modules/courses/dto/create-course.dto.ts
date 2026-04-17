@@ -171,4 +171,9 @@ export class CreateCourseDto {
   @IsOptional()
   @IsBoolean()
   showContents?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  sectionsOrder?: string[];
 }

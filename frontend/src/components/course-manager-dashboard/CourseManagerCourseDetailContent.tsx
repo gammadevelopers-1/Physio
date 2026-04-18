@@ -47,6 +47,7 @@ import {
   Eye,
   ClipboardCheck,
   Award,
+  Star,
 } from "lucide-react";
 
 interface CourseManagerCourseDetailContentProps {
@@ -121,6 +122,10 @@ const CourseManagerCourseDetailContent = ({
   const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
   useEffect(() => {
     if (!courseId) return;
+    courseManagerApi.getCourseRatings(courseId)
+      .then((res) => setReviews(res || []))
+      .catch(() => setReviews([]))
+      .finally(() => setReviewsLoading(false));
     courseManagerApi.getAssessments({ courseId, limit: 100 }).then((res) => {
       setModuleAssessments(res.data || []);
     }).catch(() => {});
@@ -130,6 +135,10 @@ const CourseManagerCourseDetailContent = ({
   const [removingMaterial, setRemovingMaterial] = useState<MaterialItem | null>(null);
   const [removeReason, setRemoveReason] = useState("");
   const [removeLoading, setRemoveLoading] = useState(false);
+
+  type ReviewItem = { id: string; rating: number; reviewText: string | null; createdAt: string; studentName: string };
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   const fetchCourse = useCallback(async () => {
     setLoading(true);
@@ -828,6 +837,69 @@ const CourseManagerCourseDetailContent = ({
                       <span className="text-[#1F2937] font-mono text-xs">{course.instructorId}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Student Reviews */}
+                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-semibold text-[#1F2937]">
+                      {t("courseDetail.reviewsTitle")}
+                    </h2>
+                    {reviews.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => {
+                            const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                            return (
+                              <Star
+                                key={s}
+                                className={`w-4 h-4 ${s <= Math.round(avg) ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                              />
+                            );
+                          })}
+                        </div>
+                        <span className="font-medium text-[#1F2937]">
+                          {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
+                        </span>
+                        <span className="text-[#6B7280]">({reviews.length})</span>
+                      </div>
+                    )}
+                  </div>
+                  {reviewsLoading ? (
+                    <div className="text-center py-6 text-sm text-[#6B7280]">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+                      {t("courseDetail.reviewsLoading")}
+                    </div>
+                  ) : reviews.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Star className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                      <p className="text-sm text-[#6B7280]">{t("courseDetail.noReviewsYet")}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-[480px] overflow-y-auto">
+                      {reviews.map((r) => (
+                        <div key={r.id} className="border border-[#E5E7EB] rounded-lg p-4 bg-[#FAFAFA]">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
+                              <p className="text-xs text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star
+                                  key={s}
+                                  className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          {r.reviewText && (
+                            <p className="text-sm text-[#374151] whitespace-pre-line">{r.reviewText}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : null}

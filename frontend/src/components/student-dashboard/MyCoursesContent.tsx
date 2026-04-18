@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -15,6 +15,8 @@ import {
   UserCheck,
   Upload,
   XCircle,
+  Star,
+  X,
 } from "lucide-react";
 import { studentApi } from "@/lib/api";
 import DashboardSidebar from "./DashboardSidebar";
@@ -87,6 +89,151 @@ const getStatusForTab = (tab: TabFilter): string | undefined => {
   }
 };
 
+interface LeaveReviewModalProps {
+  courseId: string;
+  courseTitle: string;
+  onClose: () => void;
+  onSubmitted: () => void;
+  t: (key: string) => string;
+  isRTL: boolean;
+}
+
+function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRTL }: LeaveReviewModalProps) {
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [existing, setExisting] = useState<{ rating: number; reviewText: string | null } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    studentApi
+      .getMyCourseRating(courseId)
+      .then((res) => { if (!cancelled) setExisting(res); })
+      .catch(() => { if (!cancelled) setExisting(null); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [courseId]);
+
+  const handleSubmit = async () => {
+    if (rating < 1) {
+      toast.error(t("myCourses.reviewRatingRequired"));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await studentApi.submitCourseRating(courseId, rating, reviewText.trim() || undefined);
+      toast.success(t("myCourses.reviewSuccess"));
+      onSubmitted();
+    } catch (e: unknown) {
+      const err = e as { status?: number };
+      if (err?.status === 409) {
+        toast.error(t("myCourses.reviewAlreadySubmitted"));
+        onSubmitted();
+      } else {
+        toast.error(t("myCourses.reviewError"));
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-[#1F2937]">{t("myCourses.reviewTitle")}</h3>
+            <button onClick={onClose} className="p-1 hover:bg-[#F3F4F6] rounded">
+              <X className="w-5 h-5 text-[#6B7280]" />
+            </button>
+          </div>
+
+          <p className="text-sm text-[#6B7280] mb-4 truncate">{courseTitle}</p>
+
+          {loading ? (
+            <div className="py-10 text-center text-sm text-[#6B7280]">{t("myCourses.reviewLoading")}</div>
+          ) : existing ? (
+            <div className="py-6 text-center">
+              <CheckCircle className="w-12 h-12 text-[#16A34A] mx-auto mb-3" />
+              <p className="text-sm font-medium text-[#1F2937] mb-2">{t("myCourses.reviewAlreadyTitle")}</p>
+              <p className="text-xs text-[#6B7280]">{t("myCourses.reviewAlreadyDesc")}</p>
+              <div className="flex justify-center gap-1 mt-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star
+                    key={s}
+                    className={`w-5 h-5 ${s <= existing.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                  />
+                ))}
+              </div>
+              {existing.reviewText && (
+                <p className="text-sm text-[#374151] mt-3 italic">&ldquo;{existing.reviewText}&rdquo;</p>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#374151] mb-2">
+                  {t("myCourses.reviewStarsLabel")} *
+                </label>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setRating(s)}
+                      className="p-1 hover:scale-110 transition-transform cursor-pointer"
+                      aria-label={`${s} star${s > 1 ? "s" : ""}`}
+                    >
+                      <Star
+                        className={`w-8 h-8 ${s <= rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-[#374151] mb-2">
+                  {t("myCourses.reviewTextLabel")}
+                </label>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  rows={4}
+                  maxLength={2000}
+                  placeholder={t("myCourses.reviewTextPlaceholder")}
+                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                />
+                <p className="text-xs text-[#9CA3AF] mt-1">{reviewText.length} / 2000</p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={onClose}
+                  disabled={submitting}
+                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                >
+                  {t("courseDetail.cancel")}
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || rating < 1}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {submitting ? t("myCourses.reviewSubmitting") : t("myCourses.reviewSubmit")}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const MyCoursesContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
@@ -94,6 +241,8 @@ const MyCoursesContent = () => {
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
   const [dropCourseId, setDropCourseId] = useState<string | null>(null);
   const [dropping, setDropping] = useState(false);
+  const [reviewCourse, setReviewCourse] = useState<{ id: string; title: string } | null>(null);
+  const [reviewed, setReviewed] = useState<Set<string>>(new Set());
   const { isFavourite, toggleFavourite } = useFavourites();
   const userData = useStudentProfile();
 
@@ -457,6 +606,22 @@ const MyCoursesContent = () => {
                                   {t("courseDetail.dropCourse")}
                                 </button>
                               )}
+                              {course.enrollmentStatus === "completed" && (
+                                reviewed.has(course.id) ? (
+                                  <div className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium bg-[#DCFCE7] text-[#16A34A]">
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    {t("myCourses.reviewSubmitted")}
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setReviewCourse({ id: course.id, title: (isRTL && course.titleAr) ? course.titleAr : course.title })}
+                                    className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-[#FDE68A] text-[#B45309] bg-[#FFFBEB] hover:bg-[#FEF3C7] cursor-pointer"
+                                  >
+                                    <Star className="w-3.5 h-3.5" />
+                                    {t("myCourses.leaveReview")}
+                                  </button>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -505,6 +670,21 @@ const MyCoursesContent = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Leave Review Modal */}
+      {reviewCourse && (
+        <LeaveReviewModal
+          courseId={reviewCourse.id}
+          courseTitle={reviewCourse.title}
+          onClose={() => setReviewCourse(null)}
+          onSubmitted={() => {
+            setReviewed((prev) => new Set(prev).add(reviewCourse.id));
+            setReviewCourse(null);
+          }}
+          t={t}
+          isRTL={isRTL}
+        />
       )}
     </>
   );

@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { eq, and, ilike, or, desc, asc, count, sql, inArray } from 'drizzle-orm';
@@ -1843,7 +1844,8 @@ export class CoursesService {
   // ─── Course Ratings ─────────────────────────────────────────
 
   /**
-   * Create or update a rating for a course.
+   * Create a rating for a course. One-time only — subsequent calls return 409.
+   * Student must have a completed enrollment in the course.
    */
   async rateCourse(
     courseId: string,
@@ -1851,8 +1853,26 @@ export class CoursesService {
     rating: number,
     reviewText?: string,
   ) {
+    const [enrollment] = await db
+      .select({ status: enrollments.status })
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          eq(enrollments.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
+    if (!enrollment) {
+      throw new ForbiddenException('You must be enrolled in this course to leave a review');
+    }
+    if (enrollment.status !== 'completed') {
+      throw new ForbiddenException('You can only review a course after completing it');
+    }
+
     const [existing] = await db
-      .select()
+      .select({ id: courseRatings.id })
       .from(courseRatings)
       .where(
         and(
@@ -1863,12 +1883,7 @@ export class CoursesService {
       .limit(1);
 
     if (existing) {
-      const [updated] = await db
-        .update(courseRatings)
-        .set({ rating, reviewText, updatedAt: new Date() })
-        .where(eq(courseRatings.id, existing.id))
-        .returning();
-      return updated;
+      throw new ConflictException('You have already reviewed this course');
     }
 
     const [created] = await db
@@ -1876,6 +1891,28 @@ export class CoursesService {
       .values({ courseId, studentId, rating, reviewText })
       .returning();
     return created;
+  }
+
+  /**
+   * Get the current user's rating for a course, or null if they haven't rated.
+   */
+  async getMyRating(courseId: string, studentId: string) {
+    const [row] = await db
+      .select({
+        id: courseRatings.id,
+        rating: courseRatings.rating,
+        reviewText: courseRatings.reviewText,
+        createdAt: courseRatings.createdAt,
+      })
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.courseId, courseId),
+          eq(courseRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+    return row || null;
   }
 
   /**

@@ -1597,7 +1597,22 @@
       "assignmentDue": "واجب مطلوب",
       "liveNow": "مباشر الآن",
       "viewDetails": "عرض التفاصيل",
-      "completedBadge": "مكتمل"
+      "completedBadge": "مكتمل",
+      "leaveReview": "اترك مراجعة",
+      "reviewSubmitted": "تم إرسال المراجعة",
+      "reviewTitle": "اترك مراجعة",
+      "reviewLoading": "جارٍ التحميل...",
+      "reviewStarsLabel": "التقييم",
+      "reviewTextLabel": "شاركنا تجربتك (اختياري)",
+      "reviewTextPlaceholder": "ما رأيك في الدورة؟",
+      "reviewSubmit": "إرسال المراجعة",
+      "reviewSubmitting": "جارٍ الإرسال...",
+      "reviewSuccess": "شكراً على مراجعتك!",
+      "reviewError": "فشل إرسال المراجعة. يرجى المحاولة مرة أخرى.",
+      "reviewRatingRequired": "يرجى اختيار تقييم",
+      "reviewAlreadySubmitted": "لقد قمت بمراجعة هذه الدورة من قبل",
+      "reviewAlreadyTitle": "تم إرسال المراجعة",
+      "reviewAlreadyDesc": "شكراً — لقد قمت بمراجعة هذه الدورة من قبل."
     },
     "favourites": {
       "title": "المفضلة",
@@ -4040,6 +4055,9 @@
       "createdAt": "تاريخ الإنشاء",
       "updatedAt": "آخر تحديث",
       "instructorId": "معرف المدرب",
+      "reviewsTitle": "مراجعات الطلاب",
+      "reviewsLoading": "جارٍ تحميل المراجعات...",
+      "noReviewsYet": "لا توجد مراجعات بعد. ستظهر المراجعات هنا بعد أن يُكمل الطلاب الدورة ويشاركوا آراءهم.",
       "status": {
         "active": "نشطة",
         "draft": "مسودة",

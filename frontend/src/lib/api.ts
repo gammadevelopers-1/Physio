@@ -2364,6 +2364,17 @@ export const studentApi = {
 
   rateTicket: (ticketId: string, rating: number) =>
     api.post<{ success: boolean }>(`/student/tickets/${ticketId}/rate`, { rating }),
+
+  getMyCourseRating: (courseId: string) =>
+    api.get<{ id: string; rating: number; reviewText: string | null; createdAt: string } | null>(
+      `/courses/${courseId}/ratings/me`,
+    ),
+
+  submitCourseRating: (courseId: string, rating: number, reviewText?: string) =>
+    api.post<{ id: string; rating: number; reviewText: string | null; createdAt: string }>(
+      `/courses/${courseId}/ratings`,
+      { rating, reviewText },
+    ),
 };
 
 // ===========================================

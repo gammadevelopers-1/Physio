@@ -17,6 +17,7 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 import { CreateModuleDto } from './dto/create-module.dto';
 import { UpdateModuleDto } from './dto/update-module.dto';
 import { ReorderModulesDto } from './dto/reorder-modules.dto';
+import { RateCourseDto } from './dto/rate-course.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards';
 import { CurrentUser, Roles, Public } from '../auth/decorators';
 import { UserRole } from '../../database/schema';
@@ -285,20 +286,34 @@ export class CoursesController {
   // ─── Course Ratings ─────────────────────────────────────────
 
   /**
-   * POST /courses/:id/ratings — Rate a course (student)
+   * POST /courses/:id/ratings — Rate a course (student, one-time)
    */
+  @Roles('STUDENT' as UserRole)
   @Post(':id/ratings')
   async rateCourse(
     @Param('id') courseId: string,
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: { rating: number; reviewText?: string },
+    @Body() dto: RateCourseDto,
   ) {
-    return this.coursesService.rateCourse(courseId, user.id, body.rating, body.reviewText);
+    return this.coursesService.rateCourse(courseId, user.id, dto.rating, dto.reviewText);
   }
 
   /**
-   * GET /courses/:id/ratings — Get all ratings for a course
+   * GET /courses/:id/ratings/me — Get the current student's rating for a course (or null)
    */
+  @Roles('STUDENT' as UserRole)
+  @Get(':id/ratings/me')
+  async getMyRating(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.getMyRating(courseId, user.id);
+  }
+
+  /**
+   * GET /courses/:id/ratings — Get all ratings for a course (public read)
+   */
+  @Public()
   @Get(':id/ratings')
   async getCourseRatings(@Param('id') courseId: string) {
     return this.coursesService.getCourseRatings(courseId);

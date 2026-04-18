@@ -154,13 +154,14 @@ function ModalBackdrop({ children, onClose }: { children: React.ReactNode; onClo
 // Create Role Modal
 // ============================================
 function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const tToasts = useTranslations("toasts");
   const [form, setForm] = useState({ name: "", displayName: "", description: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.displayName) {
-      toast.error("Name and display name are required");
+      toast.error(tToasts("roleNameDisplayRequired"));
       return;
     }
     setIsSubmitting(true);
@@ -170,7 +171,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
         displayName: form.displayName,
         description: form.description || undefined,
       });
-      toast.success("Role created successfully");
+      toast.success(tToasts("roleCreated"));
       onCreated();
       onClose();
     } catch (err) {
@@ -245,13 +246,14 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
 // Edit Role Modal
 // ============================================
 function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onClose: () => void; onUpdated: () => void }) {
+  const tToasts = useTranslations("toasts");
   const [form, setForm] = useState({ displayName: role.displayName, description: role.description || "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.displayName) {
-      toast.error("Display name is required");
+      toast.error(tToasts("displayNameRequired"));
       return;
     }
     setIsSubmitting(true);
@@ -260,7 +262,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
         displayName: form.displayName,
         description: form.description || undefined,
       });
-      toast.success("Role updated successfully");
+      toast.success(tToasts("roleUpdated"));
       onUpdated();
       onClose();
     } catch (err) {
@@ -325,13 +327,14 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
 // Delete Role Confirmation
 // ============================================
 function DeleteRoleModal({ role, onClose, onDeleted }: { role: RoleWithCount; onClose: () => void; onDeleted: () => void }) {
+  const tToasts = useTranslations("toasts");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleDelete = async () => {
     setIsSubmitting(true);
     try {
       await adminApi.deleteRole(role.id);
-      toast.success(`${role.displayName} role deleted`);
+      toast.success(tToasts("roleDeleted", { name: role.displayName }));
       onDeleted();
       onClose();
     } catch (err) {

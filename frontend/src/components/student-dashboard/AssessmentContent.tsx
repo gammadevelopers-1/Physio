@@ -41,6 +41,7 @@ import type {
 const AssessmentContent = () => {
   const locale = useLocale();
   const t = useTranslations("studentDashboard");
+  const tToasts = useTranslations("toasts");
   const isRTL = locale === "ar";
   const params = useParams();
   const searchParams = useSearchParams();
@@ -757,14 +758,14 @@ const AssessmentContent = () => {
                       const MAX_FILES = 10;
                       const oversized = newFiles.filter((f) => f.size > MAX_SIZE);
                       if (oversized.length > 0) {
-                        toast.error(`${oversized[0].name} exceeds 100 MB limit`);
+                        toast.error(tToasts("fileExceedsLimit", { name: oversized[0].name }));
                         e.target.value = "";
                         return;
                       }
                       setAssignmentFiles((prev) => {
                         const combined = [...prev, ...newFiles];
                         if (combined.length > MAX_FILES) {
-                          toast.error(`Maximum ${MAX_FILES} files allowed`);
+                          toast.error(tToasts("maxFilesAllowed", { max: MAX_FILES }));
                           return prev;
                         }
                         return combined;

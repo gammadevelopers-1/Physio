@@ -15,6 +15,7 @@ import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 
 function SignUpForm() {
   const t = useTranslations("signupPage");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const router = useRouter();
   const isRTL = locale === "ar";
@@ -92,7 +93,7 @@ function SignUpForm() {
         ...(scfhsNumber.trim() && { scfhsNumber: scfhsNumber.trim() }),
       });
       setSuccess(true);
-      toast.success("Account created successfully! Redirecting to sign in...");
+      toast.success(tToasts("accountCreated"));
       // Redirect to signin after 2 seconds, preserving redirect param
       setTimeout(() => {
         router.push(`/${locale}/signin${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`);

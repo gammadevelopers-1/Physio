@@ -105,6 +105,7 @@ function AttendanceModal({
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
+  const tToasts = useTranslations("toasts");
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -265,7 +266,7 @@ function AttendanceModal({
         skipped: result.skipped,
         details: result.details || [],
       });
-      toast.success(`Synced ${result.synced} attendance records from Zoom`);
+      toast.success(tToasts("syncedFromZoom", { count: result.synced }));
       setLoading(true);
       await loadData();
     } catch {
@@ -286,13 +287,13 @@ function AttendanceModal({
     setAssigningEmail(zoomEmail);
     try {
       await instructorApi.markAttendance(session.id, { studentId, status: "present" });
-      toast.success(`Assigned ${zoomEmail} to student`);
+      toast.success(tToasts("assignedToStudent", { email: zoomEmail }));
       setUnmatchedParticipants((prev) => prev.filter((p) => p.zoomUserEmail !== zoomEmail));
       setManualAssignments((prev) => { const next = { ...prev }; delete next[zoomEmail]; return next; });
       setLoading(true);
       await loadData();
     } catch {
-      toast.error("Failed to assign participant");
+      toast.error(tToasts("failedAssignParticipant"));
     } finally {
       setAssigningEmail(null);
     }
@@ -1888,6 +1889,7 @@ const SessionsContent = () => {
   const instructor = useInstructorProfile();
   const locale = useLocale();
   const t = useTranslations("instructorDashboard");
+  const tToasts = useTranslations("toasts");
   const searchParams = useSearchParams();
 
   // View mode — initialize from ?view= query param if present
@@ -2632,12 +2634,12 @@ const SessionsContent = () => {
               <button onClick={() => setRescheduleSession(null)} className="px-4 py-2 text-sm text-[#6B7280]">Cancel</button>
               <button
                 onClick={async () => {
-                  if (!rescheduleForm.reason.trim() || !rescheduleForm.date || !rescheduleForm.time) { toast.error("Please fill all required fields"); return; }
+                  if (!rescheduleForm.reason.trim() || !rescheduleForm.date || !rescheduleForm.time) { toast.error(tToasts("fillRequiredFields")); return; }
                   setRescheduleSaving(true);
                   try {
                     const newScheduledAt = new Date(`${rescheduleForm.date}T${rescheduleForm.time}`).toISOString();
                     await instructorApi.rescheduleSession(rescheduleSession.id, { reason: rescheduleForm.reason.trim(), newScheduledAt, newDurationMinutes: (rescheduleForm.durationHours * 60 + rescheduleForm.durationMins) || 60 });
-                    toast.success("Lecture rescheduled");
+                    toast.success(tToasts("lectureRescheduled"));
                     setRescheduleSession(null);
                     fetchData();
                   } catch (err: any) { toast.error(err?.message || "Failed"); } finally { setRescheduleSaving(false); }

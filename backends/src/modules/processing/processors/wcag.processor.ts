@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as https from 'https';
 import * as http from 'http';
 import { db } from '../../../database';
-import { courseMaterials, courses, users, userRoles, roles } from '../../../database/schema';
+import { courseMaterials, courses, users } from '../../../database/schema';
 import { QUEUE_NAMES } from '../constants';
 import { WcagService } from '../services/wcag.service';
 import { ProcessingService } from '../processing.service';
@@ -147,13 +147,12 @@ export class WcagProcessor extends WorkerHost {
     const instructorName = [course?.instructorFirstName, course?.instructorLastName]
       .filter(Boolean).join(' ') || 'Unknown Instructor';
 
-    // 2. Get all managers
+    // 2. Get the manager assigned to this course (if any)
     const managers = await db
       .select({ id: users.id, email: users.email, firstName: users.firstName, lastName: users.lastName, language: users.language })
-      .from(userRoles)
-      .innerJoin(users, eq(userRoles.userId, users.id))
-      .innerJoin(roles, eq(userRoles.roleId, roles.id))
-      .where(eq(roles.name, 'MANAGER'));
+      .from(courses)
+      .innerJoin(users, eq(courses.managerId, users.id))
+      .where(eq(courses.id, material.courseId));
 
     if (managers.length === 0) return;
 

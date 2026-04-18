@@ -33,6 +33,7 @@ import {
 
 const TASettingsContent = () => {
   const t = useTranslations("taDashboard");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const router = useRouter();
@@ -152,11 +153,11 @@ const TASettingsContent = () => {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      toast.error("Both password fields are required");
+      toast.error(tToasts("bothPasswordFieldsRequired"));
       return;
     }
     if (newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters");
+      toast.error(tToasts("passwordMinLength"));
       return;
     }
     setChangingPassword(true);
@@ -230,7 +231,7 @@ const TASettingsContent = () => {
       await preferencesApi.updateNotifications(notifications as unknown as Record<string, boolean>);
       toast.success(t("settings.notificationsSaved"));
     } catch {
-      toast.error("Failed to save notification preferences");
+      toast.error(tToasts("failedSaveNotificationPreferences"));
     } finally {
       setSavingNotifications(false);
     }
@@ -242,7 +243,7 @@ const TASettingsContent = () => {
       await preferencesApi.updateUi(preferences as unknown as Record<string, unknown>);
       toast.success(t("settings.preferencesSaved"));
     } catch {
-      toast.error("Failed to save preferences");
+      toast.error(tToasts("failedSavePreferences"));
     } finally {
       setSavingPreferences(false);
     }

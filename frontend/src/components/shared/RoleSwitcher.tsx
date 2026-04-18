@@ -64,7 +64,7 @@ export function RoleSwitcherDropdownItems({ onSwitch }: { onSwitch?: () => void 
   return (
     <>
       <div className="border-t border-[var(--outline-subtle)] my-1" />
-      <p className="px-4 py-1.5 text-xs font-medium text-[#9CA3AF]">
+      <p className="px-4 py-1.5 text-xs font-medium text-[#9CA3AF] text-start">
         {t("switchDashboard")}
       </p>
       {otherRoles.map((role) => {
@@ -76,14 +76,14 @@ export function RoleSwitcherDropdownItems({ onSwitch }: { onSwitch?: () => void 
             key={role}
             onClick={() => handleSwitch(role)}
             disabled={isSwitching}
-            className="flex items-center gap-2 px-4 py-2 w-full text-sm text-[#002D87] hover:bg-[#F0F7FF] transition-colors disabled:opacity-50"
+            className="flex items-center justify-start gap-2 px-4 py-2 w-full text-sm text-start text-[#002D87] hover:bg-[#F0F7FF] transition-colors disabled:opacity-50"
           >
             {isSwitching ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 flex-shrink-0 animate-spin" />
             ) : (
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4 flex-shrink-0" />
             )}
-            {getRoleLabel(role)}
+            <span className="truncate">{getRoleLabel(role)}</span>
           </button>
         );
       })}
@@ -145,14 +145,14 @@ export function RoleSwitcherMobileSection({ onSwitch }: { onSwitch?: () => void 
                 key={role}
                 onClick={() => handleSwitch(role)}
                 disabled={isSwitching}
-                className="flex items-center gap-3 px-3 py-2.5 w-full text-[#002D87] bg-[#F0F7FF] hover:bg-[#E0EFFF] rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center justify-start gap-3 px-3 py-2.5 w-full text-start text-[#002D87] bg-[#F0F7FF] hover:bg-[#E0EFFF] rounded-lg transition-colors disabled:opacity-50"
               >
                 {isSwitching ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" />
                 ) : (
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-5 h-5 flex-shrink-0" />
                 )}
-                <span className="text-sm font-medium">{getRoleLabel(role)}</span>
+                <span className="text-sm font-medium truncate">{getRoleLabel(role)}</span>
               </button>
             );
           })}

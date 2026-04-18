@@ -70,6 +70,7 @@ const TAAttendanceView = ({
   onBack,
 }: TAAttendanceViewProps) => {
   const t = useTranslations("taDashboard");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const timeLocale = locale === "ar" ? "ar-SA" : "en-US";
 
@@ -192,11 +193,11 @@ const TAAttendanceView = ({
         setAttendanceLocked(true);
       }
     } catch {
-      toast.error("Failed to load attendance data");
+      toast.error(tToasts("failedLoadAttendance"));
     } finally {
       setLoading(false);
     }
-  }, [sessionId, isZoomSession, sessionStatus]);
+  }, [sessionId, isZoomSession, sessionStatus, tToasts]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -206,11 +207,11 @@ const TAAttendanceView = ({
     try {
       const result = await api.post<{ synced: number; skipped: number; details: any[] }>(`/sessions/${sessionId}/sync-zoom`, {});
       setSyncResult({ synced: result.synced, skipped: result.skipped, details: result.details || [] });
-      toast.success(`Synced ${result.synced} attendance records from Zoom`);
+      toast.success(tToasts("syncedFromZoom", { count: result.synced }));
       setLoading(true);
       await loadData();
     } catch {
-      toast.error("Failed to sync Zoom attendance. Reports may take 10-30 minutes after meeting ends.", { duration: 8000 });
+      toast.error(tToasts("failedSyncZoom"), { duration: 8000 });
     } finally {
       setSyncing(false);
     }
@@ -222,13 +223,13 @@ const TAAttendanceView = ({
     setAssigningEmail(zoomEmail);
     try {
       await api.post(`/sessions/${sessionId}/attendance`, { studentId, status: "present" });
-      toast.success(`Assigned ${zoomEmail} to student`);
+      toast.success(tToasts("assignedToStudent", { email: zoomEmail }));
       setUnmatchedParticipants((prev) => prev.filter((p) => p.zoomUserEmail !== zoomEmail));
       setManualAssignments((prev) => { const next = { ...prev }; delete next[zoomEmail]; return next; });
       setLoading(true);
       await loadData();
     } catch {
-      toast.error("Failed to assign participant");
+      toast.error(tToasts("failedAssignParticipant"));
     } finally {
       setAssigningEmail(null);
     }
@@ -256,7 +257,7 @@ const TAAttendanceView = ({
         status: status === "unmarked" ? "absent" : status,
         ...(localNotes[studentId]?.trim() ? { note: localNotes[studentId].trim() } : {}),
       }));
-      if (bulkRecords.length === 0) { toast.error("No changes to save"); setSaving(false); return; }
+      if (bulkRecords.length === 0) { toast.error(tToasts("noChangesToSave")); setSaving(false); return; }
       await api.post(`/sessions/${sessionId}/attendance/bulk`, { records: bulkRecords });
       if (isPostSession) {
         if (sessionStatus === "ended") {
@@ -277,7 +278,7 @@ const TAAttendanceView = ({
       }
       toast.success(locale === "ar" ? "تم الحفظ" : "Attendance saved");
     } catch {
-      toast.error("Failed to save attendance");
+      toast.error(tToasts("failedSaveAttendance"));
     } finally {
       setSaving(false);
     }

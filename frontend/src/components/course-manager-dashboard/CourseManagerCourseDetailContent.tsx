@@ -339,11 +339,11 @@ const CourseManagerCourseDetailContent = ({
     const isOpen = new Date(deadline) > new Date();
     return isOpen ? (
       <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#DCFCE7] text-[#16A34A]">
-        Registration Open
+        {isRTL ? "التسجيل مفتوح" : "Registration Open"}
       </span>
     ) : (
       <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-[#FEE2E2] text-[#DC2626]">
-        Registration Closed
+        {isRTL ? "التسجيل مغلق" : "Registration Closed"}
       </span>
     );
   };

@@ -10,7 +10,7 @@ import {
   ReactNode,
 } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { authApi, setAccessToken, removeAccessToken } from '@/lib/api';
 import type { User } from '@/lib/api';
@@ -87,6 +87,7 @@ function clearSessionCookie() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations('toasts');
   const [state, setState] = useState<AuthState>({
     user: null,
     isLoading: true,
@@ -172,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         const displayName = user.firstName || user.email;
-        toast.success(`Welcome back, ${displayName}!`);
+        toast.success(t('welcomeBack', { name: displayName }));
 
         const dashboardPath = getDashboardPath(user.activeRole);
         let targetPath = `/${locale}${dashboardPath}`;
@@ -196,7 +197,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router, locale],
+    [router, locale, t],
   );
 
   // Verify 2FA OTP — called from the verification page
@@ -224,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         const displayName = user.firstName || user.email;
-        toast.success(`Welcome back, ${displayName}!`);
+        toast.success(t('welcomeBack', { name: displayName }));
 
         // Navigate to redirect target or user's correct dashboard
         const dashboardPath = getDashboardPath(user.activeRole);
@@ -249,7 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router, locale],
+    [router, locale, t],
   );
 
   // Resend 2FA OTP
@@ -292,9 +293,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSessionCookie();
     setTwoFactorPending(null);
     setState({ user: null, isLoading: false, isAuthenticated: false });
-    toast.success('Signed out successfully');
+    toast.success(t('signedOut'));
     router.push(`/${locale}/signin`);
-  }, [router, locale]);
+  }, [router, locale, t]);
 
   // Switch Role
   const switchRole = useCallback(
@@ -310,10 +311,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             : null,
         }));
 
-        const roleName =
-          response.activeRole.charAt(0) +
-          response.activeRole.slice(1).toLowerCase();
-        toast.success(`Switched to ${roleName} dashboard`);
+        const roleKeyMap: Record<string, string> = {
+          STUDENT: 'roleStudent',
+          INSTRUCTOR: 'roleInstructor',
+          TEACHING_ASSISTANT: 'roleTA',
+          MANAGER: 'roleManager',
+          ADMIN: 'roleAdmin',
+          SUPER_ADMIN: 'roleAdmin',
+        };
+        const roleKey = roleKeyMap[response.activeRole];
+        const localizedRoleName = roleKey
+          ? t(roleKey)
+          : response.activeRole.charAt(0) +
+            response.activeRole.slice(1).toLowerCase();
+        toast.success(t('switchedToDashboard', { role: localizedRoleName }));
 
         const dashboardPath = getDashboardPath(response.activeRole);
         router.push(`/${locale}${dashboardPath}`);
@@ -321,7 +332,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw error;
       }
     },
-    [router, locale],
+    [router, locale, t],
   );
 
   // Refresh user data

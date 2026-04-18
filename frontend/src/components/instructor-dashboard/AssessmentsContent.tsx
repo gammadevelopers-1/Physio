@@ -1505,6 +1505,7 @@ const GradeModal = ({
 const AssessmentsContent = () => {
   const instructor = useInstructorProfile();
   const t = useTranslations("instructorDashboard");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
@@ -2496,7 +2497,7 @@ const AssessmentsContent = () => {
                                 toast.success(t("assessments.removeFile") || "File removed");
                                 refreshAssessments();
                               } catch {
-                                toast.error("Failed to remove file");
+                                toast.error(tToasts("failedRemoveFile"));
                               }
                             };
 

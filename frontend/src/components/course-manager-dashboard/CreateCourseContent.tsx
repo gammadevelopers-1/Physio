@@ -41,7 +41,7 @@ function StepIndicator({
 }) {
   const steps = [
     { number: 1, label: t("createCourse.wizardStep1") },
-    { number: 2, label: "Content Details" },
+    { number: 2, label: t("createCourse.wizardStepContent") },
     { number: 3, label: t("createCourse.wizardStep2") },
     { number: 4, label: t("createCourse.wizardStep3") },
     { number: 5, label: t("createCourse.wizardStep5") },
@@ -135,6 +135,7 @@ const CreateCourseContent = () => {
   const locale = useLocale();
   const t = useTranslations("courseManagerDashboard");
   const tA = useTranslations("accessibility");
+  const tToasts = useTranslations("toasts");
   const isRTL = locale === "ar";
   const { calendarFormat } = useCalendarPreference();
 
@@ -223,7 +224,7 @@ const CreateCourseContent = () => {
     courseManagerApi
       .getInstructors()
       .then((data) => setInstructors(data))
-      .catch(() => toast.error("Failed to load instructors"))
+      .catch(() => toast.error(tToasts("failedLoadInstructors")))
       .finally(() => setLoadingInstructors(false));
 
     courseManagerApi
@@ -625,20 +626,20 @@ const CreateCourseContent = () => {
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-                      Content Details
+                      {t("createCourse.wizardStepContent")}
                     </h2>
                     <div className="space-y-4">
                       {/* Overview */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
                         <RichTextEditor
                           value={overview}
                           onChange={setOverview}
-                          placeholder="Course overview..."
+                          placeholder={t("createCourse.courseOverviewPlaceholder")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewAr")}</label>
                         <RichTextEditor
                           value={overviewAr}
                           onChange={setOverviewAr}
@@ -649,7 +650,7 @@ const CreateCourseContent = () => {
 
                       {/* Objectives */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (English)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
                         {objectives.map((obj, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -661,17 +662,17 @@ const CreateCourseContent = () => {
                                 setObjectives(next);
                               }}
                               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                              placeholder={`Objective ${i + 1}`}
+                              placeholder={`${t("createCourse.objectivePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setObjectives(objectives.filter((_, j) => j !== i))}
                               className="text-red-500 text-sm px-2">{"\u2715"}</button>
                           </div>
                         ))}
                         <button type="button" onClick={() => setObjectives([...objectives, ""])}
-                          className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                          className="text-sm text-blue-600 hover:underline">{t("createCourse.addObjective")}</button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (Arabic)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesAr")}</label>
                         {objectivesAr.map((obj, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -691,12 +692,12 @@ const CreateCourseContent = () => {
                           </div>
                         ))}
                         <button type="button" onClick={() => setObjectivesAr([...objectivesAr, ""])}
-                          className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                          className="text-sm text-blue-600 hover:underline">{t("createCourse.addObjective")}</button>
                       </div>
 
                       {/* Features */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Features (English)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
                         {features.map((feat, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -708,17 +709,17 @@ const CreateCourseContent = () => {
                                 setFeatures(next);
                               }}
                               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                              placeholder={`Feature ${i + 1}`}
+                              placeholder={`${t("createCourse.featurePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
                               className="text-red-500 text-sm px-2">{"\u2715"}</button>
                           </div>
                         ))}
                         <button type="button" onClick={() => setFeatures([...features, ""])}
-                          className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                          className="text-sm text-blue-600 hover:underline">{t("createCourse.addFeature")}</button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Features (Arabic)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesAr")}</label>
                         {featuresAr.map((feat, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -738,12 +739,12 @@ const CreateCourseContent = () => {
                           </div>
                         ))}
                         <button type="button" onClick={() => setFeaturesAr([...featuresAr, ""])}
-                          className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                          className="text-sm text-blue-600 hover:underline">{t("createCourse.addFeature")}</button>
                       </div>
 
                       {/* Target Audience */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (English)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
                         {targetAudience.map((item, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -755,17 +756,17 @@ const CreateCourseContent = () => {
                                 setTargetAudience(next);
                               }}
                               className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                              placeholder={`Audience ${i + 1}`}
+                              placeholder={`${t("createCourse.audiencePlaceholder")} ${i + 1}`}
                             />
                             <button type="button" onClick={() => setTargetAudience(targetAudience.filter((_, j) => j !== i))}
                               className="text-red-500 text-sm px-2">{"\u2715"}</button>
                           </div>
                         ))}
                         <button type="button" onClick={() => setTargetAudience([...targetAudience, ""])}
-                          className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                          className="text-sm text-blue-600 hover:underline">{t("createCourse.addAudience")}</button>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (Arabic)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceAr")}</label>
                         {targetAudienceAr.map((item, i) => (
                           <div key={i} className="flex gap-2 mb-2">
                             <input
@@ -785,24 +786,24 @@ const CreateCourseContent = () => {
                           </div>
                         ))}
                         <button type="button" onClick={() => setTargetAudienceAr([...targetAudienceAr, ""])}
-                          className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                          className="text-sm text-blue-600 hover:underline">{t("createCourse.addAudience")}</button>
                       </div>
 
                       {/* Requirements — only for onsite/blended */}
                       {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                         <>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1">Requirements (English)</label>
+                            <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
                             <textarea
                               value={requirements}
                               onChange={(e) => setRequirements(e.target.value)}
                               rows={3}
                               className={`${inputClass} resize-none`}
-                              placeholder="Course requirements..."
+                              placeholder={t("createCourse.requirementsPlaceholder")}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-[#374151] mb-1">Requirements (Arabic)</label>
+                            <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsAr")}</label>
                             <textarea
                               value={requirementsAr}
                               onChange={(e) => setRequirementsAr(e.target.value)}
@@ -817,17 +818,17 @@ const CreateCourseContent = () => {
 
                       {/* Notices */}
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Notices (English)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
                         <textarea
                           value={notices}
                           onChange={(e) => setNotices(e.target.value)}
                           rows={3}
                           className={`${inputClass} resize-none`}
-                          placeholder="Important notices..."
+                          placeholder={t("createCourse.noticesPlaceholder")}
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-[#374151] mb-1">Notices (Arabic)</label>
+                        <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesAr")}</label>
                         <textarea
                           value={noticesAr}
                           onChange={(e) => setNoticesAr(e.target.value)}
@@ -849,10 +850,9 @@ const CreateCourseContent = () => {
                               className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                             <div>
-                              <p className="text-sm font-medium text-[#374151]">Show Contents on public page</p>
+                              <p className="text-sm font-medium text-[#374151]">{t("createCourse.showContentsLabel")}</p>
                               <p className="text-xs text-[#6B7280] mt-0.5">
-                                When enabled, the first 2 modules are visible as a preview on the course detail page.
-                                Turn off to hide the entire Contents section from public.
+                                {t("createCourse.showContentsDesc")}
                               </p>
                             </div>
                           </label>
@@ -954,7 +954,7 @@ const CreateCourseContent = () => {
                       </div>
                       <div>
                         <label htmlFor="price" className="block text-sm font-medium text-[#374151] mb-1">
-                          Price (SAR)
+                          {t("createCourse.priceLabel")}
                         </label>
                         <input
                           id="price"
@@ -968,7 +968,7 @@ const CreateCourseContent = () => {
                       </div>
                       <div>
                         <label htmlFor="enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
-                          Enrollment Deadline
+                          {t("createCourse.enrollmentDeadlineLabel")}
                         </label>
                         <DatePicker
                           id="enrollment-deadline"
@@ -979,7 +979,7 @@ const CreateCourseContent = () => {
                       </div>
                       <div>
                         <label htmlFor="language" className="block text-sm font-medium text-[#374151] mb-1">
-                          Language
+                          {t("createCourse.languageLabel")}
                         </label>
                         <select
                           id="language"
@@ -987,29 +987,29 @@ const CreateCourseContent = () => {
                           onChange={(e) => setLanguage(e.target.value)}
                           className={selectClass}
                         >
-                          <option value="en">English</option>
-                          <option value="ar">Arabic</option>
-                          <option value="both">Both</option>
+                          <option value="en">{t("createCourse.languageEn")}</option>
+                          <option value="ar">{t("createCourse.languageAr")}</option>
+                          <option value="both">{t("createCourse.languageBoth")}</option>
                         </select>
                       </div>
                       {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                         <>
                           <div>
                             <label htmlFor="venue" className="block text-sm font-medium text-[#374151] mb-1">
-                              Venue (English)
+                              {t("createCourse.venueEn")}
                             </label>
                             <input
                               id="venue"
                               type="text"
                               value={venue}
                               onChange={(e) => setVenue(e.target.value)}
-                              placeholder="Venue name or address"
+                              placeholder={t("createCourse.venuePlaceholder")}
                               className={inputClass}
                             />
                           </div>
                           <div>
                             <label htmlFor="venue-ar" className="block text-sm font-medium text-[#374151] mb-1">
-                              Venue (Arabic)
+                              {t("createCourse.venueAr")}
                             </label>
                             <input
                               id="venue-ar"
@@ -1359,24 +1359,24 @@ const CreateCourseContent = () => {
                       {(overview || overviewAr || objectives.some(s => s.trim()) || objectivesAr.some(s => s.trim()) || features.some(s => s.trim()) || featuresAr.some(s => s.trim()) || targetAudience.some(s => s.trim()) || targetAudienceAr.some(s => s.trim()) || requirements || requirementsAr || notices || noticesAr) && (
                         <div className="border border-[#E5E7EB] rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-[#374151] mb-3">
-                            Content Details
+                            {t("createCourse.wizardStepContent")}
                           </h3>
                           <dl className="space-y-3 text-sm">
                             {overview && (
                               <div>
-                                <dt className="text-[#6B7280]">Overview (English)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsOverviewEn")}</dt>
                                 <dd className="font-medium text-[#1F2937] whitespace-pre-line">{overview}</dd>
                               </div>
                             )}
                             {overviewAr && (
                               <div>
-                                <dt className="text-[#6B7280]">Overview (Arabic)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsOverviewAr")}</dt>
                                 <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{overviewAr}</dd>
                               </div>
                             )}
                             {objectives.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">Objectives (English)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsObjectivesEn")}</dt>
                                 <dd>
                                   <ul className="list-disc list-inside text-[#1F2937]">
                                     {objectives.filter(s => s.trim()).map((o, i) => <li key={i}>{o}</li>)}
@@ -1386,7 +1386,7 @@ const CreateCourseContent = () => {
                             )}
                             {objectivesAr.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">Objectives (Arabic)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsObjectivesAr")}</dt>
                                 <dd dir="rtl">
                                   <ul className="list-disc list-inside text-[#1F2937]">
                                     {objectivesAr.filter(s => s.trim()).map((o, i) => <li key={i}>{o}</li>)}
@@ -1396,7 +1396,7 @@ const CreateCourseContent = () => {
                             )}
                             {features.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">Features (English)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsFeaturesEn")}</dt>
                                 <dd>
                                   <ul className="list-disc list-inside text-[#1F2937]">
                                     {features.filter(s => s.trim()).map((f, i) => <li key={i}>{f}</li>)}
@@ -1406,7 +1406,7 @@ const CreateCourseContent = () => {
                             )}
                             {featuresAr.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">Features (Arabic)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsFeaturesAr")}</dt>
                                 <dd dir="rtl">
                                   <ul className="list-disc list-inside text-[#1F2937]">
                                     {featuresAr.filter(s => s.trim()).map((f, i) => <li key={i}>{f}</li>)}
@@ -1416,7 +1416,7 @@ const CreateCourseContent = () => {
                             )}
                             {targetAudience.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">Target Audience (English)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsTargetAudienceEn")}</dt>
                                 <dd>
                                   <ul className="list-disc list-inside text-[#1F2937]">
                                     {targetAudience.filter(s => s.trim()).map((a, i) => <li key={i}>{a}</li>)}
@@ -1426,7 +1426,7 @@ const CreateCourseContent = () => {
                             )}
                             {targetAudienceAr.some(s => s.trim()) && (
                               <div>
-                                <dt className="text-[#6B7280]">Target Audience (Arabic)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsTargetAudienceAr")}</dt>
                                 <dd dir="rtl">
                                   <ul className="list-disc list-inside text-[#1F2937]">
                                     {targetAudienceAr.filter(s => s.trim()).map((a, i) => <li key={i}>{a}</li>)}
@@ -1436,25 +1436,25 @@ const CreateCourseContent = () => {
                             )}
                             {requirements && (
                               <div>
-                                <dt className="text-[#6B7280]">Requirements (English)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsRequirementsEn")}</dt>
                                 <dd className="font-medium text-[#1F2937] whitespace-pre-line">{requirements}</dd>
                               </div>
                             )}
                             {requirementsAr && (
                               <div>
-                                <dt className="text-[#6B7280]">Requirements (Arabic)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsRequirementsAr")}</dt>
                                 <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{requirementsAr}</dd>
                               </div>
                             )}
                             {notices && (
                               <div>
-                                <dt className="text-[#6B7280]">Notices (English)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsNoticesEn")}</dt>
                                 <dd className="font-medium text-[#1F2937] whitespace-pre-line">{notices}</dd>
                               </div>
                             )}
                             {noticesAr && (
                               <div>
-                                <dt className="text-[#6B7280]">Notices (Arabic)</dt>
+                                <dt className="text-[#6B7280]">{t("createCourse.contentDetailsNoticesAr")}</dt>
                                 <dd className="font-medium text-[#1F2937] whitespace-pre-line" dir="rtl">{noticesAr}</dd>
                               </div>
                             )}
@@ -1513,25 +1513,25 @@ const CreateCourseContent = () => {
                           )}
                           {price && (
                             <div>
-                              <dt className="text-[#6B7280]">Price (SAR)</dt>
+                              <dt className="text-[#6B7280]">{t("createCourse.priceLabel")}</dt>
                               <dd className="font-medium text-[#1F2937]">{price}</dd>
                             </div>
                           )}
                           {enrollmentDeadline && (
                             <div>
-                              <dt className="text-[#6B7280]">Enrollment Deadline</dt>
+                              <dt className="text-[#6B7280]">{t("createCourse.enrollmentDeadlineLabel")}</dt>
                               <dd className="font-medium text-[#1F2937]">{formatDate(enrollmentDeadline)}</dd>
                             </div>
                           )}
                           {language !== 'en' && (
                             <div>
-                              <dt className="text-[#6B7280]">Language</dt>
-                              <dd className="font-medium text-[#1F2937]">{language === 'ar' ? 'Arabic' : language === 'both' ? 'Both' : 'English'}</dd>
+                              <dt className="text-[#6B7280]">{t("createCourse.languageLabel")}</dt>
+                              <dd className="font-medium text-[#1F2937]">{language === 'ar' ? t("createCourse.languageAr") : language === 'both' ? t("createCourse.languageBoth") : t("createCourse.languageEn")}</dd>
                             </div>
                           )}
                           {(deliveryType === 'onsite' || deliveryType === 'blended') && venue && (
                             <div>
-                              <dt className="text-[#6B7280]">Venue</dt>
+                              <dt className="text-[#6B7280]">{t("createCourse.venueEn")}</dt>
                               <dd className="font-medium text-[#1F2937]">{venue}</dd>
                             </div>
                           )}

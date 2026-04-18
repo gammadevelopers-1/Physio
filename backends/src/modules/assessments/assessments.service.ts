@@ -372,14 +372,46 @@ export class AssessmentsService {
 
           const courseName = course?.title || 'your course';
 
-          await this.userNotificationsService.createBulk(studentIds, {
-            type: 'assessment_published',
-            title: 'New Assessment Published',
-            message: `A new ${updated.type} "${updated.title}" has been published for ${courseName}.`,
-            link: `/dashboard/student/courses/${updated.courseId}`,
-            entityType: 'assessment',
-            entityId: updated.id,
-          });
+          // Group recipients by locale for bilingual notification
+          const studentLocales = await db
+            .select({ id: users.id, language: users.language })
+            .from(users)
+            .where(inArray(users.id, studentIds));
+
+          const arIds: string[] = [];
+          const enIds: string[] = [];
+          for (const s of studentLocales) {
+            if ((s.language || 'en') === 'ar') arIds.push(s.id);
+            else enIds.push(s.id);
+          }
+
+          const typeArabicMap: Record<string, string> = {
+            quiz: 'اختبار',
+            exam: 'امتحان',
+            assignment: 'واجب',
+          };
+          const typeAr = typeArabicMap[updated.type] || updated.type;
+
+          if (enIds.length > 0) {
+            await this.userNotificationsService.createBulk(enIds, {
+              type: 'assessment_published',
+              title: 'New Assessment Published',
+              message: `A new ${updated.type} "${updated.title}" has been published for ${courseName}.`,
+              link: `/dashboard/student/courses/${updated.courseId}`,
+              entityType: 'assessment',
+              entityId: updated.id,
+            });
+          }
+          if (arIds.length > 0) {
+            await this.userNotificationsService.createBulk(arIds, {
+              type: 'assessment_published',
+              title: 'تم نشر تقييم جديد',
+              message: `تم نشر ${typeAr} جديد "${updated.title}" لدورة ${courseName}.`,
+              link: `/dashboard/student/courses/${updated.courseId}`,
+              entityType: 'assessment',
+              entityId: updated.id,
+            });
+          }
         }
       } catch (err) {
         this.logger.error('Failed to notify students about published assessment', err);

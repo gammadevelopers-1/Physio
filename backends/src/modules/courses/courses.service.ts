@@ -935,14 +935,35 @@ export class CoursesService {
     const managerIds = managers.map((m) => m.id);
     if (managerIds.length > 0) {
       const instructorName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
-      await this.userNotificationsService.createBulk(managerIds, {
-        type: 'course_submitted_for_review',
-        title: 'Course Submitted for Review',
-        message: `${instructorName} submitted "${course.title}" for review.`,
-        link: '/dashboard/manager/courses',
-        entityType: 'course',
-        entityId: courseId,
-      });
+
+      // Group managers by locale for bilingual notification
+      const arIds: string[] = [];
+      const enIds: string[] = [];
+      for (const m of managers) {
+        if ((m.language || 'en') === 'ar') arIds.push(m.id);
+        else enIds.push(m.id);
+      }
+
+      if (enIds.length > 0) {
+        await this.userNotificationsService.createBulk(enIds, {
+          type: 'course_submitted_for_review',
+          title: 'Course Submitted for Review',
+          message: `${instructorName} submitted "${course.title}" for review.`,
+          link: '/dashboard/manager/courses',
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
+      if (arIds.length > 0) {
+        await this.userNotificationsService.createBulk(arIds, {
+          type: 'course_submitted_for_review',
+          title: 'تم تقديم دورة للمراجعة',
+          message: `${instructorName} قدم "${course.title}" للمراجعة.`,
+          link: '/dashboard/manager/courses',
+          entityType: 'course',
+          entityId: courseId,
+        });
+      }
 
       // Email each manager
       for (const mgr of managers) {

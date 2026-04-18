@@ -116,6 +116,7 @@ function CreateUserModal({
   onCreated: () => void;
 }) {
   const t = useTranslations("adminDashboard");
+  const tToasts = useTranslations("toasts");
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -129,15 +130,15 @@ function CreateUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.email || !form.password || !form.firstName || !form.lastName) {
-      toast.error("Please fill in all required fields");
+      toast.error(tToasts("fillRequiredFields"));
       return;
     }
     if (form.password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(tToasts("passwordMinLength8"));
       return;
     }
     if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
-      toast.error("Password must contain uppercase, lowercase, and a number");
+      toast.error(tToasts("passwordComplexity"));
       return;
     }
 
@@ -152,7 +153,7 @@ function CreateUserModal({
       };
       if (form.phone) data.phone = form.phone;
       await adminApi.createUser(data);
-      toast.success("User created successfully");
+      toast.success(tToasts("userCreated"));
       onCreated();
       onClose();
     } catch (err) {
@@ -291,6 +292,7 @@ function EditUserModal({
   onClose: () => void;
   onUpdated: () => void;
 }) {
+  const tToasts = useTranslations("toasts");
   const [form, setForm] = useState({
     firstName: user.firstName || "",
     lastName: user.lastName || "",
@@ -303,7 +305,7 @@ function EditUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.firstName || !form.lastName) {
-      toast.error("First name and last name are required");
+      toast.error(tToasts("firstLastNameRequired"));
       return;
     }
 
@@ -317,7 +319,7 @@ function EditUserModal({
       };
       if (form.phone) data.phone = form.phone;
       await adminApi.updateUser(user.id, data);
-      toast.success("User updated successfully");
+      toast.success(tToasts("userUpdated"));
       onUpdated();
       onClose();
     } catch (err) {
@@ -532,6 +534,7 @@ function ManageRolesModal({
   onUpdated: () => void;
 }) {
   const t = useTranslations("adminDashboard");
+  const tToasts = useTranslations("toasts");
   const [userRoles, setUserRoles] = useState<string[]>(user.roles || []);
   const [activeRole, setActiveRole] = useState(user.activeRole);
   const [isLoading, setIsLoading] = useState(false);
@@ -556,7 +559,7 @@ function ManageRolesModal({
 
   const handleRemoveRole = async (role: string) => {
     if (userRoles.length <= 1) {
-      toast.error("User must have at least one role");
+      toast.error(tToasts("userMustHaveRole"));
       return;
     }
     setActionInProgress(role);

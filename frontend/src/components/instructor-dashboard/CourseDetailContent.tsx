@@ -180,6 +180,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const locale = useLocale();
   const router = useRouter();
   const t = useTranslations("instructorDashboard");
+  const tToasts = useTranslations("toasts");
   const { calendarFormat } = useCalendarPreference();
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
@@ -621,8 +622,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
 
   const handleRescheduleSession = async () => {
-    if (!rescheduleData.reason.trim()) { toast.error("Reason is required"); return; }
-    if (!rescheduleData.newDate || !rescheduleData.newTime) { toast.error("New date and time are required"); return; }
+    if (!rescheduleData.reason.trim()) { toast.error(tToasts("reasonRequired")); return; }
+    if (!rescheduleData.newDate || !rescheduleData.newTime) { toast.error(tToasts("newDateTimeRequired")); return; }
     setRescheduleSaving(true);
     try {
       const newScheduledAt = new Date(`${rescheduleData.newDate}T${rescheduleData.newTime}`).toISOString();
@@ -631,7 +632,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
         newScheduledAt,
         newDurationMinutes: (rescheduleData.durationHours * 60 + rescheduleData.durationMins) || 60,
       });
-      toast.success("Lecture rescheduled successfully");
+      toast.success(tToasts("lectureRescheduledSuccess"));
       setRescheduleModal({ open: false, sessionId: null });
       setRescheduleData({ reason: "", newDate: "", newTime: "", durationHours: 1, durationMins: 0 });
       refetch();
@@ -1937,34 +1938,33 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   <option value="hybrid">{t("courseDetail.sessionTypes.hybrid")}</option>
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.scheduledDate")} *</label>
-                  <DateTimePicker
-                    value={sessionForm.scheduledAt}
-                    onChange={(v) => setSessionForm((f) => ({ ...f, scheduledAt: v }))}
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.scheduledDate")} *</label>
+                <DateTimePicker
+                  value={sessionForm.scheduledAt}
+                  onChange={(v) => setSessionForm((f) => ({ ...f, scheduledAt: v }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration") || "Duration"}</label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="number"
+                    min={0}
+                    value={sessionForm.durationHours}
+                    onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
+                    className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration") || "Duration"}</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      value={sessionForm.durationHours}
-                      onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
-                      className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                    />
-                    <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHours")}</span>
-                    <input
-                      type="number"
-                      min={0}
-                      max={59}
-                      value={sessionForm.durationMins}
-                      onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
-                      className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
-                    />
-                  </div>
+                  <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHours")}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={59}
+                    value={sessionForm.durationMins}
+                    onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
+                    className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  />
+                  <span className="text-sm text-[#6B7280]">{t("courseDetail.durationMinutes")}</span>
                 </div>
               </div>
               {(sessionForm.type === "onsite" || sessionForm.type === "hybrid") && (

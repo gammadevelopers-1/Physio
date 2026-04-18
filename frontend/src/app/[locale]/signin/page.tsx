@@ -15,6 +15,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 
 function SignInForm() {
   const t = useTranslations("signinPage");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { login, isLoading } = useAuth();
@@ -33,8 +34,8 @@ function SignInForm() {
     setError(null);
 
     if (!email || !password) {
-      setError("Please fill in all fields");
-      toast.error("Please fill in all fields");
+      setError(tToasts("fillAllFields"));
+      toast.error(tToasts("fillAllFields"));
       return;
     }
 

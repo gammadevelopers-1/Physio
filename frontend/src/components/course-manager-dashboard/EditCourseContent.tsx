@@ -464,20 +464,20 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 {/* Course Content */}
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
-                    Content Details
+                    {t("createCourse.wizardStepContent")}
                   </h2>
                   <div className="space-y-4">
                     {/* Overview */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Overview (English)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewEn")}</label>
                       <RichTextEditor
                         value={overview}
                         onChange={setOverview}
-                        placeholder="Course overview..."
+                        placeholder={t("createCourse.courseOverviewPlaceholder")}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Overview (Arabic)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsOverviewAr")}</label>
                       <RichTextEditor
                         value={overviewAr}
                         onChange={setOverviewAr}
@@ -488,7 +488,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Objectives */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (English)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesEn")}</label>
                       {objectives.map((obj, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -500,17 +500,17 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                               setObjectives(next);
                             }}
                             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                            placeholder={`Objective ${i + 1}`}
+                            placeholder={`${t("createCourse.objectivePlaceholder")} ${i + 1}`}
                           />
                           <button type="button" onClick={() => setObjectives(objectives.filter((_, j) => j !== i))}
                             className="text-red-500 text-sm px-2">{"\u2715"}</button>
                         </div>
                       ))}
                       <button type="button" onClick={() => setObjectives([...objectives, ""])}
-                        className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                        className="text-sm text-blue-600 hover:underline">{t("createCourse.addObjective")}</button>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Objectives (Arabic)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsObjectivesAr")}</label>
                       {objectivesAr.map((obj, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -530,12 +530,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         </div>
                       ))}
                       <button type="button" onClick={() => setObjectivesAr([...objectivesAr, ""])}
-                        className="text-sm text-blue-600 hover:underline">+ Add objective</button>
+                        className="text-sm text-blue-600 hover:underline">{t("createCourse.addObjective")}</button>
                     </div>
 
                     {/* Features */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Features (English)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesEn")}</label>
                       {features.map((feat, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -547,17 +547,17 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                               setFeatures(next);
                             }}
                             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                            placeholder={`Feature ${i + 1}`}
+                            placeholder={`${t("createCourse.featurePlaceholder")} ${i + 1}`}
                           />
                           <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
                             className="text-red-500 text-sm px-2">{"\u2715"}</button>
                         </div>
                       ))}
                       <button type="button" onClick={() => setFeatures([...features, ""])}
-                        className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                        className="text-sm text-blue-600 hover:underline">{t("createCourse.addFeature")}</button>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Features (Arabic)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsFeaturesAr")}</label>
                       {featuresAr.map((feat, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -577,12 +577,12 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         </div>
                       ))}
                       <button type="button" onClick={() => setFeaturesAr([...featuresAr, ""])}
-                        className="text-sm text-blue-600 hover:underline">+ Add feature</button>
+                        className="text-sm text-blue-600 hover:underline">{t("createCourse.addFeature")}</button>
                     </div>
 
                     {/* Target Audience */}
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (English)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceEn")}</label>
                       {targetAudience.map((item, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -594,17 +594,17 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                               setTargetAudience(next);
                             }}
                             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                            placeholder={`Audience ${i + 1}`}
+                            placeholder={`${t("createCourse.audiencePlaceholder")} ${i + 1}`}
                           />
                           <button type="button" onClick={() => setTargetAudience(targetAudience.filter((_, j) => j !== i))}
                             className="text-red-500 text-sm px-2">{"\u2715"}</button>
                         </div>
                       ))}
                       <button type="button" onClick={() => setTargetAudience([...targetAudience, ""])}
-                        className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                        className="text-sm text-blue-600 hover:underline">{t("createCourse.addAudience")}</button>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#374151] mb-1">Target Audience (Arabic)</label>
+                      <label className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsTargetAudienceAr")}</label>
                       {targetAudienceAr.map((item, i) => (
                         <div key={i} className="flex gap-2 mb-2">
                           <input
@@ -624,25 +624,25 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         </div>
                       ))}
                       <button type="button" onClick={() => setTargetAudienceAr([...targetAudienceAr, ""])}
-                        className="text-sm text-blue-600 hover:underline">+ Add audience</button>
+                        className="text-sm text-blue-600 hover:underline">{t("createCourse.addAudience")}</button>
                     </div>
 
                     {/* Requirements — only for onsite/blended */}
                     {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                       <>
                         <div>
-                          <label htmlFor="edit-requirements" className="block text-sm font-medium text-[#374151] mb-1">Requirements (English)</label>
+                          <label htmlFor="edit-requirements" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsEn")}</label>
                           <textarea
                             id="edit-requirements"
                             value={requirements}
                             onChange={(e) => setRequirements(e.target.value)}
                             rows={3}
                             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
-                            placeholder="Course requirements..."
+                            placeholder={t("createCourse.requirementsPlaceholder")}
                           />
                         </div>
                         <div>
-                          <label htmlFor="edit-requirements-ar" className="block text-sm font-medium text-[#374151] mb-1">Requirements (Arabic)</label>
+                          <label htmlFor="edit-requirements-ar" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsRequirementsAr")}</label>
                           <textarea
                             id="edit-requirements-ar"
                             value={requirementsAr}
@@ -658,18 +658,18 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Notices */}
                     <div>
-                      <label htmlFor="edit-notices" className="block text-sm font-medium text-[#374151] mb-1">Notices (English)</label>
+                      <label htmlFor="edit-notices" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesEn")}</label>
                       <textarea
                         id="edit-notices"
                         value={notices}
                         onChange={(e) => setNotices(e.target.value)}
                         rows={3}
                         className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
-                        placeholder="Important notices..."
+                        placeholder={t("createCourse.noticesPlaceholder")}
                       />
                     </div>
                     <div>
-                      <label htmlFor="edit-notices-ar" className="block text-sm font-medium text-[#374151] mb-1">Notices (Arabic)</label>
+                      <label htmlFor="edit-notices-ar" className="block text-sm font-medium text-[#374151] mb-1">{t("createCourse.contentDetailsNoticesAr")}</label>
                       <textarea
                         id="edit-notices-ar"
                         value={noticesAr}
@@ -692,10 +692,9 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
                           <div>
-                            <p className="text-sm font-medium text-[#374151]">Show Contents on public page</p>
+                            <p className="text-sm font-medium text-[#374151]">{t("createCourse.showContentsLabel")}</p>
                             <p className="text-xs text-[#6B7280] mt-0.5">
-                              When enabled, the first 2 modules are visible as a preview on the course detail page.
-                              Turn off to hide the entire Contents section from public.
+                              {t("createCourse.showContentsDesc")}
                             </p>
                           </div>
                         </label>
@@ -704,18 +703,18 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Section order */}
                     <div className="pt-3 border-t border-[#E5E7EB]">
-                      <p className="text-sm font-medium text-[#374151] mb-1">Section order on public page</p>
+                      <p className="text-sm font-medium text-[#374151] mb-1">{t("createCourse.sectionOrderTitle")}</p>
                       <p className="text-xs text-[#6B7280] mb-3">
-                        Reorder how sections appear. Sections with no data are hidden automatically.
+                        {t("createCourse.sectionOrderDesc")}
                       </p>
                       <div className="flex flex-col gap-1.5">
                         {sectionsOrder.map((key, idx) => {
                           const labels: Record<string, string> = {
-                            overview: "Overview",
-                            objectives: "Objectives (What You'll Learn)",
-                            contents: "Contents / Modules",
-                            requirements: "Requirements",
-                            reviews: "Reviews",
+                            overview: t("createCourse.sectionOverview"),
+                            objectives: t("createCourse.sectionObjectives"),
+                            contents: t("createCourse.sectionContents"),
+                            requirements: t("createCourse.sectionRequirements"),
+                            reviews: t("createCourse.sectionReviews"),
                           };
                           const moveUp = () => {
                             if (idx === 0) return;
@@ -738,7 +737,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                                 onClick={moveUp}
                                 disabled={idx === 0}
                                 className="p-1 rounded hover:bg-[#E5E7EB] disabled:opacity-30 disabled:cursor-not-allowed"
-                                title="Move up"
+                                title={t("createCourse.moveUp")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
                                   <polyline points="18 15 12 9 6 15"></polyline>
@@ -749,7 +748,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                                 onClick={moveDown}
                                 disabled={idx === sectionsOrder.length - 1}
                                 className="p-1 rounded hover:bg-[#E5E7EB] disabled:opacity-30 disabled:cursor-not-allowed"
-                                title="Move down"
+                                title={t("createCourse.moveDown")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
                                   <polyline points="6 9 12 15 18 9"></polyline>
@@ -887,7 +886,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     </div>
                     <div>
                       <label htmlFor="edit-price" className="block text-sm font-medium text-[#374151] mb-1">
-                        Price (SAR)
+                        {t("createCourse.priceLabel")}
                       </label>
                       <input
                         id="edit-price"
@@ -901,7 +900,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     </div>
                     <div>
                       <label htmlFor="edit-enrollment-deadline" className="block text-sm font-medium text-[#374151] mb-1">
-                        Enrollment Deadline
+                        {t("createCourse.enrollmentDeadlineLabel")}
                       </label>
                       <DatePicker
                         id="edit-enrollment-deadline"
@@ -911,7 +910,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     </div>
                     <div>
                       <label htmlFor="edit-language" className="block text-sm font-medium text-[#374151] mb-1">
-                        Language
+                        {t("createCourse.languageLabel")}
                       </label>
                       <select
                         id="edit-language"
@@ -919,29 +918,29 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         onChange={(e) => setLanguage(e.target.value)}
                         className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                       >
-                        <option value="en">English</option>
-                        <option value="ar">Arabic</option>
-                        <option value="both">Both</option>
+                        <option value="en">{t("createCourse.languageEn")}</option>
+                        <option value="ar">{t("createCourse.languageAr")}</option>
+                        <option value="both">{t("createCourse.languageBoth")}</option>
                       </select>
                     </div>
                     {(deliveryType === 'onsite' || deliveryType === 'blended') && (
                       <>
                         <div>
                           <label htmlFor="edit-venue" className="block text-sm font-medium text-[#374151] mb-1">
-                            Venue (English)
+                            {t("createCourse.venueEn")}
                           </label>
                           <input
                             id="edit-venue"
                             type="text"
                             value={venue}
                             onChange={(e) => setVenue(e.target.value)}
-                            placeholder="Venue name or address"
+                            placeholder={t("createCourse.venuePlaceholder")}
                             className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           />
                         </div>
                         <div>
                           <label htmlFor="edit-venue-ar" className="block text-sm font-medium text-[#374151] mb-1">
-                            Venue (Arabic)
+                            {t("createCourse.venueAr")}
                           </label>
                           <input
                             id="edit-venue-ar"

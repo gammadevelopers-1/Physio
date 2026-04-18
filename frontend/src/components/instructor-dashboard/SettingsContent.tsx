@@ -35,6 +35,7 @@ import {
 const SettingsContent = () => {
   const instructor = useInstructorProfile();
   const t = useTranslations("instructorDashboard");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const isRTL = locale === "ar";
   const { calendarFormat, setCalendarFormat } = useCalendarPreference();
@@ -160,11 +161,11 @@ const SettingsContent = () => {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      toast.error("Both password fields are required");
+      toast.error(tToasts("bothPasswordFieldsRequired"));
       return;
     }
     if (newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters");
+      toast.error(tToasts("passwordMinLength"));
       return;
     }
     setChangingPassword(true);

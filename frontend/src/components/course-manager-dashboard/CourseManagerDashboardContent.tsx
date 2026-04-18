@@ -27,6 +27,7 @@ import { useCalendarPreference } from "@/contexts/CalendarContext";
 const CourseManagerDashboardContent = () => {
   const t = useTranslations("courseManagerDashboard");
   const tA = useTranslations("accessibility");
+  const tToasts = useTranslations("toasts");
   const locale = useLocale();
   const { calendarFormat } = useCalendarPreference();
   const router = useRouter();
@@ -130,7 +131,7 @@ const CourseManagerDashboardContent = () => {
             await courseManagerApi.completeCourse(courseId);
             break;
           default:
-            toast.error("Unsupported status transition");
+            toast.error(tToasts("unsupportedStatusTransition"));
             return;
         }
         toast.success(t("catalog.statusChanged"));

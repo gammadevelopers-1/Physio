@@ -530,7 +530,7 @@ export class MaterialsService {
     // For managers, scope to materials in courses they manage
     if (isManager(user)) {
       conditions.push(
-        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
       );
     }
 
@@ -567,7 +567,7 @@ export class MaterialsService {
     }
     if (isManager(user)) {
       scopeConditions.push(
-        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id} OR manager_id IS NULL)`,
+        sql`${courseMaterials.courseId} IN (SELECT id FROM courses WHERE manager_id = ${user.id})`,
       );
     }
 

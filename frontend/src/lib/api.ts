@@ -1416,6 +1416,7 @@ export interface CreateCourseManagerData {
   language?: string;
   showContents?: boolean;
   sectionsOrder?: string[];
+  visibleOnPublicSite?: boolean;
 }
 
 export interface SessionsParams {

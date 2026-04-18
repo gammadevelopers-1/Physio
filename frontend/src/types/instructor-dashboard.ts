@@ -743,6 +743,8 @@ export interface PublicCourse {
   remainingSeats: number;
   isFull: boolean;
   sessionCount: number;
+  status?: string;
+  availabilityStatus?: 'open' | 'completed' | 'full' | 'deadline_passed';
   // Content fields
   overview: string | null;
   overviewAr: string | null;

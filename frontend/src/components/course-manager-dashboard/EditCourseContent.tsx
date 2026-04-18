@@ -78,6 +78,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
   const [language, setLanguage] = useState("en");
   const [showContents, setShowContents] = useState(true);
   const [sectionsOrder, setSectionsOrder] = useState<string[]>(["overview", "objectives", "contents", "requirements", "reviews"]);
+  const [visibleOnPublicSite, setVisibleOnPublicSite] = useState(true);
 
   // Thumbnail
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -131,6 +132,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         }
         setLanguage((courseData as any).language || "en");
         setShowContents((courseData as any).showContents !== false);
+        setVisibleOnPublicSite((courseData as any).visibleOnPublicSite !== false);
         const savedOrder = (courseData as any).sectionsOrder;
         if (Array.isArray(savedOrder) && savedOrder.length > 0) {
           setSectionsOrder(savedOrder);
@@ -246,6 +248,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
         payload.showContents = showContents;
       }
       payload.sectionsOrder = sectionsOrder;
+      payload.visibleOnPublicSite = visibleOnPublicSite;
 
       await courseManagerApi.updateCourse(courseId, payload);
 
@@ -700,6 +703,24 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         </label>
                       </div>
                     )}
+
+                    {/* Visible on public site toggle */}
+                    <div className="pt-3 border-t border-[#E5E7EB]">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={visibleOnPublicSite}
+                          onChange={(e) => setVisibleOnPublicSite(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-[#374151]">{t("createCourse.visibleOnPublicLabel")}</p>
+                          <p className="text-xs text-[#6B7280] mt-0.5">
+                            {t("createCourse.visibleOnPublicDesc")}
+                          </p>
+                        </div>
+                      </label>
+                    </div>
 
                     {/* Section order */}
                     <div className="pt-3 border-t border-[#E5E7EB]">

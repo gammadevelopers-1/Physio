@@ -825,6 +825,9 @@
       "free": "Free",
       "sessions": "Lectures",
       "courseFull": "Course Full",
+      "capacityFull": "Capacity Full",
+      "courseEnded": "Course Ended",
+      "enrollmentClosed": "Enrollment Closed",
       "seatsLeft": "{count} seats left",
       "enrollBy": "Enroll by"
     },
@@ -3742,6 +3745,8 @@
       "audiencePlaceholder": "Audience",
       "showContentsLabel": "Show Contents on public page",
       "showContentsDesc": "When enabled, the first 2 modules are visible as a preview on the course detail page. Turn off to hide the entire Contents section from public.",
+      "visibleOnPublicLabel": "List this course on the public site",
+      "visibleOnPublicDesc": "When enabled, the course appears in the public /courses listing and its detail page is reachable. Turn off to fully hide the course from the public site. System rules still apply (draft, pending review, archived, full, and deadline-passed courses are always hidden).",
       "sectionOrderTitle": "Section order on public page",
       "sectionOrderDesc": "Reorder how sections appear. Sections with no data are hidden automatically.",
       "sectionOverview": "Overview",

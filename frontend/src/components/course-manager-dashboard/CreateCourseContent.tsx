@@ -185,6 +185,7 @@ const CreateCourseContent = () => {
   const [enrollmentDeadline, setEnrollmentDeadline] = useState("");
   const [language, setLanguage] = useState("en");
   const [showContents, setShowContents] = useState(true);
+  const [visibleOnPublicSite, setVisibleOnPublicSite] = useState(true);
   // NELC compliance flags — always enabled, shown as static indicators
   const nelcAccreditation = true;
   const bilingualContent = true;
@@ -386,6 +387,7 @@ const CreateCourseContent = () => {
       if (deliveryType === 'self-paced' || deliveryType === 'blended') {
         payload.showContents = showContents;
       }
+      payload.visibleOnPublicSite = visibleOnPublicSite;
 
       const created = await courseManagerApi.createCourse(payload);
 
@@ -858,6 +860,24 @@ const CreateCourseContent = () => {
                           </label>
                         </div>
                       )}
+
+                      {/* Visible on public site toggle */}
+                      <div className="pt-3 border-t border-[#E5E7EB]">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={visibleOnPublicSite}
+                            onChange={(e) => setVisibleOnPublicSite(e.target.checked)}
+                            className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-[#374151]">{t("createCourse.visibleOnPublicLabel")}</p>
+                            <p className="text-xs text-[#6B7280] mt-0.5">
+                              {t("createCourse.visibleOnPublicDesc")}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -134,6 +134,8 @@ const CourseDetailContent = ({
   const apiCmeAccredited = apiCourse?.isCmeAccredited ?? false;
   const apiCmeHours = apiCourse?.cmeHours ?? 0;
   const apiSessionCount = apiCourse?.sessionCount ?? 0;
+  const availabilityStatus = apiCourse?.availabilityStatus ?? "open";
+  const canEnroll = availabilityStatus === "open";
 
   const handleEnroll = async () => {
     if (!slug) return;
@@ -664,10 +666,20 @@ const CourseDetailContent = ({
                         {apiSessionCount} {tCourses("card.sessions")}
                       </div>
                     )}
-                    {apiIsFull ? (
+                    {availabilityStatus === "completed" ? (
+                      <div className="flex items-center gap-1.5 bg-[#E5E7EB] text-[#4B5563] px-3 py-1.5 rounded-full text-sm font-semibold">
+                        <Clock className="w-4 h-4" />
+                        {tCourses("card.courseEnded")}
+                      </div>
+                    ) : availabilityStatus === "deadline_passed" ? (
+                      <div className="flex items-center gap-1.5 bg-amber-100 text-amber-800 px-3 py-1.5 rounded-full text-sm font-semibold">
+                        <Clock className="w-4 h-4" />
+                        {tCourses("card.enrollmentClosed")}
+                      </div>
+                    ) : availabilityStatus === "full" ? (
                       <div className="flex items-center gap-1.5 bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-sm font-semibold">
                         <Users className="w-4 h-4" />
-                        {tCourses("card.courseFull")}
+                        {tCourses("card.capacityFull")}
                       </div>
                     ) : apiRemainingSeats !== null && apiRemainingSeats <= 10 ? (
                       <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-full text-sm font-medium">
@@ -859,19 +871,17 @@ const CourseDetailContent = ({
                     )}
 
                     {/* Primary Action Button */}
-                    {apiIsFull ? (
-                      /* COURSE FULL — Join Waitlist */
+                    {!canEnroll ? (
+                      /* UNAVAILABLE — disabled with reason */
                       <button
-                        onClick={() => {
-                          if (!isAuthenticated) {
-                            handleGuestRedirect();
-                          } else if (isStudent) {
-                            alert(t("enrollment.waitlistMessage"));
-                          }
-                        }}
-                        className="w-full h-12 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors mb-3"
+                        disabled
+                        className="w-full h-12 border-2 border-[#D1D5DB] rounded-xl text-[#6B7280] font-medium flex items-center justify-center gap-2 cursor-not-allowed mb-3"
                       >
-                        {t("enrollment.courseFull")}
+                        {availabilityStatus === "completed"
+                          ? tCourses("card.courseEnded")
+                          : availabilityStatus === "full"
+                            ? tCourses("card.capacityFull")
+                            : tCourses("card.enrollmentClosed")}
                       </button>
                     ) : apiIsFree ? (
                       /* FREE COURSE — Enroll Now */
@@ -1137,18 +1147,16 @@ const CourseDetailContent = ({
             )}
 
             {/* Primary Action Button */}
-            {apiIsFull ? (
+            {!canEnroll ? (
               <button
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    handleGuestRedirect();
-                  } else if (isStudent) {
-                    alert(t("enrollment.waitlistMessage"));
-                  }
-                }}
-                className="w-full h-10 border-2 border-[#F59E0B] rounded-xl text-[#F59E0B] text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#FFFBEB] transition-colors mb-2"
+                disabled
+                className="w-full h-10 border-2 border-[#D1D5DB] rounded-xl text-[#6B7280] text-sm font-medium flex items-center justify-center gap-2 cursor-not-allowed mb-2"
               >
-                {t("enrollment.courseFull")}
+                {availabilityStatus === "completed"
+                  ? tCourses("card.courseEnded")
+                  : availabilityStatus === "full"
+                    ? tCourses("card.capacityFull")
+                    : tCourses("card.enrollmentClosed")}
               </button>
             ) : apiIsFree ? (
               <div>
@@ -1222,9 +1230,17 @@ const CourseDetailContent = ({
                   {apiSessionCount} {tCourses("card.sessions")}
                 </div>
               )}
-              {apiIsFull ? (
+              {availabilityStatus === "completed" ? (
+                <div className="flex items-center gap-1 bg-[#E5E7EB] text-[#4B5563] px-2.5 py-1 rounded-full text-xs font-semibold">
+                  {tCourses("card.courseEnded")}
+                </div>
+              ) : availabilityStatus === "deadline_passed" ? (
+                <div className="flex items-center gap-1 bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full text-xs font-semibold">
+                  {tCourses("card.enrollmentClosed")}
+                </div>
+              ) : availabilityStatus === "full" ? (
                 <div className="flex items-center gap-1 bg-red-100 text-red-700 px-2.5 py-1 rounded-full text-xs font-semibold">
-                  {tCourses("card.courseFull")}
+                  {tCourses("card.capacityFull")}
                 </div>
               ) : apiRemainingSeats !== null && apiRemainingSeats <= 10 ? (
                 <div className="flex items-center gap-1 bg-red-50 text-red-600 px-2.5 py-1 rounded-full text-xs font-medium">

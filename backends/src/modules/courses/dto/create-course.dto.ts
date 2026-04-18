@@ -176,4 +176,8 @@ export class CreateCourseDto {
   @IsArray()
   @IsString({ each: true })
   sectionsOrder?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  visibleOnPublicSite?: boolean;
 }

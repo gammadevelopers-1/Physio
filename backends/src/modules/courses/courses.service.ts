@@ -141,6 +141,7 @@ export class CoursesService {
         venueAr: dto.venueAr,
         showContents: dto.showContents,
         sectionsOrder: dto.sectionsOrder,
+        ...(dto.visibleOnPublicSite !== undefined && { visibleOnPublicSite: dto.visibleOnPublicSite }),
       })
       .returning();
 
@@ -301,31 +302,12 @@ export class CoursesService {
     const offset = (page - 1) * limit;
 
     const conditions: ReturnType<typeof eq>[] = [
-      eq(courses.status, COURSE_STATUS.ACTIVE),
-    ];
-
-    // Hide courses where enrollment deadline has passed
-    conditions.push(
       or(
-        sql`${courses.enrollmentDeadline} IS NULL`,
-        sql`${courses.enrollmentDeadline} > NOW()`,
+        eq(courses.status, COURSE_STATUS.ACTIVE),
+        eq(courses.status, COURSE_STATUS.COMPLETED),
       ) as any,
-    );
-
-    // Hide courses that are full (enrolled count >= maxEnrollment)
-    // If maxEnrollment is NULL, use NELC default (2000 for non-self-paced)
-    conditions.push(
-      sql`(
-        CASE
-          WHEN ${courses.maxEnrollment} IS NOT NULL THEN
-            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < ${courses.maxEnrollment}
-          WHEN ${courses.deliveryType} = 'self-paced' THEN
-            TRUE
-          ELSE
-            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < 2000
-        END
-      )` as any,
-    );
+      eq(courses.visibleOnPublicSite, true),
+    ];
 
     if (params.delivery) {
       conditions.push(eq(courses.deliveryType, params.delivery));
@@ -363,20 +345,37 @@ export class CoursesService {
 
     const whereClause = and(...conditions);
 
-    // Determine sort order
-    let orderByClause;
+    // Primary sort: availability priority (open → completed → full → deadline passed)
+    const availabilityPriority = sql`(CASE
+      WHEN ${courses.status} = 'completed' THEN 2
+      WHEN (${courses.enrollmentDeadline} IS NOT NULL AND ${courses.enrollmentDeadline} <= NOW()) THEN 4
+      WHEN (
+        CASE
+          WHEN ${courses.maxEnrollment} IS NOT NULL THEN
+            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped') >= ${courses.maxEnrollment}
+          WHEN ${courses.deliveryType} = 'self-paced' THEN
+            FALSE
+          ELSE
+            (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped') >= 2000
+        END
+      ) THEN 3
+      ELSE 1
+    END)`;
+
+    // Secondary sort: user's choice
+    let secondarySort;
     switch (params.sort) {
       case 'starting_soon':
-        orderByClause = asc(courses.startDate);
+        secondarySort = asc(courses.startDate);
         break;
       case 'popular':
-        orderByClause = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
+        secondarySort = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
         break;
       case 'rating':
-        orderByClause = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id") DESC`;
+        secondarySort = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id") DESC`;
         break;
       default:
-        orderByClause = desc(courses.createdAt);
+        secondarySort = desc(courses.createdAt);
     }
 
     const data = await db
@@ -387,6 +386,7 @@ export class CoursesService {
         description: courses.description,
         descriptionAr: courses.descriptionAr,
         deliveryType: courses.deliveryType,
+        status: courses.status,
         thumbnail: courses.thumbnail,
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
@@ -418,11 +418,12 @@ export class CoursesService {
       })
       .from(courses)
       .where(whereClause)
-      .orderBy(orderByClause)
+      .orderBy(availabilityPriority, secondarySort)
       .limit(limit)
       .offset(offset);
 
-    // Enrich with capacity info
+    // Enrich with capacity info + availability status
+    const now = new Date();
     const enriched = data.map((c) => {
       const isSelfPaced = c.deliveryType === 'self-paced';
       let effectiveMax: number | null;
@@ -434,6 +435,18 @@ export class CoursesService {
       }
       const remainingSeats = effectiveMax !== null ? Math.max(0, effectiveMax - c.enrolledCount) : null;
       const isFull = effectiveMax !== null ? remainingSeats === 0 : false;
+      const deadlinePassed = !!(c.enrollmentDeadline && new Date(c.enrollmentDeadline) <= now);
+
+      let availabilityStatus: 'open' | 'completed' | 'full' | 'deadline_passed';
+      if (c.status === 'completed') {
+        availabilityStatus = 'completed';
+      } else if (deadlinePassed) {
+        availabilityStatus = 'deadline_passed';
+      } else if (isFull) {
+        availabilityStatus = 'full';
+      } else {
+        availabilityStatus = 'open';
+      }
 
       return {
         ...c,
@@ -442,6 +455,7 @@ export class CoursesService {
         price: c.price ? Number(c.price) : 0,
         remainingSeats,
         isFull,
+        availabilityStatus,
       };
     });
 
@@ -489,6 +503,7 @@ export class CoursesService {
         description: courses.description,
         descriptionAr: courses.descriptionAr,
         deliveryType: courses.deliveryType,
+        status: courses.status,
         thumbnail: courses.thumbnail,
         maxEnrollment: courses.maxEnrollment,
         price: courses.price,
@@ -538,26 +553,11 @@ export class CoursesService {
       .where(
         and(
           eq(courses.id, courseId),
+          eq(courses.visibleOnPublicSite, true),
           or(
             eq(courses.status, COURSE_STATUS.ACTIVE),
             eq(courses.status, COURSE_STATUS.COMPLETED),
           ),
-          // Hide if enrollment deadline has passed
-          or(
-            sql`${courses.enrollmentDeadline} IS NULL`,
-            sql`${courses.enrollmentDeadline} > NOW()`,
-          ),
-          // Hide if course is full
-          sql`(
-            CASE
-              WHEN ${courses.maxEnrollment} IS NOT NULL THEN
-                (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < ${courses.maxEnrollment}
-              WHEN ${courses.deliveryType} = 'self-paced' THEN
-                TRUE
-              ELSE
-                (SELECT COUNT(*) FROM enrollments e WHERE e.course_id = ${courses.id} AND e.status != 'dropped') < 2000
-            END
-          )`,
         ),
       )
       .limit(1);
@@ -677,6 +677,19 @@ export class CoursesService {
       effectiveMax = data.maxEnrollment ?? getNelcMaxEnrollment(classification);
     }
     const remainingSeats = effectiveMax !== null ? Math.max(0, effectiveMax - data.enrolledCount) : null;
+    const isFull = effectiveMax !== null ? remainingSeats === 0 : false;
+    const deadlinePassed = !!(data.enrollmentDeadline && new Date(data.enrollmentDeadline) <= new Date());
+
+    let availabilityStatus: 'open' | 'completed' | 'full' | 'deadline_passed';
+    if (data.status === 'completed') {
+      availabilityStatus = 'completed';
+    } else if (deadlinePassed) {
+      availabilityStatus = 'deadline_passed';
+    } else if (isFull) {
+      availabilityStatus = 'full';
+    } else {
+      availabilityStatus = 'open';
+    }
 
     return {
       ...data,
@@ -684,7 +697,8 @@ export class CoursesService {
       avgRating: Number(Number(data.avgRating || 0).toFixed(1)),
       price: data.price ? Number(data.price) : 0,
       remainingSeats,
-      isFull: effectiveMax !== null ? remainingSeats === 0 : false,
+      isFull,
+      availabilityStatus,
       sessions: sessionsList,
       modules: modulesList,
       ratings: ratingsList,

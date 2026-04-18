@@ -69,10 +69,22 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
     >
       {/* Card Header - with title, thumbnail (design cut), badges */}
       <div className="relative bg-[#eef3f7] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
-        {/* Course Full pill */}
-        {course.isFull && (
-          <div className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-20 bg-red-600 text-white text-[11px] font-semibold px-3 py-1 rounded-full`}>
-            {t("card.courseFull")}
+        {/* Availability pill */}
+        {course.availabilityStatus && course.availabilityStatus !== "open" && (
+          <div
+            className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} z-20 text-[11px] font-semibold px-3 py-1 rounded-full ${
+              course.availabilityStatus === "completed"
+                ? "bg-[#6B7280] text-white"
+                : course.availabilityStatus === "full"
+                  ? "bg-red-600 text-white"
+                  : "bg-[#F59E0B] text-white"
+            }`}
+          >
+            {course.availabilityStatus === "completed"
+              ? t("card.courseEnded")
+              : course.availabilityStatus === "full"
+                ? t("card.capacityFull")
+                : t("card.enrollmentClosed")}
           </div>
         )}
 

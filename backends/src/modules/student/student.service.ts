@@ -1199,6 +1199,11 @@ export class StudentService {
       throw new NotFoundException('Course not found or not available');
     }
 
+    // 1b. Block enrollment if the deadline has passed
+    if (course.enrollmentDeadline && new Date(course.enrollmentDeadline) <= new Date()) {
+      throw new BadRequestException('Enrollment deadline has passed for this course');
+    }
+
     // 2. NELC limit enforcement
     const classification = classifyCourse(course.startDate, course.endDate);
     const nelcMax = getNelcMaxEnrollment(classification);

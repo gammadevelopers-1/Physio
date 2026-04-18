@@ -163,6 +163,10 @@ export class UpdateCourseDto {
   @IsString({ each: true })
   sectionsOrder?: string[];
 
+  @IsOptional()
+  @IsBoolean()
+  visibleOnPublicSite?: boolean;
+
   // Course-level assessment defaults
   @IsOptional()
   @IsBoolean()

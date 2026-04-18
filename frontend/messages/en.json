@@ -924,6 +924,7 @@
       "enrolled": "Enrolled",
       "success": "Successfully enrolled! Check your dashboard.",
       "error": "Failed to enroll. Please try again.",
+      "deadlinePassed": "The enrollment deadline for this course has already passed.",
       "joinWaitlist": "Join Waitlist",
       "waitlistMessage": "You'll be notified when a seat becomes available.",
       "contactEnroll": "Contact for Enrollment",
@@ -3884,7 +3885,14 @@
       "backToCourse": "Back to Course",
       "saveChanges": "Save Changes",
       "success": "Course updated successfully!",
-      "error": "Failed to update course"
+      "error": "Failed to update course",
+      "errors": {
+        "deadlineNotForward": "Enrollment deadline can only be extended. Pick a date later than the current one.",
+        "deadlineAfterStart": "Enrollment deadline must be before the course start date.",
+        "deadlinePassed": "The enrollment deadline for this course has already passed.",
+        "capacityDecrease": "Enrollment capacity can only be increased, not decreased. Raise the number instead.",
+        "capacityBelowEnrolled": "Capacity ({capacity}) cannot be lower than the current number of enrolled students ({enrolled}). Set it to {enrolled} or higher."
+      }
     },
     "sessionsPage": {
       "title": "Lectures",

@@ -50,6 +50,9 @@ export function getDeviceId(): string {
 // API Error Class
 // ===========================================
 export class ApiError extends Error {
+  public code?: string;
+  public meta?: Record<string, unknown>;
+
   constructor(
     public statusCode: number,
     message: string,
@@ -193,7 +196,10 @@ async function fetchApi<T>(
     const message = Array.isArray(data.message)
       ? data.message[0]
       : data.message || 'An error occurred';
-    throw new ApiError(response.status, message, Array.isArray(data.message) ? data.message : undefined);
+    const err = new ApiError(response.status, message, Array.isArray(data.message) ? data.message : undefined);
+    if (typeof data.code === 'string') err.code = data.code;
+    if (data.meta && typeof data.meta === 'object') err.meta = data.meta;
+    throw err;
   }
 
   return data;

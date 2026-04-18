@@ -9,7 +9,7 @@ import CourseManagerNavbar from "./CourseManagerNavbar";
 import CourseManagerSidebar from "./CourseManagerSidebar";
 import CourseManagerMobileSidebar from "./CourseManagerMobileSidebar";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
-import { courseManagerApi } from "@/lib/api";
+import { courseManagerApi, ApiError } from "@/lib/api";
 import type { InstructorListItem } from "@/lib/api";
 import type { CourseDetailResponse } from "@/types/instructor-dashboard";
 import {
@@ -260,6 +260,21 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
       toast.success(t("editCourse.success"));
       router.push(`/${locale}/dashboard/manager/courses/${courseId}`);
     } catch (err) {
+      if (err instanceof ApiError && err.code) {
+        const codeMap: Record<string, string> = {
+          ENROLLMENT_DEADLINE_NOT_FORWARD: "editCourse.errors.deadlineNotForward",
+          ENROLLMENT_DEADLINE_AFTER_START: "editCourse.errors.deadlineAfterStart",
+          ENROLLMENT_DEADLINE_PASSED: "editCourse.errors.deadlinePassed",
+          ENROLLMENT_CAPACITY_DECREASE: "editCourse.errors.capacityDecrease",
+          ENROLLMENT_CAPACITY_BELOW_ENROLLED: "editCourse.errors.capacityBelowEnrolled",
+        };
+        const key = codeMap[err.code];
+        if (key) {
+          const meta = err.meta as { capacity?: number; enrolled?: number } | undefined;
+          toast.error(t(key, meta as any));
+          return;
+        }
+      }
       toast.error(
         err instanceof Error ? err.message : t("editCourse.error")
       );

@@ -25,7 +25,7 @@ import { CourseCard, MobileCourseCard } from "@/components/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { studentApi } from "@/lib/api";
+import { studentApi, ApiError } from "@/lib/api";
 import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
@@ -145,8 +145,12 @@ const CourseDetailContent = ({
       await studentApi.selfEnroll(slug);
       setEnrollResult({ success: true, message: t("enrollment.success") });
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : t("enrollment.error");
+      let message: string;
+      if (err instanceof ApiError && err.code === "ENROLLMENT_DEADLINE_PASSED") {
+        message = t("enrollment.deadlinePassed");
+      } else {
+        message = err instanceof Error ? err.message : t("enrollment.error");
+      }
       setEnrollResult({ success: false, message });
     } finally {
       setEnrolling(false);

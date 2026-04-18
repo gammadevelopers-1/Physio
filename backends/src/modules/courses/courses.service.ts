@@ -46,6 +46,23 @@ export class CoursesService {
     private readonly certificatesService: CertificatesService,
   ) {}
 
+  /**
+   * Parse an enrollment-deadline input. A bare YYYY-MM-DD is interpreted
+   * as end-of-day Asia/Riyadh (UTC+3) — 23:59:59 AST — so a deadline of
+   * "2026-05-15" lets students enroll through the end of that day in Saudi time.
+   */
+  private parseEnrollmentDeadline(value: string): Date {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (m) {
+      const y = Number(m[1]);
+      const mo = Number(m[2]);
+      const d = Number(m[3]);
+      // 23:59:59 AST = 20:59:59 UTC
+      return new Date(Date.UTC(y, mo - 1, d, 20, 59, 59));
+    }
+    return new Date(value);
+  }
+
   // ─── Role helpers ─────────────────────────────────────────
 
   /**
@@ -87,10 +104,13 @@ export class CoursesService {
 
     // Validate enrollment deadline is before start date
     if (dto.enrollmentDeadline && dto.startDate) {
-      const deadline = new Date(dto.enrollmentDeadline);
+      const deadline = this.parseEnrollmentDeadline(dto.enrollmentDeadline);
       const start = new Date(dto.startDate);
       if (deadline >= start) {
-        throw new BadRequestException('Enrollment deadline must be before the course start date');
+        throw new BadRequestException({
+          code: 'ENROLLMENT_DEADLINE_AFTER_START',
+          message: 'Enrollment deadline must be before the course start date',
+        });
       }
     }
 
@@ -117,7 +137,7 @@ export class CoursesService {
         price: dto.price !== undefined ? dto.price.toString() : undefined,
         cmeHours: dto.cmeHours,
         enrollmentDeadline: dto.enrollmentDeadline
-          ? new Date(dto.enrollmentDeadline)
+          ? this.parseEnrollmentDeadline(dto.enrollmentDeadline)
           : undefined,
         isCmeAccredited: dto.isCmeAccredited,
         language: dto.language,
@@ -781,17 +801,53 @@ export class CoursesService {
       );
     }
 
-    // Validate enrollment deadline changes
+    // Validate enrollment deadline changes — deadline can only move FORWARD in time
     if (dto.enrollmentDeadline !== undefined) {
-      // If course already has a deadline that has passed, block edits to it
-      if (existing.enrollmentDeadline && new Date(existing.enrollmentDeadline) < new Date()) {
-        throw new BadRequestException('Cannot modify enrollment deadline after it has passed');
+      const newDeadline = this.parseEnrollmentDeadline(dto.enrollmentDeadline);
+
+      // Never shorten a previously-set deadline (even if the old one passed)
+      if (existing.enrollmentDeadline && newDeadline <= new Date(existing.enrollmentDeadline)) {
+        throw new BadRequestException({
+          code: 'ENROLLMENT_DEADLINE_NOT_FORWARD',
+          message: 'Enrollment deadline can only be extended, not shortened',
+        });
       }
-      // Validate new deadline is before start date
-      const newDeadline = new Date(dto.enrollmentDeadline);
+
+      // Deadline must still land before the course start date
       const startDate = dto.startDate ? new Date(dto.startDate) : (existing.startDate ? new Date(existing.startDate) : null);
       if (startDate && newDeadline >= startDate) {
-        throw new BadRequestException('Enrollment deadline must be before the course start date');
+        throw new BadRequestException({
+          code: 'ENROLLMENT_DEADLINE_AFTER_START',
+          message: 'Enrollment deadline must be before the course start date',
+        });
+      }
+    }
+
+    // Validate maxEnrollment changes — capacity can only go up, never down
+    if (dto.maxEnrollment !== undefined) {
+      if (existing.maxEnrollment !== null && dto.maxEnrollment < existing.maxEnrollment) {
+        throw new BadRequestException({
+          code: 'ENROLLMENT_CAPACITY_DECREASE',
+          message: 'Enrollment capacity can only be increased, not decreased',
+        });
+      }
+      // Safety: never allow capacity to drop below current enrolled students
+      const [enrolledRow] = await db
+        .select({ count: count() })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.courseId, courseId),
+            sql`${enrollments.status} != 'dropped'`,
+          ),
+        );
+      const enrolledCount = Number(enrolledRow?.count || 0);
+      if (dto.maxEnrollment < enrolledCount) {
+        throw new BadRequestException({
+          code: 'ENROLLMENT_CAPACITY_BELOW_ENROLLED',
+          message: `Enrollment capacity (${dto.maxEnrollment}) cannot be less than currently enrolled students (${enrolledCount})`,
+          meta: { capacity: dto.maxEnrollment, enrolled: enrolledCount },
+        });
       }
     }
 
@@ -804,7 +860,7 @@ export class CoursesService {
       updateData.price = price.toString();
     }
     if (enrollmentDeadline !== undefined) {
-      updateData.enrollmentDeadline = new Date(enrollmentDeadline);
+      updateData.enrollmentDeadline = this.parseEnrollmentDeadline(enrollmentDeadline);
     }
 
     const [updated] = await db
@@ -1701,6 +1757,7 @@ export class CoursesService {
         status: courses.status,
         enrollmentDeadline: courses.enrollmentDeadline,
         startDate: courses.startDate,
+        maxEnrollment: courses.maxEnrollment,
       })
       .from(courses)
       .where(and(...conditions))

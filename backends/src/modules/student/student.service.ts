@@ -1201,7 +1201,10 @@ export class StudentService {
 
     // 1b. Block enrollment if the deadline has passed
     if (course.enrollmentDeadline && new Date(course.enrollmentDeadline) <= new Date()) {
-      throw new BadRequestException('Enrollment deadline has passed for this course');
+      throw new BadRequestException({
+        code: 'ENROLLMENT_DEADLINE_PASSED',
+        message: 'Enrollment deadline has passed for this course',
+      });
     }
 
     // 2. NELC limit enforcement

@@ -685,7 +685,7 @@ export class CoursesService {
       })
       .from(courseRatings)
       .where(eq(courseRatings.courseId, courseId))
-      .orderBy(desc(courseRatings.createdAt))
+      .orderBy(desc(courseRatings.rating), desc(courseRatings.createdAt))
       .limit(5);
 
     const isSelfPaced = data.deliveryType === 'self-paced';
@@ -785,12 +785,8 @@ export class CoursesService {
   ) {
     const existing = await this.verifyCourseAccess(courseId, user, { allowCompleted: true });
 
-    // Block all edits for completed/archived courses
-    if (existing.status === COURSE_STATUS.COMPLETED || existing.status === COURSE_STATUS.ARCHIVED) {
-      throw new BadRequestException('Cannot edit a completed or archived course');
-    }
-
-    // Instructors can only edit courses in draft or changes_requested status
+    // Instructors can only edit courses in draft or changes_requested status.
+    // Managers/admins can edit at any status (including completed and archived).
     if (
       !isManagerOrAbove(user) &&
       existing.status !== COURSE_STATUS.DRAFT &&
@@ -2005,30 +2001,121 @@ export class CoursesService {
   }
 
   /**
-   * Get all ratings for a course, including student name.
+   * Get ratings for a course with optional filtering, sorting and pagination.
+   * Response also includes aggregate stats (avgRating, totalRatings, per-star distribution).
    */
-  async getCourseRatings(courseId: string) {
-    const ratings = await db
-      .select({
-        id: courseRatings.id,
-        rating: courseRatings.rating,
-        reviewText: courseRatings.reviewText,
-        createdAt: courseRatings.createdAt,
-        studentFirstName: users.firstName,
-        studentLastName: users.lastName,
-      })
-      .from(courseRatings)
-      .innerJoin(users, eq(courseRatings.studentId, users.id))
-      .where(eq(courseRatings.courseId, courseId))
-      .orderBy(desc(courseRatings.createdAt));
+  async getCourseRatings(
+    courseId: string,
+    params: {
+      page?: number;
+      limit?: number;
+      rating?: number; // filter by specific star count 1-5
+      sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+      search?: string;
+    } = {},
+  ) {
+    const page = Math.max(1, params.page || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 20));
+    const offset = (page - 1) * limit;
 
-    return ratings.map((r) => ({
+    const conditions: any[] = [eq(courseRatings.courseId, courseId)];
+    if (params.rating && params.rating >= 1 && params.rating <= 5) {
+      conditions.push(eq(courseRatings.rating, params.rating));
+    }
+    if (params.search) {
+      const term = `%${params.search}%`;
+      conditions.push(
+        or(
+          ilike(users.firstName, term),
+          ilike(users.lastName, term),
+          ilike(courseRatings.reviewText, term),
+        ) as any,
+      );
+    }
+    const whereClause = and(...conditions);
+
+    // Sort
+    let orderBy;
+    switch (params.sort) {
+      case 'oldest':
+        orderBy = asc(courseRatings.createdAt);
+        break;
+      case 'highest':
+        orderBy = [desc(courseRatings.rating), desc(courseRatings.createdAt)];
+        break;
+      case 'lowest':
+        orderBy = [asc(courseRatings.rating), desc(courseRatings.createdAt)];
+        break;
+      case 'newest':
+      default:
+        orderBy = desc(courseRatings.createdAt);
+    }
+
+    const [rows, [countRow], [statsRow], distRows] = await Promise.all([
+      db
+        .select({
+          id: courseRatings.id,
+          rating: courseRatings.rating,
+          reviewText: courseRatings.reviewText,
+          createdAt: courseRatings.createdAt,
+          studentFirstName: users.firstName,
+          studentLastName: users.lastName,
+        })
+        .from(courseRatings)
+        .innerJoin(users, eq(courseRatings.studentId, users.id))
+        .where(whereClause)
+        .orderBy(...(Array.isArray(orderBy) ? orderBy : [orderBy]))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(courseRatings)
+        .innerJoin(users, eq(courseRatings.studentId, users.id))
+        .where(whereClause),
+      db
+        .select({
+          avgRating: sql<number>`COALESCE(AVG(${courseRatings.rating}), 0)`,
+          totalRatings: count(),
+        })
+        .from(courseRatings)
+        .where(eq(courseRatings.courseId, courseId)),
+      db
+        .select({
+          rating: courseRatings.rating,
+          count: count(),
+        })
+        .from(courseRatings)
+        .where(eq(courseRatings.courseId, courseId))
+        .groupBy(courseRatings.rating),
+    ]);
+
+    const distribution: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const r of distRows) {
+      if (r.rating >= 1 && r.rating <= 5) {
+        distribution[r.rating as 1 | 2 | 3 | 4 | 5] = Number(r.count);
+      }
+    }
+
+    const data = rows.map((r) => ({
       id: r.id,
       rating: r.rating,
       reviewText: r.reviewText,
       createdAt: r.createdAt,
       studentName: `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() || 'Anonymous',
     }));
+
+    const total = Number(countRow?.count || 0);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      avgRating: Number(Number(statsRow?.avgRating || 0).toFixed(1)),
+      totalRatings: Number(statsRow?.totalRatings || 0),
+      distribution,
+    };
   }
 
   /**

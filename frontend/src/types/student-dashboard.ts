@@ -57,6 +57,7 @@ export interface StudentEnrolledCourse {
   sessionsAttended: number;
   totalSessions: number;
   attendanceRate: number;
+  hasReviewed?: boolean;
 }
 
 export interface StudentEnrolledCoursesResponse {
@@ -178,6 +179,12 @@ export interface StudentCourseDetail {
     completed: number;
     averageScore: number;
   };
+  myRating?: {
+    id: string;
+    rating: number;
+    reviewText: string | null;
+    createdAt: string;
+  } | null;
 }
 
 export interface AttendanceRecord {

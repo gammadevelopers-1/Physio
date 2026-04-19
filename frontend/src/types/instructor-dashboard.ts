@@ -345,6 +345,7 @@ export interface InstructorCourse {
   cohort?: string | null;
   totalModules?: number;
   cmeHours?: number | null;
+  visibleOnPublicSite?: boolean;
 }
 
 export interface InstructorCoursesResponse {

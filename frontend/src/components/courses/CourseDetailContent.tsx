@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter, usePathname } from "next/navigation";
@@ -20,12 +20,13 @@ import {
   Video,
   Award,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import { CourseCard, MobileCourseCard } from "@/components/courses";
 import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { useAuth } from "@/contexts/AuthContext";
-import { studentApi, ApiError } from "@/lib/api";
+import { studentApi, publicApi, ApiError } from "@/lib/api";
 import { formatDuration } from "@/lib/utils";
 import { getCityLabel } from "@/lib/saudi-cities";
 import { Loader2 } from "lucide-react";
@@ -45,6 +46,301 @@ interface CourseDetailContentProps {
   reviewsHeading?: string;
   targetAudienceHeading?: string;
   courseDetailsHeading?: string;
+}
+
+// ───────────────────────────────────────────────────────────
+// All Reviews Modal — paginated, filterable, sortable.
+// Opens with default sort (highest → newest) and auto-scrolls past
+// the first 5 reviews that are already visible on the main page.
+// ───────────────────────────────────────────────────────────
+
+type ModalReview = {
+  id: string;
+  rating: number;
+  reviewText: string | null;
+  createdAt: string;
+  studentName: string;
+};
+
+function AllReviewsModal({
+  courseId,
+  totalCount,
+  avgRating,
+  onClose,
+  isRTL,
+  locale,
+  reviewsHeading,
+}: {
+  courseId: string;
+  totalCount: number;
+  avgRating: number;
+  onClose: () => void;
+  isRTL: boolean;
+  locale: string;
+  reviewsHeading?: string;
+}) {
+  const PAGE_SIZE = 10;
+  const [reviews, setReviews] = useState<ModalReview[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [distribution, setDistribution] = useState<Record<"1" | "2" | "3" | "4" | "5", number>>({ "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [sort, setSort] = useState<"highest" | "newest" | "oldest" | "lowest">("highest");
+  const [starFilter, setStarFilter] = useState<number | null>(null);
+  const hasAutoScrolledRef = useRef(false);
+  const sixthReviewRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch first page (or reload when filter/sort changes)
+  useEffect(() => {
+    hasAutoScrolledRef.current = false;
+    setLoadingInitial(true);
+    publicApi
+      .getCourseRatings(courseId, {
+        page: 1,
+        limit: PAGE_SIZE,
+        sort,
+        rating: starFilter ?? undefined,
+      })
+      .then((res) => {
+        setReviews(res.data);
+        setPage(1);
+        setTotalPages(res.totalPages);
+        setDistribution(res.distribution);
+      })
+      .catch(() => {
+        setReviews([]);
+      })
+      .finally(() => setLoadingInitial(false));
+  }, [courseId, sort, starFilter]);
+
+  // Auto-scroll to the 6th review on the first default load so the user
+  // resumes from where the main page's 5-review preview left off.
+  useEffect(() => {
+    if (hasAutoScrolledRef.current) return;
+    if (loadingInitial) return;
+    if (sort !== "highest" || starFilter !== null) return;
+    if (reviews.length < 6) return;
+    requestAnimationFrame(() => {
+      sixthReviewRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+      hasAutoScrolledRef.current = true;
+    });
+  }, [reviews, loadingInitial, sort, starFilter]);
+
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const loadMore = async () => {
+    if (loadingMore || page >= totalPages) return;
+    setLoadingMore(true);
+    try {
+      const next = page + 1;
+      const res = await publicApi.getCourseRatings(courseId, {
+        page: next,
+        limit: PAGE_SIZE,
+        sort,
+        rating: starFilter ?? undefined,
+      });
+      setReviews((prev) => [...prev, ...res.data]);
+      setPage(next);
+      setTotalPages(res.totalPages);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+  const filterHasMore = page < totalPages;
+  const maxDist = Math.max(1, ...Object.values(distribution));
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-[#E5E7EB]">
+          <div>
+            <h3 className="text-xl font-bold text-[#06080b]">
+              {reviewsHeading || (isRTL ? "المراجعات" : "Reviews")}
+            </h3>
+            <div className={`flex items-center gap-2 mt-1 ${isRTL ? "flex-row-reverse" : ""}`}>
+              <div className={`flex items-center gap-0.5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${i < Math.floor(avgRating) ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                  />
+                ))}
+              </div>
+              <span className="text-sm font-semibold text-[#06080b]">{avgRating.toFixed(1)}</span>
+              <span className="text-sm text-[#71717A]">
+                · {totalCount} {isRTL ? "مراجعة" : totalCount === 1 ? "review" : "reviews"}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-[#F3F4F6] transition-colors"
+            aria-label={isRTL ? "إغلاق" : "Close"}
+          >
+            <X className="w-5 h-5 text-[#6B7280]" />
+          </button>
+        </div>
+
+        {/* Filters bar */}
+        <div className="px-5 py-3 border-b border-[#E5E7EB] flex flex-wrap items-center gap-3">
+          {/* Sort */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الترتيب:" : "Sort:"}</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+            >
+              <option value="highest">{isRTL ? "الأعلى تقييماً" : "Highest rated"}</option>
+              <option value="lowest">{isRTL ? "الأقل تقييماً" : "Lowest rated"}</option>
+              <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
+              <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
+            </select>
+          </div>
+
+          {/* Star filter chips */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <button
+              onClick={() => setStarFilter(null)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                starFilter === null ? "bg-[#1F2937] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]"
+              }`}
+            >
+              {isRTL ? "الكل" : "All"}
+            </button>
+            {[5, 4, 3, 2, 1].map((s) => {
+              const c = distribution[String(s) as "1" | "2" | "3" | "4" | "5"] || 0;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStarFilter(starFilter === s ? null : s)}
+                  disabled={c === 0}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                    starFilter === s ? "bg-[#B8860B] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]"
+                  }`}
+                >
+                  {s} <Star className="w-3 h-3 fill-current" /> ({c})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Distribution bars (optional visual) */}
+        {totalCount > 0 && (
+          <div className="px-5 py-3 border-b border-[#E5E7EB] space-y-1.5">
+            {[5, 4, 3, 2, 1].map((s) => {
+              const c = distribution[String(s) as "1" | "2" | "3" | "4" | "5"] || 0;
+              const pct = (c / maxDist) * 100;
+              return (
+                <div key={s} className="flex items-center gap-2 text-xs">
+                  <span className="w-4 text-[#6B7280]">{s}★</span>
+                  <div className="flex-1 h-2 bg-[#F3F4F6] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#B8860B]" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="w-8 text-right text-[#6B7280] tabular-nums">{c}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Reviews list */}
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-5 py-4">
+          {loadingInitial ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
+                <Star className="w-7 h-7 text-[#9CA3AF]" />
+              </div>
+              <p className="text-sm text-[#9CA3AF]">{isRTL ? "لا توجد مراجعات مطابقة" : "No matching reviews"}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col divide-y divide-[#E5E7EB]">
+              {reviews.map((r, i) => (
+                <div
+                  key={r.id}
+                  ref={i === 5 ? sixthReviewRef : undefined}
+                  className="py-4 first:pt-0 last:pb-0"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-[14px] text-[#06080b]">{r.studentName}</p>
+                    <p className="text-[12px] text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                  </div>
+                  <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    {[...Array(5)].map((_, si) => (
+                      <Star
+                        key={si}
+                        className={`w-3.5 h-3.5 ${si < r.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                      />
+                    ))}
+                  </div>
+                  {r.reviewText && (
+                    <p dir="auto" className="text-[13px] text-[#4a4c4f] leading-relaxed whitespace-pre-line">
+                      {r.reviewText}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer — Load more */}
+        {!loadingInitial && reviews.length > 0 && (
+          <div className="p-4 border-t border-[#E5E7EB] flex items-center justify-between gap-3">
+            <p className="text-xs text-[#6B7280]">
+              {isRTL
+                ? `عرض ${reviews.length} من ${totalCount}`
+                : `Showing ${reviews.length} of ${totalCount}`}
+            </p>
+            {filterHasMore ? (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#1F2937] text-white text-sm font-medium hover:bg-[#111827] transition-colors disabled:opacity-60"
+              >
+                {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                {isRTL ? "تحميل المزيد" : "Load more"}
+              </button>
+            ) : (
+              <span className="text-xs text-[#9CA3AF] italic">
+                {isRTL ? "لا توجد مراجعات إضافية" : "No more reviews"}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const CourseDetailContent = ({
@@ -98,6 +394,7 @@ const CourseDetailContent = ({
   const [shareTooltip, setShareTooltip] = useState(false);
   const [sessionFilterCity, setSessionFilterCity] = useState<string>("");
   const [sessionFilterMonth, setSessionFilterMonth] = useState<string>("");
+  const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
 
   const handleShare = async () => {
     const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -578,34 +875,46 @@ const CourseDetailContent = ({
           </div>
         </div>
         {apiCourse.ratings.length > 0 ? (
-          <div className="flex flex-col divide-y divide-[#E5E7EB]">
-            {apiCourse.ratings.map((review, index) => (
-              <div key={index} className="py-4 first:pt-0 last:pb-0">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium text-[14px] text-[#06080b]">{review.studentName}</p>
-                  <p className="text-[12px] text-[#9CA3AF]">
-                    {new Date(review.createdAt).toLocaleDateString(
-                      locale === "ar" ? "ar-SA" : "en-US",
-                      { day: "numeric", month: "short", year: "numeric" }
-                    )}
-                  </p>
+          <>
+            <div className="flex flex-col divide-y divide-[#E5E7EB]">
+              {apiCourse.ratings.map((review, index) => (
+                <div key={index} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="font-medium text-[14px] text-[#06080b]">{review.studentName}</p>
+                    <p className="text-[12px] text-[#9CA3AF]">
+                      {new Date(review.createdAt).toLocaleDateString(
+                        locale === "ar" ? "ar-SA" : "en-US",
+                        { day: "numeric", month: "short", year: "numeric" }
+                      )}
+                    </p>
+                  </div>
+                  <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3 h-3 ${i < review.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
+                      />
+                    ))}
+                  </div>
+                  {review.reviewText && (
+                    <p dir="auto" className="text-[13px] text-[#4a4c4f] leading-relaxed">
+                      {review.reviewText}
+                    </p>
+                  )}
                 </div>
-                <div className={`flex items-center gap-0.5 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3 h-3 ${i < review.rating ? "text-[#B8860B] fill-[#B8860B]" : "text-[#E5E7EB] fill-[#E5E7EB]"}`}
-                    />
-                  ))}
-                </div>
-                {review.reviewText && (
-                  <p className={`text-[13px] text-[#4a4c4f] leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
-                    {review.reviewText}
-                  </p>
-                )}
+              ))}
+            </div>
+            {apiCourse.totalRatings > 5 && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={() => setReviewsModalOpen(true)}
+                  className="px-6 py-2.5 rounded-full border-2 border-[#B8860B] text-[#B8860B] text-sm font-semibold hover:bg-[#B8860B] hover:text-white transition-colors"
+                >
+                  {isRTL ? `عرض كل المراجعات (${apiCourse.totalRatings})` : `View all reviews (${apiCourse.totalRatings})`}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <div className="w-14 h-14 rounded-xl bg-[#F3F4F6] flex items-center justify-center mb-3">
@@ -1376,6 +1685,19 @@ const CourseDetailContent = ({
           </div>
         </section>
       </div>
+
+      {/* Reviews Modal */}
+      {reviewsModalOpen && slug && apiCourse && (
+        <AllReviewsModal
+          courseId={slug}
+          totalCount={apiCourse.totalRatings}
+          avgRating={apiCourse.avgRating}
+          onClose={() => setReviewsModalOpen(false)}
+          isRTL={isRTL}
+          locale={locale}
+          reviewsHeading={reviewsHeading}
+        />
+      )}
     </>
   );
 };

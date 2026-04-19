@@ -109,7 +109,16 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
     let cancelled = false;
     studentApi
       .getMyCourseRating(courseId)
-      .then((res) => { if (!cancelled) setExisting(res); })
+      .then((res) => {
+        if (cancelled) return;
+        // Only treat as existing if it has a valid rating; backend may return {}
+        // when no row exists, which is falsy-enough for our UI to ignore.
+        if (res && typeof res === 'object' && typeof (res as { rating?: unknown }).rating === 'number' && (res as { rating: number }).rating > 0) {
+          setExisting(res as { rating: number; reviewText: string | null });
+        } else {
+          setExisting(null);
+        }
+      })
       .catch(() => { if (!cancelled) setExisting(null); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -171,7 +180,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
                 ))}
               </div>
               {existing.reviewText && (
-                <p className="text-sm text-[#374151] mt-3 italic">&ldquo;{existing.reviewText}&rdquo;</p>
+                <p dir="auto" className="text-sm text-[#374151] mt-3 italic">&ldquo;{existing.reviewText}&rdquo;</p>
               )}
             </div>
           ) : (
@@ -205,6 +214,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
                   onChange={(e) => setReviewText(e.target.value)}
                   rows={4}
                   maxLength={2000}
+                  dir="auto"
                   placeholder={t("myCourses.reviewTextPlaceholder")}
                   className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                 />
@@ -251,6 +261,16 @@ const MyCoursesContent = () => {
     sort: getSortForTab(activeTab),
     limit: 50,
   });
+
+  // Seed the "reviewed" set from the backend's hasReviewed flag per course
+  useEffect(() => {
+    if (!courses) return;
+    const already = new Set<string>();
+    for (const c of courses) {
+      if ((c as StudentEnrolledCourse).hasReviewed) already.add(c.id);
+    }
+    setReviewed(already);
+  }, [courses]);
 
   const filteredCourses = courses;
 

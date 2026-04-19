@@ -311,12 +311,25 @@ export class CoursesController {
   }
 
   /**
-   * GET /courses/:id/ratings — Get all ratings for a course (public read)
+   * GET /courses/:id/ratings — Paginated + filterable ratings for a course (public read)
    */
   @Public()
   @Get(':id/ratings')
-  async getCourseRatings(@Param('id') courseId: string) {
-    return this.coursesService.getCourseRatings(courseId);
+  async getCourseRatings(
+    @Param('id') courseId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('rating') rating?: string,
+    @Query('sort') sort?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.coursesService.getCourseRatings(courseId, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      rating: rating ? Number(rating) : undefined,
+      sort: sort as 'newest' | 'oldest' | 'highest' | 'lowest' | undefined,
+      search: search || undefined,
+    });
   }
 
   /**

@@ -27,6 +27,7 @@ import {
   videoWatchEvents,
   assessmentRetakeGrants,
   assessmentOverrides,
+  courseRatings,
 } from '../../database/schema';
 import type { SubmissionAnswer } from '../../database/schema/submissions';
 import { computeEffectiveScore } from '../../common/score-policy';
@@ -366,6 +367,12 @@ export class StudentService {
         totalHours: sql<number>`(
           SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
         )`.mapWith(Number),
+        hasReviewed: sql<boolean>`(
+          SELECT EXISTS (
+            SELECT 1 FROM course_ratings cr
+            WHERE cr.course_id = "courses"."id" AND cr.student_id = ${studentId}
+          )
+        )`.mapWith(Boolean),
       })
       .from(enrollments)
       .innerJoin(courses, eq(enrollments.courseId, courses.id))
@@ -879,6 +886,23 @@ export class StudentService {
       .set({ lastAccessedAt: new Date() })
       .where(eq(enrollments.id, enrollment.id));
 
+    // Student's own review for this course (if any)
+    const [myRating] = await db
+      .select({
+        id: courseRatings.id,
+        rating: courseRatings.rating,
+        reviewText: courseRatings.reviewText,
+        createdAt: courseRatings.createdAt,
+      })
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.courseId, courseId),
+          eq(courseRatings.studentId, studentId),
+        ),
+      )
+      .limit(1);
+
     return {
       course,
       enrollment: {
@@ -894,6 +918,7 @@ export class StudentService {
       attendanceSummary,
       attendanceRecords,
       assessmentSummary,
+      myRating: myRating || null,
     };
   }
 

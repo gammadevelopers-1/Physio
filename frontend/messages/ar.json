@@ -3853,8 +3853,12 @@
         "archive": "أرشفة",
         "delete": "حذف",
         "cancel": "إلغاء",
-        "send": "إرسال"
+        "send": "إرسال",
+        "hideFromPublic": "إخفاء من الموقع العام",
+        "showOnPublic": "إظهار على الموقع العام"
       },
+      "hiddenFromPublic": "تم إخفاء الدورة من الموقع العام",
+      "shownOnPublic": "الدورة ظاهرة الآن على الموقع العام",
       "viewAnalytics": "عرض التحليلات",
       "courseSettings": "إعدادات الدورة"
     },

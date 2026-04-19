@@ -34,6 +34,8 @@ import {
   Trash2,
   MessageSquare,
   Award,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
@@ -108,7 +110,7 @@ const CoursesContent = () => {
   const [requestingChanges, setRequestingChanges] = useState(false);
 
   const handleAction = useCallback(
-    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete") => {
+    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete" | "toggle_public" | "hide_public", currentValue?: boolean) => {
       setOpenDropdown(null);
       setStatusLoading(courseId);
       try {
@@ -120,8 +122,14 @@ const CoursesContent = () => {
           await courseManagerApi.completeCourse(courseId);
         } else if (action === "delete") {
           await courseManagerApi.deleteCourse(courseId);
+        } else if (action === "toggle_public" || action === "hide_public") {
+          await courseManagerApi.updateCourse(courseId, { visibleOnPublicSite: !currentValue });
         }
-        toast.success(t("coursesPage.statusChanged"));
+        toast.success(
+          action === "toggle_public" || action === "hide_public"
+            ? t(currentValue ? "coursesPage.hiddenFromPublic" : "coursesPage.shownOnPublic")
+            : t("coursesPage.statusChanged"),
+        );
         refetch();
       } catch (err) {
         if (err instanceof ApiError) {
@@ -499,9 +507,26 @@ const CoursesContent = () => {
                                   </>
                                 )}
 
-                                {/* Active: Complete + Archive */}
+                                {/* Active: Public visibility toggle + Complete + Archive */}
                                 {course.status === "active" && (
                                   <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "toggle_public", course.visibleOnPublicSite !== false)}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      {course.visibleOnPublicSite !== false ? (
+                                        <>
+                                          <EyeOff className="w-3.5 h-3.5" />
+                                          {t("coursesPage.actions.hideFromPublic")}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Eye className="w-3.5 h-3.5" />
+                                          {t("coursesPage.actions.showOnPublic")}
+                                        </>
+                                      )}
+                                    </button>
                                     <button
                                       onClick={() => handleAction(course.id, "complete")}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#3B82F6] hover:bg-[#EFF6FF] transition-colors"
@@ -521,16 +546,35 @@ const CoursesContent = () => {
                                   </>
                                 )}
 
-                                {/* Completed: Archive */}
+                                {/* Completed: Public visibility toggle + Archive */}
                                 {course.status === "completed" && (
-                                  <button
-                                    onClick={() => handleAction(course.id, "archive")}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D97706] hover:bg-[#FFFBEB] transition-colors"
-                                    role="menuitem"
-                                  >
-                                    <Archive className="w-3.5 h-3.5" />
-                                    {t("coursesPage.actions.archive")}
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleAction(course.id, "toggle_public", course.visibleOnPublicSite !== false)}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      {course.visibleOnPublicSite !== false ? (
+                                        <>
+                                          <EyeOff className="w-3.5 h-3.5" />
+                                          {t("coursesPage.actions.hideFromPublic")}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Eye className="w-3.5 h-3.5" />
+                                          {t("coursesPage.actions.showOnPublic")}
+                                        </>
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleAction(course.id, "archive")}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#D97706] hover:bg-[#FFFBEB] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Archive className="w-3.5 h-3.5" />
+                                      {t("coursesPage.actions.archive")}
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             )}

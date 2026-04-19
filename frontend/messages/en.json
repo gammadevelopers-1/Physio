@@ -3671,8 +3671,12 @@
         "archive": "Archive",
         "delete": "Delete",
         "cancel": "Cancel",
-        "send": "Send"
+        "send": "Send",
+        "hideFromPublic": "Hide from public site",
+        "showOnPublic": "Show on public site"
       },
+      "hiddenFromPublic": "Course hidden from public site",
+      "shownOnPublic": "Course is now visible on public site",
       "viewAnalytics": "View Analytics",
       "courseSettings": "Course Settings"
     },

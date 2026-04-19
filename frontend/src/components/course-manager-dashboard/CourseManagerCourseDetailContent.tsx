@@ -122,8 +122,8 @@ const CourseManagerCourseDetailContent = ({
   const [moduleAssessments, setModuleAssessments] = useState<import("@/types/instructor-dashboard").AssessmentResponse[]>([]);
   useEffect(() => {
     if (!courseId) return;
-    courseManagerApi.getCourseRatings(courseId)
-      .then((res) => setReviews(res || []))
+    courseManagerApi.getCourseRatings(courseId, { limit: 5, sort: "highest" })
+      .then((res) => setReviews(res?.data || []))
       .catch(() => setReviews([]))
       .finally(() => setReviewsLoading(false));
     courseManagerApi.getAssessments({ courseId, limit: 100 }).then((res) => {
@@ -841,7 +841,7 @@ const CourseManagerCourseDetailContent = ({
 
                 {/* Student Reviews */}
                 <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-4 gap-3">
                     <h2 className="text-base font-semibold text-[#1F2937]">
                       {t("courseDetail.reviewsTitle")}
                     </h2>
@@ -861,7 +861,6 @@ const CourseManagerCourseDetailContent = ({
                         <span className="font-medium text-[#1F2937]">
                           {(reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)}
                         </span>
-                        <span className="text-[#6B7280]">({reviews.length})</span>
                       </div>
                     )}
                   </div>
@@ -876,29 +875,40 @@ const CourseManagerCourseDetailContent = ({
                       <p className="text-sm text-[#6B7280]">{t("courseDetail.noReviewsYet")}</p>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-[480px] overflow-y-auto">
-                      {reviews.map((r) => (
-                        <div key={r.id} className="border border-[#E5E7EB] rounded-lg p-4 bg-[#FAFAFA]">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
-                              <p className="text-xs text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                    <>
+                      <div className="space-y-3">
+                        {reviews.map((r) => (
+                          <div key={r.id} className="border border-[#E5E7EB] rounded-lg p-4 bg-[#FAFAFA]">
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
+                                <p className="text-xs text-[#9CA3AF]">{formatDate(r.createdAt)}</p>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                                  />
+                                ))}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-0.5">
-                              {[1, 2, 3, 4, 5].map((s) => (
-                                <Star
-                                  key={s}
-                                  className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
-                                />
-                              ))}
-                            </div>
+                            {r.reviewText && (
+                              <p dir="auto" className="text-sm text-[#374151] whitespace-pre-line">{r.reviewText}</p>
+                            )}
                           </div>
-                          {r.reviewText && (
-                            <p className="text-sm text-[#374151] whitespace-pre-line">{r.reviewText}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-[#E5E7EB] flex items-center justify-center">
+                        <Link
+                          href={`/${locale}/dashboard/manager/courses/${courseId}/reviews`}
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-[#3B82F6] hover:text-[#2563EB]"
+                        >
+                          {isRTL ? "عرض كل المراجعات" : "View all reviews"}
+                          {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                        </Link>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

@@ -1812,14 +1812,34 @@ export const courseManagerApi = {
   getAllCourseRatings: () =>
     api.get<Record<string, { avgRating: number; totalRatings: number }>>('/courses/ratings/all'),
 
-  getCourseRatings: (courseId: string) =>
-    api.get<Array<{
-      id: string;
-      rating: number;
-      reviewText: string | null;
-      createdAt: string;
-      studentName: string;
-    }>>(`/courses/${courseId}/ratings`),
+  getCourseRatings: (
+    courseId: string,
+    params?: { page?: number; limit?: number; rating?: number; sort?: 'newest' | 'oldest' | 'highest' | 'lowest'; search?: string },
+  ) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.rating) sp.set('rating', String(params.rating));
+    if (params?.sort) sp.set('sort', params.sort);
+    if (params?.search) sp.set('search', params.search);
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        rating: number;
+        reviewText: string | null;
+        createdAt: string;
+        studentName: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      avgRating: number;
+      totalRatings: number;
+      distribution: Record<'1' | '2' | '3' | '4' | '5', number>;
+    }>(`/courses/${courseId}/ratings${qs ? `?${qs}` : ''}`);
+  },
 
   getCourseRatingStats: (courseId: string) =>
     api.get<{ avgRating: number; totalRatings: number }>(`/courses/${courseId}/ratings/stats`),
@@ -2405,6 +2425,35 @@ export const publicApi = {
       `/courses/public${queryString ? `?${queryString}` : ''}`,
       { skipAuth: true },
     );
+  },
+
+  getCourseRatings: (
+    courseId: string,
+    params?: { page?: number; limit?: number; rating?: number; sort?: 'newest' | 'oldest' | 'highest' | 'lowest'; search?: string },
+  ) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.rating) sp.set('rating', String(params.rating));
+    if (params?.sort) sp.set('sort', params.sort);
+    if (params?.search) sp.set('search', params.search);
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        rating: number;
+        reviewText: string | null;
+        createdAt: string;
+        studentName: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      avgRating: number;
+      totalRatings: number;
+      distribution: Record<'1' | '2' | '3' | '4' | '5', number>;
+    }>(`/courses/${courseId}/ratings${qs ? `?${qs}` : ''}`, { skipAuth: true });
   },
 };
 

@@ -1970,7 +1970,7 @@ export class CoursesService {
       .returning();
 
     // Notify the course manager (fire-and-forget)
-    this.notifyManagerOfPendingReview(courseId, created.id, studentId, rating).catch((err) =>
+    this.notifyManagerOfPendingReview(courseId, created.id, studentId, rating, reviewText || null).catch((err) =>
       this.logger.warn(`Failed to notify manager of pending review: ${(err as Error).message}`),
     );
 
@@ -1985,6 +1985,7 @@ export class CoursesService {
     ratingId: string,
     studentId: string,
     rating: number,
+    reviewText: string | null,
   ): Promise<void> {
     const [course] = await db
       .select({
@@ -2038,7 +2039,7 @@ export class CoursesService {
     this.emailService
       .sendReviewPendingApproval(
         manager.email,
-        { recipientName: name, studentName, courseName: courseTitle, rating },
+        { recipientName: name, studentName, courseName: courseTitle, rating, reviewText },
         locale,
       )
       .catch(() => {});

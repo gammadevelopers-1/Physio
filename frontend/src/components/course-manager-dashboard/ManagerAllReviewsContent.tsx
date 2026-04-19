@@ -61,10 +61,31 @@ export default function ManagerAllReviewsContent() {
   const [sort, setSort] = useState<SortOption>("newest");
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [courseFilter, setCourseFilter] = useState<string>("");
+  const [courseOptions, setCourseOptions] = useState<Array<{ id: string; title: string; titleAr: string | null }>>([]);
 
   const [actingId, setActingId] = useState<string | null>(null);
   const [modal, setModal] = useState<Review | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Review | null>(null);
+
+  // Reset publish filter whenever we leave the "All" tab — it's hidden there anyway
+  useEffect(() => {
+    if (tab !== "all" && publishedFilter !== "all") {
+      setPublishedFilter("all");
+    }
+  }, [tab, publishedFilter]);
+
+  // Fetch the manager's own courses to populate the "by course" dropdown
+  useEffect(() => {
+    courseManagerApi
+      .getCourses({ limit: 200 })
+      .then((res) => {
+        setCourseOptions(
+          (res.data || []).map((c) => ({ id: c.id, title: c.title, titleAr: c.titleAr })),
+        );
+      })
+      .catch(() => setCourseOptions([]));
+  }, []);
 
   const fetchReviews = useCallback(
     async (nextPage: number) => {
@@ -76,6 +97,7 @@ export default function ManagerAllReviewsContent() {
           moderationStatus: tab === "all" ? undefined : tab,
           publishedOnly: publishedFilter === "published",
           unpublishedOnly: publishedFilter === "unpublished",
+          courseId: courseFilter || undefined,
           search: search || undefined,
           sort,
         });
@@ -91,7 +113,7 @@ export default function ManagerAllReviewsContent() {
         setLoading(false);
       }
     },
-    [tab, publishedFilter, sort, search, isRTL],
+    [tab, publishedFilter, courseFilter, sort, search, isRTL],
   );
 
   useEffect(() => {
@@ -302,17 +324,36 @@ export default function ManagerAllReviewsContent() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "النشر:" : "Published:"}</span>
+                    <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الدورة:" : "Course:"}</span>
                     <select
-                      value={publishedFilter}
-                      onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
-                      className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      value={courseFilter}
+                      onChange={(e) => setCourseFilter(e.target.value)}
+                      className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white max-w-[240px]"
                     >
-                      <option value="all">{isRTL ? "الكل" : "All"}</option>
-                      <option value="published">{isRTL ? "منشورة" : "Published"}</option>
-                      <option value="unpublished">{isRTL ? "غير منشورة" : "Unpublished"}</option>
+                      <option value="">{isRTL ? "كل الدورات" : "All courses"}</option>
+                      {courseOptions.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {isRTL && c.titleAr ? c.titleAr : c.title}
+                        </option>
+                      ))}
                     </select>
                   </div>
+
+                  {/* Publish filter only makes sense on "All" — on Pending it's always unpublished; on Approved/Rejected the per-row badge already shows state */}
+                  {tab === "all" && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "النشر:" : "Published:"}</span>
+                      <select
+                        value={publishedFilter}
+                        onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
+                        className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      >
+                        <option value="all">{isRTL ? "الكل" : "All"}</option>
+                        <option value="published">{isRTL ? "منشورة" : "Published"}</option>
+                        <option value="unpublished">{isRTL ? "غير منشورة" : "Unpublished"}</option>
+                      </select>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium text-[#6B7280]">{isRTL ? "الترتيب:" : "Sort:"}</span>

@@ -149,6 +149,14 @@ const strings = {
   wcagStatusLabel:             { en: 'WCAG Status:',                    ar: 'حالة WCAG:' },
   wcagSummaryLabel:            { en: 'Summary:',                        ar: 'الملخص:' },
 
+  /* ── Review pending approval ─────────────────────────── */
+  reviewPendingSubject:        { en: 'New Review Pending Approval: {course}', ar: 'مراجعة جديدة بانتظار الموافقة: {course}' },
+  reviewPendingTitle:          { en: 'New Review Pending Approval',     ar: 'مراجعة جديدة بانتظار الموافقة' },
+  reviewPendingBody:           { en: 'A student left a review on one of your courses. Approve or reject it before it appears on the public course page.', ar: 'ترك أحد الطلاب مراجعة على إحدى دوراتك. قم بالموافقة أو الرفض قبل ظهورها على صفحة الدورة العامة.' },
+  ratingLabel:                 { en: 'Rating:',                         ar: 'التقييم:' },
+  reviewTextLabel:             { en: 'Review:',                         ar: 'المراجعة:' },
+  reviewCtaLabel:              { en: 'Open in Dashboard',               ar: 'فتح في لوحة التحكم' },
+
   /* ── Assessment ──────────────────────────────────────── */
   assessSubmittedSubject:      { en: '{type} Submitted: {title}',      ar: 'تم تقديم {type}: {title}' },
   assessSubmittedTitle:        { en: 'Assessment Submitted',            ar: 'تم تقديم تقييم' },

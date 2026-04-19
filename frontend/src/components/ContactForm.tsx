@@ -44,11 +44,17 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
     { key: "other", label: s("issueTypeOther", "issueTypes.other") },
   ];
 
-  const email = strapiData?.generalInquiryEmail || "inquiry@physioguidance.org";
-  const phone = strapiData?.technicalSupportPhone || "+966 920035022";
-  const mapLat = strapiData?.mapLatitude ?? 24.4539;
-  const mapLng = strapiData?.mapLongitude ?? 39.6142;
-  const mapPopup = s("mapPopupText", "address");
+  // Contact details come strictly from Strapi — no hardcoded fallbacks.
+  // If a field is empty in Strapi, the corresponding block hides entirely.
+  const email = strapiData?.generalInquiryEmail || "";
+  const phone = strapiData?.technicalSupportPhone || "";
+  const addressTitle = strapiData?.address || "";
+  const mapLat = strapiData?.mapLatitude;
+  const mapLng = strapiData?.mapLongitude;
+  const mapPopup = strapiData?.mapPopupText || "";
+  const heroTitle = strapiData?.title || "";
+  const heroSubtitle = strapiData?.subtitle || "";
+  const hasCoordinates = typeof mapLat === "number" && typeof mapLng === "number";
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -74,134 +80,156 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
         <div className="flex flex-col md:flex-row md:gap-20 md:items-stretch">
           {/* Left Column - Contact Info (Right in RTL) */}
           <div className="flex flex-col md:flex-1 md:justify-between items-start">
-            {/* Header */}
-            <div className="flex flex-col gap-4 mb-8 md:mb-0 items-start">
-              <h1
-                className="font-semibold text-[#06080B] tracking-[-0.15px] md:tracking-[-0.24px]"
-                style={{
-                  fontFamily: "var(--typeface-family, 'DM Sans')",
-                  fontSize: "30px",
-                  lineHeight: "100%",
-                }}
-              >
-                {s("title", "title")}
-              </h1>
-              <p
-                className="text-[#06080B]"
-                style={{
-                  fontFamily: "var(--typeface-family, 'DM Sans')",
-                  fontSize: "18px",
-                  fontWeight: 400,
-                  lineHeight: "28px",
-                }}
-              >
-                {s("subtitle", "subtitle")}
-              </p>
-            </div>
-
-            {/* Contact Info Cards */}
-            <div className="flex flex-col gap-6 md:gap-10 mb-8 md:mb-0 md:flex-1 md:justify-center md:mt-10 items-start">
-              {/* General Inquiry */}
-              <div className="flex flex-col gap-2 md:gap-4 items-start">
-                <Mail
-                  className="w-6 h-6 text-[#a37f49]"
-                  strokeWidth={1.67}
-                />
-                <div className="flex flex-col gap-1 md:gap-2 items-start">
-                  <h3
-                    className="font-semibold text-[#4A4C4F]"
+            {/* Header — show only if title or subtitle configured in Strapi */}
+            {(heroTitle || heroSubtitle) && (
+              <div className="flex flex-col gap-4 mb-8 md:mb-0 items-start">
+                {heroTitle && (
+                  <h1
+                    className="font-semibold text-[#06080B] tracking-[-0.15px] md:tracking-[-0.24px]"
                     style={{
                       fontFamily: "var(--typeface-family, 'DM Sans')",
-                      fontSize: "20px",
-                      lineHeight: "32px",
+                      fontSize: "30px",
+                      lineHeight: "100%",
                     }}
                   >
-                    {s("generalInquiryLabel", "contactInfo.generalInquiry")}
-                  </h3>
-                  <a
-                    href={`mailto:${email}`}
-                    className="text-[#06080B] underline"
-                    style={{
-                      fontFamily: "Roboto, sans-serif",
-                      fontSize: "16px",
-                      fontWeight: 400,
-                      lineHeight: "24px",
-                    }}
-                  >
-                    {email}
-                  </a>
-                </div>
-              </div>
-
-              {/* Technical Support */}
-              <div className="flex flex-col gap-2 md:gap-4 items-start">
-                <Phone
-                  className="w-6 h-6 text-[#a37f49]"
-                  strokeWidth={1.67}
-                />
-                <div className="flex flex-col gap-1 md:gap-2 items-start">
-                  <h3
-                    className="font-semibold text-[#4A4C4F]"
-                    style={{
-                      fontFamily: "var(--typeface-family, 'DM Sans')",
-                      fontSize: "20px",
-                      lineHeight: "32px",
-                    }}
-                  >
-                    {s("technicalSupportLabel", "contactInfo.technicalSupport")}
-                  </h3>
+                    {heroTitle}
+                  </h1>
+                )}
+                {heroSubtitle && (
                   <p
                     className="text-[#06080B]"
                     style={{
-                      fontFamily: "Roboto, sans-serif",
-                      fontSize: "16px",
-                      fontWeight: 400,
-                      lineHeight: "24px",
-                      direction: "ltr",
-                    }}
-                  >
-                    {phone}
-                  </p>
-                </div>
-              </div>
-
-              {/* Location */}
-              <div className="flex flex-col gap-2 md:gap-4 items-start">
-                <MapPin
-                  className="w-6 h-6 text-[#a37f49]"
-                  strokeWidth={1.67}
-                />
-                <div className="flex flex-col gap-2 md:gap-4 items-start">
-                  <h3
-                    className="font-semibold text-[#4A4C4F]"
-                    style={{
                       fontFamily: "var(--typeface-family, 'DM Sans')",
-                      fontSize: "20px",
-                      lineHeight: "32px",
+                      fontSize: "18px",
+                      fontWeight: 400,
+                      lineHeight: "28px",
                     }}
                   >
-                    {s("address", "address")}
-                  </h3>
-                  <a
-                    href="#"
-                    className="flex items-center gap-1 text-[#06080B] hover:underline w-fit"
-                    style={{
-                      fontFamily: "Roboto, sans-serif",
-                      fontSize: "14px",
-                      fontWeight: 500,
-                      lineHeight: "24px",
-                    }}
-                  >
-                    {s("getDirectionsLabel", "contactInfo.getDirections")}
-                    {isRTL ? (
-                      <ChevronLeft className="w-4 h-4" strokeWidth={2} />
-                    ) : (
-                      <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                    )}
-                  </a>
-                </div>
+                    {heroSubtitle}
+                  </p>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Contact Info Cards — each shows only when its primary value exists in Strapi */}
+            {(email || phone || addressTitle) && (
+              <div className="flex flex-col gap-6 md:gap-10 mb-8 md:mb-0 md:flex-1 md:justify-center md:mt-10 items-start">
+                {/* General Inquiry — hides if no email configured */}
+                {email && (
+                  <div className="flex flex-col gap-2 md:gap-4 items-start">
+                    <Mail
+                      className="w-6 h-6 text-[#a37f49]"
+                      strokeWidth={1.67}
+                    />
+                    <div className="flex flex-col gap-1 md:gap-2 items-start">
+                      {strapiData?.generalInquiryLabel && (
+                        <h3
+                          className="font-semibold text-[#4A4C4F]"
+                          style={{
+                            fontFamily: "var(--typeface-family, 'DM Sans')",
+                            fontSize: "20px",
+                            lineHeight: "32px",
+                          }}
+                        >
+                          {strapiData.generalInquiryLabel}
+                        </h3>
+                      )}
+                      <a
+                        href={`mailto:${email}`}
+                        className="text-[#06080B] underline"
+                        style={{
+                          fontFamily: "Roboto, sans-serif",
+                          fontSize: "16px",
+                          fontWeight: 400,
+                          lineHeight: "24px",
+                        }}
+                      >
+                        {email}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Technical Support — hides if no phone configured */}
+                {phone && (
+                  <div className="flex flex-col gap-2 md:gap-4 items-start">
+                    <Phone
+                      className="w-6 h-6 text-[#a37f49]"
+                      strokeWidth={1.67}
+                    />
+                    <div className="flex flex-col gap-1 md:gap-2 items-start">
+                      {strapiData?.technicalSupportLabel && (
+                        <h3
+                          className="font-semibold text-[#4A4C4F]"
+                          style={{
+                            fontFamily: "var(--typeface-family, 'DM Sans')",
+                            fontSize: "20px",
+                            lineHeight: "32px",
+                          }}
+                        >
+                          {strapiData.technicalSupportLabel}
+                        </h3>
+                      )}
+                      <p
+                        className="text-[#06080B]"
+                        style={{
+                          fontFamily: "Roboto, sans-serif",
+                          fontSize: "16px",
+                          fontWeight: 400,
+                          lineHeight: "24px",
+                          direction: "ltr",
+                        }}
+                      >
+                        {phone}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Location — hides if no address configured */}
+                {addressTitle && (
+                  <div className="flex flex-col gap-2 md:gap-4 items-start">
+                    <MapPin
+                      className="w-6 h-6 text-[#a37f49]"
+                      strokeWidth={1.67}
+                    />
+                    <div className="flex flex-col gap-2 md:gap-4 items-start">
+                      <h3
+                        className="font-semibold text-[#4A4C4F]"
+                        style={{
+                          fontFamily: "var(--typeface-family, 'DM Sans')",
+                          fontSize: "20px",
+                          lineHeight: "32px",
+                        }}
+                      >
+                        {addressTitle}
+                      </h3>
+                      {strapiData?.getDirectionsLabel && hasCoordinates && (
+                        <a
+                          href={`https://www.google.com/maps?q=${mapLat},${mapLng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[#06080B] hover:underline w-fit"
+                          style={{
+                            fontFamily: "Roboto, sans-serif",
+                            fontSize: "14px",
+                            fontWeight: 500,
+                            lineHeight: "24px",
+                          }}
+                        >
+                          {strapiData.getDirectionsLabel}
+                          {isRTL ? (
+                            <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                          ) : (
+                            <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                          )}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Right Column - Contact Form (Left in RTL) */}
@@ -504,29 +532,29 @@ const ContactForm = ({ strapiData }: { strapiData?: ContactPage | null }) => {
           </div>
         </div>
 
-        {/* Map Section */}
-        {(strapiData?.showMap !== false) && (
-        <div
-          className="flex flex-col justify-center items-center w-full mt-10 md:mt-20"
-          style={{
-            gap: "40px",
-            padding: "32px 0 0 0",
-          }}
-        >
+        {/* Map Section — only renders when coordinates exist in Strapi and showMap isn't disabled */}
+        {strapiData?.showMap !== false && hasCoordinates && (
           <div
-            className="w-full h-[400px] rounded-3xl overflow-hidden border border-[var(--outline-hover)] bg-white relative z-0"
+            className="flex flex-col justify-center items-center w-full mt-10 md:mt-20"
             style={{
-              boxShadow:
-                "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",
+              gap: "40px",
+              padding: "32px 0 0 0",
             }}
           >
-            <Map
-              center={[mapLat, mapLng]}
-              zoom={14}
-              popupText={mapPopup}
-            />
+            <div
+              className="w-full h-[400px] rounded-3xl overflow-hidden border border-[var(--outline-hover)] bg-white relative z-0"
+              style={{
+                boxShadow:
+                  "-2px 8px 2px 0px rgba(0,0,0,0), -1px 5px 2px 0px rgba(0,0,0,0.01), -1px 3px 2px 0px rgba(0,0,0,0.03), 0px 1px 1px 0px rgba(0,0,0,0.05), 0px 0px 1px 0px rgba(0,0,0,0.06)",
+              }}
+            >
+              <Map
+                center={[mapLat as number, mapLng as number]}
+                zoom={14}
+                popupText={mapPopup}
+              />
+            </div>
           </div>
-        </div>
         )}
       </div>
     </section>

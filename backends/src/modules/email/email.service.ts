@@ -97,6 +97,10 @@ import {
   getPasswordResetHtml,
   getPasswordResetText,
 } from './templates/password-reset.template';
+import {
+  getReviewPendingApprovalHtml,
+  getReviewPendingApprovalText,
+} from './templates/review-pending-approval.template';
 import { EmailLocale, getEmailStrings, t, htmlAttrs } from './email-i18n';
 
 @Injectable()
@@ -710,6 +714,7 @@ export class EmailService {
    */
   /**
    * Send notification to course manager about a new review awaiting approval.
+   * Uses the branded template shared with other PhysioGuidance system emails.
    */
   async sendReviewPendingApproval(
     to: string,
@@ -718,25 +723,23 @@ export class EmailService {
       studentName: string;
       courseName: string;
       rating: number;
+      reviewText?: string | null;
     },
     locale: EmailLocale = 'en',
   ): Promise<void> {
     try {
-      const isAr = locale === 'ar';
-      const subject = isAr
-        ? `مراجعة جديدة بانتظار الموافقة — ${params.courseName}`
-        : `New review pending approval — ${params.courseName}`;
-      const body = isAr
-        ? `<p>مرحباً ${params.recipientName}،</p>
-           <p>ترك ${params.studentName} مراجعة بتقييم ${params.rating}/5 على دورة "${params.courseName}".</p>
-           <p>المراجعة في انتظار موافقتك قبل ظهورها على الصفحة العامة.</p>`
-        : `<p>Hi ${params.recipientName},</p>
-           <p>${params.studentName} left a ${params.rating}/5 review on "${params.courseName}".</p>
-           <p>The review is awaiting your approval before it appears on the public page.</p>`;
-      const text = isAr
-        ? `ترك ${params.studentName} مراجعة ${params.rating}/5 على "${params.courseName}". بانتظار موافقتك.`
-        : `${params.studentName} left a ${params.rating}/5 review on "${params.courseName}". Awaiting your approval.`;
-      await this.send({ to, subject, html: body, text });
+      const s = getEmailStrings(locale);
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'https://www.physioguidance.org';
+      const dashboardUrl = `${frontendUrl.replace(/\/$/, '')}/${locale}/dashboard/manager/reviews`;
+
+      await this.send({
+        to,
+        subject: t(s.reviewPendingSubject, { course: params.courseName }),
+        html: getReviewPendingApprovalHtml({ ...params, dashboardUrl }, locale),
+        text: getReviewPendingApprovalText({ ...params, dashboardUrl }, locale),
+      });
       this.logger.log(`Review-pending-approval email sent to ${to}`);
     } catch (error) {
       this.logger.error(`Failed to send review-pending-approval email to ${to}`, error);

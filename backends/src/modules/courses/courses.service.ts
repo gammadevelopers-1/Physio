@@ -420,7 +420,8 @@ export class CoursesService {
           SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         totalHours: sql<number>`(
-          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
+          COALESCE((SELECT SUM(cm.duration_minutes) FROM course_modules cm WHERE cm.course_id = "courses"."id"), 0)
+          + COALESCE((SELECT SUM(s.duration_minutes) FROM sessions s WHERE s.course_id = "courses"."id"), 0)
         )`.mapWith(Number),
         sessionCount: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
@@ -553,7 +554,8 @@ export class CoursesService {
           SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
         )`.mapWith(Number),
         totalHours: sql<number>`(
-          SELECT COALESCE(SUM(cm.duration_minutes), 0) FROM course_modules cm WHERE cm.course_id = "courses"."id"
+          COALESCE((SELECT SUM(cm.duration_minutes) FROM course_modules cm WHERE cm.course_id = "courses"."id"), 0)
+          + COALESCE((SELECT SUM(s.duration_minutes) FROM sessions s WHERE s.course_id = "courses"."id"), 0)
         )`.mapWith(Number),
         sessionCount: sql<number>`(
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"

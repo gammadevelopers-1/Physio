@@ -1844,6 +1844,61 @@ export const courseManagerApi = {
   getCourseRatingStats: (courseId: string) =>
     api.get<{ avgRating: number; totalRatings: number }>(`/courses/${courseId}/ratings/stats`),
 
+  // Reviews moderation (manager)
+  getManagerReviews: (params?: {
+    page?: number;
+    limit?: number;
+    moderationStatus?: 'pending' | 'approved' | 'rejected';
+    publishedOnly?: boolean;
+    unpublishedOnly?: boolean;
+    courseId?: string;
+    search?: string;
+    sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+  }) => {
+    const sp = new URLSearchParams();
+    if (params?.page) sp.set('page', String(params.page));
+    if (params?.limit) sp.set('limit', String(params.limit));
+    if (params?.moderationStatus) sp.set('moderationStatus', params.moderationStatus);
+    if (params?.publishedOnly) sp.set('publishedOnly', 'true');
+    if (params?.unpublishedOnly) sp.set('unpublishedOnly', 'true');
+    if (params?.courseId) sp.set('courseId', params.courseId);
+    if (params?.search) sp.set('search', params.search);
+    if (params?.sort) sp.set('sort', params.sort);
+    const qs = sp.toString();
+    return api.get<{
+      data: Array<{
+        id: string;
+        courseId: string;
+        courseTitle: string;
+        courseTitleAr: string | null;
+        rating: number;
+        reviewText: string | null;
+        moderationStatus: 'pending' | 'approved' | 'rejected';
+        isPublished: boolean;
+        createdAt: string;
+        reviewedAt: string | null;
+        studentName: string;
+      }>;
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+      counts: { pending: number; approved: number; rejected: number };
+    }>(`/courses/reviews/manager${qs ? `?${qs}` : ''}`);
+  },
+
+  approveReview: (courseId: string, ratingId: string) =>
+    api.post<{ id: string }>(`/courses/${courseId}/ratings/${ratingId}/approve`, {}),
+
+  rejectReview: (courseId: string, ratingId: string) =>
+    api.post<{ id: string }>(`/courses/${courseId}/ratings/${ratingId}/reject`, {}),
+
+  setReviewPublished: (courseId: string, ratingId: string, published: boolean) =>
+    api.patch<{ id: string }>(`/courses/${courseId}/ratings/${ratingId}/publish`, { published }),
+
+  deleteReview: (courseId: string, ratingId: string) =>
+    api.delete<{ id: string }>(`/courses/${courseId}/ratings/${ratingId}`),
+
   // Course Materials (manager access)
   getCourseMaterials: (courseId: string, moduleId?: string) =>
     api.get<Array<{

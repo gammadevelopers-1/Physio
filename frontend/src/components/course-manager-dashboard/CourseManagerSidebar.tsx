@@ -19,6 +19,7 @@ import {
   Pencil,
   Briefcase,
   Award,
+  Star,
   Upload,
   Trash2,
 } from "lucide-react";
@@ -128,6 +129,11 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
       label: t("sidebar.certificates") || "Certificates",
       href: `/${locale}/dashboard/manager/certificates`,
       icon: Award,
+    },
+    {
+      label: t("sidebar.reviews") || "Reviews",
+      href: `/${locale}/dashboard/manager/reviews`,
+      icon: Star,
     },
     {
       label: t("sidebar.nelcCompliance") || "NELC Compliance",

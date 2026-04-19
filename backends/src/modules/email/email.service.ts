@@ -708,6 +708,41 @@ export class EmailService {
   /**
    * Send pending review notification email to course manager
    */
+  /**
+   * Send notification to course manager about a new review awaiting approval.
+   */
+  async sendReviewPendingApproval(
+    to: string,
+    params: {
+      recipientName: string;
+      studentName: string;
+      courseName: string;
+      rating: number;
+    },
+    locale: EmailLocale = 'en',
+  ): Promise<void> {
+    try {
+      const isAr = locale === 'ar';
+      const subject = isAr
+        ? `مراجعة جديدة بانتظار الموافقة — ${params.courseName}`
+        : `New review pending approval — ${params.courseName}`;
+      const body = isAr
+        ? `<p>مرحباً ${params.recipientName}،</p>
+           <p>ترك ${params.studentName} مراجعة بتقييم ${params.rating}/5 على دورة "${params.courseName}".</p>
+           <p>المراجعة في انتظار موافقتك قبل ظهورها على الصفحة العامة.</p>`
+        : `<p>Hi ${params.recipientName},</p>
+           <p>${params.studentName} left a ${params.rating}/5 review on "${params.courseName}".</p>
+           <p>The review is awaiting your approval before it appears on the public page.</p>`;
+      const text = isAr
+        ? `ترك ${params.studentName} مراجعة ${params.rating}/5 على "${params.courseName}". بانتظار موافقتك.`
+        : `${params.studentName} left a ${params.rating}/5 review on "${params.courseName}". Awaiting your approval.`;
+      await this.send({ to, subject, html: body, text });
+      this.logger.log(`Review-pending-approval email sent to ${to}`);
+    } catch (error) {
+      this.logger.error(`Failed to send review-pending-approval email to ${to}`, error);
+    }
+  }
+
   async sendContentPendingReview(
     to: string,
     params: {

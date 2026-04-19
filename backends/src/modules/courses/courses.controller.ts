@@ -350,11 +350,79 @@ export class CoursesController {
   }
 
   /**
-   * DELETE /courses/:id/ratings/:ratingId — Delete a rating (admin/manager)
+   * GET /courses/reviews/manager — Manager all-reviews moderation list
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('reviews/manager')
+  async getManagerReviews(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('moderationStatus') moderationStatus?: string,
+    @Query('publishedOnly') publishedOnly?: string,
+    @Query('unpublishedOnly') unpublishedOnly?: string,
+    @Query('courseId') courseId?: string,
+    @Query('search') search?: string,
+    @Query('sort') sort?: string,
+  ) {
+    return this.coursesService.getManagerReviews(user, {
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+      moderationStatus: moderationStatus as 'pending' | 'approved' | 'rejected' | undefined,
+      publishedOnly: publishedOnly === 'true',
+      unpublishedOnly: unpublishedOnly === 'true',
+      courseId: courseId || undefined,
+      search: search || undefined,
+      sort: sort as 'newest' | 'oldest' | 'highest' | 'lowest' | undefined,
+    });
+  }
+
+  /**
+   * POST /courses/:id/ratings/:ratingId/approve — Approve + publish a review
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/ratings/:ratingId/approve')
+  async approveReview(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.approveReview(ratingId, user);
+  }
+
+  /**
+   * POST /courses/:id/ratings/:ratingId/reject — Reject + unpublish a review
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Post(':id/ratings/:ratingId/reject')
+  async rejectReview(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.rejectReview(ratingId, user);
+  }
+
+  /**
+   * PATCH /courses/:id/ratings/:ratingId/publish — Set is_published flag
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':id/ratings/:ratingId/publish')
+  async setReviewPublished(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { published: boolean },
+  ) {
+    return this.coursesService.setReviewPublished(ratingId, user, !!body.published);
+  }
+
+  /**
+   * DELETE /courses/:id/ratings/:ratingId — Delete a rating (admin/manager, scoped)
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Delete(':id/ratings/:ratingId')
-  async deleteRating(@Param('ratingId') ratingId: string) {
-    return this.coursesService.deleteRating(ratingId);
+  async deleteRating(
+    @Param('ratingId') ratingId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.deleteRating(ratingId, user);
   }
 }

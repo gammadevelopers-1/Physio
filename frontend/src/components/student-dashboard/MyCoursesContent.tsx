@@ -99,30 +99,9 @@ interface LeaveReviewModalProps {
 }
 
 function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRTL }: LeaveReviewModalProps) {
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
-  const [existing, setExisting] = useState<{ rating: number; reviewText: string | null } | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    studentApi
-      .getMyCourseRating(courseId)
-      .then((res) => {
-        if (cancelled) return;
-        // Only treat as existing if it has a valid rating; backend may return {}
-        // when no row exists, which is falsy-enough for our UI to ignore.
-        if (res && typeof res === 'object' && typeof (res as { rating?: unknown }).rating === 'number' && (res as { rating: number }).rating > 0) {
-          setExisting(res as { rating: number; reviewText: string | null });
-        } else {
-          setExisting(null);
-        }
-      })
-      .catch(() => { if (!cancelled) setExisting(null); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [courseId]);
 
   const handleSubmit = async () => {
     if (rating < 1) {
@@ -137,7 +116,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
     } catch (e: unknown) {
       const err = e as { status?: number };
       if (err?.status === 409) {
-        toast.error(t("myCourses.reviewAlreadySubmitted"));
+        // Already reviewed — just close silently; button will hide on next refresh.
         onSubmitted();
       } else {
         toast.error(t("myCourses.reviewError"));
@@ -164,80 +143,57 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
 
           <p className="text-sm text-[#6B7280] mb-4 truncate">{courseTitle}</p>
 
-          {loading ? (
-            <div className="py-10 text-center text-sm text-[#6B7280]">{t("myCourses.reviewLoading")}</div>
-          ) : existing ? (
-            <div className="py-6 text-center">
-              <CheckCircle className="w-12 h-12 text-[#16A34A] mx-auto mb-3" />
-              <p className="text-sm font-medium text-[#1F2937] mb-2">{t("myCourses.reviewAlreadyTitle")}</p>
-              <p className="text-xs text-[#6B7280]">{t("myCourses.reviewAlreadyDesc")}</p>
-              <div className="flex justify-center gap-1 mt-4">
-                {[1, 2, 3, 4, 5].map((s) => (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              {t("myCourses.reviewStarsLabel")} *
+            </label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setRating(s)}
+                  className="p-1 hover:scale-110 transition-transform cursor-pointer"
+                  aria-label={`${s} star${s > 1 ? "s" : ""}`}
+                >
                   <Star
-                    key={s}
-                    className={`w-5 h-5 ${s <= existing.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                    className={`w-8 h-8 ${s <= rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
                   />
-                ))}
-              </div>
-              {existing.reviewText && (
-                <p dir="auto" className="text-sm text-[#374151] mt-3 italic">&ldquo;{existing.reviewText}&rdquo;</p>
-              )}
+                </button>
+              ))}
             </div>
-          ) : (
-            <>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  {t("myCourses.reviewStarsLabel")} *
-                </label>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setRating(s)}
-                      className="p-1 hover:scale-110 transition-transform cursor-pointer"
-                      aria-label={`${s} star${s > 1 ? "s" : ""}`}
-                    >
-                      <Star
-                        className={`w-8 h-8 ${s <= rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-[#374151] mb-2">
-                  {t("myCourses.reviewTextLabel")}
-                </label>
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  rows={4}
-                  maxLength={2000}
-                  dir="auto"
-                  placeholder={t("myCourses.reviewTextPlaceholder")}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
-                />
-                <p className="text-xs text-[#9CA3AF] mt-1">{reviewText.length} / 2000</p>
-              </div>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={onClose}
-                  disabled={submitting}
-                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
-                >
-                  {t("courseDetail.cancel")}
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || rating < 1}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {submitting ? t("myCourses.reviewSubmitting") : t("myCourses.reviewSubmit")}
-                </button>
-              </div>
-            </>
-          )}
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-[#374151] mb-2">
+              {t("myCourses.reviewTextLabel")}
+            </label>
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              rows={4}
+              maxLength={2000}
+              dir="auto"
+              placeholder={t("myCourses.reviewTextPlaceholder")}
+              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+            />
+            <p className="text-xs text-[#9CA3AF] mt-1">{reviewText.length} / 2000</p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              {t("courseDetail.cancel")}
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || rating < 1}
+              className="px-4 py-2 text-sm font-medium text-white bg-[#3B82F6] rounded-lg hover:bg-[#2563EB] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {submitting ? t("myCourses.reviewSubmitting") : t("myCourses.reviewSubmit")}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -626,21 +582,14 @@ const MyCoursesContent = () => {
                                   {t("courseDetail.dropCourse")}
                                 </button>
                               )}
-                              {course.enrollmentStatus === "completed" && (
-                                reviewed.has(course.id) ? (
-                                  <div className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium bg-[#DCFCE7] text-[#16A34A]">
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    {t("myCourses.reviewSubmitted")}
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => setReviewCourse({ id: course.id, title: (isRTL && course.titleAr) ? course.titleAr : course.title })}
-                                    className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-[#FDE68A] text-[#B45309] bg-[#FFFBEB] hover:bg-[#FEF3C7] cursor-pointer"
-                                  >
-                                    <Star className="w-3.5 h-3.5" />
-                                    {t("myCourses.leaveReview")}
-                                  </button>
-                                )
+                              {course.enrollmentStatus === "completed" && !reviewed.has(course.id) && (
+                                <button
+                                  onClick={() => setReviewCourse({ id: course.id, title: (isRTL && course.titleAr) ? course.titleAr : course.title })}
+                                  className="flex items-center justify-center gap-1.5 w-full py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors border border-[#FDE68A] text-[#B45309] bg-[#FFFBEB] hover:bg-[#FEF3C7] cursor-pointer"
+                                >
+                                  <Star className="w-3.5 h-3.5" />
+                                  {t("myCourses.leaveReview")}
+                                </button>
                               )}
                             </div>
                           </div>

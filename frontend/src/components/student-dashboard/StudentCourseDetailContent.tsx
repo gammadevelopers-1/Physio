@@ -532,38 +532,6 @@ const StudentCourseDetailContent = () => {
                     );
                   })()}
 
-                  {/* Your Review — show when course is completed and student has left a review */}
-                  {data.enrollment.status === "completed" && data.myRating && (
-                    <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-sm font-semibold text-[#1F2937]">
-                            {locale === "ar" ? "مراجعتك" : "Your Review"}
-                          </p>
-                          <p className="text-xs text-[#9CA3AF]">
-                            {new Date(data.myRating.createdAt).toLocaleDateString(
-                              locale === "ar" ? "ar-SA" : "en-US",
-                              { day: "numeric", month: "short", year: "numeric" },
-                            )}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <Star
-                              key={s}
-                              className={`w-4 h-4 ${s <= data.myRating!.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      {data.myRating.reviewText && (
-                        <p dir="auto" className="text-sm text-[#374151] whitespace-pre-line mt-2">
-                          {data.myRating.reviewText}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
                   {/* Modules List */}
                   <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
                     <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">

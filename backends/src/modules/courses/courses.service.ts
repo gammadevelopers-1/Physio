@@ -427,10 +427,10 @@ export class CoursesService {
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
         )`.mapWith(Number),
         avgRating: sql<number>`(
-          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
         )`.mapWith(Number),
         totalRatings: sql<number>`(
-          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
         )`.mapWith(Number),
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
@@ -561,10 +561,10 @@ export class CoursesService {
           SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
         )`.mapWith(Number),
         avgRating: sql<number>`(
-          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
         )`.mapWith(Number),
         totalRatings: sql<number>`(
-          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id"
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
         )`.mapWith(Number),
         instructorName: sql<string>`(
           SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
@@ -686,7 +686,7 @@ export class CoursesService {
         )`,
       })
       .from(courseRatings)
-      .where(eq(courseRatings.courseId, courseId))
+      .where(and(eq(courseRatings.courseId, courseId), eq(courseRatings.isPublished, true)))
       .orderBy(desc(courseRatings.rating), desc(courseRatings.createdAt))
       .limit(5);
 
@@ -1915,6 +1915,8 @@ export class CoursesService {
   /**
    * Create a rating for a course. One-time only — subsequent calls return 409.
    * Student must have a completed enrollment in the course.
+   * Review enters moderation in `pending` state and is NOT visible to the public
+   * until the assigned course manager approves + publishes it.
    */
   async rateCourse(
     courseId: string,
@@ -1957,9 +1959,89 @@ export class CoursesService {
 
     const [created] = await db
       .insert(courseRatings)
-      .values({ courseId, studentId, rating, reviewText })
+      .values({
+        courseId,
+        studentId,
+        rating,
+        reviewText,
+        moderationStatus: 'pending',
+        isPublished: false,
+      })
       .returning();
+
+    // Notify the course manager (fire-and-forget)
+    this.notifyManagerOfPendingReview(courseId, created.id, studentId, rating).catch((err) =>
+      this.logger.warn(`Failed to notify manager of pending review: ${(err as Error).message}`),
+    );
+
     return created;
+  }
+
+  /**
+   * Send in-app + email notification to the course's assigned manager about a pending review.
+   */
+  private async notifyManagerOfPendingReview(
+    courseId: string,
+    ratingId: string,
+    studentId: string,
+    rating: number,
+  ): Promise<void> {
+    const [course] = await db
+      .select({
+        title: courses.title,
+        titleAr: courses.titleAr,
+        managerId: courses.managerId,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+    if (!course || !course.managerId) return;
+
+    const [manager] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        language: users.language,
+      })
+      .from(users)
+      .where(eq(users.id, course.managerId))
+      .limit(1);
+    if (!manager) return;
+
+    const [student] = await db
+      .select({ firstName: users.firstName, lastName: users.lastName })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+    const studentName =
+      `${student?.firstName || ''} ${student?.lastName || ''}`.trim() || 'A student';
+
+    const locale = (manager.language || 'en') as 'en' | 'ar';
+    const isAr = locale === 'ar';
+    const courseTitle = isAr && course.titleAr ? course.titleAr : course.title;
+
+    await this.userNotificationsService.create({
+      recipientId: manager.id,
+      type: 'review_pending_approval',
+      title: isAr ? 'مراجعة جديدة بانتظار الموافقة' : 'New Review Pending Approval',
+      message: isAr
+        ? `ترك ${studentName} مراجعة (${rating}/5) على "${courseTitle}" وتحتاج إلى موافقتك.`
+        : `${studentName} left a ${rating}/5 review on "${courseTitle}" that needs your approval.`,
+      link: '/dashboard/manager/reviews',
+      entityType: 'course_rating',
+      entityId: ratingId,
+    });
+
+    const name = [manager.firstName, manager.lastName].filter(Boolean).join(' ') || 'Manager';
+    this.emailService
+      .sendReviewPendingApproval(
+        manager.email,
+        { recipientName: name, studentName, courseName: courseTitle, rating },
+        locale,
+      )
+      .catch(() => {});
   }
 
   /**
@@ -2014,13 +2096,18 @@ export class CoursesService {
       rating?: number; // filter by specific star count 1-5
       sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
       search?: string;
+      onlyPublished?: boolean; // default true — public + manager-published views
     } = {},
   ) {
     const page = Math.max(1, params.page || 1);
     const limit = Math.min(100, Math.max(1, params.limit || 20));
     const offset = (page - 1) * limit;
+    const onlyPublished = params.onlyPublished !== false;
 
     const conditions: any[] = [eq(courseRatings.courseId, courseId)];
+    if (onlyPublished) {
+      conditions.push(eq(courseRatings.isPublished, true));
+    }
     if (params.rating && params.rating >= 1 && params.rating <= 5) {
       conditions.push(eq(courseRatings.rating, params.rating));
     }
@@ -2035,6 +2122,11 @@ export class CoursesService {
       );
     }
     const whereClause = and(...conditions);
+
+    // Stats queries: aggregate uses the same publish filter as data
+    const statsWhere = onlyPublished
+      ? and(eq(courseRatings.courseId, courseId), eq(courseRatings.isPublished, true))
+      : eq(courseRatings.courseId, courseId);
 
     // Sort
     let orderBy;
@@ -2080,14 +2172,14 @@ export class CoursesService {
           totalRatings: count(),
         })
         .from(courseRatings)
-        .where(eq(courseRatings.courseId, courseId)),
+        .where(statsWhere),
       db
         .select({
           rating: courseRatings.rating,
           count: count(),
         })
         .from(courseRatings)
-        .where(eq(courseRatings.courseId, courseId))
+        .where(statsWhere)
         .groupBy(courseRatings.rating),
     ]);
 
@@ -2131,6 +2223,7 @@ export class CoursesService {
         totalRatings: count(),
       })
       .from(courseRatings)
+      .where(eq(courseRatings.isPublished, true))
       .groupBy(courseRatings.courseId);
 
     const map: Record<string, { avgRating: number; totalRatings: number }> = {};
@@ -2143,14 +2236,253 @@ export class CoursesService {
     return map;
   }
 
+  // ─── Manager moderation ────────────────────────────────────
+
   /**
-   * Delete a rating (admin/manager).
+   * Ensure the rating belongs to a course this manager manages (or admin).
    */
-  async deleteRating(ratingId: string) {
+  private async verifyRatingAccess(ratingId: string, user: AuthenticatedUser) {
+    const [row] = await db
+      .select({
+        id: courseRatings.id,
+        courseId: courseRatings.courseId,
+        managerId: courses.managerId,
+      })
+      .from(courseRatings)
+      .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+      .where(eq(courseRatings.id, ratingId))
+      .limit(1);
+    if (!row) {
+      throw new NotFoundException('Review not found');
+    }
+    if (!isGlobalAdmin(user) && row.managerId !== user.id) {
+      throw new ForbiddenException('You do not manage this course');
+    }
+    return row;
+  }
+
+  async approveReview(ratingId: string, user: AuthenticatedUser) {
+    await this.verifyRatingAccess(ratingId, user);
+    const [updated] = await db
+      .update(courseRatings)
+      .set({
+        moderationStatus: 'approved',
+        isPublished: true,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(courseRatings.id, ratingId))
+      .returning();
+    return updated;
+  }
+
+  async rejectReview(ratingId: string, user: AuthenticatedUser) {
+    await this.verifyRatingAccess(ratingId, user);
+    const [updated] = await db
+      .update(courseRatings)
+      .set({
+        moderationStatus: 'rejected',
+        isPublished: false,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(courseRatings.id, ratingId))
+      .returning();
+    return updated;
+  }
+
+  async setReviewPublished(ratingId: string, user: AuthenticatedUser, published: boolean) {
+    await this.verifyRatingAccess(ratingId, user);
+    const [updated] = await db
+      .update(courseRatings)
+      .set({
+        isPublished: published,
+        reviewedBy: user.id,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(courseRatings.id, ratingId))
+      .returning();
+    return updated;
+  }
+
+  /**
+   * Delete a rating. Manager may only delete ratings for their own courses.
+   */
+  async deleteRating(ratingId: string, user: AuthenticatedUser) {
+    await this.verifyRatingAccess(ratingId, user);
     const [deleted] = await db
       .delete(courseRatings)
       .where(eq(courseRatings.id, ratingId))
       .returning();
     return deleted;
+  }
+
+  /**
+   * Manager all-reviews listing across every course they manage, with filters.
+   */
+  async getManagerReviews(
+    user: AuthenticatedUser,
+    params: {
+      page?: number;
+      limit?: number;
+      moderationStatus?: 'pending' | 'approved' | 'rejected';
+      publishedOnly?: boolean;
+      unpublishedOnly?: boolean;
+      courseId?: string;
+      search?: string;
+      sort?: 'newest' | 'oldest' | 'highest' | 'lowest';
+    } = {},
+  ) {
+    const page = Math.max(1, params.page || 1);
+    const limit = Math.min(100, Math.max(1, params.limit || 20));
+    const offset = (page - 1) * limit;
+
+    const conditions: any[] = [];
+    if (!isGlobalAdmin(user)) {
+      conditions.push(eq(courses.managerId, user.id));
+    }
+    if (params.moderationStatus) {
+      conditions.push(eq(courseRatings.moderationStatus, params.moderationStatus));
+    }
+    if (params.publishedOnly) {
+      conditions.push(eq(courseRatings.isPublished, true));
+    } else if (params.unpublishedOnly) {
+      conditions.push(eq(courseRatings.isPublished, false));
+    }
+    if (params.courseId) {
+      conditions.push(eq(courseRatings.courseId, params.courseId));
+    }
+    if (params.search) {
+      const term = `%${params.search}%`;
+      conditions.push(
+        or(
+          ilike(users.firstName, term),
+          ilike(users.lastName, term),
+          ilike(courseRatings.reviewText, term),
+          ilike(courses.title, term),
+          ilike(courses.titleAr, term),
+        ) as any,
+      );
+    }
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Secondary sort
+    let orderBy;
+    switch (params.sort) {
+      case 'oldest':
+        orderBy = asc(courseRatings.createdAt);
+        break;
+      case 'highest':
+        orderBy = [desc(courseRatings.rating), desc(courseRatings.createdAt)];
+        break;
+      case 'lowest':
+        orderBy = [asc(courseRatings.rating), desc(courseRatings.createdAt)];
+        break;
+      case 'newest':
+      default:
+        orderBy = desc(courseRatings.createdAt);
+    }
+
+    // Status-priority first: pending shows on top
+    const statusPriority = sql`CASE ${courseRatings.moderationStatus}
+      WHEN 'pending' THEN 1
+      WHEN 'approved' THEN 2
+      WHEN 'rejected' THEN 3
+      ELSE 4
+    END`;
+
+    const [rows, [countRow], [pendingRow], [approvedRow], [rejectedRow]] = await Promise.all([
+      db
+        .select({
+          id: courseRatings.id,
+          courseId: courseRatings.courseId,
+          courseTitle: courses.title,
+          courseTitleAr: courses.titleAr,
+          rating: courseRatings.rating,
+          reviewText: courseRatings.reviewText,
+          moderationStatus: courseRatings.moderationStatus,
+          isPublished: courseRatings.isPublished,
+          createdAt: courseRatings.createdAt,
+          reviewedAt: courseRatings.reviewedAt,
+          studentFirstName: users.firstName,
+          studentLastName: users.lastName,
+        })
+        .from(courseRatings)
+        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+        .innerJoin(users, eq(courseRatings.studentId, users.id))
+        .where(whereClause)
+        .orderBy(statusPriority, ...(Array.isArray(orderBy) ? orderBy : [orderBy]))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: count() })
+        .from(courseRatings)
+        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+        .innerJoin(users, eq(courseRatings.studentId, users.id))
+        .where(whereClause),
+      // Aggregate counts (independent of page-level filters so dashboard tabs stay stable)
+      db
+        .select({ count: count() })
+        .from(courseRatings)
+        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+        .where(
+          and(
+            ...(isGlobalAdmin(user) ? [] : [eq(courses.managerId, user.id)]),
+            eq(courseRatings.moderationStatus, 'pending'),
+          ),
+        ),
+      db
+        .select({ count: count() })
+        .from(courseRatings)
+        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+        .where(
+          and(
+            ...(isGlobalAdmin(user) ? [] : [eq(courses.managerId, user.id)]),
+            eq(courseRatings.moderationStatus, 'approved'),
+          ),
+        ),
+      db
+        .select({ count: count() })
+        .from(courseRatings)
+        .innerJoin(courses, eq(courseRatings.courseId, courses.id))
+        .where(
+          and(
+            ...(isGlobalAdmin(user) ? [] : [eq(courses.managerId, user.id)]),
+            eq(courseRatings.moderationStatus, 'rejected'),
+          ),
+        ),
+    ]);
+
+    const data = rows.map((r) => ({
+      id: r.id,
+      courseId: r.courseId,
+      courseTitle: r.courseTitle,
+      courseTitleAr: r.courseTitleAr,
+      rating: r.rating,
+      reviewText: r.reviewText,
+      moderationStatus: r.moderationStatus,
+      isPublished: r.isPublished,
+      createdAt: r.createdAt,
+      reviewedAt: r.reviewedAt,
+      studentName:
+        `${r.studentFirstName || ''} ${r.studentLastName || ''}`.trim() || 'Anonymous',
+    }));
+
+    const total = Number(countRow?.count || 0);
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+      counts: {
+        pending: Number(pendingRow?.count || 0),
+        approved: Number(approvedRow?.count || 0),
+        rejected: Number(rejectedRow?.count || 0),
+      },
+    };
   }
 }

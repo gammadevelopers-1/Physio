@@ -17,6 +17,7 @@ export { default as CoursesContent } from "./CoursesContent";
 export { default as CreateCourseContent } from "./CreateCourseContent";
 export { default as EditCourseContent } from "./EditCourseContent";
 export { default as CourseReviewsContent } from "./CourseReviewsContent";
+export { default as ManagerAllReviewsContent } from "./ManagerAllReviewsContent";
 export { default as CourseManagerCourseDetailContent } from "./CourseManagerCourseDetailContent";
 export { default as SessionsContent } from "./SessionsContent";
 export { default as InstructorsContent } from "./InstructorsContent";

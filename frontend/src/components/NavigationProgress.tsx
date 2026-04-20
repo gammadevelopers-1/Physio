@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 /**
  * Thin gold progress bar at the top of the viewport.
@@ -12,7 +12,6 @@ import { usePathname, useSearchParams } from "next/navigation";
  */
 export default function NavigationProgress() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -46,12 +45,12 @@ export default function NavigationProgress() {
     };
   }, []);
 
-  // Complete the bar when the path (or query) actually changes
+  // Complete the bar when the path actually changes
   useEffect(() => {
     if (!visible) return;
     completeProgress();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, searchParams?.toString()]);
+  }, [pathname]);
 
   function startProgress() {
     setVisible(true);

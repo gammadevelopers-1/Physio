@@ -95,6 +95,12 @@ ENV_VARS="${ENV_VARS},DATABASE_NAME=${STRAPI_DB_NAME}"
 ENV_VARS="${ENV_VARS},DATABASE_USERNAME=${STRAPI_DB_USER}"
 ENV_VARS="${ENV_VARS},DATABASE_SSL=false"
 
+# Upload provider — Google Cloud Storage (ephemeral local disk would lose every upload on restart)
+ENV_VARS="${ENV_VARS},GCS_BUCKET_NAME=physioguidance-cms"
+ENV_VARS="${ENV_VARS},GCS_BASE_PATH="
+ENV_VARS="${ENV_VARS},GCS_PUBLIC_FILES=true"
+ENV_VARS="${ENV_VARS},GCS_UNIFORM_ACCESS=true"
+
 # Secrets from GCP Secret Manager
 SECRETS="APP_KEYS=STRAPI_APP_KEYS:latest"
 SECRETS="${SECRETS},API_TOKEN_SALT=STRAPI_API_TOKEN_SALT:latest"

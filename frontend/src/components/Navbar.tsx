@@ -33,10 +33,9 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
   const isRTL = locale === "ar";
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Get logo URL from Strapi or use fallback
-  const logoUrl = siteSettings?.logo?.url
-    ? getStrapiMediaUrl(siteSettings.logo.url)
-    : "/images/logo.png";
+  // Logo comes strictly from Strapi — if empty, the site name text is shown instead
+  const logoUrl = siteSettings?.logo?.url ? getStrapiMediaUrl(siteSettings.logo.url) : null;
+  const siteName = siteSettings?.siteName || "";
 
   const switchLocale = async () => {
     const newLocale = locale === "en" ? "ar" : "en";
@@ -53,22 +52,28 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links (appears on right side in RTL due to dir="rtl") */}
         <div className="flex items-center gap-8">
-          {/* Logo */}
-          <Link href={`/${locale}`} className="relative h-10 w-10 lg:h-12 lg:w-12 shrink-0">
-            <Image
-              src={logoUrl}
-              alt={siteSettings?.siteName || "PhysioGuidance Logo"}
-              width={48}
-              height={48}
-              unoptimized={logoUrl.startsWith('http')}
-              className="object-contain"
-            />
-          </Link>
+          {/* Logo — Strapi image, or site name text fallback, nothing hardcoded */}
+          {logoUrl ? (
+            <Link href={`/${locale}`} className="relative h-10 w-10 lg:h-12 lg:w-12 shrink-0">
+              <Image
+                src={logoUrl}
+                alt={siteName || "Logo"}
+                width={48}
+                height={48}
+                unoptimized={logoUrl.startsWith('http')}
+                className="object-contain"
+              />
+            </Link>
+          ) : siteName ? (
+            <Link href={`/${locale}`} className="font-semibold text-lg text-[var(--on-surface-default)] shrink-0">
+              {siteName}
+            </Link>
+          ) : null}
 
-          {/* Nav Links - Hidden on mobile/tablet */}
-          <div className="hidden lg:flex items-center gap-8">
-            {navLinks.length > 0 ? (
-              navLinks.map((link) => (
+          {/* Nav Links — Strapi only, no hardcoded menu */}
+          {navLinks.length > 0 && (
+            <div className="hidden lg:flex items-center gap-8">
+              {navLinks.map((link) => (
                 <Link
                   key={link.id}
                   href={link.url.startsWith('/') ? `/${locale}${link.url.replace(/^\/(en|ar)/, '')}` : link.url}
@@ -76,17 +81,9 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
                 >
                   {link.label}
                 </Link>
-              ))
-            ) : (
-              <>
-                <Link href={`/${locale}`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("home")}</Link>
-                <Link href={`/${locale}/about`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("about")}</Link>
-                <Link href={`/${locale}/courses`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("courses")}</Link>
-                <Link href={`/${locale}/become-trainer`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("becomeTrainer")}</Link>
-                <Link href={`/${locale}/blogs`} className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap">{t("blogs")}</Link>
-              </>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Actions (appears on left side in RTL due to dir="rtl") */}
@@ -156,8 +153,8 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
       {isMobileMenuOpen && (
         <div className="lg:hidden absolute top-full left-0 right-0 bg-[var(--surface-intense)] border-t border-[var(--outline-subtle)] shadow-lg">
           <div className="flex flex-col px-4 py-4">
-            {/* Mobile Nav Links */}
-            {navLinks.length > 0 ? (
+            {/* Mobile Nav Links — Strapi only */}
+            {navLinks.length > 0 &&
               navLinks.map((link) => (
                 <Link
                   key={link.id}
@@ -167,16 +164,7 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
                 >
                   {link.label}
                 </Link>
-              ))
-            ) : (
-              <>
-                <Link href={`/${locale}`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("home")}</Link>
-                <Link href={`/${locale}/about`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("about")}</Link>
-                <Link href={`/${locale}/courses`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("courses")}</Link>
-                <Link href={`/${locale}/become-trainer`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("becomeTrainer")}</Link>
-                <Link href={`/${locale}/blogs`} className="py-3 text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors border-b border-[var(--outline-subtle)]" onClick={() => setIsMobileMenuOpen(false)}>{t("blogs")}</Link>
-              </>
-            )}
+              ))}
 
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 pt-4">

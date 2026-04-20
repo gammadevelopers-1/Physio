@@ -85,6 +85,11 @@
           "localized": true
         }
       }
+    },
+    "paymentMethods": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.payment-method-item"
     }
   }
 }

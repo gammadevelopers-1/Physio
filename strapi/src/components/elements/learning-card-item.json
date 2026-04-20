@@ -1,0 +1,33 @@
+{
+  "collectionName": "components_elements_learning_card_items",
+  "info": {
+    "displayName": "Learning Card Item",
+    "description": "A learning experience card with image, title, and optional link"
+  },
+  "attributes": {
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "imageMobile": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "linkUrl": {
+      "type": "string"
+    }
+  }
+}

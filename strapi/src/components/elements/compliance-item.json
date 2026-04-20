@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_elements_compliance_items",
+  "info": {
+    "displayName": "Compliance Item",
+    "description": "A single compliance/standard bullet point"
+  },
+  "attributes": {
+    "text": {
+      "type": "text",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

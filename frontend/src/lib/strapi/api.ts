@@ -149,6 +149,7 @@ export async function getSiteSettings(locale: string = 'en'): Promise<SiteSettin
       params: {
         locale,
         'populate[logo]': 'true',
+        'populate[paymentMethods][populate][icon]': 'true',
       },
     }
   );
@@ -306,12 +307,11 @@ export async function getAboutPage(locale: string = 'en'): Promise<AboutPage | n
         ...OG_IMAGE_POPULATE,
         'populate[heroImage]': 'true',
         'populate[heroImageMobile]': 'true',
-        'populate[learningCard1Image]': 'true',
-        'populate[learningCard1ImageMobile]': 'true',
-        'populate[learningCard2Image]': 'true',
-        'populate[learningCard2ImageMobile]': 'true',
-        'populate[learningCard3Image]': 'true',
-        'populate[learningCard3ImageMobile]': 'true',
+        // Repeatable components (each carries its own media)
+        'populate[complianceItems]': 'true',
+        'populate[learningCards][populate][image]': 'true',
+        'populate[learningCards][populate][imageMobile]': 'true',
+        'populate[features][populate][icon]': 'true',
       },
     }
   );

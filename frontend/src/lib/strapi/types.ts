@@ -92,6 +92,26 @@ export interface HomePage {
   publishedAt: string;
 }
 
+export interface AboutComplianceItem {
+  id: number;
+  text: string;
+}
+
+export interface AboutLearningCardItem {
+  id: number;
+  title: string;
+  linkUrl: string | null;
+  image: StrapiMedia | null;
+  imageMobile: StrapiMedia | null;
+}
+
+export interface AboutFeatureItem {
+  id: number;
+  title: string;
+  description: string | null;
+  icon: StrapiMedia | null;
+}
+
 export interface AboutPage {
   id: number;
   documentId: string;
@@ -99,48 +119,32 @@ export interface AboutPage {
   metaTitle: string | null;
   metaDescription: string | null;
   ogImage: StrapiMedia | null;
-  heroTitle: string;
-  heroDescription: string;
+  heroTitle: string | null;
+  heroDescription: string | null;
   heroExploreButtonLabel: string | null;
   heroGetStartedButtonLabel: string | null;
+  heroImage: StrapiMedia | null;
+  heroImageMobile: StrapiMedia | null;
   complianceTitle: string | null;
-  complianceItem1: string | null;
-  complianceItem2: string | null;
-  complianceItem3: string | null;
-  complianceItem4: string | null;
+  complianceItems: AboutComplianceItem[] | null;
   complianceButtonLabel: string | null;
   learningTitle: string | null;
   learningSubtitle: string | null;
-  learningCard1Title: string | null;
-  learningCard2Title: string | null;
-  learningCard3Title: string | null;
+  learningCards: AboutLearningCardItem[] | null;
   learningReadMoreLabel: string | null;
   capabilitiesTitle: string | null;
   capabilitiesSubtitle: string | null;
-  feature1Title: string | null;
-  feature1Description: string | null;
-  feature2Title: string | null;
-  feature2Description: string | null;
-  feature3Title: string | null;
-  feature3Description: string | null;
-  feature4Title: string | null;
-  feature4Description: string | null;
-  feature5Title: string | null;
-  feature5Description: string | null;
-  feature6Title: string | null;
-  feature6Description: string | null;
-  learningCard1Image: StrapiMedia | null;
-  learningCard1ImageMobile: StrapiMedia | null;
-  learningCard2Image: StrapiMedia | null;
-  learningCard2ImageMobile: StrapiMedia | null;
-  learningCard3Image: StrapiMedia | null;
-  learningCard3ImageMobile: StrapiMedia | null;
-  heroImage: StrapiMedia | null;
-  heroImageMobile: StrapiMedia | null;
+  features: AboutFeatureItem[] | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
+}
+
+export interface PaymentMethodItem {
+  id: number;
+  name: string;
+  icon: StrapiMedia | null;
 }
 
 export interface SiteSettings {
@@ -158,6 +162,7 @@ export interface SiteSettings {
   footerOrganizationTitle: string | null;
   footerSupportTitle: string | null;
   logo: StrapiMedia | null;
+  paymentMethods: PaymentMethodItem[] | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

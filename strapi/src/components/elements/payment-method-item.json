@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_elements_payment_method_items",
+  "info": {
+    "displayName": "Payment Method",
+    "description": "A payment method icon (Visa, Mastercard, etc.)"
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images"]
+    }
+  }
+}

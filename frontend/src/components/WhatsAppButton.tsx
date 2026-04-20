@@ -11,10 +11,13 @@ const WhatsAppButton = ({ phoneNumber }: WhatsAppButtonProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
+  // Hide the button entirely when no number is configured in Strapi
+  if (!phoneNumber || !phoneNumber.trim()) return null;
+
   const handleWhatsAppClick = () => {
-    const number = phoneNumber || "966920035022";
     // Strip leading 0 and non-digits, ensure international format
-    const cleaned = number.replace(/\D/g, "").replace(/^0+/, "");
+    const cleaned = phoneNumber.replace(/\D/g, "").replace(/^0+/, "");
+    if (!cleaned) return;
     window.open(`https://wa.me/${cleaned}`, "_blank");
   };
 

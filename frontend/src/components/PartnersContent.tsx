@@ -5,27 +5,6 @@ import { useTranslations, useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import type { Partner, PartnersPage } from "@/lib/strapi/types";
 
-// Fallback partner logos (used when Strapi partners are empty)
-const fallbackPartnerRows = [
-  [
-    { name: "National eLearning Center", src: "/Academic_partners_icons/national-elearning-center.svg", width: 144, height: 54 },
-    { name: "Ministry of Health", src: "/Academic_partners_icons/ministry-of-health.svg", width: 82, height: 75 },
-    { name: "Saudi Commission for Health Specialties", src: "/Academic_partners_icons/scfhs.svg", width: 159, height: 66 },
-  ],
-  [
-    { name: "Alfaisal University", src: "/Academic_partners_icons/alfaisal-university.svg", width: 144, height: 60 },
-    { name: "Saudi Healthcare Partner", src: "/Academic_partners_icons/saudi-healthcare-partner.svg", width: 77, height: 79 },
-    { name: "King Saud University", src: "/Academic_partners_icons/king-saud-university.svg", width: 113, height: 53 },
-  ],
-  [
-    { name: "American Heart Association", src: "/Academic_partners_icons/american-heart-association.svg", width: 148, height: 88 },
-    { name: "King Faisal Specialist Hospital", src: "/Academic_partners_icons/king-faisal-hospital.svg", width: 196, height: 64 },
-    { name: "King Faisal Medical City", src: "/Academic_partners_icons/king-faisal-medical-city.svg", width: 80, height: 80 },
-  ],
-];
-
-const fallbackMobilePartners = fallbackPartnerRows.flat();
-
 interface PartnersContentProps {
   partners: Partner[];
   strapiData?: PartnersPage | null;
@@ -38,11 +17,11 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
 
   // Only use Strapi partners if at least one has a logo uploaded
   const partnersWithLogos = partners.filter((p) => p.logo?.url);
-  const useStrapiPartners = partnersWithLogos.length > 0;
+  const hasPartners = partnersWithLogos.length > 0;
 
   // Build rows of 3 from Strapi partners that have logos
   const strapiRows: Partner[][] = [];
-  if (useStrapiPartners) {
+  if (hasPartners) {
     for (let i = 0; i < partnersWithLogos.length; i += 3) {
       strapiRows.push(partnersWithLogos.slice(i, i + 3));
     }
@@ -58,7 +37,7 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
           {strapiData?.title || t("title")}
         </h1>
 
-        {useStrapiPartners ? (
+        {hasPartners ? (
           <>
             {/* Desktop - rows of 3 from Strapi */}
             <div className="hidden md:flex flex-col gap-16 items-center w-full max-w-[880px]">
@@ -107,45 +86,9 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
             </div>
           </>
         ) : (
-          <>
-            {/* Desktop fallback */}
-            <div className="hidden md:flex flex-col gap-16 items-center w-full max-w-[880px]">
-              {fallbackPartnerRows.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex items-center justify-between w-full">
-                  {row.map((partner, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-center"
-                      style={{ width: "200px", height: "100px" }}
-                    >
-                      <Image
-                        src={partner.src}
-                        alt={partner.name}
-                        width={partner.width}
-                        height={partner.height}
-                        style={{ width: partner.width, height: partner.height, objectFit: "contain" }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Mobile fallback */}
-            <div className="md:hidden flex flex-col gap-8 w-full items-center">
-              {fallbackMobilePartners.map((partner, index) => (
-                <div key={index} className="flex items-center justify-center w-full py-4">
-                  <Image
-                    src={partner.src}
-                    alt={partner.name}
-                    width={partner.width}
-                    height={partner.height}
-                    style={{ width: partner.width, height: partner.height, objectFit: "contain" }}
-                  />
-                </div>
-              ))}
-            </div>
-          </>
+          <p className="text-[#4A4C4F] text-center leading-6 text-[16px]">
+            {isRTL ? "لا يوجد شركاء حالياً" : "No partners yet"}
+          </p>
         )}
       </div>
     </section>

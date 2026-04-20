@@ -26,7 +26,7 @@ export default async function LearningPolicies({
     footerLinks,
   } = await getLearningPoliciesPageData(locale);
 
-  // Build sections from Strapi or fall back to translations
+  // Use Strapi sections only — no translation fallback
   const sections = policyPage?.sections?.length
     ? policyPage.sections.map((s) => ({
         sectionId: s.sectionId,
@@ -34,59 +34,13 @@ export default async function LearningPolicies({
         title: s.title,
         content: s.content,
       }))
-    : [
-        {
-          sectionId: t("sections.general.id"),
-          sidebarLabel: t("sections.general.label"),
-          title: t("sections.general.title"),
-          content: t("sections.general.content"),
-        },
-        {
-          sectionId: t("sections.attendance.id"),
-          sidebarLabel: t("sections.attendance.label"),
-          title: t("sections.attendance.title"),
-          content: `${t("sections.attendance.intro")}\n\n- ${t("sections.attendance.items.item1")}\n- ${t("sections.attendance.items.item2")}\n- ${t("sections.attendance.items.item3")}`,
-        },
-        {
-          sectionId: t("sections.assessment.id"),
-          sidebarLabel: t("sections.assessment.label"),
-          title: t("sections.assessment.title"),
-          content: `${t("sections.assessment.passingScore")}\n\n${t("sections.assessment.retakePolicy")}\n\n${t("sections.assessment.feedback")}`,
-        },
-        {
-          sectionId: t("sections.integrity.id"),
-          sidebarLabel: t("sections.integrity.label"),
-          title: t("sections.integrity.title"),
-          content: `${t("sections.integrity.intro")}\n\n- ${t("sections.integrity.items.item1")}\n- ${t("sections.integrity.items.item2")}`,
-        },
-        {
-          sectionId: t("sections.intellectual.id"),
-          sidebarLabel: t("sections.intellectual.label"),
-          title: t("sections.intellectual.title"),
-          content: `${t("sections.intellectual.intro")}\n\n- ${t("sections.intellectual.items.item1")}\n- ${t("sections.intellectual.items.item2")}`,
-        },
-        {
-          sectionId: t("sections.cancellation.id"),
-          sidebarLabel: t("sections.cancellation.label"),
-          title: t("sections.cancellation.title"),
-          content: `${t("sections.cancellation.courseCancel")}\n\n${t("sections.cancellation.learnerWithdrawal")}\n\n- ${t("sections.cancellation.items.item1")}\n- ${t("sections.cancellation.items.item2")}`,
-        },
-        {
-          sectionId: t("sections.technical.id"),
-          sidebarLabel: t("sections.technical.label"),
-          title: t("sections.technical.title"),
-          content: `${t("sections.technical.intro")}\n\n- ${t("sections.technical.items.item1")}\n- ${t("sections.technical.items.item2")}\n- ${t("sections.technical.items.item3")}`,
-        },
-        {
-          sectionId: t("sections.privacy.id"),
-          sidebarLabel: t("sections.privacy.label"),
-          title: t("sections.privacy.title"),
-          content: `${t("sections.privacy.intro")}\n\n- ${t("sections.privacy.items.item1")}\n- ${t("sections.privacy.items.item2")}`,
-        },
-      ];
+    : [];
 
   const pageTitle = policyPage?.title || t("title");
   const pageLastUpdated = policyPage?.lastUpdated || t("lastUpdated");
+  const emptyMessage = isRTL
+    ? "جاري تحديث هذه السياسة — يرجى المراجعة لاحقاً"
+    : "This policy is being updated — please check back soon";
 
   const blocks = policyPage?.blocks;
 
@@ -101,6 +55,7 @@ export default async function LearningPolicies({
         lastUpdated={pageLastUpdated}
         sections={sections}
         isRTL={isRTL}
+        emptyMessage={emptyMessage}
       />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />

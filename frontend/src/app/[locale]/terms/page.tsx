@@ -26,7 +26,7 @@ export default async function TermsAndConditions({
     footerLinks,
   } = await getTermsPageData(locale);
 
-  // Build sections from Strapi or fall back to translations
+  // Use Strapi sections only — no translation fallback
   const sections = policyPage?.sections?.length
     ? policyPage.sections.map((s) => ({
         sectionId: s.sectionId,
@@ -34,65 +34,13 @@ export default async function TermsAndConditions({
         title: s.title,
         content: s.content,
       }))
-    : [
-        {
-          sectionId: t("sections.introduction.id"),
-          sidebarLabel: t("sections.introduction.label"),
-          title: t("sections.introduction.title"),
-          content: t("sections.introduction.content"),
-        },
-        {
-          sectionId: t("sections.medicalDisclaimer.id"),
-          sidebarLabel: t("sections.medicalDisclaimer.label"),
-          title: t("sections.medicalDisclaimer.title"),
-          content: `${t("sections.medicalDisclaimer.intro")}\n\n- ${t("sections.medicalDisclaimer.items.item1")}\n- ${t("sections.medicalDisclaimer.items.item2")}`,
-        },
-        {
-          sectionId: t("sections.userAccounts.id"),
-          sidebarLabel: t("sections.userAccounts.label"),
-          title: t("sections.userAccounts.title"),
-          content: `${t("sections.userAccounts.accountResponsibility")}\n\n${t("sections.userAccounts.oneUserOneAccount")}\n\n${t("sections.userAccounts.unauthorizedAccess")}`,
-        },
-        {
-          sectionId: t("sections.payments.id"),
-          sidebarLabel: t("sections.payments.label"),
-          title: t("sections.payments.title"),
-          content: `${t("sections.payments.currency")}\n\n${t("sections.payments.vat")}\n\n${t("sections.payments.paymentMethods")}`,
-        },
-        {
-          sectionId: t("sections.intellectualProperty.id"),
-          sidebarLabel: t("sections.intellectualProperty.label"),
-          title: t("sections.intellectualProperty.title"),
-          content: `${t("sections.intellectualProperty.intro")}\n\n- ${t("sections.intellectualProperty.items.item1")}`,
-        },
-        {
-          sectionId: t("sections.limitation.id"),
-          sidebarLabel: t("sections.limitation.label"),
-          title: t("sections.limitation.title"),
-          content: `${t("sections.limitation.intro")}\n\n- ${t("sections.limitation.items.item1")}\n- ${t("sections.limitation.items.item2")}\n- ${t("sections.limitation.items.item3")}`,
-        },
-        {
-          sectionId: t("sections.termination.id"),
-          sidebarLabel: t("sections.termination.label"),
-          title: t("sections.termination.title"),
-          content: t("sections.termination.content"),
-        },
-        {
-          sectionId: t("sections.governingLaw.id"),
-          sidebarLabel: t("sections.governingLaw.label"),
-          title: t("sections.governingLaw.title"),
-          content: t("sections.governingLaw.content"),
-        },
-        {
-          sectionId: t("sections.contact.id"),
-          sidebarLabel: t("sections.contact.label"),
-          title: t("sections.contact.title"),
-          content: t("sections.contact.content"),
-        },
-      ];
+    : [];
 
   const pageTitle = policyPage?.title || t("title");
   const pageLastUpdated = policyPage?.lastUpdated || t("lastUpdated");
+  const emptyMessage = isRTL
+    ? "جاري تحديث هذه السياسة — يرجى المراجعة لاحقاً"
+    : "This policy is being updated — please check back soon";
 
   const blocks = policyPage?.blocks;
 
@@ -107,6 +55,7 @@ export default async function TermsAndConditions({
         lastUpdated={pageLastUpdated}
         sections={sections}
         isRTL={isRTL}
+        emptyMessage={emptyMessage}
       />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'after-section-1')} sideLoadedData={sideLoadedData} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'bottom')} sideLoadedData={sideLoadedData} />

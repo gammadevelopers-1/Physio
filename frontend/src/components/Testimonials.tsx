@@ -17,48 +17,16 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Fallback testimonials from translations
-  const fallbackTestimonials = [
-    {
-      quote: t("items.item1.quote"),
-      name: t("items.item1.name"),
-      role: t("items.item1.role"),
-    },
-    {
-      quote: t("items.item2.quote"),
-      name: t("items.item2.name"),
-      role: t("items.item2.role"),
-    },
-    {
-      quote: t("items.item3.quote"),
-      name: t("items.item3.name"),
-      role: t("items.item3.role"),
-    },
-    {
-      quote: t("items.item4.quote"),
-      name: t("items.item4.name"),
-      role: t("items.item4.role"),
-    },
-    {
-      quote: t("items.item5.quote"),
-      name: t("items.item5.name"),
-      role: t("items.item5.role"),
-    },
-    {
-      quote: t("items.item6.quote"),
-      name: t("items.item6.name"),
-      role: t("items.item6.role"),
-    },
-  ];
+  // Use Strapi testimonials only — hide the section when empty
+  if (strapiTestimonials.length === 0) {
+    return null;
+  }
 
-  // Use Strapi testimonials if available, otherwise fallback
-  const testimonials = strapiTestimonials.length > 0
-    ? strapiTestimonials.map((t) => ({
-        quote: t.quote,
-        name: t.authorName,
-        role: t.authorRole || "",
-      }))
-    : fallbackTestimonials;
+  const testimonials = strapiTestimonials.map((t) => ({
+    quote: t.quote,
+    name: t.authorName,
+    role: t.authorRole || "",
+  }));
 
   // Desktop: 3 per page, Mobile: 1 per page
   const desktopTotalSlides = Math.ceil(testimonials.length / 3);

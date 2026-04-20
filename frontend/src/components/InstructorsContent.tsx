@@ -5,19 +5,6 @@ import { useTranslations, useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import type { Instructor, InstructorsPage } from "@/lib/strapi/types";
 
-// Fallback image paths
-const fallbackExpertImages = [
-  "/images/instructor-1.png",
-  "/images/instructor-2.png",
-  "/images/instructor-3.png",
-];
-const fallbackMindsImages = [
-  "/images/instructor-4.png",
-  "/images/instructor-5.png",
-  "/images/instructor-6.png",
-  "/images/instructor-7.png",
-];
-
 const InstructorCard = ({
   name,
   title,
@@ -104,152 +91,85 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const useStrapiData = instructors.length > 0;
-
-  // Split instructors by section
-  const experts = instructors.filter((i) => i.section === "expert");
-  const minds = instructors.filter((i) => i.section === "minds");
-
-  // Fallback keys
-  const fallbackExpertKeys = ["instructor1", "instructor2", "instructor3"] as const;
-  const fallbackMindsKeys = ["instructor1", "instructor2", "instructor3", "instructor4"] as const;
-
-  const getAvatarUrl = (instructor: Instructor, fallbackIndex: number, fallbackImages: string[]) => {
-    if (instructor.avatar?.url) {
-      return getStrapiMediaUrl(instructor.avatar.url);
-    }
-    return fallbackImages[fallbackIndex] || "/images/instructor-1.png";
-  };
+  // Split instructors by section — only include those with uploaded avatars
+  const experts = instructors.filter((i) => i.section === "expert" && i.avatar?.url);
+  const minds = instructors.filter((i) => i.section === "minds" && i.avatar?.url);
 
   return (
     <>
-      {/* Meet the Experts Section */}
-      <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
-          <h1
-            className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-          >
-            {strapiData?.meetExpertsTitle || t("meetExperts.title")}
-          </h1>
+      {/* Meet the Experts Section - only rendered when Strapi has experts */}
+      {experts.length > 0 && (
+        <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+          <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
+            <h1
+              className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
+              {strapiData?.meetExpertsTitle || t("meetExperts.title")}
+            </h1>
 
-          {useStrapiData && experts.length > 0 ? (
-            <>
-              {/* Desktop */}
-              <div className="hidden md:flex gap-8 items-start justify-center w-full">
-                {experts.map((instructor, index) => (
-                  <InstructorCard
-                    key={instructor.id}
-                    name={instructor.name}
-                    title={instructor.title || ""}
-                    image={getAvatarUrl(instructor, index, fallbackExpertImages)}
-                  />
-                ))}
-              </div>
-              {/* Mobile */}
-              <div className="flex md:hidden flex-col gap-8 items-center w-full">
-                {experts.map((instructor, index) => (
-                  <MobileInstructorCard
-                    key={instructor.id}
-                    name={instructor.name}
-                    title={instructor.title || ""}
-                    image={getAvatarUrl(instructor, index, fallbackExpertImages)}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Desktop fallback */}
-              <div className="hidden md:flex gap-8 items-start justify-center w-full">
-                {fallbackExpertKeys.map((key, index) => (
-                  <InstructorCard
-                    key={key}
-                    name={t(`meetExperts.instructors.${key}.name`)}
-                    title={t(`meetExperts.instructors.${key}.title`)}
-                    image={fallbackExpertImages[index]}
-                  />
-                ))}
-              </div>
-              {/* Mobile fallback */}
-              <div className="flex md:hidden flex-col gap-8 items-center w-full">
-                {fallbackExpertKeys.map((key, index) => (
-                  <MobileInstructorCard
-                    key={key}
-                    name={t(`meetExperts.instructors.${key}.name`)}
-                    title={t(`meetExperts.instructors.${key}.title`)}
-                    image={fallbackExpertImages[index]}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+            {/* Desktop */}
+            <div className="hidden md:flex gap-8 items-start justify-center w-full">
+              {experts.map((instructor) => (
+                <InstructorCard
+                  key={instructor.id}
+                  name={instructor.name}
+                  title={instructor.title || ""}
+                  image={getStrapiMediaUrl(instructor.avatar!.url)}
+                />
+              ))}
+            </div>
+            {/* Mobile */}
+            <div className="flex md:hidden flex-col gap-8 items-center w-full">
+              {experts.map((instructor) => (
+                <MobileInstructorCard
+                  key={instructor.id}
+                  name={instructor.name}
+                  title={instructor.title || ""}
+                  image={getStrapiMediaUrl(instructor.avatar!.url)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
-      {/* Minds Behind Physioguidance Section */}
-      <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
-          <h1
-            className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
-          >
-            {strapiData?.mindsBehindTitle || t("mindsBehind.title")}
-          </h1>
+      {/* Minds Behind Physioguidance Section - only rendered when Strapi has minds */}
+      {minds.length > 0 && (
+        <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
+          <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
+            <h1
+              className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
+            >
+              {strapiData?.mindsBehindTitle || t("mindsBehind.title")}
+            </h1>
 
-          {useStrapiData && minds.length > 0 ? (
-            <>
-              {/* Desktop */}
-              <div className="hidden md:flex gap-8 items-start justify-center w-full">
-                {minds.map((instructor, index) => (
-                  <InstructorCard
-                    key={instructor.id}
-                    name={instructor.name}
-                    title={instructor.title || ""}
-                    image={getAvatarUrl(instructor, index, fallbackMindsImages)}
-                  />
-                ))}
-              </div>
-              {/* Mobile */}
-              <div className="flex md:hidden flex-col gap-8 items-center w-full">
-                {minds.map((instructor, index) => (
-                  <MobileInstructorCard
-                    key={instructor.id}
-                    name={instructor.name}
-                    title={instructor.title || ""}
-                    image={getAvatarUrl(instructor, index, fallbackMindsImages)}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Desktop fallback */}
-              <div className="hidden md:flex gap-8 items-start justify-center w-full">
-                {fallbackMindsKeys.map((key, index) => (
-                  <InstructorCard
-                    key={key}
-                    name={t(`mindsBehind.instructors.${key}.name`)}
-                    title={t(`mindsBehind.instructors.${key}.title`)}
-                    image={fallbackMindsImages[index]}
-                  />
-                ))}
-              </div>
-              {/* Mobile fallback */}
-              <div className="flex md:hidden flex-col gap-8 items-center w-full">
-                {fallbackMindsKeys.map((key, index) => (
-                  <MobileInstructorCard
-                    key={key}
-                    name={t(`mindsBehind.instructors.${key}.name`)}
-                    title={t(`mindsBehind.instructors.${key}.title`)}
-                    image={fallbackMindsImages[index]}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+            {/* Desktop */}
+            <div className="hidden md:flex gap-8 items-start justify-center w-full">
+              {minds.map((instructor) => (
+                <InstructorCard
+                  key={instructor.id}
+                  name={instructor.name}
+                  title={instructor.title || ""}
+                  image={getStrapiMediaUrl(instructor.avatar!.url)}
+                />
+              ))}
+            </div>
+            {/* Mobile */}
+            <div className="flex md:hidden flex-col gap-8 items-center w-full">
+              {minds.map((instructor) => (
+                <MobileInstructorCard
+                  key={instructor.id}
+                  name={instructor.name}
+                  title={instructor.title || ""}
+                  image={getStrapiMediaUrl(instructor.avatar!.url)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 }

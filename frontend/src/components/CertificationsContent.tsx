@@ -19,8 +19,8 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
     return (typeof val === 'string' && val) ? val : t(translationKey);
   };
 
-  const nelcLicenseNum = strapiData?.nelcLicenseNumber || "123456789";
-  const scfhsAccredNum = strapiData?.scfhsAccreditationNumber || "123456789";
+  const nelcLicenseNum = strapiData?.nelcLicenseNumber;
+  const scfhsAccredNum = strapiData?.scfhsAccreditationNumber;
 
   return (
     <>
@@ -89,9 +89,13 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                 style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
               >
                 {s("nelcDescription", "accreditation.nelc.description")}
-                <br />
-                <br />
-                {s("nelcLicenseLabel", "accreditation.nelc.licenseLabel")} [{nelcLicenseNum}]
+                {nelcLicenseNum && (
+                  <>
+                    <br />
+                    <br />
+                    {s("nelcLicenseLabel", "accreditation.nelc.licenseLabel")} [{nelcLicenseNum}]
+                  </>
+                )}
               </p>
             </div>
 
@@ -117,9 +121,13 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                 style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
               >
                 {s("scfhsDescription", "accreditation.scfhs.description")}
-                <br />
-                <br />
-                {s("scfhsAccreditationLabel", "accreditation.scfhs.accreditationLabel")} [{scfhsAccredNum}]
+                {scfhsAccredNum && (
+                  <>
+                    <br />
+                    <br />
+                    {s("scfhsAccreditationLabel", "accreditation.scfhs.accreditationLabel")} [{scfhsAccredNum}]
+                  </>
+                )}
               </p>
             </div>
           </div>

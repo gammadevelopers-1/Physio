@@ -6,8 +6,6 @@ import { ChevronDown } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import type { FAQPage } from "@/lib/strapi/types";
 
-const fallbackKeys = ["item1", "item2", "item3", "item4"] as const;
-
 interface FAQContentProps {
   strapiData?: FAQPage | null;
 }
@@ -17,11 +15,11 @@ export default function FAQContent({ strapiData }: FAQContentProps) {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  const useStrapiItems = strapiData?.items && strapiData.items.length > 0;
-  const itemCount = useStrapiItems ? strapiData!.items.length : fallbackKeys.length;
+  const items = strapiData?.items ?? [];
+  const hasItems = items.length > 0;
 
   const [openItems, setOpenItems] = useState<number[]>(
-    Array.from({ length: itemCount }, (_, i) => i)
+    Array.from({ length: items.length }, (_, i) => i)
   );
 
   const toggleItem = (index: number) => {
@@ -62,89 +60,54 @@ export default function FAQContent({ strapiData }: FAQContentProps) {
 
           {/* FAQ List Section */}
           <div className="flex-1 min-w-0">
-            <div className="flex flex-col gap-6">
-              {useStrapiItems
-                ? strapiData!.items.map((item, index) => (
-                    <div key={item.id}>
-                      <div className="flex flex-col gap-4">
-                        <button
-                          onClick={() => toggleItem(index)}
-                          className="flex items-center justify-between gap-4 w-full text-start cursor-pointer group"
+            {hasItems ? (
+              <div className="flex flex-col gap-6">
+                {items.map((item, index) => (
+                  <div key={item.id}>
+                    <div className="flex flex-col gap-4">
+                      <button
+                        onClick={() => toggleItem(index)}
+                        className="flex items-center justify-between gap-4 w-full text-start cursor-pointer group"
+                      >
+                        <span
+                          className="flex-1 text-[var(--on-surface-default)] leading-7"
+                          style={{
+                            fontSize: "var(--typeface-font-styles-heading-subheading)",
+                          }}
                         >
-                          <span
-                            className="flex-1 text-[var(--on-surface-default)] leading-7"
-                            style={{
-                              fontSize: "var(--typeface-font-styles-heading-subheading)",
-                            }}
-                          >
-                            {item.question}
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-[var(--on-surface-variant)] shrink-0 transition-transform duration-200 ${
-                              openItems.includes(index) ? "rotate-180" : ""
-                            }`}
-                            strokeWidth={2}
-                          />
-                        </button>
+                          {item.question}
+                        </span>
+                        <ChevronDown
+                          className={`w-4 h-4 text-[var(--on-surface-variant)] shrink-0 transition-transform duration-200 ${
+                            openItems.includes(index) ? "rotate-180" : ""
+                          }`}
+                          strokeWidth={2}
+                        />
+                      </button>
 
-                        {openItems.includes(index) && (
-                          <p
-                            className="text-[var(--on-surface-variant)] leading-6"
-                            style={{
-                              fontSize: "var(--typeface-font-styles-paragraph-text)",
-                            }}
-                          >
-                            {item.answer}
-                          </p>
-                        )}
-                      </div>
-
-                      {index < strapiData!.items.length - 1 && (
-                        <div className="h-px bg-[#C8D5E1] mt-6" />
+                      {openItems.includes(index) && (
+                        <p
+                          className="text-[var(--on-surface-variant)] leading-6"
+                          style={{
+                            fontSize: "var(--typeface-font-styles-paragraph-text)",
+                          }}
+                        >
+                          {item.answer}
+                        </p>
                       )}
                     </div>
-                  ))
-                : fallbackKeys.map((key, index) => (
-                    <div key={key}>
-                      <div className="flex flex-col gap-4">
-                        <button
-                          onClick={() => toggleItem(index)}
-                          className="flex items-center justify-between gap-4 w-full text-start cursor-pointer group"
-                        >
-                          <span
-                            className="flex-1 text-[var(--on-surface-default)] leading-7"
-                            style={{
-                              fontSize: "var(--typeface-font-styles-heading-subheading)",
-                            }}
-                          >
-                            {t(`items.${key}.question`)}
-                          </span>
-                          <ChevronDown
-                            className={`w-4 h-4 text-[var(--on-surface-variant)] shrink-0 transition-transform duration-200 ${
-                              openItems.includes(index) ? "rotate-180" : ""
-                            }`}
-                            strokeWidth={2}
-                          />
-                        </button>
 
-                        {openItems.includes(index) && (
-                          <p
-                            className="text-[var(--on-surface-variant)] leading-6"
-                            style={{
-                              fontSize: "var(--typeface-font-styles-paragraph-text)",
-                            }}
-                          >
-                            {t(`items.${key}.answer`)}
-                          </p>
-                        )}
-                      </div>
-
-                      {index < fallbackKeys.length - 1 && (
-                        <div className="h-px bg-[#C8D5E1] mt-6" />
-                      )}
-                    </div>
-                  ))}
-            </div>
+                    {index < items.length - 1 && (
+                      <div className="h-px bg-[#C8D5E1] mt-6" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[var(--on-surface-variant)] leading-6 text-center">
+                {isRTL ? "لا توجد أسئلة بعد" : "No questions yet"}
+              </p>
+            )}
           </div>
         </div>
       </div>

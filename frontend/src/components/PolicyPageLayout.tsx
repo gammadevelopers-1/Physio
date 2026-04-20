@@ -15,9 +15,10 @@ interface PolicyPageLayoutProps {
   lastUpdated: string;
   sections: PolicySectionData[];
   isRTL: boolean;
+  emptyMessage: string;
 }
 
-const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL }: PolicyPageLayoutProps) => {
+const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL, emptyMessage }: PolicyPageLayoutProps) => {
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
 
   useEffect(() => {
@@ -70,7 +71,18 @@ const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL }: PolicyPageLay
         </p>
       </div>
 
-      {/* Content Container */}
+      {/* Empty state when Strapi returns no sections */}
+      {sections.length === 0 ? (
+        <div className="bg-white rounded-2xl p-6 md:p-8 shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+          <p
+            className="leading-7 text-[var(--on-surface-default)] text-center"
+            style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+          >
+            {emptyMessage}
+          </p>
+        </div>
+      ) : (
+      /* Content Container */
       <div className="flex flex-col lg:flex-row gap-8 w-full">
         {/* Sidebar Navigation - Hidden on mobile */}
         <div className="hidden lg:block lg:w-[320px] xl:w-[395px] shrink-0">
@@ -138,6 +150,7 @@ const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL }: PolicyPageLay
           </div>
         </div>
       </div>
+      )}
     </section>
   );
 };

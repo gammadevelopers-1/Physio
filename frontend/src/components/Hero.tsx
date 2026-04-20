@@ -14,37 +14,37 @@ const Hero = ({ data }: HeroProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Get video URL from Strapi or fallback to local
-  const videoUrl = data?.heroVideo?.url
-    ? getStrapiMediaUrl(data.heroVideo.url)
-    : "/videos/1767191494476407.mp4";
+  // Get video URL from Strapi only (no local fallback)
+  const videoUrl = data?.heroVideo?.url ? getStrapiMediaUrl(data.heroVideo.url) : null;
 
-  // Get hero partner logos from Strapi or use defaults (filter out entries without URLs)
+  // Get hero partner logos from Strapi (filter out entries without URLs)
   const heroPartnerLogos = (data?.heroPartnerLogos || []).filter((logo) => logo.url);
 
   return (
     <section className="relative w-full">
       {/* Video Section - Responsive height */}
-      <div className="relative h-[370px] lg:h-[600px] w-full overflow-hidden">
-        {/* Video Element */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src={videoUrl} type="video/mp4" />
-        </video>
+      <div className="relative h-[370px] lg:h-[600px] w-full overflow-hidden bg-[var(--surface-intense)]">
+        {/* Video Element - only render when Strapi provides a video */}
+        {videoUrl && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={videoUrl} type="video/mp4" />
+          </video>
+        )}
 
-        {/* Partner logos on video - Responsive positioning and sizing */}
-        <div
-          className={`absolute bottom-5 flex items-center gap-3 lg:gap-6 ${
-            isRTL ? "left-5 lg:left-16" : "right-5 lg:right-16"
-          }`}
-        >
-          {heroPartnerLogos.length > 0 ? (
-            heroPartnerLogos.map((logo, index) => (
+        {/* Partner logos on video - only render when Strapi provides logos */}
+        {heroPartnerLogos.length > 0 && (
+          <div
+            className={`absolute bottom-5 flex items-center gap-3 lg:gap-6 ${
+              isRTL ? "left-5 lg:left-16" : "right-5 lg:right-16"
+            }`}
+          >
+            {heroPartnerLogos.map((logo, index) => (
               <div key={logo.id || index} className="flex items-center gap-3 lg:gap-6">
                 <div className="relative h-8 w-8 lg:h-16 lg:w-24">
                   <Image
@@ -61,41 +61,9 @@ const Hero = ({ data }: HeroProps) => {
                   <div className="h-5 lg:h-12 w-px bg-white/40" />
                 )}
               </div>
-            ))
-          ) : (
-            <>
-              <div className="relative h-8 w-8 lg:h-16 lg:w-24">
-                <Image
-                  src="/images/partner-1.png"
-                  alt="BMC"
-                  fill
-                  className="object-contain"
-                  style={{ mixBlendMode: "multiply" }}
-                />
-              </div>
-              <div className="h-5 lg:h-12 w-px bg-white/40" />
-              <div className="relative h-8 w-8 lg:h-16 lg:w-28">
-                <Image
-                  src="/images/partner-2.png"
-                  alt="Prince Sultan"
-                  fill
-                  className="object-contain"
-                  style={{ mixBlendMode: "multiply" }}
-                />
-              </div>
-              <div className="h-5 lg:h-12 w-px bg-white/40" />
-              <div className="relative h-8 w-8 lg:h-16 lg:w-20">
-                <Image
-                  src="/images/partner-3.png"
-                  alt="Partner 3"
-                  fill
-                  className="object-contain"
-                  style={{ mixBlendMode: "multiply" }}
-                />
-              </div>
-            </>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Content Section - Responsive layout */}

@@ -15,28 +15,20 @@ const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }:
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Fallback instructors
-  const fallbackInstructors = [
-    { src: "/images/instructor-1.png", row: 1 },
-    { src: "/images/instructor-2.png", row: 1 },
-    { src: "/images/instructor-3.png", row: 1 },
-    { src: "/images/instructor-4.png", row: 2 },
-    { src: "/images/instructor-5.png", row: 2 },
-    { src: "/images/instructor-6.png", row: 2 },
-    { src: "/images/instructor-7.png", row: 2 },
-  ];
-
-  // Map Strapi instructors or use fallback — only use Strapi data if avatars are uploaded
+  // Only use Strapi data if avatars are uploaded
   const instructorsWithAvatars = strapiInstructors.filter((i) => i.avatar?.url);
-  const hasInstructors = instructorsWithAvatars.length > 0;
-  const instructorsList = hasInstructors
-    ? instructorsWithAvatars.map((instructor, index) => ({
-        id: instructor.id,
-        src: getStrapiMediaUrl(instructor.avatar?.url),
-        name: instructor.name,
-        row: index < 3 ? 1 : 2,
-      }))
-    : fallbackInstructors.map((inst, index) => ({ ...inst, id: index, name: `Instructor ${index + 1}` }));
+
+  // Hide the entire section when there are no Strapi instructors
+  if (instructorsWithAvatars.length === 0) {
+    return null;
+  }
+
+  const instructorsList = instructorsWithAvatars.map((instructor, index) => ({
+    id: instructor.id,
+    src: getStrapiMediaUrl(instructor.avatar?.url),
+    name: instructor.name,
+    row: index < 3 ? 1 : 2,
+  }));
 
   const row1 = instructorsList.filter((i) => i.row === 1);
   const row2 = instructorsList.filter((i) => i.row === 2);

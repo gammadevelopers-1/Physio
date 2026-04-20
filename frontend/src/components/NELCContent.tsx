@@ -80,16 +80,18 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
               </div>
             </div>
 
-            {/* NELC Logo - Always on the right visually */}
-            <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
-              <Image
-                src={strapiData?.nelcLogo?.url ? getStrapiMediaUrl(strapiData.nelcLogo.url) : "/NELC_agreement/image 492 (1).svg"}
-                alt="National eLearning Center"
-                width={437}
-                height={172}
-                className="object-contain w-[277px] md:w-[437px] h-auto"
-              />
-            </div>
+            {/* NELC Logo - only rendered when Strapi provides it */}
+            {strapiData?.nelcLogo?.url && (
+              <div className="flex-shrink-0 flex justify-center w-full md:w-auto">
+                <Image
+                  src={getStrapiMediaUrl(strapiData.nelcLogo.url)}
+                  alt="National eLearning Center"
+                  width={437}
+                  height={172}
+                  className="object-contain w-[277px] md:w-[437px] h-auto"
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -114,15 +116,17 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
           <div className="flex flex-col md:flex-row gap-8 md:gap-8 justify-center items-center">
             {/* Governance Card */}
             <div className="flex flex-col items-center relative w-full md:w-auto pb-6">
-              <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-                <Image
-                  src={strapiData?.governanceImage?.url ? getStrapiMediaUrl(strapiData.governanceImage.url) : "/NELC_agreement/image 18.svg"}
-                  alt={s("governanceTitle", "compliance.cards.governance.title")}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] -mt-24 relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+              {strapiData?.governanceImage?.url && (
+                <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+                  <Image
+                    src={getStrapiMediaUrl(strapiData.governanceImage.url)}
+                    alt={s("governanceTitle", "compliance.cards.governance.title")}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div className={`bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] ${strapiData?.governanceImage?.url ? "-mt-24" : ""} relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]`}>
                 <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
                   {s("governanceTitle", "compliance.cards.governance.title")}
                 </h3>
@@ -134,15 +138,17 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
 
             {/* Technology Card */}
             <div className="flex flex-col items-center relative w-full md:w-auto pb-6">
-              <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-                <Image
-                  src={strapiData?.technologyImage?.url ? getStrapiMediaUrl(strapiData.technologyImage.url) : "/NELC_agreement/image 19.svg"}
-                  alt={s("technologyTitle", "compliance.cards.technology.title")}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] -mt-24 relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+              {strapiData?.technologyImage?.url && (
+                <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+                  <Image
+                    src={getStrapiMediaUrl(strapiData.technologyImage.url)}
+                    alt={s("technologyTitle", "compliance.cards.technology.title")}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div className={`bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] ${strapiData?.technologyImage?.url ? "-mt-24" : ""} relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]`}>
                 <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
                   {s("technologyTitle", "compliance.cards.technology.title")}
                 </h3>
@@ -154,15 +160,17 @@ const NELCContent = ({ strapiData }: { strapiData?: NELCPage | null }) => {
 
             {/* Instruction Card */}
             <div className="flex flex-col items-center relative w-full md:w-auto pb-6">
-              <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-                <Image
-                  src={strapiData?.instructionImage?.url ? getStrapiMediaUrl(strapiData.instructionImage.url) : "/NELC_agreement/image 20.svg"}
-                  alt={s("instructionTitle", "compliance.cards.instruction.title")}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div className="bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] -mt-24 relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+              {strapiData?.instructionImage?.url && (
+                <div className="h-[286px] w-full md:w-[368px] relative z-0 rounded-[16px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+                  <Image
+                    src={getStrapiMediaUrl(strapiData.instructionImage.url)}
+                    alt={s("instructionTitle", "compliance.cards.instruction.title")}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
+              <div className={`bg-[#EEF3F7] rounded-[16px] p-4 min-h-[140px] md:h-[140px] w-[285px] md:w-[317px] ${strapiData?.instructionImage?.url ? "-mt-24" : ""} relative z-10 flex flex-col gap-[10px] items-center text-center shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]`}>
                 <h3 className="font-semibold text-[#06080B] text-[18px] md:text-[20px]">
                   {s("instructionTitle", "compliance.cards.instruction.title")}
                 </h3>

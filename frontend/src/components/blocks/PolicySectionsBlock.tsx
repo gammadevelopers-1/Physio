@@ -13,6 +13,10 @@ export function PolicySectionsBlock({ data }: PolicySectionsBlockProps) {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
+  const emptyMessage = isRTL
+    ? "جاري تحديث هذه السياسة — يرجى المراجعة لاحقاً"
+    : "This policy is being updated — please check back soon";
+
   return (
     <PolicyPageLayout
       title={data.title}
@@ -24,6 +28,7 @@ export function PolicySectionsBlock({ data }: PolicySectionsBlockProps) {
         content: s.content,
       }))}
       isRTL={isRTL}
+      emptyMessage={emptyMessage}
     />
   );
 }

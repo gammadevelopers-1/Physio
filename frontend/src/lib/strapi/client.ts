@@ -62,10 +62,10 @@ export async function fetchStrapi<T>(
         ...headers,
         ...fetchOptions.headers,
       },
-      cache: isDev ? 'no-store' : undefined,
-      next: isDev ? undefined : {
-        revalidate: 60, // Revalidate every 60 seconds (ISR) in production
-      },
+      // Always fetch fresh content. Strapi is self-hosted in the same region,
+      // so fetch latency is ~20-50ms. ISR introduced staleness windows that
+      // confused editors ("I published but nothing changed until I refreshed").
+      cache: 'no-store',
     });
 
     if (!response.ok) {

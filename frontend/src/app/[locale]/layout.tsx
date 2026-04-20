@@ -4,6 +4,8 @@ import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { ClientProviders } from "@/components/providers/ClientProviders";
 import { HtmlAttributesSetter } from "@/components/HtmlAttributesSetter";
+import NavigationProgress from "@/components/NavigationProgress";
+import LocaleSwitchOverlay from "@/components/LocaleSwitchOverlay";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -37,6 +39,8 @@ export default async function LocaleLayout({
         >
           {isRTL ? "انتقل إلى المحتوى الرئيسي" : "Skip to main content"}
         </a>
+        <NavigationProgress />
+        <LocaleSwitchOverlay />
         <div className={isRTL ? "font-arabic" : ""}>
           {children}
         </div>

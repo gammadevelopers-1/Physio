@@ -87,6 +87,20 @@ export class CoursesController {
   }
 
   /**
+   * GET /courses/featured-home — Public featured-courses mix for homepage.
+   * Fair round-robin across managers, random-picked each request.
+   * NOTE: declared BEFORE the generic @Get(':id') so 'featured-home' is not
+   * interpreted as an :id param.
+   */
+  @Public()
+  @Get('featured-home')
+  async findFeaturedForHome(@Query('limit') limit?: string) {
+    return this.coursesService.findFeaturedForHome(
+      limit ? Math.min(parseInt(limit, 10) || 4, 12) : 4,
+    );
+  }
+
+  /**
    * GET /courses — List courses (instructor: own only, admin: all)
    */
   @Roles('INSTRUCTOR' as UserRole, 'MANAGER' as UserRole, 'ADMIN' as UserRole)
@@ -338,18 +352,6 @@ export class CoursesController {
   @Get(':id/ratings/stats')
   async getCourseRatingStats(@Param('id') courseId: string) {
     return this.coursesService.getCourseRatingStats(courseId);
-  }
-
-  /**
-   * GET /courses/featured-home — Public featured-courses mix for homepage.
-   * Fair round-robin across managers, random-picked each request.
-   */
-  @Public()
-  @Get('featured-home')
-  async findFeaturedForHome(@Query('limit') limit?: string) {
-    return this.coursesService.findFeaturedForHome(
-      limit ? Math.min(parseInt(limit, 10) || 4, 12) : 4,
-    );
   }
 
   /**

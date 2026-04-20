@@ -92,6 +92,8 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
   const switchLocale = () => {
     const newLocale = locale === "en" ? "ar" : "en";
     const pathWithoutLocale = pathname.replace(`/${locale}`, "");
+    (window as unknown as { __showLocaleSwitchOverlay?: () => void }).__showLocaleSwitchOverlay?.();
+    (window as unknown as { __navProgressStart?: () => void }).__navProgressStart?.();
     router.push(`/${newLocale}${pathWithoutLocale}`);
     import("@/lib/api").then(({ profileApi }) => profileApi.update({ language: newLocale }).catch(() => {}));
   };

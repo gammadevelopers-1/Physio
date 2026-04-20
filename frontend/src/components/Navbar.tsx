@@ -40,6 +40,9 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
   const switchLocale = async () => {
     const newLocale = locale === "en" ? "ar" : "en";
     const pathWithoutLocale = pathname.replace(`/${locale}`, "");
+    // Show overlay + progress bar to mask the RTL/LTR flip flash
+    (window as unknown as { __showLocaleSwitchOverlay?: () => void }).__showLocaleSwitchOverlay?.();
+    (window as unknown as { __navProgressStart?: () => void }).__navProgressStart?.();
     if (isAuthenticated) {
       await profileApi.update({ language: newLocale }).catch(() => {});
     }

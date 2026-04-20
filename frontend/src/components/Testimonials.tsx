@@ -82,7 +82,13 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
 
           {/* Testimonials Card */}
           <div className="bg-[#EEF3F7] rounded-3xl p-8 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-            <div className="flex items-start justify-between w-full">
+            <div
+              className={`flex items-start w-full ${
+                visibleTestimonials.length >= 3
+                  ? "justify-between"
+                  : "justify-center gap-16"
+              }`}
+            >
               {visibleTestimonials.map((testimonial, index) => (
                 <div
                   key={index}

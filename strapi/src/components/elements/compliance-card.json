@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_elements_compliance_cards",
+  "info": {
+    "displayName": "Compliance Card",
+    "description": "A card describing a compliance pillar with image, title, and description"
+  },
+  "attributes": {
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"]
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

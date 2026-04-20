@@ -32,6 +32,144 @@
       "type": "text",
       "pluginOptions": { "i18n": { "localized": true } }
     },
+    "ctaTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "ctaDescription": {
+      "type": "text",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "ctaButtonLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "ctaButtonHref": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "showSearchBar": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "showDeliveryFilter": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "showPricingFilter": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "showAvailabilityFilter": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "showLanguageFilter": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "showSortBy": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "searchPlaceholder": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "sidebarFilterTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterAllLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterDeliveryLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterZoomLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterOnsiteLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterBlendedLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterSelfPacedLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterPricingLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterFreeLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterPaidLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterAvailabilityLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterAvailOpenLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterAvailStartingSoonLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterAvailFullLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterLanguageLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterLangEnLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterLangArLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterLangBothLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterSortByLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterSortNewestLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterSortRatingLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "filterSortFeaturedLabel": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
     "metaTitle": {
       "type": "string",
       "pluginOptions": { "i18n": { "localized": true } }

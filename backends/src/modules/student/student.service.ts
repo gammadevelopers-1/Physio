@@ -1211,12 +1211,16 @@ export class StudentService {
     courseId: string,
     user: AuthenticatedUser,
   ) {
-    // 1. Verify course exists and is active
+    // 1. Verify course exists, is active, and is publicly visible
     const [course] = await db
       .select()
       .from(courses)
       .where(
-        and(eq(courses.id, courseId), eq(courses.status, COURSE_STATUS.ACTIVE)),
+        and(
+          eq(courses.id, courseId),
+          eq(courses.status, COURSE_STATUS.ACTIVE),
+          eq(courses.visibleOnPublicSite, true),
+        ),
       )
       .limit(1);
 
@@ -1232,12 +1236,17 @@ export class StudentService {
       });
     }
 
-    // 2. NELC limit enforcement
-    const classification = classifyCourse(course.startDate, course.endDate);
-    const nelcMax = getNelcMaxEnrollment(classification);
-    const effectiveMax = course.maxEnrollment
-      ? Math.min(course.maxEnrollment, nelcMax)
-      : nelcMax;
+    // 2. Capacity enforcement (self-paced is unlimited unless a cap is set)
+    const isSelfPaced = course.deliveryType === 'self-paced';
+    let effectiveMax: number | null;
+    let classification: 'long' | 'short' = 'short';
+
+    if (isSelfPaced) {
+      effectiveMax = course.maxEnrollment ?? null; // unlimited when null
+    } else {
+      classification = classifyCourse(course.startDate, course.endDate);
+      effectiveMax = course.maxEnrollment ?? getNelcMaxEnrollment(classification);
+    }
 
     const [countResult] = await db
       .select({ count: count() })
@@ -1250,7 +1259,7 @@ export class StudentService {
       );
     const currentCount = Number(countResult?.count || 0);
 
-    if (currentCount >= effectiveMax) {
+    if (effectiveMax !== null && currentCount >= effectiveMax) {
       await this.auditService.log({
         eventType: NELC_EVENT_TYPE.ENROLLMENT_LIMIT_ENFORCED,
         entityType: 'course',

@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_elements_info_badges",
+  "info": {
+    "displayName": "Info Badge",
+    "description": "A compact label/value pair (e.g., License Number, Status, Valid Through)"
+  },
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "value": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

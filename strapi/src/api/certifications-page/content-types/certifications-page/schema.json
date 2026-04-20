@@ -234,48 +234,10 @@
         }
       }
     },
-    "step1Title": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "step1Description": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "step2Title": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "step2Description": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "step3Title": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "step3Description": {
-      "type": "text",
+    "steps": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.certifications-step",
       "pluginOptions": {
         "i18n": {
           "localized": true

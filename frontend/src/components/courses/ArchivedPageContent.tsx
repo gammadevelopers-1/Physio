@@ -12,8 +12,7 @@ import { PublicCourse } from "@/types/instructor-dashboard";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2 } from "lucide-react";
 
-const DELIVERY_TYPES = ["zoom", "onsite", "blended"];
-const CERTIFICATIONS = ["BHA", "NHA", "SCFHS"];
+const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced"];
 
 const ArchivedPageContent = () => {
   const t = useTranslations("archivedPage");
@@ -25,11 +24,7 @@ const ArchivedPageContent = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedCertifications, setSelectedCertifications] = useState<
-    string[]
-  >([]);
   const [selectedPricing, setSelectedPricing] = useState("");
-  const [cmeAccredited, setCmeAccredited] = useState("");
   const [availability, setAvailability] = useState("");
   const [language, setLanguage] = useState("");
   const [sortBy, setSortBy] = useState("newest");
@@ -45,7 +40,6 @@ const ArchivedPageContent = () => {
       const params = new URLSearchParams();
       if (searchQuery) params.set("search", searchQuery);
       if (selectedPricing) params.set("pricing", selectedPricing);
-      if (cmeAccredited) params.set("cmeAccredited", cmeAccredited);
       if (availability) params.set("availability", availability);
       if (language) params.set("language", language);
       if (sortBy) params.set("sort", sortBy);
@@ -60,7 +54,7 @@ const ArchivedPageContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedPricing, cmeAccredited, availability, language, sortBy]);
+  }, [searchQuery, selectedPricing, availability, language, sortBy]);
 
   useEffect(() => {
     fetchCourses();
@@ -104,11 +98,6 @@ const ArchivedPageContent = () => {
     resetPages();
   };
 
-  const handleCertificationChange = (certs: string[]) => {
-    setSelectedCertifications(certs);
-    resetPages();
-  };
-
   const handlePricingChange = (pricing: string) => {
     setSelectedPricing(pricing);
     resetPages();
@@ -129,12 +118,8 @@ const ArchivedPageContent = () => {
     onSearchChange: handleSearchChange,
     selectedTypes,
     onTypeChange: handleTypeChange,
-    selectedCertifications,
-    onCertificationChange: handleCertificationChange,
     selectedPricing,
     onPricingChange: handlePricingChange,
-    cmeAccredited,
-    onCmeAccreditedChange: (v: string) => { setCmeAccredited(v); resetPages(); },
     availability,
     onAvailabilityChange: (v: string) => { setAvailability(v); resetPages(); },
     language,
@@ -142,7 +127,6 @@ const ArchivedPageContent = () => {
     sortBy,
     onSortByChange: (v: string) => { setSortBy(v); resetPages(); },
     courseTypes: DELIVERY_TYPES,
-    certifications: CERTIFICATIONS,
     isRTL,
   };
 

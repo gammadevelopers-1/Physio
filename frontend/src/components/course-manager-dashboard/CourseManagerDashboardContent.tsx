@@ -13,6 +13,7 @@ import ContentReviewQueue from "./ContentReviewQueue";
 import InstructorsManagementWidget from "./InstructorsManagementWidget";
 import CourseStatsWidget from "./CourseStatsWidget";
 import UpcomingSessionsWidget from "./UpcomingSessionsWidget";
+import ReviewsOverviewWidget from "./ReviewsOverviewWidget";
 import { useManagerProfile } from "@/hooks/useManagerProfile";
 import { useCourseManagerDashboard } from "@/hooks/useCourseManagerDashboard";
 import { courseManagerApi, ApiError } from "@/lib/api";
@@ -37,9 +38,14 @@ const CourseManagerDashboardContent = () => {
   const { items: reviewItems, stats: reviewStats, approve: approveReview, reject: rejectReview } =
     useContentReview();
   const [ratingsMap, setRatingsMap] = useState<Record<string, { avgRating: number; totalRatings: number }>>({});
+  const [managerStats, setManagerStats] = useState<{
+    overall: { avgRating: number; totalRatings: number; totalCourses: number; coursesWithReviews: number };
+    topCourses: Array<{ courseId: string; title: string; titleAr: string | null; avgRating: number; totalRatings: number }>;
+  } | null>(null);
 
   useEffect(() => {
     courseManagerApi.getAllCourseRatings().then(setRatingsMap).catch(() => {});
+    courseManagerApi.getManagerRatingStats().then(setManagerStats).catch(() => {});
   }, []);
 
   // ─── Certificate handlers ──────────────────────────────────
@@ -94,7 +100,7 @@ const CourseManagerDashboardContent = () => {
           )
         : 0,
     completionTrend: 0,
-    avgRating: 0,
+    avgRating: managerStats?.overall.avgRating ?? 0,
   };
 
   // Map courses to CatalogOverviewWidget format
@@ -268,6 +274,13 @@ const CourseManagerDashboardContent = () => {
               </h1>
 
               <CourseManagerKPICards data={kpiData} />
+
+              {managerStats && (
+                <ReviewsOverviewWidget
+                  overall={managerStats.overall}
+                  topCourses={managerStats.topCourses}
+                />
+              )}
 
               <div className="mb-6">
                 <CatalogOverviewWidget courses={catalogCourses} onStatusChange={handleCatalogStatusChange} />

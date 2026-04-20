@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import type { HomePage } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
@@ -10,21 +10,30 @@ interface HeroProps {
 }
 
 const Hero = ({ data }: HeroProps) => {
-  const t = useTranslations("hero");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Get video URL from Strapi only (no local fallback)
+  // Everything here is Strapi-only. If nothing is configured the section
+  // still renders an empty video area (it's the first impression on the page)
+  // but every piece of copy / button / logo is gated on real content.
   const videoUrl = data?.heroVideo?.url ? getStrapiMediaUrl(data.heroVideo.url) : null;
-
-  // Get hero partner logos from Strapi (filter out entries without URLs)
   const heroPartnerLogos = (data?.heroPartnerLogos || []).filter((logo) => logo.url);
+
+  const titleMobile = data?.heroTitleMobile || "";
+  const title = data?.heroTitle || "";
+  const titleLine2 = data?.heroTitleLine2 || "";
+  const description = data?.heroDescription || "";
+  const button1Label = data?.heroButton1Label || "";
+  const button2Label = data?.heroButton2Label || "";
+
+  const hasAnyMobileContent = !!(titleMobile || description || button1Label || button2Label);
+  const hasAnyDesktopContent = !!(title || titleLine2 || description || button1Label || button2Label);
+  const hasButtons = !!(button1Label || button2Label);
 
   return (
     <section className="relative w-full">
       {/* Video Section - Responsive height */}
       <div className="relative h-[370px] lg:h-[600px] w-full overflow-hidden bg-[var(--surface-intense)]">
-        {/* Video Element - only render when Strapi provides a video */}
         {videoUrl && (
           <video
             autoPlay
@@ -37,7 +46,6 @@ const Hero = ({ data }: HeroProps) => {
           </video>
         )}
 
-        {/* Partner logos on video - only render when Strapi provides logos */}
         {heroPartnerLogos.length > 0 && (
           <div
             className={`absolute bottom-5 flex items-center gap-3 lg:gap-6 ${
@@ -56,7 +64,6 @@ const Hero = ({ data }: HeroProps) => {
                     style={{ mixBlendMode: "multiply" }}
                   />
                 </div>
-                {/* Separator line - show between logos */}
                 {index < heroPartnerLogos.length - 1 && (
                   <div className="h-5 lg:h-12 w-px bg-white/40" />
                 )}
@@ -66,87 +73,106 @@ const Hero = ({ data }: HeroProps) => {
         )}
       </div>
 
-      {/* Content Section - Responsive layout */}
-      <div className="bg-[var(--surface-intense)] px-4 lg:px-16 pt-8 pb-6 lg:py-20 overflow-hidden">
-        {/* Mobile/Tablet Layout - Stacked */}
-        <div className="flex flex-col gap-4 lg:hidden">
-          <h1
-            className="text-black font-semibold tracking-[-0.72px] leading-none"
-            style={{
-              fontSize: "var(--typeface-font-styles-display-base)",
-              fontFamily: "Poppins, var(--typeface-family), sans-serif",
-            }}
-          >
-            {data?.heroTitleMobile || t("titleMobile")}
-          </h1>
-
-          <p
-            className="text-black leading-7"
-            style={{
-              fontSize: "var(--typeface-font-styles-heading-subheading)",
-            }}
-          >
-            {data?.heroDescription || t("description")}
-          </p>
-
-          {/* Mobile Action Buttons */}
-          <div className="flex gap-4 pt-8">
-            <button className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap">
-              {data?.heroButton1Label || t("exploreButton")}
-            </button>
-            <button className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
-              <span
-                className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
-                style={{ WebkitTextFillColor: "transparent" }}
-              >
-                {data?.heroButton2Label || t("getStartedButton")}
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Desktop Layout - Two columns side by side */}
-        {/* In RTL: Title on right, Description+Buttons on left (handled by dir="rtl") */}
-        <div className="hidden lg:flex gap-20 items-start max-w-full">
-          {/* Title Column */}
-          <div className="flex-1 min-w-0">
-            <h1
-              className="text-[var(--on-surface-default)] font-semibold tracking-[-1.2px] leading-[1.1]"
-              style={{
-                fontSize: "60px",
-              }}
-            >
-              {data?.heroTitle || t("title")}
-              <br />
-              {data?.heroTitleLine2 || t("titleLine2")}
-            </h1>
-          </div>
-
-          {/* Description + CTAs Column */}
-          <div className="flex-1 min-w-0 flex flex-col gap-8">
-            <p
-              className="text-[var(--on-surface-default)] leading-7 text-[20px]"
-            >
-              {data?.heroDescription || t("description")}
-            </p>
-
-            {/* Desktop Action Buttons */}
-            <div className="flex gap-4">
-              <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium whitespace-nowrap">
-                {data?.heroButton1Label || t("exploreButton")}
-              </button>
-              <button className="h-10 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
-                <span
-                  className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
-                  style={{ WebkitTextFillColor: "transparent" }}
+      {/* Content Section - only render when at least one piece of text/button is provided */}
+      {(hasAnyMobileContent || hasAnyDesktopContent) && (
+        <div className="bg-[var(--surface-intense)] px-4 lg:px-16 pt-8 pb-6 lg:py-20 overflow-hidden">
+          {/* Mobile/Tablet Layout */}
+          {hasAnyMobileContent && (
+            <div className="flex flex-col gap-4 lg:hidden">
+              {titleMobile && (
+                <h1
+                  className="text-black font-semibold tracking-[-0.72px] leading-none"
+                  style={{
+                    fontSize: "var(--typeface-font-styles-display-base)",
+                    fontFamily: "Poppins, var(--typeface-family), sans-serif",
+                  }}
                 >
-                  {data?.heroButton2Label || t("getStartedButton")}
-                </span>
-              </button>
+                  {titleMobile}
+                </h1>
+              )}
+
+              {description && (
+                <p
+                  className="text-black leading-7"
+                  style={{
+                    fontSize: "var(--typeface-font-styles-heading-subheading)",
+                  }}
+                >
+                  {description}
+                </p>
+              )}
+
+              {hasButtons && (
+                <div className="flex gap-4 pt-8">
+                  {button1Label && (
+                    <button className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap">
+                      {button1Label}
+                    </button>
+                  )}
+                  {button2Label && (
+                    <button className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
+                      <span
+                        className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
+                        style={{ WebkitTextFillColor: "transparent" }}
+                      >
+                        {button2Label}
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Desktop Layout */}
+          {hasAnyDesktopContent && (
+            <div className="hidden lg:flex gap-20 items-start max-w-full">
+              {(title || titleLine2) && (
+                <div className="flex-1 min-w-0">
+                  <h1
+                    className="text-[var(--on-surface-default)] font-semibold tracking-[-1.2px] leading-[1.1]"
+                    style={{ fontSize: "60px" }}
+                  >
+                    {title}
+                    {title && titleLine2 && <br />}
+                    {titleLine2}
+                  </h1>
+                </div>
+              )}
+
+              {(description || hasButtons) && (
+                <div className="flex-1 min-w-0 flex flex-col gap-8">
+                  {description && (
+                    <p className="text-[var(--on-surface-default)] leading-7 text-[20px]">
+                      {description}
+                    </p>
+                  )}
+
+                  {hasButtons && (
+                    <div className="flex gap-4">
+                      {button1Label && (
+                        <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium whitespace-nowrap">
+                          {button1Label}
+                        </button>
+                      )}
+                      {button2Label && (
+                        <button className="h-10 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
+                          <span
+                            className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
+                            style={{ WebkitTextFillColor: "transparent" }}
+                          >
+                            {button2Label}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </section>
   );
 };

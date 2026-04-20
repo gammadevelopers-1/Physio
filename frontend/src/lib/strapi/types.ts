@@ -372,6 +372,13 @@ export interface FeedbackPage {
   publishedAt: string;
 }
 
+export interface CertificationsStepItem {
+  id: number;
+  title: string;
+  description: string | null;
+  icon: StrapiMedia | null;
+}
+
 export interface CertificationsPage {
   id: number;
   documentId: string;
@@ -380,7 +387,7 @@ export interface CertificationsPage {
   metaDescription: string | null;
   ogImage: StrapiMedia | null;
   breadcrumb: string | null;
-  heroTitle: string;
+  heroTitle: string | null;
   heroDescription: string | null;
   heroButtonLabel: string | null;
   nelcTitle: string | null;
@@ -396,12 +403,7 @@ export interface CertificationsPage {
   verificationPlaceholder: string | null;
   verificationButtonLabel: string | null;
   claimCMETitle: string | null;
-  step1Title: string | null;
-  step1Description: string | null;
-  step2Title: string | null;
-  step2Description: string | null;
-  step3Title: string | null;
-  step3Description: string | null;
+  steps: CertificationsStepItem[] | null;
   nelcLogo: StrapiMedia | null;
   scfhsLogo: StrapiMedia | null;
   certificateImage: StrapiMedia | null;
@@ -411,6 +413,19 @@ export interface CertificationsPage {
   publishedAt: string;
 }
 
+export interface NELCInfoBadge {
+  id: number;
+  label: string;
+  value: string | null;
+}
+
+export interface NELCComplianceCard {
+  id: number;
+  title: string;
+  description: string | null;
+  image: StrapiMedia | null;
+}
+
 export interface NELCPage {
   id: number;
   documentId: string;
@@ -418,26 +433,13 @@ export interface NELCPage {
   metaTitle: string | null;
   metaDescription: string | null;
   ogImage: StrapiMedia | null;
-  heroTitle: string;
+  heroTitle: string | null;
   heroDescription: string | null;
-  licenseNumberLabel: string | null;
-  licenseNumberValue: string | null;
-  licenseTypeLabel: string | null;
-  licenseTypeValue: string | null;
-  statusLabel: string | null;
-  statusValue: string | null;
+  infoBadges: NELCInfoBadge[] | null;
   complianceTitle: string | null;
   complianceDescription: string | null;
-  governanceTitle: string | null;
-  governanceDescription: string | null;
-  technologyTitle: string | null;
-  technologyDescription: string | null;
-  instructionTitle: string | null;
-  instructionDescription: string | null;
+  complianceCards: NELCComplianceCard[] | null;
   nelcLogo: StrapiMedia | null;
-  governanceImage: StrapiMedia | null;
-  technologyImage: StrapiMedia | null;
-  instructionImage: StrapiMedia | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -544,6 +546,26 @@ export interface FAQPage {
   publishedAt: string;
 }
 
+export interface BlogsPage {
+  id: number;
+  documentId: string;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ogImage: StrapiMedia | null;
+  featuredBlogsTitle: string | null;
+  featuredBlogsSubtitle: string | null;
+  blogsTitle: string | null;
+  blogsSubtitle: string | null;
+  backToAllPostsLabel: string | null;
+  publishedByLabel: string | null;
+  latestBlogsTitle: string | null;
+  latestBlogsSubtitle: string | null;
+  locale: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+}
+
 export interface CoursesPage {
   id: number;
   documentId: string;
@@ -552,6 +574,42 @@ export interface CoursesPage {
   heroSubtitle: string | null;
   emptyStateTitle: string | null;
   emptyStateMessage: string | null;
+  // CTA section
+  ctaTitle: string | null;
+  ctaDescription: string | null;
+  ctaButtonLabel: string | null;
+  ctaButtonHref: string | null;
+  // Section visibility
+  showSearchBar: boolean | null;
+  showDeliveryFilter: boolean | null;
+  showPricingFilter: boolean | null;
+  showAvailabilityFilter: boolean | null;
+  showLanguageFilter: boolean | null;
+  showSortBy: boolean | null;
+  // Filter chrome labels
+  searchPlaceholder: string | null;
+  sidebarFilterTitle: string | null;
+  filterAllLabel: string | null;
+  filterDeliveryLabel: string | null;
+  filterZoomLabel: string | null;
+  filterOnsiteLabel: string | null;
+  filterBlendedLabel: string | null;
+  filterSelfPacedLabel: string | null;
+  filterPricingLabel: string | null;
+  filterFreeLabel: string | null;
+  filterPaidLabel: string | null;
+  filterAvailabilityLabel: string | null;
+  filterAvailOpenLabel: string | null;
+  filterAvailStartingSoonLabel: string | null;
+  filterAvailFullLabel: string | null;
+  filterLanguageLabel: string | null;
+  filterLangEnLabel: string | null;
+  filterLangArLabel: string | null;
+  filterLangBothLabel: string | null;
+  filterSortByLabel: string | null;
+  filterSortNewestLabel: string | null;
+  filterSortRatingLabel: string | null;
+  filterSortFeaturedLabel: string | null;
   metaTitle: string | null;
   metaDescription: string | null;
   locale: string;
@@ -832,12 +890,7 @@ export interface CertificationCardsBlockData extends BaseBlock {
   verificationPlaceholder: string | null;
   verificationButtonLabel: string | null;
   claimCMETitle: string | null;
-  step1Title: string | null;
-  step1Description: string | null;
-  step2Title: string | null;
-  step2Description: string | null;
-  step3Title: string | null;
-  step3Description: string | null;
+  steps: CertificationsStepItem[] | null;
   nelcLogo: StrapiMedia | null;
   scfhsLogo: StrapiMedia | null;
   certificateImage: StrapiMedia | null;

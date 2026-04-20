@@ -341,12 +341,46 @@ export class CoursesController {
   }
 
   /**
+   * GET /courses/featured-home — Public featured-courses mix for homepage.
+   * Fair round-robin across managers, random-picked each request.
+   */
+  @Public()
+  @Get('featured-home')
+  async findFeaturedForHome(@Query('limit') limit?: string) {
+    return this.coursesService.findFeaturedForHome(
+      limit ? Math.min(parseInt(limit, 10) || 4, 12) : 4,
+    );
+  }
+
+  /**
+   * PATCH /courses/:id/feature — Toggle the featured flag.
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Patch(':id/feature')
+  async toggleFeatured(
+    @Param('id') courseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.coursesService.toggleFeatured(courseId, user);
+  }
+
+  /**
    * GET /courses/ratings/all — Get all course rating averages (for dashboard)
    */
   @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
   @Get('ratings/all')
   async getAllCourseRatings() {
     return this.coursesService.getAllCourseRatings();
+  }
+
+  /**
+   * GET /courses/ratings/manager-stats — Manager review analytics
+   * (overall avg rating across their courses + top 5 rated courses).
+   */
+  @Roles('MANAGER' as UserRole, 'ADMIN' as UserRole)
+  @Get('ratings/manager-stats')
+  async getManagerRatingStats(@CurrentUser() user: AuthenticatedUser) {
+    return this.coursesService.getManagerRatingStats(user);
   }
 
   /**

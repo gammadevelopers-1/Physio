@@ -346,6 +346,7 @@ export interface InstructorCourse {
   totalModules?: number;
   cmeHours?: number | null;
   visibleOnPublicSite?: boolean;
+  isFeatured?: boolean;
 }
 
 export interface InstructorCoursesResponse {
@@ -405,6 +406,7 @@ export interface CourseDetailResponse {
   assessmentRetakeCoolingHours?: number;
   assessmentRetakeScorePolicy?: string;
   assessmentRetakeScope?: string;
+  isFeatured?: boolean;
   modules: CourseModule[];
 }
 

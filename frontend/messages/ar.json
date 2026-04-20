@@ -812,9 +812,8 @@
       "lang_both": "كلاهما",
       "sortBy": "ترتيب حسب",
       "sort_newest": "الأحدث",
-      "sort_starting_soon": "يبدأ قريباً",
-      "sort_popular": "الأكثر شعبية",
-      "sort_rating": "الأعلى تقييماً"
+      "sort_rating": "الأعلى تقييماً",
+      "sort_featured": "المميزة"
     },
     "card": {
       "viewDetails": "عرض التفاصيل",
@@ -3782,6 +3781,16 @@
       "avgCompletion": "متوسط معدل الإكمال",
       "avgRating": "متوسط التقييم"
     },
+    "reviewsOverview": {
+      "title": "نظرة عامة على المراجعات",
+      "subtitle": "عبر جميع دوراتك",
+      "moderate": "إدارة المراجعات",
+      "topRated": "الدورات الأعلى تقييماً",
+      "reviewsCount": "{count, plural, =0 {لا توجد مراجعات} one {# مراجعة} two {# مراجعتان} few {# مراجعات} many {# مراجعة} other {# مراجعة}}",
+      "coursesWithReviews": "{reviewed} من {total} دورات مُقَيَّمة",
+      "emptyTitle": "لا توجد مراجعات بعد",
+      "emptySubtitle": "ستظهر مراجعات الطلاب هنا بمجرد اعتمادها."
+    },
     "upcomingSessions": {
       "title": "المحاضرات القادمة",
       "noSessions": "لا توجد محاضرات قادمة",
@@ -3856,10 +3865,15 @@
         "cancel": "إلغاء",
         "send": "إرسال",
         "hideFromPublic": "إخفاء من الموقع العام",
-        "showOnPublic": "إظهار على الموقع العام"
+        "showOnPublic": "إظهار على الموقع العام",
+        "feature": "تمييز على الصفحة الرئيسية",
+        "unfeature": "إلغاء التمييز"
       },
       "hiddenFromPublic": "تم إخفاء الدورة من الموقع العام",
       "shownOnPublic": "الدورة ظاهرة الآن على الموقع العام",
+      "featuredBadge": "مميزة",
+      "featuredToast": "تمت إضافة الدورة إلى المميزة على الصفحة الرئيسية",
+      "unfeaturedToast": "تمت إزالة الدورة من المميزة على الصفحة الرئيسية",
       "viewAnalytics": "عرض التحليلات",
       "courseSettings": "إعدادات الدورة"
     },

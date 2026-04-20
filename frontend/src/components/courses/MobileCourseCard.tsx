@@ -21,16 +21,11 @@ interface MobileCourseCardProps {
   isRTL?: boolean;
 }
 
-const DELIVERY_LABEL: Record<string, string> = {
-  zoom: "Live Online",
-  onsite: "On-site",
-  blended: "Hybrid",
-};
-
 const DELIVERY_ICON: Record<string, typeof Video> = {
   zoom: Video,
   onsite: MapPin,
   blended: Monitor,
+  "self-paced": Monitor,
 };
 
 const MobileCourseCard = ({
@@ -46,8 +41,14 @@ const MobileCourseCard = ({
       ? course.descriptionAr
       : course.description || "";
 
+  const deliveryLabelMap: Record<string, string> = {
+    zoom: t("filters.zoom"),
+    onsite: t("filters.onsite"),
+    blended: t("filters.blended"),
+    "self-paced": t("filters.selfPaced"),
+  };
   const deliveryLabel =
-    DELIVERY_LABEL[course.deliveryType] || course.deliveryType;
+    deliveryLabelMap[course.deliveryType] || course.deliveryType;
   const DeliveryIcon = DELIVERY_ICON[course.deliveryType] || Video;
 
   const formattedDate = course.startDate

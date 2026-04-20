@@ -36,6 +36,7 @@ import {
   Award,
   Eye,
   EyeOff,
+  Star,
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
@@ -109,8 +110,13 @@ const CoursesContent = () => {
   const [requestChangesNote, setRequestChangesNote] = useState("");
   const [requestingChanges, setRequestingChanges] = useState(false);
 
+  const [ratingsMap, setRatingsMap] = useState<Record<string, { avgRating: number; totalRatings: number }>>({});
+  useEffect(() => {
+    courseManagerApi.getAllCourseRatings().then(setRatingsMap).catch(() => {});
+  }, []);
+
   const handleAction = useCallback(
-    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete" | "toggle_public" | "hide_public", currentValue?: boolean) => {
+    async (courseId: string, action: "activate" | "archive" | "delete" | "approve" | "complete" | "toggle_public" | "hide_public" | "toggle_featured", currentValue?: boolean) => {
       setOpenDropdown(null);
       setStatusLoading(courseId);
       try {
@@ -124,11 +130,15 @@ const CoursesContent = () => {
           await courseManagerApi.deleteCourse(courseId);
         } else if (action === "toggle_public" || action === "hide_public") {
           await courseManagerApi.updateCourse(courseId, { visibleOnPublicSite: !currentValue });
+        } else if (action === "toggle_featured") {
+          await courseManagerApi.toggleFeatured(courseId);
         }
         toast.success(
           action === "toggle_public" || action === "hide_public"
             ? t(currentValue ? "coursesPage.hiddenFromPublic" : "coursesPage.shownOnPublic")
-            : t("coursesPage.statusChanged"),
+            : action === "toggle_featured"
+              ? t(currentValue ? "coursesPage.unfeaturedToast" : "coursesPage.featuredToast")
+              : t("coursesPage.statusChanged"),
         );
         refetch();
       } catch (err) {
@@ -507,7 +517,7 @@ const CoursesContent = () => {
                                   </>
                                 )}
 
-                                {/* Active: Public visibility toggle + Complete + Archive */}
+                                {/* Active: Public visibility toggle + Feature + Complete + Archive */}
                                 {course.status === "active" && (
                                   <>
                                     <button
@@ -526,6 +536,18 @@ const CoursesContent = () => {
                                           {t("coursesPage.actions.showOnPublic")}
                                         </>
                                       )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleAction(course.id, "toggle_featured", course.isFeatured === true)}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors"
+                                      role="menuitem"
+                                    >
+                                      <Star
+                                        className={`w-3.5 h-3.5 ${course.isFeatured ? "text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" : ""}`}
+                                      />
+                                      {course.isFeatured
+                                        ? t("coursesPage.actions.unfeature")
+                                        : t("coursesPage.actions.feature")}
                                     </button>
                                     <button
                                       onClick={() => handleAction(course.id, "complete")}
@@ -583,9 +605,20 @@ const CoursesContent = () => {
                         </div>
 
                         <div className="p-4 flex flex-col flex-1">
-                          <h3 className="text-base font-semibold text-[#1F2937] mb-1 line-clamp-1">
-                            {courseTitle}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-base font-semibold text-[#1F2937] line-clamp-1 flex-1 min-w-0">
+                              {courseTitle}
+                            </h3>
+                            {course.isFeatured && (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] rounded text-[10px] font-semibold flex-shrink-0"
+                                title={t("coursesPage.featuredBadge")}
+                              >
+                                <Star className="w-2.5 h-2.5 fill-current" />
+                                {t("coursesPage.featuredBadge")}
+                              </span>
+                            )}
+                          </div>
 
                           {course.instructorName && (
                             <p className="text-xs text-[#6B7280] mb-3">
@@ -617,6 +650,15 @@ const CoursesContent = () => {
                               <span className="flex items-center gap-1">
                                 <Award className="w-3.5 h-3.5 text-[#D4A520]" />
                                 {course.cmeHours} CME
+                              </span>
+                            )}
+                            {ratingsMap[course.id] && ratingsMap[course.id].totalRatings > 0 && (
+                              <span className="flex items-center gap-1">
+                                <Star className="w-3.5 h-3.5 text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]" />
+                                <span className="font-medium text-[#1F2937]">
+                                  {ratingsMap[course.id].avgRating.toFixed(1)}
+                                </span>
+                                <span>({ratingsMap[course.id].totalRatings})</span>
                               </span>
                             )}
                           </div>

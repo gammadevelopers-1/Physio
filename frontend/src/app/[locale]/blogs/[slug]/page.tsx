@@ -10,6 +10,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ loc
   const {
     blogPost,
     latestBlogs,
+    blogsPage,
     siteSettings,
     navbarLinks,
     footerLinks,
@@ -18,7 +19,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ loc
   return (
     <main id="main-content" className="min-h-screen bg-white">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
-      <BlogDetailContent blogPost={blogPost} latestBlogs={latestBlogs} />
+      <BlogDetailContent blogPost={blogPost} latestBlogs={latestBlogs} blogsPage={blogsPage} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />
       <WhatsAppButton phoneNumber={siteSettings?.whatsappNumber} />

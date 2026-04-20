@@ -208,6 +208,27 @@ const CourseManagerCourseDetailContent = ({
     }
   };
 
+  const handleToggleFeatured = async () => {
+    if (!course) return;
+    const wasFeatured = course.isFeatured === true;
+    setUpdatingStatus(true);
+    try {
+      const { isFeatured } = await courseManagerApi.toggleFeatured(course.id);
+      setCourse({ ...course, isFeatured });
+      toast.success(
+        wasFeatured
+          ? t("coursesPage.unfeaturedToast")
+          : t("coursesPage.featuredToast"),
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t("courseDetail.statusError"),
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const handleRequestChanges = async () => {
     if (!course || !requestChangesNote.trim()) return;
     setRequestingChanges(true);
@@ -474,14 +495,32 @@ const CourseManagerCourseDetailContent = ({
                           </>
                         )}
                         {course.status === "active" && (
-                          <button
-                            onClick={handleDeactivate}
-                            disabled={updatingStatus}
-                            className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
-                          >
-                            <Archive className="w-4 h-4" />
-                            {t("courseDetail.archive")}
-                          </button>
+                          <>
+                            <button
+                              onClick={handleToggleFeatured}
+                              disabled={updatingStatus}
+                              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
+                                course.isFeatured
+                                  ? "bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] hover:bg-[var(--gold-gold-200)]"
+                                  : "border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
+                              }`}
+                            >
+                              <Star
+                                className={`w-4 h-4 ${course.isFeatured ? "fill-current" : ""}`}
+                              />
+                              {course.isFeatured
+                                ? t("coursesPage.actions.unfeature")
+                                : t("coursesPage.actions.feature")}
+                            </button>
+                            <button
+                              onClick={handleDeactivate}
+                              disabled={updatingStatus}
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                            >
+                              <Archive className="w-4 h-4" />
+                              {t("courseDetail.archive")}
+                            </button>
+                          </>
                         )}
                         {(course.status === "archived" || course.status === "completed") && (
                           <button

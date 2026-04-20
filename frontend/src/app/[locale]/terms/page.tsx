@@ -2,7 +2,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PolicyPageLayout from "@/components/PolicyPageLayout";
 import { setRequestLocale } from "next-intl/server";
-import { getTranslations } from "next-intl/server";
 import { getTermsPageData } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
@@ -16,7 +15,6 @@ export default async function TermsAndConditions({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const t = await getTranslations({ locale, namespace: "termsPage" });
   const isRTL = locale === "ar";
 
   const {
@@ -26,7 +24,7 @@ export default async function TermsAndConditions({
     footerLinks,
   } = await getTermsPageData(locale);
 
-  // Use Strapi sections only — no translation fallback
+  // Strict Strapi only — no translation fallback anywhere
   const sections = policyPage?.sections?.length
     ? policyPage.sections.map((s) => ({
         sectionId: s.sectionId,
@@ -36,8 +34,8 @@ export default async function TermsAndConditions({
       }))
     : [];
 
-  const pageTitle = policyPage?.title || t("title");
-  const pageLastUpdated = policyPage?.lastUpdated || t("lastUpdated");
+  const pageTitle = policyPage?.title || "";
+  const pageLastUpdated = policyPage?.lastUpdated || "";
   const emptyMessage = isRTL
     ? "جاري تحديث هذه السياسة — يرجى المراجعة لاحقاً"
     : "This policy is being updated — please check back soon";

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import type { HomePage } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
@@ -10,14 +10,18 @@ interface BecomeTrainerProps {
 }
 
 const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
-  const t = useTranslations("becomeTrainer");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Get trainer image from Strapi or use fallback
-  const trainerImage = data?.becomeTrainerImage?.url
-    ? getStrapiMediaUrl(data.becomeTrainerImage.url)
-    : "/images/trainer-image.png";
+  // Everything is Strapi-only. No local fallback image, no translation fallback.
+  const trainerImage = data?.becomeTrainerImage?.url ? getStrapiMediaUrl(data.becomeTrainerImage.url) : null;
+  const title = data?.becomeTrainerTitle || "";
+  const description = data?.becomeTrainerDescription || "";
+  const buttonLabel = data?.becomeTrainerButtonLabel || "";
+
+  // Section hides entirely when Strapi has no content at all
+  const hasAny = !!(trainerImage || title || description || buttonLabel);
+  if (!hasAny) return null;
 
   return (
     <>
@@ -58,44 +62,52 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
                 <div
                   className={`flex flex-col gap-[32px] w-[600px] ${isRTL ? "items-start text-right" : "items-start"}`}
                 >
-                  <div className="flex flex-col gap-[16px] text-[#06080b]">
-                    <h2
-                      className="font-semibold leading-none tracking-[-0.24px] w-[600px]"
+                  {(title || description) && (
+                    <div className="flex flex-col gap-[16px] text-[#06080b]">
+                      {title && (
+                        <h2
+                          className="font-semibold leading-none tracking-[-0.24px] w-[600px]"
+                          style={{ fontSize: "48px" }}
+                        >
+                          {title}
+                        </h2>
+                      )}
+                      {description && (
+                        <p className="leading-[28px] text-[20px] w-[590px]">
+                          {description}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {buttonLabel && (
+                    <button
+                      className="h-[40px] px-[20px] py-[8px] text-white rounded-[12px] text-[14px] font-medium min-w-[80px]"
                       style={{
-                        fontSize: "48px",
+                        background: "linear-gradient(to right, #a37f49, #6b4e24)",
                       }}
                     >
-                      {data?.becomeTrainerTitle || t("title")}
-                    </h2>
-                    <p className="leading-[28px] text-[20px] w-[590px]">
-                      {data?.becomeTrainerDescription || t("description")}
-                    </p>
-                  </div>
-
-                  <button
-                    className="h-[40px] px-[20px] py-[8px] text-white rounded-[12px] text-[14px] font-medium min-w-[80px]"
-                    style={{
-                      background: "linear-gradient(to right, #a37f49, #6b4e24)",
-                    }}
-                  >
-                    {data?.becomeTrainerButtonLabel || t("getStartedButton")}
-                  </button>
+                      {buttonLabel}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Trainer Image - overlapping the left edge of white container */}
-            <div
-              className={`absolute top-[80px] w-[384px] h-[384px] rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)] z-10 ${isRTL ? "right-0" : "left-0"}`}
-            >
-              <Image
-                src={trainerImage}
-                alt="Become a Trainer"
-                fill
-                unoptimized={trainerImage.startsWith('http')}
-                className="object-cover"
-              />
-            </div>
+            {trainerImage && (
+              <div
+                className={`absolute top-[80px] w-[384px] h-[384px] rounded-[24px] overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)] z-10 ${isRTL ? "right-0" : "left-0"}`}
+              >
+                <Image
+                  src={trainerImage}
+                  alt=""
+                  fill
+                  unoptimized={trainerImage.startsWith('http')}
+                  className="object-cover"
+                />
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -142,41 +154,47 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
             className={`flex flex-col gap-8 justify-center w-full ${isRTL ? "items-start text-right" : "items-start"}`}
           >
             {/* Text Content */}
-            <div className="flex flex-col gap-4 text-[#06080b] w-full">
-              <h2
-                className="font-semibold leading-none tracking-[-0.15px] w-full"
-                style={{
-                  fontSize: "var(--typeface-font-styles-heading-h1)",
-                }}
-              >
-                {data?.becomeTrainerTitle || t("title")}
-              </h2>
-              <p
-                className="leading-7 w-full"
-                style={{
-                  fontSize: "var(--typeface-font-styles-heading-subheading)",
-                }}
-              >
-                {data?.becomeTrainerDescription || t("description")}
-              </p>
-            </div>
+            {(title || description) && (
+              <div className="flex flex-col gap-4 text-[#06080b] w-full">
+                {title && (
+                  <h2
+                    className="font-semibold leading-none tracking-[-0.15px] w-full"
+                    style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+                  >
+                    {title}
+                  </h2>
+                )}
+                {description && (
+                  <p
+                    className="leading-7 w-full"
+                    style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+                  >
+                    {description}
+                  </p>
+                )}
+              </div>
+            )}
 
-            {/* CTA Button - Full width on mobile */}
-            <button className="h-12 px-5 py-2 text-white rounded-xl text-sm font-medium min-w-[80px] w-full btn-gold">
-              {data?.becomeTrainerButtonLabel || t("getStartedButton")}
-            </button>
+            {buttonLabel && (
+              <button className="h-12 px-5 py-2 text-white rounded-xl text-sm font-medium min-w-[80px] w-full btn-gold">
+                {buttonLabel}
+              </button>
+            )}
           </div>
         </div>
 
         {/* Trainer Image - Centered, overlapping between gold and content sections */}
-        <div className="absolute left-4 right-4 top-[calc(50%-140px)] -translate-y-1/2 h-[331px] rounded-3xl overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
-          <Image
-            src={trainerImage}
-            alt="Become a Trainer"
-            fill
-            className="object-cover"
-          />
-        </div>
+        {trainerImage && (
+          <div className="absolute left-4 right-4 top-[calc(50%-140px)] -translate-y-1/2 h-[331px] rounded-3xl overflow-hidden shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">
+            <Image
+              src={trainerImage}
+              alt=""
+              fill
+              unoptimized={trainerImage.startsWith('http')}
+              className="object-cover"
+            />
+          </div>
+        )}
       </section>
     </>
   );

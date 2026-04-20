@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations, useLocale } from "next-intl";
-import BecomeTrainer from "@/components/BecomeTrainer";
-import Testimonials from "@/components/Testimonials";
+import { useLocale } from "next-intl";
 import {
   BlogCard,
   MobileBlogCard,
@@ -11,18 +9,24 @@ import {
   BlogPagination,
   BlogFilters,
 } from "@/components/blogs";
-import type { StrapiBlogPost, StrapiBlogCategory } from "@/lib/strapi/types";
+import type { StrapiBlogPost, StrapiBlogCategory, BlogsPage } from "@/lib/strapi/types";
 
 interface BlogsPageContentProps {
   blogPosts: StrapiBlogPost[];
   featuredBlog: StrapiBlogPost | null;
   blogCategories: StrapiBlogCategory[];
+  blogsPage?: BlogsPage | null;
 }
 
-const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPageContentProps) => {
-  const t = useTranslations("blogsPage");
+const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories, blogsPage }: BlogsPageContentProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // All section labels come from Strapi only — no translation fallback
+  const featuredTitle = blogsPage?.featuredBlogsTitle || "";
+  const featuredSubtitle = blogsPage?.featuredBlogsSubtitle || "";
+  const blogsTitle = blogsPage?.blogsTitle || "";
+  const blogsSubtitle = blogsPage?.blogsSubtitle || "";
 
   // Pagination state
   const [activeCategory, setActiveCategory] = useState("All");
@@ -76,12 +80,16 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPage
         {/* Featured Blogs Section */}
         <section className="px-16 pt-8 pb-12">
           <div className="max-w-[1200px] mx-auto">
-            <h1 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "48px" }}>
-              {t("featuredBlogs.title")}
-            </h1>
-            <p className={`text-[var(--on-surface-variant)] mb-8 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "20px" }}>
-              {t("featuredBlogs.subtitle")}
-            </p>
+            {featuredTitle && (
+              <h1 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "48px" }}>
+                {featuredTitle}
+              </h1>
+            )}
+            {featuredSubtitle && (
+              <p className={`text-[var(--on-surface-variant)] mb-8 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "20px" }}>
+                {featuredSubtitle}
+              </p>
+            )}
             {featuredBlog ? (
               <FeaturedBlog post={featuredBlog} isRTL={isRTL} />
             ) : (
@@ -95,12 +103,16 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPage
         {/* Blogs Section */}
         <section className="px-16 py-12 bg-white">
           <div className="max-w-[1200px] mx-auto">
-            <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "48px" }}>
-              {t("blogs.title")}
-            </h2>
-            <p className={`text-[var(--on-surface-variant)] mb-8 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "20px" }}>
-              {t("blogs.subtitle")}
-            </p>
+            {blogsTitle && (
+              <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "48px" }}>
+                {blogsTitle}
+              </h2>
+            )}
+            {blogsSubtitle && (
+              <p className={`text-[var(--on-surface-variant)] mb-8 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "20px" }}>
+                {blogsSubtitle}
+              </p>
+            )}
 
             {!hasNoPosts && (
               <BlogFilters
@@ -138,20 +150,22 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPage
             )}
           </div>
         </section>
-
-        <BecomeTrainer />
       </div>
 
       {/* Mobile Layout */}
       <div className="lg:hidden pb-24">
         {/* Featured Blogs Section */}
         <section className="px-4 pt-6 pb-8">
-          <h1 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "24px" }}>
-            {t("featuredBlogs.title")}
-          </h1>
-          <p className={`text-[var(--on-surface-variant)] text-sm mb-6 ${isRTL ? "text-right" : "text-left"}`}>
-            {t("featuredBlogs.subtitle")}
-          </p>
+          {featuredTitle && (
+            <h1 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "24px" }}>
+              {featuredTitle}
+            </h1>
+          )}
+          {featuredSubtitle && (
+            <p className={`text-[var(--on-surface-variant)] text-sm mb-6 ${isRTL ? "text-right" : "text-left"}`}>
+              {featuredSubtitle}
+            </p>
+          )}
           {featuredBlog ? (
             <FeaturedBlog post={featuredBlog} isRTL={isRTL} />
           ) : (
@@ -163,12 +177,16 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPage
 
         {/* Blogs Section */}
         <section className="px-4 py-6 bg-white">
-          <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "24px" }}>
-            {t("blogs.title")}
-          </h2>
-          <p className={`text-[var(--on-surface-variant)] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>
-            {t("blogs.subtitle")}
-          </p>
+          {blogsTitle && (
+            <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : "text-left"}`} style={{ fontSize: "24px" }}>
+              {blogsTitle}
+            </h2>
+          )}
+          {blogsSubtitle && (
+            <p className={`text-[var(--on-surface-variant)] text-sm mb-4 ${isRTL ? "text-right" : "text-left"}`}>
+              {blogsSubtitle}
+            </p>
+          )}
 
           {!hasNoPosts && (
             <BlogFilters
@@ -207,9 +225,6 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories }: BlogsPage
             />
           )}
         </section>
-
-        <BecomeTrainer />
-        <Testimonials />
       </div>
     </div>
   );

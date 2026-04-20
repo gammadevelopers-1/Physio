@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import { ArrowRight, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Testimonial, HomePage } from "@/lib/strapi/types";
 
@@ -13,11 +13,13 @@ interface TestimonialsProps {
 
 const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: TestimonialsProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const t = useTranslations("testimonials");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
-  // Use Strapi testimonials only — hide the section when empty
+  const title = sectionData?.testimonialsTitle || "";
+  const description = sectionData?.testimonialsDescription || "";
+
+  // Hide section entirely when nothing is configured
   if (strapiTestimonials.length === 0) {
     return null;
   }
@@ -60,22 +62,22 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
         <div className="flex flex-col gap-8 items-center justify-center max-w-[1280px] mx-auto w-full">
           {/* Section Title */}
           <div className="flex flex-col gap-6 items-center justify-center max-w-[768px] text-center text-[var(--on-surface-default)]">
-            <h2
-              className="font-semibold leading-none tracking-[-0.24px] w-[560px]"
-              style={{
-                fontSize: "var(--typeface-font-styles-heading-h1)",
-              }}
-            >
-              {sectionData?.testimonialsTitle || t("title")}
-            </h2>
-            <p
-              className="leading-7 w-[560px]"
-              style={{
-                fontSize: "var(--typeface-font-styles-heading-subheading)",
-              }}
-            >
-              {sectionData?.testimonialsDescription || t("description")}
-            </p>
+            {title && (
+              <h2
+                className="font-semibold leading-none tracking-[-0.24px] w-[560px]"
+                style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+              >
+                {title}
+              </h2>
+            )}
+            {description && (
+              <p
+                className="leading-7 w-[560px]"
+                style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+              >
+                {description}
+              </p>
+            )}
           </div>
 
           {/* Testimonials Card */}
@@ -180,24 +182,26 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
       <section className="xl:hidden bg-white px-4 py-10 overflow-hidden relative">
         <div className="flex flex-col gap-5 items-center justify-center max-w-full w-full">
           {/* Section Title */}
-          <div className="flex flex-col gap-6 items-center justify-center text-center text-black w-full">
-            <h2
-              className="font-semibold leading-none tracking-[-0.15px] w-full"
-              style={{
-                fontSize: "var(--typeface-font-styles-heading-h1)",
-              }}
-            >
-              {sectionData?.testimonialsTitle || t("title")}
-            </h2>
-            <p
-              className="leading-7 w-full"
-              style={{
-                fontSize: "var(--typeface-font-styles-heading-subheading)",
-              }}
-            >
-              {sectionData?.testimonialsDescription || t("description")}
-            </p>
-          </div>
+          {(title || description) && (
+            <div className="flex flex-col gap-6 items-center justify-center text-center text-black w-full">
+              {title && (
+                <h2
+                  className="font-semibold leading-none tracking-[-0.15px] w-full"
+                  style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+                >
+                  {title}
+                </h2>
+              )}
+              {description && (
+                <p
+                  className="leading-7 w-full"
+                  style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+                >
+                  {description}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Testimonial Card - Single card on mobile/tablet */}
           <div className="bg-[#EEF3F7] rounded-3xl p-6 w-full shadow-[0px_0px_1px_0px_rgba(0,0,0,0.06),0px_1px_1px_0px_rgba(0,0,0,0.05),-1px_3px_2px_0px_rgba(0,0,0,0.03),-1px_5px_2px_0px_rgba(0,0,0,0.01),-2px_8px_2px_0px_rgba(0,0,0,0)]">

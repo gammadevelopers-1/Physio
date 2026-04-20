@@ -3,21 +3,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import { BlogCard, MobileBlogCard } from "@/components/blogs";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
-import type { StrapiBlogPost } from "@/lib/strapi/types";
+import type { StrapiBlogPost, BlogsPage } from "@/lib/strapi/types";
 
 interface BlogDetailContentProps {
   blogPost: StrapiBlogPost | null;
   latestBlogs: StrapiBlogPost[];
+  blogsPage?: BlogsPage | null;
 }
 
-const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) => {
-  const t = useTranslations("blogsPage");
+const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailContentProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  // Section labels come from Strapi only — no translation fallback
+  const backToAllPostsLabel = blogsPage?.backToAllPostsLabel || "";
+  const publishedByLabel = blogsPage?.publishedByLabel || "";
+  const latestBlogsTitle = blogsPage?.latestBlogsTitle || "";
+  const latestBlogsSubtitle = blogsPage?.latestBlogsSubtitle || "";
 
   // Back icon based on RTL
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
@@ -55,9 +61,11 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
     return `Published on ${date.toLocaleDateString("en-US", options)}`;
   };
 
+  // Main image comes strictly from Strapi — no local fallback
   const imageUrl = blogPost.mainImage?.url
     ? getStrapiMediaUrl(blogPost.mainImage.formats?.large?.url || blogPost.mainImage.url)
-    : "/blogs/blog-hero.png";
+    : null;
+  const hasImage = !!imageUrl;
 
   // Filter out current post from latest blogs
   const relatedBlogs = latestBlogs.filter(p => p.slug !== blogPost.slug).slice(0, 3);
@@ -71,41 +79,57 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
           <div className="max-w-[1200px] mx-auto">
             <div className={`flex gap-12 ${isRTL ? "flex-row-reverse" : ""}`}>
               {/* Left - Text Content */}
-              <div className={`w-1/2 flex flex-col justify-between ${isRTL ? "text-right" : ""}`}>
+              <div className={`${hasImage ? "w-1/2" : "w-full max-w-[800px]"} flex flex-col justify-between ${isRTL ? "text-right" : ""}`}>
                 <div className={`flex flex-col ${isRTL ? "items-end" : "items-start"}`}>
                   {/* Back Link */}
-                  <Link
-                    href={`/${locale}/blogs`}
-                    className={`inline-flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] mb-8 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
-                  >
-                    <BackIcon className="w-4 h-4" />
-                    <span className="text-sm">{t("blogDetail.allPost")}</span>
-                  </Link>
+                  {backToAllPostsLabel && (
+                    <Link
+                      href={`/${locale}/blogs`}
+                      className={`inline-flex items-center gap-2 text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] mb-8 transition-colors ${isRTL ? "flex-row-reverse" : ""}`}
+                    >
+                      <BackIcon className="w-4 h-4" />
+                      <span className="text-sm">{backToAllPostsLabel}</span>
+                    </Link>
+                  )}
 
                   {/* Read Time Pill */}
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded-md mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
-                    <Clock className="w-4 h-4" />
-                    {readTime}
-                  </div>
+                  {readTime && (
+                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded-md mb-4 ${isRTL ? "flex-row-reverse" : ""}`}>
+                      <Clock className="w-4 h-4" />
+                      {readTime}
+                    </div>
+                  )}
 
                   {/* Title */}
-                  <h1 className="font-semibold text-[var(--on-surface-default)]" style={{ fontSize: "32px", lineHeight: "1.2" }}>
-                    {title}
-                  </h1>
+                  {title && (
+                    <h1 className="font-semibold text-[var(--on-surface-default)]" style={{ fontSize: "32px", lineHeight: "1.2" }}>
+                      {title}
+                    </h1>
+                  )}
                 </div>
 
                 {/* Publish Date - at bottom */}
-                <p className={`text-[var(--on-surface-variant)] ${isRTL ? "text-right" : ""}`} style={{ fontSize: "14px" }}>
-                  {getDate()}
-                </p>
+                {blogPost.publishedDate && (
+                  <p className={`text-[var(--on-surface-variant)] ${isRTL ? "text-right" : ""}`} style={{ fontSize: "14px" }}>
+                    {getDate()}
+                  </p>
+                )}
               </div>
 
               {/* Right - Image */}
-              <div className="w-1/2">
-                <div className="relative h-[320px] rounded-2xl overflow-hidden">
-                  <Image src={imageUrl} alt={title} fill className="object-cover" />
+              {hasImage && (
+                <div className="w-1/2">
+                  <div className="relative h-[320px] rounded-2xl overflow-hidden">
+                    <Image
+                      src={imageUrl!}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      unoptimized={imageUrl!.startsWith("http")}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </section>
@@ -158,7 +182,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
                     <div className="relative w-full h-[350px] rounded-xl overflow-hidden my-8">
                       <Image
                         src={String(src || "")}
-                        alt={alt || "Blog image"}
+                        alt={alt || ""}
                         fill
                         className="object-cover"
                       />
@@ -171,11 +195,11 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
             )}
           </div>
 
-          {/* Published By */}
-          {author && (
+          {/* Published By — shows only when both the author and the Strapi label are set */}
+          {author && publishedByLabel && (
             <div className="mt-10 pt-8 border-t border-[#E5E7EB]">
               <p className="text-sm text-[var(--on-surface-variant)]">
-                {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
+                {publishedByLabel} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
               </p>
             </div>
           )}
@@ -185,12 +209,16 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
         {relatedBlogs.length > 0 && (
           <section className="px-16 py-16 bg-white">
             <div className="max-w-[1200px] mx-auto">
-              <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "48px" }}>
-                {t("blogDetail.latestBlogs.title")}
-              </h2>
-              <p className={`text-[var(--on-surface-variant)] mb-10 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "20px" }}>
-                {t("blogDetail.latestBlogs.subtitle")}
-              </p>
+              {latestBlogsTitle && (
+                <h2 className={`font-semibold text-[var(--on-surface-default)] mb-2 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "48px" }}>
+                  {latestBlogsTitle}
+                </h2>
+              )}
+              {latestBlogsSubtitle && (
+                <p className={`text-[var(--on-surface-variant)] mb-10 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "20px" }}>
+                  {latestBlogsSubtitle}
+                </p>
+              )}
 
               <div className="grid grid-cols-3 gap-8">
                 {relatedBlogs.map((blog) => (
@@ -207,35 +235,45 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
         {/* Hero Section */}
         <section className={`px-4 py-6 ${isRTL ? "text-right" : ""}`}>
           {/* Back Link */}
-          <div className={`flex ${isRTL ? "justify-end" : "justify-start"} mb-6`}>
-            <Link href={`/${locale}/blogs`} className={`inline-flex items-center gap-2 text-[var(--on-surface-variant)] ${isRTL ? "flex-row-reverse" : ""}`}>
-              <BackIcon className="w-4 h-4" />
-              <span className="text-sm">{t("blogDetail.allPost")}</span>
-            </Link>
-          </div>
+          {backToAllPostsLabel && (
+            <div className={`flex ${isRTL ? "justify-end" : "justify-start"} mb-6`}>
+              <Link href={`/${locale}/blogs`} className={`inline-flex items-center gap-2 text-[var(--on-surface-variant)] ${isRTL ? "flex-row-reverse" : ""}`}>
+                <BackIcon className="w-4 h-4" />
+                <span className="text-sm">{backToAllPostsLabel}</span>
+              </Link>
+            </div>
+          )}
 
           {/* Read Time Pill */}
-          <div className={`flex ${isRTL ? "justify-end" : "justify-start"} mb-3`}>
-            <div className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded ${isRTL ? "flex-row-reverse" : ""}`}>
-              <Clock className="w-3 h-3" />
-              {readTime}
+          {readTime && (
+            <div className={`flex ${isRTL ? "justify-end" : "justify-start"} mb-3`}>
+              <div className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[var(--on-surface-default)] bg-[#F4F4F5] rounded ${isRTL ? "flex-row-reverse" : ""}`}>
+                <Clock className="w-3 h-3" />
+                {readTime}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Title */}
-          <h1 className="font-semibold text-[var(--on-surface-default)] mb-4" style={{ fontSize: "22px", lineHeight: "1.3" }}>
-            {title}
-          </h1>
+          {title && (
+            <h1 className="font-semibold text-[var(--on-surface-default)] mb-4" style={{ fontSize: "22px", lineHeight: "1.3" }}>
+              {title}
+            </h1>
+          )}
 
           {/* Image */}
-          <div className="relative w-full h-[200px] rounded-xl overflow-hidden mb-4">
-            <Image src={imageUrl} alt={title} fill className="object-cover" />
-          </div>
+          {hasImage && (
+            <div className="relative w-full h-[200px] rounded-xl overflow-hidden mb-4">
+              <Image src={imageUrl!} alt="" fill className="object-cover" unoptimized={imageUrl!.startsWith("http")} />
+            </div>
+          )}
 
           {/* Publish Date */}
-          <p className="text-[var(--on-surface-variant)] text-xs mb-6">
-            {getDate()}
-          </p>
+          {blogPost.publishedDate && (
+            <p className="text-[var(--on-surface-variant)] text-xs mb-6">
+              {getDate()}
+            </p>
+          )}
 
           {/* Divider */}
           <div className="w-full h-px bg-[#E5E7EB]" />
@@ -286,7 +324,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
                     <div className="relative w-full h-[200px] rounded-xl overflow-hidden my-6">
                       <Image
                         src={String(src || "")}
-                        alt={alt || "Blog image"}
+                        alt={alt || ""}
                         fill
                         className="object-cover"
                       />
@@ -300,10 +338,10 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
           </div>
 
           {/* Published By */}
-          {author && (
+          {author && publishedByLabel && (
             <div className="mt-8 pt-6 border-t border-[#E5E7EB]">
               <p className="text-xs text-[var(--on-surface-variant)]">
-                {t("blogDetail.publishedBy")} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
+                {publishedByLabel} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
               </p>
             </div>
           )}
@@ -312,12 +350,16 @@ const BlogDetailContent = ({ blogPost, latestBlogs }: BlogDetailContentProps) =>
         {/* Latest Blogs Section */}
         {relatedBlogs.length > 0 && (
           <section className="px-4 py-8 bg-white">
-            <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "24px" }}>
-              {t("blogDetail.latestBlogs.title")}
-            </h2>
-            <p className={`text-[var(--on-surface-variant)] text-sm mb-6 ${isRTL ? "text-right" : ""}`}>
-              {t("blogDetail.latestBlogs.subtitle")}
-            </p>
+            {latestBlogsTitle && (
+              <h2 className={`font-semibold text-[var(--on-surface-default)] mb-1 ${isRTL ? "text-right" : ""}`} style={{ fontSize: "24px" }}>
+                {latestBlogsTitle}
+              </h2>
+            )}
+            {latestBlogsSubtitle && (
+              <p className={`text-[var(--on-surface-variant)] text-sm mb-6 ${isRTL ? "text-right" : ""}`}>
+                {latestBlogsSubtitle}
+              </p>
+            )}
 
             <div className="flex flex-col gap-6">
               {relatedBlogs.map((blog) => (

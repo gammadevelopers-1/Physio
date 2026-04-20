@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import type { FAQPage } from "@/lib/strapi/types";
 
 interface FAQContentProps {
@@ -11,9 +11,12 @@ interface FAQContentProps {
 }
 
 export default function FAQContent({ strapiData }: FAQContentProps) {
-  const t = useTranslations("faqPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  const title = strapiData?.title || "";
+  const subtitle = strapiData?.subtitle || "";
+  const getInTouchLabel = strapiData?.getInTouchLabel || "";
 
   const items = strapiData?.items ?? [];
   const hasItems = items.length > 0;
@@ -32,31 +35,41 @@ export default function FAQContent({ strapiData }: FAQContentProps) {
     <section className="bg-white px-4 md:px-16 py-12 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-[1312px] mx-auto">
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
-          {/* Title and CTA Section */}
-          <div className="lg:w-[500px] shrink-0">
-            <div className="flex flex-col gap-6 lg:gap-8">
-              <div className="flex flex-col gap-6">
-                <h1
-                  className="font-semibold tracking-[-0.24px] text-[var(--on-surface-default)]"
-                  style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
-                >
-                  {strapiData?.title || t("title")}
-                </h1>
-                <p
-                  className="text-[var(--on-surface-default)] leading-relaxed"
-                  style={{ fontSize: "18px" }}
-                >
-                  {strapiData?.subtitle || t("subtitle")}
-                </p>
+          {/* Title and CTA Section — each element hides when Strapi is empty */}
+          {(title || subtitle || getInTouchLabel) && (
+            <div className="lg:w-[500px] shrink-0">
+              <div className="flex flex-col gap-6 lg:gap-8">
+                {(title || subtitle) && (
+                  <div className="flex flex-col gap-6">
+                    {title && (
+                      <h1
+                        className="font-semibold tracking-[-0.24px] text-[var(--on-surface-default)]"
+                        style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+                      >
+                        {title}
+                      </h1>
+                    )}
+                    {subtitle && (
+                      <p
+                        className="text-[var(--on-surface-default)] leading-relaxed"
+                        style={{ fontSize: "18px" }}
+                      >
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {getInTouchLabel && (
+                  <Link
+                    href={`/${locale}/contact`}
+                    className="inline-flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-fit"
+                  >
+                    {getInTouchLabel}
+                  </Link>
+                )}
               </div>
-              <Link
-                href={`/${locale}/contact`}
-                className="inline-flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-fit"
-              >
-                {strapiData?.getInTouchLabel || t("getInTouch")}
-              </Link>
             </div>
-          </div>
+          )}
 
           {/* FAQ List Section */}
           <div className="flex-1 min-w-0">

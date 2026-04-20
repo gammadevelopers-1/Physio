@@ -114,48 +114,10 @@
         }
       }
     },
-    "licenseNumberLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "licenseNumberValue": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "licenseTypeLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "licenseTypeValue": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "statusLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "statusValue": {
-      "type": "string",
+    "infoBadges": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.info-badge",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -178,48 +140,10 @@
         }
       }
     },
-    "governanceTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "governanceDescription": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "technologyTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "technologyDescription": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "instructionTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "instructionDescription": {
-      "type": "text",
+    "complianceCards": {
+      "type": "component",
+      "repeatable": true,
+      "component": "elements.compliance-card",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -227,30 +151,6 @@
       }
     },
     "nelcLogo": {
-      "type": "media",
-      "multiple": false,
-      "required": false,
-      "allowedTypes": [
-        "images"
-      ]
-    },
-    "governanceImage": {
-      "type": "media",
-      "multiple": false,
-      "required": false,
-      "allowedTypes": [
-        "images"
-      ]
-    },
-    "technologyImage": {
-      "type": "media",
-      "multiple": false,
-      "required": false,
-      "allowedTypes": [
-        "images"
-      ]
-    },
-    "instructionImage": {
       "type": "media",
       "multiple": false,
       "required": false,

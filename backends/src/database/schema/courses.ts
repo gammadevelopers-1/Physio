@@ -62,6 +62,7 @@ export const courses = pgTable(
     showContents: boolean('show_contents').default(true),
     sectionsOrder: jsonb('sections_order').$type<string[]>(),
     visibleOnPublicSite: boolean('visible_on_public_site').default(true).notNull(),
+    isFeatured: boolean('is_featured').default(false).notNull(),
     // Course-level assessment defaults (per-assessment can override)
     assessmentProctoringEnabled: boolean('assessment_proctoring_enabled').default(false),
     assessmentTimeLimitEnforced: boolean('assessment_time_limit_enforced').default(true),

@@ -812,9 +812,8 @@
       "lang_both": "Both",
       "sortBy": "Sort By",
       "sort_newest": "Newest",
-      "sort_starting_soon": "Starting Soon",
-      "sort_popular": "Most Popular",
-      "sort_rating": "Highest Rated"
+      "sort_rating": "Highest Rated",
+      "sort_featured": "Featured"
     },
     "card": {
       "viewDetails": "View Details",
@@ -3600,6 +3599,16 @@
       "avgCompletion": "Avg Completion Rate",
       "avgRating": "Average Rating"
     },
+    "reviewsOverview": {
+      "title": "Reviews Overview",
+      "subtitle": "Across your courses",
+      "moderate": "Moderate Reviews",
+      "topRated": "Top Rated Courses",
+      "reviewsCount": "{count, plural, =0 {No reviews} one {# review} other {# reviews}}",
+      "coursesWithReviews": "{reviewed} of {total} courses rated",
+      "emptyTitle": "No reviews yet",
+      "emptySubtitle": "Student reviews will appear here once they're approved."
+    },
     "upcomingSessions": {
       "title": "Upcoming Lectures",
       "noSessions": "No Upcoming Lectures",
@@ -3674,10 +3683,15 @@
         "cancel": "Cancel",
         "send": "Send",
         "hideFromPublic": "Hide from public site",
-        "showOnPublic": "Show on public site"
+        "showOnPublic": "Show on public site",
+        "feature": "Mark as Featured",
+        "unfeature": "Remove from Featured"
       },
       "hiddenFromPublic": "Course hidden from public site",
       "shownOnPublic": "Course is now visible on public site",
+      "featuredBadge": "Featured",
+      "featuredToast": "Course added to homepage featured",
+      "unfeaturedToast": "Course removed from homepage featured",
       "viewAnalytics": "View Analytics",
       "courseSettings": "Course Settings"
     },

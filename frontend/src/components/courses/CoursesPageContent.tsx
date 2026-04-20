@@ -8,18 +8,22 @@ import {
   CoursePagination,
   CourseCTA,
 } from "@/components/courses";
+import type { CourseFiltersLabels } from "@/components/courses/CourseFilters";
 import { PublicCourse } from "@/types/instructor-dashboard";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import { Loader2 } from "lucide-react";
 
-const DELIVERY_TYPES = ["zoom", "onsite", "blended"];
-const CERTIFICATIONS = ["BHA", "NHA", "SCFHS"];
+const DELIVERY_TYPES = ["zoom", "onsite", "blended", "self-paced"];
 
-interface CoursesPageContentProps {
+interface CoursesPageContentProps extends CourseFiltersLabels {
   heroTitle?: string;
   heroSubtitle?: string;
   emptyStateTitle?: string;
   emptyStateMessage?: string;
+  ctaTitle?: string;
+  ctaDescription?: string;
+  ctaButtonLabel?: string;
+  ctaButtonHref?: string;
 }
 
 const CoursesPageContent = ({
@@ -27,8 +31,12 @@ const CoursesPageContent = ({
   heroSubtitle,
   emptyStateTitle,
   emptyStateMessage,
+  ctaTitle,
+  ctaDescription,
+  ctaButtonLabel,
+  ctaButtonHref,
+  ...filterLabels
 }: CoursesPageContentProps = {}) => {
-  const t = useTranslations("coursesPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -37,11 +45,7 @@ const CoursesPageContent = ({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedCertifications, setSelectedCertifications] = useState<
-    string[]
-  >([]);
   const [selectedPricing, setSelectedPricing] = useState("");
-  const [cmeAccredited, setCmeAccredited] = useState("");
   const [availability, setAvailability] = useState("");
   const [language, setLanguage] = useState("");
   const [sortBy, setSortBy] = useState("newest");
@@ -57,7 +61,6 @@ const CoursesPageContent = ({
       const params = new URLSearchParams();
       if (searchQuery) params.set("search", searchQuery);
       if (selectedPricing) params.set("pricing", selectedPricing);
-      if (cmeAccredited) params.set("cmeAccredited", cmeAccredited);
       if (availability) params.set("availability", availability);
       if (language) params.set("language", language);
       if (sortBy) params.set("sort", sortBy);
@@ -72,7 +75,7 @@ const CoursesPageContent = ({
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedPricing, cmeAccredited, availability, language, sortBy]);
+  }, [searchQuery, selectedPricing, availability, language, sortBy]);
 
   useEffect(() => {
     fetchCourses();
@@ -88,14 +91,12 @@ const CoursesPageContent = ({
     });
   }, [courses, selectedTypes]);
 
-  // Desktop pagination
   const totalPages = Math.ceil(filteredCourses.length / postsPerPageDesktop);
   const paginatedCourses = filteredCourses.slice(
     (currentPage - 1) * postsPerPageDesktop,
     currentPage * postsPerPageDesktop,
   );
 
-  // Mobile pagination
   const totalPagesMobile = Math.ceil(
     filteredCourses.length / postsPerPageMobile,
   );
@@ -104,7 +105,6 @@ const CoursesPageContent = ({
     currentPageMobile * postsPerPageMobile,
   );
 
-  // Reset pagination when filters change
   const resetPages = () => {
     setCurrentPage(1);
     setCurrentPageMobile(1);
@@ -120,18 +120,8 @@ const CoursesPageContent = ({
     resetPages();
   };
 
-  const handleCertificationChange = (certs: string[]) => {
-    setSelectedCertifications(certs);
-    resetPages();
-  };
-
   const handlePricingChange = (pricing: string) => {
     setSelectedPricing(pricing);
-    resetPages();
-  };
-
-  const handleCmeAccreditedChange = (value: string) => {
-    setCmeAccredited(value);
     resetPages();
   };
 
@@ -165,12 +155,8 @@ const CoursesPageContent = ({
     onSearchChange: handleSearchChange,
     selectedTypes,
     onTypeChange: handleTypeChange,
-    selectedCertifications,
-    onCertificationChange: handleCertificationChange,
     selectedPricing,
     onPricingChange: handlePricingChange,
-    cmeAccredited,
-    onCmeAccreditedChange: handleCmeAccreditedChange,
     availability,
     onAvailabilityChange: handleAvailabilityChange,
     language,
@@ -178,9 +164,11 @@ const CoursesPageContent = ({
     sortBy,
     onSortByChange: handleSortByChange,
     courseTypes: DELIVERY_TYPES,
-    certifications: CERTIFICATIONS,
     isRTL,
+    ...filterLabels,
   };
+
+  const hasHeader = !!heroTitle || !!heroSubtitle;
 
   return (
     <>
@@ -188,25 +176,27 @@ const CoursesPageContent = ({
       <div className="hidden lg:block" dir={isRTL ? "rtl" : "ltr"}>
         <section className="px-16 py-12">
           <div className="max-w-[1200px] mx-auto">
-            {/* Header */}
-            <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
-              <h1
-                className="font-semibold text-[#06080b] mb-2"
-                style={{ fontSize: "48px" }}
-              >
-                {heroTitle || t("title")}
-              </h1>
-              <p className="text-[#4a4c4f]" style={{ fontSize: "20px" }}>
-                {heroSubtitle || t("subtitle")}
-              </p>
-            </div>
+            {hasHeader && (
+              <div className={`mb-8 ${isRTL ? "text-right" : "text-left"}`}>
+                {heroTitle && (
+                  <h1
+                    className="font-semibold text-[#06080b] mb-2"
+                    style={{ fontSize: "48px" }}
+                  >
+                    {heroTitle}
+                  </h1>
+                )}
+                {heroSubtitle && (
+                  <p className="text-[#4a4c4f]" style={{ fontSize: "20px" }}>
+                    {heroSubtitle}
+                  </p>
+                )}
+              </div>
+            )}
 
-            {/* Main Content */}
             <div className="flex gap-8">
-              {/* Sidebar Filters */}
               <CourseFilters {...filterProps} />
 
-              {/* Course Grid */}
               <div className="flex-1">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
@@ -216,11 +206,7 @@ const CoursesPageContent = ({
                   <>
                     <div className="grid grid-cols-3 gap-8">
                       {paginatedCourses.map((course) => (
-                        <CourseCard
-                          key={course.id}
-                          course={course}
-                          isRTL={isRTL}
-                        />
+                        <CourseCard key={course.id} course={course} isRTL={isRTL} />
                       ))}
                     </div>
 
@@ -232,23 +218,31 @@ const CoursesPageContent = ({
                     />
                   </>
                 ) : (
-                  <div className="text-center py-16">
-                    {emptyStateTitle && (
-                      <p className="text-[#06080b] text-xl font-semibold mb-2">
-                        {emptyStateTitle}
-                      </p>
-                    )}
-                    <p className="text-[#4a4c4f] text-lg">
-                      {emptyStateMessage || t("noCoursesFound")}
-                    </p>
-                  </div>
+                  (emptyStateTitle || emptyStateMessage) && (
+                    <div className="text-center py-16">
+                      {emptyStateTitle && (
+                        <p className="text-[#06080b] text-xl font-semibold mb-2">
+                          {emptyStateTitle}
+                        </p>
+                      )}
+                      {emptyStateMessage && (
+                        <p className="text-[#4a4c4f] text-lg">{emptyStateMessage}</p>
+                      )}
+                    </div>
+                  )
                 )}
               </div>
             </div>
           </div>
         </section>
 
-        <CourseCTA isRTL={isRTL} />
+        <CourseCTA
+          isRTL={isRTL}
+          title={ctaTitle}
+          description={ctaDescription}
+          buttonLabel={ctaButtonLabel}
+          buttonHref={ctaButtonHref}
+        />
       </div>
 
       {/* Mobile Layout */}
@@ -257,21 +251,24 @@ const CoursesPageContent = ({
         dir={isRTL ? "rtl" : "ltr"}
       >
         <section className="px-4 py-6 max-w-full">
-          {/* Header */}
-          <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
-            <h1
-              className="font-semibold text-[#06080b] mb-1"
-              style={{ fontSize: "24px" }}
-            >
-              {heroTitle || t("title")}
-            </h1>
-            <p className="text-[#4a4c4f] text-sm">{heroSubtitle || t("subtitle")}</p>
-          </div>
+          {hasHeader && (
+            <div className={`mb-6 ${isRTL ? "text-right" : "text-left"}`}>
+              {heroTitle && (
+                <h1
+                  className="font-semibold text-[#06080b] mb-1"
+                  style={{ fontSize: "24px" }}
+                >
+                  {heroTitle}
+                </h1>
+              )}
+              {heroSubtitle && (
+                <p className="text-[#4a4c4f] text-sm">{heroSubtitle}</p>
+              )}
+            </div>
+          )}
 
-          {/* Filters */}
           <CourseFilters {...filterProps} variant="mobile" />
 
-          {/* Course Cards */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-[#B8860B]" />
@@ -280,11 +277,7 @@ const CoursesPageContent = ({
             <>
               <div className="flex flex-col gap-6">
                 {paginatedCoursesMobile.map((course) => (
-                  <MobileCourseCard
-                    key={course.id}
-                    course={course}
-                    isRTL={isRTL}
-                  />
+                  <MobileCourseCard key={course.id} course={course} isRTL={isRTL} />
                 ))}
               </div>
 
@@ -297,20 +290,28 @@ const CoursesPageContent = ({
               />
             </>
           ) : (
-            <div className="text-center py-12">
-              {emptyStateTitle && (
-                <p className="text-[#06080b] text-lg font-semibold mb-2">
-                  {emptyStateTitle}
-                </p>
-              )}
-              <p className="text-[#4a4c4f] text-base">
-                {emptyStateMessage || t("noCoursesFound")}
-              </p>
-            </div>
+            (emptyStateTitle || emptyStateMessage) && (
+              <div className="text-center py-12">
+                {emptyStateTitle && (
+                  <p className="text-[#06080b] text-lg font-semibold mb-2">
+                    {emptyStateTitle}
+                  </p>
+                )}
+                {emptyStateMessage && (
+                  <p className="text-[#4a4c4f] text-base">{emptyStateMessage}</p>
+                )}
+              </div>
+            )
           )}
         </section>
 
-        <CourseCTA isRTL={isRTL} />
+        <CourseCTA
+          isRTL={isRTL}
+          title={ctaTitle}
+          description={ctaDescription}
+          buttonLabel={ctaButtonLabel}
+          buttonHref={ctaButtonHref}
+        />
       </div>
     </>
   );

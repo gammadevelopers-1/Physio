@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import type { Instructor, InstructorsPage } from "@/lib/strapi/types";
 
@@ -87,7 +87,6 @@ interface InstructorsContentProps {
 }
 
 export default function InstructorsContent({ instructors, strapiData }: InstructorsContentProps) {
-  const t = useTranslations("instructorsPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -95,18 +94,23 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
   const experts = instructors.filter((i) => i.section === "expert" && i.avatar?.url);
   const minds = instructors.filter((i) => i.section === "minds" && i.avatar?.url);
 
+  const expertsTitle = strapiData?.meetExpertsTitle || "";
+  const mindsTitle = strapiData?.mindsBehindTitle || "";
+
   return (
     <>
       {/* Meet the Experts Section - only rendered when Strapi has experts */}
       {experts.length > 0 && (
         <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
-            <h1
-              className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
-            >
-              {strapiData?.meetExpertsTitle || t("meetExperts.title")}
-            </h1>
+            {expertsTitle && (
+              <h1
+                className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
+                style={{ fontFamily: "'DM Sans', sans-serif" }}
+              >
+                {expertsTitle}
+              </h1>
+            )}
 
             {/* Desktop */}
             <div className="hidden md:flex gap-8 items-start justify-center w-full">
@@ -138,12 +142,14 @@ export default function InstructorsContent({ instructors, strapiData }: Instruct
       {minds.length > 0 && (
         <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
           <div className="max-w-[1312px] mx-auto flex flex-col gap-12 items-center">
-            <h1
-              className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
-              style={{ fontFamily: "'DM Sans', sans-serif" }}
-            >
-              {strapiData?.mindsBehindTitle || t("mindsBehind.title")}
-            </h1>
+            {mindsTitle && (
+              <h1
+                className="font-semibold text-[#06080B] text-center tracking-[-0.24px] leading-none text-[32px] md:text-[48px]"
+                style={{ fontFamily: "'DM Sans', sans-serif" }}
+              >
+                {mindsTitle}
+              </h1>
+            )}
 
             {/* Desktop */}
             <div className="hidden md:flex gap-8 items-start justify-center w-full">

@@ -16,6 +16,7 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
     blogPosts,
     featuredBlog,
     blogCategories,
+    blogsPage,
     siteSettings,
     navbarLinks,
     footerLinks,
@@ -28,6 +29,7 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
         blogPosts={blogPosts}
         featuredBlog={featuredBlog}
         blogCategories={blogCategories}
+        blogsPage={blogsPage}
       />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />
       <BottomNav />

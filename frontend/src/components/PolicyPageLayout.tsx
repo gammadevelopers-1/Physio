@@ -11,8 +11,8 @@ interface PolicySectionData {
 }
 
 interface PolicyPageLayoutProps {
-  title: string;
-  lastUpdated: string;
+  title?: string | null;
+  lastUpdated?: string | null;
   sections: PolicySectionData[];
   isRTL: boolean;
   emptyMessage: string;
@@ -55,21 +55,27 @@ const PolicyPageLayout = ({ title, lastUpdated, sections, isRTL, emptyMessage }:
 
   return (
     <section className="bg-[#EEF3F7] px-4 md:px-16 py-12 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
-      {/* Header */}
-      <div className="flex flex-col gap-1 mb-8 text-[var(--on-surface-default)]">
-        <h1
-          className="font-semibold tracking-[-0.24px]"
-          style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
-        >
-          {title}
-        </h1>
-        <p
-          className="leading-7"
-          style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
-        >
-          {lastUpdated}
-        </p>
-      </div>
+      {/* Header — each line hides when Strapi has no value */}
+      {(title || lastUpdated) && (
+        <div className="flex flex-col gap-1 mb-8 text-[var(--on-surface-default)]">
+          {title && (
+            <h1
+              className="font-semibold tracking-[-0.24px]"
+              style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+            >
+              {title}
+            </h1>
+          )}
+          {lastUpdated && (
+            <p
+              className="leading-7"
+              style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+            >
+              {lastUpdated}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Empty state when Strapi returns no sections */}
       {sections.length === 0 ? (

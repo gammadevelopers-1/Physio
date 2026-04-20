@@ -9,6 +9,7 @@ export { default as ContentReviewQueue } from "./ContentReviewQueue";
 export { default as InstructorsManagementWidget } from "./InstructorsManagementWidget";
 export { default as NELCComplianceWidget } from "./NELCComplianceWidget";
 export { default as CourseStatsWidget } from "./CourseStatsWidget";
+export { default as ReviewsOverviewWidget } from "./ReviewsOverviewWidget";
 export { default as UpcomingSessionsWidget } from "./UpcomingSessionsWidget";
 export { default as CourseManagerDashboardContent } from "./CourseManagerDashboardContent";
 

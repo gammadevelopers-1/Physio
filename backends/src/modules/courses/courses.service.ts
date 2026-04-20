@@ -359,8 +359,21 @@ export class CoursesService {
       conditions.push(eq(courses.isCmeAccredited, params.cmeAccredited));
     }
 
+    // 'featured' sort doubles as a filter — only return featured courses.
+    if (params.sort === 'featured') {
+      conditions.push(eq(courses.isFeatured, true));
+    }
+
     if (params.language && params.language !== 'all') {
-      conditions.push(eq(courses.language, params.language));
+      // 'en' and 'ar' filters include bilingual ('both') courses;
+      // 'both' stays strict for students who specifically want bilingual.
+      if (params.language === 'en') {
+        conditions.push(inArray(courses.language, ['en', 'both']));
+      } else if (params.language === 'ar') {
+        conditions.push(inArray(courses.language, ['ar', 'both']));
+      } else {
+        conditions.push(eq(courses.language, params.language));
+      }
     }
 
     const whereClause = and(...conditions);
@@ -385,15 +398,11 @@ export class CoursesService {
     // Secondary sort: user's choice
     let secondarySort;
     switch (params.sort) {
-      case 'starting_soon':
-        secondarySort = asc(courses.startDate);
-        break;
-      case 'popular':
-        secondarySort = sql`(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id") DESC`;
-        break;
       case 'rating':
         secondarySort = sql`(SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id") DESC`;
         break;
+      case 'featured':
+      case 'newest':
       default:
         secondarySort = desc(courses.createdAt);
     }
@@ -480,19 +489,16 @@ export class CoursesService {
       };
     });
 
-    // Post-query availability filter (depends on computed isFull)
+    // Post-query availability filter (depends on computed availabilityStatus)
     let filtered = enriched;
     if (params.availability === 'open') {
-      filtered = enriched.filter((c) => !c.isFull);
+      filtered = enriched.filter((c) => c.availabilityStatus === 'open');
     } else if (params.availability === 'starting_soon') {
-      const twoWeeksFromNow = new Date();
-      twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
       filtered = enriched.filter(
         (c) =>
           !c.isFull &&
-          c.startDate &&
-          new Date(c.startDate) <= twoWeeksFromNow &&
-          new Date(c.startDate) >= new Date(),
+          c.enrollmentDeadline &&
+          new Date(c.enrollmentDeadline) > now,
       );
     } else if (params.availability === 'full') {
       filtered = enriched.filter((c) => c.isFull);
@@ -510,6 +516,176 @@ export class CoursesService {
       limit,
       totalPages: Math.ceil((countResult?.count || 0) / limit),
     };
+  }
+
+  /**
+   * Toggle a course's featured flag. Manager (own course) or admin only.
+   */
+  async toggleFeatured(courseId: string, user: AuthenticatedUser) {
+    const [course] = await db
+      .select({
+        id: courses.id,
+        managerId: courses.managerId,
+        isFeatured: courses.isFeatured,
+        title: courses.title,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    if (!isGlobalAdmin(user) && course.managerId !== user.id) {
+      throw new ForbiddenException('You do not manage this course');
+    }
+
+    const [updated] = await db
+      .update(courses)
+      .set({ isFeatured: !course.isFeatured, updatedAt: new Date() })
+      .where(eq(courses.id, courseId))
+      .returning({ id: courses.id, isFeatured: courses.isFeatured });
+
+    this.logger.log(
+      `Course "${course.title}" featured=${updated.isFeatured} by ${user.id}`,
+    );
+
+    return updated;
+  }
+
+  /**
+   * Return a fair-distributed random mix of featured courses for the homepage.
+   * Round-robin across managers + random shuffle within each manager's pool.
+   */
+  async findFeaturedForHome(limit: number = 4) {
+    const rows = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+        description: courses.description,
+        descriptionAr: courses.descriptionAr,
+        deliveryType: courses.deliveryType,
+        status: courses.status,
+        thumbnail: courses.thumbnail,
+        maxEnrollment: courses.maxEnrollment,
+        price: courses.price,
+        cmeHours: courses.cmeHours,
+        enrollmentDeadline: courses.enrollmentDeadline,
+        isCmeAccredited: courses.isCmeAccredited,
+        language: courses.language,
+        startDate: courses.startDate,
+        endDate: courses.endDate,
+        managerId: courses.managerId,
+        enrolledCount: sql<number>`(
+          SELECT COUNT(*) FROM enrollments e WHERE e.course_id = "courses"."id" AND e.status != 'dropped'
+        )`.mapWith(Number),
+        totalHours: sql<number>`(
+          COALESCE((SELECT SUM(cm.duration_minutes) FROM course_modules cm WHERE cm.course_id = "courses"."id"), 0)
+          + COALESCE((SELECT SUM(s.duration_minutes) FROM sessions s WHERE s.course_id = "courses"."id"), 0)
+        )`.mapWith(Number),
+        sessionCount: sql<number>`(
+          SELECT COUNT(*) FROM sessions s WHERE s.course_id = "courses"."id"
+        )`.mapWith(Number),
+        avgRating: sql<number>`(
+          SELECT COALESCE(AVG(cr.rating), 0) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
+        )`.mapWith(Number),
+        totalRatings: sql<number>`(
+          SELECT COUNT(*) FROM course_ratings cr WHERE cr.course_id = "courses"."id" AND cr.is_published = true
+        )`.mapWith(Number),
+        instructorName: sql<string>`(
+          SELECT CONCAT(u.first_name, ' ', u.last_name) FROM users u
+          WHERE u.id = "courses"."instructor_id"
+        )`,
+      })
+      .from(courses)
+      .where(
+        and(
+          eq(courses.isFeatured, true),
+          eq(courses.status, COURSE_STATUS.ACTIVE),
+          eq(courses.visibleOnPublicSite, true),
+        ),
+      );
+
+    if (rows.length === 0) return [];
+
+    // Group by manager (null managerId bucketed under '__none__')
+    const byManager = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const key = r.managerId ?? '__none__';
+      const bucket = byManager.get(key) ?? [];
+      bucket.push(r);
+      byManager.set(key, bucket);
+    }
+
+    // Fisher-Yates shuffle in place
+    const shuffle = <T,>(arr: T[]): T[] => {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    };
+
+    // Shuffle within each manager + shuffle manager order
+    for (const list of byManager.values()) shuffle(list);
+    const managers = shuffle([...byManager.keys()]);
+
+    // Round-robin pick
+    const picked: typeof rows = [];
+    let progressed = true;
+    while (picked.length < limit && progressed) {
+      progressed = false;
+      for (const m of managers) {
+        if (picked.length >= limit) break;
+        const list = byManager.get(m)!;
+        if (list.length > 0) {
+          picked.push(list.shift()!);
+          progressed = true;
+        }
+      }
+    }
+
+    // Enrich with capacity/availability (same rules as findAllPublic)
+    const now = new Date();
+    return picked.map((c) => {
+      const isSelfPaced = c.deliveryType === 'self-paced';
+      let effectiveMax: number | null;
+      if (isSelfPaced) {
+        effectiveMax = c.maxEnrollment ?? null;
+      } else {
+        const classification = classifyCourse(c.startDate, c.endDate);
+        effectiveMax = c.maxEnrollment ?? getNelcMaxEnrollment(classification);
+      }
+      const remainingSeats =
+        effectiveMax !== null ? Math.max(0, effectiveMax - c.enrolledCount) : null;
+      const isFull = effectiveMax !== null ? remainingSeats === 0 : false;
+      const deadlinePassed = !!(
+        c.enrollmentDeadline && new Date(c.enrollmentDeadline) <= now
+      );
+
+      let availabilityStatus: 'open' | 'completed' | 'full' | 'deadline_passed';
+      if (c.status === 'completed') {
+        availabilityStatus = 'completed';
+      } else if (deadlinePassed) {
+        availabilityStatus = 'deadline_passed';
+      } else if (isFull) {
+        availabilityStatus = 'full';
+      } else {
+        availabilityStatus = 'open';
+      }
+
+      return {
+        ...c,
+        totalHours: Math.round((c.totalHours / 60) * 10) / 10,
+        avgRating: Number(Number(c.avgRating || 0).toFixed(1)),
+        price: c.price ? Number(c.price) : 0,
+        remainingSeats,
+        isFull,
+        availabilityStatus,
+      };
+    });
   }
 
   /**
@@ -2235,6 +2411,106 @@ export class CoursesService {
       };
     }
     return map;
+  }
+
+  /**
+   * Manager review analytics — overall rating across their courses + top 5.
+   * Scoped to caller's managed courses (or all courses for admin).
+   * Published reviews only, matching public listing semantics.
+   */
+  async getManagerRatingStats(user: AuthenticatedUser) {
+    const isAdmin = isGlobalAdmin(user);
+
+    const courseRows = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        titleAr: courses.titleAr,
+      })
+      .from(courses)
+      .where(isAdmin ? undefined : eq(courses.managerId, user.id));
+
+    const totalCourses = courseRows.length;
+
+    if (totalCourses === 0) {
+      return {
+        overall: {
+          avgRating: 0,
+          totalRatings: 0,
+          totalCourses: 0,
+          coursesWithReviews: 0,
+        },
+        topCourses: [] as Array<{
+          courseId: string;
+          title: string;
+          titleAr: string | null;
+          avgRating: number;
+          totalRatings: number;
+        }>,
+      };
+    }
+
+    const courseIds = courseRows.map((c) => c.id);
+
+    const stats = await db
+      .select({
+        courseId: courseRatings.courseId,
+        avgRating: sql<number>`COALESCE(AVG(${courseRatings.rating}), 0)`,
+        totalRatings: count(),
+      })
+      .from(courseRatings)
+      .where(
+        and(
+          eq(courseRatings.isPublished, true),
+          inArray(courseRatings.courseId, courseIds),
+        ),
+      )
+      .groupBy(courseRatings.courseId);
+
+    const statsMap = new Map<
+      string,
+      { avgRating: number; totalRatings: number }
+    >();
+    let totalRatings = 0;
+    let weightedSum = 0;
+
+    for (const s of stats) {
+      const avg = Number(s.avgRating || 0);
+      const total = Number(s.totalRatings || 0);
+      statsMap.set(s.courseId, { avgRating: avg, totalRatings: total });
+      totalRatings += total;
+      weightedSum += avg * total;
+    }
+
+    const overallAvg = totalRatings > 0 ? weightedSum / totalRatings : 0;
+
+    const topCourses = courseRows
+      .filter((c) => statsMap.has(c.id))
+      .map((c) => {
+        const s = statsMap.get(c.id)!;
+        return {
+          courseId: c.id,
+          title: c.title,
+          titleAr: c.titleAr,
+          avgRating: Number(s.avgRating.toFixed(1)),
+          totalRatings: s.totalRatings,
+        };
+      })
+      .sort((a, b) => {
+        if (b.avgRating !== a.avgRating) return b.avgRating - a.avgRating;
+        return b.totalRatings - a.totalRatings;
+      })
+      .slice(0, 5);
+
+    return {
+      overall: {
+        avgRating: Number(overallAvg.toFixed(1)),
+        totalRatings,
+        totalCourses,
+        coursesWithReviews: statsMap.size,
+      },
+      topCourses,
+    };
   }
 
   // ─── Manager moderation ────────────────────────────────────

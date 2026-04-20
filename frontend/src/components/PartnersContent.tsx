@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 import type { Partner, PartnersPage } from "@/lib/strapi/types";
 
@@ -11,9 +11,10 @@ interface PartnersContentProps {
 }
 
 export default function PartnersContent({ partners, strapiData }: PartnersContentProps) {
-  const t = useTranslations("partnersPage");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  const title = strapiData?.title || "";
 
   // Only use Strapi partners if at least one has a logo uploaded
   const partnersWithLogos = partners.filter((p) => p.logo?.url);
@@ -30,12 +31,14 @@ export default function PartnersContent({ partners, strapiData }: PartnersConten
   return (
     <section className="bg-white px-4 md:px-16 py-16 md:py-24" dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-[1312px] mx-auto flex flex-col items-center">
-        <h1
-          className="font-semibold tracking-[-0.24px] text-[#06080B] text-center mb-12 md:mb-16 text-[32px] md:text-[48px] leading-none"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
-          {strapiData?.title || t("title")}
-        </h1>
+        {title && (
+          <h1
+            className="font-semibold tracking-[-0.24px] text-[#06080B] text-center mb-12 md:mb-16 text-[32px] md:text-[48px] leading-none"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            {title}
+          </h1>
+        )}
 
         {hasPartners ? (
           <>

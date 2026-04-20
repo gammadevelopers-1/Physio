@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useTranslations, useLocale } from "next-intl";
+import { useLocale } from "next-intl";
 import type { Instructor, HomePage } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
@@ -11,15 +11,17 @@ interface ExpertInstructorsProps {
 }
 
 const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }: ExpertInstructorsProps) => {
-  const t = useTranslations("expertInstructors");
   const locale = useLocale();
   const isRTL = locale === "ar";
+
+  const title = sectionData?.instructorsTitle || "";
+  const description = sectionData?.instructorsDescription || "";
 
   // Only use Strapi data if avatars are uploaded
   const instructorsWithAvatars = strapiInstructors.filter((i) => i.avatar?.url);
 
-  // Hide the entire section when there are no Strapi instructors
-  if (instructorsWithAvatars.length === 0) {
+  // Hide the entire section when there is no content at all
+  if (instructorsWithAvatars.length === 0 && !title && !description) {
     return null;
   }
 
@@ -36,25 +38,23 @@ const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }:
   return (
     <section className="bg-[var(--surface-intense)] px-4 md:px-10 py-16 md:py-24 overflow-hidden">
       <div className="flex flex-col gap-5 md:gap-8 items-center justify-center w-full">
-        {/* Title */}
-        <h2
-          className="text-[var(--on-surface-default)] font-semibold text-center leading-none tracking-[-0.15px] md:tracking-[-0.24px] w-full md:w-[600px]"
-          style={{
-            fontSize: "var(--typeface-font-styles-heading-h1)",
-          }}
-        >
-          {sectionData?.instructorsTitle || t("title")}
-        </h2>
+        {title && (
+          <h2
+            className="text-[var(--on-surface-default)] font-semibold text-center leading-none tracking-[-0.15px] md:tracking-[-0.24px] w-full md:w-[600px]"
+            style={{ fontSize: "var(--typeface-font-styles-heading-h1)" }}
+          >
+            {title}
+          </h2>
+        )}
 
-        {/* Description */}
-        <p
-          className="text-[var(--on-surface-default)] text-center leading-7 w-full md:w-[590px]"
-          style={{
-            fontSize: "var(--typeface-font-styles-heading-subheading)",
-          }}
-        >
-          {sectionData?.instructorsDescription || t("description")}
-        </p>
+        {description && (
+          <p
+            className="text-[var(--on-surface-default)] text-center leading-7 w-full md:w-[590px]"
+            style={{ fontSize: "var(--typeface-font-styles-heading-subheading)" }}
+          >
+            {description}
+          </p>
+        )}
 
         {/* Desktop Instructor Avatars */}
         <div className="hidden md:flex flex-col gap-6 items-center justify-center">

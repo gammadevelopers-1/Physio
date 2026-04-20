@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_elements_certifications_steps",
+  "info": {
+    "displayName": "Certifications Step",
+    "description": "A single step in the 'How to Claim CME Hours' flow with icon, title, and description"
+  },
+  "attributes": {
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images", "files"]
+    },
+    "title": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

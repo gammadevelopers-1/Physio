@@ -21,6 +21,7 @@ import type {
   PartnersPage,
   InstructorsPage,
   FAQPage,
+  BlogsPage,
   CoursesPage,
   CourseDetailPage,
   StrapiSingleResponse,
@@ -641,6 +642,7 @@ export async function getCertificationsPage(locale: string = 'en'): Promise<Cert
         'populate[nelcLogo]': 'true',
         'populate[scfhsLogo]': 'true',
         'populate[certificateImage]': 'true',
+        'populate[steps][populate][icon]': 'true',
       },
     }
   );
@@ -683,9 +685,8 @@ export async function getNELCPage(locale: string = 'en'): Promise<NELCPage | nul
         ...BLOCKS_POPULATE_PARAMS,
         ...OG_IMAGE_POPULATE,
         'populate[nelcLogo]': 'true',
-        'populate[governanceImage]': 'true',
-        'populate[technologyImage]': 'true',
-        'populate[instructionImage]': 'true',
+        'populate[infoBadges]': 'true',
+        'populate[complianceCards][populate][image]': 'true',
       },
     }
   );
@@ -833,6 +834,22 @@ export async function searchBlogs(query: string, locale: string = 'en'): Promise
 }
 
 /**
+ * Fetch blogs-page single type (section labels for blog listing + detail pages)
+ */
+export async function getBlogsPage(locale: string = 'en'): Promise<BlogsPage | null> {
+  const response = await fetchStrapi<StrapiSingleResponse<BlogsPage>>(
+    '/blogs-page',
+    {
+      params: {
+        locale,
+        ...OG_IMAGE_POPULATE,
+      },
+    }
+  );
+  return response?.data || null;
+}
+
+/**
  * Fetch all blogs page data at once
  */
 export async function getBlogsPageData(locale: string = 'en') {
@@ -840,6 +857,7 @@ export async function getBlogsPageData(locale: string = 'en') {
     blogPosts,
     featuredBlog,
     blogCategories,
+    blogsPage,
     siteSettings,
     navbarLinks,
     footerLinks,
@@ -847,6 +865,7 @@ export async function getBlogsPageData(locale: string = 'en') {
     getBlogPosts(locale),
     getFeaturedBlog(locale),
     getBlogCategories(locale),
+    getBlogsPage(locale),
     getSiteSettings(locale),
     getNavbarLinks(locale),
     getFooterLinks(locale),
@@ -856,6 +875,7 @@ export async function getBlogsPageData(locale: string = 'en') {
     blogPosts,
     featuredBlog,
     blogCategories,
+    blogsPage,
     siteSettings,
     navbarLinks,
     footerLinks,
@@ -869,12 +889,14 @@ export async function getBlogDetailData(slug: string, locale: string = 'en') {
   const [
     blogPost,
     latestBlogs,
+    blogsPage,
     siteSettings,
     navbarLinks,
     footerLinks,
   ] = await Promise.all([
     getBlogBySlug(slug, locale),
     getLatestBlogs(locale, 4),
+    getBlogsPage(locale),
     getSiteSettings(locale),
     getNavbarLinks(locale),
     getFooterLinks(locale),
@@ -883,6 +905,7 @@ export async function getBlogDetailData(slug: string, locale: string = 'en') {
   return {
     blogPost,
     latestBlogs,
+    blogsPage,
     siteSettings,
     navbarLinks,
     footerLinks,

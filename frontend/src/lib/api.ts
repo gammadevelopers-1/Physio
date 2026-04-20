@@ -1755,6 +1755,10 @@ export const courseManagerApi = {
   completeCourse: (courseId: string) =>
     api.post<CourseDetailResponse>(`/courses/${courseId}/complete`, {}),
 
+  // Toggle featured flag (homepage showcase)
+  toggleFeatured: (courseId: string) =>
+    api.patch<{ id: string; isFeatured: boolean }>(`/courses/${courseId}/feature`, {}),
+
   // Request changes on a course (sends back to instructor)
   requestChanges: (courseId: string, note: string) =>
     api.post<CourseDetailResponse>(`/courses/${courseId}/request-changes`, { note }),
@@ -1811,6 +1815,23 @@ export const courseManagerApi = {
   // Course Ratings
   getAllCourseRatings: () =>
     api.get<Record<string, { avgRating: number; totalRatings: number }>>('/courses/ratings/all'),
+
+  getManagerRatingStats: () =>
+    api.get<{
+      overall: {
+        avgRating: number;
+        totalRatings: number;
+        totalCourses: number;
+        coursesWithReviews: number;
+      };
+      topCourses: Array<{
+        courseId: string;
+        title: string;
+        titleAr: string | null;
+        avgRating: number;
+        totalRatings: number;
+      }>;
+    }>('/courses/ratings/manager-stats'),
 
   getCourseRatings: (
     courseId: string,

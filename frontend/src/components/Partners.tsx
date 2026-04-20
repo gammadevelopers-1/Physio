@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useTranslations } from "next-intl";
 import { Marquee } from "@/components/ui/marquee";
 import type { Partner } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
@@ -12,8 +11,6 @@ interface PartnersProps {
 }
 
 const Partners = ({ partners = [], sectionTitle }: PartnersProps) => {
-  const t = useTranslations("partners");
-
   // Only use Strapi partners that have logos uploaded
   const partnersWithLogos = partners.filter((p) => p.logo?.url);
 
@@ -25,17 +22,17 @@ const Partners = ({ partners = [], sectionTitle }: PartnersProps) => {
   return (
     <section className="bg-[#EEF3F7] py-8 md:py-20 px-4 md:px-0 overflow-hidden">
       <div className="flex flex-col gap-6 md:gap-12 items-center">
-        {/* Title */}
-        <div className="flex justify-center md:px-16">
-          <h2
-            className="text-black md:text-[var(--on-surface-default)] font-semibold text-center leading-9 md:w-[560px]"
-            style={{
-              fontSize: "var(--typeface-font-styles-heading-h2)",
-            }}
-          >
-            {sectionTitle || t("title")}
-          </h2>
-        </div>
+        {/* Title — only renders when Strapi provides one */}
+        {sectionTitle && (
+          <div className="flex justify-center md:px-16">
+            <h2
+              className="text-black md:text-[var(--on-surface-default)] font-semibold text-center leading-9 md:w-[560px]"
+              style={{ fontSize: "var(--typeface-font-styles-heading-h2)" }}
+            >
+              {sectionTitle}
+            </h2>
+          </div>
+        )}
 
         {/* Desktop Partner Logos Marquee */}
         <Marquee

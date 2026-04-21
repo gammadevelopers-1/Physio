@@ -123,6 +123,14 @@
         }
       }
     },
+    "getInTouchLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "items": {
       "type": "component",
       "repeatable": true,

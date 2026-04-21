@@ -8,6 +8,7 @@ import { setRequestLocale } from "next-intl/server";
 import { getAboutPageData, getStrapiMediaUrl } from "@/lib/strapi";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { getBlocksAtPosition } from "@/lib/strapi/block-utils";
+import { resolveHref } from "@/lib/href-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
 
 export default async function AboutPage({
@@ -81,7 +82,7 @@ export default async function AboutPage({
                   <div className={`flex flex-row items-center gap-[10px] ${isRTL ? "flex-row-reverse justify-end" : ""}`}>
                     {data?.heroExploreButtonLabel && (
                       <Link
-                        href={`/${locale}/courses`}
+                        href={resolveHref(data?.heroExploreButtonLink, locale) || "#"}
                         className="flex items-center justify-center h-12 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl font-medium transition-colors text-sm md:text-base"
                       >
                         {data.heroExploreButtonLabel}
@@ -89,7 +90,7 @@ export default async function AboutPage({
                     )}
                     {data?.heroGetStartedButtonLabel && (
                       <Link
-                        href={`/${locale}/get-started`}
+                        href={resolveHref(data?.heroGetStartedButtonLink, locale) || "#"}
                         className="flex items-center justify-center h-12 px-5 py-2 bg-[var(--surface-intense)] text-[var(--on-surface-default)] rounded-xl font-medium border border-[var(--outline-subtle)] transition-colors hover:bg-[var(--surface-container-low)] text-sm md:text-base"
                       >
                         {data.heroGetStartedButtonLabel}
@@ -165,13 +166,13 @@ export default async function AboutPage({
             {data?.complianceButtonLabel && (
               <>
                 <Link
-                  href={`/${locale}/programs`}
+                  href={resolveHref(data?.complianceButtonLink, locale) || "#"}
                   className="w-full lg:w-auto lg:hidden flex items-center justify-center h-12 px-5 py-2 btn-gold rounded-xl font-medium transition-all duration-300 text-white"
                 >
                   {data.complianceButtonLabel}
                 </Link>
                 <Link
-                  href={`/${locale}/programs`}
+                  href={resolveHref(data?.complianceButtonLink, locale) || "#"}
                   className="hidden lg:flex items-center justify-center h-12 px-8 py-3 bg-transparent btn-gold rounded-xl font-medium border transition-all duration-300 text-white"
                 >
                   {data.complianceButtonLabel}

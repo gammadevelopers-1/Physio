@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ChevronRight, ChevronLeft, Home } from "lucide-react";
 import { useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { resolveHref } from "@/lib/href-utils";
 import type { CertificationsPage } from "@/lib/strapi/types";
 
 const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage | null }) => {
@@ -86,9 +87,12 @@ const CertificationsContent = ({ strapiData }: { strapiData?: CertificationsPage
                   </p>
                 )}
                 {heroButtonLabel && (
-                  <button className="h-[40px] px-5 py-2 text-white rounded-xl text-sm font-medium btn-gold">
+                  <Link
+                    href={resolveHref(strapiData?.heroButtonLink, locale) || "#"}
+                    className="h-[40px] px-5 py-2 text-white rounded-xl text-sm font-medium btn-gold inline-flex items-center justify-center"
+                  >
                     {heroButtonLabel}
-                  </button>
+                  </Link>
                 )}
               </div>
             )}

@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLocale } from "next-intl";
 import type { HomePage } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { resolveHref } from "@/lib/href-utils";
 
 interface CTASectionProps {
   data?: HomePage | null;
@@ -17,6 +19,7 @@ const CTASection = ({ data }: CTASectionProps) => {
   const title = data?.ctaTitle || "";
   const description = data?.ctaDescription || "";
   const buttonLabel = data?.ctaButtonLabel || "";
+  const buttonHref = resolveHref(data?.ctaButtonLink, locale);
 
   // Section hides when Strapi has nothing
   if (!title && !description && !buttonLabel && !ctaBackgroundImage) return null;
@@ -58,9 +61,12 @@ const CTASection = ({ data }: CTASectionProps) => {
         )}
 
         {buttonLabel && (
-          <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px]">
+          <Link
+            href={buttonHref || "#"}
+            className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium min-w-[80px] inline-flex items-center justify-center"
+          >
             {buttonLabel}
-          </button>
+          </Link>
         )}
       </div>
     </section>

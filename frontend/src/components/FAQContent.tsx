@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { useLocale } from "next-intl";
+import { resolveHref } from "@/lib/href-utils";
 import type { FAQPage } from "@/lib/strapi/types";
 
 interface FAQContentProps {
@@ -61,7 +62,7 @@ export default function FAQContent({ strapiData }: FAQContentProps) {
                 )}
                 {getInTouchLabel && (
                   <Link
-                    href={`/${locale}/contact`}
+                    href={resolveHref(strapiData?.getInTouchLink, locale) || "#"}
                     className="inline-flex items-center justify-center h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium w-fit"
                   >
                     {getInTouchLabel}

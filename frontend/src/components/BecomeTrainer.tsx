@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLocale } from "next-intl";
 import type { HomePage } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { resolveHref } from "@/lib/href-utils";
 
 interface BecomeTrainerProps {
   data?: HomePage | null;
@@ -18,6 +20,7 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
   const title = data?.becomeTrainerTitle || "";
   const description = data?.becomeTrainerDescription || "";
   const buttonLabel = data?.becomeTrainerButtonLabel || "";
+  const buttonHref = resolveHref(data?.becomeTrainerButtonLink, locale);
 
   // Section hides entirely when Strapi has no content at all
   const hasAny = !!(trainerImage || title || description || buttonLabel);
@@ -81,14 +84,15 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
                   )}
 
                   {buttonLabel && (
-                    <button
-                      className="h-[40px] px-[20px] py-[8px] text-white rounded-[12px] text-[14px] font-medium min-w-[80px]"
+                    <Link
+                      href={buttonHref || "#"}
+                      className="h-[40px] px-[20px] py-[8px] text-white rounded-[12px] text-[14px] font-medium min-w-[80px] inline-flex items-center justify-center"
                       style={{
                         background: "linear-gradient(to right, #a37f49, #6b4e24)",
                       }}
                     >
                       {buttonLabel}
-                    </button>
+                    </Link>
                   )}
                 </div>
               </div>
@@ -176,9 +180,12 @@ const BecomeTrainer = ({ data }: BecomeTrainerProps) => {
             )}
 
             {buttonLabel && (
-              <button className="h-12 px-5 py-2 text-white rounded-xl text-sm font-medium min-w-[80px] w-full btn-gold">
+              <Link
+                href={buttonHref || "#"}
+                className="h-12 px-5 py-2 text-white rounded-xl text-sm font-medium min-w-[80px] w-full btn-gold inline-flex items-center justify-center"
+              >
                 {buttonLabel}
-              </button>
+              </Link>
             )}
           </div>
         </div>

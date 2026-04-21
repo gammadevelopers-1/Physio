@@ -75,6 +75,7 @@ export interface HomePage {
   becomeTrainerTitle: string | null;
   becomeTrainerDescription: string | null;
   becomeTrainerButtonLabel: string | null;
+  becomeTrainerButtonLink: string | null;
   instructorsTitle: string | null;
   instructorsDescription: string | null;
   testimonialsTitle: string | null;
@@ -82,6 +83,7 @@ export interface HomePage {
   ctaTitle: string | null;
   ctaDescription: string | null;
   ctaButtonLabel: string | null;
+  ctaButtonLink: string | null;
   heroVideo: StrapiMedia | null;
   becomeTrainerImage: StrapiMedia | null;
   ctaBackgroundImage: StrapiMedia | null;
@@ -122,12 +124,15 @@ export interface AboutPage {
   heroTitle: string | null;
   heroDescription: string | null;
   heroExploreButtonLabel: string | null;
+  heroExploreButtonLink: string | null;
   heroGetStartedButtonLabel: string | null;
+  heroGetStartedButtonLink: string | null;
   heroImage: StrapiMedia | null;
   heroImageMobile: StrapiMedia | null;
   complianceTitle: string | null;
   complianceItems: AboutComplianceItem[] | null;
   complianceButtonLabel: string | null;
+  complianceButtonLink: string | null;
   learningTitle: string | null;
   learningSubtitle: string | null;
   learningCards: AboutLearningCardItem[] | null;
@@ -391,6 +396,7 @@ export interface CertificationsPage {
   heroTitle: string | null;
   heroDescription: string | null;
   heroButtonLabel: string | null;
+  heroButtonLink: string | null;
   nelcTitle: string | null;
   nelcDescription: string | null;
   nelcLicenseLabel: string | null;
@@ -540,6 +546,7 @@ export interface FAQPage {
   title: string;
   subtitle: string | null;
   getInTouchLabel: string | null;
+  getInTouchLink: string | null;
   items: FAQItem[];
   locale: string;
   createdAt: string;

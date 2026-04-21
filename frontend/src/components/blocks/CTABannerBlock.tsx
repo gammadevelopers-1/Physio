@@ -14,12 +14,15 @@ interface CTABannerBlockProps {
 }
 
 export function CTABannerBlock({ data }: CTABannerBlockProps) {
+  const primaryButton = data.buttons?.[0] ?? null;
+
   if (data.variant === "centered") {
     // CTASection expects a `data` prop shaped like HomePage.
     const ctaData: Partial<HomePage> = {
       ctaTitle: data.title,
       ctaDescription: data.description,
-      ctaButtonLabel: data.buttons?.[0]?.label ?? null,
+      ctaButtonLabel: primaryButton?.label ?? null,
+      ctaButtonLink: primaryButton?.url ?? null,
       ctaBackgroundImage: data.backgroundImage,
     };
 
@@ -31,7 +34,8 @@ export function CTABannerBlock({ data }: CTABannerBlockProps) {
   const trainerData: Partial<HomePage> = {
     becomeTrainerTitle: data.title,
     becomeTrainerDescription: data.description,
-    becomeTrainerButtonLabel: data.buttons?.[0]?.label ?? null,
+    becomeTrainerButtonLabel: primaryButton?.label ?? null,
+    becomeTrainerButtonLink: primaryButton?.url ?? null,
     becomeTrainerImage: data.image,
   };
 

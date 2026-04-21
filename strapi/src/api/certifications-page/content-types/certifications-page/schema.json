@@ -130,6 +130,14 @@
         }
       }
     },
+    "heroButtonLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "nelcTitle": {
       "type": "string",
       "pluginOptions": {

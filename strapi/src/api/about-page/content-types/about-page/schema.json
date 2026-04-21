@@ -121,11 +121,27 @@
         }
       }
     },
+    "heroExploreButtonLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "heroGetStartedButtonLabel": {
       "type": "string",
       "pluginOptions": {
         "i18n": {
           "localized": true
+        }
+      }
+    },
+    "heroGetStartedButtonLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
         }
       }
     },
@@ -165,6 +181,14 @@
       "pluginOptions": {
         "i18n": {
           "localized": true
+        }
+      }
+    },
+    "complianceButtonLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
         }
       }
     },

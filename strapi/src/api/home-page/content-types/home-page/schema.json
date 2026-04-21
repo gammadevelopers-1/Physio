@@ -218,6 +218,14 @@
         }
       }
     },
+    "becomeTrainerButtonLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "becomeTrainerImage": {
       "type": "media",
       "multiple": false,
@@ -279,6 +287,14 @@
       "pluginOptions": {
         "i18n": {
           "localized": true
+        }
+      }
+    },
+    "ctaButtonLink": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
         }
       }
     },

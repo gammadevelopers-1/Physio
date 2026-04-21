@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { resolveHref } from "@/lib/href-utils";
 import type { SideLoadedData } from "@/lib/strapi/types";
 
 interface ButtonLink {
@@ -86,7 +87,7 @@ export function HeroBannerBlock({ data }: HeroBannerBlockProps) {
               {data.buttons!.map((btn, i) => (
                 <Link
                   key={btn.id}
-                  href={btn.url || `/${locale}`}
+                  href={resolveHref(btn.url, locale) || `/${locale}`}
                   className={i === 0
                     ? "h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
                     : "h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap inline-flex items-center justify-center text-[#a37f49]"

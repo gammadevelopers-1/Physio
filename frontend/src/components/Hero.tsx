@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useLocale } from "next-intl";
 import type { HomePage } from "@/lib/strapi/types";
 import { getStrapiMediaUrl } from "@/lib/strapi/client";
+import { resolveHref } from "@/lib/href-utils";
 
 interface HeroProps {
   data?: HomePage | null;
@@ -25,6 +27,8 @@ const Hero = ({ data }: HeroProps) => {
   const description = data?.heroDescription || "";
   const button1Label = data?.heroButton1Label || "";
   const button2Label = data?.heroButton2Label || "";
+  const button1Href = resolveHref(data?.heroButton1Link, locale);
+  const button2Href = resolveHref(data?.heroButton2Link, locale);
 
   const hasAnyMobileContent = !!(titleMobile || description || button1Label || button2Label);
   const hasAnyDesktopContent = !!(title || titleLine2 || description || button1Label || button2Label);
@@ -105,19 +109,25 @@ const Hero = ({ data }: HeroProps) => {
               {hasButtons && (
                 <div className="flex gap-4 pt-8">
                   {button1Label && (
-                    <button className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap">
+                    <Link
+                      href={button1Href || "#"}
+                      className="h-12 px-5 py-2 btn-gold text-white rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
+                    >
                       {button1Label}
-                    </button>
+                    </Link>
                   )}
                   {button2Label && (
-                    <button className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
+                    <Link
+                      href={button2Href || "#"}
+                      className="h-12 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap inline-flex items-center justify-center"
+                    >
                       <span
                         className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
                         style={{ WebkitTextFillColor: "transparent" }}
                       >
                         {button2Label}
                       </span>
-                    </button>
+                    </Link>
                   )}
                 </div>
               )}
@@ -151,19 +161,25 @@ const Hero = ({ data }: HeroProps) => {
                   {hasButtons && (
                     <div className="flex gap-4">
                       {button1Label && (
-                        <button className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium whitespace-nowrap">
+                        <Link
+                          href={button1Href || "#"}
+                          className="h-10 px-5 py-2 btn-gold text-[var(--on-surface-inverse)] rounded-xl text-sm font-medium whitespace-nowrap inline-flex items-center justify-center"
+                        >
                           {button1Label}
-                        </button>
+                        </Link>
                       )}
                       {button2Label && (
-                        <button className="h-10 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap">
+                        <Link
+                          href={button2Href || "#"}
+                          className="h-10 px-5 py-2 border border-[var(--outline-default)] rounded-xl text-sm font-medium bg-transparent whitespace-nowrap inline-flex items-center justify-center"
+                        >
                           <span
                             className="bg-gradient-to-r from-[#ab842f] to-[#8e690a] bg-clip-text"
                             style={{ WebkitTextFillColor: "transparent" }}
                           >
                             {button2Label}
                           </span>
-                        </button>
+                        </Link>
                       )}
                     </div>
                   )}

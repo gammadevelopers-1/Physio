@@ -118,7 +118,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
         <div className="flex items-center gap-8">
           {/* Logo — from Strapi site settings, fallback to local */}
           <Link
-            href={`/${locale}/dashboard/manager`}
+            href={`/${locale}`}
             className="relative h-10 w-10 lg:h-12 lg:w-12 shrink-0"
           >
             <Image

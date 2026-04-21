@@ -14,7 +14,7 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params;
   const {
     blogPosts,
-    featuredBlog,
+    featuredBlogs,
     blogCategories,
     blogsPage,
     siteSettings,
@@ -27,7 +27,7 @@ export default async function BlogsPage({ params }: { params: Promise<{ locale: 
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} />
       <BlogsPageContent
         blogPosts={blogPosts}
-        featuredBlog={featuredBlog}
+        featuredBlogs={featuredBlogs}
         blogCategories={blogCategories}
         blogsPage={blogsPage}
       />

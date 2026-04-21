@@ -105,13 +105,15 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
           {/* Separator - Hidden on mobile/tablet */}
           <div className="hidden lg:block h-6 w-px bg-[var(--on-surface-variant)] opacity-30" />
 
-          {/* Search Icon - Hidden on mobile/tablet */}
-          <Link
-            href={`/${locale}/search`}
-            className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-          >
-            <Search className="w-5 h-5" strokeWidth={1.67} />
-          </Link>
+          {/* Search Icon - Hidden on mobile/tablet; gated by Strapi toggle */}
+          {siteSettings?.showSearchBar !== false && (
+            <Link
+              href={`/${locale}/search`}
+              className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            >
+              <Search className="w-5 h-5" strokeWidth={1.67} />
+            </Link>
+          )}
 
           {/* Cart Icon - Hidden on mobile/tablet */}
           <Link
@@ -171,13 +173,15 @@ const Navbar = ({ siteSettings, navLinks = [] }: NavbarProps) => {
 
             {/* Mobile Action Buttons */}
             <div className="flex items-center gap-4 pt-4">
-              <Link
-                href={`/${locale}/search`}
-                className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Search className="w-5 h-5" strokeWidth={1.67} />
-              </Link>
+              {siteSettings?.showSearchBar !== false && (
+                <Link
+                  href={`/${locale}/search`}
+                  className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Search className="w-5 h-5" strokeWidth={1.67} />
+                </Link>
+              )}
               <Link
                 href={`/${locale}/checkout`}
                 className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"

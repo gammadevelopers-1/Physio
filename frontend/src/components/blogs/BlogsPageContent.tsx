@@ -5,7 +5,7 @@ import { useLocale } from "next-intl";
 import {
   BlogCard,
   MobileBlogCard,
-  FeaturedBlog,
+  FeaturedBlogCarousel,
   BlogPagination,
   BlogFilters,
 } from "@/components/blogs";
@@ -13,12 +13,12 @@ import type { StrapiBlogPost, StrapiBlogCategory, BlogsPage } from "@/lib/strapi
 
 interface BlogsPageContentProps {
   blogPosts: StrapiBlogPost[];
-  featuredBlog: StrapiBlogPost | null;
+  featuredBlogs: StrapiBlogPost[];
   blogCategories: StrapiBlogCategory[];
   blogsPage?: BlogsPage | null;
 }
 
-const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories, blogsPage }: BlogsPageContentProps) => {
+const BlogsPageContent = ({ blogPosts, featuredBlogs, blogCategories, blogsPage }: BlogsPageContentProps) => {
   const locale = useLocale();
   const isRTL = locale === "ar";
 
@@ -90,8 +90,8 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories, blogsPage }
                 {featuredSubtitle}
               </p>
             )}
-            {featuredBlog ? (
-              <FeaturedBlog post={featuredBlog} isRTL={isRTL} />
+            {featuredBlogs.length > 0 ? (
+              <FeaturedBlogCarousel posts={featuredBlogs} isRTL={isRTL} />
             ) : (
               <div className="text-center py-12 text-[var(--on-surface-variant)] bg-[#F4F4F5] rounded-2xl">
                 {isRTL ? "لا توجد مدونات مميزة حالياً" : "No featured blog available"}
@@ -166,8 +166,8 @@ const BlogsPageContent = ({ blogPosts, featuredBlog, blogCategories, blogsPage }
               {featuredSubtitle}
             </p>
           )}
-          {featuredBlog ? (
-            <FeaturedBlog post={featuredBlog} isRTL={isRTL} />
+          {featuredBlogs.length > 0 ? (
+            <FeaturedBlogCarousel posts={featuredBlogs} isRTL={isRTL} />
           ) : (
             <div className="text-center py-8 text-[var(--on-surface-variant)] bg-[#F4F4F5] rounded-xl text-sm">
               {isRTL ? "لا توجد مدونات مميزة حالياً" : "No featured blog available"}

@@ -758,6 +758,27 @@ export async function getFeaturedBlog(locale: string = 'en'): Promise<StrapiBlog
 }
 
 /**
+ * Fetch ALL featured blog posts (for hero carousel).
+ * Newest-published first, capped at 10 to keep the hero manageable.
+ */
+export async function getFeaturedBlogs(locale: string = 'en'): Promise<StrapiBlogPost[]> {
+  const response = await fetchStrapi<StrapiResponse<StrapiBlogPost[]>>(
+    '/blog-posts',
+    {
+      params: {
+        locale,
+        'filters[featured][$eq]': 'true',
+        'sort[0]': 'publishedDate:desc',
+        'populate[category]': 'true',
+        'populate[mainImage]': 'true',
+        'pagination[pageSize]': '10',
+      },
+    }
+  );
+  return response?.data || [];
+}
+
+/**
  * Fetch all blog categories
  */
 export async function getBlogCategories(locale: string = 'en'): Promise<StrapiBlogCategory[]> {
@@ -855,7 +876,7 @@ export async function getBlogsPage(locale: string = 'en'): Promise<BlogsPage | n
 export async function getBlogsPageData(locale: string = 'en') {
   const [
     blogPosts,
-    featuredBlog,
+    featuredBlogs,
     blogCategories,
     blogsPage,
     siteSettings,
@@ -863,7 +884,7 @@ export async function getBlogsPageData(locale: string = 'en') {
     footerLinks,
   ] = await Promise.all([
     getBlogPosts(locale),
-    getFeaturedBlog(locale),
+    getFeaturedBlogs(locale),
     getBlogCategories(locale),
     getBlogsPage(locale),
     getSiteSettings(locale),
@@ -873,7 +894,7 @@ export async function getBlogsPageData(locale: string = 'en') {
 
   return {
     blogPosts,
-    featuredBlog,
+    featuredBlogs,
     blogCategories,
     blogsPage,
     siteSettings,

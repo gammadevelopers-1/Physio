@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Globe,
   Search,
-  ShoppingCart,
   Menu,
   X,
   LogOut,
@@ -29,6 +28,8 @@ import {
 import { useAuth } from "@/contexts";
 import DashboardSearchOverlay from "@/components/shared/DashboardSearchOverlay";
 import { RoleSwitcherDropdownItems, RoleSwitcherMobileSection } from "@/components/shared/RoleSwitcher";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { getStrapiMediaUrl } from "@/lib/strapi/client";
 
 interface AdminProfile {
   name: string;
@@ -50,6 +51,11 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
   const pathname = usePathname();
   const isRTL = locale === "ar";
   const { logout } = useAuth();
+  const { settings: siteSettings } = useSiteSettings();
+  const logoUrl = siteSettings?.logo?.url
+    ? getStrapiMediaUrl(siteSettings.logo.url)
+    : "/images/logo.png";
+  const showSearch = siteSettings?.showSearchBar !== false;
 
   // Dashboard navigation items for mobile menu
   const dashboardNavItems = [
@@ -121,64 +127,21 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
       <div className="flex items-center justify-between w-full">
         {/* Logo + Nav Links */}
         <div className="flex items-center gap-8">
-          {/* Logo */}
+          {/* Logo — from Strapi site settings, fallback to local */}
           <Link
-            href={`/${locale}`}
+            href={`/${locale}/dashboard/admin`}
             className="relative h-10 w-10 lg:h-12 lg:w-12 shrink-0"
           >
             <Image
-              src="/images/logo.png"
-              alt="PhysioGuidance Logo"
+              src={logoUrl}
+              alt={siteSettings?.siteName || "Logo"}
               width={48}
               height={48}
               className="object-contain"
+              unoptimized={logoUrl.startsWith("http")}
             />
           </Link>
 
-          {/* Nav Links - Hidden on mobile/tablet */}
-          <div className="hidden lg:flex items-center gap-8">
-            <Link
-              href={`/${locale}`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("home")}
-            </Link>
-
-            <Link
-              href={`/${locale}/courses`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("courses")}
-            </Link>
-
-            <Link
-              href={`/${locale}/become-trainer`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("becomeTrainer")}
-            </Link>
-
-            <Link
-              href={`/${locale}/archived`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("archive")}
-            </Link>
-
-            <Link
-              href={`/${locale}/blogs`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("blogs")}
-            </Link>
-
-            <Link
-              href={`/${locale}/about`}
-              className="text-[var(--on-surface-variant)] text-base leading-6 hover:text-[var(--on-surface-default)] transition-colors whitespace-nowrap"
-            >
-              {t("about")}
-            </Link>
-          </div>
         </div>
 
         {/* Actions */}
@@ -203,21 +166,15 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
             </span>
           </button>
 
-          {/* Search Icon - Hidden on mobile */}
-          <button
-            onClick={() => setIsSearchOpen(true)}
-            className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-          >
-            <Search className="w-5 h-5" strokeWidth={1.67} />
-          </button>
-
-          {/* Cart Icon - Hidden on mobile */}
-          <Link
-            href={`/${locale}/checkout`}
-            className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-          >
-            <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
-          </Link>
+          {/* Search Icon - Hidden on mobile; gated by Strapi toggle */}
+          {showSearch && (
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="hidden lg:flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+            >
+              <Search className="w-5 h-5" strokeWidth={1.67} />
+            </button>
+          )}
 
           {/* User Avatar with Dropdown - Hidden on mobile */}
           <div className="hidden lg:block relative">
@@ -363,53 +320,17 @@ const AdminNavbar = ({ admin }: AdminNavbarProps) => {
             {/* Divider */}
             <div className="border-t border-[var(--outline-subtle)] my-2" />
 
-            {/* Site Navigation Links */}
-            <div className="py-2">
-              <p className="px-3 py-2 text-xs font-medium text-[#9CA3AF] uppercase">
-                {t("home")}
-              </p>
-              <Link
-                href={`/${locale}`}
-                className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span className="text-sm">{t("home")}</span>
-              </Link>
-              <Link
-                href={`/${locale}/courses`}
-                className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span className="text-sm">{t("courses")}</span>
-              </Link>
-              <Link
-                href={`/${locale}/about`}
-                className="flex items-center gap-3 px-3 py-2.5 text-[#4B5563] hover:bg-[#F9FAFB] rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span className="text-sm">{t("about")}</span>
-              </Link>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-[var(--outline-subtle)] my-2" />
-
             {/* Mobile Action Buttons */}
-            <div className="flex items-center gap-4 py-3">
-              <button
-                onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
-                className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-              >
-                <Search className="w-5 h-5" strokeWidth={1.67} />
-              </button>
-              <Link
-                href={`/${locale}/checkout`}
-                className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <ShoppingCart className="w-5 h-5" strokeWidth={1.67} />
-              </Link>
-            </div>
+            {showSearch && (
+              <div className="flex items-center gap-4 py-3">
+                <button
+                  onClick={() => { setIsSearchOpen(true); setIsMobileMenuOpen(false); }}
+                  className="flex items-center justify-center text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)] transition-colors"
+                >
+                  <Search className="w-5 h-5" strokeWidth={1.67} />
+                </button>
+              </div>
+            )}
 
             {/* Role Switcher */}
             <RoleSwitcherMobileSection onSwitch={() => setIsMobileMenuOpen(false)} />

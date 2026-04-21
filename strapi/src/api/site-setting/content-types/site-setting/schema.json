@@ -50,6 +50,11 @@
     "whatsappNumber": {
       "type": "string"
     },
+    "showSearchBar": {
+      "type": "boolean",
+      "default": true,
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
     "instagramUrl": {
       "type": "string"
     },

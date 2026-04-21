@@ -154,6 +154,7 @@ export interface SiteSettings {
   footerDescription: string | null;
   copyrightText: string | null;
   whatsappNumber: string | null;
+  showSearchBar: boolean | null;
   instagramUrl: string | null;
   twitterUrl: string | null;
   linkedinUrl: string | null;

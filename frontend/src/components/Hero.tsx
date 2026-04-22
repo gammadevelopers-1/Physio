@@ -21,6 +21,15 @@ const Hero = ({ data }: HeroProps) => {
   const videoUrl = data?.heroVideo?.url ? getStrapiMediaUrl(data.heroVideo.url) : null;
   const heroPartnerLogos = (data?.heroPartnerLogos || []).filter((logo) => logo.url);
 
+  const heroVideoMode = data?.heroVideoMode || "banner";
+  const videoContainerClass =
+    heroVideoMode === "banner"
+      ? "aspect-[1920/450]"
+      : heroVideoMode === "widescreen"
+        ? "aspect-[16/9]"
+        : "h-[370px] lg:h-[600px]";
+  const videoObjectFitClass = heroVideoMode === "fullFit" ? "object-contain" : "object-cover";
+
   const titleMobile = data?.heroTitleMobile || "";
   const title = data?.heroTitle || "";
   const titleLine2 = data?.heroTitleLine2 || "";
@@ -37,14 +46,14 @@ const Hero = ({ data }: HeroProps) => {
   return (
     <section className="relative w-full">
       {/* Video Section - Responsive height */}
-      <div className="relative h-[370px] lg:h-[600px] w-full overflow-hidden bg-[var(--surface-intense)]">
+      <div className={`relative ${videoContainerClass} w-full overflow-hidden bg-[var(--surface-intense)]`}>
         {videoUrl && (
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            className={`absolute inset-0 w-full h-full ${videoObjectFitClass}`}
           >
             <source src={videoUrl} type="video/mp4" />
           </video>

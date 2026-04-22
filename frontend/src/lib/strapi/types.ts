@@ -85,6 +85,7 @@ export interface HomePage {
   ctaButtonLabel: string | null;
   ctaButtonLink: string | null;
   heroVideo: StrapiMedia | null;
+  heroVideoMode: "banner" | "widescreen" | "fullFit" | null;
   becomeTrainerImage: StrapiMedia | null;
   ctaBackgroundImage: StrapiMedia | null;
   heroPartnerLogos: StrapiMedia[] | null;

@@ -106,6 +106,15 @@
         "videos"
       ]
     },
+    "heroVideoMode": {
+      "type": "enumeration",
+      "enum": [
+        "banner",
+        "widescreen",
+        "fullFit"
+      ],
+      "default": "banner"
+    },
     "heroTitle": {
       "type": "string",
       "required": true,

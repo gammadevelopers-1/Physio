@@ -98,12 +98,12 @@ export default function TrustedDevicesSection({
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2
-            className="font-semibold text-[#171717] mb-0.5"
+            className="font-semibold text-[var(--color-text-primary)] mb-0.5"
             style={{ fontSize: "16px" }}
           >
             {t("trustedDevices.title")}
           </h2>
-          <p className="text-[#737373]" style={{ fontSize: "13px" }}>
+          <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "13px" }}>
             {t("trustedDevices.description")}
           </p>
         </div>
@@ -113,7 +113,7 @@ export default function TrustedDevicesSection({
             {showRevokeAllConfirm ? (
               <div className="flex flex-col items-end gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[#737373] text-xs hidden sm:inline">
+                  <span className="text-[var(--color-text-secondary)] text-xs hidden sm:inline">
                     {t("trustedDevices.revokeAllConfirm")}
                   </span>
                   <button
@@ -194,7 +194,7 @@ export default function TrustedDevicesSection({
             <Smartphone className="w-7 h-7 text-gray-300" />
           </div>
           <p
-            className="text-[#737373] font-medium mb-1"
+            className="text-[var(--color-text-secondary)] font-medium mb-1"
             style={{ fontSize: "14px" }}
           >
             {t("trustedDevices.noDevices")}
@@ -217,7 +217,7 @@ export default function TrustedDevicesSection({
               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                 device.isCurrentDevice
                   ? "bg-green-100 text-green-600"
-                  : "bg-[#f8fafc] text-[#737373]"
+                  : "bg-[#f8fafc] text-[var(--color-text-secondary)]"
               }`}>
                 {getDeviceIcon(device.deviceName)}
               </div>
@@ -225,7 +225,7 @@ export default function TrustedDevicesSection({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p
-                    className="font-medium text-[#171717] truncate"
+                    className="font-medium text-[var(--color-text-primary)] truncate"
                     style={{ fontSize: "14px" }}
                   >
                     {device.deviceName || "Unknown Device"}

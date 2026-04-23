@@ -358,10 +358,10 @@ function CertificateVerifyForm({
         {(titleLabel || subtitleLabel) && (
           <div className="flex flex-col gap-1 mb-5">
             {titleLabel && (
-              <h3 className="font-semibold text-[#171717] text-[16px]">{titleLabel}</h3>
+              <h3 className="font-semibold text-[var(--color-text-primary)] text-[16px]">{titleLabel}</h3>
             )}
             {subtitleLabel && (
-              <p className="text-[#737373] text-[14px]">{subtitleLabel}</p>
+              <p className="text-[var(--color-text-secondary)] text-[14px]">{subtitleLabel}</p>
             )}
           </div>
         )}
@@ -372,7 +372,7 @@ function CertificateVerifyForm({
             onChange={(e) => setCertInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             placeholder={placeholderLabel || ""}
-            className={`w-full h-[48px] px-4 border border-[#C8D5E1] rounded-lg text-[14px] text-[#171717] placeholder:text-[#C8D5E1] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "text-right" : "text-left"}`}
+            className={`w-full h-[48px] px-4 border border-[#C8D5E1] rounded-lg text-[14px] text-[var(--color-text-primary)] placeholder:text-[#C8D5E1] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "text-right" : "text-left"}`}
             dir={isRTL ? "rtl" : "ltr"}
           />
           {buttonLabel && (

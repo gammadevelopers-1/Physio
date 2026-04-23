@@ -219,7 +219,7 @@ function VerifyForm() {
 
               {/* Title */}
               <h1
-                className="text-center font-semibold text-[#171717] mb-2"
+                className="text-center font-semibold text-[var(--color-text-primary)] mb-2"
                 style={{ fontSize: "20px", lineHeight: "28px" }}
               >
                 {t("title")}
@@ -228,7 +228,7 @@ function VerifyForm() {
               {/* Subtitle with email */}
               <div className="text-center mb-8">
                 <p
-                  className="text-[#737373] mb-1"
+                  className="text-[var(--color-text-secondary)] mb-1"
                   style={{ fontSize: "14px", lineHeight: "20px" }}
                 >
                   {t("subtitle")}
@@ -322,7 +322,7 @@ function VerifyForm() {
               <div className="text-center mb-4">
                 {resendTimer > 0 ? (
                   <p
-                    className="text-[#737373]"
+                    className="text-[var(--color-text-secondary)]"
                     style={{ fontSize: "14px" }}
                   >
                     {t("resendIn", { seconds: resendTimer })}
@@ -345,7 +345,7 @@ function VerifyForm() {
                 <button
                   type="button"
                   onClick={handleBackToLogin}
-                  className="inline-flex items-center gap-1.5 text-[#737373] hover:text-[#1a1a1a] transition-colors"
+                  className="inline-flex items-center gap-1.5 text-[var(--color-text-secondary)] hover:text-[#1a1a1a] transition-colors"
                   style={{ fontSize: "14px" }}
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />

@@ -78,13 +78,13 @@ export default function ForgotPasswordPage() {
                 {/* Header */}
                 <div className="flex flex-col gap-1 mb-6">
                   <h1
-                    className="font-semibold text-[#171717]"
+                    className="font-semibold text-[var(--color-text-primary)]"
                     style={{ fontSize: "16px", lineHeight: "24px" }}
                   >
                     {t("title")}
                   </h1>
                   <p
-                    className="text-[#737373]"
+                    className="text-[var(--color-text-secondary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
                     {t("description")}

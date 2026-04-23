@@ -44,7 +44,7 @@ export default function SecuritySettingsContent() {
       {/* Back button */}
       <button
         onClick={() => router.back()}
-        className="inline-flex items-center gap-1.5 text-[#737373] hover:text-[#1a1a1a] transition-colors mb-6"
+        className="inline-flex items-center gap-1.5 text-[var(--color-text-secondary)] hover:text-[#1a1a1a] transition-colors mb-6"
         style={{ fontSize: "14px" }}
       >
         <ArrowLeft className="w-4 h-4" />
@@ -54,12 +54,12 @@ export default function SecuritySettingsContent() {
       {/* Page Header */}
       <div className="mb-8">
         <h1
-          className="font-semibold text-[#171717] mb-1"
+          className="font-semibold text-[var(--color-text-primary)] mb-1"
           style={{ fontSize: "24px", lineHeight: "32px" }}
         >
           {t("title")}
         </h1>
-        <p className="text-[#737373]" style={{ fontSize: "14px" }}>
+        <p className="text-[var(--color-text-secondary)]" style={{ fontSize: "14px" }}>
           {t("description")}
         </p>
       </div>

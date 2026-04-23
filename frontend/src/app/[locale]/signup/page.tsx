@@ -152,13 +152,13 @@ function SignUpForm() {
                 {/* Header */}
                 <div className="flex flex-col gap-1 mb-6">
                   <h1
-                    className="font-semibold text-[#171717]"
+                    className="font-semibold text-[var(--color-text-primary)]"
                     style={{ fontSize: "16px", lineHeight: "24px" }}
                   >
                     {t("title")}
                   </h1>
                   <p
-                    className="text-[#737373]"
+                    className="text-[var(--color-text-secondary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
                     {t("description")}
@@ -401,14 +401,14 @@ function SignUpForm() {
                 {/* Footer Link */}
                 <div className="mt-6 text-center">
                   <span
-                    className="text-[#171717]"
+                    className="text-[var(--color-text-primary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
                     {t("footer.hasAccount")}{" "}
                   </span>
                   <Link
                     href={`/${locale}/signin${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ''}`}
-                    className="text-[#171717] underline hover:text-[var(--on-surface-primary)]"
+                    className="text-[var(--color-text-primary)] underline hover:text-[var(--on-surface-primary)]"
                     style={{ fontSize: "14px", lineHeight: "20px" }}
                   >
                     {t("footer.logIn")}

@@ -251,7 +251,8 @@
       "Bash(STRAPI_URL=\"https://physioguidance-cms-gw6zn2f4sq-uc.a.run.app\" STRAPI_API_TOKEN=\"3cc9554e5dbfb5a7c4920fafbb7904051fbf43b0cc52b6b7cba0bd94f44dcd2310a4b3b99158ef88ecee78930761f994b744bd12aa5fa4f3dd074c1f09fde5c0b3568ac0f69e65b75e7b3124a70c0defb45177ffd76b8c4d4810ac09eeb05ead4d10d8572e0ff1c0ccc2369c6e5cef90445c10bc8d2fef3442d59321b231fa22\" node scripts/seed-courses-page-labels.js)",
       "Bash(awk -F: '$1 <= 895')",
       "Bash(bash *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(awk -F: '{print tolower\\($NF\\)}')"
     ]
   }
 }

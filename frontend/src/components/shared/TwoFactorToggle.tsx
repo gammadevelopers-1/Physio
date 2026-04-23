@@ -37,7 +37,7 @@ export default function TwoFactorToggle({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <h2
-            className="font-semibold text-[#171717]"
+            className="font-semibold text-[var(--color-text-primary)]"
             style={{ fontSize: "16px" }}
           >
             {t("twoFactor.title")}
@@ -53,7 +53,7 @@ export default function TwoFactorToggle({
           </span>
         </div>
         <p
-          className="text-[#737373] mb-4"
+          className="text-[var(--color-text-secondary)] mb-4"
           style={{ fontSize: "13px", lineHeight: "1.5" }}
         >
           {t("twoFactor.description")}

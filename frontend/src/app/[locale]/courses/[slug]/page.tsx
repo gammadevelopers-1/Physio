@@ -32,7 +32,7 @@ export default async function CourseDetailPage({
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-white">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />

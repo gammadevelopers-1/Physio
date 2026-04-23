@@ -298,7 +298,7 @@ const ContentReviewContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen">
+        <div className="bg-[var(--color-surface-page)] min-h-screen">
           <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="hidden lg:block lg:flex-shrink-0">
@@ -331,7 +331,7 @@ const ContentReviewContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
+        <div className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
@@ -352,7 +352,7 @@ const ContentReviewContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -563,7 +563,7 @@ const ContentReviewContent = () => {
                         <col className="w-[120px]" />
                       </colgroup>
                       <thead>
-                        <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                        <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                           <th className="px-2 py-3">
                             <input
                               type="checkbox"
@@ -605,7 +605,7 @@ const ContentReviewContent = () => {
                           return (
                             <Fragment key={item.id}>
                               <tr
-                                className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                                className="hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                                 onClick={() => toggleExpand(item.id)}
                               >
                                 <td className="px-2 py-3" onClick={(e) => e.stopPropagation()}>
@@ -740,7 +740,7 @@ const ContentReviewContent = () => {
                               {/* Expandable Compliance Checklist Row */}
                               {isExpanded && (
                                 <tr>
-                                  <td colSpan={6} className="bg-[#F9FAFB] px-4 py-4">
+                                  <td colSpan={6} className="bg-[var(--color-surface-page)] px-4 py-4">
                                     {/* Previous review note */}
                                     {item.reviewNote && (
                                       <div className="mb-4 p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg">

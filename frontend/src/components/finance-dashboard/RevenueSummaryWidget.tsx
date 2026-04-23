@@ -184,7 +184,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
         {/* Breakdown Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Gateway Breakdown */}
-          <div className="bg-[#F9FAFB] rounded-xl p-4">
+          <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
             <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("revenueSummary.byGateway")}
             </h4>
@@ -214,7 +214,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
           </div>
 
           {/* Top Courses */}
-          <div className="bg-[#F9FAFB] rounded-xl p-4">
+          <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
             <h4 className="text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
               {t("revenueSummary.topCourses")}
             </h4>

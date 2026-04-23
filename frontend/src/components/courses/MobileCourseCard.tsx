@@ -72,7 +72,7 @@ const MobileCourseCard = ({
       className={`flex flex-col gap-4 w-full group ${isRTL ? "items-end" : "items-start"}`}
     >
       {/* Card Header */}
-      <div className="relative bg-[var(--color-surface-page)] rounded-2xl p-4 h-[182.84px] flex flex-col justify-between overflow-hidden w-full">
+      <div className="relative bg-[var(--color-surface-card)] rounded-2xl p-4 h-[182.84px] flex flex-col justify-between overflow-hidden w-full">
         {/* CME Badge */}
         {course.isCmeAccredited && (
           <div

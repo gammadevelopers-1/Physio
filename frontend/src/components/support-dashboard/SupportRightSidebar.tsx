@@ -116,19 +116,19 @@ const SupportRightSidebar = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+          <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">156</p>
             <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.responses")}
             </p>
           </div>
-          <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+          <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
             <p className="text-sm font-semibold text-[#16A34A]">+42</p>
             <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.nps")}
             </p>
           </div>
-          <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+          <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">4.7</p>
             <p className="text-[10px] text-[var(--color-text-secondary)]">
               {t("csatSection.avgRating")}
@@ -240,7 +240,7 @@ const SupportRightSidebar = () => {
             return (
               <button
                 key={action.id}
-                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t(action.labelKey)}

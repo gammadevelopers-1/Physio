@@ -186,7 +186,7 @@ const KnowledgeBaseContent = () => {
       <SupportNavbar profile={profile} />
 
       {/* Main Container */}
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
@@ -268,7 +268,7 @@ const KnowledgeBaseContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[var(--color-text-primary)] text-white"
-                        : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                        : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     {tab.label}
@@ -311,11 +311,11 @@ const KnowledgeBaseContent = () => {
                           <div
                             className={`absolute top-full mt-1 ${isRTL ? "left-0" : "right-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10`}
                           >
-                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
+                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
                               <Eye className="w-4 h-4" />
                               {t("kbPage.actions.view")}
                             </button>
-                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
+                            <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
                               <Pencil className="w-4 h-4" />
                               {t("kbPage.actions.edit")}
                             </button>

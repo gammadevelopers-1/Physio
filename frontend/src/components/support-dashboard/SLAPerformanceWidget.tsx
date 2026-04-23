@@ -95,7 +95,7 @@ const SLAPerformanceWidget = () => {
         {/* SLA Metrics Grid */}
         <div className="grid grid-cols-2 gap-3 mb-5">
           {slaMetrics.map((metric) => (
-            <div key={metric.id} className="bg-[#F9FAFB] rounded-lg p-3">
+            <div key={metric.id} className="bg-[var(--color-surface-page)] rounded-lg p-3">
               <p className="text-[11px] text-[var(--color-text-secondary)] mb-1">{metric.label}</p>
               <div className="flex items-baseline justify-between mb-2">
                 <span
@@ -126,7 +126,7 @@ const SLAPerformanceWidget = () => {
             {agents.map((agent) => (
               <div
                 key={agent.id}
-                className="flex items-center gap-3 p-2.5 bg-[#F9FAFB] rounded-lg border border-[#F3F4F6]"
+                className="flex items-center gap-3 p-2.5 bg-[var(--color-surface-page)] rounded-lg border border-[#F3F4F6]"
               >
                 {/* Avatar */}
                 <div className="relative flex-shrink-0">

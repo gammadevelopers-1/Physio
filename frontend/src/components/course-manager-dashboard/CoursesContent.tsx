@@ -224,7 +224,7 @@ const CoursesContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -694,14 +694,14 @@ const CoursesContent = () => {
                             </Link>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
-                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                               aria-label={tA("viewAnalytics")}
                             >
                               <BarChart3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
-                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                               aria-label={tA("courseSettings")}
                             >
                               <Settings className="w-4 h-4" />

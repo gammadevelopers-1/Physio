@@ -376,7 +376,7 @@ const TAAttendanceView = ({
           )}
 
           {/* Summary */}
-          <div className="flex items-center gap-4 px-4 py-3 border-b border-[var(--color-border)] bg-[#F9FAFB] flex-wrap">
+          <div className="flex items-center gap-4 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-page)] flex-wrap">
             <span className="text-xs font-medium text-[var(--color-text-secondary)]">{t("attendance.summary")}:</span>
             <span className="text-xs text-[#16A34A]">{presentCount} {t("attendance.present")}</span>
             <span className="text-xs text-[#EF4444]">{absentCount} {t("attendance.absent")}</span>
@@ -384,7 +384,7 @@ const TAAttendanceView = ({
 
           {/* Bulk actions / lock banner */}
           {isVerifiedReadOnly ? (
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
               <Lock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
               <span className="text-xs text-[var(--color-text-secondary)]">
                 {attendanceLocked

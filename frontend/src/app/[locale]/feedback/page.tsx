@@ -28,7 +28,7 @@ export default async function FeedbackPage({
   const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
 
   return (
-    <main id="main-content" className="min-h-screen bg-[var(--surface)] pb-16 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)] pb-16 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <FeedbackForm strapiData={feedbackPage} />

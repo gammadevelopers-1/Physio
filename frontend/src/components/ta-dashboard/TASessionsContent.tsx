@@ -265,7 +265,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {(session.status === "live" || session.status === "ended" || session.status === "completed") && (
             <button
               onClick={() => onViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[var(--color-surface-page)] transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
               {t("sessions.viewAttendance")}
@@ -274,7 +274,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           {session.assessmentId && (
             <button
               onClick={() => onViewSubmissions(session.assessmentId!)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-xs font-medium hover:bg-[var(--color-surface-page)] transition-colors"
             >
               <FileText className="w-3.5 h-3.5" />
               {t("sessions.viewSubmissions")}
@@ -437,7 +437,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
+          <div className="flex items-center gap-4 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
             <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
               <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
               {t("sessions.scheduled")}
@@ -467,7 +467,7 @@ const TASessionsContent = ({ onViewAttendance, onViewSubmissions }: TASessionsCo
 
             {/* Empty cells */}
             {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[#F9FAFB]" />
+              <div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[var(--color-surface-page)]" />
             ))}
 
             {/* Days */}

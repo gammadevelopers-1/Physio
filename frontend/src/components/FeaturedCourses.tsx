@@ -49,7 +49,7 @@ const FeaturedCourses = ({ sectionData }: FeaturedCoursesProps) => {
   }
 
   return (
-    <section className="bg-white px-4 xl:px-[64px] py-16 xl:py-[96px] overflow-hidden">
+    <section className="bg-[var(--color-surface-card)] px-4 xl:px-[64px] py-16 xl:py-[96px] overflow-hidden">
       <div className="flex flex-col gap-5 xl:gap-[40px] items-center justify-center w-full max-w-[1440px] mx-auto">
         {/* Section Title - Desktop (1280px+) */}
         {(title || description) && (

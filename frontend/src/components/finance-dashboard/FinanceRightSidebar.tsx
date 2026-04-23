@@ -195,7 +195,7 @@ const FinanceRightSidebar = ({
           {coupons.map((coupon) => (
             <div
               key={coupon.id}
-              className="flex items-center justify-between p-2.5 bg-[#F9FAFB] rounded-lg border border-[#F3F4F6]"
+              className="flex items-center justify-between p-2.5 bg-[var(--color-surface-page)] rounded-lg border border-[#F3F4F6]"
             >
               <div>
                 <p className="text-[13px] font-medium text-[var(--color-text-secondary)]">
@@ -233,19 +233,19 @@ const FinanceRightSidebar = ({
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <FileText className="w-3.5 h-3.5" />
             {t("quickActions.createInvoice")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <BarChart3 className="w-3.5 h-3.5" />
             {t("quickActions.exportReport")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <Tag className="w-3.5 h-3.5" />
             {t("quickActions.addCoupon")}
           </button>
-          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
+          <button className="flex items-center justify-center gap-1.5 p-2.5 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:bg-[#FDF6EC] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors">
             <RotateCcw className="w-3.5 h-3.5" />
             {t("quickActions.processRefund")}
           </button>

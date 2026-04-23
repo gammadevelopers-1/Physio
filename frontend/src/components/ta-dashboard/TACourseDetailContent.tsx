@@ -136,7 +136,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
   ];
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <TANavbar />
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -306,27 +306,27 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                       <div>
                         <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.courseInfo")}</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
                           </div>
-                          <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.statusLabel")}</p>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.status.${course.status}`)}</p>
                           </div>
-                          <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{course.maxEnrollment || "—"}</p>
                           </div>
-                          <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.startDate)}</p>
                           </div>
-                          <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDate(course.endDate)}</p>
                           </div>
-                          <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
@@ -343,7 +343,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             {course.modules.map((mod, idx) => (
                               <div
                                 key={mod.id}
-                                className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-lg"
+                                className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-lg"
                               >
                                 <span className="w-7 h-7 flex items-center justify-center bg-[#EFF6FF] rounded-full text-xs font-medium text-[#3B82F6]">
                                   {idx + 1}
@@ -443,7 +443,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                             .map((session) => (
                               <div
                                 key={session.id}
-                                className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg"
+                                className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg"
                               >
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-10 h-10 bg-white rounded-lg border border-[var(--color-border)] flex items-center justify-center">

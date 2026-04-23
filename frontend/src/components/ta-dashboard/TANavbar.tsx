@@ -195,7 +195,7 @@ const TANavbar = () => {
                 const isActive = isActiveRoute(item.href);
                 return (
                   <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)} aria-current={isActive ? "page" : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"}`}>
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive ? "bg-[#FFF8E6] text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}>
                     <Icon className={`w-5 h-5 ${isActive ? "text-[var(--color-primary-dark)]" : "text-[var(--color-text-secondary)]"}`} />
                     <span className={`text-sm ${isActive ? "font-medium" : ""}`}>{item.label}</span>
                   </Link>
@@ -211,13 +211,13 @@ const TANavbar = () => {
               <p className="px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] uppercase">
                 {t("home")}
               </p>
-              <Link href={`/${locale}`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={`/${locale}`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="text-sm">{t("home")}</span>
               </Link>
-              <Link href={`/${locale}/courses`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={`/${locale}/courses`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="text-sm">{t("courses")}</span>
               </Link>
-              <Link href={`/${locale}/about`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link href={`/${locale}/about`} className="flex items-center gap-3 px-3 py-2.5 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] rounded-lg transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
                 <span className="text-sm">{t("about")}</span>
               </Link>
             </div>

@@ -180,6 +180,7 @@ export interface SiteSettings {
   themeBorderColor: string | null;
   themeBorderSubtle: string | null;
   themeIconColor: string | null;
+  themeFooterBackground: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;

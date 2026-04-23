@@ -72,7 +72,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                 className={`p-3.5 rounded-xl border ${
                   session.hasConflict
                     ? "bg-[#FEF2F2] border-[var(--functional-red-400)]"
-                    : "bg-[#F9FAFB] border-[var(--color-border)]"
+                    : "bg-[var(--color-surface-page)] border-[var(--color-border)]"
                 }`}
               >
                 {/* Date and Time */}

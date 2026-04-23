@@ -2,7 +2,7 @@ import StudentCourseDetailContent from "@/components/student-dashboard/StudentCo
 
 export default function StudentCourseDetailPage() {
   return (
-    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <StudentCourseDetailContent />
     </main>
   );

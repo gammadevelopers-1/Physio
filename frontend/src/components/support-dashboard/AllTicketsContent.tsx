@@ -224,7 +224,7 @@ const AllTicketsContent = () => {
     <>
       <SupportNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
@@ -429,7 +429,7 @@ const AllTicketsContent = () => {
                       {filteredTickets.map((ticket) => (
                         <tr
                           key={ticket.id}
-                          className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors"
+                          className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)] transition-colors"
                         >
                           {/* Ticket # */}
                           <td className="py-3 px-4">
@@ -505,7 +505,7 @@ const AllTicketsContent = () => {
                                       : ticket.id
                                   )
                                 }
-                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[var(--color-text-secondary)]"
+                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
@@ -513,11 +513,11 @@ const AllTicketsContent = () => {
                                 <div
                                   className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                                 >
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.view")}
                                   </button>
-                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                  <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                     <UserPlus className="w-3.5 h-3.5" />
                                     {t("allTicketsPage.actions.assign")}
                                   </button>
@@ -545,11 +545,11 @@ const AllTicketsContent = () => {
                     })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">
                       <ChevronLeft className="w-4 h-4" />
                       {t("allTicketsPage.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">
                       {t("allTicketsPage.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>

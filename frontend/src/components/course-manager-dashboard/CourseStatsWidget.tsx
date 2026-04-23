@@ -54,7 +54,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
         </div>
 
         {/* Completion Rate */}
-        <div className="bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
+        <div className="bg-[var(--color-surface-page)] rounded-xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[var(--functional-green-400)]/10 rounded-lg flex items-center justify-center">
@@ -83,7 +83,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
         </div>
 
         {/* Average Rating */}
-        <div className="bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
+        <div className="bg-[var(--color-surface-page)] rounded-xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
               <Star className="w-4 h-4 text-[var(--gold-gold-500)]" />

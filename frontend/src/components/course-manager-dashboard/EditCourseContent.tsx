@@ -287,7 +287,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen">
+        <div className="bg-[var(--color-surface-page)] min-h-screen">
           <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="hidden lg:block lg:flex-shrink-0">
@@ -313,7 +313,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen">
+        <div className="bg-[var(--color-surface-page)] min-h-screen">
           <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="hidden lg:block lg:flex-shrink-0">
@@ -344,7 +344,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -765,7 +765,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             setSectionsOrder(next);
                           };
                           return (
-                            <div key={key} className="flex items-center gap-2 px-3 py-2 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg">
+                            <div key={key} className="flex items-center gap-2 px-3 py-2 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg">
                               <span className="text-xs text-[var(--color-text-secondary)] font-medium w-5">{idx + 1}.</span>
                               <span className="text-sm text-[var(--color-text-secondary)] flex-1">{labels[key] || key}</span>
                               <button
@@ -998,7 +998,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   <button
                     type="button"
                     onClick={() => router.back()}
-                    className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                    className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     {t("createCourse.cancel")}
                   </button>

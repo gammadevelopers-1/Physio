@@ -224,7 +224,7 @@ const CourseManagerDashboardContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
+        <div className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
             <p className="text-sm text-[var(--color-text-secondary)]">{t("dashboard.loading")}</p>
@@ -238,7 +238,7 @@ const CourseManagerDashboardContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
+        <div className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
@@ -260,7 +260,7 @@ const CourseManagerDashboardContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">

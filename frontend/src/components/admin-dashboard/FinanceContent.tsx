@@ -115,7 +115,7 @@ const FinanceContent = () => {
     <>
       <AdminNavbar admin={admin} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -148,7 +148,7 @@ const FinanceContent = () => {
                     <option value="mtd">{t("financePage.dateRange.mtd")}</option>
                     <option value="ytd">{t("financePage.dateRange.ytd")}</option>
                   </select>
-                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("financePage.export")}
                   </button>
@@ -244,7 +244,7 @@ const FinanceContent = () => {
                   <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">
                     {t("financePage.revenueChart")}
                   </h3>
-                  <div className="h-48 bg-[#F9FAFB] rounded-lg flex items-center justify-center">
+                  <div className="h-48 bg-[var(--color-surface-page)] rounded-lg flex items-center justify-center">
                     <TrendingUp className="w-12 h-12 text-[var(--color-text-secondary)]" />
                   </div>
                 </div>
@@ -297,7 +297,7 @@ const FinanceContent = () => {
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-[#F9FAFB]">
+                    <thead className="bg-[var(--color-surface-page)]">
                       <tr>
                         <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("financePage.table.date")}
@@ -323,7 +323,7 @@ const FinanceContent = () => {
                       {filteredTransactions.map((tx) => (
                         <tr
                           key={tx.id}
-                          className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
+                          className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]"
                         >
                           <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)]">{tx.date}</td>
                           <td className="px-4 py-4 text-sm text-[var(--color-text-primary)]">{tx.description}</td>

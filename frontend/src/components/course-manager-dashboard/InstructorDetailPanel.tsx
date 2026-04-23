@@ -179,17 +179,17 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
                 {/* Quick Stats Row */}
                 <div className="grid grid-cols-3 gap-3 mt-3">
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
+                  <div className="bg-[var(--color-surface-page)] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <BookOpen className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[var(--color-text-secondary)]">{data.coursesCount}</p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.courses")}</p>
                   </div>
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
+                  <div className="bg-[var(--color-surface-page)] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Users className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[var(--color-text-secondary)]">{data.totalStudents}</p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.students")}</p>
                   </div>
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
+                  <div className="bg-[var(--color-surface-page)] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Calendar className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[var(--color-text-secondary)]">{data.sessions.total}</p>
                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("instructorDetail.lectures")}</p>
@@ -197,7 +197,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 </div>
 
                 {/* Lectures Progress */}
-                <div className="mt-5 bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
+                <div className="mt-5 bg-[var(--color-surface-page)] rounded-xl p-4 border border-[var(--color-border)]">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">{t("instructorDetail.lectures")}</h4>
                     <span className="text-xs font-medium text-[var(--color-text-secondary)]">
@@ -213,7 +213,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 </div>
 
                 {/* Content Quality */}
-                <div className="mt-4 bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
+                <div className="mt-4 bg-[var(--color-surface-page)] rounded-xl p-4 border border-[var(--color-border)]">
                   <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("instructorDetail.contentQuality")}</h4>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">

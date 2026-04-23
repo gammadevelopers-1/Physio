@@ -257,7 +257,7 @@ const TASettingsContent = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen bg-[var(--color-surface-page)]">
       <TANavbar />
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -411,7 +411,7 @@ const TASettingsContent = () => {
                               type="email"
                               value={profileData.email}
                               readOnly
-                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>

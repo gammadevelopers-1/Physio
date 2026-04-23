@@ -144,7 +144,7 @@ function SatisfactionRating({
   };
 
   return (
-    <div className="mt-4 p-4 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]">
+    <div className="mt-4 p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)]">
       <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">
         {t("supportPage.rateExperience")}
       </p>
@@ -231,7 +231,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
     <>
       <DashboardNavbar user={userData} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">

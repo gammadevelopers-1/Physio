@@ -172,7 +172,7 @@ const AtRiskLearners = ({
           {displayedLearners.map((learner) => (
             <div
               key={learner.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
+              className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
             >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)] flex-shrink-0">
@@ -220,7 +220,7 @@ const AtRiskLearners = ({
                       <button
                         onClick={() => handleSendReminder(learner)}
                         disabled={actionLoading === learner.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
                         role="menuitem"
                       >
                         <Mail className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -229,7 +229,7 @@ const AtRiskLearners = ({
                       <button
                         onClick={() => handleScheduleMakeup(learner)}
                         disabled={actionLoading === learner.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
                         role="menuitem"
                       >
                         <Calendar className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -238,7 +238,7 @@ const AtRiskLearners = ({
                       <button
                         onClick={() => handleOpenTicket(learner)}
                         disabled={actionLoading === learner.id}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
                         role="menuitem"
                       >
                         <Ticket className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -408,7 +408,7 @@ function ThresholdSettingsModal({
             <button
               type="button"
               onClick={handleReset}
-              className="px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               {t("atRisk.resetDefaults")}
             </button>

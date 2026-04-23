@@ -100,7 +100,7 @@ const SupportSettingsContent = () => {
     <>
       <SupportNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -166,7 +166,7 @@ const SupportSettingsContent = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                            <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                               <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.sla.priority")}
                               </th>
@@ -293,7 +293,7 @@ const SupportSettingsContent = () => {
                               className={`p-5 rounded-xl border cursor-pointer transition-all ${
                                 isActive
                                   ? "ring-1 ring-[var(--color-primary)] border-[var(--color-primary)] bg-[#FDF6EC]"
-                                  : "border-[var(--color-border)] bg-[#F9FAFB] hover:border-[var(--color-border)]"
+                                  : "border-[var(--color-border)] bg-[var(--color-surface-page)] hover:border-[var(--color-border)]"
                               }`}
                             >
                               <div className="flex items-center justify-between gap-4">
@@ -353,7 +353,7 @@ const SupportSettingsContent = () => {
                       </div>
                       <div className="space-y-4">
                         {macros.map((macro) => (
-                          <div key={macro.id} className="p-5 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                          <div key={macro.id} className="p-5 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                             <div className="flex items-start justify-between gap-4">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
@@ -390,7 +390,7 @@ const SupportSettingsContent = () => {
                         {t("settingsPage.notifications.title")}
                       </h3>
                       <div className="space-y-4">
-                        <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.notifications.email")}</p>
@@ -404,7 +404,7 @@ const SupportSettingsContent = () => {
                             </button>
                           </div>
                         </div>
-                        <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.notifications.sms")}</p>
@@ -418,7 +418,7 @@ const SupportSettingsContent = () => {
                             </button>
                           </div>
                         </div>
-                        <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.notifications.whatsapp")}</p>
@@ -455,7 +455,7 @@ const SupportSettingsContent = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                            <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                               <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.categories.name")}
                               </th>
@@ -472,7 +472,7 @@ const SupportSettingsContent = () => {
                           </thead>
                           <tbody>
                             {categories.map((category, index) => (
-                              <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                              <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
                                 <td className="py-3 px-5 text-[13px] font-medium text-[var(--color-text-primary)]">{category.name}</td>
                                 <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{category.description}</td>
                                 <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{category.tickets}</td>

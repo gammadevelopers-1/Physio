@@ -87,7 +87,7 @@ const SessionCard = ({
       isLive
         ? "border-[#EF4444]/30 bg-gradient-to-r from-[#FEF2F2] to-white shadow-sm"
         : isCompleted || isInactive
-        ? "border-[var(--color-border)] bg-[#F9FAFB] opacity-75"
+        ? "border-[var(--color-border)] bg-[var(--color-surface-page)] opacity-75"
         : "border-[var(--color-border)] bg-white hover:border-[#3B82F6]/40 hover:shadow-sm"
     }`}>
       <div className="flex items-center gap-4 p-4">
@@ -173,7 +173,7 @@ const SessionCard = ({
           {!isInactive && (
             <button
               onClick={onAttendance}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
               aria-label={t("sessions.attendance")}
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
@@ -183,7 +183,7 @@ const SessionCard = ({
           {(isScheduled || isLive) && (
             <button
               onClick={onShare}
-              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+              className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
               aria-label={t("sessions.shareMaterials")}
             >
               <Upload className="w-3.5 h-3.5" />

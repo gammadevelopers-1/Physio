@@ -174,7 +174,7 @@ const CalendarGrid = ({
               onClick={() => onSelectDate(day)}
               className={`relative flex flex-col items-center justify-center py-2 sm:py-3 min-h-[44px] transition-colors ${
                 isCurrentMonth ? "" : "opacity-40"
-              } ${isSelected ? "" : "hover:bg-[#F9FAFB]"}`}
+              } ${isSelected ? "" : "hover:bg-[var(--color-surface-page)]"}`}
             >
               <span
                 className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-full text-sm transition-colors ${

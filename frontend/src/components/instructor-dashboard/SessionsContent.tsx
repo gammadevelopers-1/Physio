@@ -506,7 +506,7 @@ function AttendanceModal({
           )}
 
           {/* Summary */}
-          <div className="flex items-center gap-4 px-4 py-3 border-b border-[var(--color-border)] bg-[#F9FAFB] flex-wrap">
+          <div className="flex items-center gap-4 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface-page)] flex-wrap">
             <span className="text-xs font-medium text-[var(--color-text-secondary)]">
               {t("sessionsPage.attendance.summary")}:
             </span>
@@ -516,7 +516,7 @@ function AttendanceModal({
 
           {/* Bulk actions / lock banner */}
           {isVerifiedReadOnly ? (
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
               <Lock className="w-3.5 h-3.5 text-[var(--color-text-secondary)]" />
               <span className="text-xs text-[var(--color-text-secondary)]">
                 {attendanceLocked
@@ -888,7 +888,7 @@ function RecordingsModal({
                       href={rec.downloadUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                     >
                       <Download className="w-3 h-3" />
                       {t("sessionsPage.recordings.download")}
@@ -1513,7 +1513,7 @@ function SessionCard({
 
   return (
     <div className={`px-4 py-3 transition-colors ${
-      isLive ? "bg-[#FEF2F2]/50" : "hover:bg-[#F9FAFB]"
+      isLive ? "bg-[#FEF2F2]/50" : "hover:bg-[var(--color-surface-page)]"
     } ${isPast ? "opacity-70" : ""}`}>
       {/* Main row */}
       <div className="flex items-center gap-3">
@@ -1584,10 +1584,10 @@ function SessionCard({
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
                 {t("sessionsPage.start")}
               </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
-              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.edit")}>
+              <button onClick={onEdit} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.edit")}>
                 <Edit className="w-3.5 h-3.5" />
               </button>
               <button onClick={onCancel} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" aria-label={t("sessionsPage.cancel")}>
@@ -1606,7 +1606,7 @@ function SessionCard({
                 {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Square className="w-3.5 h-3.5" />}
                 {t("sessionsPage.endSession")}
               </button>
-              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+              <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </button>
               {session.zoomLink && (
@@ -1625,7 +1625,7 @@ function SessionCard({
           )}
 
           {session.status === "completed" && (
-            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
+            <button onClick={onAttendance} className="p-1.5 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" aria-label={t("sessionsPage.attendance.title")}>
               <ClipboardCheck className="w-3.5 h-3.5" />
             </button>
           )}
@@ -2322,7 +2322,7 @@ const SessionsContent = () => {
     <>
       <InstructorNavbar instructor={instructor} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -2482,7 +2482,7 @@ const SessionsContent = () => {
                   </div>
 
                   {/* Calendar type toggle + Legend */}
-                  <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
@@ -2520,7 +2520,7 @@ const SessionsContent = () => {
 
                     {/* Empty cells */}
                     {Array.from({ length: calendarData.firstDayOfMonth }).map((_, i) => (
-                      <div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[#F9FAFB]" />
+                      <div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[var(--color-surface-page)]" />
                     ))}
 
                     {/* Days */}

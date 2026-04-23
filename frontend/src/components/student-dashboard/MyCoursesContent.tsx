@@ -182,7 +182,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
             <button
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
             >
               {t("courseDetail.cancel")}
             </button>
@@ -301,7 +301,7 @@ const MyCoursesContent = () => {
     <>
       <DashboardNavbar user={userData} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -624,7 +624,7 @@ const MyCoursesContent = () => {
                 <button
                   onClick={() => setDropCourseId(null)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

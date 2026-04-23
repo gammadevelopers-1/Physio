@@ -672,7 +672,7 @@ const SessionsContent = () => {
     return (
       <div
         key={session.id}
-        className={`p-4 hover:bg-[#F9FAFB] transition-colors border-s-4 ${colorClass} ${dimmed ? "opacity-75" : ""} ${isConflict ? "bg-[#FEF2F2]" : ""}`}
+        className={`p-4 hover:bg-[var(--color-surface-page)] transition-colors border-s-4 ${colorClass} ${dimmed ? "opacity-75" : ""} ${isConflict ? "bg-[#FEF2F2]" : ""}`}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
@@ -768,7 +768,7 @@ const SessionsContent = () => {
                   {(session.status === "completed" || session.status === "ended" || session.status === "cancelled") && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setAttendanceModal({ id: session.id, title: session.title, courseId: session.courseId }); }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB]"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                     >
                       <Users className="w-4 h-4" /> {t("sessionsPage.viewAttendance")}
                     </button>
@@ -783,13 +783,13 @@ const SessionsContent = () => {
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setRescheduleModal({ id: session.id, title: session.title, scheduledAt: session.scheduledAt }); (() => { const d = new Date(session.scheduledAt); const local = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; setRescheduleDate(local); })(); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                       >
                         <CalendarClock className="w-4 h-4" /> {t("sessionsPage.reschedule")}
                       </button>
                       {false && <button
                         onClick={(e) => { e.stopPropagation(); setActionDropdown(null); setSubstituteModal({ id: session.id, title: session.title }); setSubstituteId(""); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB]"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]"
                       >
                         <UserPlus className="w-4 h-4" /> {t("sessionsPage.assignSubstitute")}
                       </button>}
@@ -808,7 +808,7 @@ const SessionsContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -1009,7 +1009,7 @@ const SessionsContent = () => {
                     <div className="bg-white rounded-xl border border-[var(--color-border)]">
                       <button
                         onClick={() => setShowPast(!showPast)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors rounded-xl"
+                        className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-page)] transition-colors rounded-xl"
                       >
                         <div className="flex items-center gap-2">
                           <h2 className="text-base font-semibold text-[var(--color-text-primary)]">{t("sessionsPage.past")}</h2>
@@ -1043,7 +1043,7 @@ const SessionsContent = () => {
                     <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{calendarData.headerLabel}</h2>
                     <button onClick={goToNextMonth} className="p-2 hover:bg-[#F3F4F6] rounded-lg">{isRTL ? <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" /> : <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />}</button>
                   </div>
-                  <div className="flex items-center justify-end px-4 py-2 border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                  <div className="flex items-center justify-end px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                     <button
                       onClick={() => setCalendarFormat(useHijri ? "gregorian" : "hijri")}
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium border border-[var(--color-border)] hover:bg-white transition-colors text-[var(--color-text-secondary)]"
@@ -1053,7 +1053,7 @@ const SessionsContent = () => {
                   </div>
                   <div className="grid grid-cols-7">
                     {dayNames.map((day) => (<div key={day} className="p-3 text-center text-xs font-medium text-[var(--color-text-secondary)] border-b border-[var(--color-border)]">{day}</div>))}
-                    {Array.from({ length: calendarData.firstDayOfMonth }).map((_, i) => (<div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[#F9FAFB]" />))}
+                    {Array.from({ length: calendarData.firstDayOfMonth }).map((_, i) => (<div key={`empty-${i}`} className="min-h-[100px] p-2 border-b border-r border-[var(--color-border)] bg-[var(--color-surface-page)]" />))}
                     {Array.from({ length: calendarData.daysInMonth }).map((_, i) => {
                       const day = i + 1;
                       const daySessions = getSessionsForDate(day);
@@ -1113,7 +1113,7 @@ const SessionsContent = () => {
                   className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm mb-4 focus:ring-2 focus:ring-[#3B82F6] outline-none resize-none h-24"
                 />
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
+                  <button onClick={() => setCancelModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
                   <button onClick={handleCancelOnBehalf} disabled={!cancelReason || actionLoading} className="px-4 py-2 text-sm font-medium text-white bg-[#EF4444] rounded-lg disabled:opacity-50 inline-flex items-center gap-2 hover:bg-[#DC2626]">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Cancel Session
                   </button>
@@ -1147,7 +1147,7 @@ const SessionsContent = () => {
                   />
                 </div>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
+                  <button onClick={() => setRescheduleModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
                   <button onClick={handleReschedule} disabled={!rescheduleDate || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Reschedule
                   </button>
@@ -1185,7 +1185,7 @@ const SessionsContent = () => {
                   ))}
                 </select>
                 <div className="flex justify-end gap-3">
-                  <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">Close</button>
+                  <button onClick={() => setSubstituteModal(null)} className="px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]">Close</button>
                   <button onClick={handleAssignSubstitute} disabled={!substituteId || actionLoading} className="px-4 py-2 text-sm font-medium text-white btn-gold rounded-lg disabled:opacity-50 inline-flex items-center gap-2">
                     {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}Assign
                   </button>
@@ -1228,7 +1228,7 @@ const SessionsContent = () => {
                     { label: t("sessionsPage.attendPresent"), count: attendanceStats.present, color: "text-[#22C55E]" },
                     { label: t("sessionsPage.attendAbsent"), count: attendanceStats.absent, color: "text-[#EF4444]" },
                   ].map((s) => (
-                    <div key={s.label} className="bg-[#F9FAFB] rounded-lg p-2 text-center">
+                    <div key={s.label} className="bg-[var(--color-surface-page)] rounded-lg p-2 text-center">
                       <p className={`text-lg font-bold ${s.color}`}>{s.count}</p>
                       <p className="text-[10px] text-[var(--color-text-secondary)]">{s.label}</p>
                     </div>
@@ -1252,7 +1252,7 @@ const SessionsContent = () => {
                 {/* Attendance table */}
                 <div className="overflow-x-auto border border-[var(--color-border)] rounded-lg">
                   <table className="w-full text-sm">
-                    <thead className="bg-[#F9FAFB] text-[var(--color-text-secondary)]">
+                    <thead className="bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]">
                       <tr>
                         <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendStudent")}</th>
                         <th className="text-start px-3 py-2 font-medium">{t("sessionsPage.attendStatus")}</th>
@@ -1273,7 +1273,7 @@ const SessionsContent = () => {
                         };
                         const presPercent = (record as any).presencePercent;
                         return (
-                          <tr key={`${record.studentId}-${idx}`} className="hover:bg-[#F9FAFB]">
+                          <tr key={`${record.studentId}-${idx}`} className="hover:bg-[var(--color-surface-page)]">
                             <td className="px-3 py-2 text-[var(--color-text-primary)]">{name}</td>
                             <td className="px-3 py-2">
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${statusColors[record.status] || "bg-[#F3F4F6] text-[var(--color-text-secondary)]"}`}>
@@ -1329,7 +1329,7 @@ const SessionsContent = () => {
                       // silently fail
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors whitespace-nowrap"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Export

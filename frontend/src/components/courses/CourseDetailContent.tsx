@@ -719,7 +719,7 @@ const CourseDetailContent = ({
         <div className="flex flex-col gap-3">
           {previewModules.map((mod, i) => (
             <div key={mod.id} className="border border-[var(--outline-subtle)] rounded-lg overflow-hidden">
-              <div className={`flex items-center justify-between p-3 bg-[#F9FAFB] ${isRTL ? "flex-row-reverse" : ""}`}>
+              <div className={`flex items-center justify-between p-3 bg-[var(--color-surface-page)] ${isRTL ? "flex-row-reverse" : ""}`}>
                 <div className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
                   <span className="text-[13px] text-[var(--color-text-secondary)] font-medium">{i + 1}.</span>
                   <span className="text-[14px] font-medium text-[var(--color-text-primary)]">
@@ -743,7 +743,7 @@ const CourseDetailContent = ({
             </div>
           ))}
           {remaining > 0 && (
-            <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg text-center">
+            <div className="mt-2 p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
               <p className="text-[13px] text-[var(--color-text-secondary)]">
                 {moreContentText || (locale === "ar"
                   ? "المزيد من المحتوى متاح عند التسجيل"

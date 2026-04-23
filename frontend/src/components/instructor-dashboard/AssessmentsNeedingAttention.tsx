@@ -72,7 +72,7 @@ const AssessmentsNeedingAttention = ({
           {displayed.map((sub) => (
             <div
               key={sub.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
+              className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
             >
               {/* Clock icon */}
               <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">

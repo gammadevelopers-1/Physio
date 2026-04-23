@@ -102,7 +102,7 @@ const InstructorsManagementWidget = ({
           return (
             <div
               key={instructor.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]"
+              className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)]"
             >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">

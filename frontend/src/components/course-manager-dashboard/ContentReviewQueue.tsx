@@ -74,7 +74,7 @@ const ContentReviewQueue = ({
           return (
             <div
               key={item.id}
-              className="bg-[#F9FAFB] rounded-xl p-3.5 border border-[var(--color-border)]"
+              className="bg-[var(--color-surface-page)] rounded-xl p-3.5 border border-[var(--color-border)]"
             >
               {/* Header row */}
               <div className="flex items-start gap-3 mb-2">

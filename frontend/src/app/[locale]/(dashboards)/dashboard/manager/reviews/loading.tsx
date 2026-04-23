@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ManagerReviewsLoading() {
   return (
-    <div className="bg-[#F9FAFB] min-h-screen">
+    <div className="bg-[var(--color-surface-page)] min-h-screen">
       <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="hidden lg:block lg:w-[260px] lg:flex-shrink-0">

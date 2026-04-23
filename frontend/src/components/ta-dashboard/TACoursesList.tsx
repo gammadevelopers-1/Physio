@@ -153,7 +153,7 @@ const TACoursesList = () => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === f.key
                 ? "btn-gold text-white"
-                : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
             }`}
           >
             {f.label}

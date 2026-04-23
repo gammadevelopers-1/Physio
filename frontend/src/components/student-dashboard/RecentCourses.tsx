@@ -49,7 +49,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[#F9FAFB]",
+          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]",
         key: "resumeLesson" as const,
       };
     case "upload_assignment":
@@ -68,7 +68,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[#F9FAFB]",
+          "bg-white border border-[var(--color-border)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)]",
         key: "startCourse" as const,
       };
   }

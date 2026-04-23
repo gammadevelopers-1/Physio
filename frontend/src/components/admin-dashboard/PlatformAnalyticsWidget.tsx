@@ -66,7 +66,7 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
       {/* Chart Placeholders */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Enrollment Funnel Chart */}
-        <div className="bg-[#F9FAFB] rounded-lg p-4 min-h-[160px] flex flex-col items-center justify-center">
+        <div className="bg-[var(--color-surface-page)] rounded-lg p-4 min-h-[160px] flex flex-col items-center justify-center">
           <div className="w-16 h-16 mb-3 flex items-center justify-center">
             <BarChart3 className="w-12 h-12 text-[var(--color-text-secondary)]" />
           </div>
@@ -74,7 +74,7 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
         </div>
 
         {/* User Growth Chart */}
-        <div className="bg-[#F9FAFB] rounded-lg p-4 min-h-[160px] flex flex-col items-center justify-center">
+        <div className="bg-[var(--color-surface-page)] rounded-lg p-4 min-h-[160px] flex flex-col items-center justify-center">
           <div className="w-16 h-16 mb-3 flex items-center justify-center">
             <TrendingUp className="w-12 h-12 text-[var(--color-text-secondary)]" />
           </div>
@@ -87,7 +87,7 @@ const PlatformAnalyticsWidget = ({ data }: PlatformAnalyticsWidgetProps) => {
         {conversionMetrics.map((metric) => (
           <div
             key={metric.id}
-            className="bg-[#F9FAFB] rounded-lg p-4 text-center"
+            className="bg-[var(--color-surface-page)] rounded-lg p-4 text-center"
           >
             <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{metric.value}%</p>
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">{metric.label}</p>

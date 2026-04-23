@@ -564,7 +564,7 @@ const SettingsContent = () => {
     <>
       <DashboardNavbar user={userData} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -799,7 +799,7 @@ const SettingsContent = () => {
                               onClick={() =>
                                 handleNationalitySelect(nationality.value)
                               }
-                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[#F3F4F6]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.nationality === nationality.value ? "bg-[#F3F4F6]" : ""}`}
                             >
                               {t(nationality.labelKey)}
                             </button>
@@ -847,7 +847,7 @@ const SettingsContent = () => {
                               key={gender.value}
                               type="button"
                               onClick={() => handleGenderSelect(gender.value)}
-                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[#F3F4F6]" : ""}`}
+                              className={`w-full px-4 py-2.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors ${isRTL ? "text-right" : "text-left"} ${formData.gender === gender.value ? "bg-[#F3F4F6]" : ""}`}
                             >
                               {t(gender.labelKey)}
                             </button>

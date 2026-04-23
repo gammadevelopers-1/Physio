@@ -133,7 +133,7 @@ function CourseRow({
   formatDate: (d: string | null) => string;
 }) {
   return (
-    <tr className="border-b border-[#F3F4F6] last:border-0 hover:bg-[#F9FAFB] transition-colors">
+    <tr className="border-b border-[#F3F4F6] last:border-0 hover:bg-[var(--color-surface-page)] transition-colors">
       <td className="py-3 px-3">
         <p className="text-sm font-medium text-[var(--color-text-secondary)]">
           {isRTL && course.courseTitleAr
@@ -193,7 +193,7 @@ function CourseMobileCard({
   formatDate: (d: string | null) => string;
 }) {
   return (
-    <div className="bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] p-4">
+    <div className="bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-start justify-between mb-2">
         <h4 className="text-sm font-semibold text-[var(--color-text-primary)] flex-1 min-w-0">
           {isRTL && course.courseTitleAr
@@ -274,7 +274,7 @@ const TranscriptContent = () => {
     <>
       <DashboardNavbar user={userData} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0 print:hidden">
@@ -379,7 +379,7 @@ const TranscriptContent = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                          <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                             <th className="py-3 px-3 text-left text-xs font-medium text-[var(--color-text-secondary)]">
                               {t("transcriptPage.courseTitle")}
                             </th>

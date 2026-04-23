@@ -162,7 +162,7 @@ function TicketRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors text-left"
+      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors text-left"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="flex-1 min-w-0">
@@ -403,7 +403,7 @@ function CreateTicketForm({
             {t("supportPage.attachment")}
           </label>
           {attachmentFile ? (
-            <div className="flex items-center gap-2 p-2.5 border border-[var(--color-border)] rounded-lg bg-[#F9FAFB]">
+            <div className="flex items-center gap-2 p-2.5 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)]">
               <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
               <span className="text-sm text-[var(--color-text-secondary)] truncate flex-1">
                 {attachmentFile.name}
@@ -420,7 +420,7 @@ function CreateTicketForm({
               </button>
             </div>
           ) : (
-            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
+            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-surface-page)] transition-colors">
               <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)]" />
               <span className="text-sm text-[var(--color-text-secondary)]">
                 {t("supportPage.attachFile")}
@@ -526,7 +526,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
             <div key={index} className="border border-[var(--color-border)] rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
-                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#F9FAFB] transition-colors"
+                className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#F3F4F6] text-[var(--color-text-secondary)] flex-shrink-0">
@@ -635,7 +635,7 @@ const SupportContent = () => {
     <>
       <DashboardNavbar user={userData} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -745,7 +745,7 @@ const SupportContent = () => {
                         </p>
                         <button
                           onClick={() => setShowForm(true)}
-                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                         >
                           <Plus className="w-4 h-4" />
                           {t("supportPage.createFirst")}

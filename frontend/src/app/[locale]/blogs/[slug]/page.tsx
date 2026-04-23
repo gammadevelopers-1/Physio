@@ -16,7 +16,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ loc
   } = await getBlogDetailData(slug, locale);
 
   return (
-    <main id="main-content" className="min-h-screen bg-white">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlogDetailContent blogPost={blogPost} latestBlogs={latestBlogs} blogsPage={blogsPage} />
       <Footer siteSettings={siteSettings} footerLinks={footerLinks} />

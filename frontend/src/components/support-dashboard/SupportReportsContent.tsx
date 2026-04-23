@@ -125,7 +125,7 @@ const SupportReportsContent = () => {
     <>
       <SupportNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -146,11 +146,11 @@ const SupportReportsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
                     <FileSpreadsheet className="w-4 h-4" />
                     {t("reportsPage.exportExcel")}
                   </button>
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("reportsPage.exportPdf")}
                   </button>
@@ -310,7 +310,7 @@ const SupportReportsContent = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                      <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.category")}</th>
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.tickets")}</th>
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.avgResponse")}</th>
@@ -320,7 +320,7 @@ const SupportReportsContent = () => {
                     </thead>
                     <tbody>
                       {mockReportData.map((item, index) => (
-                        <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                        <tr key={index} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
                           <td className="py-3 px-5 text-[13px] font-medium text-[var(--color-text-primary)]">{item.name}</td>
                           <td className="py-3 px-5 text-[13px] font-semibold text-[var(--color-text-primary)]">{item.tickets}</td>
                           <td className="py-3 px-5 text-[13px] text-[var(--color-text-secondary)] hidden md:table-cell">{item.avgResponse}</td>

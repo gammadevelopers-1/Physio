@@ -82,7 +82,7 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
   return (
     <aside className="w-full lg:w-[280px] flex flex-col gap-4">
       {/* Profile Card */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-6">
         {/* Profile Section */}
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
@@ -161,13 +161,13 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors">
+        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors">
           {t("sidebar.viewProfile")}
         </button>
       </div>
 
       {/* Navigation Card */}
-      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-4">
+      <div className="bg-[var(--color-surface-card)] rounded-2xl border border-[var(--color-border)] p-4">
         <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -180,7 +180,7 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                   active
                     ? "bg-[#F0F7FF] text-[#002D87]"
-                    : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                    : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                 }`}
               >
                 <Icon

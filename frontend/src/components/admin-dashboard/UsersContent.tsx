@@ -254,7 +254,7 @@ function CreateUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               Cancel
             </button>
@@ -422,7 +422,7 @@ function EditUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               Cancel
             </button>
@@ -496,7 +496,7 @@ function DeleteUserModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
           >
             Cancel
           </button>
@@ -639,7 +639,7 @@ function ManageRolesModal({
             {userRoles.map((role) => (
               <div
                 key={role}
-                className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg"
+                className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg"
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -707,7 +707,7 @@ function ManageRolesModal({
                   key={role}
                   onClick={() => handleAddRole(role)}
                   disabled={actionInProgress === role}
-                  className="px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-full hover:bg-[#F9FAFB] disabled:opacity-50 flex items-center gap-1"
+                  className="px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-full hover:bg-[var(--color-surface-page)] disabled:opacity-50 flex items-center gap-1"
                 >
                   <Plus className="w-3 h-3" />
                   {t(`userManagement.roles.${role.toLowerCase()}`)}
@@ -720,7 +720,7 @@ function ManageRolesModal({
         <div className="mt-6">
           <button
             onClick={onClose}
-            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
           >
             Close
           </button>
@@ -896,7 +896,7 @@ const UsersContent = () => {
     <>
       <AdminNavbar admin={adminProfile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -983,7 +983,7 @@ const UsersContent = () => {
                     <option value="suspended">{t("userManagement.statuses.suspended")}</option>
                   </select>
 
-                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("usersPage.export")}
                   </button>
@@ -1019,7 +1019,7 @@ const UsersContent = () => {
                 <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto scrollbar-hide">
                     <table className="w-full">
-                      <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                      <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                         <tr>
                           <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.user")}
@@ -1049,7 +1049,7 @@ const UsersContent = () => {
                           const status = getUserStatus(user);
                           const roleKey = user.activeRole.toLowerCase();
                           return (
-                            <tr key={user.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                            <tr key={user.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
                               <td className="px-4 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-10 h-10 rounded-full ${getAvatarBgColor(user.activeRole)} flex items-center justify-center flex-shrink-0`}>
@@ -1102,7 +1102,7 @@ const UsersContent = () => {
                                           setEditingUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                                       >
                                         <Edit className="w-4 h-4" />
                                         {t("usersPage.actions.edit")}
@@ -1112,7 +1112,7 @@ const UsersContent = () => {
                                           setManagingRolesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                                       >
                                         <Shield className="w-4 h-4" />
                                         Manage Roles
@@ -1122,7 +1122,7 @@ const UsersContent = () => {
                                           setViewingDevicesUser(user);
                                           setOpenDropdownId(null);
                                         }}
-                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                                       >
                                         <Smartphone className="w-4 h-4" />
                                         Trusted Devices
@@ -1179,7 +1179,7 @@ const UsersContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={!pagination.hasPrev}
-                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Previous
                       </button>
@@ -1195,7 +1195,7 @@ const UsersContent = () => {
                               className={`w-8 h-8 text-sm rounded-lg ${
                                 p === currentPage
                                   ? "bg-[#002D87] text-white"
-                                  : "border border-[var(--color-border)] hover:bg-[#F9FAFB] text-[var(--color-text-secondary)]"
+                                  : "border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                               }`}
                             >
                               {p}
@@ -1205,7 +1205,7 @@ const UsersContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                         disabled={!pagination.hasNext}
-                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Next
                       </button>

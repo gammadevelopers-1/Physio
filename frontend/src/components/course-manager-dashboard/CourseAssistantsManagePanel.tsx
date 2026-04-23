@@ -249,7 +249,7 @@ const CourseAssistantsManagePanel = ({
 
       {/* Assign TA Dropdown */}
       {showDropdown && (
-        <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
+        <div className="mb-4 p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
               {t("taManagement.selectTA")}
@@ -293,7 +293,7 @@ const CourseAssistantsManagePanel = ({
           {sortedTAs.map((ta) => (
             <div
               key={ta.id}
-              className="flex items-center justify-between px-3 py-2.5 bg-[#F9FAFB] rounded-lg"
+              className="flex items-center justify-between px-3 py-2.5 bg-[var(--color-surface-page)] rounded-lg"
             >
               <div className="flex items-center gap-3 min-w-0">
                 {/* Priority controls (for approved only) */}
@@ -386,7 +386,7 @@ const CourseAssistantsManagePanel = ({
                         </button>
                         <button
                           onClick={() => setConfirmRemove(null)}
-                          className="px-2 py-1 text-xs text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]"
+                          className="px-2 py-1 text-xs text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]"
                         >
                           {t("taManagement.cancel")}
                         </button>
@@ -451,7 +451,7 @@ const CourseAssistantsManagePanel = ({
                   setRejectionReason("");
                 }}
                 disabled={rejectingLoading}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
               >
                 {t("taManagement.cancel")}
               </button>

@@ -168,7 +168,7 @@ const InstructorDashboardContent = () => {
       <InstructorNavbar instructor={instructor} />
 
       {/* Main Container */}
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile, shown via MobileSidebar */}
@@ -353,7 +353,7 @@ function ShareMaterialsModal({
           ) : (
             <div className="space-y-2">
               {courseMaterials.map((m) => (
-                <div key={m.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                <div key={m.id} className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-[var(--color-text-secondary)] truncate">{m.title}</p>
                     <p className="text-xs text-[var(--color-text-secondary)]">{m.type}</p>

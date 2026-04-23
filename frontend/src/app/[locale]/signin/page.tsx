@@ -56,7 +56,7 @@ function SignInForm() {
   const loading = isLoading || isSubmitting;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
       <AuthNavbar />
 
       {/* Main Content */}

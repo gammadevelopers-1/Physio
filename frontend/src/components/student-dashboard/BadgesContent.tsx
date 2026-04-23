@@ -23,7 +23,7 @@ const BadgesContent = () => {
       <DashboardNavbar user={userData} />
 
       {/* Main Container */}
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
@@ -60,7 +60,7 @@ const BadgesContent = () => {
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[var(--color-text-primary)] text-xs sm:text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                     >
                       {t("badges.viewCourses")}
                     </Link>

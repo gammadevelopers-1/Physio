@@ -336,7 +336,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
           {/* Auto-Transcribe Toggle (video only) */}
           {detectedType === "video" && (
-            <div className="mt-4 flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+            <div className="mt-4 flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("content.autoTranscribe")}</p>
                 <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{t("content.autoTranscribeDesc")}</p>
@@ -388,7 +388,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
           {/* Actions */}
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -462,7 +462,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           </div>
 
           {/* Current file info */}
-          <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
+          <div className="p-3 bg-[var(--color-surface-page)] rounded-lg mb-4">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{material.title}</p>
             <p className="text-xs text-[var(--color-text-secondary)] mt-1">
               v{material.version} &bull; {formatFileSize(material.fileSize)} &bull; {material.type.toUpperCase()}
@@ -519,7 +519,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -604,7 +604,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           </div>
 
           {/* WCAG Status display */}
-          <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg">
+          <div className="mb-4 p-3 bg-[var(--color-surface-page)] rounded-lg">
             <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("content.wcagStatus")}</p>
             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
               material.wcagStatus === "pass" ? "bg-[#DCFCE7] text-[#22C55E]" :
@@ -658,7 +658,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.captionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadCaptions")}
@@ -669,7 +669,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.transcriptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadTranscript")}
@@ -705,7 +705,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
               </div>
 
               {/* Auto-Transcribe Toggle */}
-              <div className="mb-4 flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+              <div className="mb-4 flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("content.autoTranscribe")}</p>
                   <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">{t("content.autoTranscribeDesc")}</p>
@@ -730,14 +730,14 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           )}
 
           {/* Info */}
-          <div className="p-3 bg-[#F9FAFB] rounded-lg text-xs text-[var(--color-text-secondary)] space-y-1">
+          <div className="p-3 bg-[var(--color-surface-page)] rounded-lg text-xs text-[var(--color-text-secondary)] space-y-1">
             <p>{t("content.version")}: v{material.version}</p>
             <p>{t("content.type")}: {material.type.toUpperCase()}</p>
             <p>{t("content.tableSize")}: {formatFileSize(material.fileSize)}</p>
           </div>
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -793,7 +793,7 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
           <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-6">&ldquo;{material.title}&rdquo;</p>
 
           <div className="flex gap-3">
-            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -1090,7 +1090,7 @@ const ContentManagementContent = () => {
   return (
     <>
       <InstructorNavbar instructor={instructor} />
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -1108,7 +1108,7 @@ const ContentManagementContent = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={refetch}
-                    className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                    className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                     aria-label={t("content.refresh")}
                   >
                     <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -1214,7 +1214,7 @@ const ContentManagementContent = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowFilters(!showFilters)}
-                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                         >
                           <Filter className="w-4 h-4" />
                           {t("content.filters")}
@@ -1225,13 +1225,13 @@ const ContentManagementContent = () => {
                         <div className="flex border border-[var(--color-border)] rounded-lg overflow-hidden">
                           <button
                             onClick={() => setViewMode("list")}
-                            className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"}`}
+                            className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
                           >
                             <List className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setViewMode("grid")}
-                            className={`p-2.5 ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"}`}
+                            className={`p-2.5 ${viewMode === "grid" ? "bg-[#3B82F6] text-white" : "bg-white text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"}`}
                           >
                             <Grid className="w-4 h-4" />
                           </button>
@@ -1338,7 +1338,7 @@ const ContentManagementContent = () => {
                             <col className="w-[12%]" />
                           </colgroup>
                           <thead>
-                            <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                            <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                               <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 {t("content.tableFile")}
                               </th>
@@ -1361,7 +1361,7 @@ const ContentManagementContent = () => {
                           </thead>
                           <tbody className="divide-y divide-[var(--color-border)]">
                             {paginatedMaterials.map((m) => (
-                              <tr key={m.id} className="hover:bg-[#F9FAFB] transition-colors">
+                              <tr key={m.id} className="hover:bg-[var(--color-surface-page)] transition-colors">
                                 <td className="px-4 py-4 overflow-hidden">
                                   <div className="flex items-center gap-3 min-w-0">
                                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getFileIconBg(m.type)}`}>

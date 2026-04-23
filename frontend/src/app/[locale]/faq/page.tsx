@@ -27,7 +27,7 @@ export default async function FAQPage({
   const sideLoadedData: SideLoadedData = { partners: [], featuredCourses: [], instructors: [], testimonials: [] };
 
   return (
-    <main id="main-content" className="min-h-screen bg-[var(--surface-intense)] pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
       <FAQContent strapiData={faqPage} />

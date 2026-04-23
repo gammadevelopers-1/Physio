@@ -103,7 +103,7 @@ const InstructorNotificationsWidget = ({
           </p>
           <button
             onClick={onRefresh}
-            className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors"
+            className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors"
             aria-label={tA("refresh")}
           >
             {t("notifications.refresh")}
@@ -117,7 +117,7 @@ const InstructorNotificationsWidget = ({
               className={`p-3 rounded-lg border transition-colors ${
                 !notification.read
                   ? "bg-[#EFF6FF] border-[#DBEAFE]"
-                  : "bg-[#F9FAFB] border-transparent hover:border-[var(--color-border)]"
+                  : "bg-[var(--color-surface-page)] border-transparent hover:border-[var(--color-border)]"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-1">

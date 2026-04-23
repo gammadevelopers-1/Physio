@@ -78,7 +78,7 @@ const ReviewsOverviewWidget = ({ overall, topCourses }: ReviewsOverviewWidgetPro
         </div>
         <Link
           href={`/${locale}/dashboard/manager/reviews`}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--on-surface-default)] bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg transition-colors flex-shrink-0"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--on-surface-default)] bg-[var(--color-surface-page)] hover:bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg transition-colors flex-shrink-0"
         >
           <span className="hidden sm:inline">{t("moderate")}</span>
           <ArrowIcon className="w-3.5 h-3.5" />
@@ -98,7 +98,7 @@ const ReviewsOverviewWidget = ({ overall, topCourses }: ReviewsOverviewWidgetPro
       ) : (
         <div className="p-4 sm:p-5 flex flex-col lg:flex-row gap-4 lg:gap-6">
           {/* Overall rating block */}
-          <div className="bg-[#F9FAFB] rounded-xl p-4 sm:p-5 border border-[var(--color-border)] lg:w-[200px] lg:flex-shrink-0 text-center">
+          <div className="bg-[var(--color-surface-page)] rounded-xl p-4 sm:p-5 border border-[var(--color-border)] lg:w-[200px] lg:flex-shrink-0 text-center">
             <p className="text-4xl font-bold text-[var(--on-surface-default)] mb-2">
               {overall.avgRating.toFixed(1)}
             </p>
@@ -128,7 +128,7 @@ const ReviewsOverviewWidget = ({ overall, topCourses }: ReviewsOverviewWidgetPro
                   <li key={course.courseId}>
                     <Link
                       href={`/${locale}/dashboard/manager/courses/${course.courseId}/reviews`}
-                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[#F9FAFB] transition-colors group"
+                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-[var(--color-surface-page)] transition-colors group"
                     >
                       <span className="w-6 h-6 rounded-full bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] text-xs font-semibold flex items-center justify-center flex-shrink-0">
                         {idx + 1}

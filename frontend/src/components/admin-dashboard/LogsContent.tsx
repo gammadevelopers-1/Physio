@@ -195,7 +195,7 @@ const LogsContent = () => {
     <>
       <AdminNavbar admin={admin} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -220,7 +220,7 @@ const LogsContent = () => {
                 <button
                   onClick={handleExport}
                   disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
                 >
                   {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   {t("logsPage.exportLogs")}
@@ -282,7 +282,7 @@ const LogsContent = () => {
               <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                    <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                       <tr>
                         <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("logsPage.table.timestamp")}
@@ -306,7 +306,7 @@ const LogsContent = () => {
                     </thead>
                     <tbody>
                       {filteredLogs.map((log) => (
-                        <tr key={log.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                        <tr key={log.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
                           <td className="px-4 py-4 text-sm text-[var(--color-text-secondary)] font-mono whitespace-nowrap">
                             {log.timestamp}
                           </td>
@@ -347,13 +347,13 @@ const LogsContent = () => {
                     {t("logsPage.showing", { count: filteredLogs.length })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">
                       {t("logsPage.previous")}
                     </button>
                     <button className="px-3 py-1.5 text-sm btn-gold text-white rounded">1</button>
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">2</button>
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">3</button>
-                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">2</button>
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">3</button>
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[var(--color-surface-page)]">
                       {t("logsPage.next")}
                     </button>
                   </div>

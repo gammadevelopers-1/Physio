@@ -100,7 +100,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
       <p className="text-sm text-[var(--color-text-secondary)] mb-4">{t("modulesHint")}</p>
 
       {/* Module Form */}
-      <div className="border border-[var(--color-border)] rounded-lg p-4 mb-4 bg-[#F9FAFB]">
+      <div className="border border-[var(--color-border)] rounded-lg p-4 mb-4 bg-[var(--color-surface-page)]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="module-title" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">

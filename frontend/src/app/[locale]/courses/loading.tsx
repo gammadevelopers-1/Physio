@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CoursesLoading() {
   return (
-    <main id="main-content" className="min-h-screen bg-white overflow-x-hidden">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)] overflow-x-hidden">
       {/* Desktop */}
       <div className="hidden lg:block">
         <section className="px-16 py-12">

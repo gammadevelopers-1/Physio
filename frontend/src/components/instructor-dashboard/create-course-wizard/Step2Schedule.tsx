@@ -53,7 +53,7 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
         <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
           {t("maxEnrollment")}
         </label>
-        <p className="text-sm text-[var(--color-text-secondary)] bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg px-3 py-2.5 max-w-xs">
+        <p className="text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg px-3 py-2.5 max-w-xs">
           {t("syncDefaultMax") || "Default: up to 2000 students"}
         </p>
       </div>

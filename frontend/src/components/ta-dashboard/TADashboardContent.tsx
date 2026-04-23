@@ -437,7 +437,7 @@ const TADashboardContent = ({
                         session.status === "completed") && (
                         <button
                           onClick={() => handleViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[var(--color-text-primary)] rounded-lg text-sm font-medium hover:bg-[var(--color-surface-page)] transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                           {t("sessions.viewAttendance")}
@@ -531,7 +531,7 @@ const TADashboardContent = ({
                     className={`p-3 rounded-lg border transition-colors ${
                       !notification.isRead
                         ? "bg-[#EFF6FF] border-[#DBEAFE]"
-                        : "bg-[#F9FAFB] border-transparent hover:border-[var(--color-border)]"
+                        : "bg-[var(--color-surface-page)] border-transparent hover:border-[var(--color-border)]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -585,7 +585,7 @@ const TADashboardContent = ({
                 {upcomingSessions.slice(0, 3).map((session) => (
                   <div
                     key={session.id}
-                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
+                    className="p-3 bg-[var(--color-surface-page)] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
@@ -639,7 +639,7 @@ const TADashboardContent = ({
                 {courses.slice(0, 5).map((course) => (
                   <div
                     key={course.id}
-                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
+                    className="p-3 bg-[var(--color-surface-page)] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className="text-sm font-medium text-[var(--color-text-primary)] leading-tight">
@@ -705,7 +705,7 @@ const TADashboardContent = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]">
+    <div className="min-h-screen bg-[var(--color-surface-page)]">
       <TANavbar />
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">

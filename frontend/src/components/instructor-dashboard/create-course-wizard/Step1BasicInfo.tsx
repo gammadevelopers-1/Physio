@@ -142,7 +142,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
                 {t("maxEnrollment")}
               </label>
-              <p className="text-sm text-[var(--color-text-secondary)] bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
+              <p className="text-sm text-[var(--color-text-secondary)] bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
                 {t("selfPacedUnlimited") || "Self-paced: unlimited enrollment"}
               </p>
             </div>
@@ -172,7 +172,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[#3B82F6] hover:bg-[#F9FAFB] transition-colors">
+          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[#3B82F6] hover:bg-[var(--color-surface-page)] transition-colors">
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"

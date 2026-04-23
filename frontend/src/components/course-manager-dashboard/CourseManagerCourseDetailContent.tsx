@@ -402,7 +402,7 @@ const CourseManagerCourseDetailContent = ({
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -502,7 +502,7 @@ const CourseManagerCourseDetailContent = ({
                               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                                 course.isFeatured
                                   ? "bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] hover:bg-[var(--gold-gold-200)]"
-                                  : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                                  : "border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                               }`}
                             >
                               <Star
@@ -515,7 +515,7 @@ const CourseManagerCourseDetailContent = ({
                             <button
                               onClick={handleDeactivate}
                               disabled={updatingStatus}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[var(--color-text-secondary)] text-sm font-medium rounded-lg hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
                             >
                               <Archive className="w-4 h-4" />
                               {t("courseDetail.archive")}
@@ -686,7 +686,7 @@ const CourseManagerCourseDetailContent = ({
                         .map((mod: CourseModule, idx: number) => (
                           <div key={mod.id}>
                             <button
-                              className="w-full flex items-center justify-between p-4 hover:bg-[#F9FAFB] transition-colors"
+                              className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-page)] transition-colors"
                               onClick={() => toggleModule(mod.id)}
                             >
                               <div className="flex items-center gap-3">
@@ -724,7 +724,7 @@ const CourseManagerCourseDetailContent = ({
                               </div>
                             </button>
                             {expandedModules.has(mod.id) && (
-                              <div className="px-4 pb-4 bg-[#F9FAFB]">
+                              <div className="px-4 pb-4 bg-[var(--color-surface-page)]">
                                 <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                                   <div>
                                     <span className="text-[var(--color-text-secondary)]">{t("courseDetail.moduleType")}:</span>{" "}
@@ -992,7 +992,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
                 onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1027,7 +1027,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1073,7 +1073,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => { setShowRequestChanges(false); setRequestChangesNote(""); }}
-                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)]"
               >
                 {t("courseDetail.cancel")}
               </button>

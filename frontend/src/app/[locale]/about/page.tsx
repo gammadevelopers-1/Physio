@@ -54,16 +54,16 @@ export default async function AboutPage({
   const hasCapabilities = !!(data?.capabilitiesTitle || data?.capabilitiesSubtitle || features.length > 0);
 
   return (
-    <main id="main-content" className="min-h-screen bg-[var(--surface-default)] pb-20 lg:pb-0">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)] pb-20 lg:pb-0">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />
 
       {/* Section 1: About Hero Section */}
       {hasHero && (
-        <section className="bg-[var(--surface-intense)]">
+        <section className="bg-[var(--color-surface-page)]">
           <div className={`flex flex-col lg:flex-row min-h-[400px] lg:min-h-[600px] ${isRTL ? "lg:flex-row-reverse" : ""}`}>
             {/* Left Content */}
-            <div className={`flex-1 bg-[var(--surface-intense)] flex items-center justify-center px-4 py-8 md:px-12 md:py-16 lg:px-16 lg:py-20 order-2 ${isRTL ? "lg:order-2" : "lg:order-1"}`}>
+            <div className={`flex-1 bg-[var(--color-surface-page)] flex items-center justify-center px-4 py-8 md:px-12 md:py-16 lg:px-16 lg:py-20 order-2 ${isRTL ? "lg:order-2" : "lg:order-1"}`}>
               <div className={`max-w-[480px] w-full ${isRTL ? "text-right" : ""}`}>
                 {data?.heroTitle && (
                   <h1 className="text-[var(--on-surface-default)] mb-4 md:mb-6 text-[36px] lg:text-[60px] font-semibold leading-[100%] tracking-[-0.72px] lg:tracking-[-1.2px]">
@@ -90,7 +90,7 @@ export default async function AboutPage({
                     {data?.heroGetStartedButtonLabel && (
                       <Link
                         href={resolveHref(data?.heroGetStartedButtonLink, locale) || "#"}
-                        className="flex items-center justify-center h-12 px-5 py-2 bg-[var(--surface-intense)] text-[var(--on-surface-default)] rounded-xl font-medium border border-[var(--outline-subtle)] transition-colors hover:bg-[var(--surface-container-low)] text-sm md:text-base"
+                        className="flex items-center justify-center h-12 px-5 py-2 bg-[var(--color-surface-page)] text-[var(--on-surface-default)] rounded-xl font-medium border border-[var(--outline-subtle)] transition-colors hover:bg-[var(--surface-container-low)] text-sm md:text-base"
                       >
                         {data.heroGetStartedButtonLabel}
                       </Link>
@@ -185,7 +185,7 @@ export default async function AboutPage({
 
       {/* Section 3: Learning Experience Section */}
       {hasLearning && (
-        <section className="bg-[var(--surface-intense)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
+        <section className="bg-[var(--color-surface-page)] px-4 py-12 md:px-12 md:py-20 lg:px-16 lg:py-24">
           <div className="flex flex-col items-center justify-center max-w-[1200px] mx-auto">
             {data?.learningTitle && (
               <h2 className="text-[var(--on-surface-default)] mb-3 md:mb-4 text-center text-[30px] lg:text-[48px] font-semibold leading-[100%] tracking-[-0.15px] lg:tracking-[-0.24px]">
@@ -225,7 +225,7 @@ export default async function AboutPage({
                           unoptimized={isExternal(imgDesktop)}
                         />
                       </div>
-                      <div className="relative -mt-12 mx-4 bg-[var(--surface-intense)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-4 text-center h-[140px] flex flex-col items-center justify-between">
+                      <div className="relative -mt-12 mx-4 bg-[var(--color-surface-page)] rounded-2xl shadow-[0px_4px_20px_rgba(0,0,0,0.08)] border border-[var(--outline-subtle)] p-4 text-center h-[140px] flex flex-col items-center justify-between">
                         <h3 className="text-[var(--on-surface-default)] font-semibold text-[20px] leading-normal">
                           {card.title}
                         </h3>
@@ -276,7 +276,7 @@ export default async function AboutPage({
                   return (
                     <div
                       key={f.id}
-                      className="flex flex-col items-center bg-white lg:bg-[var(--surface-intense)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
+                      className="flex flex-col items-center bg-[var(--color-surface-card)] rounded-[16px] py-6 px-8 lg:p-8 text-center lg:border lg:border-[var(--outline-subtle)]"
                       style={{ boxShadow: "-2px 8px 2px 0 rgba(0,0,0,0.00), -1px 5px 2px 0 rgba(0,0,0,0.01)" }}
                     >
                       {iconUrl && (

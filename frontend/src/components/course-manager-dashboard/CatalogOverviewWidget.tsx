@@ -297,7 +297,7 @@ const CatalogOverviewWidget = ({
         {displayCourses.map((course) => (
           <div
             key={course.id}
-            className="bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]"
+            className="bg-[var(--color-surface-page)] rounded-xl p-4 border border-[var(--color-border)]"
           >
             <div className="flex items-start gap-3 mb-3">
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--blue-blue-500)] to-[var(--blue-brand-blue)] flex items-center justify-center text-white font-semibold flex-shrink-0">

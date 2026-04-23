@@ -152,7 +152,7 @@ export default function DatePicker({
       <div
         onClick={() => !disabled && setOpen(!open)}
         className={`flex items-center gap-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm cursor-pointer bg-white hover:border-[var(--color-text-secondary)] transition-colors ${
-          disabled ? "opacity-60 cursor-not-allowed bg-[#F9FAFB]" : ""
+          disabled ? "opacity-60 cursor-not-allowed bg-[var(--color-surface-page)]" : ""
         } ${open ? "ring-2 ring-[#3B82F6] border-[#3B82F6]" : ""} ${className}`}
       >
         <Calendar className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />

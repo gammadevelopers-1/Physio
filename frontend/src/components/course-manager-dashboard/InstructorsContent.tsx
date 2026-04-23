@@ -231,7 +231,7 @@ const InstructorsContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -413,7 +413,7 @@ const InstructorsContent = () => {
                         <div className="flex items-center justify-center pt-3 border-t border-[var(--color-border)] mt-auto">
                           <button
                             onClick={() => setDetailInstructorId(instructor.id)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[#F9FAFB] rounded-lg transition-colors"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] rounded-lg transition-colors"
                           >
                             {t("instructorsPage.viewProfile")}
                             <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

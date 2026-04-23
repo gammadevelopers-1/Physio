@@ -209,7 +209,7 @@ const RoleRequestsContent = () => {
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                      <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                         <th className="text-start px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
                           {t("roleRequestsPage.colApplicant") || "Applicant"}
                         </th>
@@ -239,7 +239,7 @@ const RoleRequestsContent = () => {
                           <tr
                             key={request.id}
                             onClick={() => router.push(`/${locale}/dashboard/admin/role-requests/${request.id}`)}
-                            className="border-b border-[var(--color-border)] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                            className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                           >
                             <td className="px-4 py-3">
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{getApplicantName(request)}</p>
@@ -285,7 +285,7 @@ const RoleRequestsContent = () => {
                       <Link
                         key={request.id}
                         href={`/${locale}/dashboard/admin/role-requests/${request.id}`}
-                        className="block p-4 hover:bg-[#F9FAFB] transition-colors"
+                        className="block p-4 hover:bg-[var(--color-surface-page)] transition-colors"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
@@ -313,7 +313,7 @@ const RoleRequestsContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={!pagination.hasPrev}
-                        className="p-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                       </button>
@@ -327,7 +327,7 @@ const RoleRequestsContent = () => {
                             className={`w-8 h-8 rounded-lg text-sm font-medium ${
                               page === currentPage
                                 ? "bg-[#002D87] text-white"
-                                : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                                : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                             }`}
                           >
                             {page}
@@ -337,7 +337,7 @@ const RoleRequestsContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                         disabled={!pagination.hasNext}
-                        className="p-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[var(--color-surface-page)] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>

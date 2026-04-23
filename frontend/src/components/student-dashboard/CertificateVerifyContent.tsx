@@ -185,20 +185,20 @@ export default function CertificateVerifyContent({
 
             {/* Details Grid */}
             <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
+              <div className="bg-[var(--color-surface-page)] rounded-xl p-4 text-center">
                 <Calendar className="w-5 h-5 text-[#002D87] mx-auto mb-2" />
                 <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Date Issued</p>
                 <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{formattedDate}</p>
               </div>
 
               {result.totalHours && result.totalHours > 0 ? (
-                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
+                <div className="bg-[var(--color-surface-page)] rounded-xl p-4 text-center">
                   <Clock className="w-5 h-5 text-[#D4A520] mx-auto mb-2" />
                   <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">CME Hours</p>
                   <p className="text-sm font-semibold text-[var(--color-text-secondary)]">{result.totalHours} Hours</p>
                 </div>
               ) : (
-                <div className="bg-[#F9FAFB] rounded-xl p-4 text-center">
+                <div className="bg-[var(--color-surface-page)] rounded-xl p-4 text-center">
                   <Shield className="w-5 h-5 text-[#22C55E] mx-auto mb-2" />
                   <p className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Status</p>
                   <p className="text-sm font-semibold text-[#22C55E]">Verified</p>

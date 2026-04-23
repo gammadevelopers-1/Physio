@@ -361,7 +361,7 @@ const NELCComplianceCenterContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen">
+        <div className="bg-[var(--color-surface-page)] min-h-screen">
           <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="hidden lg:block lg:flex-shrink-0">
@@ -390,7 +390,7 @@ const NELCComplianceCenterContent = () => {
     return (
       <>
         <CourseManagerNavbar manager={manager} />
-        <div className="bg-[#F9FAFB] min-h-screen flex items-center justify-center">
+        <div className="bg-[var(--color-surface-page)] min-h-screen flex items-center justify-center">
           <div className="text-center">
             <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
             <p className="text-sm text-[var(--color-text-secondary)] mb-4">{error}</p>
@@ -411,7 +411,7 @@ const NELCComplianceCenterContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -504,7 +504,7 @@ const NELCComplianceCenterContent = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                        <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                           <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                             {t("nelc.vcCourse")}
                           </th>
@@ -531,7 +531,7 @@ const NELCComplianceCenterContent = () => {
                           return (
                             <Fragment key={course.courseId}>
                               <tr
-                                className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                                className="hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                                 onClick={() => {
                                   const next = isExpanded ? null : course.courseId;
                                   setExpandedCourse(next);
@@ -574,7 +574,7 @@ const NELCComplianceCenterContent = () => {
                               </tr>
                               {isExpanded && (
                                 <tr>
-                                  <td colSpan={5} className="px-4 py-4 bg-[#F9FAFB]">
+                                  <td colSpan={5} className="px-4 py-4 bg-[var(--color-surface-page)]">
                                     {scorecardLoading[course.courseId] ? (
                                       <div className="flex items-center gap-2 py-6 justify-center">
                                         <Loader2 className="w-4 h-4 text-[#3B82F6] animate-spin" />
@@ -736,7 +736,7 @@ const NELCComplianceCenterContent = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
+                            <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
                               <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                 {t("nelc.vcSession")}
                               </th>
@@ -769,7 +769,7 @@ const NELCComplianceCenterContent = () => {
                               return (
                                 <Fragment key={vc.sessionId}>
                                   <tr
-                                    className="hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                                    className="hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                                     onClick={() =>
                                       setExpandedSession(isExpanded ? null : vc.sessionId)
                                     }
@@ -845,7 +845,7 @@ const NELCComplianceCenterContent = () => {
                                   </tr>
                                   {isExpanded && (
                                     <tr>
-                                      <td colSpan={7} className="px-4 py-3 bg-[#F9FAFB]">
+                                      <td colSpan={7} className="px-4 py-3 bg-[var(--color-surface-page)]">
                                         <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">
                                           {t("nelc.vcComplianceChecks")}
                                         </h4>

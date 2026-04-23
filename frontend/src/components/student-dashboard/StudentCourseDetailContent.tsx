@@ -171,7 +171,7 @@ const StudentCourseDetailContent = () => {
     <>
       <DashboardNavbar user={userData} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -552,7 +552,7 @@ const StudentCourseDetailContent = () => {
                               <div key={module.id} className="rounded-lg border border-[var(--color-border)]">
                                 <Link
                                   href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
-                                  className="flex items-center gap-3 p-3 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                                  className="flex items-center gap-3 p-3 hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                                 >
                                   {module.isCompleted ? (
                                     <div className="w-8 h-8 rounded-full bg-[#F0FDF4] flex items-center justify-center flex-shrink-0">
@@ -593,7 +593,7 @@ const StudentCourseDetailContent = () => {
                                       <Link
                                         key={ma.id}
                                         href={`/${locale}/dashboard/student/courses/${courseId}/assessment/${ma.id}`}
-                                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#F9FAFB] transition-colors"
+                                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[var(--color-surface-page)] transition-colors"
                                       >
                                         <ClipboardCheck className="w-3.5 h-3.5 text-[var(--color-text-secondary)] flex-shrink-0" />
                                         <span className="text-xs text-[var(--color-text-secondary)] flex-1 truncate">{ma.title}</span>
@@ -625,7 +625,7 @@ const StudentCourseDetailContent = () => {
                     <div className="bg-white rounded-xl border border-[var(--color-border)] mb-4">
                       <button
                         onClick={() => setShowAttendanceHistory(!showAttendanceHistory)}
-                        className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-[#F9FAFB] transition-colors rounded-xl"
+                        className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-[var(--color-surface-page)] transition-colors rounded-xl"
                       >
                         <div className="flex items-center gap-3">
                           <h2 className="text-base sm:text-lg font-semibold text-[var(--color-text-primary)]">
@@ -846,7 +846,7 @@ const StudentCourseDetailContent = () => {
                       </h2>
                       <div className="space-y-3">
                         {inactiveSessions.map((session) => (
-                          <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[#F9FAFB]">
+                          <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-page)]">
                             <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
                               <XCircle className="w-5 h-5 text-[var(--color-text-secondary)]" />
                             </div>
@@ -1051,7 +1051,7 @@ const StudentCourseDetailContent = () => {
                             href={rec.downloadUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                           >
                             <Download className="w-3 h-3" />
                           </a>
@@ -1104,7 +1104,7 @@ const StudentCourseDetailContent = () => {
                 <button
                   onClick={() => setShowDropConfirm(false)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

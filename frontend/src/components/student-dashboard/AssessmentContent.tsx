@@ -380,7 +380,7 @@ const AssessmentContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
       </div>
     );
@@ -388,7 +388,7 @@ const AssessmentContent = () => {
 
   if (error && !assessment) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-[#DC2626] mx-auto mb-3" />
           <p className="text-[var(--color-text-secondary)] mb-4">{error}</p>
@@ -409,7 +409,7 @@ const AssessmentContent = () => {
   // instead of flashing the start/attempt screen.
   if (openReview && !reviewMode && !reviewData) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
       </div>
     );
@@ -426,7 +426,7 @@ const AssessmentContent = () => {
     const passed = pct >= ((assessment.passingMarks / assessment.totalMarks) * 100);
 
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           {!isGraded ? (
             <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
@@ -445,7 +445,7 @@ const AssessmentContent = () => {
           </h2>
 
           {isGraded && (
-            <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6 mt-4">
+            <div className="bg-[var(--color-surface-page)] rounded-xl p-4 mb-6 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
@@ -504,7 +504,7 @@ const AssessmentContent = () => {
     // Assignment Review Mode (after grading)
     if (reviewMode && reviewData) {
       return (
-        <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
           <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
             <div className="max-w-[700px] mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -562,7 +562,7 @@ const AssessmentContent = () => {
                 <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.studentFiles") || "Your Submitted Files"}</h3>
                 <div className="space-y-2">
                   {reviewData.submissionFiles.map((f) => (
-                    <div key={f.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                    <div key={f.id} className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
                         <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.fileName}</span>
@@ -593,7 +593,7 @@ const AssessmentContent = () => {
       const isPendingGrading = result.status === "submitted";
 
       return (
-        <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
           <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
             {isPendingGrading ? (
               <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
@@ -611,7 +611,7 @@ const AssessmentContent = () => {
             </p>
 
             {!isPendingGrading && (
-              <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
+              <div className="bg-[var(--color-surface-page)] rounded-xl p-4 mb-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("assessment.score")}</p>
@@ -650,7 +650,7 @@ const AssessmentContent = () => {
 
     // Assignment Start / Submission Screen
     return (
-      <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
         <div className="max-w-[700px] mx-auto px-4 py-6 sm:py-8">
           {/* Back link */}
           <Link
@@ -719,7 +719,7 @@ const AssessmentContent = () => {
               <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">{t("assessment.assignmentFiles") || "Assignment Files"}</h3>
               <div className="space-y-2">
                 {assessment.assignmentFiles.map((f) => (
-                  <div key={f.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                  <div key={f.id} className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
                       <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.fileName}</span>
@@ -781,7 +781,7 @@ const AssessmentContent = () => {
               {assignmentFiles.length > 0 && (
                 <div className="space-y-2 mb-4">
                   {assignmentFiles.map((f, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-lg">
+                    <div key={i} className="flex items-center justify-between p-3 bg-[var(--color-surface-page)] rounded-lg">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <Paperclip className="w-4 h-4 text-[var(--color-text-secondary)] shrink-0" />
                         <span className="text-sm text-[var(--color-text-secondary)] truncate">{f.name}</span>
@@ -852,7 +852,7 @@ const AssessmentContent = () => {
     );
 
     return (
-      <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
         {/* Top Bar */}
         <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
           <div className="max-w-[900px] mx-auto flex items-center justify-between">
@@ -1034,7 +1034,7 @@ const AssessmentContent = () => {
                       <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">
                         {t("assessment.yourAnswer")}
                       </p>
-                      <div className="p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">
+                      <div className="p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">
                         {studentAnswer?.answer || "—"}
                       </div>
                     </div>
@@ -1068,7 +1068,7 @@ const AssessmentContent = () => {
                 <button
                   onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
                   disabled={currentQuestion === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40"
                 >
                   {isRTL ? (
                     <ArrowRight className="w-4 h-4" />
@@ -1136,7 +1136,7 @@ const AssessmentContent = () => {
 
     return (
       <div
-        className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4"
+        className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
         dir={isRTL ? "rtl" : "ltr"}
       >
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
@@ -1163,7 +1163,7 @@ const AssessmentContent = () => {
           </p>
 
           {/* Score Grid */}
-          <div className="bg-[#F9FAFB] rounded-xl p-4 mb-6">
+          <div className="bg-[var(--color-surface-page)] rounded-xl p-4 mb-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-[var(--color-text-secondary)] mb-1">
@@ -1208,7 +1208,7 @@ const AssessmentContent = () => {
                   {result.gradedAnswers.map((ga, i) => (
                     <div
                       key={ga.questionId}
-                      className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-lg"
+                      className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-lg"
                     >
                       <div className="flex-shrink-0">
                         {ga.isCorrect === true ? (
@@ -1265,7 +1265,7 @@ const AssessmentContent = () => {
                     <div
                       key={attempt.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border ${
-                        attempt.isEffective ? "border-[#7C3AED] bg-[#F5F3FF]" : "border-[var(--color-border)] bg-[#F9FAFB]"
+                        attempt.isEffective ? "border-[#7C3AED] bg-[#F5F3FF]" : "border-[var(--color-border)] bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div className="flex-shrink-0">
@@ -1365,7 +1365,7 @@ const AssessmentContent = () => {
 
     return (
       <div
-        className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4"
+        className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4"
         dir={isRTL ? "rtl" : "ltr"}
       >
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6 sm:p-8 max-w-lg w-full">
@@ -1406,7 +1406,7 @@ const AssessmentContent = () => {
 
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-[#F9FAFB] rounded-lg p-3">
+            <div className="bg-[var(--color-surface-page)] rounded-lg p-3">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.totalMarks")}
               </p>
@@ -1414,7 +1414,7 @@ const AssessmentContent = () => {
                 {assessment.totalMarks}
               </p>
             </div>
-            <div className="bg-[#F9FAFB] rounded-lg p-3">
+            <div className="bg-[var(--color-surface-page)] rounded-lg p-3">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.passingMarks")}
               </p>
@@ -1422,7 +1422,7 @@ const AssessmentContent = () => {
                 {assessment.passingMarks}
               </p>
             </div>
-            <div className="bg-[#F9FAFB] rounded-lg p-3">
+            <div className="bg-[var(--color-surface-page)] rounded-lg p-3">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.questionsCount")}
               </p>
@@ -1430,7 +1430,7 @@ const AssessmentContent = () => {
                 {assessment.questions.length}
               </p>
             </div>
-            <div className="bg-[#F9FAFB] rounded-lg p-3">
+            <div className="bg-[var(--color-surface-page)] rounded-lg p-3">
               <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
                 {t("assessment.timeLimit")}
               </p>
@@ -1443,7 +1443,7 @@ const AssessmentContent = () => {
           </div>
 
           {/* Attempts */}
-          <div className="bg-[#F9FAFB] rounded-lg p-3 mb-6">
+          <div className="bg-[var(--color-surface-page)] rounded-lg p-3 mb-6">
             <p className="text-xs text-[var(--color-text-secondary)] mb-0.5">
               {t("assessment.attemptsUsed")}
             </p>
@@ -1505,7 +1505,7 @@ const AssessmentContent = () => {
   // error message instead of crashing on undefined property access.
   if (assessment.questions.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
         <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           <AlertCircle className="w-12 h-12 text-[#D4A520] mx-auto mb-4" />
           <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">
@@ -1542,7 +1542,7 @@ const AssessmentContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
       {/* Top Bar */}
       <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
         <div className="max-w-[1100px] mx-auto flex items-center justify-between">
@@ -1723,7 +1723,7 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[#F0F7FF]"
-                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div
@@ -1775,7 +1775,7 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[#F0F7FF]"
-                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div
@@ -1824,7 +1824,7 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[#F0F7FF]"
-                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                       }`}
                     >
                       <div
@@ -1879,7 +1879,7 @@ const AssessmentContent = () => {
             {question.type === "essay" && (
               <div className="border border-[var(--color-border)] rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#002D87] focus-within:border-transparent">
                 {/* Toolbar */}
-                <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                   <button
                     type="button"
                     onClick={() => document.execCommand("bold")}
@@ -1937,7 +1937,7 @@ const AssessmentContent = () => {
             {question.type === "file_upload" && (
               <div>
                 {answers[question.id] ? (
-                  <div className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-lg bg-[#F9FAFB]">
+                  <div className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-lg bg-[var(--color-surface-page)]">
                     <Paperclip className="w-5 h-5 text-[var(--color-text-secondary)] flex-shrink-0" />
                     <span className="text-sm text-[var(--color-text-secondary)] truncate flex-1">
                       {t("assessment.fileUploaded")}
@@ -1957,7 +1957,7 @@ const AssessmentContent = () => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[#F9FAFB] hover:border-[#002D87] transition-colors">
+                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[var(--color-surface-page)] hover:border-[#002D87] transition-colors">
                     <Upload className="w-10 h-10 text-[var(--color-text-secondary)]" />
                     <span className="text-sm text-[var(--color-text-secondary)]">
                       {t("assessment.uploadFile")}
@@ -1995,7 +1995,7 @@ const AssessmentContent = () => {
             <button
               onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
               disabled={currentQuestion === 0}
-              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40"
             >
               {isRTL ? (
                 <ArrowRight className="w-4 h-4" />

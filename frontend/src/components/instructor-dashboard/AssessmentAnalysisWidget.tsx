@@ -163,7 +163,7 @@ const AssessmentAnalysisWidget = ({
               {[...questions].sort((a, b) => a.correctRate - b.correctRate).slice(0, 5).map((question, qIndex) => (
                 <div
                   key={question.id}
-                  className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]"
+                  className="flex items-center gap-3 p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)]"
                 >
                   {/* Question number */}
                   <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[var(--color-text-secondary)] flex-shrink-0">

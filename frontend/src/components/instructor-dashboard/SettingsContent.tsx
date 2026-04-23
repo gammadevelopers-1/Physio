@@ -241,7 +241,7 @@ const SettingsContent = () => {
     <>
       <InstructorNavbar instructor={instructor} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -428,7 +428,7 @@ const SettingsContent = () => {
                                 type="email"
                                 value={profileData.email}
                                 readOnly
-                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -487,7 +487,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "gregorian"
                                 ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                             }`}
                           >
                             {t("settings.gregorian") || "Gregorian"} (ميلادي)
@@ -498,7 +498,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "hijri"
                                 ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                                : "bg-white text-[var(--color-text-secondary)] border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                             }`}
                           >
                             {t("settings.hijri") || "Hijri"} (هجري)

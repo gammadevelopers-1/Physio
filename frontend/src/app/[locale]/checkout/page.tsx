@@ -45,11 +45,11 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
       <Navbar />
 
       {/* Main Content */}
-      <main id="main-content" className="flex-1 bg-[#F8FAFC] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"}>
+      <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] px-4 py-6 md:px-16 md:py-8" dir={isRTL ? "rtl" : "ltr"}>
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm mb-6">
           <Link href="/" className="text-[var(--on-surface-variant)] hover:text-[var(--on-surface-default)]">

@@ -157,7 +157,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
 
       {/* Sidebar Drawer */}
       <div
-        className={`lg:hidden fixed top-0 ${isRTL ? "right-0" : "left-0"} h-full w-[300px] bg-[#F9FAFB] z-50 transform transition-transform duration-300 overflow-y-auto ${
+        className={`lg:hidden fixed top-0 ${isRTL ? "right-0" : "left-0"} h-full w-[300px] bg-[var(--color-surface-page)] z-50 transform transition-transform duration-300 overflow-y-auto ${
           isOpen
             ? "translate-x-0"
             : isRTL
@@ -291,7 +291,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
             {/* View Profile Button */}
             <Link
               href={`/${locale}/dashboard/student/settings`}
-              className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[#F9FAFB] transition-colors text-center block"
+              className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-surface-page)] transition-colors text-center block"
             >
               {t("sidebar.viewProfile")}
             </Link>
@@ -313,7 +313,7 @@ const MobileSidebar = ({ user }: MobileSidebarProps) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
                         ? "bg-[#F0F7FF] text-[#002D87]"
-                        : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     <Icon

@@ -25,7 +25,7 @@ const CTASection = ({ data }: CTASectionProps) => {
   if (!title && !description && !buttonLabel && !ctaBackgroundImage) return null;
 
   return (
-    <section className="relative bg-[var(--surface-container-low)] px-4 lg:px-10 py-16 lg:py-[120px] overflow-hidden">
+    <section className="relative bg-[var(--color-surface-card)] px-4 lg:px-10 py-16 lg:py-[120px] overflow-hidden">
       {ctaBackgroundImage && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className={`absolute w-[1440px] h-[1440px] ${isRTL ? "-scale-x-100" : ""}`}>

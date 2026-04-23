@@ -280,7 +280,7 @@ const StudentsContent = () => {
     <>
       <InstructorNavbar instructor={instructor} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -407,7 +407,7 @@ const StudentsContent = () => {
 
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("students.filters")}
@@ -489,7 +489,7 @@ const StudentsContent = () => {
                         <div className="overflow-x-auto">
                           <table className="w-full table-fixed">
                             <thead>
-                              <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                              <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                                 <th className="px-3 py-3 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider" style={{ width: "28%" }}>
                                   <button onClick={() => toggleSort("name")} className="flex items-center gap-1 hover:text-[var(--color-text-secondary)]">
                                     {t("students.tableStudent")}
@@ -531,7 +531,7 @@ const StudentsContent = () => {
                               {paginatedStudents.map((student) => (
                                 <tr
                                   key={student.studentId}
-                                  className="hover:bg-[#F9FAFB] transition-colors"
+                                  className="hover:bg-[var(--color-surface-page)] transition-colors"
                                 >
                                   <td className="px-3 py-3">
                                     <div className="max-w-[200px]">
@@ -694,7 +694,7 @@ const StudentsContent = () => {
                             </div>
 
                             <div className="grid grid-cols-3 gap-2 mb-2">
-                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                              <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
                                 <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                                   {student.totalEnrollments}
                                 </p>
@@ -702,7 +702,7 @@ const StudentsContent = () => {
                                   {t("students.tableCourse") || "Courses"}
                                 </p>
                               </div>
-                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                              <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
                                 <p
                                   className={`text-sm font-semibold ${getProgressStyle(student.averageProgress)}`}
                                 >
@@ -712,7 +712,7 @@ const StudentsContent = () => {
                                   {t("students.tableProgress") || "Progress"}
                                 </p>
                               </div>
-                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                              <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
                                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                   {formatLastActive(student.lastAccessedAt)}
                                 </p>
@@ -722,7 +722,7 @@ const StudentsContent = () => {
                               </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2 mb-3">
-                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                              <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
                                 <p
                                   className={`text-sm font-semibold ${
                                     student.attendanceRate == null
@@ -738,7 +738,7 @@ const StudentsContent = () => {
                                   {t("students.tableAttendance")}
                                 </p>
                               </div>
-                              <div className="text-center p-2 bg-[#F9FAFB] rounded-lg">
+                              <div className="text-center p-2 bg-[var(--color-surface-page)] rounded-lg">
                                 <p
                                   className={`text-sm font-semibold ${
                                     student.assessmentAverage == null

@@ -114,7 +114,7 @@ const TAAssessmentSubmissionsView = ({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                   <th className="text-left px-4 py-3 text-sm font-medium text-[var(--color-text-secondary)]">
                     {t("submissions.studentName")}
                   </th>
@@ -136,7 +136,7 @@ const TAAssessmentSubmissionsView = ({
                   return (
                     <React.Fragment key={submission.id}>
                       <tr
-                        className={`border-b border-[var(--color-border)] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[#F9FAFB]" : ""}`}
+                        className={`border-b border-[var(--color-border)] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[var(--color-surface-page)]" : ""}`}
                         onClick={() => hasContent && setExpandedId(isExpanded ? null : submission.id)}
                       >
                         <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
@@ -172,7 +172,7 @@ const TAAssessmentSubmissionsView = ({
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={4} className="px-4 py-4 bg-[#F9FAFB]">
+                          <td colSpan={4} className="px-4 py-4 bg-[var(--color-surface-page)]">
                             <div className="space-y-3">
                               {submission.answers && submission.answers.length > 0 && (
                                 <div>

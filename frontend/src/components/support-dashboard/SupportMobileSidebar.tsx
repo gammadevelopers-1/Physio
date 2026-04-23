@@ -92,7 +92,7 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
 
       {/* Sidebar Drawer */}
       <div
-        className={`lg:hidden fixed top-0 ${isRTL ? "right-0" : "left-0"} h-full w-[300px] bg-[#F9FAFB] z-50 transform transition-transform duration-300 overflow-y-auto ${
+        className={`lg:hidden fixed top-0 ${isRTL ? "right-0" : "left-0"} h-full w-[300px] bg-[var(--color-surface-page)] z-50 transform transition-transform duration-300 overflow-y-auto ${
           isOpen
             ? "translate-x-0"
             : isRTL
@@ -209,7 +209,7 @@ const SupportMobileSidebar = ({ profile }: SupportMobileSidebarProps) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       active
                         ? "bg-[#F0F7FF] text-[#002D87]"
-                        : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     <Icon

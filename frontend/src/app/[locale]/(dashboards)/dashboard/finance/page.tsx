@@ -16,7 +16,7 @@ export default async function FinanceDashboardPage({
   setRequestLocale(locale);
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <FinanceDashboardContent />
     </main>
   );

@@ -129,7 +129,7 @@ const TicketsBoardWidget = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-[#F3F4F6] bg-[#F9FAFB]">
+      <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-[#F3F4F6] bg-[var(--color-surface-page)]">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -176,7 +176,7 @@ const TicketsBoardWidget = () => {
       <div>
         <table className="w-full">
           <thead>
-            <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+            <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
               <th className="text-left text-[11px] font-semibold text-[var(--color-text-secondary)] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.id")}
               </th>
@@ -203,7 +203,7 @@ const TicketsBoardWidget = () => {
             {filteredTickets.map((ticket) => (
               <tr
                 key={ticket.id}
-                className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB] transition-colors"
+                className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)] transition-colors"
               >
                 <td className="px-3 py-3">
                   <span className="text-[13px] font-medium text-[#3B82F6]">

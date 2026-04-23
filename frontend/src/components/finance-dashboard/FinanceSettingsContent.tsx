@@ -73,7 +73,7 @@ const FinanceSettingsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -140,7 +140,7 @@ const FinanceSettingsContent = () => {
                         {gateways.map((gw) => {
                           const enabled = gatewayEnabled[gw.key];
                           return (
-                            <div key={gw.key} className="p-5 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                            <div key={gw.key} className="p-5 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                                 <div className="flex items-center gap-3">
                                   <div className={`w-10 h-10 ${gw.color} rounded-lg flex items-center justify-center`}>
@@ -259,7 +259,7 @@ const FinanceSettingsContent = () => {
                         {t("settingsPage.tax.title")}
                       </h3>
                       <div className="max-w-md space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                           <div>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.tax.vatEnabled")}</p>
                           </div>
@@ -279,7 +279,7 @@ const FinanceSettingsContent = () => {
                             className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                        <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                           <div>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">{t("settingsPage.tax.taxInclusive")}</p>
                           </div>

@@ -45,7 +45,7 @@ const FavouritesContent = () => {
       <DashboardNavbar user={userData} />
 
       {/* Main Container */}
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
@@ -144,7 +144,7 @@ const FavouritesContent = () => {
                           {/* View Course Button */}
                           <Link
                             href={`/${locale}/dashboard/student/courses/${course.id}`}
-                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[#F9FAFB] transition-colors"
+                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[var(--color-text-primary)] text-center hover:bg-[var(--color-surface-page)] transition-colors"
                           >
                             {t("favourites.viewCourse")}
                           </Link>

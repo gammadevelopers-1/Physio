@@ -36,7 +36,7 @@ const ExpertInstructors = ({ instructors: strapiInstructors = [], sectionData }:
   const row2 = instructorsList.filter((i) => i.row === 2);
 
   return (
-    <section className="bg-[var(--surface-intense)] px-4 md:px-10 py-16 md:py-24 overflow-hidden">
+    <section className="bg-[var(--color-surface-card)] px-4 md:px-10 py-16 md:py-24 overflow-hidden">
       <div className="flex flex-col gap-5 md:gap-8 items-center justify-center w-full">
         {title && (
           <h2

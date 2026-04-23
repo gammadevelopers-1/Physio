@@ -96,7 +96,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
   return (
     <div className="relative">
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#F9FAFB] rounded-lg z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-surface-page)] rounded-lg z-10">
           <Loader2 className="w-6 h-6 text-[var(--color-text-secondary)] animate-spin" />
         </div>
       )}
@@ -112,7 +112,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           href={material.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
           Open in tab
@@ -139,7 +139,7 @@ function ImageViewer({ material }: { material: ModuleMaterial }) {
       <img
         src={material.fileUrl}
         alt={material.title}
-        className="w-full rounded-lg object-contain bg-[#F9FAFB]"
+        className="w-full rounded-lg object-contain bg-[var(--color-surface-page)]"
         style={{ maxHeight: "600px" }}
       />
       <a
@@ -280,7 +280,7 @@ const CourseLearningContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-[var(--color-text-secondary)] animate-spin" />
       </div>
     );
@@ -288,7 +288,7 @@ const CourseLearningContent = () => {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-surface-page)] flex items-center justify-center">
         <div className="text-center">
           <p className="text-[var(--color-text-secondary)] mb-4">{error || t("courseDetail.notFound")}</p>
           <Link
@@ -306,7 +306,7 @@ const CourseLearningContent = () => {
   const isSequential = data?.course?.isSequential !== false;
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-[var(--color-surface-page)]" dir={isRTL ? "rtl" : "ltr"}>
       {/* Locked module toast */}
       {lockedToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 bg-[var(--color-text-primary)] text-white text-sm rounded-xl shadow-lg">
@@ -404,7 +404,7 @@ const CourseLearningContent = () => {
                         ? "opacity-50 cursor-not-allowed"
                         : isActive
                           ? "bg-[#EFF6FF] border border-[#BFDBFE]"
-                          : "hover:bg-[#F9FAFB] cursor-pointer"
+                          : "hover:bg-[var(--color-surface-page)] cursor-pointer"
                     }`}
                   >
                     {/* Step indicator */}
@@ -603,7 +603,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToPrevModule}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
                     aria-label={tA("previousModule")}
                   >
                     {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
@@ -612,7 +612,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToNextModule}
                     disabled={currentIndex === sortedModules.length - 1}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-40 text-sm text-[var(--color-text-secondary)]"
                     aria-label={tA("nextModule")}
                   >
                     Next

@@ -70,7 +70,7 @@ const CertificateQueue = ({
           {displayCerts.map((cert) => (
             <div
               key={cert.id}
-              className="p-3 rounded-lg border bg-[#F9FAFB] border-transparent hover:border-[var(--color-border)] transition-colors"
+              className="p-3 rounded-lg border bg-[var(--color-surface-page)] border-transparent hover:border-[var(--color-border)] transition-colors"
             >
               {/* Top Row: Star, Name */}
               <div className="flex items-center gap-2 mb-2">

@@ -107,7 +107,7 @@ const RefundsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -187,7 +187,7 @@ const RefundsContent = () => {
                 {/* Refund Items */}
                 <div className="p-5 space-y-4">
                   {filteredRefunds.map((refund) => (
-                    <div key={refund.id} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+                    <div key={refund.id} className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-[#FFEDD5] flex items-center justify-center flex-shrink-0">

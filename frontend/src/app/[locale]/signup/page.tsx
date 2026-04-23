@@ -113,7 +113,7 @@ function SignUpForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+      <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
         <AuthNavbar />
         <main id="main-content" className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center px-4 py-10">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-lg">
@@ -133,7 +133,7 @@ function SignUpForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
       <AuthNavbar />
 
       {/* Main Content */}

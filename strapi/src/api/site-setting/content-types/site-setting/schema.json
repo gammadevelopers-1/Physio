@@ -148,6 +148,11 @@
       "type": "string",
       "default": "#737373",
       "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeFooterBackground": {
+      "type": "string",
+      "default": "#ffffff",
+      "pluginOptions": { "i18n": { "localized": false } }
     }
   }
 }

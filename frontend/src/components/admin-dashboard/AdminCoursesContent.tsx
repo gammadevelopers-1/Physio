@@ -92,7 +92,7 @@ const AdminCoursesContent = () => {
     <>
       <AdminNavbar admin={admin} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -281,15 +281,15 @@ const AdminCoursesContent = () => {
                                   <div
                                     className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
                                   >
-                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                       <Eye className="w-4 h-4" />
                                       {t("coursesPage.actions.view")}
                                     </button>
-                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                       <Edit className="w-4 h-4" />
                                       {t("coursesPage.actions.edit")}
                                     </button>
-                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                    <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                       <Archive className="w-4 h-4" />
                                       {t("coursesPage.actions.archive")}
                                     </button>
@@ -304,7 +304,7 @@ const AdminCoursesContent = () => {
                   ) : (
                     <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <table className="w-full">
-                        <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                        <thead className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                           <tr>
                             <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.course")}
@@ -330,7 +330,7 @@ const AdminCoursesContent = () => {
                           {courses.map((course) => (
                             <tr
                               key={course.id}
-                              className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]"
+                              className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]"
                             >
                               <td className="px-4 py-4">
                                 <span className="text-sm font-medium text-[var(--color-text-primary)]">
@@ -377,7 +377,7 @@ const AdminCoursesContent = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
-                          className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -387,7 +387,7 @@ const AdminCoursesContent = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>

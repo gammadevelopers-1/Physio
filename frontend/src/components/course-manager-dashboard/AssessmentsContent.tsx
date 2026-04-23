@@ -665,7 +665,7 @@ const AssessmentsContent = () => {
     if (expandedId !== assessmentId || !settingsForm) return null;
 
     return (
-      <div className="bg-[#F9FAFB] border-t border-[var(--color-border)] px-4 py-4">
+      <div className="bg-[var(--color-surface-page)] border-t border-[var(--color-border)] px-4 py-4">
         <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60 pointer-events-none" : ""}>
           {renderSettingsFields(settingsForm, setSettingsForm, courseDefaults)}
         </fieldset>
@@ -706,7 +706,7 @@ const AssessmentsContent = () => {
     <>
       <CourseManagerNavbar manager={manager} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -885,7 +885,7 @@ const AssessmentsContent = () => {
                   <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6 overflow-hidden">
                     <button
                       onClick={() => setDefaultsOpen(!defaultsOpen)}
-                      className="w-full flex items-center justify-between px-4 py-4 hover:bg-[#F9FAFB] transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-4 hover:bg-[var(--color-surface-page)] transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
@@ -908,7 +908,7 @@ const AssessmentsContent = () => {
                     </button>
 
                     {defaultsOpen && courseDefaultsForm && (
-                      <div className="border-t border-[var(--color-border)] px-4 py-4 bg-[#F9FAFB]">
+                      <div className="border-t border-[var(--color-border)] px-4 py-4 bg-[var(--color-surface-page)]">
                         <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60 pointer-events-none" : ""}>
                         {renderSettingsFields(
                           {
@@ -1096,7 +1096,7 @@ const AssessmentsContent = () => {
                                 <col className="w-[15%]" />
                               </colgroup>
                               <thead>
-                                <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                                <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                                   <th className="text-start text-xs font-medium text-[var(--color-text-secondary)] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
                                   <th className="text-start text-xs font-medium text-[var(--color-text-secondary)] px-4 py-3">{t("assessmentsPage.table.type")}</th>
                                   <th className="text-start text-xs font-medium text-[var(--color-text-secondary)] px-4 py-3">{t("assessmentsPage.table.totalMarks")}</th>
@@ -1122,8 +1122,8 @@ const AssessmentsContent = () => {
                                           </colgroup>
                                           <tbody>
                                             <tr
-                                              className={`hover:bg-[#F9FAFB] transition-colors cursor-pointer ${
-                                                expandedId === assessment.id ? "bg-[#F9FAFB]" : ""
+                                              className={`hover:bg-[var(--color-surface-page)] transition-colors cursor-pointer ${
+                                                expandedId === assessment.id ? "bg-[var(--color-surface-page)]" : ""
                                               }`}
                                               onClick={() => toggleSettings(assessment)}
                                             >
@@ -1357,7 +1357,7 @@ const AssessmentsContent = () => {
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
-                                <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                                <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                                   <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">{t("assessmentsPage.submissions.student")}</th>
                                   <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">{t("assessmentsPage.submissions.score")}</th>
                                   <th className="px-4 py-3 text-start text-xs font-semibold text-[var(--color-text-secondary)] uppercase">{t("assessmentsPage.submissions.status")}</th>
@@ -1386,7 +1386,7 @@ const AssessmentsContent = () => {
                                     return (
                                       <tr
                                         key={sub.id}
-                                        className={`hover:bg-[#F9FAFB] transition-colors ${isNested ? "bg-[#FAFAFA]" : ""}`}
+                                        className={`hover:bg-[var(--color-surface-page)] transition-colors ${isNested ? "bg-[#FAFAFA]" : ""}`}
                                       >
                                         <td className={`px-4 py-3 ${isNested ? "ps-10" : ""}`}>
                                           {isNested ? (
@@ -1476,7 +1476,7 @@ const AssessmentsContent = () => {
                                     return (
                                       <React.Fragment key={studentId}>
                                         {/* Primary row */}
-                                        <tr className="hover:bg-[#F9FAFB] transition-colors">
+                                        <tr className="hover:bg-[var(--color-surface-page)] transition-colors">
                                           <td className="px-4 py-3">
                                             <div className="flex items-center gap-2">
                                               {hasRetakes && (
@@ -1643,13 +1643,13 @@ const AssessmentsContent = () => {
                   </div>
                 </div>
                 {assessment && (
-                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                  <div className="p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.table.assessment")}</p>
                     <p className="text-sm font-medium text-[var(--color-text-secondary)]">{assessment.title}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                  <div className="p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.score")}</p>
                     {isNotSubmitted ? (
                       <p className="text-lg font-bold text-[#EF4444]">
@@ -1663,7 +1663,7 @@ const AssessmentsContent = () => {
                       <p className="text-lg font-bold text-[var(--color-text-secondary)]">--</p>
                     )}
                   </div>
-                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                  <div className="p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.status")}</p>
                     {isNotSubmitted ? (
                       <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium mt-1 bg-[#FEE2E2] text-[#DC2626]">
@@ -1691,7 +1691,7 @@ const AssessmentsContent = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                  <div className="p-3 bg-[var(--color-surface-page)] rounded-lg">
                     <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.submitted")}</p>
                     {sub.submittedAt ? (
                       <p className="text-sm text-[var(--color-text-secondary)]">
@@ -1702,7 +1702,7 @@ const AssessmentsContent = () => {
                     )}
                   </div>
                   {sub.gradedAt && (
-                    <div className="p-3 bg-[#F9FAFB] rounded-lg">
+                    <div className="p-3 bg-[var(--color-surface-page)] rounded-lg">
                       <p className="text-xs text-[var(--color-text-secondary)]">{t("assessmentsPage.submissions.graded")}</p>
                       <p className="text-sm text-[var(--color-text-secondary)]">
                         {new Date(sub.gradedAt).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
@@ -1767,7 +1767,7 @@ const AssessmentsContent = () => {
                                 <div className={`p-2 rounded-md text-sm ${
                                   isCorrect === true ? "bg-[#DCFCE7] text-[#065F46]" :
                                   isCorrect === false ? "bg-[#FEE2E2] text-[#991B1B]" :
-                                  "bg-[#F9FAFB] text-[var(--color-text-secondary)]"
+                                  "bg-[var(--color-surface-page)] text-[var(--color-text-secondary)]"
                                 }`}>
                                   <p className="text-[10px] uppercase font-semibold mb-1 opacity-70">
                                     {t("assessmentsPage.submissions.studentAnswer") || "Student Answer"}
@@ -1980,7 +1980,7 @@ const AssessmentsContent = () => {
                             <div
                               key={oi}
                               className={`flex items-center gap-2 p-2.5 rounded-lg border ${
-                                opt.isCorrect ? "bg-[#DCFCE7] border-[#22C55E]" : "bg-[#F9FAFB] border-[var(--color-border)]"
+                                opt.isCorrect ? "bg-[#DCFCE7] border-[#22C55E]" : "bg-[var(--color-surface-page)] border-[var(--color-border)]"
                               }`}
                             >
                               <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${

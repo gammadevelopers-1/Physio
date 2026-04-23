@@ -114,7 +114,7 @@ const DiscountsContent = () => {
     <>
       <FinanceNavbar profile={profile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -185,7 +185,7 @@ const DiscountsContent = () => {
                 {/* Coupon Cards */}
                 <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredCoupons.map((coupon) => (
-                    <div key={coupon.id} className="p-4 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6] relative">
+                    <div key={coupon.id} className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6] relative">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-10 h-10 bg-[#FDF6EC] rounded-lg flex items-center justify-center">
@@ -219,11 +219,11 @@ const DiscountsContent = () => {
                             </button>
                             {openActionId === coupon.id && (
                               <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
-                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                   <Eye className="w-3.5 h-3.5" />
                                   {t("paymentsTable.actions.view")}
                                 </button>
-                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                   <Pencil className="w-3.5 h-3.5" />
                                   {t("discountsPage.actions.edit")}
                                 </button>
@@ -273,7 +273,7 @@ const DiscountsContent = () => {
                   <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t("discountsPage.analytics.title")}</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl text-center">
+                  <div className="p-4 bg-[var(--color-surface-page)] rounded-xl text-center">
                     <p className="text-2xl font-bold text-[var(--color-text-secondary)]">342</p>
                     <p className="text-[12px] text-[var(--color-text-secondary)]">{t("discountsPage.analytics.totalUsage")}</p>
                   </div>
@@ -330,7 +330,7 @@ const DiscountsContent = () => {
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                 {t("discountsPage.form.cancel")}
               </button>
               <button className="flex-1 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium">

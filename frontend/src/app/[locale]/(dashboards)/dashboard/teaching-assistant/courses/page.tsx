@@ -17,7 +17,7 @@ export default async function TACoursesPage({
   setRequestLocale(locale);
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <TANavbar />
       <div className="max-w-[1440px] mx-auto px-4 lg:px-8 py-6">
         <div className="flex flex-col lg:flex-row gap-6">

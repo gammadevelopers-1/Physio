@@ -128,7 +128,7 @@ const ComplianceContent = () => {
     <>
       <AdminNavbar admin={admin} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -224,7 +224,7 @@ const ComplianceContent = () => {
                       return (
                         <div
                           key={category.id}
-                          className="p-4 bg-[#F9FAFB] rounded-lg"
+                          className="p-4 bg-[var(--color-surface-page)] rounded-lg"
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span
@@ -263,7 +263,7 @@ const ComplianceContent = () => {
                     <div key={category.id}>
                       {/* Category Header */}
                       <button
-                        className="w-full flex items-center justify-between p-5 hover:bg-[#F9FAFB] transition-colors"
+                        className="w-full flex items-center justify-between p-5 hover:bg-[var(--color-surface-page)] transition-colors"
                         onClick={() =>
                           setExpandedCategory(
                             expandedCategory === category.id ? null : category.id
@@ -286,7 +286,7 @@ const ComplianceContent = () => {
 
                       {/* Clauses */}
                       {expandedCategory === category.id && (
-                        <div className="bg-[#F9FAFB] px-5 pb-5">
+                        <div className="bg-[var(--color-surface-page)] px-5 pb-5">
                           <table className="w-full">
                             <thead>
                               <tr className="border-b border-[var(--color-border)]">

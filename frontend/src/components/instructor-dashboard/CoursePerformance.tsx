@@ -223,7 +223,7 @@ const CoursePerformance = ({
           <div className="relative" ref={exportRef}>
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
               aria-label={tA("exportOptions")}
               aria-haspopup="true"
               aria-expanded={showExportDropdown}
@@ -238,7 +238,7 @@ const CoursePerformance = ({
                 <div className="py-1">
                   <button
                     onClick={handleExportCSV}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                     role="menuitem"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-[#22C55E]" />
@@ -246,7 +246,7 @@ const CoursePerformance = ({
                   </button>
                   <button
                     onClick={handleExportPDF}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                     role="menuitem"
                   >
                     <FileText className="w-4 h-4 text-[#EF4444]" />

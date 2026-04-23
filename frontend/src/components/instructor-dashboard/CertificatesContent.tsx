@@ -125,7 +125,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
           </div>
 
           {/* Student Info */}
-          <div className="p-4 bg-[#F9FAFB] rounded-xl mb-6">
+          <div className="p-4 bg-[var(--color-surface-page)] rounded-xl mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[var(--color-text-secondary)]">
                 {initials}
@@ -197,7 +197,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
 
           {/* Existing review note */}
           {cert.reviewNote && cert.status !== "pending" && (
-            <div className="p-3 bg-[#F9FAFB] rounded-lg mb-4">
+            <div className="p-3 bg-[var(--color-surface-page)] rounded-lg mb-4">
               <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("certificates.reviewNote")}</p>
               <p className="text-sm text-[var(--color-text-secondary)]">{cert.reviewNote}</p>
             </div>
@@ -221,7 +221,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
           {/* Action Buttons */}
           {canAct ? (
             <div className="flex gap-2">
-              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
+              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
                 {t("certificates.cancel")}
               </button>
               {cert.status === "pending" && (
@@ -252,7 +252,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, t }: ReviewModalProp
               </button>
             </div>
           ) : (
-            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
               {t("certificates.close")}
             </button>
           )}
@@ -612,7 +612,7 @@ const CertificatesContent = () => {
   return (
     <>
       <InstructorNavbar instructor={instructor} />
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -627,7 +627,7 @@ const CertificatesContent = () => {
                   <h1 className="text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{t("certificates.title")}</h1>
                   <p className="text-sm text-[var(--color-text-secondary)] mt-1">{t("certificates.subtitle")}</p>
                 </div>
-                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors" title={t("certificates.refresh")}>
+                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors" title={t("certificates.refresh")}>
                   <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 </button>
               </div>
@@ -729,7 +729,7 @@ const CertificatesContent = () => {
                       </div>
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("certificates.filters")}
@@ -789,7 +789,7 @@ const CertificatesContent = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
+                            <tr className="bg-[var(--color-surface-page)] border-b border-[var(--color-border)]">
                               <th className="px-4 py-3 text-start">
                                 <input
                                   type="checkbox"
@@ -811,7 +811,7 @@ const CertificatesContent = () => {
                               const elig = getEligibility(cert);
                               const canSelect = cert.status === "pending" || cert.status === "held";
                               return (
-                                <tr key={cert.id} className="hover:bg-[#F9FAFB] transition-colors">
+                                <tr key={cert.id} className="hover:bg-[var(--color-surface-page)] transition-colors">
                                   <td className="px-4 py-4">
                                     {canSelect ? (
                                       <input
@@ -961,7 +961,7 @@ const CertificatesContent = () => {
                             </div>
 
                             {/* Eligibility */}
-                            <div className="grid grid-cols-3 gap-2 mb-3 p-3 bg-[#F9FAFB] rounded-lg">
+                            <div className="grid grid-cols-3 gap-2 mb-3 p-3 bg-[var(--color-surface-page)] rounded-lg">
                               <div className="text-center">
                                 <div className={`w-6 h-6 mx-auto rounded flex items-center justify-center mb-1 ${elig.attendance ? "bg-[#DCFCE7] text-[#22C55E]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
                                   {elig.attendance ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
@@ -989,7 +989,7 @@ const CertificatesContent = () => {
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">
-                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                                   <Eye className="w-4 h-4" />{t("certificates.review")}
                                 </button>
                                 <button onClick={() => quickApprove(cert)} className="flex items-center justify-center px-3 py-2 bg-[#22C55E] text-white rounded-lg hover:bg-[#16A34A]">
@@ -1074,7 +1074,7 @@ const CertificatesContent = () => {
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
+                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1106,7 +1106,7 @@ const CertificatesContent = () => {
                 className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none mb-4"
               />
               <div className="flex gap-3">
-                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50">
+                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button

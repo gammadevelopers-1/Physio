@@ -192,7 +192,7 @@ const TeamContent = () => {
       <SupportNavbar profile={profile} />
 
       {/* Main Container */}
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar - Hidden on mobile */}
@@ -274,7 +274,7 @@ const TeamContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[var(--color-text-primary)] text-white"
-                        : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
+                        : "bg-white text-[var(--color-text-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     {tab.label}
@@ -374,19 +374,19 @@ const TeamContent = () => {
                     {/* Quick Action Buttons */}
                     <div className="flex items-center gap-2">
                       <button
-                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                         title={t("teamPage.actions.message")}
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                         title={t("teamPage.actions.stats")}
                       >
                         <BarChart3 className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors"
+                        className="flex-1 h-9 flex items-center justify-center gap-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors"
                         title={t("teamPage.actions.more")}
                       >
                         <MoreVertical className="w-3.5 h-3.5" />
@@ -407,7 +407,7 @@ const TeamContent = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Best Response Time */}
-                  <div className="bg-[#F9FAFB] rounded-xl p-4">
+                  <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.bestResponseTime")}
                     </p>
@@ -418,7 +418,7 @@ const TeamContent = () => {
                   </div>
 
                   {/* Highest CSAT */}
-                  <div className="bg-[#F9FAFB] rounded-xl p-4">
+                  <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.highestCSAT")}
                     </p>
@@ -429,7 +429,7 @@ const TeamContent = () => {
                   </div>
 
                   {/* Most Resolved */}
-                  <div className="bg-[#F9FAFB] rounded-xl p-4">
+                  <div className="bg-[var(--color-surface-page)] rounded-xl p-4">
                     <p className="text-sm text-[var(--color-text-secondary)] mb-1">
                       {t("teamPage.performanceCards.mostResolved")}
                     </p>

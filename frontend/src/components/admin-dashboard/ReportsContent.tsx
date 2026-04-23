@@ -101,7 +101,7 @@ const ReportsContent = () => {
     <>
       <AdminNavbar admin={admin} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -235,7 +235,7 @@ const ReportsContent = () => {
 
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-[#F9FAFB]">
+                    <thead className="bg-[var(--color-surface-page)]">
                       <tr>
                         <th className={`px-4 py-3 text-xs font-medium text-[var(--color-text-secondary)] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("reportsPage.table.reportName")}

@@ -45,7 +45,7 @@ const TodaysSessions = ({
         </h2>
         <button
           onClick={() => router.push(`/${locale}/dashboard/instructor/sessions?view=calendar`)}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
         >
           {t("todaysSessions.viewCalendar")}
         </button>

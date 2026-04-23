@@ -136,8 +136,8 @@ const SchedulesSessionsWidget = ({
                 session.hasConflict
                   ? "bg-[#FEE2E2] border-s-3 border-[#EF4444]"
                   : session.type === "onsite"
-                    ? "bg-[#F9FAFB] border-s-3 border-[#22C55E]"
-                    : "bg-[#F9FAFB] border-s-3 border-[#3B82F6]"
+                    ? "bg-[var(--color-surface-page)] border-s-3 border-[#22C55E]"
+                    : "bg-[var(--color-surface-page)] border-s-3 border-[#3B82F6]"
               }`}
               style={{ borderInlineStartWidth: "3px" }}
             >

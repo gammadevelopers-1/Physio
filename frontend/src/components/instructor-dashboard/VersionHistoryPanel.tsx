@@ -146,7 +146,7 @@ export default function VersionHistoryPanel({
                             </button>
                             <button
                               onClick={() => setConfirmId(null)}
-                              className="px-3 py-1 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                              className="px-3 py-1 border border-[var(--color-border)] rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                             >
                               {t("versions.cancel")}
                             </button>
@@ -174,7 +174,7 @@ export default function VersionHistoryPanel({
                   </div>
                   {/* Rollback explanation */}
                   {confirmId === v.id && (
-                    <p className="text-xs text-[var(--color-text-secondary)] mt-2 bg-[#F9FAFB] p-2 rounded">
+                    <p className="text-xs text-[var(--color-text-secondary)] mt-2 bg-[var(--color-surface-page)] p-2 rounded">
                       {t("versions.rollbackDesc")}
                     </p>
                   )}
@@ -186,7 +186,7 @@ export default function VersionHistoryPanel({
 
         {/* Footer */}
         <div className="p-4 border-t border-[var(--color-border)]">
-          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
             {t("versions.close")}
           </button>
         </div>

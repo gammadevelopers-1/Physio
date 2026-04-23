@@ -213,7 +213,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
 
                 {/* Review note from admin */}
                 {application.reviewNote && (
-                  <div className="mt-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
+                  <div className="mt-4 p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)]">
                     <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-1 uppercase tracking-wider">
                       {t("roleRequestReviewPage.adminNote") || "Admin Note"}
                     </p>
@@ -279,7 +279,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                         href={file.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                        className="flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors"
                       >
                         <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center shrink-0">
                           <Download className="w-5 h-5 text-[#002D87]" />
@@ -406,7 +406,7 @@ const RoleRequestReviewContent = ({ applicationId }: RoleRequestReviewContentPro
                 <button
                   onClick={() => setShowModal(null)}
                   disabled={!!actionLoading}
-                  className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                  className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] transition-colors disabled:opacity-50"
                 >
                   {t("roleRequestReviewPage.cancel") || "Cancel"}
                 </button>

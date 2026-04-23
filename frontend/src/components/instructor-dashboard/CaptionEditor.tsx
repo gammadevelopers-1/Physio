@@ -150,7 +150,7 @@ export default function CaptionEditor({
                 <p className="text-sm text-[var(--color-text-secondary)] text-center py-8">{t("captions.noCaptions")}</p>
               )}
               {entries.map((entry, i) => (
-                <div key={i} className="flex gap-2 items-start p-3 bg-[#F9FAFB] rounded-lg">
+                <div key={i} className="flex gap-2 items-start p-3 bg-[var(--color-surface-page)] rounded-lg">
                   <div className="flex-shrink-0 text-xs text-[var(--color-text-secondary)] w-6 pt-2">{i + 1}</div>
                   <div className="flex-1 space-y-2">
                     <div className="flex gap-2">
@@ -217,7 +217,7 @@ export default function CaptionEditor({
         {/* Footer */}
         {tab === "editor" && (
           <div className="flex justify-end gap-2 p-4 border-t border-[var(--color-border)]">
-            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
               {t("captions.cancel")}
             </button>
             <button

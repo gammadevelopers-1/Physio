@@ -69,7 +69,7 @@ const CourseCard = ({ course, isRTL = false }: CourseCardProps) => {
       className="flex flex-col w-full group h-full"
     >
       {/* Card Header - with title, thumbnail (design cut), badges */}
-      <div className="relative bg-[var(--color-surface-page)] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
+      <div className="relative bg-[var(--color-surface-card)] rounded-2xl p-4 h-[200px] flex flex-col justify-between overflow-hidden">
         {/* Availability pill */}
         {course.availabilityStatus && course.availabilityStatus !== "open" && (
           <div

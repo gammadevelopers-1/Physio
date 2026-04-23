@@ -163,7 +163,7 @@ const CourseFilters = ({
 
   if (variant === "mobile") {
     return (
-      <div className="bg-[var(--color-surface-page)] rounded-xl p-4 mb-6">
+      <div className="bg-[var(--color-surface-card)] rounded-xl p-4 mb-6">
         {showSearchBar && searchPlaceholder && (
           <div className="relative mb-4">
             <Search

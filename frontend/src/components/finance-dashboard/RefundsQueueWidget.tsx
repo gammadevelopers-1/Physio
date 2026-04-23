@@ -44,7 +44,7 @@ const RefundsQueueWidget = ({ refunds }: RefundsQueueWidgetProps) => {
       <div className="p-5 space-y-3">
         {refunds.map((refund) => (
           <div key={refund.id}>
-            <div className="flex items-center gap-3 p-3.5 bg-[#F9FAFB] rounded-xl border border-[#F3F4F6]">
+            <div className="flex items-center gap-3 p-3.5 bg-[var(--color-surface-page)] rounded-xl border border-[#F3F4F6]">
               {/* Icon */}
               <div className="w-10 h-10 rounded-full bg-[#FFEDD5] flex items-center justify-center flex-shrink-0">
                 <RotateCcw className="w-4 h-4 text-[#EA580C]" />

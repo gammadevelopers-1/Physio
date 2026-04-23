@@ -123,7 +123,7 @@ function ResetPasswordForm() {
 
   if (!email) {
     return (
-      <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+      <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
         <AuthNavbar />
         <main className="flex-1 bg-[var(--color-surface-page)] flex items-center justify-center">
           <div className="text-center">
@@ -142,7 +142,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--surface-intense)]">
+    <div className="min-h-screen flex flex-col bg-[var(--color-surface-page)]">
       <AuthNavbar />
 
       <main

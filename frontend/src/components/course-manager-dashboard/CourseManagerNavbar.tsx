@@ -275,7 +275,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                       isActive
                         ? "bg-[#F0F7FF] text-[#002D87]"
-                        : "text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                        : "text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                     }`}
                   >
                     <Icon

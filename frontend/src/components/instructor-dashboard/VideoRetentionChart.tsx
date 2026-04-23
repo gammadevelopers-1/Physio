@@ -89,7 +89,7 @@ export default function VideoRetentionChart({
               </div>
 
               {/* Retention Chart (SVG bars) */}
-              <div className="bg-[#F9FAFB] rounded-lg p-4">
+              <div className="bg-[var(--color-surface-page)] rounded-lg p-4">
                 <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-3">{t("analytics.retentionCurve")}</p>
                 <div className="relative h-[200px] flex items-end gap-px">
                   {data.retention.map((r) => {
@@ -145,7 +145,7 @@ export default function VideoRetentionChart({
 
         {/* Footer */}
         <div className="p-4 border-t border-[var(--color-border)]">
-          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+          <button onClick={onClose} className="w-full px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
             {t("analytics.close")}
           </button>
         </div>

@@ -754,7 +754,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
     <>
       <InstructorNavbar instructor={instructor} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -925,31 +925,31 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         <div>
                           <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.courseInfo")}</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.deliveryTypeLabel")}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.delivery.${course.deliveryType}`)}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.statusLabel")}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)] capitalize">{t(`courses.status.${course.status}`)}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.maxEnrollmentLabel")}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{course.maxEnrollment || "—"}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.startDate")}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDateLocal(course.startDate, calendarFormat, locale)}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.endDate")}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{formatDateLocal(course.endDate, calendarFormat, locale)}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.cmeHoursLabel") || "CME/CPD Hours"}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">{course.cmeHours || "—"}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg">
                               <p className="text-xs text-[var(--color-text-secondary)] mb-1">{t("courseDetail.enrollmentCount")}</p>
                               <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                 {enrollments.length}{course.maxEnrollment ? ` / ${course.maxEnrollment}` : ""}
@@ -988,7 +988,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           .sort((a, b) => a.orderIndex - b.orderIndex)
                           .map((mod, idx) => (
                             <div key={mod.id} className="border border-[var(--color-border)] rounded-lg overflow-hidden">
-                              <div className="flex items-center justify-between p-4 bg-[#F9FAFB]">
+                              <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)]">
                                 <button
                                   onClick={() => toggleModule(mod.id)}
                                   className="flex-1 flex items-center gap-3 text-start"
@@ -1097,7 +1097,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                         {(moduleMaterials[mod.id] || []).map((mat) => (
                                           <div
                                             key={mat.id}
-                                            className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
+                                            className="flex items-center gap-3 p-2 rounded-lg bg-[var(--color-surface-page)] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
                                           >
                                             {getMaterialIcon(mat.type)}
                                             <div className="flex-1 min-w-0">
@@ -1166,7 +1166,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           {modAssessments.map((ma) => (
                                             <div
                                               key={ma.id}
-                                              className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
+                                              className="flex items-center gap-3 p-2 rounded-lg bg-[var(--color-surface-page)] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
                                             >
                                               <ClipboardCheck className="w-4 h-4 text-[var(--color-text-secondary)] flex-shrink-0" />
                                               <div className="flex-1 min-w-0">
@@ -1247,7 +1247,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       suspended: "bg-[#FEF3C7] text-[#D97706]",
                                     };
                                     return (
-                                      <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[#F9FAFB]">
+                                      <tr key={enrollment.id} className="border-b border-[#F3F4F6] hover:bg-[var(--color-surface-page)]">
                                         <td className="px-3 py-3">
                                           <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                                             {enrollment.studentFirstName} {enrollment.studentLastName}
@@ -1298,7 +1298,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
                                       disabled={studentsPage === 1}
-                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
                                     >
                                       <ChevronLeft className="w-3.5 h-3.5" />
                                     </button>
@@ -1308,7 +1308,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.min(studentsTotalPages, p + 1))}
                                       disabled={studentsPage === studentsTotalPages}
-                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)] disabled:opacity-50"
                                     >
                                       <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
@@ -1331,7 +1331,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           </div>
                         ) : (
                           sessions.map((session) => (
-                            <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                            <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] transition-colors">
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                                   session.type === "zoom" ? "bg-[#EFF6FF]" : session.type === "onsite" ? "bg-[#DCFCE7]" : "bg-[#F3E8FF]"
@@ -1447,28 +1447,28 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         <div>
                           <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.enrollmentStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                                 <Users className="w-5 h-5 text-[#3B82F6]" />
                               </div>
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.total}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalEnrolled")}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                                 <UserCheck className="w-5 h-5 text-[#22C55E]" />
                               </div>
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.active}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.activeStudents")}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                                 <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
                               </div>
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.completed}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedStudents")}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <div className="w-10 h-10 mx-auto mb-2 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                                 <UserX className="w-5 h-5 text-[#EF4444]" />
                               </div>
@@ -1536,19 +1536,19 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         <div>
                           <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-3">{t("courseDetail.sessionStats")}</h3>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[var(--color-text-secondary)]">{analytics.totalSessions}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.totalSessionsLabel")}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[#22C55E]">{analytics.completedSessions}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.completedSessionsLabel")}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[#3B82F6]">{analytics.scheduledSessions}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.scheduledSessionsLabel")}</p>
                             </div>
-                            <div className="p-4 bg-[#F9FAFB] rounded-lg text-center">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-lg text-center">
                               <p className="text-2xl font-bold text-[#D97706]">{analytics.liveSessions}</p>
                               <p className="text-xs text-[var(--color-text-secondary)]">{t("courseDetail.liveSessionsLabel")}</p>
                             </div>
@@ -1614,7 +1614,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <select
                                 value={settingsForm.deliveryType}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
                               >
                                 <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
                                 <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
@@ -1629,7 +1629,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 min="1"
                                 value={settingsForm.maxEnrollment}
                                 disabled
-                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[var(--color-text-secondary)] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[var(--color-surface-page)] text-[var(--color-text-secondary)] cursor-not-allowed"
                               />
                             </div>
                             <div>

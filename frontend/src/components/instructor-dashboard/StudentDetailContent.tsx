@@ -286,7 +286,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
     <>
       <InstructorNavbar instructor={instructor} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -488,7 +488,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               {student.enrollments.map((enrollment) => (
                                 <div
                                   key={enrollment.id}
-                                  className="p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                                  className="p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors"
                                 >
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
@@ -583,7 +583,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             .map((cp: any) => (
                             <div key={cp.courseId} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                               {/* Course Header */}
-                              <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[var(--color-border)] flex items-center justify-between">
+                              <div className="px-4 py-3 bg-[var(--color-surface-page)] border-b border-[var(--color-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="w-4 h-4 text-[#D4A520]" />
                                   <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -610,7 +610,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               <div className="p-4 space-y-4">
                                 {/* Attendance Stats */}
                                 <div className="grid grid-cols-5 gap-2">
-                                  <div className="bg-[#F9FAFB] rounded-lg p-2.5 text-center">
+                                  <div className="bg-[var(--color-surface-page)] rounded-lg p-2.5 text-center">
                                     <p className="text-base font-bold text-[var(--color-text-secondary)]">{cp.attendance.totalSessions}</p>
                                     <p className="text-[10px] text-[var(--color-text-secondary)]">{t("studentDetail.total")}</p>
                                   </div>
@@ -688,7 +688,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                     <div className="mt-2 overflow-x-auto">
                                       <table className="w-full">
                                         <thead>
-                                          <tr className="bg-[#F9FAFB]">
+                                          <tr className="bg-[var(--color-surface-page)]">
                                             <th className="px-3 py-1.5 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase">{t("studentDetail.session")}</th>
                                             <th className="px-3 py-1.5 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase">{t("studentDetail.dateLabel")}</th>
                                             <th className="px-3 py-1.5 text-start text-[10px] font-semibold text-[var(--color-text-secondary)] uppercase">{t("studentDetail.status")}</th>
@@ -696,7 +696,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                         </thead>
                                         <tbody className="divide-y divide-[#F3F4F6]">
                                           {cp.attendanceRecords.map((r: any) => (
-                                            <tr key={r.sessionId} className="hover:bg-[#F9FAFB]">
+                                            <tr key={r.sessionId} className="hover:bg-[var(--color-surface-page)]">
                                               <td className="px-3 py-1.5 text-xs text-[var(--color-text-primary)]">{r.sessionTitle}</td>
                                               <td className="px-3 py-1.5 text-xs text-[var(--color-text-secondary)]">{formatDate(r.scheduledAt)}</td>
                                               <td className="px-3 py-1.5">
@@ -758,7 +758,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             if (courseAssessments.length === 0) return null;
                             return (
                               <div key={cp.courseId} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
-                                <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[var(--color-border)] flex items-center justify-between">
+                                <div className="px-4 py-3 bg-[var(--color-surface-page)] border-b border-[var(--color-border)] flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <BookOpen className="w-4 h-4 text-[#D4A520]" />
                                     <h4 className="text-sm font-semibold text-[var(--color-text-primary)]">
@@ -790,7 +790,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                         const pct = a.maxScore > 0 ? Math.round((a.score / a.maxScore) * 100) : 0;
                                         const passed = pct >= 60;
                                         return (
-                                          <tr key={a.assessmentId} className="hover:bg-[#F9FAFB]">
+                                          <tr key={a.assessmentId} className="hover:bg-[var(--color-surface-page)]">
                                             <td className="px-4 py-2.5 text-sm text-[var(--color-text-primary)]">{a.title}</td>
                                             <td className="px-4 py-2.5">
                                               <span className={`text-sm font-semibold ${pct >= 80 ? "text-[#22C55E]" : pct >= 60 ? "text-[#EAB308]" : "text-[#EF4444]"}`}>
@@ -841,7 +841,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
                           {/* Add Intervention Form */}
                           {showAddForm && (
-                            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] space-y-3">
+                            <div className="p-4 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)] space-y-3">
                               {/* Type selector */}
                               <div>
                                 <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
@@ -927,7 +927,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               {interventions.map((iv) => (
                                 <div
                                   key={iv.id}
-                                  className="flex items-start gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]"
+                                  className="flex items-start gap-3 p-3 bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)]"
                                 >
                                   <div className="w-9 h-9 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center flex-shrink-0 mt-0.5">
                                     {getInterventionIcon(iv.type)}

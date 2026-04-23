@@ -229,7 +229,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -310,7 +310,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -363,7 +363,7 @@ function DeleteRoleModal({ role, onClose, onDeleted }: { role: RoleWithCount; on
         )}
         <p className="text-xs text-[var(--color-text-secondary)] mb-6">This action cannot be undone.</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
             Cancel
           </button>
           <button
@@ -431,7 +431,7 @@ const RolesContent = () => {
     <>
       <AdminNavbar admin={adminProfile} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -500,7 +500,7 @@ const RolesContent = () => {
                       >
                         {/* Role Header */}
                         <div
-                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[#F9FAFB]"
+                          className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-surface-page)]"
                           onClick={() =>
                             setExpandedRole(expandedRole === role.id ? null : role.id)
                           }

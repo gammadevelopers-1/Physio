@@ -31,7 +31,7 @@ export default async function CoursesPage({
   };
 
   return (
-    <main id="main-content" className="min-h-screen bg-white overflow-x-hidden">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)] overflow-x-hidden">
       <Navbar siteSettings={siteSettings} navLinks={navbarLinks} footerLinks={footerLinks} />
 
       <BlockRenderer blocks={getBlocksAtPosition(blocks, 'top')} sideLoadedData={sideLoadedData} />

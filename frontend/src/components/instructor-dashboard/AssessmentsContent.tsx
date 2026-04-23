@@ -307,7 +307,7 @@ const CreateAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -556,7 +556,7 @@ const EditAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -864,7 +864,7 @@ const AddQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1158,7 +1158,7 @@ const EditQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1294,7 +1294,7 @@ const GradeModal = ({
                       href={f.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] text-sm text-[#3B82F6]"
+                      className="flex items-center gap-2 p-2 bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] text-sm text-[#3B82F6]"
                     >
                       <FileText className="w-4 h-4" />
                       {f.fileName}
@@ -1392,7 +1392,7 @@ const GradeModal = ({
                             </div>
                           </div>
                         )}
-                        <div className="flex items-center gap-3 mb-2 p-2 bg-[#F9FAFB] rounded-lg">
+                        <div className="flex items-center gap-3 mb-2 p-2 bg-[var(--color-surface-page)] rounded-lg">
                           <label className="text-sm font-semibold text-[var(--color-text-secondary)]">
                             Score:
                           </label>
@@ -1452,7 +1452,7 @@ const GradeModal = ({
                             </p>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 p-2 bg-[#F9FAFB] rounded-lg">
+                        <div className="flex items-center gap-2 p-2 bg-[var(--color-surface-page)] rounded-lg">
                           <span className="text-sm font-semibold text-[var(--color-text-secondary)]">Score:</span>
                           <span className="text-sm font-medium text-[var(--color-text-primary)]">{answer.marksAwarded ?? 0} / {maxMarks}</span>
                         </div>
@@ -1483,7 +1483,7 @@ const GradeModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
           >
             {t("assessments.cancel")}
           </button>
@@ -1935,7 +1935,7 @@ const AssessmentsContent = () => {
     <>
       <InstructorNavbar instructor={instructor} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1440px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="hidden lg:block lg:flex-shrink-0">
@@ -2066,7 +2066,7 @@ const AssessmentsContent = () => {
                             </div>
                             <button
                               onClick={() => setShowFilters(!showFilters)}
-                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
                             >
                               <Filter className="w-4 h-4" />
                               {t("assessments.filters")}
@@ -2158,7 +2158,7 @@ const AssessmentsContent = () => {
                             filteredAssessments.map((assessment) => (
                               <div
                                 key={assessment.id}
-                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors"
                               >
                                 <div className="flex-1">
                                   <div className="flex items-start gap-3">
@@ -2364,7 +2364,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForQ(a.id)}
-                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2508,7 +2508,7 @@ const AssessmentsContent = () => {
                                     {t("assessments.assignmentFiles") || "Assignment Files"}
                                   </p>
                                   {selAssignment.instructions && (
-                                    <div className="bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg p-3 mb-3">
+                                    <div className="bg-[var(--color-surface-page)] border border-[var(--color-border)] rounded-lg p-3 mb-3">
                                       <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-1">{t("assessments.assignmentInstructions") || "Instructions"}</p>
                                       <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">{selAssignment.instructions}</p>
                                     </div>
@@ -2587,7 +2587,7 @@ const AssessmentsContent = () => {
                                 return (
                                 <div
                                   key={question.id}
-                                  className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                                  className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[var(--color-surface-page)] transition-colors"
                                 >
                                   <div className="flex items-start gap-3 flex-1">
                                     <div className="w-9 h-9 rounded-lg bg-[#F3F4F6] flex items-center justify-center shrink-0">
@@ -2711,7 +2711,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForS(a.id)}
-                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2827,7 +2827,7 @@ const AssessmentsContent = () => {
                                       const renderRow = (sub: AssessmentSubmission, isNested: boolean) => {
                                         const pct = sub.percentage ? parseFloat(sub.percentage) : 0;
                                         return (
-                                          <tr key={sub.id} className={`hover:bg-[#F9FAFB] ${isNested ? "bg-[#FAFAFA]" : ""}`}>
+                                          <tr key={sub.id} className={`hover:bg-[var(--color-surface-page)] ${isNested ? "bg-[#FAFAFA]" : ""}`}>
                                             <td className={`py-3 ${isNested ? "ps-14" : ""}`}>
                                               {isNested ? (
                                                 <div className="flex items-center gap-2">
@@ -2890,7 +2890,7 @@ const AssessmentsContent = () => {
 
                                         return (
                                           <React.Fragment key={studentId}>
-                                            <tr className="hover:bg-[#F9FAFB]">
+                                            <tr className="hover:bg-[var(--color-surface-page)]">
                                               <td className="py-3">
                                                 <div className="flex items-center gap-3">
                                                   {hasRetakes && (
@@ -3023,7 +3023,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForIA(a.id)}
-                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[var(--color-surface-page)] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -3077,7 +3077,7 @@ const AssessmentsContent = () => {
                         {selectedAssessmentForIA && !iaLoading && itemAnalysis && (
                           <>
                             {/* Summary */}
-                            <div className="flex items-center gap-4 p-3 bg-[#F9FAFB] rounded-xl">
+                            <div className="flex items-center gap-4 p-3 bg-[var(--color-surface-page)] rounded-xl">
                               <div className="text-center">
                                 <p className="text-lg font-bold text-[var(--color-text-secondary)]">
                                   {itemAnalysis.totalSubmissions}
@@ -3186,7 +3186,7 @@ const AssessmentsContent = () => {
                                       return (
                                         <tr
                                           key={item.questionId}
-                                          className="hover:bg-[#F9FAFB]"
+                                          className="hover:bg-[var(--color-surface-page)]"
                                         >
                                           <td className="py-3 max-w-[300px]">
                                             <span className="text-sm text-[var(--color-text-primary)] line-clamp-2">
@@ -3389,7 +3389,7 @@ const AssessmentsContent = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => { setPublishConfirmId(null); setPublishCheckData(null); }}
-                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]"
+                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]"
               >
                 {t("assessments.cancel")}
               </button>

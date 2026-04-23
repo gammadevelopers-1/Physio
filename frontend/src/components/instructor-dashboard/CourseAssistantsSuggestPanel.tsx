@@ -184,7 +184,7 @@ const CourseAssistantsSuggestPanel = ({
 
       {/* Suggest TA Dropdown */}
       {showDropdown && (
-        <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
+        <div className="mb-4 p-3 bg-[var(--color-surface-page)] rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
               {t("taPanel.selectTA")}
@@ -228,7 +228,7 @@ const CourseAssistantsSuggestPanel = ({
           {tas.map((ta) => (
             <div
               key={ta.id}
-              className="flex items-center justify-between px-3 py-2.5 bg-[#F9FAFB] rounded-lg"
+              className="flex items-center justify-between px-3 py-2.5 bg-[var(--color-surface-page)] rounded-lg"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--color-text-secondary)]">

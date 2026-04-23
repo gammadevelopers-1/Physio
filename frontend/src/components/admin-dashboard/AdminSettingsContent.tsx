@@ -86,7 +86,7 @@ const AdminSettingsContent = () => {
     <>
       <AdminNavbar admin={admin} />
 
-      <div className="bg-[#F9FAFB] min-h-screen">
+      <div className="bg-[var(--color-surface-page)] min-h-screen">
         <div className="max-w-[1600px] mx-auto px-4 lg:px-6 py-6">
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Sidebar */}
@@ -186,10 +186,10 @@ const AdminSettingsContent = () => {
                             {t("settingsPage.general.logo")}
                           </label>
                           <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 bg-[#F9FAFB] rounded-lg flex items-center justify-center border border-[var(--color-border)]">
+                            <div className="w-20 h-20 bg-[var(--color-surface-page)] rounded-lg flex items-center justify-center border border-[var(--color-border)]">
                               <Settings className="w-8 h-8 text-[var(--color-text-secondary)]" />
                             </div>
-                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[#F9FAFB]">
+                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-page)]">
                               {t("settingsPage.general.uploadLogo")}
                             </button>
                           </div>
@@ -306,7 +306,7 @@ const AdminSettingsContent = () => {
                         </p>
 
                         {/* 2FA Toggle */}
-                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[var(--color-border)]">
+                        <div className="bg-[var(--color-surface-page)] rounded-lg p-5 border border-[var(--color-border)]">
                           <TwoFactorToggle
                             enabled={twoFactorEnabled}
                             toggling={toggling}
@@ -315,7 +315,7 @@ const AdminSettingsContent = () => {
                         </div>
 
                         {/* Trusted Devices */}
-                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[var(--color-border)]">
+                        <div className="bg-[var(--color-surface-page)] rounded-lg p-5 border border-[var(--color-border)]">
                           <TrustedDevicesSection
                             devices={devices}
                             revokingId={revokingId}
@@ -336,7 +336,7 @@ const AdminSettingsContent = () => {
                           {t("settingsPage.maintenance.title")}
                         </h2>
 
-                        <div className={`flex items-center justify-between py-4 px-4 rounded-lg border ${maintenanceMode ? "bg-[#FEE2E2] border-[#FCA5A5]" : "bg-[#F9FAFB] border-[var(--color-border)]"}`}>
+                        <div className={`flex items-center justify-between py-4 px-4 rounded-lg border ${maintenanceMode ? "bg-[#FEE2E2] border-[#FCA5A5]" : "bg-[var(--color-surface-page)] border-[var(--color-border)]"}`}>
                           <div>
                             <p className="text-sm font-medium text-[var(--color-text-secondary)]">
                               {t("settingsPage.maintenance.mode")}
@@ -377,7 +377,7 @@ const AdminSettingsContent = () => {
                         </h2>
 
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-[#DBEAFE] rounded-lg flex items-center justify-center">
                                 <span className="text-sm font-bold text-[#3B82F6]">Z</span>
@@ -392,7 +392,7 @@ const AdminSettingsContent = () => {
                             </button>
                           </div>
 
-                          <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                                 <span className="text-sm font-bold text-[#16A34A]">T</span>
@@ -407,7 +407,7 @@ const AdminSettingsContent = () => {
                             </button>
                           </div>
 
-                          <div className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg">
+                          <div className="flex items-center justify-between p-4 bg-[var(--color-surface-page)] rounded-lg">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center">
                                 <span className="text-sm font-bold text-[var(--color-text-secondary)]">U</span>

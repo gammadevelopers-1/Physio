@@ -95,7 +95,7 @@ export function RichTextEditor({
   return (
     <div className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-white">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-[var(--color-border)] bg-[#F9FAFB]">
+      <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-[var(--color-border)] bg-[var(--color-surface-page)]">
         <Btn
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           isActive={editor.isActive("heading", { level: 1 })}

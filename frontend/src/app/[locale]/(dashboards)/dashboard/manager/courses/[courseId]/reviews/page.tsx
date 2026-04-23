@@ -15,7 +15,7 @@ export default async function CourseReviewsPage({
   setRequestLocale(locale);
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#F9FAFB]">
+    <main id="main-content" className="min-h-screen bg-[var(--color-surface-page)]">
       <CourseReviewsContent courseId={courseId} />
     </main>
   );

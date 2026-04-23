@@ -124,7 +124,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
             return (
               <div
                 key={event.id}
-                className="bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] p-4"
+                className="bg-[var(--color-surface-page)] rounded-xl border border-[var(--color-border)] p-4"
               >
                 {/* Header: Icon + Type Badge + Title */}
                 <div className="flex items-start gap-3 mb-3">

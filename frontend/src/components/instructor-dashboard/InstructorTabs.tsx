@@ -330,10 +330,10 @@ const InstructorTabs = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       {/* Tab Headers */}
       <div className="overflow-x-auto scrollbar-hide">
-        <div className="flex border-b border-[#E5E7EB] min-w-max" role="tablist">
+        <div className="flex border-b border-[var(--color-border)] min-w-max" role="tablist">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -371,7 +371,7 @@ const InstructorTabs = ({
               className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
                 isDragOver
                   ? "border-[#3B82F6] bg-[#EFF6FF]"
-                  : "border-[#E5E7EB] hover:border-[#3B82F6] hover:bg-[#F9FAFB]"
+                  : "border-[var(--color-border)] hover:border-[#3B82F6] hover:bg-[#F9FAFB]"
               }`}
             >
               <input
@@ -513,7 +513,7 @@ const InstructorTabs = ({
                           <div className="relative">
                             <button
                               onClick={() => setOpenActionMenu(openActionMenu === file.id ? null : file.id)}
-                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                               aria-label={tA("openActions")}
                               aria-haspopup="true"
                               aria-expanded={openActionMenu === file.id}
@@ -523,7 +523,7 @@ const InstructorTabs = ({
 
                             {/* Action Menu Dropdown */}
                             {openActionMenu === file.id && (
-                              <div className="absolute end-0 top-full mt-1 w-36 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
+                              <div className="absolute end-0 top-full mt-1 w-36 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
                                 <div className="py-1">
                                   <button
                                     onClick={() => handleEdit(file.id)}
@@ -571,14 +571,14 @@ const InstructorTabs = ({
                   <button
                     onClick={() => setContentPage((p) => Math.max(0, p - 1))}
                     disabled={contentPage === 0}
-                    className="px-3 py-1.5 text-sm font-medium border border-[#E5E7EB] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {t("content.previous")}
                   </button>
                   <button
                     onClick={() => setContentPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={contentPage >= totalPages - 1}
-                    className="px-3 py-1.5 text-sm font-medium border border-[#E5E7EB] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-1.5 text-sm font-medium border border-[var(--color-border)] rounded-lg text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {t("content.next")}
                   </button>

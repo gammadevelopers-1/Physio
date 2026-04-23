@@ -370,8 +370,8 @@ const NELCComplianceCenterContent = () => {
               <CourseManagerMobileSidebar manager={manager} />
               <div className="flex-1 min-w-0">
                 <div className="mb-6">
-                  <div className="h-7 bg-[#E5E7EB] rounded w-56 animate-pulse mb-2" />
-                  <div className="h-4 bg-[#E5E7EB] rounded w-80 animate-pulse" />
+                  <div className="h-7 bg-[var(--color-border)] rounded w-56 animate-pulse mb-2" />
+                  <div className="h-4 bg-[var(--color-border)] rounded w-80 animate-pulse" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -432,19 +432,19 @@ const NELCComplianceCenterContent = () => {
 
               {/* Summary Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#3B82F6]">{overallPercentage}%</p>
                   <p className="text-xs text-[#6B7280] mt-1">{t("nelc.overallCompliance")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#22C55E]">{totals.passed}</p>
                   <p className="text-xs text-[#6B7280] mt-1">{t("nelc.passed")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#F59E0B]">{totals.review}</p>
                   <p className="text-xs text-[#6B7280] mt-1">{t("nelc.review")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                   <p className="text-3xl font-bold text-[#EF4444]">{totals.failed}</p>
                   <p className="text-xs text-[#6B7280] mt-1">{t("nelc.failed")}</p>
                 </div>
@@ -460,13 +460,13 @@ const NELCComplianceCenterContent = () => {
                     placeholder={t("catalog.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("catalog.allStatus")}</option>
                   <option value="passed">{t("nelc.passed")}</option>
@@ -476,7 +476,7 @@ const NELCComplianceCenterContent = () => {
                 <select
                   value={deliveryFilter}
                   onChange={(e) => setDeliveryFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("sessionsPage.allTypes")}</option>
                   <option value="zoom">{t("coursesPage.delivery.zoom")}</option>
@@ -488,7 +488,7 @@ const NELCComplianceCenterContent = () => {
 
               {/* Courses Tab Content */}
               {filtered.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShieldCheck className="w-8 h-8 text-[#9CA3AF]" />
                   </div>
@@ -500,11 +500,11 @@ const NELCComplianceCenterContent = () => {
                   </p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                        <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                           <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                             {t("nelc.vcCourse")}
                           </th>
@@ -522,7 +522,7 @@ const NELCComplianceCenterContent = () => {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#E5E7EB]">
+                      <tbody className="divide-y divide-[var(--color-border)]">
                         {paginatedCourses.map((course) => {
                           const config = STATUS_CONFIG[course.overallStatus];
                           const StatusIcon = config.icon;
@@ -601,7 +601,7 @@ const NELCComplianceCenterContent = () => {
                                             return (
                                               <div
                                                 key={cat.category}
-                                                className="bg-white rounded-lg border border-[#E5E7EB] overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
+                                                className="bg-white rounded-lg border border-[var(--color-border)] overflow-hidden cursor-pointer hover:shadow-sm transition-shadow"
                                                 onClick={(e) => {
                                                   e.stopPropagation();
                                                   setExpandedCategory(
@@ -630,7 +630,7 @@ const NELCComplianceCenterContent = () => {
                                                 </div>
 
                                                 {isCatExpanded && (
-                                                  <div className="border-t border-[#E5E7EB] p-3 space-y-1.5">
+                                                  <div className="border-t border-[var(--color-border)] p-3 space-y-1.5">
                                                     {cat.checks.map((check) => {
                                                       const chkConfig = STATUS_CONFIG[check.status];
                                                       const ChkIcon = chkConfig.icon;
@@ -689,7 +689,7 @@ const NELCComplianceCenterContent = () => {
                     </table>
                   </div>
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 p-4 border-t border-[#E5E7EB]">
+                    <div className="flex items-center justify-center gap-2 p-4 border-t border-[var(--color-border)]">
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
@@ -713,12 +713,12 @@ const NELCComplianceCenterContent = () => {
               {false && (
                 <>
                   {vcLoading ? (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <Loader2 className="w-8 h-8 text-[#3B82F6] animate-spin mx-auto mb-3" />
                       <p className="text-sm text-[#6B7280]">{t("dashboard.loading")}</p>
                     </div>
                   ) : filteredVc.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                       <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                         <Video className="w-8 h-8 text-[#9CA3AF]" />
                       </div>
@@ -732,11 +732,11 @@ const NELCComplianceCenterContent = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                            <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                               <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">
                                 {t("nelc.vcSession")}
                               </th>
@@ -760,7 +760,7 @@ const NELCComplianceCenterContent = () => {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#E5E7EB]">
+                          <tbody className="divide-y divide-[var(--color-border)]">
                             {filteredVc.map((vc) => {
                               const config = STATUS_CONFIG[vc.overallStatus];
                               const StatusIcon = config.icon;
@@ -856,7 +856,7 @@ const NELCComplianceCenterContent = () => {
                                             return (
                                               <div
                                                 key={idx}
-                                                className="flex items-start gap-3 p-2.5 bg-white rounded-lg border border-[#E5E7EB]"
+                                                className="flex items-start gap-3 p-2.5 bg-white rounded-lg border border-[var(--color-border)]"
                                               >
                                                 <CheckIcon
                                                   className={`w-4 h-4 mt-0.5 flex-shrink-0 ${checkConfig.text}`}

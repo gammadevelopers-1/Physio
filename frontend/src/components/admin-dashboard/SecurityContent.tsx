@@ -83,7 +83,7 @@ const SecurityContent = () => {
 
               {/* Security Stats */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Lock className="w-5 h-5 text-[#D97706]" />
                   </div>
@@ -91,7 +91,7 @@ const SecurityContent = () => {
                   <p className="text-xs text-[#6B7280]">{t("securityPage.stats.failedLogins")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Ban className="w-5 h-5 text-[#DC2626]" />
                   </div>
@@ -99,7 +99,7 @@ const SecurityContent = () => {
                   <p className="text-xs text-[#6B7280]">{t("securityPage.stats.ipsBlocked")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-5 h-5 text-[#3B82F6]" />
                   </div>
@@ -107,7 +107,7 @@ const SecurityContent = () => {
                   <p className="text-xs text-[#6B7280]">{t("securityPage.stats.activeSessions")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <KeyRound className="w-5 h-5 text-[#16A34A]" />
                   </div>
@@ -115,7 +115,7 @@ const SecurityContent = () => {
                   <p className="text-xs text-[#6B7280]">{t("securityPage.stats.twoFa")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Shield className="w-5 h-5 text-[#8B5CF6]" />
                   </div>
@@ -125,8 +125,8 @@ const SecurityContent = () => {
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                <div className="flex border-b border-[#E5E7EB] overflow-x-auto">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                   {(["overview", "logins", "blocked", "sessions"] as const).map((tab) => (
                     <button
                       key={tab}

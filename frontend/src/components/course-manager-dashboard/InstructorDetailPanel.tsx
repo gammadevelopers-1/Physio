@@ -109,7 +109,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB] bg-gradient-to-r from-[#F9FAFB] to-white">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)] bg-gradient-to-r from-[#F9FAFB] to-white">
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-[var(--color-primary-dark)]" />
             <h2 className="text-lg font-semibold text-[#1F2937]">{t("instructorDetail.title")}</h2>
@@ -179,17 +179,17 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
 
                 {/* Quick Stats Row */}
                 <div className="grid grid-cols-3 gap-3 mt-3">
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
+                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <BookOpen className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[#1F2937]">{data.coursesCount}</p>
                     <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.courses")}</p>
                   </div>
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
+                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Users className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[#1F2937]">{data.totalStudents}</p>
                     <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.students")}</p>
                   </div>
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[#E5E7EB]">
+                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center border border-[var(--color-border)]">
                     <Calendar className="w-4 h-4 text-[var(--color-primary-dark)] mx-auto mb-1" />
                     <p className="text-xl font-bold text-[#1F2937]">{data.sessions.total}</p>
                     <p className="text-[10px] text-[#6B7280]">{t("instructorDetail.lectures")}</p>
@@ -197,14 +197,14 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 </div>
 
                 {/* Lectures Progress */}
-                <div className="mt-5 bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+                <div className="mt-5 bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-semibold text-[#1F2937]">{t("instructorDetail.lectures")}</h4>
                     <span className="text-xs font-medium text-[#6B7280]">
                       {data.sessions.completed}/{data.sessions.total} ({sessionPercent}%)
                     </span>
                   </div>
-                  <div className="h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full transition-all"
                       style={{ width: `${sessionPercent}%` }}
@@ -213,7 +213,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                 </div>
 
                 {/* Content Quality */}
-                <div className="mt-4 bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+                <div className="mt-4 bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
                   <h4 className="text-sm font-semibold text-[#1F2937] mb-3">{t("instructorDetail.contentQuality")}</h4>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
@@ -233,7 +233,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                     </div>
                   </div>
                   {contentTotal > 0 && (
-                    <div className="mt-3 h-2 bg-[#E5E7EB] rounded-full overflow-hidden flex">
+                    <div className="mt-3 h-2 bg-[var(--color-border)] rounded-full overflow-hidden flex">
                       <div className="bg-[#22C55E] h-full" style={{ width: `${(data.contentQuality.approved / contentTotal) * 100}%` }} />
                       <div className="bg-[#EF4444] h-full" style={{ width: `${(data.contentQuality.rejected / contentTotal) * 100}%` }} />
                       <div className="bg-[#F59E0B] h-full" style={{ width: `${(data.contentQuality.pending / contentTotal) * 100}%` }} />
@@ -251,9 +251,9 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                       {data.courses.length}
                     </span>
                   </div>
-                  <div className="max-h-[200px] overflow-y-auto space-y-2 rounded-xl border border-[#E5E7EB] p-2 bg-[#FAFAFA]">
+                  <div className="max-h-[200px] overflow-y-auto space-y-2 rounded-xl border border-[var(--color-border)] p-2 bg-[#FAFAFA]">
                     {data.courses.map((course) => (
-                      <div key={course.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#F3F4F6] hover:border-[#E5E7EB] transition-colors">
+                      <div key={course.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors">
                         <span className="text-sm text-[#1F2937] truncate flex-1 me-3">{course.title}</span>
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap ${
                           course.status === "active"
@@ -270,7 +270,7 @@ const InstructorDetailPanel = ({ instructorId, onClose }: Props) => {
                     ))}
                     {data.courses.length === 0 && (
                       <div className="py-6 text-center">
-                        <BookOpen className="w-6 h-6 text-[#D1D5DB] mx-auto mb-2" />
+                        <BookOpen className="w-6 h-6 text-[var(--color-border)] mx-auto mb-2" />
                         <p className="text-sm text-[#6B7280]">{t("instructorDetail.noCourses")}</p>
                       </div>
                     )}

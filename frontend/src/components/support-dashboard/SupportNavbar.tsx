@@ -164,7 +164,7 @@ const SupportNavbar = ({ profile }: SupportNavbarProps) => {
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB] bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--color-border)] bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center">
                 {profile.avatar ? (
                   <Image
                     src={profile.avatar}

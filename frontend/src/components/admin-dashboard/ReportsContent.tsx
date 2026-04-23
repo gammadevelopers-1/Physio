@@ -124,7 +124,7 @@ const ReportsContent = () => {
               </div>
 
               {/* Date Range Filter */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-5 h-5 text-[#6B7280]" />
@@ -135,14 +135,14 @@ const ReportsContent = () => {
                       type="date"
                       value={dateFrom}
                       onChange={(e) => setDateFrom(e.target.value)}
-                      className="h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm"
+                      className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
                     />
                     <span className="text-[#6B7280]">-</span>
                     <input
                       type="date"
                       value={dateTo}
                       onChange={(e) => setDateTo(e.target.value)}
-                      className="h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm"
+                      className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
                     />
                   </div>
                   <div className="flex items-center gap-2 sm:ml-auto">
@@ -177,7 +177,7 @@ const ReportsContent = () => {
                         className={`bg-white rounded-xl border-2 p-5 cursor-pointer transition-all ${
                           selectedReport === report.id
                             ? "border-[#002D87] shadow-md"
-                            : "border-[#E5E7EB] hover:border-[#002D87]/50"
+                            : "border-[var(--color-border)] hover:border-[#002D87]/50"
                         }`}
                       >
                         <div
@@ -196,7 +196,7 @@ const ReportsContent = () => {
 
               {/* Generate Button */}
               {selectedReport && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="font-semibold text-[#1F2937]">
@@ -207,7 +207,7 @@ const ReportsContent = () => {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <select className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563]">
+                      <select className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563]">
                         <option value="pdf">PDF</option>
                         <option value="excel">Excel</option>
                         <option value="csv">CSV</option>
@@ -226,8 +226,8 @@ const ReportsContent = () => {
               )}
 
               {/* Scheduled Reports */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                <div className="p-5 border-b border-[#E5E7EB]">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="p-5 border-b border-[var(--color-border)]">
                   <h3 className="text-lg font-semibold text-[#1F2937]">
                     {t("reportsPage.scheduledReports")}
                   </h3>

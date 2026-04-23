@@ -124,7 +124,7 @@ export default function UserDevicesModal({ user, onClose }: UserDevicesModalProp
           <div className="mt-6">
             <button
               onClick={onClose}
-              className="w-full h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+              className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
             >
               Close
             </button>

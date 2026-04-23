@@ -32,9 +32,9 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
   const displaySessions = sessions.slice(0, MAX_DISPLAY);
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
             <Calendar className="w-4 h-4 text-[var(--gold-gold-500)]" />
@@ -72,7 +72,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
                 className={`p-3.5 rounded-xl border ${
                   session.hasConflict
                     ? "bg-[#FEF2F2] border-[var(--functional-red-400)]"
-                    : "bg-[#F9FAFB] border-[#E5E7EB]"
+                    : "bg-[#F9FAFB] border-[var(--color-border)]"
                 }`}
               >
                 {/* Date and Time */}
@@ -128,7 +128,7 @@ const UpcomingSessionsWidget = ({ sessions }: UpcomingSessionsWidgetProps) => {
 
         {/* View All Link */}
         {totalCount > 0 && (
-          <div className="text-center pt-4 border-t border-[#E5E7EB] mt-4">
+          <div className="text-center pt-4 border-t border-[var(--color-border)] mt-4">
             <Link
               href={`/${locale}/dashboard/manager/sessions`}
               className="text-[13px] font-medium text-[var(--blue-brand-blue)] hover:underline inline-flex items-center gap-1"

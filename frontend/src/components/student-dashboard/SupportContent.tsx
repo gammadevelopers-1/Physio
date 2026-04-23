@@ -162,7 +162,7 @@ function TicketRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors text-left"
+      className="w-full flex items-center gap-3 p-3 sm:p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors text-left"
       dir={isRTL ? "rtl" : "ltr"}
     >
       <div className="flex-1 min-w-0">
@@ -308,7 +308,7 @@ function CreateTicketForm({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as TicketCategory)}
-            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
           >
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
@@ -327,7 +327,7 @@ function CreateTicketForm({
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
             >
               <option value="">{t("supportPage.selectCourse")}</option>
               {enrolledCourses.map((c) => (
@@ -353,7 +353,7 @@ function CreateTicketForm({
                 className={`flex-1 py-2 text-xs sm:text-sm font-medium rounded-lg border transition-colors ${
                   priority === p
                     ? "border-[#002D87] bg-[#002D87] text-white"
-                    : "border-[#D1D5DB] text-[#374151] hover:bg-gray-50"
+                    : "border-[var(--color-border)] text-[#374151] hover:bg-gray-50"
                 }`}
               >
                 {t(`supportPage.priority_${p}` as Parameters<typeof t>[0])}
@@ -373,7 +373,7 @@ function CreateTicketForm({
             onChange={(e) => setSubject(e.target.value)}
             maxLength={200}
             placeholder={t("supportPage.subjectPlaceholder")}
-            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
             required
           />
         </div>
@@ -389,7 +389,7 @@ function CreateTicketForm({
             maxLength={2000}
             rows={5}
             placeholder={t("supportPage.descriptionPlaceholder")}
-            className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
             required
           />
           <p className="text-xs text-[#9CA3AF] mt-1 text-right">
@@ -403,7 +403,7 @@ function CreateTicketForm({
             {t("supportPage.attachment")}
           </label>
           {attachmentFile ? (
-            <div className="flex items-center gap-2 p-2.5 border border-[#D1D5DB] rounded-lg bg-[#F9FAFB]">
+            <div className="flex items-center gap-2 p-2.5 border border-[var(--color-border)] rounded-lg bg-[#F9FAFB]">
               <Paperclip className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
               <span className="text-sm text-[#374151] truncate flex-1">
                 {attachmentFile.name}
@@ -420,12 +420,12 @@ function CreateTicketForm({
               </button>
             </div>
           ) : (
-            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
+            <label className="flex items-center gap-2 p-2.5 border border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[#F9FAFB] transition-colors">
               <Paperclip className="w-4 h-4 text-[#9CA3AF]" />
               <span className="text-sm text-[#9CA3AF]">
                 {t("supportPage.attachFile")}
               </span>
-              <span className="text-xs text-[#D1D5DB] ml-auto">
+              <span className="text-xs text-[var(--color-border)] ml-auto">
                 PDF, JPG, PNG (max 5MB)
               </span>
               <input
@@ -491,7 +491,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("supportPage.searchFaq")}
-          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent`}
+          className={`w-full ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent`}
         />
       </div>
 
@@ -499,7 +499,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
       <div className="flex flex-wrap gap-2 mb-4">
         <button
           onClick={() => setActiveCategory("all")}
-          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
+          className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === "all" ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]"}`}
         >
           {t("supportPage.faq.allCategories")}
         </button>
@@ -507,7 +507,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"}`}
+            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${activeCategory === cat ? "bg-[#002D87] text-white" : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]"}`}
           >
             {t(`supportPage.category_${cat}` as Parameters<typeof t>[0])}
           </button>
@@ -517,13 +517,13 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
       {/* FAQ Accordion */}
       {filtered.length === 0 ? (
         <div className="text-center py-8">
-          <HelpCircle className="w-10 h-10 text-[#D1D5DB] mx-auto mb-2" />
+          <HelpCircle className="w-10 h-10 text-[var(--color-border)] mx-auto mb-2" />
           <p className="text-sm text-[#6B7280]">{t("supportPage.faq.noResults")}</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((item, index) => (
-            <div key={index} className="border border-[#E5E7EB] rounded-lg overflow-hidden">
+            <div key={index} className="border border-[var(--color-border)] rounded-lg overflow-hidden">
               <button
                 onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
                 className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-[#F9FAFB] transition-colors"
@@ -537,7 +537,7 @@ function FAQSection({ t, locale }: { t: ReturnType<typeof useTranslations>; loca
                 <ChevronDown className={`w-4 h-4 text-[#9CA3AF] flex-shrink-0 transition-transform ${expandedIndex === index ? "rotate-180" : ""}`} />
               </button>
               {expandedIndex === index && (
-                <div className="px-4 pb-3 text-sm text-[#4B5563] border-t border-[#E5E7EB] pt-3">
+                <div className="px-4 pb-3 text-sm text-[#4B5563] border-t border-[var(--color-border)] pt-3">
                   {item.answer}
                 </div>
               )}
@@ -566,7 +566,7 @@ function VideoTutorials({ t, locale }: { t: ReturnType<typeof useTranslations>; 
       <p className="text-sm text-[#6B7280] mb-4">{t("supportPage.tutorials.description")}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {TUTORIAL_ITEMS.map((tutorial) => (
-          <div key={tutorial.key} className="border border-[#E5E7EB] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+          <div key={tutorial.key} className="border border-[var(--color-border)] rounded-xl overflow-hidden hover:shadow-md transition-shadow">
             {/* Thumbnail placeholder */}
             <div className="relative h-[120px] bg-gradient-to-br from-[#002D87] to-[#0047D4] flex items-center justify-center">
               <PlayCircle className="w-12 h-12 text-white/80" />
@@ -664,7 +664,7 @@ const SupportContent = () => {
               <OfflineBanner />
 
               {/* Main Tabs: Tickets / FAQ / Tutorials */}
-              <div className="flex gap-1 mb-4 border-b border-[#E5E7EB]">
+              <div className="flex gap-1 mb-4 border-b border-[var(--color-border)]">
                 {([
                   { key: "tickets" as MainTab, label: t("supportPage.tabTickets"), icon: MessageSquarePlus },
                   { key: "faq" as MainTab, label: t("supportPage.tabFaq"), icon: HelpCircle },
@@ -690,15 +690,15 @@ const SupportContent = () => {
 
               {/* Tab Content */}
               {mainTab === "faq" ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <FAQSection t={t} locale={locale} />
                 </div>
               ) : mainTab === "tutorials" ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <VideoTutorials t={t} locale={locale} />
                 </div>
               ) : (
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {showForm ? (
                   <CreateTicketForm
                     t={t}
@@ -745,7 +745,7 @@ const SupportContent = () => {
                         </p>
                         <button
                           onClick={() => setShowForm(true)}
-                          className="flex items-center gap-1.5 px-5 py-2 border border-[#E5E7EB] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                          className="flex items-center gap-1.5 px-5 py-2 border border-[var(--color-border)] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                         >
                           <Plus className="w-4 h-4" />
                           {t("supportPage.createFirst")}

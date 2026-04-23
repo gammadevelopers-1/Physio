@@ -85,7 +85,7 @@ export function RichTextEditor({
       disabled={disabled}
       title={title}
       className={`p-1.5 rounded hover:bg-[#F3F4F6] transition-colors ${
-        isActive ? "bg-[#E5E7EB] text-[#1F2937]" : "text-[#6B7280]"
+        isActive ? "bg-[var(--color-border)] text-[#1F2937]" : "text-[#6B7280]"
       } disabled:opacity-40 disabled:cursor-not-allowed`}
     >
       {children}
@@ -93,9 +93,9 @@ export function RichTextEditor({
   );
 
   return (
-    <div className="border border-[#D1D5DB] rounded-lg overflow-hidden bg-white">
+    <div className="border border-[var(--color-border)] rounded-lg overflow-hidden bg-white">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+      <div className="flex flex-wrap items-center gap-0.5 p-1.5 border-b border-[var(--color-border)] bg-[#F9FAFB]">
         <Btn
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           isActive={editor.isActive("heading", { level: 1 })}
@@ -117,7 +117,7 @@ export function RichTextEditor({
         >
           <Heading3 className="w-4 h-4" />
         </Btn>
-        <div className="w-px h-5 bg-[#E5E7EB] mx-1" />
+        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
         <Btn
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
@@ -139,7 +139,7 @@ export function RichTextEditor({
         >
           <Strikethrough className="w-4 h-4" />
         </Btn>
-        <div className="w-px h-5 bg-[#E5E7EB] mx-1" />
+        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
         <Btn
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive("bulletList")}
@@ -161,7 +161,7 @@ export function RichTextEditor({
         >
           <Quote className="w-4 h-4" />
         </Btn>
-        <div className="w-px h-5 bg-[#E5E7EB] mx-1" />
+        <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
         <Btn
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
@@ -225,7 +225,7 @@ export function RichTextEditor({
           margin: 0.25em 0;
         }
         .tiptap-content .ProseMirror blockquote {
-          border-left: 3px solid #d1d5db;
+          border-left: 3px solid var(--color-border);
           padding-left: 1rem;
           margin: 0.5em 0;
           color: #6b7280;
@@ -238,7 +238,7 @@ export function RichTextEditor({
         }
         .tiptap-content .ProseMirror[dir="rtl"] blockquote {
           border-left: none;
-          border-right: 3px solid #d1d5db;
+          border-right: 3px solid var(--color-border);
           padding-left: 0;
           padding-right: 1rem;
         }

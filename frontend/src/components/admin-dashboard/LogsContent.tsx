@@ -220,7 +220,7 @@ const LogsContent = () => {
                 <button
                   onClick={handleExport}
                   disabled={exporting}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                 >
                   {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   {t("logsPage.exportLogs")}
@@ -228,7 +228,7 @@ const LogsContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
@@ -238,7 +238,7 @@ const LogsContent = () => {
                       placeholder={t("logsPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full h-10 border border-[#E5E7EB] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
 
@@ -246,7 +246,7 @@ const LogsContent = () => {
                   <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
-                    className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("logsPage.filters.allActions")}</option>
                     <option value="create">{t("logsPage.filters.create")}</option>
@@ -260,7 +260,7 @@ const LogsContent = () => {
                   <select
                     value={resourceFilter}
                     onChange={(e) => setResourceFilter(e.target.value)}
-                    className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("logsPage.filters.allResources")}</option>
                     <option value="user">{t("logsPage.filters.users")}</option>
@@ -273,16 +273,16 @@ const LogsContent = () => {
                   {/* Date Range */}
                   <input
                     type="date"
-                    className="h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm"
+                    className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm"
                   />
                 </div>
               </div>
 
               {/* Logs Table */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                    <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                       <tr>
                         <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                           {t("logsPage.table.timestamp")}
@@ -342,18 +342,18 @@ const LogsContent = () => {
                 )}
 
                 {/* Pagination */}
-                <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
                   <p className="text-sm text-[#6B7280]">
                     {t("logsPage.showing", { count: filteredLogs.length })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]">
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">
                       {t("logsPage.previous")}
                     </button>
                     <button className="px-3 py-1.5 text-sm btn-gold text-white rounded">1</button>
-                    <button className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]">2</button>
-                    <button className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]">3</button>
-                    <button className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]">
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">2</button>
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">3</button>
+                    <button className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]">
                       {t("logsPage.next")}
                     </button>
                   </div>

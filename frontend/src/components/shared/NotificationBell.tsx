@@ -146,7 +146,7 @@ export default function NotificationBell() {
           <div className="max-h-[380px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="py-10 text-center">
-                <Bell className="w-8 h-8 mx-auto text-[#D1D5DB] mb-2" />
+                <Bell className="w-8 h-8 mx-auto text-[var(--color-border)] mb-2" />
                 <p className="text-sm text-[#9CA3AF]">
                   {t("noNotifications")}
                 </p>

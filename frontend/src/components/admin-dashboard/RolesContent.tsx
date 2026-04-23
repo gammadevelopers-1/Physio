@@ -203,7 +203,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value.toUpperCase().replace(/\s+/g, "_") })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               placeholder="e.g. CONTENT_REVIEWER"
               required
             />
@@ -214,7 +214,7 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
               type="text"
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               placeholder="e.g. Content Reviewer"
               required
             />
@@ -224,12 +224,12 @@ function CreateRoleModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full h-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
+              className="w-full h-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
               placeholder="What can this role do?"
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -297,7 +297,7 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
               type="text"
               value={form.displayName}
               onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               required
             />
           </div>
@@ -306,11 +306,11 @@ function EditRoleModal({ role, onClose, onUpdated }: { role: RoleWithCount; onCl
             <textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full h-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
+              className="w-full h-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87] resize-none"
             />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+            <button type="button" onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
               Cancel
             </button>
             <button type="submit" disabled={isSubmitting} className="flex-1 h-10 btn-gold text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2">
@@ -363,7 +363,7 @@ function DeleteRoleModal({ role, onClose, onDeleted }: { role: RoleWithCount; on
         )}
         <p className="text-xs text-[#6B7280] mb-6">This action cannot be undone.</p>
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
+          <button onClick={onClose} className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]">
             Cancel
           </button>
           <button
@@ -464,7 +464,7 @@ const RolesContent = () => {
 
               {/* Loading State */}
               {isLoading && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] py-16 flex flex-col items-center justify-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
                   <p className="text-sm text-[#6B7280]">Loading roles...</p>
                 </div>
@@ -472,7 +472,7 @@ const RolesContent = () => {
 
               {/* Error State */}
               {fetchError && !isLoading && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] py-16 flex flex-col items-center justify-center" role="alert">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center" role="alert">
                   <AlertCircle className="w-8 h-8 text-[#DC2626] mb-3" />
                   <p className="text-sm text-[#DC2626] mb-4">{fetchError}</p>
                   <button
@@ -496,7 +496,7 @@ const RolesContent = () => {
                     return (
                       <div
                         key={role.id}
-                        className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden"
+                        className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden"
                       >
                         {/* Role Header */}
                         <div
@@ -565,7 +565,7 @@ const RolesContent = () => {
 
                         {/* Permissions Matrix */}
                         {expandedRole === role.id && (
-                          <div className="border-t border-[#E5E7EB] p-4">
+                          <div className="border-t border-[var(--color-border)] p-4">
                             <h4 className="text-sm font-semibold text-[#6B7280] uppercase mb-4">
                               {t("rolesPage.permissions")}
                             </h4>
@@ -573,7 +573,7 @@ const RolesContent = () => {
                             <div className="overflow-x-auto scrollbar-hide">
                               <table className="w-full">
                                 <thead>
-                                  <tr className="border-b border-[#E5E7EB]">
+                                  <tr className="border-b border-[var(--color-border)]">
                                     <th className={`pb-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                       {t("rolesPage.module")}
                                     </th>
@@ -621,7 +621,7 @@ const RolesContent = () => {
                   })}
 
                   {roles.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] py-12 text-center">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] py-12 text-center">
                       <p className="text-[#6B7280]">No roles found</p>
                     </div>
                   )}

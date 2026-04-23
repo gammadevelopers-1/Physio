@@ -112,9 +112,9 @@ const CatalogOverviewWidget = ({
   };
 
   return (
-    <div className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
           <BookOpen className="w-4 h-4 text-[var(--gold-gold-500)]" />
         </div>
@@ -125,7 +125,7 @@ const CatalogOverviewWidget = ({
 
       {/* Charts Section */}
       {courses.length > 0 && (
-        <div className="px-4 sm:px-5 py-4 border-b border-[#E5E7EB]">
+        <div className="px-4 sm:px-5 py-4 border-b border-[var(--color-border)]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Donut Chart — Status Distribution */}
             <div>
@@ -183,7 +183,7 @@ const CatalogOverviewWidget = ({
                           {cat.capacity > 0 ? `${cat.enrolled}/${cat.capacity}` : `${cat.enrolled}`}
                         </span>
                       </div>
-                      <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                      <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div
                           className="h-full bg-[#3B82F6] rounded-full"
                           style={{ width: `${(barValue / maxEnrollment) * 100}%`, opacity: fillPercent < 100 ? 0.6 : 1 }}
@@ -205,7 +205,7 @@ const CatalogOverviewWidget = ({
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full min-w-[700px]">
           <thead>
-            <tr className="border-b border-[#E5E7EB]">
+            <tr className="border-b border-[var(--color-border)]">
               <th className="text-start px-5 py-3 text-xs font-semibold text-[var(--on-surface-variant)] uppercase tracking-wider">
                 {t("catalog.course")}
               </th>
@@ -264,7 +264,7 @@ const CatalogOverviewWidget = ({
                     <span className="text-sm text-[var(--on-surface-variant)]">
                       {course.enrolled}/{course.capacity}
                     </span>
-                    <div className="w-12 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                    <div className="w-12 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[var(--functional-blue-600)] rounded-full"
                         style={{
@@ -297,7 +297,7 @@ const CatalogOverviewWidget = ({
         {displayCourses.map((course) => (
           <div
             key={course.id}
-            className="bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]"
+            className="bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]"
           >
             <div className="flex items-start gap-3 mb-3">
               <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[var(--blue-blue-500)] to-[var(--blue-brand-blue)] flex items-center justify-center text-white font-semibold flex-shrink-0">
@@ -323,7 +323,7 @@ const CatalogOverviewWidget = ({
                 {t(`catalog.${course.status}`)}
               </span>
             </div>
-            <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--on-surface-variant)]">
                   {course.enrolled}/{course.capacity} {t("catalog.enrolled")}
@@ -343,7 +343,7 @@ const CatalogOverviewWidget = ({
       </div>
 
       {/* View All Footer */}
-      <div className="border-t border-[#E5E7EB] p-4">
+      <div className="border-t border-[var(--color-border)] p-4">
         <Link
           href={`/${locale}/dashboard/manager/courses`}
           className="flex items-center justify-center gap-1.5 text-sm font-medium text-[var(--blue-brand-blue)] hover:underline"

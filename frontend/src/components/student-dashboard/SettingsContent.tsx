@@ -86,7 +86,7 @@ function ButtonGroup({
           className={`px-4 py-2 text-sm rounded-lg border transition-colors min-h-[44px] ${
             value === opt.value
               ? "bg-[#002D87] text-white border-[#002D87]"
-              : "bg-white text-[#1F2937] border-[#E5E7EB] hover:border-[#002D87]"
+              : "bg-white text-[#1F2937] border-[var(--color-border)] hover:border-[#002D87]"
           }`}
         >
           {opt.label}
@@ -156,7 +156,7 @@ function PreferencesTab({
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Language Settings */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.languageSettings")}</SectionHeading>
 
         <SettingRow label={t("settings.interfaceLanguage")}>
@@ -196,7 +196,7 @@ function PreferencesTab({
       </div>
 
       {/* Accessibility Controls */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.accessibilityControls")}</SectionHeading>
 
         <SettingRow label={t("settings.fontSize")}>
@@ -267,7 +267,7 @@ function PreferencesTab({
       </div>
 
       {/* Privacy Controls */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.privacyControls")}</SectionHeading>
 
         <SettingRow
@@ -298,7 +298,7 @@ function PreferencesTab({
         <SettingRow label={t("settings.exportData")}>
           <button
             disabled
-            className="flex items-center gap-2 px-4 py-2 text-sm border border-[#E5E7EB] rounded-lg text-[#9CA3AF] cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 text-sm border border-[var(--color-border)] rounded-lg text-[#9CA3AF] cursor-not-allowed"
             title={t("settings.comingSoon")}
           >
             <Download className="w-4 h-4" />
@@ -361,11 +361,11 @@ function NotificationsTab({
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
       {/* Email Notifications */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.notificationPreferences")}</SectionHeading>
 
         {/* Header row */}
-        <div className="flex items-center gap-4 pb-3 mb-1 border-b border-[#E5E7EB]">
+        <div className="flex items-center gap-4 pb-3 mb-1 border-b border-[var(--color-border)]">
           <div className="flex-1 text-sm font-medium text-[#6B7280]" />
           <div className="w-16 text-center text-xs font-medium text-[#6B7280]">
             {t("settings.emailNotifications")}
@@ -404,7 +404,7 @@ function NotificationsTab({
       </div>
 
       {/* Reminder Timing */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <SectionHeading>{t("settings.reminderTiming")}</SectionHeading>
         <p className="text-sm text-[#6B7280] mb-4">
           {t("settings.reminderTimingDesc")}
@@ -603,7 +603,7 @@ const SettingsContent = () => {
               {/* ── Profile Tab ── */}
               {activeTab === "profile" && (
                 <div
-                  className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6"
+                  className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6"
                   dir={isRTL ? "rtl" : "ltr"}
                 >
                   {/* Avatar + Name */}
@@ -638,7 +638,7 @@ const SettingsContent = () => {
                             <Pencil className="w-3.5 h-3.5 text-white" />
                           </button>
                           {avatarMenuOpen && (
-                            <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}>
+                            <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { settingsAvatarRef.current?.click(); setAvatarMenuOpen(false); }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -676,7 +676,7 @@ const SettingsContent = () => {
                           value={formData.firstName}
                           onChange={handleInputChange}
                           aria-label={t("settings.firstName")}
-                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                       <div>
@@ -693,7 +693,7 @@ const SettingsContent = () => {
                           value={formData.lastName}
                           onChange={handleInputChange}
                           aria-label={t("settings.lastName")}
-                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`w-full px-4 py-2.5 bg-[#F3F4F6] border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                       </div>
                     </div>
@@ -714,7 +714,7 @@ const SettingsContent = () => {
                       value={formData.email}
                       readOnly
                       aria-label={t("settings.email")}
-                      className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-gray-50 cursor-not-allowed ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] bg-gray-50 cursor-not-allowed ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -734,7 +734,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       aria-label={t("settings.scfhsNumber")}
                       placeholder={t("settings.scfhsPlaceholder")}
-                      className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -753,7 +753,7 @@ const SettingsContent = () => {
                       value={formData.nationalId}
                       onChange={handleInputChange}
                       aria-label={t("settings.nationalId")}
-                      className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -771,7 +771,7 @@ const SettingsContent = () => {
                         type="button"
                         onClick={() => setNationalityOpen(!nationalityOpen)}
                         aria-label={t("settings.nationality")}
-                        className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         <span
                           className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
@@ -790,7 +790,7 @@ const SettingsContent = () => {
                       </button>
                       {nationalityOpen && (
                         <div
-                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10`}
+                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10`}
                         >
                           {nationalities.map((nationality) => (
                             <button
@@ -823,7 +823,7 @@ const SettingsContent = () => {
                         type="button"
                         onClick={() => setGenderOpen(!genderOpen)}
                         aria-label={t("settings.gender")}
-                        className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         <span>
                           {formData.gender
@@ -840,7 +840,7 @@ const SettingsContent = () => {
                       </button>
                       {genderOpen && (
                         <div
-                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10`}
+                          className={`absolute top-full ${isRTL ? "right-0" : "left-0"} w-full mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10`}
                         >
                           {genders.map((gender) => (
                             <button
@@ -874,7 +874,7 @@ const SettingsContent = () => {
                         onChange={handleInputChange}
                         placeholder="DD/MM/YYYY"
                         aria-label={t("settings.dob")}
-                        className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right pr-4 pl-10" : "pr-10"}`}
+                        className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right pr-4 pl-10" : "pr-10"}`}
                       />
                       <Calendar
                         className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280] ${isRTL ? "left-3" : "right-3"}`}
@@ -897,7 +897,7 @@ const SettingsContent = () => {
                       onChange={handleInputChange}
                       rows={4}
                       aria-label={t("settings.biography")}
-                      className={`w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent resize-none ${isRTL ? "text-right" : ""}`}
+                      className={`w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent resize-none ${isRTL ? "text-right" : ""}`}
                     />
                   </div>
 
@@ -955,14 +955,14 @@ const SettingsContent = () => {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                         <TwoFactorToggle
                           enabled={security.twoFactorEnabled}
                           toggling={security.toggling}
                           onToggle={security.handleToggle2FA}
                         />
                       </div>
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                         <TrustedDevicesSection
                           devices={security.devices}
                           revokingId={security.revokingId}

@@ -51,9 +51,9 @@ const ContentReviewQueue = ({
   const defaultTypeIcon = { icon: File, bg: "bg-[#F3F4F6]", color: "text-[#6B7280]" };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
           <ClipboardList className="w-4 h-4 text-[#D4A520]" />
         </div>
@@ -74,7 +74,7 @@ const ContentReviewQueue = ({
           return (
             <div
               key={item.id}
-              className="bg-[#F9FAFB] rounded-xl p-3.5 border border-[#E5E7EB]"
+              className="bg-[#F9FAFB] rounded-xl p-3.5 border border-[var(--color-border)]"
             >
               {/* Header row */}
               <div className="flex items-start gap-3 mb-2">
@@ -119,7 +119,7 @@ const ContentReviewQueue = ({
                 </button>
                 <button
                   onClick={() => onPreview(item.id)}
-                  className="py-1.5 px-2 bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium rounded-md hover:bg-[#E5E7EB] transition-colors"
+                  className="py-1.5 px-2 bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium rounded-md hover:bg-[var(--color-border)] transition-colors"
                   aria-label={tA("preview")}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -130,7 +130,7 @@ const ContentReviewQueue = ({
         })}
 
         {/* View All Link */}
-        <div className="text-center pt-3 border-t border-[#E5E7EB] mt-3">
+        <div className="text-center pt-3 border-t border-[var(--color-border)] mt-3">
           <Link
             href={`/${locale}/dashboard/manager/content-review`}
             className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"

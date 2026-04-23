@@ -109,9 +109,9 @@ const AdminSettingsContent = () => {
               </div>
 
               {/* Settings Card with Horizontal Tabs */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB]">
+              <div className="bg-white rounded-xl border border-[var(--color-border)]">
                 {/* Horizontal Tabs - Compact & Wrapped */}
-                <div className="flex flex-wrap border-b border-[#E5E7EB]">
+                <div className="flex flex-wrap border-b border-[var(--color-border)]">
                   {settingsTabs.map((tab) => {
                     const Icon = tab.icon;
                     return (
@@ -150,7 +150,7 @@ const AdminSettingsContent = () => {
                             type="text"
                             value={platformName}
                             onChange={(e) => setPlatformName(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
 
@@ -162,7 +162,7 @@ const AdminSettingsContent = () => {
                             type="email"
                             value={contactEmail}
                             onChange={(e) => setContactEmail(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           />
                         </div>
 
@@ -173,7 +173,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={timezone}
                             onChange={(e) => setTimezone(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="Asia/Riyadh">Asia/Riyadh (UTC+3)</option>
                             <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
@@ -186,10 +186,10 @@ const AdminSettingsContent = () => {
                             {t("settingsPage.general.logo")}
                           </label>
                           <div className="flex items-center gap-4">
-                            <div className="w-20 h-20 bg-[#F9FAFB] rounded-lg flex items-center justify-center border border-[#E5E7EB]">
+                            <div className="w-20 h-20 bg-[#F9FAFB] rounded-lg flex items-center justify-center border border-[var(--color-border)]">
                               <Settings className="w-8 h-8 text-[#9CA3AF]" />
                             </div>
-                            <button className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
+                            <button className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
                               {t("settingsPage.general.uploadLogo")}
                             </button>
                           </div>
@@ -203,7 +203,7 @@ const AdminSettingsContent = () => {
                           {t("settingsPage.auth.title")}
                         </h2>
 
-                        <div className="flex items-center justify-between py-4 border-b border-[#E5E7EB]">
+                        <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
                             <p className="text-sm font-medium text-[#1F2937]">
                               {t("settingsPage.auth.require2FA")}
@@ -214,7 +214,7 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setRequire2FA(!require2FA)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${require2FA ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${require2FA ? "ms-auto" : ""}`} />
                           </button>
@@ -227,7 +227,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={sessionTimeout}
                             onChange={(e) => setSessionTimeout(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="15">15 minutes</option>
                             <option value="30">30 minutes</option>
@@ -243,7 +243,7 @@ const AdminSettingsContent = () => {
                           <select
                             value={passwordMinLength}
                             onChange={(e) => setPasswordMinLength(e.target.value)}
-                            className="w-full h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                            className="w-full h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                           >
                             <option value="6">6 characters</option>
                             <option value="8">8 characters</option>
@@ -260,7 +260,7 @@ const AdminSettingsContent = () => {
                           {t("settingsPage.notifications.title")}
                         </h2>
 
-                        <div className="flex items-center justify-between py-4 border-b border-[#E5E7EB]">
+                        <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
                             <p className="text-sm font-medium text-[#1F2937]">
                               {t("settingsPage.notifications.email")}
@@ -271,13 +271,13 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setEmailNotifications(!emailNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotifications ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotifications ? "ms-auto" : ""}`} />
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between py-4 border-b border-[#E5E7EB]">
+                        <div className="flex items-center justify-between py-4 border-b border-[var(--color-border)]">
                           <div>
                             <p className="text-sm font-medium text-[#1F2937]">
                               {t("settingsPage.notifications.sms")}
@@ -288,7 +288,7 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setSmsNotifications(!smsNotifications)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotifications ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotifications ? "ms-auto" : ""}`} />
                           </button>
@@ -306,7 +306,7 @@ const AdminSettingsContent = () => {
                         </p>
 
                         {/* 2FA Toggle */}
-                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[#E5E7EB]">
+                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[var(--color-border)]">
                           <TwoFactorToggle
                             enabled={twoFactorEnabled}
                             toggling={toggling}
@@ -315,7 +315,7 @@ const AdminSettingsContent = () => {
                         </div>
 
                         {/* Trusted Devices */}
-                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[#E5E7EB]">
+                        <div className="bg-[#F9FAFB] rounded-lg p-5 border border-[var(--color-border)]">
                           <TrustedDevicesSection
                             devices={devices}
                             revokingId={revokingId}
@@ -336,7 +336,7 @@ const AdminSettingsContent = () => {
                           {t("settingsPage.maintenance.title")}
                         </h2>
 
-                        <div className={`flex items-center justify-between py-4 px-4 rounded-lg border ${maintenanceMode ? "bg-[#FEE2E2] border-[#FCA5A5]" : "bg-[#F9FAFB] border-[#E5E7EB]"}`}>
+                        <div className={`flex items-center justify-between py-4 px-4 rounded-lg border ${maintenanceMode ? "bg-[#FEE2E2] border-[#FCA5A5]" : "bg-[#F9FAFB] border-[var(--color-border)]"}`}>
                           <div>
                             <p className="text-sm font-medium text-[#1F2937]">
                               {t("settingsPage.maintenance.mode")}
@@ -347,7 +347,7 @@ const AdminSettingsContent = () => {
                           </div>
                           <button
                             onClick={() => setMaintenanceMode(!maintenanceMode)}
-                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${maintenanceMode ? "bg-[#DC2626]" : "bg-[#E5E7EB]"}`}
+                            className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${maintenanceMode ? "bg-[#DC2626]" : "bg-[var(--color-border)]"}`}
                           >
                             <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${maintenanceMode ? "ms-auto" : ""}`} />
                           </button>
@@ -363,7 +363,7 @@ const AdminSettingsContent = () => {
                               onChange={(e) => setMaintenanceMessage(e.target.value)}
                               rows={4}
                               placeholder={t("settingsPage.maintenance.defaultMessage")}
-                              className="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
+                              className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]"
                             />
                           </div>
                         )}
@@ -426,7 +426,7 @@ const AdminSettingsContent = () => {
                     )}
 
                   {/* Save Button */}
-                  <div className="mt-8 pt-6 border-t border-[#E5E7EB] flex justify-end">
+                  <div className="mt-8 pt-6 border-t border-[var(--color-border)] flex justify-end">
                     <button className="flex items-center gap-2 px-6 py-2.5 btn-gold text-white rounded-lg transition-colors">
                       <Save className="w-5 h-5" />
                       <span className="text-sm font-medium">{t("settingsPage.saveChanges")}</span>

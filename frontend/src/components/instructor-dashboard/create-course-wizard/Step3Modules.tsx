@@ -93,14 +93,14 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
       <h2 className="text-lg font-semibold text-[#1F2937] mb-1">
         {t("wizardStep3")}
       </h2>
       <p className="text-sm text-[#6B7280] mb-4">{t("modulesHint")}</p>
 
       {/* Module Form */}
-      <div className="border border-[#E5E7EB] rounded-lg p-4 mb-4 bg-[#F9FAFB]">
+      <div className="border border-[var(--color-border)] rounded-lg p-4 mb-4 bg-[#F9FAFB]">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="module-title" className="block text-sm font-medium text-[#374151] mb-1">
@@ -111,7 +111,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               type="text"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
             />
           </div>
           <div>
@@ -124,7 +124,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               dir="rtl"
               value={form.titleAr}
               onChange={(e) => setForm((f) => ({ ...f, titleAr: e.target.value }))}
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
             />
           </div>
           <div>
@@ -135,7 +135,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               id="module-type"
               value={form.type}
               onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
             >
               {MODULE_TYPES.map((mType) => (
                 <option key={mType} value={mType}>
@@ -162,7 +162,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                     }))
                   }
                   placeholder="1"
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                 />
                 <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("hours")}</span>
               </div>
@@ -180,7 +180,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
                     }))
                   }
                   placeholder="30"
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                 />
                 <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("minutes")}</span>
               </div>
@@ -222,7 +222,7 @@ const Step3Modules = ({ state, dispatch }: Step3Props) => {
               className={`flex items-center gap-3 p-3 border rounded-lg ${
                 editingId === mod.tempId
                   ? "border-[#3B82F6] bg-[#EFF6FF]"
-                  : "border-[#E5E7EB]"
+                  : "border-[var(--color-border)]"
               }`}
             >
               <span className="text-sm font-medium text-[#9CA3AF] w-6 text-center">

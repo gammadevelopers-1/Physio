@@ -40,7 +40,7 @@ const InputField = ({
       </label>
       <div className="relative w-full lg:w-1/2">
         {icon && (
-          <div className={`absolute top-1/2 -translate-y-1/2 text-[#C8D5E1] ${isRTL ? "right-4" : "left-4"}`}>
+          <div className={`absolute top-1/2 -translate-y-1/2 text-[var(--color-border-subtle)] ${isRTL ? "right-4" : "left-4"}`}>
             {icon}
           </div>
         )}
@@ -51,7 +51,7 @@ const InputField = ({
           onChange={onChange}
           required={required}
           placeholder={placeholder}
-          className={`w-full h-12 ${icon ? (isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4') : 'px-4'} py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+          className={`w-full h-12 ${icon ? (isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4') : 'px-4'} py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
           style={{ fontSize: "16px" }}
         />
       </div>
@@ -75,7 +75,7 @@ const Checkbox = ({
   isRTL?: boolean;
 }) => (
   <label className={`flex items-center gap-2 cursor-pointer ${isRTL ? "flex-row-reverse" : ""}`}>
-    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors bg-white ${checked ? 'border-[var(--color-primary)]' : 'border-[#C8D5E1]'}`}>
+    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors bg-white ${checked ? 'border-[var(--color-primary)]' : 'border-[var(--color-border-subtle)]'}`}>
       {checked && (
         <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
           <path d="M1 5L4.5 8.5L11 1.5" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -141,7 +141,7 @@ const Dropdown = ({
           <button
             type="button"
             onClick={onToggle}
-            className="w-full h-12 px-4 bg-white border border-[#C8D5E1] rounded-lg flex items-center justify-between cursor-pointer"
+            className="w-full h-12 px-4 bg-white border border-[var(--color-border-subtle)] rounded-lg flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2">
               {showFlag && value === "Saudi Arabia" && (
@@ -154,7 +154,7 @@ const Dropdown = ({
             <ChevronDown className={`w-5 h-5 text-[var(--on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
           </button>
           {isOpen && (
-            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
+            <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
               {options.map((option) => (
                 <button
                   key={option.value}
@@ -208,7 +208,7 @@ const FileUpload = ({
         {label}
       </label>
       <div
-        className="bg-[#F8FAFC] border border-[#C8D5E1] rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#F1F5F9] transition-colors"
+        className="bg-[#F8FAFC] border border-[var(--color-border-subtle)] rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-[#F1F5F9] transition-colors"
         onClick={() => inputRef.current?.click()}
       >
         <input
@@ -847,7 +847,7 @@ const BecomeTrainerForm = ({
                       value={formData.fullNameArabic}
                       onChange={handleInputChange}
                       placeholder={labels.fullNameArPlaceholder}
-                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
                     />
                     <input
@@ -856,7 +856,7 @@ const BecomeTrainerForm = ({
                       value={formData.fullNameEnglish}
                       onChange={handleInputChange}
                       placeholder={labels.fullNameEnPlaceholder}
-                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                      className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                       style={{ fontSize: "16px" }}
                     />
                   </div>
@@ -871,14 +871,14 @@ const BecomeTrainerForm = ({
                     {labels.email} <span className="text-[#dc2626]">*</span>
                   </label>
                   <div className="relative w-1/2">
-                    <Mail className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#C8D5E1] ${isRTL ? "right-4" : "left-4"}`} strokeWidth={1.5} />
+                    <Mail className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-border-subtle)] ${isRTL ? "right-4" : "left-4"}`} strokeWidth={1.5} />
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className={`w-full h-12 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-4 text-right" : "pl-12 pr-4"}`}
+                      className={`w-full h-12 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "pr-12 pl-4 text-right" : "pl-12 pr-4"}`}
                       style={{ fontSize: "16px" }}
                     />
                   </div>
@@ -891,12 +891,12 @@ const BecomeTrainerForm = ({
                   <label className="shrink-0 text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                     {labels.mobile} <span className="text-[#dc2626]">*</span>
                   </label>
-                  <div className={`w-1/2 flex h-12 bg-white border border-[#C8D5E1] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className={`w-1/2 flex h-12 bg-white border border-[var(--color-border-subtle)] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setOpenDropdown(openDropdown === "countryCode" ? null : "countryCode")}
-                        className={`h-full px-4 flex items-center gap-1 cursor-pointer bg-white ${isRTL ? "border-l border-[#C8D5E1]" : "border-r border-[#C8D5E1]"}`}
+                        className={`h-full px-4 flex items-center gap-1 cursor-pointer bg-white ${isRTL ? "border-l border-[var(--color-border-subtle)]" : "border-r border-[var(--color-border-subtle)]"}`}
                       >
                         <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                           {formData.countryCode}
@@ -904,7 +904,7 @@ const BecomeTrainerForm = ({
                         <ChevronDown className={`w-4 h-4 text-[var(--on-surface-variant)] transition-transform ${openDropdown === "countryCode" ? "rotate-180" : ""}`} />
                       </button>
                       {openDropdown === "countryCode" && (
-                        <div className={`absolute top-full mt-1 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-20 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
+                        <div className={`absolute top-full mt-1 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
                           {["SA", "AE", "EG", "JO"].map((code) => (
                             <button
                               key={code}
@@ -961,7 +961,7 @@ const BecomeTrainerForm = ({
                         value={formData.scfhsNumber}
                         onChange={handleInputChange}
                         placeholder={locale === "ar" ? "أدخل رقم التصنيف" : "Enter SCFHS number"}
-                        className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                        className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                         style={{ fontSize: "16px" }}
                       />
                     )}
@@ -1027,7 +1027,7 @@ const BecomeTrainerForm = ({
 
               {/* Submit Buttons */}
               <div className="flex gap-3 justify-end">
-                <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[#C8D5E1] hover:bg-gray-50">
+                <button type="button" className="h-11 px-6 rounded-lg font-medium border border-[var(--color-border-subtle)] hover:bg-gray-50">
                   {labels.cancel}
                 </button>
                 <button type="submit" disabled={isSubmitting} className="h-11 px-6 rounded-lg font-medium text-white btn-gold disabled:opacity-50 flex items-center gap-2">
@@ -1104,7 +1104,7 @@ const BecomeTrainerForm = ({
                   value={formData.fullNameArabic}
                   onChange={handleInputChange}
                   placeholder={labels.fullNameArPlaceholder}
-                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
                 />
                 <input
@@ -1113,7 +1113,7 @@ const BecomeTrainerForm = ({
                   value={formData.fullNameEnglish}
                   onChange={handleInputChange}
                   placeholder={labels.fullNameEnPlaceholder}
-                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                  className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                   style={{ fontSize: "16px" }}
                 />
               </div>
@@ -1128,12 +1128,12 @@ const BecomeTrainerForm = ({
                 <label className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                   {labels.mobile} <span className="text-[#dc2626]">*</span>
                 </label>
-                <div className={`flex h-12 bg-white border border-[#C8D5E1] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div className={`flex h-12 bg-white border border-[var(--color-border-subtle)] rounded-lg overflow-hidden ${isRTL ? "flex-row-reverse" : ""}`}>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setOpenDropdown(openDropdown === "countryCodeMobile" ? null : "countryCodeMobile")}
-                      className={`h-full px-4 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[#C8D5E1]" : "border-r border-[#C8D5E1]"}`}
+                      className={`h-full px-4 flex items-center gap-1 cursor-pointer ${isRTL ? "border-l border-[var(--color-border-subtle)]" : "border-r border-[var(--color-border-subtle)]"}`}
                     >
                       <span className="text-[var(--on-surface-default)]" style={{ fontSize: "16px" }}>
                         {formData.countryCode}
@@ -1141,7 +1141,7 @@ const BecomeTrainerForm = ({
                       <ChevronDown className={`w-4 h-4 text-[var(--on-surface-variant)] transition-transform ${openDropdown === "countryCodeMobile" ? "rotate-180" : ""}`} />
                     </button>
                     {openDropdown === "countryCodeMobile" && (
-                      <div className={`absolute top-full mt-1 bg-white border border-[#C8D5E1] rounded-lg shadow-lg z-20 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
+                      <div className={`absolute top-full mt-1 bg-white border border-[var(--color-border-subtle)] rounded-lg shadow-lg z-20 min-w-[80px] ${isRTL ? "right-0" : "left-0"}`}>
                         {["SA", "AE", "EG", "JO"].map((code) => (
                           <button
                             key={code}
@@ -1197,7 +1197,7 @@ const BecomeTrainerForm = ({
                     value={formData.scfhsNumber}
                     onChange={handleInputChange}
                     placeholder={locale === "ar" ? "أدخل رقم التصنيف" : "Enter SCFHS number"}
-                    className={`w-full h-12 px-4 py-2.5 bg-white border border-[#C8D5E1] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
+                    className={`w-full h-12 px-4 py-2.5 bg-white border border-[var(--color-border-subtle)] rounded-lg focus:outline-none focus:border-[var(--outline-focused)] ${isRTL ? "text-right" : ""}`}
                     style={{ fontSize: "16px" }}
                   />
                 )}
@@ -1260,7 +1260,7 @@ const BecomeTrainerForm = ({
 
             {/* Submit Buttons */}
             <div className="flex gap-3 mt-6">
-              <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[#C8D5E1] hover:bg-gray-50">
+              <button type="button" className="flex-1 h-12 rounded-xl font-medium border border-[var(--color-border-subtle)] hover:bg-gray-50">
                 {labels.cancel}
               </button>
               <button type="submit" disabled={isSubmitting} className="flex-1 h-12 rounded-xl font-medium text-white btn-gold disabled:opacity-50 flex items-center justify-center gap-2">

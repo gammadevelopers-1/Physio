@@ -327,7 +327,7 @@ const StudentsContent = () => {
                 <>
                   {/* Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                           <Users className="w-5 h-5 text-[#3B82F6]" />
@@ -342,7 +342,7 @@ const StudentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
@@ -357,7 +357,7 @@ const StudentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center">
                           <AlertTriangle className="w-5 h-5 text-[#EAB308]" />
@@ -372,7 +372,7 @@ const StudentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#FEE2E2] flex items-center justify-center">
                           <UserX className="w-5 h-5 text-[#EF4444]" />
@@ -390,7 +390,7 @@ const StudentsContent = () => {
                   </div>
 
                   {/* Search and Filters */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
                         <Search
@@ -401,13 +401,13 @@ const StudentsContent = () => {
                           placeholder={t("students.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
 
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("students.filters")}
@@ -420,7 +420,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("students.allCourses")}</option>
                           {courses.map((c) => (
@@ -430,7 +430,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statusOptions.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -442,11 +442,11 @@ const StudentsContent = () => {
                     </div>
 
                     {showFilters && (
-                      <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] space-y-3">
+                      <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] space-y-3">
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("students.allCourses")}</option>
                           {courses.map((c) => (
@@ -456,7 +456,7 @@ const StudentsContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statusOptions.map((option) => (
                             <option key={option.id} value={option.id}>
@@ -470,8 +470,8 @@ const StudentsContent = () => {
 
                   {/* Empty state */}
                   {filteredStudents.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                      <Users className="w-12 h-12 text-[#D1D5DB] mx-auto mb-4" />
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                      <Users className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
                         {t("students.noStudents") || "No students found"}
                       </h3>
@@ -485,11 +485,11 @@ const StudentsContent = () => {
                   {filteredStudents.length > 0 && (
                     <>
                       {/* Desktop Table */}
-                      <div className="hidden md:block bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                      <div className="hidden md:block bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                         <div className="overflow-x-auto">
                           <table className="w-full table-fixed">
                             <thead>
-                              <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                              <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                                 <th className="px-3 py-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider" style={{ width: "28%" }}>
                                   <button onClick={() => toggleSort("name")} className="flex items-center gap-1 hover:text-[#374151]">
                                     {t("students.tableStudent")}
@@ -527,7 +527,7 @@ const StudentsContent = () => {
                                 </th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[#E5E7EB]">
+                            <tbody className="divide-y divide-[var(--color-border)]">
                               {paginatedStudents.map((student) => (
                                 <tr
                                   key={student.studentId}
@@ -551,7 +551,7 @@ const StudentsContent = () => {
                                   </td>
                                   <td className="px-3 py-3">
                                     <div className="flex items-center gap-2">
-                                      <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                      <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                         <div
                                           className={`h-full rounded-full ${
                                             student.averageProgress >= 80 ? "bg-[#22C55E]"
@@ -602,7 +602,7 @@ const StudentsContent = () => {
                         </div>
 
                         {/* Pagination */}
-                        <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                        <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
                           <p className="text-sm text-[#6B7280]">
                             {t("students.showing")}{" "}
                             {Math.min(
@@ -668,11 +668,11 @@ const StudentsContent = () => {
                         {paginatedStudents.map((student) => (
                           <div
                             key={student.studentId}
-                            className="bg-white rounded-xl border border-[#E5E7EB] p-4"
+                            className="bg-white rounded-xl border border-[var(--color-border)] p-4"
                           >
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+                                <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
                                   {getInitials(student.firstName, student.lastName)}
                                 </div>
                                 <div>

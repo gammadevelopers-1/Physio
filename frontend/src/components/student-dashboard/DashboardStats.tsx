@@ -31,7 +31,7 @@ function ProgressRing({
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="#E5E7EB"
+        stroke="var(--color-border)"
         strokeWidth={strokeWidth}
       />
       <circle
@@ -115,7 +115,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Card 1: Overall Progress */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-center gap-4">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-4">
         <div className="relative flex-shrink-0">
           <ProgressRing percentage={stats.averageProgress} />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -135,7 +135,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
       </div>
 
       {/* Card 2: Attendance Rate */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex flex-col justify-between">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
         <p className="text-sm font-medium text-[#6B7280]">
           {t("kpi.attendanceRate")}
         </p>
@@ -145,7 +145,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
               {stats.attendanceRate}%
             </span>
           </div>
-          <div className="w-full h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${attendanceColor}`}
               style={{ width: `${Math.min(stats.attendanceRate, 100)}%` }}
@@ -161,7 +161,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
       </div>
 
       {/* Card 3: Certificates */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex flex-col justify-between">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
         <p className="text-sm font-medium text-[#6B7280]">
           {t("kpi.certificates")}
         </p>
@@ -174,7 +174,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
               {t("kpi.earned")}
             </span>
           </div>
-          <div className="w-px h-8 bg-[#E5E7EB]" />
+          <div className="w-px h-8 bg-[var(--color-border)]" />
           <div className="flex flex-col items-center">
             <span className="text-xl font-bold text-[#F59E0B]">
               {stats.certificatesPending}
@@ -185,7 +185,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
           </div>
           {stats.certificatesExpiringSoon > 0 && (
             <>
-              <div className="w-px h-8 bg-[#E5E7EB]" />
+              <div className="w-px h-8 bg-[var(--color-border)]" />
               <div className="flex flex-col items-center">
                 <span className="text-xl font-bold text-[#DC2626]">
                   {stats.certificatesExpiringSoon}
@@ -200,7 +200,7 @@ const DashboardStats = ({ stats }: DashboardStatsProps) => {
       </div>
 
       {/* Card 4: Next Session */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex flex-col justify-between">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col justify-between">
         <p className="text-sm font-medium text-[#6B7280]">
           {t("kpi.nextSession")}
         </p>

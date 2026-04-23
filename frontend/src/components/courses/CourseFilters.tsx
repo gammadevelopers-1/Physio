@@ -242,7 +242,7 @@ const CourseFilters = ({
     "w-4 h-4 rounded border-[#D4D4D8] text-[#06080b] focus:ring-0 cursor-pointer flex-shrink-0";
   const sectionTitle =
     "text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2";
-  const divider = <div className="h-px bg-[#E5E7EB] my-4" />;
+  const divider = <div className="h-px bg-[var(--color-border)] my-4" />;
 
   // Build the desktop sections dynamically so we can insert dividers only between visible ones
   const sections: React.ReactNode[] = [];

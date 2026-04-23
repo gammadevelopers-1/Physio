@@ -216,7 +216,7 @@ const KnowledgeBaseContent = () => {
                   return (
                     <div
                       key={stat.label}
-                      className="bg-white rounded-xl border border-[#E5E7EB] p-4"
+                      className="bg-white rounded-xl border border-[var(--color-border)] p-4"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div
@@ -248,7 +248,7 @@ const KnowledgeBaseContent = () => {
                     placeholder={t("kbPage.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full sm:w-[280px] h-10 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} border border-[#E5E7EB] rounded-lg text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                    className={`w-full sm:w-[280px] h-10 ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} border border-[var(--color-border)] rounded-lg text-sm text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                   />
                 </div>
 
@@ -268,7 +268,7 @@ const KnowledgeBaseContent = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                       activeTab === tab.key
                         ? "bg-[#111827] text-white"
-                        : "bg-white text-[#6B7280] border border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                        : "bg-white text-[#6B7280] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
                     }`}
                   >
                     {tab.label}
@@ -281,7 +281,7 @@ const KnowledgeBaseContent = () => {
                 {filteredArticles.map((article) => (
                   <div
                     key={article.id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] p-5"
+                    className="bg-white rounded-xl border border-[var(--color-border)] p-5"
                   >
                     {/* Card Header */}
                     <div className="flex items-start justify-between mb-3">
@@ -309,7 +309,7 @@ const KnowledgeBaseContent = () => {
 
                         {openActionId === article.id && (
                           <div
-                            className={`absolute top-full mt-1 ${isRTL ? "left-0" : "right-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-10`}
+                            className={`absolute top-full mt-1 ${isRTL ? "left-0" : "right-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10`}
                           >
                             <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[#374151] hover:bg-[#F9FAFB] transition-colors">
                               <Eye className="w-4 h-4" />
@@ -354,7 +354,7 @@ const KnowledgeBaseContent = () => {
                     </div>
 
                     {/* Stats Row */}
-                    <div className="flex items-center gap-4 pt-3 border-t border-[#E5E7EB]">
+                    <div className="flex items-center gap-4 pt-3 border-t border-[var(--color-border)]">
                       <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
                         <Eye className="w-3.5 h-3.5" />
                         <span>

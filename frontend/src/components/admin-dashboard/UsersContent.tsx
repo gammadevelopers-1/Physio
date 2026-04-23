@@ -186,7 +186,7 @@ function CreateUserModal({
                 type="text"
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -196,7 +196,7 @@ function CreateUserModal({
                 type="text"
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -208,7 +208,7 @@ function CreateUserModal({
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               required
             />
           </div>
@@ -219,7 +219,7 @@ function CreateUserModal({
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
               placeholder="Min 8 chars, uppercase, lowercase, number"
               required
             />
@@ -231,7 +231,7 @@ function CreateUserModal({
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             />
           </div>
 
@@ -240,7 +240,7 @@ function CreateUserModal({
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             >
               {ALL_ROLES.map((role) => (
                 <option key={role} value={role}>
@@ -254,7 +254,7 @@ function CreateUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
             >
               Cancel
             </button>
@@ -358,7 +358,7 @@ function EditUserModal({
                 type="text"
                 value={form.firstName}
                 onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -368,7 +368,7 @@ function EditUserModal({
                 type="text"
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+                className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
                 required
               />
             </div>
@@ -380,7 +380,7 @@ function EditUserModal({
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
+              className="w-full h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[#002D87]"
             />
           </div>
 
@@ -390,7 +390,7 @@ function EditUserModal({
               type="button"
               onClick={() => setForm({ ...form, isActive: !form.isActive })}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                form.isActive ? "bg-[#16A34A]" : "bg-[#D1D5DB]"
+                form.isActive ? "bg-[#16A34A]" : "bg-[var(--color-border)]"
               }`}
             >
               <span
@@ -407,7 +407,7 @@ function EditUserModal({
               type="button"
               onClick={() => setForm({ ...form, isVerified: !form.isVerified })}
               className={`relative w-11 h-6 rounded-full transition-colors ${
-                form.isVerified ? "bg-[#16A34A]" : "bg-[#D1D5DB]"
+                form.isVerified ? "bg-[#16A34A]" : "bg-[var(--color-border)]"
               }`}
             >
               <span
@@ -422,7 +422,7 @@ function EditUserModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+              className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
             >
               Cancel
             </button>
@@ -496,7 +496,7 @@ function DeleteUserModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+            className="flex-1 h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
           >
             Cancel
           </button>
@@ -707,7 +707,7 @@ function ManageRolesModal({
                   key={role}
                   onClick={() => handleAddRole(role)}
                   disabled={actionInProgress === role}
-                  className="px-3 py-1.5 text-xs font-medium border border-[#E5E7EB] rounded-full hover:bg-[#F9FAFB] disabled:opacity-50 flex items-center gap-1"
+                  className="px-3 py-1.5 text-xs font-medium border border-[var(--color-border)] rounded-full hover:bg-[#F9FAFB] disabled:opacity-50 flex items-center gap-1"
                 >
                   <Plus className="w-3 h-3" />
                   {t(`userManagement.roles.${role.toLowerCase()}`)}
@@ -720,7 +720,7 @@ function ManageRolesModal({
         <div className="mt-6">
           <button
             onClick={onClose}
-            className="w-full h-10 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
+            className="w-full h-10 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#4B5563] hover:bg-[#F9FAFB]"
           >
             Close
           </button>
@@ -929,22 +929,22 @@ const UsersContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
                   <p className="text-sm text-[#6B7280]">{t("usersPage.stats.total")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{stats.active}</p>
                   <p className="text-sm text-[#6B7280]">{t("usersPage.stats.active")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#DC2626]">{stats.suspended}</p>
                   <p className="text-sm text-[#6B7280]">{t("usersPage.stats.suspended")}</p>
                 </div>
               </div>
 
               {/* Filters and Search */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
@@ -953,14 +953,14 @@ const UsersContent = () => {
                       placeholder={t("usersPage.searchPlaceholder")}
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
-                      className={`w-full h-10 border border-[#E5E7EB] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
 
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("usersPage.filters.allRoles")}</option>
                     <option value="admin">{t("userManagement.roles.admin")}</option>
@@ -975,7 +975,7 @@ const UsersContent = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("usersPage.filters.allStatus")}</option>
                     <option value="active">{t("userManagement.statuses.active")}</option>
@@ -983,7 +983,7 @@ const UsersContent = () => {
                     <option value="suspended">{t("userManagement.statuses.suspended")}</option>
                   </select>
 
-                  <button className="flex items-center gap-2 px-4 h-10 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-2 px-4 h-10 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("usersPage.export")}
                   </button>
@@ -992,7 +992,7 @@ const UsersContent = () => {
 
               {/* Loading State */}
               {isLoadingUsers && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] py-16 flex flex-col items-center justify-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center">
                   <Loader2 className="w-8 h-8 animate-spin text-[#002D87] mb-3" />
                   <p className="text-sm text-[#6B7280]">Loading users...</p>
                 </div>
@@ -1000,7 +1000,7 @@ const UsersContent = () => {
 
               {/* Error State */}
               {fetchError && !isLoadingUsers && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] py-16 flex flex-col items-center justify-center" role="alert">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] py-16 flex flex-col items-center justify-center" role="alert">
                   <AlertCircle className="w-8 h-8 text-[#DC2626] mb-3" />
                   <p className="text-sm text-[#DC2626] mb-4">{fetchError}</p>
                   <button
@@ -1016,10 +1016,10 @@ const UsersContent = () => {
               {/* Users Table */}
               {!isLoadingUsers && !fetchError && (
                 <>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto scrollbar-hide">
                     <table className="w-full">
-                      <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                      <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                         <tr>
                           <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                             {t("usersPage.table.user")}
@@ -1096,7 +1096,7 @@ const UsersContent = () => {
                                   </button>
 
                                   {openDropdownId === user.id && (
-                                    <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px] z-10 ${isRTL ? "left-0" : "right-0"}`}>
+                                    <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-10 ${isRTL ? "left-0" : "right-0"}`}>
                                       <button
                                         onClick={() => {
                                           setEditingUser(user);
@@ -1127,7 +1127,7 @@ const UsersContent = () => {
                                         <Smartphone className="w-4 h-4" />
                                         Trusted Devices
                                       </button>
-                                      <div className="border-t border-[#E5E7EB] my-1" />
+                                      <div className="border-t border-[var(--color-border)] my-1" />
                                       <button
                                         onClick={() => handleSuspendToggle(user)}
                                         className={`flex items-center gap-2 w-full px-4 py-2 text-sm ${
@@ -1179,7 +1179,7 @@ const UsersContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={!pagination.hasPrev}
-                        className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Previous
                       </button>
@@ -1195,7 +1195,7 @@ const UsersContent = () => {
                               className={`w-8 h-8 text-sm rounded-lg ${
                                 p === currentPage
                                   ? "bg-[#002D87] text-white"
-                                  : "border border-[#E5E7EB] hover:bg-[#F9FAFB] text-[#4B5563]"
+                                  : "border border-[var(--color-border)] hover:bg-[#F9FAFB] text-[#4B5563]"
                               }`}
                             >
                               {p}
@@ -1205,7 +1205,7 @@ const UsersContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                         disabled={!pagination.hasNext}
-                        className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Next
                       </button>

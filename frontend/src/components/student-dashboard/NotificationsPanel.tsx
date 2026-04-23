@@ -75,14 +75,14 @@ const NotificationsPanel = ({
   const t = useTranslations("studentDashboard");
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
       <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
         {t("activity.title")}
       </h2>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <div className="w-6 h-6 border-2 border-[#E5E7EB] border-t-[#9CA3AF] rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-[var(--color-border)] border-t-[#9CA3AF] rounded-full animate-spin" />
         </div>
       ) : activities.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
@@ -107,7 +107,7 @@ const NotificationsPanel = ({
               <div key={item.id} className="flex gap-3 relative">
                 {/* Timeline line */}
                 {!isLast && (
-                  <div className="absolute left-[11px] top-7 bottom-0 w-px bg-[#E5E7EB]" />
+                  <div className="absolute left-[11px] top-7 bottom-0 w-px bg-[var(--color-border)]" />
                 )}
 
                 {/* Dot */}

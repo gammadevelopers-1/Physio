@@ -88,7 +88,7 @@ export function StudentProgressBlock({ data }: StudentProgressBlockProps) {
               return (
                 <div key={metric.id} className="flex items-center gap-4">
                   <svg width="100" height="100" className="flex-shrink-0">
-                    <circle cx="50" cy="50" r={r} fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                    <circle cx="50" cy="50" r={r} fill="none" stroke="var(--color-border)" strokeWidth="8" />
                     <circle
                       cx="50"
                       cy="50"

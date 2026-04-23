@@ -13,7 +13,7 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
   const t = useTranslations("instructorDashboard.createCourse");
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
       <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
         {t("wizardStep2")}
       </h2>
@@ -53,7 +53,7 @@ const Step2Schedule = ({ state, dispatch }: Step2Props) => {
         <label className="block text-sm font-medium text-[#374151] mb-1">
           {t("maxEnrollment")}
         </label>
-        <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5 max-w-xs">
+        <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg px-3 py-2.5 max-w-xs">
           {t("syncDefaultMax") || "Default: up to 2000 students"}
         </p>
       </div>

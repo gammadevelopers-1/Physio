@@ -35,7 +35,7 @@ const WizardStepIndicator = ({ currentStep, skipStep2 }: WizardStepIndicatorProp
                     ? "bg-[#22C55E] text-white"
                     : isCurrent
                       ? "bg-[#3B82F6] text-white"
-                      : "bg-[#E5E7EB] text-[#9CA3AF]"
+                      : "bg-[var(--color-border)] text-[#9CA3AF]"
                 }`}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : idx + 1}
@@ -51,7 +51,7 @@ const WizardStepIndicator = ({ currentStep, skipStep2 }: WizardStepIndicatorProp
             {idx < steps.length - 1 && (
               <div
                 className={`flex-1 h-0.5 mx-3 mt-[-1rem] ${
-                  currentStep > step.number ? "bg-[#22C55E]" : "bg-[#E5E7EB]"
+                  currentStep > step.number ? "bg-[#22C55E]" : "bg-[var(--color-border)]"
                 }`}
               />
             )}

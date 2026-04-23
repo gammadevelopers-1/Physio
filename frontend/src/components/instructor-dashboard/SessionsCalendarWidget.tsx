@@ -162,7 +162,7 @@ const SessionsCalendarWidget = ({
       return "bg-[#FEF3C7] border-[#FDE68A]";
     }
     if (session.status === "cancelled") {
-      return "bg-[#F3F4F6] border-[#E5E7EB] opacity-50";
+      return "bg-[#F3F4F6] border-[var(--color-border)] opacity-50";
     }
     if (session.status === "live") {
       return "bg-[#FEF2F2] border-[#FECACA] ring-1 ring-[#EF4444]";
@@ -239,7 +239,7 @@ const SessionsCalendarWidget = ({
 
         {/* Action overlay on hover — hidden in readOnly mode */}
         {!readOnly && hoveredSession === session.id && !isCancelled && (
-          <div className={`${isMobile ? "flex items-center justify-center gap-1 px-2 pb-2" : "absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-[#E5E7EB] p-1 flex items-center justify-center gap-1"}`}>
+          <div className={`${isMobile ? "flex items-center justify-center gap-1 px-2 pb-2" : "absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm border-t border-[var(--color-border)] p-1 flex items-center justify-center gap-1"}`}>
             {isScheduled && (
               <button
                 onClick={(e) => { e.stopPropagation(); onStartSession?.(session.id); }}
@@ -260,7 +260,7 @@ const SessionsCalendarWidget = ({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); onAttendance?.(session.id); }}
-              className="p-1 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+              className="p-1 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
               title={t("sessionsCalendar.attendance")}
             >
               <ClipboardCheck className="w-3 h-3" />
@@ -268,7 +268,7 @@ const SessionsCalendarWidget = ({
             {isScheduled && (
               <button
                 onClick={(e) => { e.stopPropagation(); onShareMaterials?.(session.id); }}
-                className="p-1 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                className="p-1 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                 title={t("sessionsCalendar.shareMaterials")}
               >
                 <Upload className="w-3 h-3" />
@@ -281,9 +281,9 @@ const SessionsCalendarWidget = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB] gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
         <div className="flex items-center gap-2">
           <Calendar className="w-5 h-5 text-[#3B82F6]" />
           <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
@@ -293,7 +293,7 @@ const SessionsCalendarWidget = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigateWeek("prev")}
-            className="p-1.5 sm:p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
             aria-label="Previous week"
           >
             {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -303,7 +303,7 @@ const SessionsCalendarWidget = ({
           </span>
           <button
             onClick={() => navigateWeek("next")}
-            className="p-1.5 sm:p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+            className="p-1.5 sm:p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
             aria-label="Next week"
           >
             {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -328,7 +328,7 @@ const SessionsCalendarWidget = ({
               <div key={index} className="min-h-[200px]">
                 {/* Day Header */}
                 <div
-                  className={`text-center pb-2 mb-2 border-b border-[#E5E7EB] ${
+                  className={`text-center pb-2 mb-2 border-b border-[var(--color-border)] ${
                     day.isToday ? "bg-[#EFF6FF] rounded-t-lg -mx-1 px-1 pt-1" : ""
                   }`}
                 >
@@ -379,13 +379,13 @@ const SessionsCalendarWidget = ({
                 className={`flex-shrink-0 w-[140px] sm:w-[160px] rounded-lg border ${
                   day.isToday
                     ? "border-[#3B82F6] bg-[#EFF6FF]"
-                    : "border-[#E5E7EB]"
+                    : "border-[var(--color-border)]"
                 }`}
               >
                 {/* Day Header */}
                 <div
                   className={`text-center p-2 border-b ${
-                    day.isToday ? "border-[#BFDBFE]" : "border-[#E5E7EB]"
+                    day.isToday ? "border-[#BFDBFE]" : "border-[var(--color-border)]"
                   }`}
                 >
                   <p
@@ -430,7 +430,7 @@ const SessionsCalendarWidget = ({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[#E5E7EB] flex-wrap">
+        <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-[var(--color-border)] flex-wrap">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#EFF6FF] border border-[#BFDBFE]" />
             <span className="text-xs text-[#6B7280]">

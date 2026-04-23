@@ -37,15 +37,15 @@ const TodaysSessions = ({
   const locale = useLocale();
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB] gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)] gap-3">
         <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
           {t("todaysSessions.title")}
         </h2>
         <button
           onClick={() => router.push(`/${locale}/dashboard/instructor/sessions?view=calendar`)}
-          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
         >
           {t("todaysSessions.viewCalendar")}
         </button>

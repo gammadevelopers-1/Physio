@@ -39,7 +39,7 @@ export default function ManagerCoursesLoading() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden"
+                  className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden"
                 >
                   <Skeleton className="h-36 w-full rounded-none" />
                   <div className="p-4 space-y-3">

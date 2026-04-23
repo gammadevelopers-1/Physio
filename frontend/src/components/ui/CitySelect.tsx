@@ -59,7 +59,7 @@ export function CitySelect({
         type="button"
         onClick={() => !disabled && setOpen(!open)}
         disabled={disabled}
-        className={`w-full flex items-center justify-between px-3 py-2.5 border border-[#D1D5DB] rounded-lg text-sm bg-white hover:border-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50 disabled:cursor-not-allowed ${
+        className={`w-full flex items-center justify-between px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white hover:border-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50 disabled:cursor-not-allowed ${
           !value ? "text-[#9CA3AF]" : "text-[#1F2937]"
         } ${isRTL ? "flex-row-reverse" : ""}`}
       >
@@ -73,8 +73,8 @@ export function CitySelect({
       </button>
 
       {open && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-50 max-h-64 overflow-hidden flex flex-col">
-          <div className="p-2 border-b border-[#E5E7EB]">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-50 max-h-64 overflow-hidden flex flex-col">
+          <div className="p-2 border-b border-[var(--color-border)]">
             <div className="relative">
               <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-2" : "left-2"}`} />
               <input
@@ -83,7 +83,7 @@ export function CitySelect({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={isRTL ? "بحث..." : "Search..."}
                 autoFocus
-                className={`w-full px-8 py-1.5 text-sm border border-[#E5E7EB] rounded focus:outline-none focus:ring-1 focus:ring-[#3B82F6] ${
+                className={`w-full px-8 py-1.5 text-sm border border-[var(--color-border)] rounded focus:outline-none focus:ring-1 focus:ring-[#3B82F6] ${
                   isRTL ? "text-right" : "text-left"
                 }`}
                 dir={isRTL ? "rtl" : "ltr"}

@@ -141,14 +141,14 @@ const FinanceContent = () => {
                   <select
                     value={dateRange}
                     onChange={(e) => setDateRange(e.target.value)}
-                    className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="today">{t("financePage.dateRange.today")}</option>
                     <option value="week">{t("financePage.dateRange.week")}</option>
                     <option value="mtd">{t("financePage.dateRange.mtd")}</option>
                     <option value="ytd">{t("financePage.dateRange.ytd")}</option>
                   </select>
-                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("financePage.export")}
                   </button>
@@ -157,7 +157,7 @@ const FinanceContent = () => {
 
               {/* Revenue Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[#DCFCE7] rounded-lg flex items-center justify-center">
                       <DollarSign className="w-5 h-5 text-[#16A34A]" />
@@ -177,7 +177,7 @@ const FinanceContent = () => {
                   <p className="text-sm text-[#6B7280]">{t("financePage.stats.gross")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[#DBEAFE] rounded-lg flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-[#3B82F6]" />
@@ -197,7 +197,7 @@ const FinanceContent = () => {
                   <p className="text-sm text-[#6B7280]">{t("financePage.stats.net")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                       <RefreshCcw className="w-5 h-5 text-[#DC2626]" />
@@ -217,7 +217,7 @@ const FinanceContent = () => {
                   <p className="text-sm text-[#6B7280]">{t("financePage.stats.refunds")}</p>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="w-10 h-10 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
                       <CreditCard className="w-5 h-5 text-[var(--gold-gold-500)]" />
@@ -240,7 +240,7 @@ const FinanceContent = () => {
 
               {/* Gateway Breakdown */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                <div className="lg:col-span-2 bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <h3 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("financePage.revenueChart")}
                   </h3>
@@ -249,7 +249,7 @@ const FinanceContent = () => {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <h3 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("financePage.gatewayBreakdown")}
                   </h3>
@@ -259,7 +259,7 @@ const FinanceContent = () => {
                         <span className="text-sm text-[#4B5563]">Tap/Moyasar</span>
                         <span className="text-sm font-medium text-[#1F2937]">72%</span>
                       </div>
-                      <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                      <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: "72%" }} />
                       </div>
                     </div>
@@ -268,7 +268,7 @@ const FinanceContent = () => {
                         <span className="text-sm text-[#4B5563]">BNPL (Tamara)</span>
                         <span className="text-sm font-medium text-[#1F2937]">28%</span>
                       </div>
-                      <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                      <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                         <div className="h-full bg-[#8B5CF6] rounded-full" style={{ width: "28%" }} />
                       </div>
                     </div>
@@ -277,8 +277,8 @@ const FinanceContent = () => {
               </div>
 
               {/* Recent Transactions */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                <div className="p-5 border-b border-[#E5E7EB]">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="p-5 border-b border-[var(--color-border)]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-[#1F2937]">
                       {t("financePage.recentTransactions")}
@@ -286,7 +286,7 @@ const FinanceContent = () => {
                     <select
                       value={transactionFilter}
                       onChange={(e) => setTransactionFilter(e.target.value)}
-                      className="h-9 px-3 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                      className="h-9 px-3 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                     >
                       <option value="all">{t("financePage.filters.all")}</option>
                       <option value="payment">{t("financePage.filters.payments")}</option>

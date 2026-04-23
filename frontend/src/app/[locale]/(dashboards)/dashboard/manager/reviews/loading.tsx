@@ -32,7 +32,7 @@ export default function ManagerReviewsLoading() {
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="bg-white rounded-xl border border-[#E5E7EB] p-5 space-y-3"
+                  className="bg-white rounded-xl border border-[var(--color-border)] p-5 space-y-3"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">

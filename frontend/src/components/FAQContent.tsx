@@ -112,7 +112,7 @@ export default function FAQContent({ strapiData }: FAQContentProps) {
                     </div>
 
                     {index < items.length - 1 && (
-                      <div className="h-px bg-[#C8D5E1] mt-6" />
+                      <div className="h-px bg-[var(--color-border-subtle)] mt-6" />
                     )}
                   </div>
                 ))}

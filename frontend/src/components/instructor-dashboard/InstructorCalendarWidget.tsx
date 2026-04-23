@@ -25,7 +25,7 @@ const InstructorCalendarWidget = ({
   const t = useTranslations("instructorDashboard");
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         <h3 className="text-base font-semibold text-[#1F2937] mb-4">
           {t("calendar.title")}
@@ -50,10 +50,10 @@ const InstructorCalendarWidget = ({
                 event.status === "completed"
                   ? "p-3.5 border border-[#BBF7D0] bg-[#F0FDF4] rounded-xl opacity-70"
                   : event.status === "cancelled"
-                    ? "p-3.5 border border-[#E5E7EB] bg-[#F3F4F6] rounded-xl opacity-50"
+                    ? "p-3.5 border border-[var(--color-border)] bg-[#F3F4F6] rounded-xl opacity-50"
                     : event.status === "live"
                       ? "p-3.5 border border-[#FECACA] bg-[#FEF2F2] rounded-xl ring-1 ring-[#EF4444]"
-                      : "p-3.5 border border-[#E5E7EB] rounded-xl";
+                      : "p-3.5 border border-[var(--color-border)] rounded-xl";
 
               const titleStyle =
                 event.status === "cancelled"

@@ -108,7 +108,7 @@ const InvoicesContent = () => {
               </h1>
 
               {/* Invoices Section */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {/* Invoices Table or Empty State */}
                 {invoices.length === 0 ? (
                   // Empty State
@@ -132,7 +132,7 @@ const InvoicesContent = () => {
                       dir={isRTL ? "rtl" : "ltr"}
                     >
                       <thead>
-                        <tr className="border-b border-[#E5E7EB]">
+                        <tr className="border-b border-[var(--color-border)]">
                           <th
                             className={`py-3 px-4 text-xs font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
                           >
@@ -160,7 +160,7 @@ const InvoicesContent = () => {
                         {invoices.map((invoice) => (
                           <tr
                             key={invoice.id}
-                            className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
+                            className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
                           >
                             <td
                               className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
@@ -197,7 +197,7 @@ const InvoicesContent = () => {
                               </button>
                               {openMenuId === invoice.id && (
                                 <div
-                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
                                     className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
@@ -224,7 +224,7 @@ const InvoicesContent = () => {
                       {invoices.map((invoice) => (
                         <div
                           key={invoice.id}
-                          className="border border-[#E5E7EB] rounded-lg p-4"
+                          className="border border-[var(--color-border)] rounded-lg p-4"
                           dir={isRTL ? "rtl" : "ltr"}
                         >
                           <div className="flex items-center justify-between mb-3">
@@ -241,7 +241,7 @@ const InvoicesContent = () => {
                               </button>
                               {openMenuId === invoice.id && (
                                 <div
-                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                  className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                 >
                                   <button
                                     className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}

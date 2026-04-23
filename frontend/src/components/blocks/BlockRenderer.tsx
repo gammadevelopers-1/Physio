@@ -3,6 +3,7 @@ import { HeroBannerBlock } from './HeroBannerBlock';
 import { PartnersStripBlock } from './PartnersStripBlock';
 import { FeaturedCoursesGridBlock } from './FeaturedCoursesGridBlock';
 import { CTABannerBlock } from './CTABannerBlock';
+import { ImageBannerBlock } from './ImageBannerBlock';
 import { InstructorsGridBlock } from './InstructorsGridBlock';
 import { TestimonialsCarouselBlock } from './TestimonialsCarouselBlock';
 import { RichTextBlock } from './RichTextBlock';
@@ -53,6 +54,7 @@ const BLOCK_COMPONENTS: Record<string, React.ComponentType<any>> = {
   'blocks.partners-strip': PartnersStripBlock,
   'blocks.featured-courses-grid': FeaturedCoursesGridBlock,
   'blocks.cta-banner': CTABannerBlock,
+  'blocks.image-banner-block': ImageBannerBlock,
   'blocks.instructors-grid': InstructorsGridBlock,
   'blocks.testimonials-carousel': TestimonialsCarouselBlock,
   'blocks.rich-text-block': RichTextBlock,

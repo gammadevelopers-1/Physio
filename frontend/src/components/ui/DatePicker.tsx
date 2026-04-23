@@ -151,7 +151,7 @@ export default function DatePicker({
       {/* Input trigger */}
       <div
         onClick={() => !disabled && setOpen(!open)}
-        className={`flex items-center gap-2 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm cursor-pointer bg-white hover:border-[#9CA3AF] transition-colors ${
+        className={`flex items-center gap-2 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm cursor-pointer bg-white hover:border-[#9CA3AF] transition-colors ${
           disabled ? "opacity-60 cursor-not-allowed bg-[#F9FAFB]" : ""
         } ${open ? "ring-2 ring-[#3B82F6] border-[#3B82F6]" : ""} ${className}`}
       >
@@ -165,12 +165,12 @@ export default function DatePicker({
       {/* Dropdown calendar */}
       {open && (
         <div
-          className={`absolute z-50 mt-1 bg-white border border-[#E5E7EB] rounded-xl shadow-lg w-[300px] ${
+          className={`absolute z-50 mt-1 bg-white border border-[var(--color-border)] rounded-xl shadow-lg w-[300px] ${
             isRTL ? "right-0" : "left-0"
           }`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-[#E5E7EB]">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">
             <button
               type="button"
               onClick={goToPrevMonth}
@@ -189,7 +189,7 @@ export default function DatePicker({
           </div>
 
           {/* Day headers */}
-          <div className="grid grid-cols-7 border-b border-[#E5E7EB]">
+          <div className="grid grid-cols-7 border-b border-[var(--color-border)]">
             {dayLabels.map((d) => (
               <div key={d} className="py-1.5 text-center text-[10px] font-medium text-[#9CA3AF]">
                 {d}
@@ -228,7 +228,7 @@ export default function DatePicker({
                       : isToday
                         ? "bg-[#EFF6FF] text-[#3B82F6] font-semibold"
                         : isDis
-                          ? "text-[#D1D5DB] cursor-not-allowed"
+                          ? "text-[var(--color-border)] cursor-not-allowed"
                           : "text-[#374151] hover:bg-[#F3F4F6]"
                   }`}
                 >
@@ -239,7 +239,7 @@ export default function DatePicker({
           </div>
 
           {/* Footer — calendar type indicator */}
-          <div className="flex items-center justify-center px-3 py-1.5 border-t border-[#E5E7EB] text-[10px] text-[#9CA3AF]">
+          <div className="flex items-center justify-center px-3 py-1.5 border-t border-[var(--color-border)] text-[10px] text-[#9CA3AF]">
             {useHijri ? "هجري (Hijri)" : "ميلادي (Gregorian)"}
           </div>
         </div>

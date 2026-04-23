@@ -132,7 +132,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
           {/* Student Info */}
           <div className="p-4 bg-[#F9FAFB] rounded-xl mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+              <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
                 {initials}
               </div>
               <div>
@@ -217,7 +217,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t("certificates.notePlaceholder")}
                 rows={3}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
               />
               <p className="text-xs text-[#9CA3AF] mt-1">{t("certificates.noteHint")}</p>
             </div>
@@ -226,7 +226,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
           {/* Action Buttons */}
           {canAct ? (
             <div className="flex gap-2">
-              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+              <button onClick={onClose} disabled={processing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
                 {t("certificates.cancel")}
               </button>
               {cert.status === "pending" && (
@@ -257,7 +257,7 @@ const ReviewModal = ({ cert, courseName, onClose, onAction, onApproveConfirm, t 
               </button>
             </div>
           ) : (
-            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+            <button onClick={onClose} className="w-full px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
               {t("certificates.close")}
             </button>
           )}
@@ -287,7 +287,7 @@ const BatchBar = ({ count, onApprove, onReject, onClear, processing, t }: BatchB
       <span className="text-sm text-white">{count} {t("certificates.selected")}</span>
     </div>
     <div className="flex items-center gap-2">
-      <button onClick={onClear} disabled={processing} className="px-3 py-2 text-sm text-[#D1D5DB] hover:text-white transition-colors disabled:opacity-50">
+      <button onClick={onClear} disabled={processing} className="px-3 py-2 text-sm text-[var(--color-border)] hover:text-white transition-colors disabled:opacity-50">
         {t("certificates.clearSelection")}
       </button>
       <button
@@ -657,14 +657,14 @@ const CertificatesContent = () => {
                   <h1 className="text-xl md:text-2xl font-bold text-[#1F2937]">{t("certificates.title")}</h1>
                   <p className="text-sm text-[#6B7280] mt-1">{t("certificates.subtitle")}</p>
                 </div>
-                <button onClick={refetch} className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" title={t("certificates.refresh")}>
+                <button onClick={refetch} className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors" title={t("certificates.refresh")}>
                   <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 </button>
               </div>
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center"><Award className="w-5 h-5 text-[#3B82F6]" /></div>
                     <div>
@@ -673,7 +673,7 @@ const CertificatesContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center"><Clock className="w-5 h-5 text-[#EAB308]" /></div>
                     <div>
@@ -682,7 +682,7 @@ const CertificatesContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center"><FileCheck className="w-5 h-5 text-[#22C55E]" /></div>
                     <div>
@@ -691,7 +691,7 @@ const CertificatesContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FFEDD5] flex items-center justify-center"><PauseCircle className="w-5 h-5 text-[#F97316]" /></div>
                     <div>
@@ -735,7 +735,7 @@ const CertificatesContent = () => {
               )}
 
               {error && !loading && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-[#EF4444] mb-4">{error}</p>
                   <button onClick={refetch} className="px-4 py-2 btn-gold text-white rounded-lg text-sm">{t("certificates.retry")}</button>
@@ -745,7 +745,7 @@ const CertificatesContent = () => {
               {!loading && !error && (
                 <>
                   {/* Search and Filters */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
                         <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
@@ -754,12 +754,12 @@ const CertificatesContent = () => {
                           placeholder={t("certificates.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                          className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
                       <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                        className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
                       >
                         <Filter className="w-4 h-4" />
                         {t("certificates.filters")}
@@ -769,7 +769,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("certificates.allCourses")}</option>
                           {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -777,18 +777,18 @@ const CertificatesContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); setSelectedIds(new Set()); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                       </div>
                     </div>
                     {showFilters && (
-                      <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] grid grid-cols-2 gap-3">
+                      <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-2 gap-3">
                         <select
                           value={selectedCourse}
                           onChange={(e) => { setSelectedCourse(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("certificates.allCourses")}</option>
                           {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
@@ -796,7 +796,7 @@ const CertificatesContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statusOptions.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
@@ -806,8 +806,8 @@ const CertificatesContent = () => {
 
                   {/* Empty state */}
                   {filteredCertificates.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                      <Award className="w-12 h-12 text-[#D1D5DB] mx-auto mb-4" />
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                      <Award className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("certificates.noRequests")}</h3>
                       <p className="text-sm text-[#6B7280]">{t("certificates.noRequestsDesc")}</p>
                     </div>
@@ -815,17 +815,17 @@ const CertificatesContent = () => {
 
                   {/* Desktop Table */}
                   {filteredCertificates.length > 0 && (
-                    <div className="hidden md:block bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                    <div className="hidden md:block bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                            <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                               <th className="px-4 py-3 text-start">
                                 <input
                                   type="checkbox"
                                   checked={actionableCerts.length > 0 && selectedIds.size === actionableCerts.length}
                                   onChange={toggleSelectAll}
-                                  className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                                  className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                                 />
                               </th>
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableStudent")}</th>
@@ -836,7 +836,7 @@ const CertificatesContent = () => {
                               <th className={`px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider`}>{t("certificates.tableActions")}</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#E5E7EB]">
+                          <tbody className="divide-y divide-[var(--color-border)]">
                             {filteredCertificates.map((cert) => {
                               const elig = getEligibility(cert);
                               const canSelect = cert.status === "pending" || cert.status === "held";
@@ -848,13 +848,13 @@ const CertificatesContent = () => {
                                         type="checkbox"
                                         checked={selectedIds.has(cert.id)}
                                         onChange={() => toggleSelect(cert.id)}
-                                        className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                                        className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                                       />
                                     ) : <div className="w-4 h-4" />}
                                   </td>
                                   <td className="px-4 py-4">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
+                                      <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
                                         {getInitials(cert)}
                                       </div>
                                       <div className="min-w-0">
@@ -929,7 +929,7 @@ const CertificatesContent = () => {
                       </div>
 
                       {/* Pagination */}
-                      <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
                         <p className="text-sm text-[#6B7280]">
                           {t("certificates.showing")} {filteredCertificates.length} {t("certificates.of")} {totalCerts} {t("certificates.requests")}
                         </p>
@@ -956,7 +956,7 @@ const CertificatesContent = () => {
                             type="checkbox"
                             checked={selectedIds.size === actionableCerts.length}
                             onChange={toggleSelectAll}
-                            className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                            className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
                           <span className="text-xs text-[#6B7280]">{t("certificates.selectAll")}</span>
                         </div>
@@ -965,7 +965,7 @@ const CertificatesContent = () => {
                         const elig = getEligibility(cert);
                         const canSelect = cert.status === "pending" || cert.status === "held";
                         return (
-                          <div key={cert.id} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                          <div key={cert.id} className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 {canSelect && (
@@ -973,10 +973,10 @@ const CertificatesContent = () => {
                                     type="checkbox"
                                     checked={selectedIds.has(cert.id)}
                                     onChange={() => toggleSelect(cert.id)}
-                                    className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6] mt-1"
+                                    className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6] mt-1"
                                   />
                                 )}
-                                <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
+                                <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563]">
                                   {getInitials(cert)}
                                 </div>
                                 <div>
@@ -1019,7 +1019,7 @@ const CertificatesContent = () => {
 
                             {(cert.status === "pending" || cert.status === "held") && (
                               <div className="flex gap-2">
-                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+                                <button onClick={() => setReviewingCert(cert)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
                                   <Eye className="w-4 h-4" />{t("certificates.review")}
                                 </button>
                                 <button onClick={() => quickApprove(cert)} className="flex items-center justify-center px-3 py-2 bg-[#22C55E] text-white rounded-lg hover:bg-[#16A34A]">
@@ -1101,11 +1101,11 @@ const CertificatesContent = () => {
                   onChange={(e) => setRevokeReason(e.target.value)}
                   placeholder={t("certificates.revokeReasonPlaceholder")}
                   rows={3}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EF4444] resize-none"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EF4444] resize-none"
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+                <button onClick={() => { setRevokingCert(null); setRevokeReason(""); }} disabled={revokeProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1134,10 +1134,10 @@ const CertificatesContent = () => {
                 onChange={(e) => setBatchNote(e.target.value)}
                 placeholder={t("certificates.notePlaceholder")}
                 rows={3}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none mb-4"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none mb-4"
               />
               <div className="flex gap-3">
-                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+                <button onClick={() => { setBatchNoteModal(null); setBatchNote(""); }} disabled={batchProcessing} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
                   {t("certificates.cancel")}
                 </button>
                 <button
@@ -1254,7 +1254,7 @@ const CertificatesContent = () => {
                   <button
                     onClick={() => setConfirmingApproval(null)}
                     disabled={approvalProcessing}
-                    className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50"
                   >
                     Close
                   </button>

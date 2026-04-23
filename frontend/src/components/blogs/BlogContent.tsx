@@ -67,7 +67,7 @@ const BlogContent = ({ content, variant = "desktop" }: BlogContentProps) => {
             return (
               <div
                 key={index}
-                className={`bg-[#F8FAFC] border border-[#E5E7EB] rounded-xl ${isMobile ? "p-4 my-8" : "p-6 my-10"}`}
+                className={`bg-[#F8FAFC] border border-[var(--color-border)] rounded-xl ${isMobile ? "p-4 my-8" : "p-6 my-10"}`}
               >
                 <h3
                   className={`font-semibold text-[var(--on-surface-default)] ${isMobile ? "mb-2" : "mb-3"}`}

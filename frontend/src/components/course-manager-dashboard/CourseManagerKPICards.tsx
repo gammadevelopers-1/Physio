@@ -53,7 +53,7 @@ const CourseManagerKPICards = ({ data }: CourseManagerKPICardsProps) => {
         return (
           <div
             key={card.id}
-            className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3"
+            className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
           >
             <div
               className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}

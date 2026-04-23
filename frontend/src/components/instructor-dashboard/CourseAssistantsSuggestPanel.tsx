@@ -140,7 +140,7 @@ const CourseAssistantsSuggestPanel = ({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1F2937]">
           {t("taPanel.title")}
@@ -184,7 +184,7 @@ const CourseAssistantsSuggestPanel = ({
 
       {/* Suggest TA Dropdown */}
       {showDropdown && (
-        <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]">
+        <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-[#4B5563]">
               {t("taPanel.selectTA")}

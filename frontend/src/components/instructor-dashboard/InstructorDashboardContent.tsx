@@ -338,7 +338,7 @@ function ShareMaterialsModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[70vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <h3 className="text-lg font-semibold text-[#1F2937]">{t("shareMaterials.title")}</h3>
           <button onClick={onClose} className="p-2 text-[#6B7280] hover:text-[#374151] hover:bg-[#F3F4F6] rounded-lg">
             <span className="text-lg">&times;</span>
@@ -361,7 +361,7 @@ function ShareMaterialsModal({
                   <button
                     onClick={() => toggle(m.id)}
                     disabled={toggling === m.id}
-                    className={`relative w-10 h-5 rounded-full transition-colors ${sharedIds.has(m.id) ? "bg-[#22C55E]" : "bg-[#D1D5DB]"} ${toggling === m.id ? "opacity-50" : ""}`}
+                    className={`relative w-10 h-5 rounded-full transition-colors ${sharedIds.has(m.id) ? "bg-[#22C55E]" : "bg-[var(--color-border)]"} ${toggling === m.id ? "opacity-50" : ""}`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${sharedIds.has(m.id) ? "translate-x-5" : "translate-x-0.5"}`} />
                   </button>
@@ -370,7 +370,7 @@ function ShareMaterialsModal({
             </div>
           )}
         </div>
-        <div className="p-4 border-t border-[#E5E7EB]">
+        <div className="p-4 border-t border-[var(--color-border)]">
           <button onClick={onClose} className="w-full px-4 py-2 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB]">
             {t("shareMaterials.done")}
           </button>

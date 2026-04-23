@@ -250,19 +250,19 @@ const InstructorsContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.total")}</p>
                   <p className="text-2xl font-bold text-[#1F2937] mt-1">{stats.total}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.available")}</p>
                   <p className="text-2xl font-bold text-[#22C55E] mt-1">{stats.available}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.filters.busy")}</p>
                   <p className="text-2xl font-bold text-[#F59E0B] mt-1">{stats.busy}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">{t("instructorsPage.stats.overloaded")}</p>
                   <p className="text-2xl font-bold text-[#EF4444] mt-1">{stats.overloaded}</p>
                 </div>
@@ -277,13 +277,13 @@ const InstructorsContent = () => {
                     placeholder={t("instructorsPage.searchPlaceholder")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("instructorsPage.filters.allStatus")}</option>
                   <option value="available">{t("instructorsPage.filters.available")}</option>
@@ -301,7 +301,7 @@ const InstructorsContent = () => {
               )}
 
               {error && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-sm text-[#6B7280] mb-4">{error}</p>
                   <button onClick={fetchRoster} className="inline-flex items-center gap-2 px-4 py-2 btn-gold text-white text-sm font-medium rounded-lg">
@@ -311,7 +311,7 @@ const InstructorsContent = () => {
               )}
 
               {!loading && !error && filtered.length === 0 && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <User className="w-8 h-8 text-[#9CA3AF]" />
                   </div>
@@ -327,7 +327,7 @@ const InstructorsContent = () => {
                     const loadPercent = Math.min((instructor.hoursThisWeek / maxHours) * 100, 100);
 
                     return (
-                      <div key={instructor.id} className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
+                      <div key={instructor.id} className="bg-white rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow flex flex-col h-full">
                         {/* Badges row */}
                         <div className="h-6 mb-2 flex items-center gap-2">
                           {instructor.isMyInstructor && (
@@ -401,7 +401,7 @@ const InstructorsContent = () => {
                             <span className="text-[#6B7280]">{t("instructorsPage.workload")}</span>
                             <span className={`font-medium ${config.text}`}>{instructor.hoursThisWeek}h / {maxHours}h</span>
                           </div>
-                          <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                          <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${config.bar}`}
                               style={{ width: `${loadPercent}%` }}
@@ -410,7 +410,7 @@ const InstructorsContent = () => {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center justify-center pt-3 border-t border-[#E5E7EB] mt-auto">
+                        <div className="flex items-center justify-center pt-3 border-t border-[var(--color-border)] mt-auto">
                           <button
                             onClick={() => setDetailInstructorId(instructor.id)}
                             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F9FAFB] rounded-lg transition-colors"

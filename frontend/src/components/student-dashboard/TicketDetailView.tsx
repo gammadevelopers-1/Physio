@@ -144,7 +144,7 @@ function SatisfactionRating({
   };
 
   return (
-    <div className="mt-4 p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
+    <div className="mt-4 p-4 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]">
       <p className="text-sm font-medium text-[#374151] mb-2">
         {t("supportPage.rateExperience")}
       </p>
@@ -251,13 +251,13 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
               </button>
 
               {loading || !ticket ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 flex items-center justify-center py-16">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 flex items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   {/* Ticket header */}
-                  <div className="p-4 sm:p-6 border-b border-[#E5E7EB]">
+                  <div className="p-4 sm:p-6 border-b border-[var(--color-border)]">
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <StatusBadge status={ticket.status} t={t} />
                       <span className="text-xs text-[#9CA3AF]">
@@ -286,7 +286,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                   </div>
 
                   {/* Description */}
-                  <div className="p-4 sm:p-6 border-b border-[#E5E7EB] bg-[#FAFBFC]">
+                  <div className="p-4 sm:p-6 border-b border-[var(--color-border)] bg-[#FAFBFC]">
                     <p className="text-xs font-medium text-[#6B7280] mb-2">
                       {t("supportPage.description")}
                     </p>
@@ -329,7 +329,7 @@ const TicketDetailView = ({ ticketId, onBack }: TicketDetailViewProps) => {
                           onKeyDown={handleKeyDown}
                           placeholder={t("supportPage.replyPlaceholder")}
                           rows={2}
-                          className="flex-1 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
+                          className="flex-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent resize-none"
                         />
                         <button
                           onClick={handleSendReply}

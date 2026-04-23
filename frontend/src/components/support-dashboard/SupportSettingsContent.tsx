@@ -128,10 +128,10 @@ const SupportSettingsContent = () => {
               </div>
 
               {/* Settings Card */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
                 <div className="px-5 overflow-x-auto">
-                  <div className="flex flex-wrap border-b border-[#E5E7EB]">
+                  <div className="flex flex-wrap border-b border-[var(--color-border)]">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       return (
@@ -166,7 +166,7 @@ const SupportSettingsContent = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                            <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                               <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.sla.priority")}
                               </th>
@@ -191,7 +191,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={highFRT}
                                     onChange={(e) => setHighFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -202,7 +202,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={highResolution}
                                     onChange={(e) => setHighResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -220,7 +220,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={medFRT}
                                     onChange={(e) => setMedFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -231,7 +231,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={medResolution}
                                     onChange={(e) => setMedResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -249,7 +249,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={lowFRT}
                                     onChange={(e) => setLowFRT(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -260,7 +260,7 @@ const SupportSettingsContent = () => {
                                     type="number"
                                     value={lowResolution}
                                     onChange={(e) => setLowResolution(Number(e.target.value))}
-                                    className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
+                                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)]"
                                   />
                                   <span className="text-[13px] text-[#6B7280]">{t("settingsPage.sla.hours")}</span>
                                 </div>
@@ -293,14 +293,14 @@ const SupportSettingsContent = () => {
                               className={`p-5 rounded-xl border cursor-pointer transition-all ${
                                 isActive
                                   ? "ring-1 ring-[var(--color-primary)] border-[var(--color-primary)] bg-[#FDF6EC]"
-                                  : "border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#D1D5DB]"
+                                  : "border-[var(--color-border)] bg-[#F9FAFB] hover:border-[var(--color-border)]"
                               }`}
                             >
                               <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
                                   <div
                                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                      isActive ? "border-[var(--color-primary)]" : "border-[#D1D5DB]"
+                                      isActive ? "border-[var(--color-primary)]" : "border-[var(--color-border)]"
                                     }`}
                                   >
                                     {isActive && (
@@ -322,7 +322,7 @@ const SupportSettingsContent = () => {
                                     setRuleEnabled((prev) => ({ ...prev, [rule.key]: !prev[rule.key] }));
                                   }}
                                   className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${
-                                    enabled ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"
+                                    enabled ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"
                                   }`}
                                 >
                                   <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${enabled ? "ms-auto" : ""}`} />
@@ -398,7 +398,7 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setEmailNotif(!emailNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${emailNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                             >
                               <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${emailNotif ? "ms-auto" : ""}`} />
                             </button>
@@ -412,7 +412,7 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setSmsNotif(!smsNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${smsNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                             >
                               <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${smsNotif ? "ms-auto" : ""}`} />
                             </button>
@@ -426,7 +426,7 @@ const SupportSettingsContent = () => {
                             </div>
                             <button
                               onClick={() => setWhatsappNotif(!whatsappNotif)}
-                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[var(--color-primary)]" : "bg-[#E5E7EB]"}`}
+                              className={`w-12 h-6 rounded-full transition-colors flex items-center px-0.5 ${whatsappNotif ? "bg-[var(--color-primary)]" : "bg-[var(--color-border)]"}`}
                             >
                               <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${whatsappNotif ? "ms-auto" : ""}`} />
                             </button>
@@ -455,7 +455,7 @@ const SupportSettingsContent = () => {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                            <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                               <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                 {t("settingsPage.categories.name")}
                               </th>

@@ -119,10 +119,10 @@ const InviteFriendsContent = () => {
               </h1>
 
               {/* Invite Friends Section */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {/* Send Invite Card */}
                 <div
-                  className="border-2 border-dashed border-[#E5E7EB] rounded-xl p-4 sm:p-6 mb-6"
+                  className="border-2 border-dashed border-[var(--color-border)] rounded-xl p-4 sm:p-6 mb-6"
                   dir={isRTL ? "rtl" : "ltr"}
                 >
                   <div className="flex flex-col items-center text-center">
@@ -163,7 +163,7 @@ const InviteFriendsContent = () => {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder={t("inviteFriends.emailPlaceholder")}
-                          className={`flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
+                          className={`flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#D4A520] focus:border-transparent ${isRTL ? "text-right" : ""}`}
                         />
                         <button
                           type="submit"
@@ -179,13 +179,13 @@ const InviteFriendsContent = () => {
                       className={`flex flex-col sm:flex-row items-center gap-2 sm:gap-3 w-full max-w-md ${isRTL ? "sm:flex-row-reverse" : ""}`}
                     >
                       <div
-                        className={`flex-1 px-4 py-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] truncate w-full sm:w-auto ${isRTL ? "text-right" : "text-left"}`}
+                        className={`flex-1 px-4 py-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-sm text-[#6B7280] truncate w-full sm:w-auto ${isRTL ? "text-right" : "text-left"}`}
                       >
                         {referralCode}...
                       </div>
                       <button
                         onClick={handleCopyCode}
-                        className={`flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors whitespace-nowrap ${isRTL ? "flex-row-reverse" : ""}`}
+                        className={`flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors whitespace-nowrap ${isRTL ? "flex-row-reverse" : ""}`}
                       >
                         {copied ? (
                           <Check className="w-4 h-4 text-[#16A34A]" />
@@ -220,7 +220,7 @@ const InviteFriendsContent = () => {
                       <div className="hidden sm:block overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-[#E5E7EB]">
+                            <tr className="border-b border-[var(--color-border)]">
                               <th
                                 className={`py-3 px-4 text-sm font-medium text-[#6B7280] ${isRTL ? "text-right" : "text-left"}`}
                               >
@@ -256,7 +256,7 @@ const InviteFriendsContent = () => {
                             {invites.map((invite) => (
                               <tr
                                 key={invite.id}
-                                className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
+                                className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
                               >
                                 <td
                                   className={`py-4 px-4 text-sm text-[#1F2937] ${isRTL ? "text-right" : "text-left"}`}
@@ -282,7 +282,7 @@ const InviteFriendsContent = () => {
                                   </button>
                                   {openMenuId === invite.id && (
                                     <div
-                                      className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                      className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                     >
                                       <button
                                         className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}
@@ -310,7 +310,7 @@ const InviteFriendsContent = () => {
                         {invites.map((invite) => (
                           <div
                             key={invite.id}
-                            className="border border-[#E5E7EB] rounded-lg p-4"
+                            className="border border-[var(--color-border)] rounded-lg p-4"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
@@ -333,7 +333,7 @@ const InviteFriendsContent = () => {
                                 </button>
                                 {openMenuId === invite.id && (
                                   <div
-                                    className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-10 min-w-[140px]`}
+                                    className={`absolute top-full ${isRTL ? "left-0" : "right-0"} mt-1 bg-white border border-[var(--color-border)] rounded-lg shadow-lg z-10 min-w-[140px]`}
                                   >
                                     <button
                                       className={`w-full px-4 py-2 text-sm text-[#1F2937] hover:bg-[#F9FAFB] transition-colors ${isRTL ? "text-right" : "text-left"}`}

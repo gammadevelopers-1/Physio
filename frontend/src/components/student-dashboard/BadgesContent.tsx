@@ -44,7 +44,7 @@ const BadgesContent = () => {
               </h1>
 
               {/* Badges Section */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {/* Badges Grid or Empty State */}
                 {mockBadgesData.length === 0 ? (
                   // Empty State
@@ -60,7 +60,7 @@ const BadgesContent = () => {
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[#E5E7EB] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                     >
                       {t("badges.viewCourses")}
                     </Link>

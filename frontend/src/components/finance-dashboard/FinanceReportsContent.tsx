@@ -141,11 +141,11 @@ const FinanceReportsContent = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                     <FileSpreadsheet className="w-4 h-4" />
                     {t("reportsPage.exportExcel")}
                   </button>
-                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                  <button className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                     <Download className="w-4 h-4" />
                     {t("reportsPage.exportPdf")}
                   </button>
@@ -164,7 +164,7 @@ const FinanceReportsContent = () => {
                       className={`p-4 rounded-xl border text-left transition-all ${
                         isSelected
                           ? "bg-[#FDF6EC] border-[var(--color-primary)] ring-1 ring-[var(--color-primary)]"
-                          : "bg-white border-[#E5E7EB] hover:border-[#D1D5DB]"
+                          : "bg-white border-[var(--color-border)] hover:border-[var(--color-border)]"
                       }`}
                     >
                       <div className={`w-10 h-10 ${report.iconBg} rounded-lg flex items-center justify-center mb-3`}>
@@ -180,7 +180,7 @@ const FinanceReportsContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5 mb-6">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5 mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Filter className="w-4 h-4 text-[#6B7280]" />
                   <h3 className="text-sm font-semibold text-[#111827]">{t("reportsPage.filters.period")}</h3>
@@ -191,7 +191,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={period}
                       onChange={(e) => setPeriod(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="thisMonth">{t("reportsPage.filters.thisMonth")}</option>
                       <option value="lastMonth">{t("reportsPage.filters.lastMonth")}</option>
@@ -205,7 +205,7 @@ const FinanceReportsContent = () => {
                     <select
                       value={groupBy}
                       onChange={(e) => setGroupBy(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)]"
                     >
                       <option value="byCourse">{t("reportsPage.filters.byCourse")}</option>
                       <option value="byInstructor">{t("reportsPage.filters.byInstructor")}</option>
@@ -223,7 +223,7 @@ const FinanceReportsContent = () => {
               </div>
 
               {/* Report Results */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <h3 className="text-base font-semibold text-[#111827]">
                     {reportTypes.find((r) => r.key === selectedReport)?.title}
@@ -252,7 +252,7 @@ const FinanceReportsContent = () => {
                           y1={5 + (90 * (100 - y)) / 100}
                           x2="95"
                           y2={5 + (90 * (100 - y)) / 100}
-                          stroke="#E5E7EB"
+                          stroke="var(--color-border)"
                           strokeWidth="0.3"
                           strokeDasharray="2,2"
                         />
@@ -305,7 +305,7 @@ const FinanceReportsContent = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                      <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.course")}</th>
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("sidebar.revenue")}</th>
                         <th className={`py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase hidden md:table-cell ${isRTL ? "text-right" : "text-left"}`}>{t("reportsPage.columns.transactions")}</th>

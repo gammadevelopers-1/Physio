@@ -148,7 +148,7 @@ const DiscountsContent = () => {
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={index} className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3">
+                    <div key={index} className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
@@ -162,7 +162,7 @@ const DiscountsContent = () => {
               </div>
 
               {/* Coupons List */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden mb-6">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
                 {/* Tabs */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit">
@@ -218,7 +218,7 @@ const DiscountsContent = () => {
                               <MoreVertical className="w-4 h-4" />
                             </button>
                             {openActionId === coupon.id && (
-                              <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                              <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[120px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
                                 <button className="flex items-center gap-2 w-full px-3 py-1.5 text-[12px] text-[#374151] hover:bg-[#F9FAFB]">
                                   <Eye className="w-3.5 h-3.5" />
                                   {t("paymentsTable.actions.view")}
@@ -243,7 +243,7 @@ const DiscountsContent = () => {
                           <span>{t("discounts.usage", { used: coupon.usedCount, limit: coupon.usageLimit })}</span>
                           <span>{Math.round((coupon.usedCount / coupon.usageLimit) * 100)}%</span>
                         </div>
-                        <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                           <div
                             className="h-full bg-[var(--color-primary)] rounded-full"
                             style={{ width: `${Math.min((coupon.usedCount / coupon.usageLimit) * 100, 100)}%` }}
@@ -267,7 +267,7 @@ const DiscountsContent = () => {
               </div>
 
               {/* Usage Analytics */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="w-5 h-5 text-[var(--color-primary)]" />
                   <h3 className="text-base font-semibold text-[#111827]">{t("discountsPage.analytics.title")}</h3>
@@ -305,11 +305,11 @@ const DiscountsContent = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.code")}</label>
-                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                <input type="text" placeholder={t("discountsPage.form.codePlaceholder")} className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.type")}</label>
-                <select className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
+                <select className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]">
                   <option value="percentage">{t("discountsPage.form.percentage")}</option>
                   <option value="fixed">{t("discountsPage.form.fixedAmount")}</option>
                 </select>
@@ -317,20 +317,20 @@ const DiscountsContent = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.usageLimit")}</label>
-                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                  <input type="number" placeholder="100" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.expiryDate")}</label>
-                  <input type="date" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                  <input type="date" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("discountsPage.form.minOrder")}</label>
-                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
+                <input type="number" placeholder="0" className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:border-[var(--color-primary)]" />
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+              <button onClick={() => setShowCreateModal(false)} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
                 {t("discountsPage.form.cancel")}
               </button>
               <button className="flex-1 px-4 py-2.5 btn-gold text-white rounded-lg text-sm font-medium">

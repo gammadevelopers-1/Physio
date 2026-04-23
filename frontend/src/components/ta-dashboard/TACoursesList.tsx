@@ -114,7 +114,7 @@ const TACoursesList = () => {
       </div>
 
       {/* Filters Card */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
         <div className="flex flex-col lg:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
@@ -124,7 +124,7 @@ const TACoursesList = () => {
               placeholder={t("courses.searchPlaceholder") || "Search courses..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20 focus:border-transparent"
             />
           </div>
 
@@ -134,7 +134,7 @@ const TACoursesList = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
+              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#d4a520]/20"
             >
               <option value="newest">{t("courses.sortNewest") || "Newest First"}</option>
               <option value="oldest">{t("courses.sortOldest") || "Oldest First"}</option>
@@ -153,7 +153,7 @@ const TACoursesList = () => {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === f.key
                 ? "btn-gold text-white"
-                : "bg-white text-[#4B5563] border border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                : "bg-white text-[#4B5563] border border-[var(--color-border)] hover:bg-[#F9FAFB]"
             }`}
           >
             {f.label}
@@ -167,7 +167,7 @@ const TACoursesList = () => {
           <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredAndSortedCourses.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
           <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
           <p className="text-[#6B7280]">{t("courses.noCourses")}</p>
         </div>
@@ -179,7 +179,7 @@ const TACoursesList = () => {
             return (
               <div
                 key={course.id}
-                className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
               >
                 {/* Thumbnail */}
                 <div className="relative h-40">

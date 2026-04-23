@@ -65,7 +65,7 @@ function StepIndicator({
                     ? "bg-[#22C55E] text-white"
                     : isCurrent
                       ? "bg-[#3B82F6] text-white"
-                      : "bg-[#E5E7EB] text-[#9CA3AF]"
+                      : "bg-[var(--color-border)] text-[#9CA3AF]"
                 }`}
               >
                 {isCompleted ? <Check className="w-4 h-4" /> : step.number}
@@ -85,7 +85,7 @@ function StepIndicator({
             {idx < steps.length - 1 && (
               <div
                 className={`flex-1 h-0.5 mx-3 mt-[-1rem] sm:mt-0 ${
-                  currentStep > step.number ? "bg-[#22C55E]" : "bg-[#E5E7EB]"
+                  currentStep > step.number ? "bg-[#22C55E]" : "bg-[var(--color-border)]"
                 }`}
               />
             )}
@@ -415,7 +415,7 @@ const CreateCourseContent = () => {
   const selectedTA = availableTAs.find((ta) => ta.id === selectedTAId);
 
   const inputClass =
-    "w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]";
+    "w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]";
   const selectClass = `${inputClass} bg-white`;
 
   const formatDate = (dateStr: string) => {
@@ -473,7 +473,7 @@ const CreateCourseContent = () => {
               {/* Step 1: Basic Info */}
               {currentStep === 1 && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                       {t("createCourse.basicInfo")}
                     </h2>
@@ -571,7 +571,7 @@ const CreateCourseContent = () => {
                   </div>
 
                   {/* Course Image */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                       {t("createCourse.courseImage")}
                     </h2>
@@ -583,7 +583,7 @@ const CreateCourseContent = () => {
                       className="hidden"
                     />
                     {thumbnailPreview ? (
-                      <div className="relative w-full max-w-md h-48 rounded-lg overflow-hidden border border-[#E5E7EB]">
+                      <div className="relative w-full max-w-md h-48 rounded-lg overflow-hidden border border-[var(--color-border)]">
                         <Image
                           src={thumbnailPreview}
                           alt="Thumbnail preview"
@@ -608,7 +608,7 @@ const CreateCourseContent = () => {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full max-w-md h-48 border-2 border-dashed border-[#E5E7EB] rounded-lg flex flex-col items-center justify-center text-[#9CA3AF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                        className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[#9CA3AF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                       >
                         <ImagePlus className="w-8 h-8 mb-2" />
                         <span className="text-sm font-medium">
@@ -626,7 +626,7 @@ const CreateCourseContent = () => {
               {/* Step 2: Content Details */}
               {currentStep === 2 && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                       {t("createCourse.wizardStepContent")}
                     </h2>
@@ -843,13 +843,13 @@ const CreateCourseContent = () => {
 
                       {/* Show Contents toggle — only for self-paced and blended */}
                       {(deliveryType === 'self-paced' || deliveryType === 'blended') && (
-                        <div className="pt-3 border-t border-[#E5E7EB]">
+                        <div className="pt-3 border-t border-[var(--color-border)]">
                           <label className="flex items-start gap-3 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={showContents}
                               onChange={(e) => setShowContents(e.target.checked)}
-                              className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                              className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                             <div>
                               <p className="text-sm font-medium text-[#374151]">{t("createCourse.showContentsLabel")}</p>
@@ -862,13 +862,13 @@ const CreateCourseContent = () => {
                       )}
 
                       {/* Visible on public site toggle */}
-                      <div className="pt-3 border-t border-[#E5E7EB]">
+                      <div className="pt-3 border-t border-[var(--color-border)]">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={visibleOnPublicSite}
                             onChange={(e) => setVisibleOnPublicSite(e.target.checked)}
-                            className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
                           <div>
                             <p className="text-sm font-medium text-[#374151]">{t("createCourse.visibleOnPublicLabel")}</p>
@@ -887,7 +887,7 @@ const CreateCourseContent = () => {
               {currentStep === 3 && (
                 <div className="space-y-6">
                   {/* Schedule */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                       {t("createCourse.scheduleTitle")}
                     </h2>
@@ -1047,7 +1047,7 @@ const CreateCourseContent = () => {
                   </div>
 
                   {/* NELC Configuration */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <ShieldCheck className="w-5 h-5 text-[var(--color-primary-dark)]" />
                       <h2 className="text-lg font-semibold text-[#1F2937]">
@@ -1087,7 +1087,7 @@ const CreateCourseContent = () => {
                 return (
                 <div className="space-y-6">
                   {/* Instructor Section */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-1">
                       {t("createCourse.instructor")} *
                     </h2>
@@ -1103,7 +1103,7 @@ const CreateCourseContent = () => {
                         <button
                           type="button"
                           onClick={() => setInstructorDropdownOpen(!instructorDropdownOpen)}
-                          className="w-full flex items-center gap-3 p-3 border border-[#E5E7EB] rounded-xl bg-white hover:border-[#3B82F6] transition-colors text-start"
+                          className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-white hover:border-[#3B82F6] transition-colors text-start"
                         >
                           {selectedInstructor ? (
                             <>
@@ -1132,9 +1132,9 @@ const CreateCourseContent = () => {
 
                         {/* Dropdown */}
                         {instructorDropdownOpen && (
-                          <div className="absolute z-20 mt-1 w-full bg-white border border-[#E5E7EB] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
+                          <div className="absolute z-20 mt-1 w-full bg-white border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
                             {/* Search */}
-                            <div className="p-2 border-b border-[#E5E7EB]">
+                            <div className="p-2 border-b border-[var(--color-border)]">
                               <div className="relative">
                                 <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
                                 <input
@@ -1142,7 +1142,7 @@ const CreateCourseContent = () => {
                                   value={instructorSearch}
                                   onChange={(e) => setInstructorSearch(e.target.value)}
                                   placeholder={isRTL ? "بحث..." : "Search..."}
-                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                   autoFocus
                                 />
                               </div>
@@ -1195,7 +1195,7 @@ const CreateCourseContent = () => {
                   {/* Divider */}
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-[#E5E7EB]" />
+                      <div className="w-full border-t border-[var(--color-border)]" />
                     </div>
                     <div className="relative flex justify-center">
                       <span className="bg-[#F9FAFB] px-3 text-xs text-[#9CA3AF] uppercase tracking-wider">
@@ -1205,7 +1205,7 @@ const CreateCourseContent = () => {
                   </div>
 
                   {/* TA Section */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex items-center gap-2 mb-4">
                       <Users className="w-5 h-5 text-[var(--color-primary-dark)]" />
                       <h2 className="text-lg font-semibold text-[#1F2937]">
@@ -1242,15 +1242,15 @@ const CreateCourseContent = () => {
                         <button
                           type="button"
                           onClick={() => setTaDropdownOpen(!taDropdownOpen)}
-                          className="w-full flex items-center gap-3 p-3 border border-[#E5E7EB] rounded-xl bg-white hover:border-[#D97706] transition-colors text-start"
+                          className="w-full flex items-center gap-3 p-3 border border-[var(--color-border)] rounded-xl bg-white hover:border-[#D97706] transition-colors text-start"
                         >
                           <span className="text-sm text-[#9CA3AF]">{t("createCourse.noneSelected")}</span>
                           <ChevronDown className={`w-4 h-4 text-[#6B7280] ms-auto transition-transform ${taDropdownOpen ? "rotate-180" : ""}`} />
                         </button>
 
                         {taDropdownOpen && (
-                          <div className="absolute z-20 mt-1 w-full bg-white border border-[#E5E7EB] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
-                            <div className="p-2 border-b border-[#E5E7EB]">
+                          <div className="absolute z-20 mt-1 w-full bg-white border border-[var(--color-border)] rounded-xl shadow-lg max-h-[280px] overflow-hidden">
+                            <div className="p-2 border-b border-[var(--color-border)]">
                               <div className="relative">
                                 <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]" />
                                 <input
@@ -1258,7 +1258,7 @@ const CreateCourseContent = () => {
                                   value={taSearch}
                                   onChange={(e) => setTaSearch(e.target.value)}
                                   placeholder={isRTL ? "بحث..." : "Search..."}
-                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706]"
+                                  className="w-full ps-8 pe-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D97706]"
                                   autoFocus
                                 />
                               </div>
@@ -1308,7 +1308,7 @@ const CreateCourseContent = () => {
               {/* Step 5: Review & Submit */}
               {currentStep === 5 && (
                 <div className="space-y-6">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                       {t("createCourse.reviewTitle")}
                     </h2>
@@ -1318,14 +1318,14 @@ const CreateCourseContent = () => {
 
                     <div className="space-y-4">
                       {/* Basic Info */}
-                      <div className="border border-[#E5E7EB] rounded-lg p-4">
+                      <div className="border border-[var(--color-border)] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.basicInfo")}
                         </h3>
 
                         {/* Thumbnail preview */}
                         {thumbnailPreview && (
-                          <div className="relative w-full max-w-xs h-36 rounded-lg overflow-hidden border border-[#E5E7EB] mb-4">
+                          <div className="relative w-full max-w-xs h-36 rounded-lg overflow-hidden border border-[var(--color-border)] mb-4">
                             <Image
                               src={thumbnailPreview}
                               alt="Course thumbnail"
@@ -1377,7 +1377,7 @@ const CreateCourseContent = () => {
 
                       {/* Content Details */}
                       {(overview || overviewAr || objectives.some(s => s.trim()) || objectivesAr.some(s => s.trim()) || features.some(s => s.trim()) || featuresAr.some(s => s.trim()) || targetAudience.some(s => s.trim()) || targetAudienceAr.some(s => s.trim()) || requirements || requirementsAr || notices || noticesAr) && (
-                        <div className="border border-[#E5E7EB] rounded-lg p-4">
+                        <div className="border border-[var(--color-border)] rounded-lg p-4">
                           <h3 className="text-sm font-semibold text-[#374151] mb-3">
                             {t("createCourse.wizardStepContent")}
                           </h3>
@@ -1483,7 +1483,7 @@ const CreateCourseContent = () => {
                       )}
 
                       {/* Schedule & NELC */}
-                      <div className="border border-[#E5E7EB] rounded-lg p-4">
+                      <div className="border border-[var(--color-border)] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.scheduleTitle")} &{" "}
                           {t("createCourse.nelcConfig")}
@@ -1585,7 +1585,7 @@ const CreateCourseContent = () => {
                       </div>
 
                       {/* Instructor */}
-                      <div className="border border-[#E5E7EB] rounded-lg p-4">
+                      <div className="border border-[var(--color-border)] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.instructor")}
                         </h3>
@@ -1601,7 +1601,7 @@ const CreateCourseContent = () => {
                               ({selectedInstructor.email})
                             </p>
                             {selectedInstructor.status && (
-                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-50 border border-[#E5E7EB]">
+                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-gray-50 border border-[var(--color-border)]">
                                 <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(selectedInstructor.status)}`} />
                                 {getInstructorStatusLabel(selectedInstructor.status, t)}
                               </span>
@@ -1613,7 +1613,7 @@ const CreateCourseContent = () => {
                       </div>
 
                       {/* Teaching Assistant */}
-                      <div className="border border-[#E5E7EB] rounded-lg p-4">
+                      <div className="border border-[var(--color-border)] rounded-lg p-4">
                         <h3 className="text-sm font-semibold text-[#374151] mb-3">
                           {t("createCourse.taAssignment")}
                         </h3>
@@ -1640,7 +1640,7 @@ const CreateCourseContent = () => {
                 <button
                   type="button"
                   onClick={currentStep === 1 ? () => router.back() : goBack}
-                  className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                 >
                   {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
                   {currentStep === 1

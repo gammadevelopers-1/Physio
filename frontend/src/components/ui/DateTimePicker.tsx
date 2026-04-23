@@ -55,7 +55,7 @@ export default function DateTimePicker({
         value={timePart}
         onChange={(e) => handleTimeChange(e.target.value)}
         disabled={disabled}
-        className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+        className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
       />
     </div>
   );

@@ -105,16 +105,16 @@ const TAAssessmentSubmissionsView = ({
           <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : submissions.length === 0 ? (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
           <FileText className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
           <p className="text-[#6B7280]">{t("submissions.noSubmissions")}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                   <th className="text-left px-4 py-3 text-sm font-medium text-[#4B5563]">
                     {t("submissions.studentName")}
                   </th>
@@ -136,7 +136,7 @@ const TAAssessmentSubmissionsView = ({
                   return (
                     <React.Fragment key={submission.id}>
                       <tr
-                        className={`border-b border-[#E5E7EB] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[#F9FAFB]" : ""}`}
+                        className={`border-b border-[var(--color-border)] last:border-b-0 ${hasContent ? "cursor-pointer hover:bg-[#F9FAFB]" : ""}`}
                         onClick={() => hasContent && setExpandedId(isExpanded ? null : submission.id)}
                       >
                         <td className="px-4 py-3 text-sm text-[#1F2937]">
@@ -179,7 +179,7 @@ const TAAssessmentSubmissionsView = ({
                                   <p className="text-xs font-medium text-[#4B5563] mb-2">{t("submissions.answers")}</p>
                                   <div className="space-y-2">
                                     {submission.answers.map((a, idx) => (
-                                      <div key={idx} className="bg-white rounded-lg border border-[#E5E7EB] px-3 py-2">
+                                      <div key={idx} className="bg-white rounded-lg border border-[var(--color-border)] px-3 py-2">
                                         <p className="text-xs text-[#6B7280] mb-1">Q{idx + 1}</p>
                                         <p className="text-sm text-[#1F2937]">{a.answer || "—"}</p>
                                       </div>

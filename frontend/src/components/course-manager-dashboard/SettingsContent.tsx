@@ -241,8 +241,8 @@ const SettingsContent = () => {
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB]">
-                <div className="flex border-b border-[#E5E7EB] overflow-x-auto">
+              <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
@@ -281,7 +281,7 @@ const SettingsContent = () => {
                               />
                             </div>
                           ) : (
-                            <div className="w-24 h-24 rounded-full bg-[#E5E7EB] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
+                            <div className="w-24 h-24 rounded-full bg-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
                               {initials}
                             </div>
                           )}
@@ -300,7 +300,7 @@ const SettingsContent = () => {
                               <Pencil className="w-3.5 h-3.5 text-white" />
                             </button>
                             {avatarMenuOpen && (
-                              <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}>
+                              <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                                 <button
                                   onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -348,7 +348,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             />
                           </div>
                           <div>
@@ -362,7 +362,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastName: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             />
                           </div>
                           <div>
@@ -377,7 +377,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, firstNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             />
                           </div>
                           <div>
@@ -392,7 +392,7 @@ const SettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, lastNameAr: e.target.value })
                               }
-                              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             />
                           </div>
                           <div>
@@ -408,7 +408,7 @@ const SettingsContent = () => {
                                 type="email"
                                 value={profileData.email}
                                 disabled
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -427,7 +427,7 @@ const SettingsContent = () => {
                                 onChange={(e) =>
                                   setProfileData({ ...profileData, phone: e.target.value })
                                 }
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                               />
                             </div>
                           </div>
@@ -435,7 +435,7 @@ const SettingsContent = () => {
                       </div>
 
                       {/* Language Section */}
-                      <div className="pt-6 border-t border-[#E5E7EB]">
+                      <div className="pt-6 border-t border-[var(--color-border)]">
                         <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
                           {t("settingsPage.preferences.language")}
                         </h4>
@@ -452,7 +452,7 @@ const SettingsContent = () => {
                                 await profileApi.update({ language: newLocale }).catch(() => {});
                                 window.location.href = `/${newLocale}/dashboard/manager/settings`;
                               }}
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             >
                               <option value="en">English</option>
                               <option value="ar">{"\u0627\u0644\u0639\u0631\u0628\u064A\u0629"}</option>
@@ -462,7 +462,7 @@ const SettingsContent = () => {
                       </div>
 
                       {/* Calendar Preference */}
-                      <div className="pt-4 border-t border-[#E5E7EB]">
+                      <div className="pt-4 border-t border-[var(--color-border)]">
                         <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
                           {t("settingsPage.profile.calendarType") || "Calendar Type"}
                         </h4>
@@ -473,7 +473,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "gregorian"
                                 ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[#374151] border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                                : "bg-white text-[#374151] border-[var(--color-border)] hover:bg-[#F9FAFB]"
                             }`}
                           >
                             {t("settingsPage.profile.gregorian") || "Gregorian"} (ميلادي)
@@ -484,7 +484,7 @@ const SettingsContent = () => {
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                               calendarFormat === "hijri"
                                 ? "bg-[#002D87] text-white border-[#002D87]"
-                                : "bg-white text-[#374151] border-[#E5E7EB] hover:bg-[#F9FAFB]"
+                                : "bg-white text-[#374151] border-[var(--color-border)] hover:bg-[#F9FAFB]"
                             }`}
                           >
                             {t("settingsPage.profile.hijri") || "Hijri"} (هجري)
@@ -536,7 +536,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={currentPassword}
                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
@@ -565,7 +565,7 @@ const SettingsContent = () => {
                                 placeholder="••••••••"
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                               />
                               <button
                                 type="button"
@@ -639,7 +639,7 @@ const SettingsContent = () => {
                             <button
                               onClick={() => setEmailNotificationsOn(!emailNotificationsOn)}
                               className={`relative w-10 h-5 rounded-full transition-colors ${
-                                emailNotificationsOn ? "bg-[#3B82F6]" : "bg-[#E5E7EB]"
+                                emailNotificationsOn ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
@@ -657,7 +657,7 @@ const SettingsContent = () => {
                           </div>
 
                           {/* In-app Notifications Toggle */}
-                          <div className="flex items-center justify-between py-2 pt-6 border-t border-[#E5E7EB]">
+                          <div className="flex items-center justify-between py-2 pt-6 border-t border-[var(--color-border)]">
                             <div>
                               <span className="text-sm font-medium text-[#374151]">
                                 {t("settingsPage.notifications.push")}
@@ -669,7 +669,7 @@ const SettingsContent = () => {
                             <button
                               onClick={() => setPushNotificationsOn(!pushNotificationsOn)}
                               className={`relative w-10 h-5 rounded-full transition-colors ${
-                                pushNotificationsOn ? "bg-[#3B82F6]" : "bg-[#E5E7EB]"
+                                pushNotificationsOn ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span

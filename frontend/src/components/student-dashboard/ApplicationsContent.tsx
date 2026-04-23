@@ -124,8 +124,8 @@ const ApplicationsContent = () => {
 
           {/* Empty state */}
           {!isLoading && !error && applications.length === 0 && (
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-              <FileText className="w-12 h-12 text-[#D1D5DB] mx-auto mb-4" />
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+              <FileText className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
               <h3 className="text-lg font-medium text-[#1F2937] mb-2">
                 {t("applicationsPage.emptyTitle") || "No Applications Yet"}
               </h3>
@@ -152,7 +152,7 @@ const ApplicationsContent = () => {
               return (
                 <div
                   key={app.id}
-                  className={`bg-white rounded-xl border border-[#E5E7EB] overflow-hidden`}
+                  className={`bg-white rounded-xl border border-[var(--color-border)] overflow-hidden`}
                 >
                   <div className="p-5 sm:p-6">
                     <div className="flex items-start justify-between gap-4">
@@ -248,13 +248,13 @@ const ApplicationsContent = () => {
 
                     {/* Timeline */}
                     {(app.reviewedAt || app.updatedAt !== app.createdAt) && (
-                      <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
+                      <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
                         <p className="text-xs font-medium text-[#9CA3AF] uppercase tracking-wider mb-2">
                           {t("applicationsPage.timeline") || "Timeline"}
                         </p>
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-xs text-[#6B7280]">
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-[var(--color-border)]" />
                             <span>{t("applicationsPage.submitted") || "Submitted"}: {formatDate(app.createdAt)}</span>
                           </div>
                           {app.reviewedAt && (

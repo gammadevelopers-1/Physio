@@ -87,7 +87,7 @@ const FeaturedBlogCarousel = ({ posts, isRTL }: FeaturedBlogCarouselProps) => {
           type="button"
           onClick={goPrev}
           aria-label={isRTL ? "التالي" : "Previous"}
-          className="pointer-events-auto flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-md hover:bg-[#F9FAFB] border border-[#E5E7EB] text-[var(--on-surface-default)] transition-colors"
+          className="pointer-events-auto flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-md hover:bg-[#F9FAFB] border border-[var(--color-border)] text-[var(--on-surface-default)] transition-colors"
         >
           <PrevIcon className="w-5 h-5" strokeWidth={1.75} />
         </button>
@@ -95,7 +95,7 @@ const FeaturedBlogCarousel = ({ posts, isRTL }: FeaturedBlogCarouselProps) => {
           type="button"
           onClick={goNext}
           aria-label={isRTL ? "السابق" : "Next"}
-          className="pointer-events-auto flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-md hover:bg-[#F9FAFB] border border-[#E5E7EB] text-[var(--on-surface-default)] transition-colors"
+          className="pointer-events-auto flex items-center justify-center w-11 h-11 rounded-full bg-white shadow-md hover:bg-[#F9FAFB] border border-[var(--color-border)] text-[var(--on-surface-default)] transition-colors"
         >
           <NextIcon className="w-5 h-5" strokeWidth={1.75} />
         </button>
@@ -117,7 +117,7 @@ const FeaturedBlogCarousel = ({ posts, isRTL }: FeaturedBlogCarouselProps) => {
             className={`h-2 rounded-full transition-all ${
               index === i
                 ? "w-8 bg-[var(--gold-gold-500)]"
-                : "w-2 bg-[#D1D5DB] hover:bg-[#9CA3AF]"
+                : "w-2 bg-[var(--color-border)] hover:bg-[#9CA3AF]"
             }`}
           />
         ))}
@@ -129,7 +129,7 @@ const FeaturedBlogCarousel = ({ posts, isRTL }: FeaturedBlogCarouselProps) => {
           type="button"
           onClick={goPrev}
           aria-label={isRTL ? "التالي" : "Previous"}
-          className="flex items-center justify-center w-10 h-10 rounded-full border border-[#E5E7EB] bg-white text-[var(--on-surface-default)]"
+          className="flex items-center justify-center w-10 h-10 rounded-full border border-[var(--color-border)] bg-white text-[var(--on-surface-default)]"
         >
           <PrevIcon className="w-4 h-4" strokeWidth={1.75} />
         </button>
@@ -137,7 +137,7 @@ const FeaturedBlogCarousel = ({ posts, isRTL }: FeaturedBlogCarouselProps) => {
           type="button"
           onClick={goNext}
           aria-label={isRTL ? "السابق" : "Next"}
-          className="flex items-center justify-center w-10 h-10 rounded-full border border-[#E5E7EB] bg-white text-[var(--on-surface-default)]"
+          className="flex items-center justify-center w-10 h-10 rounded-full border border-[var(--color-border)] bg-white text-[var(--on-surface-default)]"
         >
           <NextIcon className="w-4 h-4" strokeWidth={1.75} />
         </button>

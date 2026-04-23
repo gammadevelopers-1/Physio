@@ -334,10 +334,10 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
               {!loading && !error && student && (
                 <>
                   {/* Student Header Card */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xl font-bold text-[#4B5563]">
+                        <div className="w-16 h-16 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xl font-bold text-[#4B5563]">
                           {getInitials(student.firstName, student.lastName)}
                         </div>
                         <div>
@@ -388,7 +388,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   {/* Stats Cards */}
                   {stats && (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#DBEAFE] flex items-center justify-center mb-2">
                           <BookOpen className="w-5 h-5 text-[#3B82F6]" />
                         </div>
@@ -399,7 +399,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.totalCourses")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#DCFCE7] flex items-center justify-center mb-2">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                         </div>
@@ -410,7 +410,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.completed")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#FEF9C3] flex items-center justify-center mb-2">
                           <TrendingUp className="w-5 h-5 text-[#EAB308]" />
                         </div>
@@ -421,7 +421,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.avgAttendance")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#E0E7FF] flex items-center justify-center mb-2">
                           <FileText className="w-5 h-5 text-[#6366F1]" />
                         </div>
@@ -432,7 +432,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {t("studentDetail.avgScore")}
                         </p>
                       </div>
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-center">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-center">
                         <div className="w-10 h-10 mx-auto rounded-lg bg-[#FEF3C7] flex items-center justify-center mb-2">
                           <Award className="w-5 h-5 text-[#D4A520]" />
                         </div>
@@ -447,8 +447,8 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                   )}
 
                   {/* Tabs */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB]">
-                    <div className="flex border-b border-[#E5E7EB] overflow-x-auto">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                    <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                       {tabs.map((tab) => (
                         <button
                           key={tab.id}
@@ -477,7 +477,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
                           {student.enrollments.length === 0 ? (
                             <div className="text-center py-8">
-                              <BookOpen className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                              <BookOpen className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                               <p className="text-sm text-[#6B7280]">
                                 {t("studentDetail.noEnrollments") ||
                                   "No course enrollments found."}
@@ -488,7 +488,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               {student.enrollments.map((enrollment) => (
                                 <div
                                   key={enrollment.id}
-                                  className="p-4 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                                  className="p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors"
                                 >
                                   <div className="flex items-start justify-between mb-3">
                                     <div>
@@ -528,7 +528,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                       <span>{t("studentDetail.progress")}</span>
                                       <span>{enrollment.progress}%</span>
                                     </div>
-                                    <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                    <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                       <div
                                         className={`h-full rounded-full transition-all ${
                                           enrollment.progress >= 80
@@ -581,9 +581,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               return (order[a.enrollmentStatus] ?? 3) - (order[b.enrollmentStatus] ?? 3);
                             })
                             .map((cp: any) => (
-                            <div key={cp.courseId} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                            <div key={cp.courseId} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                               {/* Course Header */}
-                              <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] flex items-center justify-between">
+                              <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[var(--color-border)] flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <BookOpen className="w-4 h-4 text-[#D4A520]" />
                                   <h4 className="text-sm font-semibold text-[#1F2937]">
@@ -635,7 +635,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 {/* Attendance Rate Bar */}
                                 <div className="flex items-center gap-3">
                                   <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">{t("studentDetail.attendance")}</span>
-                                  <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                  <div className="flex-1 h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                     <div
                                       className={`h-full rounded-full transition-all ${
                                         cp.attendance.attendanceRate >= 80 ? "bg-[#22C55E]"
@@ -658,7 +658,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 {cp.assessmentAverage !== null && (
                                   <div className="flex items-center gap-3">
                                     <span className="text-xs text-[#6B7280] w-24 flex-shrink-0">{t("studentDetail.assessment")}</span>
-                                    <div className="flex-1 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                    <div className="flex-1 h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                       <div
                                         className={`h-full rounded-full transition-all ${
                                           cp.assessmentAverage >= 70 ? "bg-[#3B82F6]"
@@ -736,7 +736,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
                           {(!student.coursePerformance || student.coursePerformance.length === 0) && (
                             <div className="text-center py-8">
-                              <Calendar className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                              <Calendar className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                               <p className="text-sm text-[#6B7280]">
                                 {t("studentDetail.noAttendanceRecords") || "No attendance records found."}
                               </p>
@@ -757,8 +757,8 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                             const courseAssessments = cp.assessments || [];
                             if (courseAssessments.length === 0) return null;
                             return (
-                              <div key={cp.courseId} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                                <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[#E5E7EB] flex items-center justify-between">
+                              <div key={cp.courseId} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                                <div className="px-4 py-3 bg-[#F9FAFB] border-b border-[var(--color-border)] flex items-center justify-between">
                                   <div className="flex items-center gap-2">
                                     <BookOpen className="w-4 h-4 text-[#D4A520]" />
                                     <h4 className="text-sm font-semibold text-[#1F2937]">
@@ -816,7 +816,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
                           {(!student.coursePerformance || student.coursePerformance.every((cp: any) => !(cp.assessments?.length))) && (
                             <div className="text-center py-8">
-                              <FileText className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                              <FileText className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                               <p className="text-sm text-[#6B7280]">{t("studentDetail.noAssessments")}</p>
                             </div>
                           )}
@@ -841,7 +841,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
 
                           {/* Add Intervention Form */}
                           {showAddForm && (
-                            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] space-y-3">
+                            <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] space-y-3">
                               {/* Type selector */}
                               <div>
                                 <label className="block text-sm font-medium text-[#374151] mb-1">
@@ -850,7 +850,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                 <select
                                   value={interventionType}
                                   onChange={(e) => setInterventionType(e.target.value as InterventionType)}
-                                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
                                 >
                                   <option value="email">{t("studentDetail.interventionEmail")}</option>
                                   <option value="makeup_session">{t("studentDetail.interventionMakeup")}</option>
@@ -867,7 +867,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   <select
                                     value={interventionCourseId}
                                     onChange={(e) => setInterventionCourseId(e.target.value)}
-                                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+                                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
                                   >
                                     <option value="">{t("studentDetail.interventionAnyCourse")}</option>
                                     {student.enrollments.map((e) => (
@@ -890,7 +890,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                                   placeholder={t("studentDetail.interventionNotePlaceholder")}
                                   maxLength={2000}
                                   rows={3}
-                                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+                                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
                                 />
                               </div>
 
@@ -898,7 +898,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               <div className="flex items-center gap-2 justify-end">
                                 <button
                                   onClick={() => setShowAddForm(false)}
-                                  className="px-3 py-1.5 text-sm font-medium text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors"
+                                  className="px-3 py-1.5 text-sm font-medium text-[#6B7280] hover:bg-[var(--color-border)] rounded-lg transition-colors"
                                 >
                                   {t("studentDetail.interventionCancel")}
                                 </button>
@@ -917,7 +917,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                           {/* Interventions Timeline */}
                           {interventions.length === 0 ? (
                             <div className="text-center py-8">
-                              <MessageSquare className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                              <MessageSquare className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                               <p className="text-sm text-[#6B7280]">
                                 {t("studentDetail.noInterventions")}
                               </p>
@@ -927,9 +927,9 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                               {interventions.map((iv) => (
                                 <div
                                   key={iv.id}
-                                  className="flex items-start gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]"
+                                  className="flex items-start gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]"
                                 >
-                                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E7EB] flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <div className="w-9 h-9 rounded-lg bg-white border border-[var(--color-border)] flex items-center justify-center flex-shrink-0 mt-0.5">
                                     {getInterventionIcon(iv.type)}
                                   </div>
                                   <div className="flex-1 min-w-0">
@@ -984,7 +984,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     type="text"
                     value={makeupData.title}
                     onChange={(e) => setMakeupData(d => ({ ...d, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1001,7 +1001,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                       type="time"
                       value={makeupData.time}
                       onChange={(e) => setMakeupData(d => ({ ...d, time: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -1012,7 +1012,7 @@ const StudentDetailContent = ({ studentId }: StudentDetailContentProps) => {
                     value={makeupData.duration}
                     onChange={(e) => setMakeupData(d => ({ ...d, duration: e.target.value }))}
                     min={15}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
                 </div>
                 <p className="text-xs text-[#9CA3AF]">{t("studentDetail.makeupNote")}</p>

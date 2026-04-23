@@ -210,7 +210,7 @@ function ResetPasswordForm() {
                           onChange={(e) => handleCodeChange(i, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(i, e)}
                           disabled={isSubmitting}
-                          className="w-11 h-12 text-center text-lg font-semibold border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors disabled:opacity-50"
+                          className="w-11 h-12 text-center text-lg font-semibold border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors disabled:opacity-50"
                         />
                       ))}
                     </div>
@@ -248,7 +248,7 @@ function ResetPasswordForm() {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         disabled={isSubmitting}
-                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full min-h-[36px] px-3 py-[7.5px] pe-10 bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                           fontSize: "14px",
@@ -283,7 +283,7 @@ function ResetPasswordForm() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       disabled={isSubmitting}
-                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[#e5e5e5] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full min-h-[36px] px-3 py-[7.5px] bg-white border border-[var(--color-border)] rounded-lg outline-none focus:border-[var(--outline-focused)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
                         fontSize: "14px",

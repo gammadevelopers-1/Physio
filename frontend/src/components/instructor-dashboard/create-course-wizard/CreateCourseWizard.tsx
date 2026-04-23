@@ -225,7 +225,7 @@ const CreateCourseWizard = () => {
           <button
             type="button"
             onClick={handleBack}
-            className="px-6 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+            className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
           >
             {state.step === 1 ? t("cancel") : t("back")}
           </button>

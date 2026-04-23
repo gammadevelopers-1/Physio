@@ -176,6 +176,8 @@ export interface SiteSettings {
   themeSurfaceCard: string | null;
   themeTextPrimary: string | null;
   themeTextSecondary: string | null;
+  themeBorderColor: string | null;
+  themeBorderSubtle: string | null;
   locale: string;
   createdAt: string;
   updatedAt: string;
@@ -734,6 +736,15 @@ export interface CTABannerBlockData extends BaseBlock {
   buttons: ButtonLink[];
 }
 
+export interface ImageBannerBlockData extends BaseBlock {
+  __component: 'blocks.image-banner-block';
+  image: StrapiMedia | null;
+  imageAlt: string | null;
+  button: ButtonLink | null;
+  maxWidth: 'small' | 'medium' | 'large' | 'full';
+  alignment: 'left' | 'center' | 'right';
+}
+
 export interface InstructorsGridBlockData extends BaseBlock {
   __component: 'blocks.instructors-grid';
   title: string | null;
@@ -918,6 +929,7 @@ export type DynamicZoneBlock =
   | PartnersStripBlockData
   | FeaturedCoursesGridBlockData
   | CTABannerBlockData
+  | ImageBannerBlockData
   | InstructorsGridBlockData
   | TestimonialsCarouselBlockData
   | RichTextBlockData

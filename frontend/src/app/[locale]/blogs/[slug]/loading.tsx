@@ -24,7 +24,7 @@ export default function BlogDetailLoading() {
           </div>
         </section>
 
-        <div className="mx-16 h-px bg-[#E5E7EB]" />
+        <div className="mx-16 h-px bg-[var(--color-border)]" />
 
         <article className="max-w-[800px] mx-auto px-8 py-12 space-y-5">
           {Array.from({ length: 10 }).map((_, i) => (

@@ -32,7 +32,7 @@ export function SpacerBlock({ data }: SpacerBlockProps) {
       {data.showDivider && (
         <hr
           className="w-full max-w-[1280px] border-t"
-          style={{ borderColor: data.dividerColor || "#e5e7eb" }}
+          style={{ borderColor: data.dividerColor || "var(--color-border)" }}
         />
       )}
     </div>

@@ -35,7 +35,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
@@ -94,7 +94,7 @@ const FinanceSummaryWidget = ({ data }: FinanceSummaryWidgetProps) => {
       </div>
 
       {/* Health Metrics */}
-      <div className="pt-4 border-t border-[#E5E7EB]">
+      <div className="pt-4 border-t border-[var(--color-border)]">
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-[#4B5563]">

@@ -35,7 +35,7 @@ const AssessmentsNeedingAttention = ({
 
   if (totalCount === 0) {
     return (
-      <div className="bg-white rounded-xl border border-[#E5E7EB]">
+      <div className="bg-white rounded-xl border border-[var(--color-border)]">
         <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-[#1F2937] flex items-center gap-2">
@@ -55,7 +55,7 @@ const AssessmentsNeedingAttention = ({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count */}
         <div className="flex items-center justify-between mb-4">
@@ -72,7 +72,7 @@ const AssessmentsNeedingAttention = ({
           {displayed.map((sub) => (
             <div
               key={sub.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] hover:border-[#D1D5DB] transition-colors"
+              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
             >
               {/* Clock icon */}
               <div className="w-10 h-10 rounded-full bg-[#FEF3C7] flex items-center justify-center flex-shrink-0">

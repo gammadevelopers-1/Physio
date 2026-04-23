@@ -125,6 +125,16 @@
       "type": "string",
       "default": "#737373",
       "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeBorderColor": {
+      "type": "string",
+      "default": "#e5e7eb",
+      "pluginOptions": { "i18n": { "localized": false } }
+    },
+    "themeBorderSubtle": {
+      "type": "string",
+      "default": "#C8D5E1",
+      "pluginOptions": { "i18n": { "localized": false } }
     }
   }
 }

@@ -60,7 +60,7 @@ const NELCComplianceOverviewWidget = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">

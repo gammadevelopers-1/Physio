@@ -103,7 +103,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
       <embed
         src={material.fileUrl}
         type="application/pdf"
-        className="w-full rounded-lg border border-[#E5E7EB]"
+        className="w-full rounded-lg border border-[var(--color-border)]"
         style={{ height: "680px" }}
         onLoad={() => setLoading(false)}
       />
@@ -112,7 +112,7 @@ function PdfViewer({ material }: { material: ModuleMaterial }) {
           href={material.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
           Open in tab
@@ -316,7 +316,7 @@ const CourseLearningContent = () => {
       )}
 
       {/* Top Bar */}
-      <div className="bg-white border-b border-[#E5E7EB] px-4 py-3 sticky top-0 z-30">
+      <div className="bg-white border-b border-[var(--color-border)] px-4 py-3 sticky top-0 z-30">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -340,7 +340,7 @@ const CourseLearningContent = () => {
             <span className="hidden sm:inline text-xs font-medium text-[#4B5563]">
               {data.enrollment.progress}%
             </span>
-            <div className="hidden sm:block w-32 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+            <div className="hidden sm:block w-32 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#16A34A] rounded-full transition-all"
                 style={{ width: `${data.enrollment.progress}%` }}
@@ -362,7 +362,7 @@ const CourseLearningContent = () => {
         <aside
           className={`${
             sidebarOpen ? "block" : "hidden"
-          } lg:block w-full lg:w-[300px] xl:w-[320px] flex-shrink-0 bg-white border-e border-[#E5E7EB] overflow-y-auto`}
+          } lg:block w-full lg:w-[300px] xl:w-[320px] flex-shrink-0 bg-white border-e border-[var(--color-border)] overflow-y-auto`}
           style={{ maxHeight: "calc(100vh - 57px)", position: "sticky", top: 57 }}
         >
           <div className="p-4">
@@ -481,11 +481,11 @@ const CourseLearningContent = () => {
               </div>
 
               {/* Content Card */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden mb-5">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden mb-5">
 
                 {/* Material Tabs — shown only when multiple materials */}
                 {!materialsLoading && materials.length > 1 && (
-                  <div className="flex items-center gap-0 border-b border-[#E5E7EB] overflow-x-auto">
+                  <div className="flex items-center gap-0 border-b border-[var(--color-border)] overflow-x-auto">
                     {materials.map((mat, idx) => {
                       const { Icon } = getModuleIcon(mat.type);
                       return (
@@ -603,7 +603,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToPrevModule}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[#4B5563]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[#4B5563]"
                     aria-label={tA("previousModule")}
                   >
                     {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
@@ -612,7 +612,7 @@ const CourseLearningContent = () => {
                   <button
                     onClick={goToNextModule}
                     disabled={currentIndex === sortedModules.length - 1}
-                    className="flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[#4B5563]"
+                    className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors disabled:opacity-40 text-sm text-[#4B5563]"
                     aria-label={tA("nextModule")}
                   >
                     Next

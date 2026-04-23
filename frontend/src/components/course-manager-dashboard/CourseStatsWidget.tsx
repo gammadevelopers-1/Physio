@@ -20,9 +20,9 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
   const t = useTranslations("courseManagerDashboard");
 
   return (
-    <div className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB]">
+    <div className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)]">
       {/* Header */}
-      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center gap-2 p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
           <BookOpen className="w-4 h-4 text-[var(--gold-gold-500)]" />
         </div>
@@ -54,7 +54,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
         </div>
 
         {/* Completion Rate */}
-        <div className="bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+        <div className="bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-[var(--functional-green-400)]/10 rounded-lg flex items-center justify-center">
@@ -73,7 +73,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
           </div>
           <div className="flex items-end gap-2">
             <p className="text-2xl font-bold text-[var(--on-surface-default)]">{data.avgCompletionRate}%</p>
-            <div className="flex-1 h-2 bg-[#E5E7EB] rounded-full overflow-hidden mb-1">
+            <div className="flex-1 h-2 bg-[var(--color-border)] rounded-full overflow-hidden mb-1">
               <div
                 className="h-full bg-[var(--functional-green-600)] rounded-full transition-all"
                 style={{ width: `${data.avgCompletionRate}%` }}
@@ -83,7 +83,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
         </div>
 
         {/* Average Rating */}
-        <div className="bg-[#F9FAFB] rounded-xl p-4 border border-[#E5E7EB]">
+        <div className="bg-[#F9FAFB] rounded-xl p-4 border border-[var(--color-border)]">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-[var(--gold-gold-100)] rounded-lg flex items-center justify-center">
               <Star className="w-4 h-4 text-[var(--gold-gold-500)]" />
@@ -103,7 +103,7 @@ const CourseStatsWidget = ({ data }: CourseStatsWidgetProps) => {
                       ? "text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]"
                       : star - 0.5 <= data.avgRating
                         ? "text-[var(--gold-gold-500)] fill-[var(--gold-gold-500)]/50"
-                        : "text-[#D1D5DB]"
+                        : "text-[var(--color-border)]"
                   }`}
                 />
               ))}

@@ -208,7 +208,7 @@ const CourseAssistantsManagePanel = ({
   const maxPriority = Math.max(...activeTAs.map((ta) => ta.priority), 0);
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1F2937]">
@@ -249,7 +249,7 @@ const CourseAssistantsManagePanel = ({
 
       {/* Assign TA Dropdown */}
       {showDropdown && (
-        <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB]">
+        <div className="mb-4 p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-[#4B5563]">
               {t("taManagement.selectTA")}
@@ -386,7 +386,7 @@ const CourseAssistantsManagePanel = ({
                         </button>
                         <button
                           onClick={() => setConfirmRemove(null)}
-                          className="px-2 py-1 text-xs text-[#6B7280] border border-[#E5E7EB] rounded hover:bg-[#F9FAFB]"
+                          className="px-2 py-1 text-xs text-[#6B7280] border border-[var(--color-border)] rounded hover:bg-[#F9FAFB]"
                         >
                           {t("taManagement.cancel")}
                         </button>
@@ -436,7 +436,7 @@ const CourseAssistantsManagePanel = ({
               }}
               placeholder={t("taManagement.rejectPlaceholder")}
               rows={4}
-              className="w-full px-3 py-2 text-sm border border-[#E5E7EB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
+              className="w-full px-3 py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent resize-none text-[#1F2937] placeholder-[#9CA3AF]"
               disabled={rejectingLoading}
             />
             <div className="flex items-center justify-between mt-2 mb-4">
@@ -451,7 +451,7 @@ const CourseAssistantsManagePanel = ({
                   setRejectionReason("");
                 }}
                 disabled={rejectingLoading}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
               >
                 {t("taManagement.cancel")}
               </button>

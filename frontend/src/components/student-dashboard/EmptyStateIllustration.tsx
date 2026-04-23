@@ -183,7 +183,7 @@ function CalendarIllustration() {
         cx="60"
         cy="60"
         r="35"
-        stroke="#D1D5DB"
+        stroke="var(--color-border)"
         strokeWidth="2"
         fill="none"
       />

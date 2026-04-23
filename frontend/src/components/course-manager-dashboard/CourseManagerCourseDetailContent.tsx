@@ -57,27 +57,27 @@ interface CourseManagerCourseDetailContentProps {
 // ─── Skeleton ──────────────────────────────────────────────────
 const CourseDetailSkeleton = () => (
   <div className="flex-1 min-w-0 animate-pulse">
-    <div className="h-4 w-32 bg-[#E5E7EB] rounded mb-4" />
-    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
-      <div className="h-48 sm:h-56 bg-[#E5E7EB]" />
+    <div className="h-4 w-32 bg-[var(--color-border)] rounded mb-4" />
+    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+      <div className="h-48 sm:h-56 bg-[var(--color-border)]" />
       <div className="p-5 space-y-3">
-        <div className="h-6 w-2/3 bg-[#E5E7EB] rounded" />
-        <div className="h-4 w-1/2 bg-[#E5E7EB] rounded" />
+        <div className="h-6 w-2/3 bg-[var(--color-border)] rounded" />
+        <div className="h-4 w-1/2 bg-[var(--color-border)] rounded" />
       </div>
     </div>
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="bg-white rounded-xl border border-[#E5E7EB] p-4">
-          <div className="h-4 w-16 bg-[#E5E7EB] rounded mb-2" />
-          <div className="h-6 w-12 bg-[#E5E7EB] rounded" />
+        <div key={i} className="bg-white rounded-xl border border-[var(--color-border)] p-4">
+          <div className="h-4 w-16 bg-[var(--color-border)] rounded mb-2" />
+          <div className="h-6 w-12 bg-[var(--color-border)] rounded" />
         </div>
       ))}
     </div>
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
-      <div className="h-5 w-32 bg-[#E5E7EB] rounded mb-4" />
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
+      <div className="h-5 w-32 bg-[var(--color-border)] rounded mb-4" />
       <div className="space-y-3">
-        <div className="h-4 w-full bg-[#E5E7EB] rounded" />
-        <div className="h-4 w-3/4 bg-[#E5E7EB] rounded" />
+        <div className="h-4 w-full bg-[var(--color-border)] rounded" />
+        <div className="h-4 w-3/4 bg-[var(--color-border)] rounded" />
       </div>
     </div>
   </div>
@@ -417,7 +417,7 @@ const CourseManagerCourseDetailContent = ({
               <CourseDetailSkeleton />
             ) : error ? (
               <div className="flex-1 min-w-0">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
                   <p className="text-[#6B7280] mb-4">{error}</p>
                   <button
@@ -441,7 +441,7 @@ const CourseManagerCourseDetailContent = ({
                 </Link>
 
                 {/* Course Header */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   {/* Thumbnail */}
                   {course.thumbnail && (
                     <div className="relative h-48 sm:h-56 bg-[#F3F4F6]">
@@ -502,7 +502,7 @@ const CourseManagerCourseDetailContent = ({
                               className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${
                                 course.isFeatured
                                   ? "bg-[var(--gold-gold-100)] text-[var(--gold-gold-500)] hover:bg-[var(--gold-gold-200)]"
-                                  : "border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB]"
+                                  : "border border-[var(--color-border)] text-[#6B7280] hover:bg-[#F9FAFB]"
                               }`}
                             >
                               <Star
@@ -515,7 +515,7 @@ const CourseManagerCourseDetailContent = ({
                             <button
                               onClick={handleDeactivate}
                               disabled={updatingStatus}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[#6B7280] text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
                             >
                               <Archive className="w-4 h-4" />
                               {t("courseDetail.archive")}
@@ -576,7 +576,7 @@ const CourseManagerCourseDetailContent = ({
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       {getDeliveryIcon(course.deliveryType)}
                       <span className="text-xs text-[#6B7280]">
@@ -587,7 +587,7 @@ const CourseManagerCourseDetailContent = ({
                       {t(`courseDetail.delivery.${course.deliveryType}`)}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="w-4 h-4 text-[#8B5CF6]" />
                       <span className="text-xs text-[#6B7280]">
@@ -598,7 +598,7 @@ const CourseManagerCourseDetailContent = ({
                       {course.maxEnrollment ?? "—"}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="w-4 h-4 text-[#16A34A]" />
                       <span className="text-xs text-[#6B7280]">
@@ -609,7 +609,7 @@ const CourseManagerCourseDetailContent = ({
                       {formatDate(course.startDate)}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Calendar className="w-4 h-4 text-[#DC2626]" />
                       <span className="text-xs text-[#6B7280]">
@@ -620,7 +620,7 @@ const CourseManagerCourseDetailContent = ({
                       {formatDate(course.endDate)}
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <Award className="w-4 h-4 text-[#D4A520]" />
                       <span className="text-xs text-[#6B7280]">
@@ -634,7 +634,7 @@ const CourseManagerCourseDetailContent = ({
                 </div>
 
                 {/* Description */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
                   <h2 className="text-base font-semibold text-[#1F2937] mb-3">
                     {t("courseDetail.description")}
                   </h2>
@@ -649,7 +649,7 @@ const CourseManagerCourseDetailContent = ({
                   )}
                   {course.descriptionAr && (
                     <p
-                      className="text-sm text-[#4B5563] leading-relaxed mt-3 pt-3 border-t border-[#E5E7EB] whitespace-pre-wrap"
+                      className="text-sm text-[#4B5563] leading-relaxed mt-3 pt-3 border-t border-[var(--color-border)] whitespace-pre-wrap"
                       dir="rtl"
                     >
                       {course.descriptionAr}
@@ -672,15 +672,15 @@ const CourseManagerCourseDetailContent = ({
                 )}
 
                 {/* Modules */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
-                  <div className="p-5 border-b border-[#E5E7EB] flex items-center justify-between">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+                  <div className="p-5 border-b border-[var(--color-border)] flex items-center justify-between">
                     <h2 className="text-base font-semibold text-[#1F2937]">
                       {t("courseDetail.modules")} ({course.modules?.length ?? 0})
                     </h2>
                   </div>
 
                   {course.modules && course.modules.length > 0 ? (
-                    <div className="divide-y divide-[#E5E7EB]">
+                    <div className="divide-y divide-[var(--color-border)]">
                       {course.modules
                         .sort((a, b) => a.orderIndex - b.orderIndex)
                         .map((mod: CourseModule, idx: number) => (
@@ -739,7 +739,7 @@ const CourseManagerCourseDetailContent = ({
                                 </div>
 
                                 {/* Materials in this module */}
-                                <div className="border-t border-[#E5E7EB] pt-3">
+                                <div className="border-t border-[var(--color-border)] pt-3">
                                   <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
                                     {t("courseDetail.materials")}
                                   </p>
@@ -753,7 +753,7 @@ const CourseManagerCourseDetailContent = ({
                                       {moduleMaterials[mod.id].map((mat) => (
                                         <div
                                           key={mat.id}
-                                          className="flex items-center gap-3 bg-white rounded-lg border border-[#E5E7EB] px-3 py-2"
+                                          className="flex items-center gap-3 bg-white rounded-lg border border-[var(--color-border)] px-3 py-2"
                                         >
                                           {getMaterialIcon(mat.type)}
                                           <div className="flex-1 min-w-0">
@@ -810,7 +810,7 @@ const CourseManagerCourseDetailContent = ({
                                   const modAssessments = moduleAssessments.filter((a) => a.moduleId === mod.id);
                                   if (modAssessments.length === 0) return null;
                                   return (
-                                    <div className="border-t border-[#E5E7EB] pt-3">
+                                    <div className="border-t border-[var(--color-border)] pt-3">
                                       <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide mb-2">
                                         {t("courseDetail.moduleAssessments")}
                                       </p>
@@ -818,7 +818,7 @@ const CourseManagerCourseDetailContent = ({
                                         {modAssessments.map((ma) => (
                                           <div
                                             key={ma.id}
-                                            className="flex items-center gap-3 bg-white rounded-lg border border-[#E5E7EB] px-3 py-2"
+                                            className="flex items-center gap-3 bg-white rounded-lg border border-[var(--color-border)] px-3 py-2"
                                           >
                                             <ClipboardCheck className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
                                             <div className="flex-1 min-w-0">
@@ -854,7 +854,7 @@ const CourseManagerCourseDetailContent = ({
                 </div>
 
                 {/* Course Metadata */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <h2 className="text-base font-semibold text-[#1F2937] mb-3">
                     {t("courseDetail.courseInfo")}
                   </h2>
@@ -879,7 +879,7 @@ const CourseManagerCourseDetailContent = ({
                 </div>
 
                 {/* Student Reviews */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <div className="flex items-center justify-between mb-4 gap-3">
                     <h2 className="text-base font-semibold text-[#1F2937]">
                       {t("courseDetail.reviewsTitle")}
@@ -892,7 +892,7 @@ const CourseManagerCourseDetailContent = ({
                             return (
                               <Star
                                 key={s}
-                                className={`w-4 h-4 ${s <= Math.round(avg) ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                                className={`w-4 h-4 ${s <= Math.round(avg) ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
                               />
                             );
                           })}
@@ -910,14 +910,14 @@ const CourseManagerCourseDetailContent = ({
                     </div>
                   ) : reviews.length === 0 ? (
                     <div className="text-center py-8">
-                      <Star className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                      <Star className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                       <p className="text-sm text-[#6B7280]">{t("courseDetail.noReviewsYet")}</p>
                     </div>
                   ) : (
                     <>
                       <div className="space-y-3">
                         {reviews.map((r) => (
-                          <div key={r.id} className="border border-[#E5E7EB] rounded-lg p-4 bg-[#FAFAFA]">
+                          <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
@@ -927,7 +927,7 @@ const CourseManagerCourseDetailContent = ({
                                 {[1, 2, 3, 4, 5].map((s) => (
                                   <Star
                                     key={s}
-                                    className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                                    className={`w-3.5 h-3.5 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
                                   />
                                 ))}
                               </div>
@@ -938,7 +938,7 @@ const CourseManagerCourseDetailContent = ({
                           </div>
                         ))}
                       </div>
-                      <div className="mt-4 pt-4 border-t border-[#E5E7EB] flex items-center justify-center">
+                      <div className="mt-4 pt-4 border-t border-[var(--color-border)] flex items-center justify-center">
                         <Link
                           href={`/${locale}/dashboard/manager/courses/${courseId}/reviews`}
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-[#3B82F6] hover:text-[#2563EB]"
@@ -986,13 +986,13 @@ const CourseManagerCourseDetailContent = ({
               value={removeReason}
               onChange={(e) => setRemoveReason(e.target.value)}
               placeholder={t("courseDetail.removeReasonPlaceholder")}
-              className="w-full border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm text-[#1F2937] resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+              className="w-full border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm text-[#1F2937] resize-none focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
               rows={3}
             />
             <div className="flex items-center justify-end gap-3 mt-4">
               <button
                 onClick={() => { setRemovingMaterial(null); setRemoveReason(""); }}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1027,7 +1027,7 @@ const CourseManagerCourseDetailContent = ({
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {t("courseDetail.cancel")}
               </button>
@@ -1067,13 +1067,13 @@ const CourseManagerCourseDetailContent = ({
               rows={4}
               maxLength={1000}
               placeholder={t("courseDetail.requestChangesPlaceholder")}
-              className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none mb-1"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent resize-none mb-1"
             />
             <p className="text-xs text-[#9CA3AF] mb-4 text-end">{requestChangesNote.length}/1000</p>
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => { setShowRequestChanges(false); setRequestChangesNote(""); }}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {t("courseDetail.cancel")}
               </button>

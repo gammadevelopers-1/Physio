@@ -165,7 +165,7 @@ const CreateAssessmentModal = ({
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               required
             >
               {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
@@ -183,7 +183,7 @@ const CreateAssessmentModal = ({
               <select
                 value={moduleId}
                 onChange={(e) => setModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="">{t("assessments.noModule") || "No module (general)"}</option>
                 {courseModules.map((m) => (
@@ -200,7 +200,7 @@ const CreateAssessmentModal = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               placeholder={t("assessments.titlePlaceholder")}
               required
             />
@@ -213,7 +213,7 @@ const CreateAssessmentModal = ({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="quiz">{t("assessments.typeQuiz")}</option>
                 <option value="exam">{t("assessments.typeExam")}</option>
@@ -229,7 +229,7 @@ const CreateAssessmentModal = ({
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                   placeholder={t("assessments.minutes")}
                   min={1}
                   required
@@ -270,7 +270,7 @@ const CreateAssessmentModal = ({
               <textarea
                 value={instructions}
                 onChange={(e) => setInstructions(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[80px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[80px]"
                 placeholder={t("assessments.instructionsPlaceholder") || "Enter assignment instructions..."}
               />
             </div>
@@ -284,7 +284,7 @@ const CreateAssessmentModal = ({
                 type="number"
                 value={totalMarks}
                 onChange={(e) => setTotalMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={1}
                 required
               />
@@ -297,7 +297,7 @@ const CreateAssessmentModal = ({
                 type="number"
                 value={passingMarks}
                 onChange={(e) => setPassingMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={0}
                 required
               />
@@ -307,7 +307,7 @@ const CreateAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -420,7 +420,7 @@ const EditAssessmentModal = ({
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               required
             />
           </div>
@@ -432,7 +432,7 @@ const EditAssessmentModal = ({
               <select
                 value={editModuleId}
                 onChange={(e) => setEditModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="">{t("assessments.noModule") || "No module (general)"}</option>
                 {editCourseModules.map((m) => (
@@ -449,7 +449,7 @@ const EditAssessmentModal = ({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="quiz">{t("assessments.typeQuiz")}</option>
                 <option value="exam">{t("assessments.typeExam")}</option>
@@ -463,7 +463,7 @@ const EditAssessmentModal = ({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="draft">{t("assessments.statusDraft")}</option>
                 <option value="published">{t("assessments.statusPublished")}</option>
@@ -480,7 +480,7 @@ const EditAssessmentModal = ({
                 type="number"
                 value={totalMarks}
                 onChange={(e) => setTotalMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={1}
                 required
               />
@@ -493,7 +493,7 @@ const EditAssessmentModal = ({
                 type="number"
                 value={passingMarks}
                 onChange={(e) => setPassingMarks(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={0}
                 required
               />
@@ -507,7 +507,7 @@ const EditAssessmentModal = ({
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                   placeholder={t("assessments.minutes")}
                   min={1}
                 />
@@ -547,7 +547,7 @@ const EditAssessmentModal = ({
               <textarea
                 value={editInstructions}
                 onChange={(e) => setEditInstructions(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[80px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[80px]"
                 placeholder={t("assessments.instructionsPlaceholder") || "Enter assignment instructions..."}
               />
             </div>
@@ -556,7 +556,7 @@ const EditAssessmentModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -709,7 +709,7 @@ const AddQuestionModal = ({
               <select
                 value={qType}
                 onChange={(e) => setQType(e.target.value as QuestionType)}
-                className="w-full px-2 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="mcq">{t("assessments.typeMCQ")}</option>
                 <option value="true_false">{t("assessments.typeTrueFalse")}</option>
@@ -724,7 +724,7 @@ const AddQuestionModal = ({
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                className="w-full px-2 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="easy">{t("assessments.difficultyEasy")}</option>
                 <option value="medium">{t("assessments.difficultyMedium")}</option>
@@ -739,7 +739,7 @@ const AddQuestionModal = ({
                 type="number"
                 value={marks}
                 onChange={(e) => setMarks(Number(e.target.value))}
-                className="w-full px-2 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={1}
               />
             </div>
@@ -753,7 +753,7 @@ const AddQuestionModal = ({
             <textarea
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
               rows={3}
               required
             />
@@ -767,7 +767,7 @@ const AddQuestionModal = ({
             <textarea
               value={questionTextAr}
               onChange={(e) => setQuestionTextAr(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
               rows={2}
               dir="rtl"
             />
@@ -793,7 +793,7 @@ const AddQuestionModal = ({
                       type="text"
                       value={opt.text}
                       onChange={(e) => handleOptionChange(idx, "text", e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="flex-1 px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       placeholder={`${t("assessments.option")} ${idx + 1}`}
                     />
                     {options.length > 2 && (
@@ -811,7 +811,7 @@ const AddQuestionModal = ({
                       type="text"
                       value={opt.textAr || ""}
                       onChange={(e) => handleOptionChange(idx, "textAr", e.target.value)}
-                      className="w-full px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       placeholder={`${t("assessments.optionAr")} ${idx + 1}`}
                       dir="rtl"
                     />
@@ -864,7 +864,7 @@ const AddQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1012,7 +1012,7 @@ const EditQuestionModal = ({
               <select
                 value={qType}
                 onChange={(e) => setQType(e.target.value as QuestionType)}
-                className="w-full px-2 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="mcq">{t("assessments.typeMCQ")}</option>
                 <option value="true_false">{t("assessments.typeTrueFalse")}</option>
@@ -1027,7 +1027,7 @@ const EditQuestionModal = ({
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                className="w-full px-2 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="easy">{t("assessments.difficultyEasy")}</option>
                 <option value="medium">{t("assessments.difficultyMedium")}</option>
@@ -1042,7 +1042,7 @@ const EditQuestionModal = ({
                 type="number"
                 value={marks}
                 onChange={(e) => setMarks(Number(e.target.value))}
-                className="w-full px-2 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-2 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={1}
               />
             </div>
@@ -1054,7 +1054,7 @@ const EditQuestionModal = ({
             <textarea
               value={questionText}
               onChange={(e) => setQuestionText(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
               rows={3}
               required
             />
@@ -1066,7 +1066,7 @@ const EditQuestionModal = ({
             <textarea
               value={questionTextAr}
               onChange={(e) => setQuestionTextAr(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
               rows={2}
               dir="rtl"
             />
@@ -1090,7 +1090,7 @@ const EditQuestionModal = ({
                       type="text"
                       value={opt.text}
                       onChange={(e) => handleOptionChange(idx, "text", e.target.value)}
-                      className="flex-1 px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="flex-1 px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       placeholder={`${t("assessments.option")} ${idx + 1}`}
                     />
                     {options.length > 2 && (
@@ -1108,7 +1108,7 @@ const EditQuestionModal = ({
                       type="text"
                       value={opt.textAr || ""}
                       onChange={(e) => handleOptionChange(idx, "textAr", e.target.value)}
-                      className="w-full px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       placeholder={`${t("assessments.optionAr")} ${idx + 1}`}
                       dir="rtl"
                     />
@@ -1158,7 +1158,7 @@ const EditQuestionModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
             >
               {t("assessments.cancel")}
             </button>
@@ -1294,7 +1294,7 @@ const GradeModal = ({
                       href={f.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg hover:bg-[#F3F4F6] text-sm text-[#3B82F6]"
+                      className="flex items-center gap-2 p-2 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] text-sm text-[#3B82F6]"
                     >
                       <FileText className="w-4 h-4" />
                       {f.fileName}
@@ -1329,7 +1329,7 @@ const GradeModal = ({
               <textarea
                 value={overallComment}
                 onChange={(e) => setOverallComment(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[80px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[80px]"
                 placeholder={t("assessments.addComment") || "Add a comment..."}
               />
             </div>
@@ -1345,7 +1345,7 @@ const GradeModal = ({
 
               return (
                 <div key={answer.questionId}>
-                  {idx > 0 && <hr className="border-[#E5E7EB] my-4" />}
+                  {idx > 0 && <hr className="border-[var(--color-border)] my-4" />}
                   <div className="py-2">
                     {/* Question header */}
                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -1423,7 +1423,7 @@ const GradeModal = ({
                               [answer.questionId]: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           placeholder={t("assessments.questionComment") || "Add comment for this question..."}
                         />
                       </>
@@ -1464,7 +1464,7 @@ const GradeModal = ({
             })}
 
             {/* Overall comment for quiz/exam */}
-            <hr className="border-[#E5E7EB] my-4" />
+            <hr className="border-[var(--color-border)] my-4" />
             <div className="pt-2">
               <label className="block text-sm font-medium text-[#374151] mb-1">
                 {t("assessments.overallComment") || "Overall Comment"}
@@ -1472,18 +1472,18 @@ const GradeModal = ({
               <textarea
                 value={overallComment}
                 onChange={(e) => setOverallComment(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[60px]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[60px]"
                 placeholder={t("assessments.addComment") || "Add an overall comment..."}
               />
             </div>
           </div>
         )}
 
-        <div className="flex gap-3 pt-4 mt-4 border-t border-[#E5E7EB]">
+        <div className="flex gap-3 pt-4 mt-4 border-t border-[var(--color-border)]">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+            className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
           >
             {t("assessments.cancel")}
           </button>
@@ -1989,7 +1989,7 @@ const AssessmentsContent = () => {
                 <>
                   {/* Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                           <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
@@ -2000,7 +2000,7 @@ const AssessmentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                           <CheckCircle className="w-5 h-5 text-[#22C55E]" />
@@ -2011,7 +2011,7 @@ const AssessmentsContent = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-[#FEF9C3] flex items-center justify-center">
                           <Clock className="w-5 h-5 text-[#EAB308]" />
@@ -2025,8 +2025,8 @@ const AssessmentsContent = () => {
                   </div>
 
                   {/* Tabs */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB]">
-                    <div className="flex border-b border-[#E5E7EB] overflow-x-auto">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)]">
+                    <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                       {tabs.map((tab) => (
                         <button
                           key={tab.id}
@@ -2050,7 +2050,7 @@ const AssessmentsContent = () => {
                     {activeTab === "all" && (
                       <>
                         {/* Search and Filters */}
-                        <div className="p-4 border-b border-[#E5E7EB]">
+                        <div className="p-4 border-b border-[var(--color-border)]">
                           <div className="flex flex-col md:flex-row gap-4">
                             <div className="relative flex-1">
                               <Search
@@ -2061,12 +2061,12 @@ const AssessmentsContent = () => {
                                 placeholder={t("assessments.searchPlaceholder")}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                                className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                               />
                             </div>
                             <button
                               onClick={() => setShowFilters(!showFilters)}
-                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                              className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
                             >
                               <Filter className="w-4 h-4" />
                               {t("assessments.filters")}
@@ -2078,7 +2078,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2090,7 +2090,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {types.map((t_) => (
                                   <option key={t_.id} value={t_.id}>{t_.name}</option>
@@ -2099,7 +2099,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {statusOptions.map((s) => (
                                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -2108,11 +2108,11 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                           {showFilters && (
-                            <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] grid grid-cols-2 gap-3">
+                            <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-2 gap-3">
                               <select
                                 value={selectedCourse}
                                 onChange={(e) => setSelectedCourse(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2124,7 +2124,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedType}
                                 onChange={(e) => setSelectedType(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {types.map((t_) => (
                                   <option key={t_.id} value={t_.id}>{t_.name}</option>
@@ -2133,7 +2133,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 {statusOptions.map((s) => (
                                   <option key={s.id} value={s.id}>{s.name}</option>
@@ -2146,7 +2146,7 @@ const AssessmentsContent = () => {
                         <div className="p-5 space-y-4">
                           {filteredAssessments.length === 0 ? (
                             <div className="text-center py-12">
-                              <ClipboardList className="w-12 h-12 text-[#D1D5DB] mx-auto mb-4" />
+                              <ClipboardList className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                               <h3 className="text-lg font-semibold text-[#1F2937] mb-2">
                                 {t("assessments.noAssessments")}
                               </h3>
@@ -2158,7 +2158,7 @@ const AssessmentsContent = () => {
                             filteredAssessments.map((assessment) => (
                               <div
                                 key={assessment.id}
-                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors"
                               >
                                 <div className="flex-1">
                                   <div className="flex items-start gap-3">
@@ -2299,7 +2299,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbCourseFilter}
                                 onChange={(e) => { setQbCourseFilter(e.target.value); setSelectedAssessmentForQ(""); }}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2313,13 +2313,13 @@ const AssessmentsContent = () => {
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
                                   value={qbSearchQuery}
                                   onChange={(e) => setQbSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                 />
                               </div>
                               <select
                                 value={qbStatusFilter}
                                 onChange={(e) => setQbStatusFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allStatuses")}</option>
                                 <option value="draft">{t("assessments.statusDraft")}</option>
@@ -2328,7 +2328,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={qbTypeFilter}
                                 onChange={(e) => setQbTypeFilter(e.target.value)}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                               >
                                 <option value="all">{t("assessments.allTypes")}</option>
                                 <option value="quiz">{t("assessments.typeQuiz")}</option>
@@ -2340,7 +2340,7 @@ const AssessmentsContent = () => {
                             {/* Step 2: Assessment Cards List */}
                             {qbFiltered.length === 0 ? (
                               <div className="text-center py-10">
-                                <HelpCircle className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                                <HelpCircle className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                                 <p className="text-sm text-[#6B7280]">{t("assessments.noAssessmentsFound") || "No assessments found"}</p>
                               </div>
                             ) : (
@@ -2364,7 +2364,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForQ(a.id)}
-                                      className="w-full text-start p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2401,7 +2401,7 @@ const AssessmentsContent = () => {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => setSelectedAssessmentForQ("")}
-                                className="flex items-center gap-1 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                                className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
                               >
                                 <ChevronDown className="w-4 h-4 rotate-90" />
                                 {t("assessments.back") || "Back"}
@@ -2425,7 +2425,7 @@ const AssessmentsContent = () => {
                                   <select
                                     value={questionTypeFilter}
                                     onChange={(e) => setQuestionTypeFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                    className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                   >
                                     <option value="all">{t("assessments.allTypes")}</option>
                                     <option value="mcq">{t("assessments.typeMCQ")}</option>
@@ -2436,7 +2436,7 @@ const AssessmentsContent = () => {
                                   <select
                                     value={questionDifficultyFilter}
                                     onChange={(e) => setQuestionDifficultyFilter(e.target.value)}
-                                    className="px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                    className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                   >
                                     <option value="all">{t("assessments.allDifficulties")}</option>
                                     <option value="easy">{t("assessments.difficultyEasy")}</option>
@@ -2508,7 +2508,7 @@ const AssessmentsContent = () => {
                                     {t("assessments.assignmentFiles") || "Assignment Files"}
                                   </p>
                                   {selAssignment.instructions && (
-                                    <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg p-3 mb-3">
+                                    <div className="bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg p-3 mb-3">
                                       <p className="text-xs font-medium text-[#6B7280] mb-1">{t("assessments.assignmentInstructions") || "Instructions"}</p>
                                       <p className="text-sm text-[#374151] whitespace-pre-wrap">{selAssignment.instructions}</p>
                                     </div>
@@ -2521,7 +2521,7 @@ const AssessmentsContent = () => {
                                 </div>
 
                                 {/* Upload zone */}
-                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#D1D5DB] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors">
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors">
                                   <div className="flex flex-col items-center">
                                     <Plus className="w-8 h-8 text-[#9CA3AF] mb-1" />
                                     <p className="text-sm text-[#6B7280]">
@@ -2533,7 +2533,7 @@ const AssessmentsContent = () => {
                                   />
                                 </label>
                                 {uploading && (
-                                  <div className="w-full bg-[#E5E7EB] rounded-full h-2">
+                                  <div className="w-full bg-[var(--color-border)] rounded-full h-2">
                                     <div className="bg-[#3B82F6] h-2 rounded-full transition-all" style={{ width: `${uploadPct}%` }} />
                                   </div>
                                 )}
@@ -2546,7 +2546,7 @@ const AssessmentsContent = () => {
                                 ) : (
                                   <div className="space-y-2">
                                     {files.map((f) => (
-                                      <div key={f.id} className="flex items-center justify-between p-3 border border-[#E5E7EB] rounded-lg">
+                                      <div key={f.id} className="flex items-center justify-between p-3 border border-[var(--color-border)] rounded-lg">
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                           <FileText className="w-4 h-4 text-[#3B82F6] shrink-0" />
                                           <a href={f.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-[#3B82F6] hover:underline truncate">{f.fileName}</a>
@@ -2576,7 +2576,7 @@ const AssessmentsContent = () => {
                             </p>
                             {filteredQuestions.length === 0 ? (
                               <div className="text-center py-8">
-                                <HelpCircle className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                                <HelpCircle className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                                 <p className="text-sm text-[#6B7280]">
                                   {t("assessments.noQuestions")}
                                 </p>
@@ -2587,7 +2587,7 @@ const AssessmentsContent = () => {
                                 return (
                                 <div
                                   key={question.id}
-                                  className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-4 border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB] transition-colors"
+                                  className="flex flex-col md:flex-row md:items-start justify-between gap-4 p-4 border border-[var(--color-border)] rounded-xl hover:bg-[#F9FAFB] transition-colors"
                                 >
                                   <div className="flex items-start gap-3 flex-1">
                                     <div className="w-9 h-9 rounded-lg bg-[#F3F4F6] flex items-center justify-center shrink-0">
@@ -2678,7 +2678,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={subCourseFilter}
                                 onChange={(e) => { setSubCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses")}</option>
                                 {courses.map((c) => (
@@ -2692,13 +2692,13 @@ const AssessmentsContent = () => {
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
                                   value={subSearchQuery}
                                   onChange={(e) => setSubSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                 />
                               </div>
                             </div>
                             {subFiltered.length === 0 ? (
                               <div className="text-center py-10">
-                                <Users className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                                <Users className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                                 <p className="text-sm text-[#6B7280]">{t("assessments.noPublishedAssessments") || "No published assessments found"}</p>
                               </div>
                             ) : (
@@ -2711,7 +2711,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForS(a.id)}
-                                      className="w-full text-start p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -2741,7 +2741,7 @@ const AssessmentsContent = () => {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => setSelectedAssessmentForS("")}
-                                className="flex items-center gap-1 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                                className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
                               >
                                 <ChevronDown className="w-4 h-4 rotate-90" />
                                 {t("assessments.back") || "Back"}
@@ -2758,7 +2758,7 @@ const AssessmentsContent = () => {
                             <select
                               value={submissionStatusFilter}
                               onChange={(e) => setSubmissionStatusFilter(e.target.value)}
-                              className="px-2 py-1.5 border border-[#E5E7EB] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="px-2 py-1.5 border border-[var(--color-border)] rounded-lg text-xs text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             >
                               <option value="all">{t("assessments.filterByStatus")}</option>
                               <option value="submitted">{t("assessments.submissionPending")}</option>
@@ -2781,7 +2781,7 @@ const AssessmentsContent = () => {
                               : submissions.filter((s) => s.status === submissionStatusFilter)
                             ).length === 0 ? (
                               <div className="text-center py-8">
-                                <Users className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                                <Users className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                                 <p className="text-sm text-[#6B7280]">
                                   {t("assessments.noSubmissions")}
                                 </p>
@@ -2811,7 +2811,7 @@ const AssessmentsContent = () => {
                                       </th>
                                     </tr>
                                   </thead>
-                                  <tbody className="divide-y divide-[#E5E7EB]">
+                                  <tbody className="divide-y divide-[var(--color-border)]">
                                     {(() => {
                                       const filtered = submissionStatusFilter === "all"
                                         ? submissions
@@ -2843,7 +2843,7 @@ const AssessmentsContent = () => {
                                                 </div>
                                               ) : (
                                                 <div className="flex items-center gap-3">
-                                                  <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                                                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
                                                     {(sub.studentFirstName?.[0] || "").toUpperCase()}
                                                     {(sub.studentLastName?.[0] || "").toUpperCase()}
                                                   </div>
@@ -2908,7 +2908,7 @@ const AssessmentsContent = () => {
                                                       {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[#6B7280]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#6B7280]" />}
                                                     </button>
                                                   )}
-                                                  <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                                                  <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
                                                     {(effectiveRow.studentFirstName?.[0] || "").toUpperCase()}
                                                     {(effectiveRow.studentLastName?.[0] || "").toUpperCase()}
                                                   </div>
@@ -2989,7 +2989,7 @@ const AssessmentsContent = () => {
                               <select
                                 value={iaCourseFilter}
                                 onChange={(e) => { setIaCourseFilter(e.target.value); }}
-                                className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
+                                className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-w-[200px]"
                               >
                                 <option value="">{t("assessments.allCourses") || "All Courses"}</option>
                                 {courses.map((c) => (
@@ -3003,13 +3003,13 @@ const AssessmentsContent = () => {
                                   placeholder={t("assessments.searchByName") || "Search by name..."}
                                   value={iaSearchQuery}
                                   onChange={(e) => setIaSearchQuery(e.target.value)}
-                                  className="w-full pl-9 pr-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                                  className="w-full pl-9 pr-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                                 />
                               </div>
                             </div>
                             {iaFiltered.length === 0 ? (
                               <div className="text-center py-10">
-                                <BarChart3 className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                                <BarChart3 className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                                 <p className="text-sm text-[#6B7280]">{t("assessments.noPublishedAssessments") || "No published assessments found"}</p>
                                 <p className="text-xs text-[#9CA3AF] mt-1">{t("assessments.itemAnalysisQuizExamOnly") || "Item analysis is available for quizzes and exams only"}</p>
                               </div>
@@ -3023,7 +3023,7 @@ const AssessmentsContent = () => {
                                     <button
                                       key={a.id}
                                       onClick={() => setSelectedAssessmentForIA(a.id)}
-                                      className="w-full text-start p-3 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
+                                      className="w-full text-start p-3 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] hover:border-[#3B82F6] transition-colors flex items-center justify-between gap-3"
                                     >
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -3052,7 +3052,7 @@ const AssessmentsContent = () => {
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => setSelectedAssessmentForIA("")}
-                              className="flex items-center gap-1 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                              className="flex items-center gap-1 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F3F4F6] transition-colors"
                             >
                               <ChevronDown className="w-4 h-4 rotate-90" />
                               {t("assessments.back") || "Back"}
@@ -3099,7 +3099,7 @@ const AssessmentsContent = () => {
                             {/* Pre/Post Comparison */}
                             {itemAnalysis.prePostComparison &&
                               itemAnalysis.prePostComparison.length > 1 && (
-                                <div className="p-4 border border-[#E5E7EB] rounded-xl">
+                                <div className="p-4 border border-[var(--color-border)] rounded-xl">
                                   <h4 className="text-sm font-semibold text-[#1F2937] mb-3">
                                     {t("assessments.prePostComparison")}
                                   </h4>
@@ -3116,7 +3116,7 @@ const AssessmentsContent = () => {
                                             {item.title}
                                           </span>
                                           <div className="flex items-center gap-2 shrink-0">
-                                            <div className="w-24 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                            <div className="w-24 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                               <div
                                                 className="h-full bg-[#3B82F6] rounded-full"
                                                 style={{
@@ -3148,7 +3148,7 @@ const AssessmentsContent = () => {
                             {/* Question-Level Analysis */}
                             {itemAnalysis.questions.length === 0 ? (
                               <div className="text-center py-8">
-                                <BarChart3 className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                                <BarChart3 className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                                 <p className="text-sm text-[#6B7280]">
                                   {t("assessments.noAnalysisData")}
                                 </p>
@@ -3172,7 +3172,7 @@ const AssessmentsContent = () => {
                                       </th>
                                     </tr>
                                   </thead>
-                                  <tbody className="divide-y divide-[#E5E7EB]">
+                                  <tbody className="divide-y divide-[var(--color-border)]">
                                     {itemAnalysis.questions.map((item, idx) => {
                                       const correctRate =
                                         item.totalAttempts > 0
@@ -3195,7 +3195,7 @@ const AssessmentsContent = () => {
                                           </td>
                                           <td className="py-3">
                                             <div className="flex items-center gap-2">
-                                              <div className="w-20 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                              <div className="w-20 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                                 <div
                                                   className={`h-full rounded-full ${
                                                     correctRate >= 70
@@ -3389,7 +3389,7 @@ const AssessmentsContent = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => { setPublishConfirmId(null); setPublishCheckData(null); }}
-                className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+                className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
               >
                 {t("assessments.cancel")}
               </button>

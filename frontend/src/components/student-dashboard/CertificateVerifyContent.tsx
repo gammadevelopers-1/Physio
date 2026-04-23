@@ -76,7 +76,7 @@ export default function CertificateVerifyContent({
     return (
       <div className="min-h-screen bg-[#F8F9FC] flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
-          <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-lg p-10">
+          <div className="bg-white rounded-2xl border border-[var(--color-border)] shadow-lg p-10">
             <div className="w-20 h-20 bg-[#FEF2F2] rounded-full flex items-center justify-center mx-auto mb-5">
               <XCircle className="w-10 h-10 text-[#EF4444]" />
             </div>
@@ -123,7 +123,7 @@ export default function CertificateVerifyContent({
         </div>
 
         {/* Certificate Card */}
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] shadow-lg overflow-hidden">
           {/* Status Banner */}
           {result.verified ? (
             <div className="bg-gradient-to-r from-[#002D87] to-[#0046D4] px-8 py-6">
@@ -170,9 +170,9 @@ export default function CertificateVerifyContent({
 
             {/* Decorative divider */}
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex-1 h-px bg-[#E5E7EB]" />
+              <div className="flex-1 h-px bg-[var(--color-border)]" />
               <Award className="w-5 h-5 text-[#D4A520]" />
-              <div className="flex-1 h-px bg-[#E5E7EB]" />
+              <div className="flex-1 h-px bg-[var(--color-border)]" />
             </div>
 
             {/* Certificate Title */}
@@ -215,7 +215,7 @@ export default function CertificateVerifyContent({
           </div>
 
           {/* Footer */}
-          <div className="border-t border-[#E5E7EB] bg-[#FAFBFC] px-8 py-4 flex items-center justify-between">
+          <div className="border-t border-[var(--color-border)] bg-[#FAFBFC] px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Image src="/images/logo.png" alt="" width={20} height={20} />
               <span className="text-xs text-[#9CA3AF]">Issued by PhysioGuidance</span>

@@ -121,7 +121,7 @@ const CalendarContent = () => {
                 </h1>
                 <button
                   onClick={handleExportIcs}
-                  className="flex items-center gap-1.5 px-3 py-2 border border-[#E5E7EB] text-[#4B5563] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-2 border border-[var(--color-border)] text-[#4B5563] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   {t("calendarPage.exportIcs")}
@@ -130,16 +130,16 @@ const CalendarContent = () => {
 
               <OfflineBanner />
 
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {loading ? (
                   <div className="space-y-4 py-4">
                     <div className="flex justify-between items-center">
-                      <div className="bg-[#E5E7EB] rounded animate-pulse h-6 w-32" />
-                      <div className="bg-[#E5E7EB] rounded animate-pulse h-8 w-20" />
+                      <div className="bg-[var(--color-border)] rounded animate-pulse h-6 w-32" />
+                      <div className="bg-[var(--color-border)] rounded animate-pulse h-8 w-20" />
                     </div>
                     <div className="grid grid-cols-7 gap-2">
                       {Array.from({ length: 35 }).map((_, i) => (
-                        <div key={i} className="bg-[#E5E7EB] rounded animate-pulse h-12" />
+                        <div key={i} className="bg-[var(--color-border)] rounded animate-pulse h-12" />
                       ))}
                     </div>
                   </div>

@@ -49,7 +49,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F9FAFB]",
+          "bg-white border border-[var(--color-border)] text-[#1F2937] hover:bg-[#F9FAFB]",
         key: "resumeLesson" as const,
       };
     case "upload_assignment":
@@ -68,7 +68,7 @@ function getActionConfig(action: string) {
       return {
         icon: PlayCircle,
         color:
-          "bg-white border border-[#E5E7EB] text-[#1F2937] hover:bg-[#F9FAFB]",
+          "bg-white border border-[var(--color-border)] text-[#1F2937] hover:bg-[#F9FAFB]",
         key: "startCourse" as const,
       };
   }
@@ -107,7 +107,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
   const { isFavourite, toggleFavourite } = useFavourites();
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mt-6">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mt-6">
       <h2 className="text-lg font-semibold text-[#1F2937] mb-6">
         {t("recentCourses.title")}
       </h2>
@@ -142,7 +142,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
             return (
               <div
                 key={course.id}
-                className="min-w-[280px] max-w-[320px] snap-start flex-shrink-0 border border-[#E5E7EB] rounded-xl overflow-hidden relative"
+                className="min-w-[280px] max-w-[320px] snap-start flex-shrink-0 border border-[var(--color-border)] rounded-xl overflow-hidden relative"
               >
                 {/* Deadline Badge */}
                 <DeadlineBadge deadline={course.nextDeadline} t={t} />
@@ -208,7 +208,7 @@ const RecentCourses = ({ courses }: RecentCoursesProps) => {
                         {course.progress}%
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#16A34A] rounded-full transition-all duration-300"
                         style={{ width: `${course.progress}%` }}

@@ -211,7 +211,7 @@ export default function TrustedDevicesSection({
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                 device.isCurrentDevice
                   ? "border-green-200 bg-green-50/50"
-                  : "border-[#f0f0f0] hover:border-[#e5e7eb]"
+                  : "border-[#f0f0f0] hover:border-[var(--color-border)]"
               }`}
             >
               <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${

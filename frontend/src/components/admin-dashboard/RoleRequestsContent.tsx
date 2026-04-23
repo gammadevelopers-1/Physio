@@ -140,26 +140,26 @@ const RoleRequestsContent = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#1F2937]">{stats.total}</p>
               <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.total") || "Total"}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#D97706]">{stats.pending}</p>
               <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.pending") || "Pending"}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#16A34A]">{stats.approved}</p>
               <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.approved") || "Approved"}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-2xl font-bold text-[#DC2626]">{stats.rejected}</p>
               <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.stats.rejected") || "Rejected"}</p>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
@@ -168,13 +168,13 @@ const RoleRequestsContent = () => {
                   placeholder={t("roleRequestsPage.searchPlaceholder") || "Search by name or email..."}
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
-                  className={`w-full h-10 border border-[#E5E7EB] rounded-lg text-sm outline-none focus:border-[#002D87] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                  className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm outline-none focus:border-[#002D87] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 px-3 border border-[#E5E7EB] rounded-lg text-sm bg-white outline-none focus:border-[#002D87]"
+                className="h-10 px-3 border border-[var(--color-border)] rounded-lg text-sm bg-white outline-none focus:border-[#002D87]"
               >
                 <option value="all">{t("roleRequestsPage.filterAll") || "All Status"}</option>
                 <option value="PENDING">{t("roleRequestsPage.filterPending") || "Pending"}</option>
@@ -193,14 +193,14 @@ const RoleRequestsContent = () => {
           )}
 
           {/* Table */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-[#002D87]" />
               </div>
             ) : requests.length === 0 ? (
               <div className="text-center py-16">
-                <FileText className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                <FileText className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                 <p className="text-sm text-[#6B7280]">{t("roleRequestsPage.noResults") || "No role requests found"}</p>
               </div>
             ) : (
@@ -209,7 +209,7 @@ const RoleRequestsContent = () => {
                 <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                      <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                         <th className="text-start px-4 py-3 text-xs font-medium text-[#6B7280] uppercase tracking-wider">
                           {t("roleRequestsPage.colApplicant") || "Applicant"}
                         </th>
@@ -239,7 +239,7 @@ const RoleRequestsContent = () => {
                           <tr
                             key={request.id}
                             onClick={() => router.push(`/${locale}/dashboard/admin/role-requests/${request.id}`)}
-                            className="border-b border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                            className="border-b border-[var(--color-border)] hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                           >
                             <td className="px-4 py-3">
                               <p className="text-sm font-medium text-[#1F2937]">{getApplicantName(request)}</p>
@@ -276,7 +276,7 @@ const RoleRequestsContent = () => {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="md:hidden divide-y divide-[#E5E7EB]">
+                <div className="md:hidden divide-y divide-[var(--color-border)]">
                   {requests.map((request) => {
                     const config = statusConfig[request.status as keyof typeof statusConfig] || statusConfig.PENDING;
                     const StatusIcon = config.icon;
@@ -305,7 +305,7 @@ const RoleRequestsContent = () => {
 
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                  <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
                     <p className="text-sm text-[#6B7280]">
                       {t("roleRequestsPage.showing") || "Showing"} {(currentPage - 1) * 10 + 1}-{Math.min(currentPage * 10, pagination.total)} {t("roleRequestsPage.of") || "of"} {pagination.total}
                     </p>
@@ -313,7 +313,7 @@ const RoleRequestsContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                         disabled={!pagination.hasPrev}
-                        className="p-1.5 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                       </button>
@@ -337,7 +337,7 @@ const RoleRequestsContent = () => {
                       <button
                         onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                         disabled={!pagination.hasNext}
-                        className="p-1.5 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="p-1.5 rounded-lg border border-[var(--color-border)] hover:bg-[#F9FAFB] disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>

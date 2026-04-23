@@ -66,7 +66,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[#E5E7EB]">
+            <tr className="border-b border-[var(--color-border)]">
               <th
                 className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
@@ -147,7 +147,7 @@ const UserManagementWidget = ({ users }: UserManagementWidgetProps) => {
       </div>
 
       {/* View All Link */}
-      <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
+      <div className="mt-4 pt-4 border-t border-[var(--color-border)]">
         <Link
           href={`/${locale}/dashboard/admin/users`}
           className="text-sm text-[#0066FF] hover:underline flex items-center gap-1"

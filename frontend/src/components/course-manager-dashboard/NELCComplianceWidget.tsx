@@ -44,7 +44,7 @@ const NELCComplianceWidget = ({
   const failedPercent = (compliance.failed / total) * 100;
 
   return (
-    <div className="bg-[var(--surface-intense)] rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+    <div className="bg-[var(--surface-intense)] rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ const NELCComplianceWidget = ({
           <p className="text-sm text-[var(--on-surface-variant)] mt-1">{t("nelc.compliant")}</p>
 
           {/* Progress Bar */}
-          <div className="mt-4 h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+          <div className="mt-4 h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
             <div className="flex h-full">
               <div
                 className="bg-[var(--functional-green-600)]"
@@ -130,7 +130,7 @@ const NELCComplianceWidget = ({
             return (
               <div
                 key={report.id}
-                className="bg-[#F9FAFB] rounded-xl p-4 sm:p-5 text-center border border-[#E5E7EB] hover:border-[var(--blue-brand-blue)] hover:shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#002D87]"
+                className="bg-[#F9FAFB] rounded-xl p-4 sm:p-5 text-center border border-[var(--color-border)] hover:border-[var(--blue-brand-blue)] hover:shadow-md transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#002D87]"
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.currentTarget.click(); } }}

@@ -44,7 +44,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
   });
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] mt-4">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] mt-4">
       <div className="p-6">
         <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
           {t("calendar.title")}
@@ -77,7 +77,7 @@ const CalendarPanel = ({ events }: CalendarPanelProps) => {
               return (
                 <div
                   key={event.id}
-                  className="p-3 border border-[#E5E7EB] rounded-lg"
+                  className="p-3 border border-[var(--color-border)] rounded-lg"
                 >
                   {/* Date/Time + Delivery Icon */}
                   <div className="flex items-center gap-1.5 mb-1.5">

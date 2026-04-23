@@ -195,7 +195,7 @@ const StudentCourseDetailContent = () => {
                   <Loader2 className="w-8 h-8 text-[#9CA3AF] animate-spin" />
                 </div>
               ) : error || !data ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <p className="text-[#6B7280]">
                     {error || t("courseDetail.notFound")}
                   </p>
@@ -203,7 +203,7 @@ const StudentCourseDetailContent = () => {
               ) : (
                 <>
                   {/* Course Header */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                       {/* Thumbnail */}
                       <div className="w-full sm:w-[200px] h-[120px] sm:h-[130px] bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -266,7 +266,7 @@ const StudentCourseDetailContent = () => {
                               {data.enrollment.progress}%
                             </span>
                           </div>
-                          <div className="h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                          <div className="h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                             <div
                               className={`h-full bg-[#16A34A] rounded-full transition-all duration-300 ${isRTL ? "ms-auto" : ""}`}
                               style={{
@@ -303,7 +303,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Course Description / Learning Objectives */}
                   {(data.course.description || data.course.descriptionAr) && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h3 className="text-sm font-semibold text-[#1F2937] mb-3">
                         {t("courseDetail.aboutCourse")}
                       </h3>
@@ -318,7 +318,7 @@ const StudentCourseDetailContent = () => {
                   {/* Course Info Grid */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                     {/* Modules */}
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0F7FF] rounded-lg flex items-center justify-center">
                           <BookOpen className="w-5 h-5 text-[#002D87]" />
@@ -337,7 +337,7 @@ const StudentCourseDetailContent = () => {
 
                     {/* Attendance — hidden for self-paced */}
                     {data.course.deliveryType !== "self-paced" && (
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-10 h-10 rounded-lg flex items-center justify-center ${
@@ -383,7 +383,7 @@ const StudentCourseDetailContent = () => {
                     )}
 
                     {/* Assessments */}
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center">
                           <ClipboardCheck className="w-5 h-5 text-[#D4A520]" />
@@ -412,7 +412,7 @@ const StudentCourseDetailContent = () => {
                     </div>
 
                     {/* Status */}
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#F0FDF4] rounded-lg flex items-center justify-center">
                           <Users className="w-5 h-5 text-[#16A34A]" />
@@ -533,7 +533,7 @@ const StudentCourseDetailContent = () => {
                   })()}
 
                   {/* Modules List */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                       {t("courseDetail.courseModules")}
                     </h2>
@@ -549,7 +549,7 @@ const StudentCourseDetailContent = () => {
                           .map((module, index) => {
                             const moduleAssessments = data.assessments.filter((a) => a.moduleId === module.id);
                             return (
-                              <div key={module.id} className="rounded-lg border border-[#E5E7EB]">
+                              <div key={module.id} className="rounded-lg border border-[var(--color-border)]">
                                 <Link
                                   href={`/${locale}/dashboard/student/courses/${courseId}/learn`}
                                   className="flex items-center gap-3 p-3 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
@@ -588,7 +588,7 @@ const StudentCourseDetailContent = () => {
                                   </div>
                                 </Link>
                                 {moduleAssessments.length > 0 && (
-                                  <div className="border-t border-[#E5E7EB] px-3 py-2 space-y-1.5">
+                                  <div className="border-t border-[var(--color-border)] px-3 py-2 space-y-1.5">
                                     {moduleAssessments.map((ma) => (
                                       <Link
                                         key={ma.id}
@@ -607,7 +607,7 @@ const StudentCourseDetailContent = () => {
                                         ) : ma.submission?.status === "submitted" ? (
                                           <Clock className="w-3.5 h-3.5 text-[#D4A520] flex-shrink-0" />
                                         ) : (
-                                          <Circle className="w-3.5 h-3.5 text-[#D1D5DB] flex-shrink-0" />
+                                          <Circle className="w-3.5 h-3.5 text-[var(--color-border)] flex-shrink-0" />
                                         )}
                                       </Link>
                                     ))}
@@ -622,7 +622,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Attendance History — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && data.attendanceRecords && data.attendanceRecords.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] mb-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-4">
                       <button
                         onClick={() => setShowAttendanceHistory(!showAttendanceHistory)}
                         className="w-full flex items-center justify-between p-4 sm:p-6 hover:bg-[#F9FAFB] transition-colors rounded-xl"
@@ -645,18 +645,18 @@ const StudentCourseDetailContent = () => {
                       </button>
 
                       {showAttendanceHistory && (
-                        <div className="border-t border-[#E5E7EB]">
+                        <div className="border-t border-[var(--color-border)]">
                           {/* Marked by info — shown once */}
                           {(() => {
                             const marker = data.attendanceRecords.find((r: any) => (r as any).markedByName);
                             if (!marker) return null;
                             return (
-                              <div className="flex items-center gap-3 px-4 sm:px-6 py-2 bg-[#FAFAFA] text-[10px] text-[#9CA3AF] border-b border-[#E5E7EB]">
+                              <div className="flex items-center gap-3 px-4 sm:px-6 py-2 bg-[#FAFAFA] text-[10px] text-[#9CA3AF] border-b border-[var(--color-border)]">
                                 <span>Marked by: <span className="font-medium text-[#6B7280]">{(marker as any).markedByName}</span> ({(marker as any).markedByRole === "TEACHING_ASSISTANT" ? "TA" : (marker as any).markedByRole === "INSTRUCTOR" ? "Instructor" : (marker as any).markedByRole || "System"})</span>
                               </div>
                             );
                           })()}
-                          <div className="divide-y divide-[#E5E7EB]">
+                          <div className="divide-y divide-[var(--color-border)]">
                           {data.attendanceRecords.map((record) => {
                             const badge = getAttendanceStatusBadge(record.status);
                             return (
@@ -710,7 +710,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Upcoming Sessions (hidden for self-paced) */}
                   {data.course.deliveryType !== "self-paced" && upcomingSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                         {t("courseDetail.upcomingSessions")}
                       </h2>
@@ -719,7 +719,7 @@ const StudentCourseDetailContent = () => {
                         {upcomingSessions.map((session) => (
                           <div
                             key={session.id}
-                            className="flex items-start gap-3 p-3 rounded-lg border border-[#E5E7EB]"
+                            className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)]"
                           >
                             <div className="w-10 h-10 bg-[#FFFBEB] rounded-lg flex items-center justify-center flex-shrink-0">
                               {session.type === "zoom" || session.type === "online" ? (
@@ -776,7 +776,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Past Sessions — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && completedSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                         {t("courseDetail.pastSessions")} ({completedSessions.length})
                       </h2>
@@ -789,7 +789,7 @@ const StudentCourseDetailContent = () => {
                           return (
                           <div
                             key={session.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg border ${wasAbsent ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[#E5E7EB]"}`}
+                            className={`flex items-start gap-3 p-3 rounded-lg border ${wasAbsent ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[var(--color-border)]"}`}
                           >
                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${wasAbsent ? "bg-[#FEE2E2]" : "bg-[#F3F4F6]"}`}>
                               {wasAbsent ? (
@@ -819,7 +819,7 @@ const StudentCourseDetailContent = () => {
                             </div>
                             <button
                               onClick={() => handleViewRecordings(session.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#002D87] border border-[#E5E7EB] rounded-lg hover:bg-[#F0F7FF] transition-colors flex-shrink-0"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#002D87] border border-[var(--color-border)] rounded-lg hover:bg-[#F0F7FF] transition-colors flex-shrink-0"
                             >
                               <Film className="w-3 h-3" />
                               {t("courseDetail.viewRecording")}
@@ -840,13 +840,13 @@ const StudentCourseDetailContent = () => {
 
                   {/* Missed/Rescheduled Lectures — hidden for self-paced */}
                   {data.course.deliveryType !== "self-paced" && inactiveSessions.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                       <h2 className="text-base sm:text-lg font-semibold text-[#6B7280] mb-4">
                         Cancelled / Rescheduled Lectures
                       </h2>
                       <div className="space-y-3">
                         {inactiveSessions.map((session) => (
-                          <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB]">
+                          <div key={session.id} className="flex items-start gap-3 p-3 rounded-lg border border-[var(--color-border)] bg-[#F9FAFB]">
                             <div className="w-10 h-10 bg-[#F3F4F6] rounded-lg flex items-center justify-center flex-shrink-0">
                               <XCircle className="w-5 h-5 text-[#9CA3AF]" />
                             </div>
@@ -869,7 +869,7 @@ const StudentCourseDetailContent = () => {
 
                   {/* Assessments */}
                   {data.assessments.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                       <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                         {t("courseDetail.assessments")}
                       </h2>
@@ -887,7 +887,7 @@ const StudentCourseDetailContent = () => {
                           <div
                             key={assessment.id}
                             className={`flex items-center gap-3 p-3 rounded-lg border ${
-                              isFailed ? "border-red-200 bg-red-50/50" : isExpiredAssignment ? "border-orange-200 bg-orange-50/30" : "border-[#E5E7EB]"
+                              isFailed ? "border-red-200 bg-red-50/50" : isExpiredAssignment ? "border-orange-200 bg-orange-50/30" : "border-[var(--color-border)]"
                             }`}
                           >
                             {isPassed ? (
@@ -1003,7 +1003,7 @@ const StudentCourseDetailContent = () => {
             aria-hidden="true"
           />
           <div className="relative bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto scrollbar-hide">
-            <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+            <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
               <h2 className="text-lg font-semibold text-[#1F2937]">
                 {t("courseDetail.viewRecording")}
               </h2>
@@ -1021,13 +1021,13 @@ const StudentCourseDetailContent = () => {
               </div>
             ) : recordings.length === 0 ? (
               <div className="py-12 text-center">
-                <Film className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                <Film className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                 <p className="text-sm text-[#6B7280]">
                   {t("courseDetail.noRecordings")}
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-[#E5E7EB]">
+              <div className="divide-y divide-[var(--color-border)]">
                 {recordings.map((rec) => (
                   <div key={rec.id} className="p-4 space-y-2">
                     <div className="flex items-center justify-between">
@@ -1051,7 +1051,7 @@ const StudentCourseDetailContent = () => {
                             href={rec.downloadUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
                           >
                             <Download className="w-3 h-3" />
                           </a>
@@ -1072,7 +1072,7 @@ const StudentCourseDetailContent = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-end p-4 border-t border-[#E5E7EB]">
+            <div className="flex items-center justify-end p-4 border-t border-[var(--color-border)]">
               <button
                 onClick={() => setRecordingsModalSession(null)}
                 className="px-4 py-2 text-sm font-medium text-[#6B7280] hover:text-[#1F2937] transition-colors"
@@ -1104,7 +1104,7 @@ const StudentCourseDetailContent = () => {
                 <button
                   onClick={() => setShowDropConfirm(false)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

@@ -252,7 +252,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             onDragOver={handleDragOver}
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[#E5E7EB] hover:border-[#3B82F6]"
+              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[var(--color-border)] hover:border-[#3B82F6]"
             }`}
           >
             <input
@@ -299,7 +299,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t("content.titlePlaceholder")}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             />
           </div>
 
@@ -309,7 +309,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             >
               {courses.filter((c) => c.status !== "completed" && c.status !== "archived").map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
@@ -324,7 +324,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
               <select
                 value={selectedModuleId}
                 onChange={(e) => setSelectedModuleId(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
               >
                 <option value="">{t("content.noModule")}</option>
                 {courseModules.map((m) => (
@@ -347,7 +347,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
                 aria-checked={autoTranscribe}
                 onClick={() => setAutoTranscribe((v) => !v)}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 ${
-                  autoTranscribe ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
+                  autoTranscribe ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
                 }`}
               >
                 <span
@@ -366,7 +366,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
                 <span>{t("content.uploading")}</span>
                 <span>{progress}%</span>
               </div>
-              <div className="w-full bg-[#E5E7EB] rounded-full h-2">
+              <div className="w-full bg-[var(--color-border)] rounded-full h-2">
                 <div
                   className="bg-[#3B82F6] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
@@ -388,7 +388,7 @@ const UploadModal = ({ courses, onClose, onUploaded, t }: UploadModalProps) => {
 
           {/* Actions */}
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -475,7 +475,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           <div
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer ${
-              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[#E5E7EB] hover:border-[#3B82F6]"
+              file ? "border-[#22C55E] bg-[#F0FDF4]" : "border-[var(--color-border)] hover:border-[#3B82F6]"
             }`}
           >
             <input
@@ -510,7 +510,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
                 <span>{t("content.uploading")}</span>
                 <span>{progress}%</span>
               </div>
-              <div className="w-full bg-[#E5E7EB] rounded-full h-2">
+              <div className="w-full bg-[var(--color-border)] rounded-full h-2">
                 <div className="bg-[#3B82F6] h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
               </div>
             </div>
@@ -519,7 +519,7 @@ const ReplaceModal = ({ material, onClose, onReplaced, t }: ReplaceModalProps) =
           {error && <p className="mt-3 text-sm text-[#EF4444]">{error}</p>}
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={uploading} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -599,7 +599,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             />
           </div>
 
@@ -658,7 +658,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.captionsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[#D1D5DB] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadCaptions")}
@@ -669,7 +669,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                     href={material.transcriptUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[#D1D5DB] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[var(--color-border)] rounded-lg text-xs font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                   >
                     <Download className="w-3 h-3" />
                     {t("content.downloadTranscript")}
@@ -689,7 +689,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   value={captionsUrl}
                   onChange={(e) => setCaptionsUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 />
                 <p className="text-xs text-[#9CA3AF] mt-1">{t("content.captionsUrlHint")}</p>
               </div>
@@ -700,7 +700,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   value={transcriptUrl}
                   onChange={(e) => setTranscriptUrl(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 />
               </div>
 
@@ -716,7 +716,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
                   aria-checked={autoTranscribe}
                   onClick={() => setAutoTranscribe((v) => !v)}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:ring-offset-2 ${
-                    autoTranscribe ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
+                    autoTranscribe ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
                   }`}
                 >
                   <span
@@ -737,7 +737,7 @@ const EditModal = ({ material, onClose, onUpdated, t }: EditModalProps) => {
           </div>
 
           <div className="flex gap-3 mt-6">
-            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -793,7 +793,7 @@ const DeleteConfirm = ({ material, onClose, onDeleted, t }: DeleteConfirmProps) 
           <p className="text-sm font-medium text-[#1F2937] mb-6">&ldquo;{material.title}&rdquo;</p>
 
           <div className="flex gap-3">
-            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
+            <button onClick={onClose} disabled={deleting} className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] disabled:opacity-50">
               {t("content.cancel")}
             </button>
             <button
@@ -1108,7 +1108,7 @@ const ContentManagementContent = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={refetch}
-                    className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                    className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                     aria-label={t("content.refresh")}
                   >
                     <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
@@ -1131,7 +1131,7 @@ const ContentManagementContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                       <FolderOpen className="w-5 h-5 text-[#3B82F6]" />
@@ -1142,7 +1142,7 @@ const ContentManagementContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#E0E7FF] flex items-center justify-center">
                       <HardDrive className="w-5 h-5 text-[#6366F1]" />
@@ -1153,7 +1153,7 @@ const ContentManagementContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                       <Check className="w-5 h-5 text-[#22C55E]" />
@@ -1164,7 +1164,7 @@ const ContentManagementContent = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FCE7F3] flex items-center justify-center">
                       <FileCheck className="w-5 h-5 text-[#EC4899]" />
@@ -1186,7 +1186,7 @@ const ContentManagementContent = () => {
               )}
 
               {error && !loading && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                   <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                   <p className="text-[#EF4444] mb-4">{error}</p>
                   <button onClick={refetch} className="px-4 py-2 btn-gold text-white rounded-lg text-sm">
@@ -1198,7 +1198,7 @@ const ContentManagementContent = () => {
               {!loading && !error && (
                 <>
                   {/* Search and Filters */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="relative flex-1">
                         <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] ${isRTL ? "right-3" : "left-3"}`} />
@@ -1207,14 +1207,14 @@ const ContentManagementContent = () => {
                           placeholder={t("content.searchPlaceholder")}
                           value={searchQuery}
                           onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                          className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
+                          className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"}`}
                         />
                       </div>
 
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowFilters(!showFilters)}
-                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
+                          className="md:hidden flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] hover:bg-[#F9FAFB]"
                         >
                           <Filter className="w-4 h-4" />
                           {t("content.filters")}
@@ -1222,7 +1222,7 @@ const ContentManagementContent = () => {
                         </button>
 
                         {/* View Mode Toggle */}
-                        <div className="flex border border-[#E5E7EB] rounded-lg overflow-hidden">
+                        <div className="flex border border-[var(--color-border)] rounded-lg overflow-hidden">
                           <button
                             onClick={() => setViewMode("list")}
                             className={`p-2.5 ${viewMode === "list" ? "bg-[#3B82F6] text-white" : "bg-white text-[#6B7280] hover:bg-[#F9FAFB]"}`}
@@ -1243,7 +1243,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1253,7 +1253,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1262,7 +1262,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1273,11 +1273,11 @@ const ContentManagementContent = () => {
 
                     {/* Mobile Filters */}
                     {showFilters && (
-                      <div className="md:hidden mt-4 pt-4 border-t border-[#E5E7EB] grid grid-cols-3 gap-3">
+                      <div className="md:hidden mt-4 pt-4 border-t border-[var(--color-border)] grid grid-cols-3 gap-3">
                         <select
                           value={selectedCourse}
                           onChange={(e) => handleCourseChange(e.target.value)}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="all">{t("content.allCourses")}</option>
                           {courses.map((c) => (
@@ -1287,7 +1287,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedType}
                           onChange={(e) => { setSelectedType(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {types.map((t) => (
                             <option key={t.id} value={t.id}>{t.name}</option>
@@ -1296,7 +1296,7 @@ const ContentManagementContent = () => {
                         <select
                           value={selectedStatus}
                           onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                          className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           {statuses.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
@@ -1308,8 +1308,8 @@ const ContentManagementContent = () => {
 
                   {/* Empty state */}
                   {filteredMaterials.length === 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
-                      <FolderOpen className="w-12 h-12 text-[#D1D5DB] mx-auto mb-4" />
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
+                      <FolderOpen className="w-12 h-12 text-[var(--color-border)] mx-auto mb-4" />
                       <h3 className="text-lg font-semibold text-[#1F2937] mb-2">{t("content.noFiles")}</h3>
                       <p className="text-sm text-[#6B7280] mb-6">{t("content.noFilesDesc")}</p>
                       {courses.length > 0 && (
@@ -1326,7 +1326,7 @@ const ContentManagementContent = () => {
 
                   {/* List View */}
                   {viewMode === "list" && filteredMaterials.length > 0 && (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full table-fixed">
                           <colgroup>
@@ -1338,7 +1338,7 @@ const ContentManagementContent = () => {
                             <col className="w-[12%]" />
                           </colgroup>
                           <thead>
-                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                            <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                               <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
                                 {t("content.tableFile")}
                               </th>
@@ -1359,7 +1359,7 @@ const ContentManagementContent = () => {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-[#E5E7EB]">
+                          <tbody className="divide-y divide-[var(--color-border)]">
                             {paginatedMaterials.map((m) => (
                               <tr key={m.id} className="hover:bg-[#F9FAFB] transition-colors">
                                 <td className="px-4 py-4 overflow-hidden">
@@ -1463,7 +1463,7 @@ const ContentManagementContent = () => {
                       </div>
 
                       {/* Pagination */}
-                      <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E7EB]">
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--color-border)]">
                         <p className="text-sm text-[#6B7280]">
                           {t("content.showing")} {paginatedMaterials.length} {t("content.of")} {filteredMaterials.length} {t("content.files")}
                         </p>
@@ -1495,7 +1495,7 @@ const ContentManagementContent = () => {
                     <>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {paginatedMaterials.map((m) => (
-                          <div key={m.id} className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow">
+                          <div key={m.id} className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow">
                             {/* File Preview */}
                             <div className={`h-32 flex items-center justify-center relative ${
                               m.type === "video" ? "bg-[#FEE2E2]" :
@@ -1538,7 +1538,7 @@ const ContentManagementContent = () => {
                                 <span>v{m.version}</span>
                               </div>
 
-                              <div className="flex items-center justify-end mt-3 pt-3 border-t border-[#E5E7EB]">
+                              <div className="flex items-center justify-end mt-3 pt-3 border-t border-[var(--color-border)]">
                                 <ActionsDropdown
                                   actions={[
                                     ...(m.fileUrl ? [{

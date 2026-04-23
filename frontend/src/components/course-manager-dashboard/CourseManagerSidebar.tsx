@@ -159,7 +159,7 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
   return (
     <aside className="w-full lg:w-[280px] flex flex-col gap-4">
       {/* Profile Card */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6">
         {/* Profile Section */}
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
@@ -192,7 +192,7 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
                 <Pencil className="w-3.5 h-3.5 text-white" />
               </button>
               {avatarMenuOpen && (
-                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`} role="menu">
+                <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`} role="menu">
                   <button
                     onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -232,7 +232,7 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
         </div>
 
         {/* Stats Row */}
-        <div className="mt-6 flex justify-around py-4 border-t border-[#E5E7EB]">
+        <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
           <div className="text-center">
             <p className="text-xl font-bold text-[#1F2937]">{manager.totalCourses}</p>
             <p className="text-xs text-[#6B7280]">{t("sidebar.courses")}</p>
@@ -250,14 +250,14 @@ const CourseManagerSidebar = ({ manager, pendingReviews: pendingReviewsProp }: C
         {/* View Profile Button */}
         <Link
           href={`/${locale}/dashboard/manager/settings`}
-          className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
+          className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors text-center block"
         >
           {t("sidebar.viewProfile")}
         </Link>
       </div>
 
       {/* Navigation Card */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-4">
         <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;

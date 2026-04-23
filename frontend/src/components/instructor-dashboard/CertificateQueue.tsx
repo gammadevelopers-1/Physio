@@ -52,7 +52,7 @@ const CertificateQueue = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count */}
         <div className="flex items-center justify-between mb-4">
@@ -70,7 +70,7 @@ const CertificateQueue = ({
           {displayCerts.map((cert) => (
             <div
               key={cert.id}
-              className="p-3 rounded-lg border bg-[#F9FAFB] border-transparent hover:border-[#E5E7EB] transition-colors"
+              className="p-3 rounded-lg border bg-[#F9FAFB] border-transparent hover:border-[var(--color-border)] transition-colors"
             >
               {/* Top Row: Star, Name */}
               <div className="flex items-center gap-2 mb-2">

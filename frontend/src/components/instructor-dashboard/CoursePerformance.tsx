@@ -212,9 +212,9 @@ const CoursePerformance = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6">
       {/* Header */}
-      <div className="p-4 sm:p-5 border-b border-[#E5E7EB]">
+      <div className="p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base sm:text-lg font-semibold text-[#1F2937]">
             {t("performance.title")}
@@ -223,7 +223,7 @@ const CoursePerformance = ({
           <div className="relative" ref={exportRef}>
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#374151] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#374151] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors"
               aria-label={tA("exportOptions")}
               aria-haspopup="true"
               aria-expanded={showExportDropdown}
@@ -234,7 +234,7 @@ const CoursePerformance = ({
             </button>
 
             {showExportDropdown && (
-              <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
+              <div className="absolute end-0 top-full mt-1 w-40 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
                 <div className="py-1">
                   <button
                     onClick={handleExportCSV}
@@ -262,7 +262,7 @@ const CoursePerformance = ({
           <select
             value={deliveryFilter}
             onChange={(e) => setDeliveryFilter(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
           >
             <option value="all">{t("performance.allDeliveryTypes")}</option>
             <option value="zoom">{t("performance.zoom")}</option>
@@ -274,7 +274,7 @@ const CoursePerformance = ({
             <select
               value={cohortFilter}
               onChange={(e) => setCohortFilter(e.target.value)}
-              className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+              className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
             >
               <option value="all">{t("performance.allCohorts")}</option>
               {cohorts.map((cohort) => (
@@ -286,7 +286,7 @@ const CoursePerformance = ({
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-[#E5E7EB] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
+            className="px-3 py-1.5 text-sm border border-[var(--color-border)] rounded-lg text-[#374151] bg-white hover:border-[#9CA3AF] transition-colors cursor-pointer"
           >
             {filteredCourses.map((course) => (
               <option key={course.value} value={course.value}>
@@ -336,7 +336,7 @@ const CoursePerformance = ({
                     y1={5 + (90 * (100 - y)) / 100}
                     x2="95"
                     y2={5 + (90 * (100 - y)) / 100}
-                    stroke="#E5E7EB"
+                    stroke="var(--color-border)"
                     strokeWidth="0.3"
                     strokeDasharray="2,2"
                   />
@@ -407,7 +407,7 @@ const CoursePerformance = ({
                       {module.percentage}%
                     </span>
                   </div>
-                  <div className="h-2.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#22C55E] rounded-full transition-all duration-300"
                       style={{ width: `${module.percentage}%` }}
@@ -421,13 +421,13 @@ const CoursePerformance = ({
 
         {/* Pass/Fail Rate */}
         {passFailStats && passFailStats.totalStudents > 0 && (
-          <div className="col-span-1 lg:col-span-2 pt-4 border-t border-[#E5E7EB]">
+          <div className="col-span-1 lg:col-span-2 pt-4 border-t border-[var(--color-border)]">
             <h4 className="text-sm text-[#4B5563] mb-3">
               {t("performance.passRate")}
             </h4>
             <div className="flex items-center gap-4">
               {/* Stacked bar */}
-              <div className="flex-1 h-6 bg-[#E5E7EB] rounded-full overflow-hidden flex">
+              <div className="flex-1 h-6 bg-[var(--color-border)] rounded-full overflow-hidden flex">
                 <div
                   className="h-full bg-[#22C55E] transition-all duration-300"
                   style={{ width: `${passFailStats.passRate}%` }}

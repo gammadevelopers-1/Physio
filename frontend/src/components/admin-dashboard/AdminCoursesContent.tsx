@@ -118,26 +118,26 @@ const AdminCoursesContent = () => {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#1F2937]">{total}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.total")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#16A34A]">{activeCount}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.active")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#3B82F6]">{enrollmentsCount}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.enrollments")}</p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-2xl font-bold text-[#D97706]">{pendingCount}</p>
                   <p className="text-sm text-[#6B7280]">{t("coursesPage.stats.pendingReview")}</p>
                 </div>
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col sm:flex-row gap-4">
                   {/* Search */}
                   <div className="flex-1 relative">
@@ -147,7 +147,7 @@ const AdminCoursesContent = () => {
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className={`w-full h-10 border border-[#E5E7EB] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
+                      className={`w-full h-10 border border-[var(--color-border)] rounded-lg text-sm ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} focus:outline-none focus:border-[#002D87]`}
                     />
                   </div>
 
@@ -155,7 +155,7 @@ const AdminCoursesContent = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => handleStatusChange(e.target.value)}
-                    className="h-10 px-4 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
+                    className="h-10 px-4 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] focus:outline-none focus:border-[#002D87]"
                   >
                     <option value="all">{t("coursesPage.filters.allStatus")}</option>
                     <option value="active">{t("coursesPage.filters.active")}</option>
@@ -167,7 +167,7 @@ const AdminCoursesContent = () => {
                   </select>
 
                   {/* View Toggle */}
-                  <div className="flex items-center gap-1 border border-[#E5E7EB] rounded-lg p-1">
+                  <div className="flex items-center gap-1 border border-[var(--color-border)] rounded-lg p-1">
                     <button
                       onClick={() => setViewMode("grid")}
                       className={`p-2 rounded ${viewMode === "grid" ? "btn-gold text-white" : "text-[#6B7280]"}`}
@@ -212,7 +212,7 @@ const AdminCoursesContent = () => {
                       {courses.map((course) => (
                         <div
                           key={course.id}
-                          className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden"
+                          className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden"
                         >
                           {/* Thumbnail */}
                           <div className="h-32 bg-gradient-to-r from-[#002D87] to-[#0066FF] flex items-center justify-center overflow-hidden">
@@ -261,7 +261,7 @@ const AdminCoursesContent = () => {
                               )}
                             </div>
 
-                            <div className="flex items-center justify-between pt-3 border-t border-[#E5E7EB]">
+                            <div className="flex items-center justify-between pt-3 border-t border-[var(--color-border)]">
                               <span className="text-sm font-medium text-[#1F2937]">
                                 SAR {(course.price ?? 0).toLocaleString()}
                               </span>
@@ -279,7 +279,7 @@ const AdminCoursesContent = () => {
 
                                 {openDropdownId === course.id && (
                                   <div
-                                    className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
+                                    className={`absolute bottom-full mb-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-10 ${isRTL ? "left-0" : "right-0"}`}
                                   >
                                     <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-[#4B5563] hover:bg-[#F9FAFB]">
                                       <Eye className="w-4 h-4" />
@@ -302,9 +302,9 @@ const AdminCoursesContent = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                       <table className="w-full">
-                        <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                        <thead className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                           <tr>
                             <th className={`px-4 py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                               {t("coursesPage.table.course")}
@@ -377,7 +377,7 @@ const AdminCoursesContent = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
-                          className="p-2 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -387,7 +387,7 @@ const AdminCoursesContent = () => {
                         <button
                           onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                           disabled={currentPage === totalPages}
-                          className="p-2 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ChevronRight className="w-4 h-4" />
                         </button>
@@ -399,7 +399,7 @@ const AdminCoursesContent = () => {
 
               {/* Empty State */}
               {!loading && !error && courses.length === 0 && (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] py-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] py-12 text-center">
                   <BookOpen className="w-12 h-12 text-[#9CA3AF] mx-auto mb-4" />
                   <p className="text-[#6B7280]">{t("coursesPage.noCourses")}</p>
                 </div>

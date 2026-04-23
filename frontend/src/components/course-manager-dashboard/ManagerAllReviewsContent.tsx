@@ -280,7 +280,7 @@ export default function ManagerAllReviewsContent() {
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-2 mb-4">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-2 mb-4">
                 <div className="flex flex-wrap gap-1">
                   {tabItems.map((ti) => (
                     <button
@@ -296,7 +296,7 @@ export default function ManagerAllReviewsContent() {
                       {ti.count !== undefined && ti.count > 0 && (
                         <span
                           className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            tab === ti.key ? "bg-white/20" : "bg-[#E5E7EB] text-[#374151]"
+                            tab === ti.key ? "bg-white/20" : "bg-[var(--color-border)] text-[#374151]"
                           }`}
                         >
                           {ti.count}
@@ -308,7 +308,7 @@ export default function ManagerAllReviewsContent() {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative flex-1 min-w-[200px]">
                     <Search className={`w-4 h-4 text-[#9CA3AF] absolute top-2.5 ${isRTL ? "right-3" : "left-3"}`} />
@@ -319,7 +319,7 @@ export default function ManagerAllReviewsContent() {
                       onKeyDown={(e) => { if (e.key === "Enter") setSearch(searchInput); }}
                       onBlur={() => setSearch(searchInput)}
                       placeholder={isRTL ? "بحث باسم الطالب أو الدورة أو نص المراجعة..." : "Search by student, course, or review text..."}
-                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]`}
+                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]`}
                     />
                   </div>
 
@@ -328,7 +328,7 @@ export default function ManagerAllReviewsContent() {
                     <select
                       value={courseFilter}
                       onChange={(e) => setCourseFilter(e.target.value)}
-                      className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white max-w-[240px]"
+                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white max-w-[240px]"
                     >
                       <option value="">{isRTL ? "كل الدورات" : "All courses"}</option>
                       {courseOptions.map((c) => (
@@ -346,7 +346,7 @@ export default function ManagerAllReviewsContent() {
                       <select
                         value={publishedFilter}
                         onChange={(e) => setPublishedFilter(e.target.value as typeof publishedFilter)}
-                        className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                        className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                       >
                         <option value="all">{isRTL ? "الكل" : "All"}</option>
                         <option value="published">{isRTL ? "منشورة" : "Published"}</option>
@@ -360,7 +360,7 @@ export default function ManagerAllReviewsContent() {
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                     >
                       <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
                       <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
@@ -372,7 +372,7 @@ export default function ManagerAllReviewsContent() {
               </div>
 
               {/* List */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
@@ -392,7 +392,7 @@ export default function ManagerAllReviewsContent() {
                       const courseTitle = isRTL && r.courseTitleAr ? r.courseTitleAr : r.courseTitle;
                       const isBusy = actingId === r.id;
                       return (
-                        <div key={r.id} className="border border-[#E5E7EB] rounded-lg p-4 bg-[#FAFAFA]">
+                        <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -422,7 +422,7 @@ export default function ManagerAllReviewsContent() {
                               {[1, 2, 3, 4, 5].map((s) => (
                                 <Star
                                   key={s}
-                                  className={`w-4 h-4 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                                  className={`w-4 h-4 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
                                 />
                               ))}
                             </div>
@@ -435,7 +435,7 @@ export default function ManagerAllReviewsContent() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={() => setModal(r)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6]"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[#374151] hover:bg-[#F3F4F6]"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               {isRTL ? "عرض" : "View"}
@@ -464,7 +464,7 @@ export default function ManagerAllReviewsContent() {
                               <button
                                 onClick={() => handleTogglePublish(r)}
                                 disabled={isBusy}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-60"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-[var(--color-border)] text-[#374151] hover:bg-[#F3F4F6] disabled:opacity-60"
                               >
                                 {r.isPublished ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                 {r.isPublished
@@ -493,7 +493,7 @@ export default function ManagerAllReviewsContent() {
 
                 {/* Pagination */}
                 {!loading && reviews.length > 0 && totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-[#E5E7EB]">
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--color-border)]">
                     <p className="text-xs text-[#6B7280]">
                       {isRTL ? `صفحة ${page} من ${totalPages} · ${total} نتيجة` : `Page ${page} of ${totalPages} · ${total} result${total === 1 ? "" : "s"}`}
                     </p>
@@ -544,7 +544,7 @@ export default function ManagerAllReviewsContent() {
             onClick={(e) => e.stopPropagation()}
             dir={isRTL ? "rtl" : "ltr"}
           >
-            <div className="p-5 border-b border-[#E5E7EB] flex items-start justify-between gap-3">
+            <div className="p-5 border-b border-[var(--color-border)] flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-2">
                   <h3 className="text-base font-semibold text-[#1F2937]">{modal.studentName}</h3>
@@ -561,7 +561,7 @@ export default function ManagerAllReviewsContent() {
             <div className="p-5 space-y-3">
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} className={`w-5 h-5 ${s <= modal.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`} />
+                  <Star key={s} className={`w-5 h-5 ${s <= modal.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`} />
                 ))}
               </div>
               {modal.reviewText ? (
@@ -569,7 +569,7 @@ export default function ManagerAllReviewsContent() {
               ) : (
                 <p className="text-sm text-[#9CA3AF] italic">{isRTL ? "لا يوجد نص" : "No text"}</p>
               )}
-              <div className="text-xs text-[#6B7280] space-y-0.5 pt-3 border-t border-[#E5E7EB]">
+              <div className="text-xs text-[#6B7280] space-y-0.5 pt-3 border-t border-[var(--color-border)]">
                 <p>{isRTL ? `تاريخ الإرسال: ${formatDate(modal.createdAt)}` : `Submitted: ${formatDate(modal.createdAt)}`}</p>
                 {modal.reviewedAt && (
                   <p>{isRTL ? `تاريخ المراجعة: ${formatDate(modal.reviewedAt)}` : `Reviewed: ${formatDate(modal.reviewedAt)}`}</p>
@@ -610,7 +610,7 @@ export default function ManagerAllReviewsContent() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]"
+                className="px-4 py-2 text-sm font-medium text-[#4B5563] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]"
               >
                 {isRTL ? "إلغاء" : "Cancel"}
               </button>

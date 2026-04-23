@@ -69,7 +69,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
 
   if (!selectedDate) {
     return (
-      <div className="mt-6 pt-6 border-t border-[#E5E7EB]">
+      <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
         <p className="text-sm text-[#6B7280] text-center py-6">
           {t("calendarPage.selectDay")}
         </p>
@@ -78,7 +78,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
   }
 
   return (
-    <div className="mt-6 pt-6 border-t border-[#E5E7EB]">
+    <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
       {/* Selected date header */}
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-[#1F2937]">{dateLabel}</h3>
@@ -124,7 +124,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
             return (
               <div
                 key={event.id}
-                className="bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] p-4"
+                className="bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] p-4"
               >
                 {/* Header: Icon + Type Badge + Title */}
                 <div className="flex items-start gap-3 mb-3">
@@ -266,7 +266,7 @@ const EventDetailPanel = ({ selectedDate, events }: EventDetailPanelProps) => {
                   {/* Add to Calendar */}
                   <button
                     onClick={() => downloadIcs(event)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F3F4F6] transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
                     {t("calendarPage.addToCalendar")}

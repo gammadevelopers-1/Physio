@@ -146,7 +146,7 @@ const AtRiskLearners = ({
   const totalCount = learners.length;
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header with Badge Count + Settings Gear */}
         <div className="flex items-center justify-between mb-4">
@@ -172,10 +172,10 @@ const AtRiskLearners = ({
           {displayedLearners.map((learner) => (
             <div
               key={learner.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] hover:border-[#D1D5DB] transition-colors"
+              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-border)] transition-colors"
             >
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-[#E5E7EB] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[var(--color-border)] flex items-center justify-center text-sm font-semibold text-[#4B5563] flex-shrink-0">
                 {learner.initials}
               </div>
 
@@ -201,7 +201,7 @@ const AtRiskLearners = ({
                 <button
                   onClick={() => setOpenDropdown(openDropdown === learner.id ? null : learner.id)}
                   disabled={actionLoading === learner.id}
-                  className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[#E5E7EB] rounded-lg transition-colors disabled:opacity-50"
+                  className="p-1.5 text-[#9CA3AF] hover:text-[#6B7280] hover:bg-[var(--color-border)] rounded-lg transition-colors disabled:opacity-50"
                   aria-label={tA("openActions")}
                   aria-haspopup="true"
                   aria-expanded={openDropdown === learner.id}
@@ -215,7 +215,7 @@ const AtRiskLearners = ({
 
                 {/* Dropdown Menu */}
                 {openDropdown === learner.id && (
-                  <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-10" role="menu">
+                  <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-10" role="menu">
                     <div className="py-1">
                       <button
                         onClick={() => handleSendReminder(learner)}
@@ -341,7 +341,7 @@ function ThresholdSettingsModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             >
               {courses.map((c) => (
                 <option key={c.value} value={c.value}>{c.label}</option>
@@ -359,7 +359,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={attendance}
                 onChange={(e) => setAttendance(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={0}
                 max={100}
               />
@@ -377,7 +377,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={0}
                 max={100}
               />
@@ -395,7 +395,7 @@ function ThresholdSettingsModal({
                 type="number"
                 value={inactivity}
                 onChange={(e) => setInactivity(e.target.value)}
-                className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 min={1}
                 max={90}
               />
@@ -408,7 +408,7 @@ function ThresholdSettingsModal({
             <button
               type="button"
               onClick={handleReset}
-              className="px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
+              className="px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]"
             >
               {t("atRisk.resetDefaults")}
             </button>

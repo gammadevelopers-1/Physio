@@ -14,6 +14,8 @@
   --color-surface-card: #e5edf4;
   --color-text-primary: #171717;
   --color-text-secondary: #737373;
+  --color-border: #e5e7eb;
+  --color-border-subtle: #C8D5E1;
 
   /* Font Sizes */
   --font-sizes-12: 0.75rem;
@@ -128,11 +130,11 @@
   --feedback-warning: var(--functional-amber-600);
 
   /* On Surface */
-  --on-surface-default: var(--black);
+  --on-surface-default: var(--color-text-primary);
   --on-surface-inverse: var(--white);
-  --on-surface-primary: var(--blue-blue-600);
-  --on-surface-secondary: var(--gold-gold-600);
-  --on-surface-variant: var(--neutral-neutral-800);
+  --on-surface-primary: var(--color-primary);
+  --on-surface-secondary: var(--color-primary);
+  --on-surface-variant: var(--color-text-secondary);
 
   /* Outline */
   --outline-bright: var(--white);

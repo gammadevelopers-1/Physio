@@ -89,7 +89,7 @@ const AlertsActivitySidebar = ({
       case "info":
         return "bg-[#DBEAFE] border-[#93C5FD]";
       default:
-        return "bg-[#F3F4F6] border-[#E5E7EB]";
+        return "bg-[#F3F4F6] border-[var(--color-border)]";
     }
   };
 
@@ -176,7 +176,7 @@ const AlertsActivitySidebar = ({
   return (
     <div className="w-full lg:w-[320px] lg:flex-shrink-0 space-y-4">
       {/* Alerts Section */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-[#002D87]" />
@@ -228,7 +228,7 @@ const AlertsActivitySidebar = ({
       </div>
 
       {/* Recent Activity Section */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-[#002D87]" />
@@ -263,7 +263,7 @@ const AlertsActivitySidebar = ({
       </div>
 
       {/* Quick Actions Section */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap className="w-5 h-5 text-[#002D87]" />
           <h3 className="text-base font-semibold text-[#1F2937]">
@@ -278,7 +278,7 @@ const AlertsActivitySidebar = ({
               <Link
                 key={action.id}
                 href={action.href}
-                className="flex items-center gap-2 p-3 rounded-lg border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+                className="flex items-center gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:bg-[#F9FAFB] transition-colors"
               >
                 <Icon className="w-4 h-4 text-[#6B7280]" />
                 <span className="text-sm text-[#4B5563]">{action.label}</span>
@@ -290,7 +290,7 @@ const AlertsActivitySidebar = ({
 
       {/* Finance Summary Section */}
       {finance && (
-        <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+        <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-2">
@@ -353,7 +353,7 @@ const AlertsActivitySidebar = ({
           </div>
 
           {/* Health Metrics */}
-          <div className="pt-3 border-t border-[#E5E7EB]">
+          <div className="pt-3 border-t border-[var(--color-border)]">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[#4B5563]">

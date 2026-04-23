@@ -176,7 +176,7 @@ function CertificateCard({
   const isRevoked = certificate.status === "revoked";
 
   return (
-    <div className="border border-[#E5E7EB] rounded-xl overflow-hidden">
+    <div className="border border-[var(--color-border)] rounded-xl overflow-hidden">
       <div className="p-3 sm:p-4">
         {/* Status Badge */}
         <div className="flex items-center justify-between mb-2">
@@ -248,7 +248,7 @@ function CertificateCard({
               <button
                 onClick={() => onDownload(certificate.id)}
                 disabled={downloading}
-                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 flex-1 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors disabled:opacity-50"
               >
                 {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 {t("certifications.downloadCertificate")}
@@ -260,7 +260,7 @@ function CertificateCard({
                     toast.success(t("certifications.linkCopied"));
                   });
                 }}
-                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
                 title={t("certifications.shareCertificate")}
               >
                 <Link2 className="w-4 h-4" />
@@ -424,7 +424,7 @@ const CertificationsContent = () => {
 
               <OfflineBanner />
 
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {loading ? (
                   <StudentCoursesGridSkeleton count={4} />
                 ) : error ? (
@@ -440,7 +440,7 @@ const CertificationsContent = () => {
                     </p>
                     <Link
                       href={`/${locale}/courses`}
-                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[#E5E7EB] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
+                      className="px-5 py-2 sm:px-6 sm:py-2.5 border border-[var(--color-border)] text-[#1F2937] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] transition-colors"
                     >
                       {t("certifications.viewCourses")}
                     </Link>

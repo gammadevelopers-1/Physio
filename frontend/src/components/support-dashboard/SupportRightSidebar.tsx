@@ -104,7 +104,7 @@ const SupportRightSidebar = () => {
   return (
     <div className="w-full lg:w-[300px] lg:flex-shrink-0 space-y-4">
       {/* CSAT Score */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <h3 className="text-[15px] font-semibold text-[#111827] mb-4">
           {t("csatSection.title")}
         </h3>
@@ -138,7 +138,7 @@ const SupportRightSidebar = () => {
       </div>
 
       {/* Activity Feed */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <ClipboardList className="w-4 h-4 text-[#3B82F6]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
@@ -184,7 +184,7 @@ const SupportRightSidebar = () => {
       </div>
 
       {/* Alerts */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <AlertTriangle className="w-4 h-4 text-[#EA580C]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
@@ -226,7 +226,7 @@ const SupportRightSidebar = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap className="w-4 h-4 text-[#3B82F6]" />
           <h3 className="text-[15px] font-semibold text-[#111827]">
@@ -240,7 +240,7 @@ const SupportRightSidebar = () => {
             return (
               <button
                 key={action.id}
-                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                className="flex items-center justify-center gap-1.5 p-2.5 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg text-[12px] font-medium text-[#374151] hover:bg-[#EFF6FF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
               >
                 <Icon className="w-3.5 h-3.5" />
                 {t(action.labelKey)}

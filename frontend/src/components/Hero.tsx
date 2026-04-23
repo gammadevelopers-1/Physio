@@ -94,7 +94,7 @@ const Hero = ({ data }: HeroProps) => {
             <div className="flex flex-col gap-4 lg:hidden">
               {titleMobile && (
                 <h1
-                  className="text-black font-semibold tracking-[-0.72px] leading-none"
+                  className="text-[var(--color-text-primary)] font-semibold tracking-[-0.72px] leading-none"
                   style={{
                     fontSize: "var(--typeface-font-styles-display-base)",
                     fontFamily: "Poppins, var(--typeface-family), sans-serif",
@@ -106,7 +106,7 @@ const Hero = ({ data }: HeroProps) => {
 
               {description && (
                 <p
-                  className="text-black leading-7"
+                  className="text-[var(--color-text-primary)] leading-7"
                   style={{
                     fontSize: "var(--typeface-font-styles-heading-subheading)",
                   }}

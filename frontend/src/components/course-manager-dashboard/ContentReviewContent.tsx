@@ -307,10 +307,10 @@ const ContentReviewContent = () => {
               <CourseManagerMobileSidebar manager={manager} />
               <div className="flex-1 min-w-0">
                 <div className="mb-6">
-                  <div className="h-7 bg-[#E5E7EB] rounded w-48 animate-pulse mb-2" />
-                  <div className="h-4 bg-[#E5E7EB] rounded w-72 animate-pulse" />
+                  <div className="h-7 bg-[var(--color-border)] rounded w-48 animate-pulse mb-2" />
+                  <div className="h-4 bg-[var(--color-border)] rounded w-72 animate-pulse" />
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <table className="w-full">
                     <tbody>
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -369,7 +369,7 @@ const ContentReviewContent = () => {
 
               {/* Stats Cards — 4 cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-center gap-3">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
                     <Clock className="w-5 h-5 text-[#F59E0B]" />
                   </div>
@@ -378,7 +378,7 @@ const ContentReviewContent = () => {
                     <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.pending")}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-center gap-3">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FEF9C3] rounded-lg flex items-center justify-center">
                     <MessageSquare className="w-5 h-5 text-[#D97706]" />
                   </div>
@@ -387,7 +387,7 @@ const ContentReviewContent = () => {
                     <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.changesRequested")}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-center gap-3">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#D1FAE5] rounded-lg flex items-center justify-center">
                     <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
                   </div>
@@ -396,7 +396,7 @@ const ContentReviewContent = () => {
                     <p className="text-xs text-[#6B7280]">{t("contentReviewPage.stats.approved")}</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-center gap-3">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#FEE2E2] rounded-lg flex items-center justify-center">
                     <XCircle className="w-5 h-5 text-[#EF4444]" />
                   </div>
@@ -416,13 +416,13 @@ const ContentReviewContent = () => {
                     placeholder={t("contentReviewPage.searchPlaceholder")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
+                    className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none`}
                   />
                 </div>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allStatus")}</option>
                   <option value="pending_review">{t("contentReviewPage.filters.pending")}</option>
@@ -433,7 +433,7 @@ const ContentReviewContent = () => {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allTypes")}</option>
                   <option value="video">{t("contentReviewPage.filters.video")}</option>
@@ -443,7 +443,7 @@ const ContentReviewContent = () => {
                 <select
                   value={courseFilter}
                   onChange={(e) => setCourseFilter(e.target.value)}
-                  className="px-4 py-2.5 bg-white border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
+                  className="px-4 py-2.5 bg-white border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
                 >
                   <option value="all">{t("contentReviewPage.filters.allCourses")}</option>
                   {courses.map((course) => (
@@ -471,7 +471,7 @@ const ContentReviewContent = () => {
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder={t("contentReviewPage.commentPlaceholder")}
                       rows={4}
-                      className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none resize-none"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#1F2937] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none resize-none"
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <button
@@ -535,7 +535,7 @@ const ContentReviewContent = () => {
 
               {/* Table */}
               {filtered.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <FileText className="w-8 h-8 text-[#9CA3AF]" />
                   </div>
@@ -551,7 +551,7 @@ const ContentReviewContent = () => {
                   </p>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full table-fixed">
                       <colgroup>
@@ -563,13 +563,13 @@ const ContentReviewContent = () => {
                         <col className="w-[120px]" />
                       </colgroup>
                       <thead>
-                        <tr className="border-b border-[#E5E7EB] bg-[#F9FAFB]">
+                        <tr className="border-b border-[var(--color-border)] bg-[#F9FAFB]">
                           <th className="px-2 py-3">
                             <input
                               type="checkbox"
                               checked={filtered.length > 0 && selectedIds.size === filtered.length}
                               onChange={toggleSelectAll}
-                              className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                              className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                             />
                           </th>
                           <th className="px-1 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase"></th>
@@ -587,7 +587,7 @@ const ContentReviewContent = () => {
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#E5E7EB]">
+                      <tbody className="divide-y divide-[var(--color-border)]">
                         {paginatedItems.map((item) => {
                           const typeConfig = TYPE_ICONS[item.type] || TYPE_ICONS.document;
                           const TypeIcon = typeConfig.icon;
@@ -613,7 +613,7 @@ const ContentReviewContent = () => {
                                     type="checkbox"
                                     checked={selectedIds.has(item.id)}
                                     onChange={() => toggleSelect(item.id)}
-                                    className="w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                                    className="w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                                   />
                                 </td>
                                 <td className="px-1 py-3">
@@ -812,7 +812,7 @@ const ContentReviewContent = () => {
                                         {checklist.checks.map((check) => (
                                           <div
                                             key={check.rule}
-                                            className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[#E5E7EB]"
+                                            className="flex items-start gap-3 p-3 bg-white rounded-lg border border-[var(--color-border)]"
                                           >
                                             {check.status === "passed" ? (
                                               <CheckCircle2 className="w-5 h-5 text-[#22C55E] flex-shrink-0 mt-0.5" />
@@ -847,10 +847,10 @@ const ContentReviewContent = () => {
                     </table>
                   </div>
                   {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 p-4 border-t border-[#E5E7EB]">
-                      <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50">←</button>
+                    <div className="flex items-center justify-center gap-2 p-4 border-t border-[var(--color-border)]">
+                      <button disabled={currentPage <= 1} onClick={() => setCurrentPage(p => p - 1)} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm disabled:opacity-50">←</button>
                       <span className="text-sm text-[#6B7280]">{currentPage} / {totalPages}</span>
-                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 border border-[#E5E7EB] rounded-lg text-sm disabled:opacity-50">→</button>
+                      <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-3 py-1.5 border border-[var(--color-border)] rounded-lg text-sm disabled:opacity-50">→</button>
                     </div>
                   )}
                 </div>

@@ -33,7 +33,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
   return (
     <div className="space-y-6">
       {/* Title & Description */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
           {t("basicInfo")}
         </h2>
@@ -48,7 +48,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               type="text"
               value={state.title}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "title", value: e.target.value })}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
             />
           </div>
           <div>
@@ -61,7 +61,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               value={state.titleAr}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "titleAr", value: e.target.value })}
               dir="rtl"
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none"
             />
           </div>
         </div>
@@ -76,7 +76,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               value={state.description}
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "description", value: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
             />
           </div>
           <div>
@@ -89,7 +89,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               onChange={(e) => dispatch({ type: "SET_FIELD", field: "descriptionAr", value: e.target.value })}
               rows={4}
               dir="rtl"
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none resize-none"
             />
           </div>
         </div>
@@ -105,7 +105,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             onChange={(e) =>
               dispatch({ type: "SET_FIELD", field: "deliveryType", value: e.target.value })
             }
-            className="w-full max-w-xs px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none bg-white"
+            className="w-full max-w-xs px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:ring-2 focus:ring-[#3B82F6] focus:border-[#3B82F6] outline-none bg-white"
           >
             <option value="zoom">Zoom</option>
             <option value="onsite">On-site</option>
@@ -142,7 +142,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
               <label className="block text-sm font-medium text-[#374151] mb-1">
                 {t("maxEnrollment")}
               </label>
-              <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg px-3 py-2.5">
+              <p className="text-sm text-[#6B7280] bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg px-3 py-2.5">
                 {t("selfPacedUnlimited") || "Self-paced: unlimited enrollment"}
               </p>
             </div>
@@ -151,7 +151,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
       </div>
 
       {/* Thumbnail */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
           {t("courseImage")}
         </h2>
@@ -161,7 +161,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             <img
               src={state.thumbnail}
               alt="Course thumbnail"
-              className="w-full h-48 object-cover rounded-lg border border-[#E5E7EB]"
+              className="w-full h-48 object-cover rounded-lg border border-[var(--color-border)]"
             />
             <button
               type="button"
@@ -172,7 +172,7 @@ const Step1BasicInfo = ({ state, dispatch }: Step1Props) => {
             </button>
           </div>
         ) : (
-          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[#D1D5DB] rounded-lg cursor-pointer hover:border-[#3B82F6] hover:bg-[#F9FAFB] transition-colors">
+          <label className="flex flex-col items-center justify-center w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:border-[#3B82F6] hover:bg-[#F9FAFB] transition-colors">
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"

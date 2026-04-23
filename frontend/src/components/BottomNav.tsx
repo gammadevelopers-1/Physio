@@ -158,7 +158,7 @@ const BottomNav = () => {
 
         {/* Drawer Header */}
         <div
-          className={`flex items-center justify-between px-4 pb-4 border-b border-[#E5E7EB] ${isRTL ? "flex-row-reverse" : ""}`}
+          className={`flex items-center justify-between px-4 pb-4 border-b border-[var(--color-border)] ${isRTL ? "flex-row-reverse" : ""}`}
         >
           <h2 className="text-lg font-semibold text-[#06080b]">{t("menu")}</h2>
           <button
@@ -175,7 +175,7 @@ const BottomNav = () => {
           style={{ maxHeight: "calc(85vh - 80px)" }}
         >
           {/* Platform Section */}
-          <div className="py-4 border-b border-[#E5E7EB]">
+          <div className="py-4 border-b border-[var(--color-border)]">
             <h3
               className={`text-sm font-semibold text-[#71717A] mb-3 ${isRTL ? "text-right" : "text-left"}`}
             >
@@ -197,7 +197,7 @@ const BottomNav = () => {
           </div>
 
           {/* Organization Section */}
-          <div className="py-4 border-b border-[#E5E7EB]">
+          <div className="py-4 border-b border-[var(--color-border)]">
             <h3
               className={`text-sm font-semibold text-[#71717A] mb-3 ${isRTL ? "text-right" : "text-left"}`}
             >

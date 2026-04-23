@@ -57,9 +57,9 @@ const InstructorsManagementWidget = ({
   }), [instructors]);
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
             <Users className="w-4 h-4 text-[#D4A520]" />
@@ -76,7 +76,7 @@ const InstructorsManagementWidget = ({
       </div>
 
       {/* Status Summary */}
-      <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-[#E5E7EB]">
+      <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
           <span className="text-xs text-[#6B7280]">{t("instructors.available")}</span>
@@ -102,7 +102,7 @@ const InstructorsManagementWidget = ({
           return (
             <div
               key={instructor.id}
-              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]"
+              className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border border-[var(--color-border)]"
             >
               {/* Avatar */}
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
@@ -119,7 +119,7 @@ const InstructorsManagementWidget = ({
                 </p>
                 {/* Load Bar */}
                 <div className="mt-1.5">
-                  <div className="w-full h-1 bg-[#E5E7EB] rounded-full overflow-hidden">
+                  <div className="w-full h-1 bg-[var(--color-border)] rounded-full overflow-hidden">
                     <div
                       className={`h-full ${config.barColor} rounded-full transition-all`}
                       style={{ width: `${instructor.loadPercentage}%` }}
@@ -148,7 +148,7 @@ const InstructorsManagementWidget = ({
 
         {/* View All Link */}
         {totalCount > 0 && (
-          <div className="text-center pt-3 border-t border-[#E5E7EB] mt-3">
+          <div className="text-center pt-3 border-t border-[var(--color-border)] mt-3">
             <Link
               href={`/${locale}/dashboard/manager/instructors`}
               className="text-[13px] font-medium text-[#3B82F6] hover:underline inline-flex items-center gap-1"

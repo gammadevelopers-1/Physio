@@ -157,7 +157,7 @@ const InvoicesContent = () => {
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={index} className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3">
+                    <div key={index} className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
@@ -171,7 +171,7 @@ const InvoicesContent = () => {
               </div>
 
               {/* Invoices Table */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden mb-6">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden mb-6">
                 {/* Tabs + Search */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -197,7 +197,7 @@ const InvoicesContent = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("paymentsTable.searchPlaceholder")}
-                        className={`w-full sm:w-[260px] py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                        className={`w-full sm:w-[260px] py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                       />
                     </div>
                   </div>
@@ -207,7 +207,7 @@ const InvoicesContent = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#E5E7EB]">
+                      <tr className="border-b border-[var(--color-border)]">
                         <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.invoice")}</th>
                         <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.date")}</th>
                         <th className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>{t("paymentsTable.columns.customer")}</th>
@@ -236,12 +236,12 @@ const InvoicesContent = () => {
                             <div className="relative">
                               <button
                                 onClick={() => setOpenActionId(openActionId === inv.id ? null : inv.id)}
-                                className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
                               {openActionId === inv.id && (
-                                <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
+                                <div className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}>
                                   <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
                                     <Eye className="w-3.5 h-3.5" />
                                     {t("paymentsTable.actions.view")}
@@ -270,11 +270,11 @@ const InvoicesContent = () => {
                     {t("paymentsTable.pagination.showing", { from: 1, to: filteredInvoices.length, total: filteredInvoices.length })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       <ChevronLeft className="w-4 h-4" />
                       {t("paymentsTable.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       {t("paymentsTable.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -283,7 +283,7 @@ const InvoicesContent = () => {
               </div>
 
               {/* Aging Report */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] p-5">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-[#EA580C]" />
                   <h3 className="text-base font-semibold text-[#111827]">{t("invoicesPage.agingReport")}</h3>

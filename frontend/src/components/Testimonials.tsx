@@ -131,8 +131,8 @@ const Testimonials = ({ testimonials: strapiTestimonials = [], sectionData }: Te
 
                   {/* Divider - hide for last item */}
                   {index < visibleTestimonials.length - 1 && (
-                    <div className="w-px h-[249px] bg-[#c8d5e1] self-stretch flex items-center justify-center">
-                      <div className="w-px h-full bg-[#c8d5e1]" />
+                    <div className="w-px h-[249px] bg-[var(--color-border-subtle)] self-stretch flex items-center justify-center">
+                      <div className="w-px h-full bg-[var(--color-border-subtle)]" />
                     </div>
                   )}
                 </div>

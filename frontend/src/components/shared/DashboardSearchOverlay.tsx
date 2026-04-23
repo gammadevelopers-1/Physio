@@ -264,7 +264,7 @@ export default function DashboardSearchOverlay({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input */}
-        <div className="flex items-center border-b border-[#E5E7EB] px-4 flex-shrink-0">
+        <div className="flex items-center border-b border-[var(--color-border)] px-4 flex-shrink-0">
           <Search className="w-5 h-5 text-[#9CA3AF] flex-shrink-0" />
           <input
             ref={inputRef}
@@ -318,7 +318,7 @@ export default function DashboardSearchOverlay({
           {/* No results */}
           {hasQuery && !isSearching && totalResults === 0 && (
             <div className="text-center py-10">
-              <Search className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+              <Search className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
               <p className="text-sm text-[#6B7280]">{t("noResults")}</p>
               <p className="text-xs text-[#9CA3AF] mt-1">{t("noResultsHint")}</p>
             </div>
@@ -347,7 +347,7 @@ export default function DashboardSearchOverlay({
                       {course.type} &middot; {course.hours}
                     </p>
                   </div>
-                  <ArrowIcon className="w-4 h-4 text-[#D1D5DB] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
+                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
                 </button>
               ))}
             </div>
@@ -376,7 +376,7 @@ export default function DashboardSearchOverlay({
                       {blog.excerpt}
                     </p>
                   </div>
-                  <ArrowIcon className="w-4 h-4 text-[#D1D5DB] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
+                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
                 </button>
               ))}
             </div>
@@ -417,7 +417,7 @@ export default function DashboardSearchOverlay({
                       </p>
                     </div>
                   </div>
-                  <ArrowIcon className="w-4 h-4 text-[#D1D5DB] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
+                  <ArrowIcon className="w-4 h-4 text-[var(--color-border)] group-hover:text-[#6B7280] flex-shrink-0 ms-2" />
                 </button>
               ))}
             </div>
@@ -439,7 +439,7 @@ export default function DashboardSearchOverlay({
         </div>
 
         {/* Footer hint */}
-        <div className="border-t border-[#E5E7EB] px-4 py-2.5 flex items-center justify-between text-xs text-[#9CA3AF] flex-shrink-0">
+        <div className="border-t border-[var(--color-border)] px-4 py-2.5 flex items-center justify-between text-xs text-[#9CA3AF] flex-shrink-0">
           <span>{t("escToClose")}</span>
         </div>
       </div>

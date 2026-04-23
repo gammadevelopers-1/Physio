@@ -110,7 +110,7 @@ export default function CaptionEditor({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--color-border)]">
           <div>
             <h3 className="text-lg font-semibold text-[#1F2937]">{t("captions.title")}</h3>
             <p className="text-sm text-[#6B7280] truncate max-w-[400px]">{materialTitle}</p>
@@ -121,7 +121,7 @@ export default function CaptionEditor({
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[#E5E7EB]">
+        <div className="flex border-b border-[var(--color-border)]">
           <button
             onClick={() => setTab("editor")}
             className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${tab === "editor" ? "text-[#3B82F6] border-b-2 border-[#3B82F6]" : "text-[#6B7280] hover:text-[#374151]"}`}
@@ -158,7 +158,7 @@ export default function CaptionEditor({
                         type="text"
                         value={entry.startTime}
                         onChange={(e) => updateEntry(i, "startTime", e.target.value)}
-                        className="w-[130px] px-2 py-1.5 border border-[#E5E7EB] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
                         placeholder="00:00:00.000"
                       />
                       <span className="text-[#9CA3AF] text-xs pt-1.5">&rarr;</span>
@@ -166,7 +166,7 @@ export default function CaptionEditor({
                         type="text"
                         value={entry.endTime}
                         onChange={(e) => updateEntry(i, "endTime", e.target.value)}
-                        className="w-[130px] px-2 py-1.5 border border-[#E5E7EB] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
+                        className="w-[130px] px-2 py-1.5 border border-[var(--color-border)] rounded text-xs font-mono focus:outline-none focus:ring-1 focus:ring-[#3B82F6]"
                         placeholder="00:00:05.000"
                       />
                     </div>
@@ -174,7 +174,7 @@ export default function CaptionEditor({
                       value={entry.text}
                       onChange={(e) => updateEntry(i, "text", e.target.value)}
                       rows={2}
-                      className="w-full px-2 py-1.5 border border-[#E5E7EB] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#3B82F6] resize-none"
+                      className="w-full px-2 py-1.5 border border-[var(--color-border)] rounded text-sm focus:outline-none focus:ring-1 focus:ring-[#3B82F6] resize-none"
                     />
                   </div>
                   <button
@@ -195,7 +195,7 @@ export default function CaptionEditor({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12">
-              <Upload className="w-12 h-12 text-[#D1D5DB] mb-4" />
+              <Upload className="w-12 h-12 text-[var(--color-border)] mb-4" />
               <p className="text-sm text-[#6B7280] mb-4">{t("captions.uploadDesc")}</p>
               <label className="px-4 py-2.5 bg-[#3B82F6] text-white rounded-lg text-sm font-medium hover:bg-[#2563EB] cursor-pointer">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin inline me-1.5" /> : <Upload className="w-4 h-4 inline me-1.5" />}
@@ -216,8 +216,8 @@ export default function CaptionEditor({
 
         {/* Footer */}
         {tab === "editor" && (
-          <div className="flex justify-end gap-2 p-4 border-t border-[#E5E7EB]">
-            <button onClick={onClose} className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
+          <div className="flex justify-end gap-2 p-4 border-t border-[var(--color-border)]">
+            <button onClick={onClose} className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB]">
               {t("captions.cancel")}
             </button>
             <button

@@ -72,7 +72,7 @@ const PaymentsInvoicesTable = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-5 py-4 border-b border-[#F3F4F6] gap-3">
         <div className="flex items-center gap-2">
@@ -95,7 +95,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">{t("paymentsTable.filters.allStatus")}</option>
             <option value="paid">{t("paymentsTable.filters.paid")}</option>
@@ -107,7 +107,7 @@ const PaymentsInvoicesTable = ({
           <select
             value={gatewayFilter}
             onChange={(e) => setGatewayFilter(e.target.value)}
-            className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
+            className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] bg-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
           >
             <option value="all">
               {t("paymentsTable.filters.allGateways")}
@@ -126,7 +126,7 @@ const PaymentsInvoicesTable = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("paymentsTable.searchPlaceholder")}
-              className={`w-full py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+              className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20 ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
             />
           </div>
         </div>
@@ -136,7 +136,7 @@ const PaymentsInvoicesTable = ({
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[#E5E7EB]">
+            <tr className="border-b border-[var(--color-border)]">
               <th
                 className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
               >
@@ -220,13 +220,13 @@ const PaymentsInvoicesTable = ({
                           openActionId === tx.id ? null : tx.id
                         )
                       }
-                      className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] text-[#6B7280] hover:text-[#374151] transition-colors"
+                      className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[#6B7280] hover:text-[#374151] transition-colors"
                     >
                       <MoreVertical className="w-3.5 h-3.5" />
                     </button>
                     {openActionId === tx.id && (
                       <div
-                        className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                        className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[140px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                       >
                         <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB] transition-colors">
                           <Eye className="w-3.5 h-3.5" />
@@ -267,11 +267,11 @@ const PaymentsInvoicesTable = ({
             })}
           </p>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
               <ChevronLeft className="w-4 h-4" />
               {t("paymentsTable.pagination.previous")}
             </button>
-            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+            <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
               {t("paymentsTable.pagination.next")}
               <ChevronRight className="w-4 h-4" />
             </button>

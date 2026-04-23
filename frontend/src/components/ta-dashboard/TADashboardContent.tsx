@@ -340,7 +340,7 @@ const TADashboardContent = ({
           return (
             <div
               key={i}
-              className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex flex-col gap-3"
+              className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex flex-col gap-3"
             >
               <div
                 className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center`}
@@ -373,7 +373,7 @@ const TADashboardContent = ({
                 <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : todaySessions.length === 0 ? (
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                 <Calendar className="w-12 h-12 text-[#9CA3AF] mx-auto mb-3" />
                 <p className="text-[#6B7280]">{t("home.noSessions")}</p>
               </div>
@@ -382,7 +382,7 @@ const TADashboardContent = ({
                 {todaySessions.map((session) => (
                   <div
                     key={session.id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -437,7 +437,7 @@ const TADashboardContent = ({
                         session.status === "completed") && (
                         <button
                           onClick={() => handleViewAttendance(session.id, { scheduledAt: session.scheduledAt, durationMinutes: session.durationMinutes, title: session.title, type: session.type, status: session.status, courseId: session.courseId, zoomLink: session.zoomLink })}
-                          className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[#1F2937] rounded-lg text-sm font-medium hover:bg-[#F9FAFB] transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                           {t("sessions.viewAttendance")}
@@ -479,7 +479,7 @@ const TADashboardContent = ({
         {/* Right Sidebar Widgets */}
         <div className="space-y-4">
           {/* Notifications Widget */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-[#1F2937]">
@@ -531,7 +531,7 @@ const TADashboardContent = ({
                     className={`p-3 rounded-lg border transition-colors ${
                       !notification.isRead
                         ? "bg-[#EFF6FF] border-[#DBEAFE]"
-                        : "bg-[#F9FAFB] border-transparent hover:border-[#E5E7EB]"
+                        : "bg-[#F9FAFB] border-transparent hover:border-[var(--color-border)]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
@@ -558,7 +558,7 @@ const TADashboardContent = ({
           </div>
 
           {/* Upcoming Sessions Widget */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-[#1F2937]">
                 {t("home.upcomingSessions.title")}
@@ -585,7 +585,7 @@ const TADashboardContent = ({
                 {upcomingSessions.slice(0, 3).map((session) => (
                   <div
                     key={session.id}
-                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[#E5E7EB] transition-colors"
+                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <h4 className="text-sm font-medium text-[#1F2937] leading-tight">
@@ -612,7 +612,7 @@ const TADashboardContent = ({
           </div>
 
           {/* My Courses Quick View */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-[#1F2937]">
                 {t("home.coursesOverview.title")}
@@ -639,7 +639,7 @@ const TADashboardContent = ({
                 {courses.slice(0, 5).map((course) => (
                   <div
                     key={course.id}
-                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[#E5E7EB] transition-colors"
+                    className="p-3 bg-[#F9FAFB] rounded-lg border border-transparent hover:border-[var(--color-border)] transition-colors"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h4 className="text-sm font-medium text-[#1F2937] leading-tight">

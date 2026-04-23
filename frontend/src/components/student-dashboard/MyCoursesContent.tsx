@@ -157,7 +157,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
                   aria-label={`${s} star${s > 1 ? "s" : ""}`}
                 >
                   <Star
-                    className={`w-8 h-8 ${s <= rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                    className={`w-8 h-8 ${s <= rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
                   />
                 </button>
               ))}
@@ -174,7 +174,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
               maxLength={2000}
               dir="auto"
               placeholder={t("myCourses.reviewTextPlaceholder")}
-              className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+              className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
             />
             <p className="text-xs text-[#9CA3AF] mt-1">{reviewText.length} / 2000</p>
           </div>
@@ -182,7 +182,7 @@ function LeaveReviewModal({ courseId, courseTitle, onClose, onSubmitted, t, isRT
             <button
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
             >
               {t("courseDetail.cancel")}
             </button>
@@ -317,7 +317,7 @@ const MyCoursesContent = () => {
 
               <OfflineBanner />
 
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 <h2 className="text-base sm:text-lg font-semibold text-[#1F2937] mb-4">
                   {t("myCourses.recentCourses")}
                 </h2>
@@ -333,7 +333,7 @@ const MyCoursesContent = () => {
                       className={`px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors ${
                         activeTab === tab.key
                           ? "bg-[#1F2937] text-white"
-                          : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]"
+                          : "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]"
                       }`}
                     >
                       {tab.label}
@@ -392,7 +392,7 @@ const MyCoursesContent = () => {
                       return (
                         <div
                           key={course.id}
-                          className="border border-[#E5E7EB] rounded-xl overflow-hidden relative flex flex-col"
+                          className="border border-[var(--color-border)] rounded-xl overflow-hidden relative flex flex-col"
                         >
                           {/* Favourite Button */}
                           <button
@@ -474,7 +474,7 @@ const MyCoursesContent = () => {
                                   className="w-5 h-5 rounded-full object-cover"
                                 />
                               ) : (
-                                <div className="w-5 h-5 rounded-full bg-[#E5E7EB] flex items-center justify-center">
+                                <div className="w-5 h-5 rounded-full bg-[var(--color-border)] flex items-center justify-center">
                                   <span className="text-[8px] font-medium text-[#6B7280]">
                                     {course.instructorName
                                       ?.split(" ")
@@ -502,7 +502,7 @@ const MyCoursesContent = () => {
                                   {course.progress}%
                                 </span>
                               </div>
-                              <div className="h-1.5 sm:h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div className="h-1.5 sm:h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div
                                   className={`h-full bg-[#16A34A] rounded-full transition-all duration-300 ${isRTL ? "ms-auto" : ""}`}
                                   style={{
@@ -624,7 +624,7 @@ const MyCoursesContent = () => {
                 <button
                   onClick={() => setDropCourseId(null)}
                   disabled={dropping}
-                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-medium text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer"
                 >
                   {t("courseDetail.cancel")}
                 </button>

@@ -113,7 +113,7 @@ const SupportKPICards = ({ data }: SupportKPICardsProps) => {
         return (
           <div
             key={card.id}
-            className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3"
+            className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
           >
             <div
               className={`w-10 h-10 ${card.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}

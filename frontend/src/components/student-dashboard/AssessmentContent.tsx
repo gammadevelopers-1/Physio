@@ -427,7 +427,7 @@ const AssessmentContent = () => {
 
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           {!isGraded ? (
             <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
           ) : passed ? (
@@ -505,7 +505,7 @@ const AssessmentContent = () => {
     if (reviewMode && reviewData) {
       return (
         <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
-          <div className="bg-white border-b border-[#E5E7EB] px-4 py-3">
+          <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
             <div className="max-w-[700px] mx-auto flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link
@@ -537,7 +537,7 @@ const AssessmentContent = () => {
             )}
 
             {/* Score */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-[#6B7280] mb-1">{t("assessment.score")}</p>
@@ -558,7 +558,7 @@ const AssessmentContent = () => {
 
             {/* Submitted Files */}
             {reviewData.submissionFiles && reviewData.submissionFiles.length > 0 && (
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                 <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.studentFiles") || "Your Submitted Files"}</h3>
                 <div className="space-y-2">
                   {reviewData.submissionFiles.map((f) => (
@@ -594,7 +594,7 @@ const AssessmentContent = () => {
 
       return (
         <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
-          <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+          <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
             {isPendingGrading ? (
               <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
             ) : result.passed ? (
@@ -687,16 +687,16 @@ const AssessmentContent = () => {
 
           {/* Info Grid */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.totalMarks")}</p>
               <p className="text-base font-semibold text-[#1F2937]">{assessment.totalMarks}</p>
             </div>
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
               <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.passingMarks")}</p>
               <p className="text-base font-semibold text-[#1F2937]">{assessment.passingMarks}</p>
             </div>
             {assessment.dueDate && (
-              <div className="col-span-2 bg-white rounded-xl border border-[#E5E7EB] p-4">
+              <div className="col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-4">
                 <p className="text-xs text-[#6B7280] mb-0.5">{t("assessment.deadline") || "Deadline"}</p>
                 <p className="text-base font-semibold text-[#1F2937]">
                   {new Date(assessment.dueDate).toLocaleString(locale === "ar" ? "ar-SA" : "en-US", { timeZone: "Asia/Riyadh" })} (KSA)
@@ -715,7 +715,7 @@ const AssessmentContent = () => {
 
           {/* Assignment Files (instructor-provided) */}
           {assessment.assignmentFiles && assessment.assignmentFiles.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
               <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.assignmentFiles") || "Assignment Files"}</h3>
               <div className="space-y-2">
                 {assessment.assignmentFiles.map((f) => (
@@ -737,10 +737,10 @@ const AssessmentContent = () => {
 
           {/* Student File Upload */}
           {canSubmit && (
-            <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-6">
+            <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-6">
               <h3 className="text-sm font-semibold text-[#1F2937] mb-3">{t("assessment.uploadFiles") || "Upload Your Files"}</h3>
 
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[#D1D5DB] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors mb-3">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border)] rounded-xl cursor-pointer hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-colors mb-3">
                 <div className="flex flex-col items-center">
                   <Upload className="w-8 h-8 text-[#9CA3AF] mb-1" />
                   <p className="text-sm text-[#6B7280]">{t("assessment.dragDropFiles") || "Click to select files"}</p>
@@ -800,7 +800,7 @@ const AssessmentContent = () => {
 
               {/* Upload progress */}
               {assignmentUploading && (
-                <div className="w-full bg-[#E5E7EB] rounded-full h-2 mb-4">
+                <div className="w-full bg-[var(--color-border)] rounded-full h-2 mb-4">
                   <div className="bg-[#3B82F6] h-2 rounded-full transition-all" style={{ width: `${assignmentUploadPct}%` }} />
                 </div>
               )}
@@ -854,7 +854,7 @@ const AssessmentContent = () => {
     return (
       <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
         {/* Top Bar */}
-        <div className="bg-white border-b border-[#E5E7EB] px-4 py-3">
+        <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
           <div className="max-w-[900px] mx-auto flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link
@@ -876,7 +876,7 @@ const AssessmentContent = () => {
 
         {/* Attempt Selector */}
         {reviewableAttempts.length > 1 && (
-          <div className="bg-white border-b border-[#E5E7EB] px-4 py-2">
+          <div className="bg-white border-b border-[var(--color-border)] px-4 py-2">
             <div className="max-w-[900px] mx-auto flex items-center gap-2 overflow-x-auto">
               {reviewableAttempts.map((attempt) => {
                 const isActive = attempt.id === reviewAttemptId;
@@ -889,7 +889,7 @@ const AssessmentContent = () => {
                     className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 ${
                       isActive
                         ? "bg-[#002D87] text-white"
-                        : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[#E5E7EB]"
+                        : "bg-[#F3F4F6] text-[#4B5563] hover:bg-[var(--color-border)]"
                     }`}
                   >
                     {attempt.attemptNumber === 1
@@ -960,7 +960,7 @@ const AssessmentContent = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
                 <p className="text-base sm:text-lg font-medium text-[#1F2937] mb-6">
                   {isRTL && reviewQuestion.questionTextAr
                     ? reviewQuestion.questionTextAr
@@ -999,7 +999,7 @@ const AssessmentContent = () => {
                                 ? "border-[#16A34A] bg-green-50"
                                 : isStudentAnswer
                                   ? "border-[#DC2626] bg-red-50"
-                                  : "border-[#E5E7EB]"
+                                  : "border-[var(--color-border)]"
                             }`}
                           >
                             <div
@@ -1008,7 +1008,7 @@ const AssessmentContent = () => {
                                   ? "border-[#16A34A] bg-[#16A34A]"
                                   : isStudentAnswer
                                     ? "border-[#DC2626] bg-[#DC2626]"
-                                    : "border-[#D1D5DB]"
+                                    : "border-[var(--color-border)]"
                               }`}
                             >
                               {isCorrectOption && (
@@ -1034,7 +1034,7 @@ const AssessmentContent = () => {
                       <p className="text-xs font-medium text-[#6B7280] mb-1">
                         {t("assessment.yourAnswer")}
                       </p>
-                      <div className="p-3 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] text-sm text-[#1F2937] whitespace-pre-wrap">
+                      <div className="p-3 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)] text-sm text-[#1F2937] whitespace-pre-wrap">
                         {studentAnswer?.answer || "—"}
                       </div>
                     </div>
@@ -1068,7 +1068,7 @@ const AssessmentContent = () => {
                 <button
                   onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
                   disabled={currentQuestion === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
                 >
                   {isRTL ? (
                     <ArrowRight className="w-4 h-4" />
@@ -1139,7 +1139,7 @@ const AssessmentContent = () => {
         className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4"
         dir={isRTL ? "rtl" : "ltr"}
       >
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           {isPendingGrading ? (
             <Clock className="w-16 h-16 text-[#D4A520] mx-auto mb-4" />
           ) : result.passed ? (
@@ -1265,7 +1265,7 @@ const AssessmentContent = () => {
                     <div
                       key={attempt.id}
                       className={`flex items-center gap-3 p-3 rounded-lg border ${
-                        attempt.isEffective ? "border-[#7C3AED] bg-[#F5F3FF]" : "border-[#E5E7EB] bg-[#F9FAFB]"
+                        attempt.isEffective ? "border-[#7C3AED] bg-[#F5F3FF]" : "border-[var(--color-border)] bg-[#F9FAFB]"
                       }`}
                     >
                       <div className="flex-shrink-0">
@@ -1368,7 +1368,7 @@ const AssessmentContent = () => {
         className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4"
         dir={isRTL ? "rtl" : "ltr"}
       >
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6 sm:p-8 max-w-lg w-full">
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6 sm:p-8 max-w-lg w-full">
           {/* Back link */}
           <Link
             href={`/${locale}/dashboard/student/courses/${courseId}`}
@@ -1506,7 +1506,7 @@ const AssessmentContent = () => {
   if (assessment.questions.length === 0) {
     return (
       <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center p-4" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="bg-white rounded-2xl border border-[#E5E7EB] p-8 max-w-lg w-full text-center">
+        <div className="bg-white rounded-2xl border border-[var(--color-border)] p-8 max-w-lg w-full text-center">
           <AlertCircle className="w-12 h-12 text-[#D4A520] mx-auto mb-4" />
           <h2 className="text-lg font-bold text-[#1F2937] mb-2">
             {t("assessment.noQuestionsAvailable") || "No questions available"}
@@ -1538,13 +1538,13 @@ const AssessmentContent = () => {
     if (isAnswered && isFlagged) return "bg-[#D4A520] text-white ring-2 ring-[#16A34A]";
     if (isFlagged) return "bg-[#FBBF24] text-[#1F2937]";
     if (isAnswered) return "bg-[#16A34A] text-white";
-    return "bg-[#F3F4F6] text-[#6B7280] hover:bg-[#E5E7EB]";
+    return "bg-[#F3F4F6] text-[#6B7280] hover:bg-[var(--color-border)]";
   };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB]" dir={isRTL ? "rtl" : "ltr"}>
       {/* Top Bar */}
-      <div className="bg-white border-b border-[#E5E7EB] px-4 py-3">
+      <div className="bg-white border-b border-[var(--color-border)] px-4 py-3">
         <div className="max-w-[1100px] mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -1621,7 +1621,7 @@ const AssessmentContent = () => {
       <div className="max-w-[1100px] mx-auto px-4 py-6 sm:py-8 flex gap-6">
         {/* Question Navigation Sidebar (desktop only) */}
         <div className="hidden lg:block w-[200px] flex-shrink-0">
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sticky top-6">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sticky top-6">
             <p className="text-xs font-semibold text-[#6B7280] uppercase tracking-wider mb-3">
               {t("assessment.questionsCount")}
             </p>
@@ -1696,7 +1696,7 @@ const AssessmentContent = () => {
           </div>
 
           {/* Question Content */}
-          <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-6">
+          <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 mb-6">
             <p className="text-base sm:text-lg font-medium text-[#1F2937] mb-6">
               {isRTL && question.questionTextAr
                 ? question.questionTextAr
@@ -1723,14 +1723,14 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[#F0F7FF]"
-                          : "border-[#E5E7EB] hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[#F9FAFB]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
                             ? "border-[#002D87] bg-[#002D87]"
-                            : "border-[#D1D5DB]"
+                            : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && (
@@ -1775,14 +1775,14 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[#F0F7FF]"
-                          : "border-[#E5E7EB] hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[#F9FAFB]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
                             ? "border-[#002D87] bg-[#002D87]"
-                            : "border-[#D1D5DB]"
+                            : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && (
@@ -1824,14 +1824,14 @@ const AssessmentContent = () => {
                       className={`w-full flex items-center gap-3 p-4 rounded-lg border transition-colors text-start ${
                         isSelected
                           ? "border-[#002D87] bg-[#F0F7FF]"
-                          : "border-[#E5E7EB] hover:border-[#D1D5DB] hover:bg-[#F9FAFB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)] hover:bg-[#F9FAFB]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
                             ? "border-[#002D87] bg-[#002D87]"
-                            : "border-[#D1D5DB]"
+                            : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && (
@@ -1867,7 +1867,7 @@ const AssessmentContent = () => {
                   }
                   maxLength={500}
                   placeholder={t("assessment.typeAnswer")}
-                  className="w-full px-4 py-3 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
+                  className="w-full px-4 py-3 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#002D87] focus:border-transparent"
                 />
                 <p className="text-xs text-[#9CA3AF] mt-1 text-end">
                   {(answers[question.id] || "").length}/500
@@ -1877,13 +1877,13 @@ const AssessmentContent = () => {
 
             {/* Essay with formatting toolbar */}
             {question.type === "essay" && (
-              <div className="border border-[#E5E7EB] rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#002D87] focus-within:border-transparent">
+              <div className="border border-[var(--color-border)] rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#002D87] focus-within:border-transparent">
                 {/* Toolbar */}
-                <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                <div className="flex items-center gap-0.5 px-2 py-1.5 bg-[#F9FAFB] border-b border-[var(--color-border)]">
                   <button
                     type="button"
                     onClick={() => document.execCommand("bold")}
-                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.bold")}
                   >
                     <Bold className="w-4 h-4 text-[#4B5563]" />
@@ -1891,7 +1891,7 @@ const AssessmentContent = () => {
                   <button
                     type="button"
                     onClick={() => document.execCommand("italic")}
-                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.italic")}
                   >
                     <Italic className="w-4 h-4 text-[#4B5563]" />
@@ -1899,16 +1899,16 @@ const AssessmentContent = () => {
                   <button
                     type="button"
                     onClick={() => document.execCommand("underline")}
-                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.underline")}
                   >
                     <Underline className="w-4 h-4 text-[#4B5563]" />
                   </button>
-                  <div className="w-px h-5 bg-[#E5E7EB] mx-1" />
+                  <div className="w-px h-5 bg-[var(--color-border)] mx-1" />
                   <button
                     type="button"
                     onClick={() => document.execCommand("insertUnorderedList")}
-                    className="p-1.5 rounded hover:bg-[#E5E7EB] transition-colors"
+                    className="p-1.5 rounded hover:bg-[var(--color-border)] transition-colors"
                     title={t("assessment.bulletList")}
                   >
                     <List className="w-4 h-4 text-[#4B5563]" />
@@ -1937,7 +1937,7 @@ const AssessmentContent = () => {
             {question.type === "file_upload" && (
               <div>
                 {answers[question.id] ? (
-                  <div className="flex items-center gap-3 p-4 border border-[#E5E7EB] rounded-lg bg-[#F9FAFB]">
+                  <div className="flex items-center gap-3 p-4 border border-[var(--color-border)] rounded-lg bg-[#F9FAFB]">
                     <Paperclip className="w-5 h-5 text-[#6B7280] flex-shrink-0" />
                     <span className="text-sm text-[#374151] truncate flex-1">
                       {t("assessment.fileUploaded")}
@@ -1957,12 +1957,12 @@ const AssessmentContent = () => {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[#D1D5DB] rounded-lg cursor-pointer hover:bg-[#F9FAFB] hover:border-[#002D87] transition-colors">
+                  <label className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-[var(--color-border)] rounded-lg cursor-pointer hover:bg-[#F9FAFB] hover:border-[#002D87] transition-colors">
                     <Upload className="w-10 h-10 text-[#9CA3AF]" />
                     <span className="text-sm text-[#6B7280]">
                       {t("assessment.uploadFile")}
                     </span>
-                    <span className="text-xs text-[#D1D5DB]">
+                    <span className="text-xs text-[var(--color-border)]">
                       PDF, DOCX, JPG, PNG
                     </span>
                     <input
@@ -1995,7 +1995,7 @@ const AssessmentContent = () => {
             <button
               onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
               disabled={currentQuestion === 0}
-              className="flex items-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
+              className="flex items-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#4B5563] hover:bg-[#F9FAFB] transition-colors disabled:opacity-40"
             >
               {isRTL ? (
                 <ArrowRight className="w-4 h-4" />

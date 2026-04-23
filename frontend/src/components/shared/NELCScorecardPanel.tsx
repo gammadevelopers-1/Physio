@@ -103,7 +103,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
   const totalCount = scorecard.categories.length;
 
   return (
-    <div className={`bg-white rounded-xl border border-[#E5E7EB] overflow-hidden ${compact ? "" : "shadow-sm"}`}>
+    <div className={`bg-white rounded-xl border border-[var(--color-border)] overflow-hidden ${compact ? "" : "shadow-sm"}`}>
       {/* Header — clickable to toggle */}
       <button
         onClick={() => setPanelOpen((v) => !v)}
@@ -149,7 +149,7 @@ export default function NELCScorecardPanel({ courseId, compact = false }: Props)
       </button>
 
       {/* Categories — collapsible */}
-      {panelOpen && <div className="divide-y divide-[#F3F4F6] border-t border-[#E5E7EB]">
+      {panelOpen && <div className="divide-y divide-[#F3F4F6] border-t border-[var(--color-border)]">
         {scorecard.categories.map((cat) => {
           const cfg = STATUS_STYLES[cat.status];
           const CatIcon = CATEGORY_ICONS[cat.category] || BookOpen;

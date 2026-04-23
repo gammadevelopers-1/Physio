@@ -56,7 +56,7 @@ const InstructorNotificationsWidget = ({
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-5">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h3 className="text-base font-semibold text-[#1F2937]">
@@ -103,7 +103,7 @@ const InstructorNotificationsWidget = ({
           </p>
           <button
             onClick={onRefresh}
-            className="px-4 py-2 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
+            className="px-4 py-2 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors"
             aria-label={tA("refresh")}
           >
             {t("notifications.refresh")}
@@ -117,7 +117,7 @@ const InstructorNotificationsWidget = ({
               className={`p-3 rounded-lg border transition-colors ${
                 !notification.read
                   ? "bg-[#EFF6FF] border-[#DBEAFE]"
-                  : "bg-[#F9FAFB] border-transparent hover:border-[#E5E7EB]"
+                  : "bg-[#F9FAFB] border-transparent hover:border-[var(--color-border)]"
               }`}
             >
               <div className="flex items-start justify-between gap-2 mb-1">

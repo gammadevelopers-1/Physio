@@ -53,9 +53,9 @@ const SchedulesSessionsWidget = ({
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#FEF3C7] rounded-lg flex items-center justify-center">
             <Calendar className="w-4 h-4 text-[#D4A520]" />
@@ -79,13 +79,13 @@ const SchedulesSessionsWidget = ({
             <div className="flex gap-1">
               <button
                 onClick={onPrevMonth}
-                className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F3F4F6] transition-colors"
+                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F3F4F6] transition-colors"
               >
                 <ChevronLeft className={`w-4 h-4 text-[#4B5563] ${isRTL ? "rotate-180" : ""}`} />
               </button>
               <button
                 onClick={onNextMonth}
-                className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F3F4F6] transition-colors"
+                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F3F4F6] transition-colors"
               >
                 <ChevronRight className={`w-4 h-4 text-[#4B5563] ${isRTL ? "rotate-180" : ""}`} />
               </button>

@@ -295,11 +295,11 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               </div>
               <CourseManagerMobileSidebar manager={manager} />
               <div className="flex-1 min-w-0 animate-pulse space-y-4">
-                <div className="h-8 w-48 bg-[#E5E7EB] rounded" />
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 space-y-4">
-                  <div className="h-6 w-32 bg-[#E5E7EB] rounded" />
-                  <div className="h-10 w-full bg-[#E5E7EB] rounded" />
-                  <div className="h-10 w-full bg-[#E5E7EB] rounded" />
+                <div className="h-8 w-48 bg-[var(--color-border)] rounded" />
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6 space-y-4">
+                  <div className="h-6 w-32 bg-[var(--color-border)] rounded" />
+                  <div className="h-10 w-full bg-[var(--color-border)] rounded" />
+                  <div className="h-10 w-full bg-[var(--color-border)] rounded" />
                 </div>
               </div>
             </div>
@@ -321,7 +321,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
               </div>
               <CourseManagerMobileSidebar manager={manager} />
               <div className="flex-1 min-w-0">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <AlertTriangle className="w-12 h-12 text-[#D97706] mx-auto mb-4" />
                   <p className="text-[#6B7280] mb-4">{loadError}</p>
                   <button
@@ -372,7 +372,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Info */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("createCourse.basicInfo")}
                   </h2>
@@ -386,7 +386,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         required
                       />
                     </div>
@@ -399,7 +399,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         type="text"
                         value={titleAr}
                         onChange={(e) => setTitleAr(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         dir="rtl"
                       />
                     </div>
@@ -412,7 +412,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -424,7 +424,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={descriptionAr}
                         onChange={(e) => setDescriptionAr(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                         dir="rtl"
                       />
                     </div>
@@ -432,7 +432,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Course Image */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("createCourse.courseImage")}
                   </h2>
@@ -444,7 +444,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     className="hidden"
                   />
                   {thumbnailPreview ? (
-                    <div className="relative w-full max-w-md h-48 rounded-lg overflow-hidden border border-[#E5E7EB]">
+                    <div className="relative w-full max-w-md h-48 rounded-lg overflow-hidden border border-[var(--color-border)]">
                       <Image
                         src={thumbnailPreview}
                         alt="Thumbnail preview"
@@ -469,7 +469,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full max-w-md h-48 border-2 border-dashed border-[#E5E7EB] rounded-lg flex flex-col items-center justify-center text-[#9CA3AF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                      className="w-full max-w-md h-48 border-2 border-dashed border-[var(--color-border)] rounded-lg flex flex-col items-center justify-center text-[#9CA3AF] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                     >
                       <ImagePlus className="w-8 h-8 mb-2" />
                       <span className="text-sm font-medium">
@@ -480,7 +480,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Course Content */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("createCourse.wizardStepContent")}
                   </h2>
@@ -655,7 +655,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             value={requirements}
                             onChange={(e) => setRequirements(e.target.value)}
                             rows={3}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                             placeholder={t("createCourse.requirementsPlaceholder")}
                           />
                         </div>
@@ -666,7 +666,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             value={requirementsAr}
                             onChange={(e) => setRequirementsAr(e.target.value)}
                             rows={3}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                             dir="rtl"
                             placeholder="..."
                           />
@@ -682,7 +682,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={notices}
                         onChange={(e) => setNotices(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                         placeholder={t("createCourse.noticesPlaceholder")}
                       />
                     </div>
@@ -693,7 +693,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         value={noticesAr}
                         onChange={(e) => setNoticesAr(e.target.value)}
                         rows={3}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                         dir="rtl"
                         placeholder="..."
                       />
@@ -701,13 +701,13 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
 
                     {/* Show Contents toggle — only for self-paced and blended */}
                     {(deliveryType === 'self-paced' || deliveryType === 'blended') && (
-                      <div className="pt-3 border-t border-[#E5E7EB]">
+                      <div className="pt-3 border-t border-[var(--color-border)]">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={showContents}
                             onChange={(e) => setShowContents(e.target.checked)}
-                            className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                            className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                           />
                           <div>
                             <p className="text-sm font-medium text-[#374151]">{t("createCourse.showContentsLabel")}</p>
@@ -720,13 +720,13 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     )}
 
                     {/* Visible on public site toggle */}
-                    <div className="pt-3 border-t border-[#E5E7EB]">
+                    <div className="pt-3 border-t border-[var(--color-border)]">
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={visibleOnPublicSite}
                           onChange={(e) => setVisibleOnPublicSite(e.target.checked)}
-                          className="mt-0.5 w-4 h-4 rounded border-[#D1D5DB] text-[#3B82F6] focus:ring-[#3B82F6]"
+                          className="mt-0.5 w-4 h-4 rounded border-[var(--color-border)] text-[#3B82F6] focus:ring-[#3B82F6]"
                         />
                         <div>
                           <p className="text-sm font-medium text-[#374151]">{t("createCourse.visibleOnPublicLabel")}</p>
@@ -738,7 +738,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                     </div>
 
                     {/* Section order */}
-                    <div className="pt-3 border-t border-[#E5E7EB]">
+                    <div className="pt-3 border-t border-[var(--color-border)]">
                       <p className="text-sm font-medium text-[#374151] mb-1">{t("createCourse.sectionOrderTitle")}</p>
                       <p className="text-xs text-[#6B7280] mb-3">
                         {t("createCourse.sectionOrderDesc")}
@@ -765,14 +765,14 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             setSectionsOrder(next);
                           };
                           return (
-                            <div key={key} className="flex items-center gap-2 px-3 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg">
+                            <div key={key} className="flex items-center gap-2 px-3 py-2 bg-[#F9FAFB] border border-[var(--color-border)] rounded-lg">
                               <span className="text-xs text-[#9CA3AF] font-medium w-5">{idx + 1}.</span>
                               <span className="text-sm text-[#374151] flex-1">{labels[key] || key}</span>
                               <button
                                 type="button"
                                 onClick={moveUp}
                                 disabled={idx === 0}
-                                className="p-1 rounded hover:bg-[#E5E7EB] disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="p-1 rounded hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
                                 title={t("createCourse.moveUp")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
@@ -783,7 +783,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                                 type="button"
                                 onClick={moveDown}
                                 disabled={idx === sectionsOrder.length - 1}
-                                className="p-1 rounded hover:bg-[#E5E7EB] disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="p-1 rounded hover:bg-[var(--color-border)] disabled:opacity-30 disabled:cursor-not-allowed"
                                 title={t("createCourse.moveDown")}
                               >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#6B7280]">
@@ -799,7 +799,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Instructor Assignment */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("createCourse.instructor")}
                   </h2>
@@ -811,7 +811,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                       id="edit-instructor-select"
                       value={instructorId}
                       onChange={(e) => setInstructorId(e.target.value)}
-                      className="w-full max-w-md px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      className="w-full max-w-md px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                       required
                     >
                       <option value="">
@@ -831,7 +831,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                 </div>
 
                 {/* Course Settings */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                   <h2 className="text-lg font-semibold text-[#1F2937] mb-4">
                     {t("createCourse.courseSettings")}
                   </h2>
@@ -848,7 +848,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             e.target.value as "zoom" | "onsite" | "blended" | "self-paced"
                           )
                         }
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                       >
                         <option value="zoom">
                           {t("createCourse.deliveryZoom")}
@@ -875,7 +875,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         onChange={(e) => setMaxEnrollment(e.target.value)}
                         placeholder={deliveryType === "self-paced" ? t("createCourse.unlimited") || "Unlimited" : "2000"}
                         min={1}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
                       <p className="text-xs text-[#9CA3AF] mt-1">
                         {deliveryType === "self-paced"
@@ -894,7 +894,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         onChange={(e) => setCohort(e.target.value)}
                         placeholder={t("createCourse.cohortPlaceholder")}
                         maxLength={100}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
                       <p className="text-xs text-[#6B7280] mt-1">
                         {t("createCourse.cohortHint")}
@@ -931,7 +931,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         onChange={(e) => setPrice(e.target.value)}
                         placeholder="0"
                         min={0}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                       />
                     </div>
                     <div>
@@ -952,7 +952,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                         id="edit-language"
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                       >
                         <option value="en">{t("createCourse.languageEn")}</option>
                         <option value="ar">{t("createCourse.languageAr")}</option>
@@ -971,7 +971,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             value={venue}
                             onChange={(e) => setVenue(e.target.value)}
                             placeholder={t("createCourse.venuePlaceholder")}
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           />
                         </div>
                         <div>
@@ -984,7 +984,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                             value={venueAr}
                             onChange={(e) => setVenueAr(e.target.value)}
                             placeholder="..."
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             dir="rtl"
                           />
                         </div>
@@ -998,7 +998,7 @@ const EditCourseContent = ({ courseId }: EditCourseContentProps) => {
                   <button
                     type="button"
                     onClick={() => router.back()}
-                    className="px-6 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                    className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                   >
                     {t("createCourse.cancel")}
                   </button>

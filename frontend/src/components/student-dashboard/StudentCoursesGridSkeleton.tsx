@@ -1,7 +1,7 @@
 "use client";
 
 const SkeletonBlock = ({ className }: { className?: string }) => (
-  <div className={`bg-[#E5E7EB] rounded animate-pulse ${className || ""}`} />
+  <div className={`bg-[var(--color-border)] rounded animate-pulse ${className || ""}`} />
 );
 
 const StudentCoursesGridSkeleton = ({ count = 4 }: { count?: number }) => (
@@ -10,7 +10,7 @@ const StudentCoursesGridSkeleton = ({ count = 4 }: { count?: number }) => (
     {Array.from({ length: count }).map((_, i) => (
       <div
         key={i}
-        className="border border-[#E5E7EB] rounded-xl overflow-hidden"
+        className="border border-[var(--color-border)] rounded-xl overflow-hidden"
       >
         <SkeletonBlock className="w-full h-[120px] sm:h-[140px] rounded-none" />
         <div className="p-3 sm:p-4 space-y-2">

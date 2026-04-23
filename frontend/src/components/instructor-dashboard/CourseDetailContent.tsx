@@ -67,33 +67,33 @@ interface CourseDetailContentProps {
 // ─── Skeleton ──────────────────────────────────────────────────
 const CourseDetailSkeleton = () => (
   <div className="flex-1 min-w-0 animate-pulse">
-    <div className="h-4 w-32 bg-[#E5E7EB] rounded mb-4" />
-    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
-      <div className="h-48 sm:h-56 bg-[#E5E7EB]" />
-      <div className="p-4 border-t border-[#E5E7EB]">
+    <div className="h-4 w-32 bg-[var(--color-border)] rounded mb-4" />
+    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
+      <div className="h-48 sm:h-56 bg-[var(--color-border)]" />
+      <div className="p-4 border-t border-[var(--color-border)]">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E5E7EB] rounded-lg" />
+              <div className="w-10 h-10 bg-[var(--color-border)] rounded-lg" />
               <div className="space-y-1.5">
-                <div className="h-5 w-12 bg-[#E5E7EB] rounded" />
-                <div className="h-3 w-16 bg-[#E5E7EB] rounded" />
+                <div className="h-5 w-12 bg-[var(--color-border)] rounded" />
+                <div className="h-3 w-16 bg-[var(--color-border)] rounded" />
               </div>
             </div>
           ))}
         </div>
       </div>
     </div>
-    <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-      <div className="flex gap-4 p-4 border-b border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+      <div className="flex gap-4 p-4 border-b border-[var(--color-border)]">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-5 w-20 bg-[#E5E7EB] rounded" />
+          <div key={i} className="h-5 w-20 bg-[var(--color-border)] rounded" />
         ))}
       </div>
       <div className="p-5 space-y-4">
-        <div className="h-4 w-24 bg-[#E5E7EB] rounded" />
-        <div className="h-3 w-full bg-[#E5E7EB] rounded" />
-        <div className="h-3 w-3/4 bg-[#E5E7EB] rounded" />
+        <div className="h-4 w-24 bg-[var(--color-border)] rounded" />
+        <div className="h-3 w-full bg-[var(--color-border)] rounded" />
+        <div className="h-3 w-3/4 bg-[var(--color-border)] rounded" />
       </div>
     </div>
   </div>
@@ -788,7 +788,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </Link>
 
                 {/* Course Header */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                   <div className="relative h-48 sm:h-56">
                     {course.thumbnail ? (
                       <Image
@@ -826,7 +826,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     </div>
                   </div>
 
-                  <div className="p-4 border-t border-[#E5E7EB]">
+                  <div className="p-4 border-t border-[var(--color-border)]">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
@@ -879,8 +879,8 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 </div>
 
                 {/* Tabs */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                  <div className="flex border-b border-[#E5E7EB] overflow-x-auto" role="tablist">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                  <div className="flex border-b border-[var(--color-border)] overflow-x-auto" role="tablist">
                     {tabs.map((tab) => (
                       <button
                         key={tab.id}
@@ -987,13 +987,13 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {[...course.modules]
                           .sort((a, b) => a.orderIndex - b.orderIndex)
                           .map((mod, idx) => (
-                            <div key={mod.id} className="border border-[#E5E7EB] rounded-lg overflow-hidden">
+                            <div key={mod.id} className="border border-[var(--color-border)] rounded-lg overflow-hidden">
                               <div className="flex items-center justify-between p-4 bg-[#F9FAFB]">
                                 <button
                                   onClick={() => toggleModule(mod.id)}
                                   className="flex-1 flex items-center gap-3 text-start"
                                 >
-                                  <span className="w-6 h-6 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-medium text-[#6B7280]">
+                                  <span className="w-6 h-6 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-medium text-[#6B7280]">
                                     {idx + 1}
                                   </span>
                                   <span className="flex items-center gap-2">
@@ -1018,7 +1018,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => handleReorderModule(mod.id, "up")}
                                       disabled={idx === 0}
-                                      className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                      className="p-1 hover:bg-[var(--color-border)] rounded disabled:opacity-30 disabled:cursor-not-allowed"
                                       aria-label={t("courseDetail.moveUp")}
                                     >
                                       <ArrowUp className="w-3.5 h-3.5 text-[#6B7280]" />
@@ -1026,14 +1026,14 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => handleReorderModule(mod.id, "down")}
                                       disabled={idx === course.modules.length - 1}
-                                      className="p-1 hover:bg-[#E5E7EB] rounded disabled:opacity-30 disabled:cursor-not-allowed"
+                                      className="p-1 hover:bg-[var(--color-border)] rounded disabled:opacity-30 disabled:cursor-not-allowed"
                                       aria-label={t("courseDetail.moveDown")}
                                     >
                                       <ArrowDown className="w-3.5 h-3.5 text-[#6B7280]" />
                                     </button>
                                     <button
                                       onClick={() => openEditModule(mod)}
-                                      className="p-1 hover:bg-[#E5E7EB] rounded"
+                                      className="p-1 hover:bg-[var(--color-border)] rounded"
                                       aria-label={t("courseDetail.editModule")}
                                     >
                                       <Edit className="w-3.5 h-3.5 text-[#6B7280]" />
@@ -1050,7 +1050,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 )}
                               </div>
                               {expandedModules.includes(mod.id) && (
-                                <div className="border-t border-[#E5E7EB]">
+                                <div className="border-t border-[var(--color-border)]">
                                   {/* Module metadata */}
                                   <div className="px-4 pt-3 pb-2 flex items-center gap-4 text-sm text-[#6B7280]">
                                     {getModuleIcon(mod.type)}
@@ -1089,7 +1089,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                       </div>
                                     ) : (moduleMaterials[mod.id] || []).length === 0 ? (
                                       <div className="text-center py-4">
-                                        <FileText className="w-8 h-8 text-[#D1D5DB] mx-auto mb-2" />
+                                        <FileText className="w-8 h-8 text-[var(--color-border)] mx-auto mb-2" />
                                         <p className="text-xs text-[#9CA3AF]">{t("courseDetail.noModuleMaterials")}</p>
                                       </div>
                                     ) : (
@@ -1097,7 +1097,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                         {(moduleMaterials[mod.id] || []).map((mat) => (
                                           <div
                                             key={mat.id}
-                                            className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[#E5E7EB] transition-colors"
+                                            className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
                                           >
                                             {getMaterialIcon(mat.type)}
                                             <div className="flex-1 min-w-0">
@@ -1133,7 +1133,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                                   href={mat.fileUrl}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
-                                                  className="p-1 hover:bg-[#E5E7EB] rounded"
+                                                  className="p-1 hover:bg-[var(--color-border)] rounded"
                                                   aria-label={t("courseDetail.download")}
                                                 >
                                                   <Download className="w-3.5 h-3.5 text-[#6B7280]" />
@@ -1166,7 +1166,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                           {modAssessments.map((ma) => (
                                             <div
                                               key={ma.id}
-                                              className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[#E5E7EB] transition-colors"
+                                              className="flex items-center gap-3 p-2 rounded-lg bg-[#F9FAFB] border border-[#F3F4F6] hover:border-[var(--color-border)] transition-colors"
                                             >
                                               <ClipboardCheck className="w-4 h-4 text-[#6B7280] flex-shrink-0" />
                                               <div className="flex-1 min-w-0">
@@ -1201,7 +1201,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={openAddModule}
-                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.addModule")}
@@ -1228,7 +1228,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <>
                               <table className="w-full">
                                 <thead>
-                                  <tr className="border-b border-[#E5E7EB]">
+                                  <tr className="border-b border-[var(--color-border)]">
                                     <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.name")}</th>
                                     <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">{t("courseDetail.enrolledDate")}</th>
                                     <th className="px-3 pb-3 text-start text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider w-32">{t("courseDetail.progress")}</th>
@@ -1257,7 +1257,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                         <td className="px-3 py-3 text-xs text-[#6B7280]">{formatDateLocal(enrollment.enrolledAt, calendarFormat, locale)}</td>
                                         <td className="px-3 py-3">
                                           <div className="flex items-center gap-2">
-                                            <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                            <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                               <div
                                                 className={`h-full rounded-full ${
                                                   progress >= 75 ? "bg-[#22C55E]" : progress >= 50 ? "bg-[#3B82F6]" : progress >= 25 ? "bg-[#F59E0B]" : "bg-[#EF4444]"
@@ -1290,7 +1290,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 </tbody>
                               </table>
                               {studentsTotalPages > 1 && (
-                                <div className="flex items-center justify-between pt-4 border-t border-[#E5E7EB] mt-2">
+                                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)] mt-2">
                                   <p className="text-xs text-[#6B7280]">
                                     {(studentsPage - 1) * STUDENTS_PER_PAGE + 1}–{Math.min(studentsPage * STUDENTS_PER_PAGE, enrollments.length)} of {enrollments.length}
                                   </p>
@@ -1298,7 +1298,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.max(1, p - 1))}
                                       disabled={studentsPage === 1}
-                                      className="p-1.5 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
                                     >
                                       <ChevronLeft className="w-3.5 h-3.5" />
                                     </button>
@@ -1308,7 +1308,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                     <button
                                       onClick={() => setStudentsPage((p) => Math.min(studentsTotalPages, p + 1))}
                                       disabled={studentsPage === studentsTotalPages}
-                                      className="p-1.5 border border-[#E5E7EB] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
+                                      className="p-1.5 border border-[var(--color-border)] rounded text-[#6B7280] hover:bg-[#F9FAFB] disabled:opacity-50"
                                     >
                                       <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
@@ -1331,7 +1331,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                           </div>
                         ) : (
                           sessions.map((session) => (
-                            <div key={session.id} className="flex items-center justify-between p-4 border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors">
+                            <div key={session.id} className="flex items-center justify-between p-4 border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB] transition-colors">
                               <div className="flex items-center gap-3">
                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                                   session.type === "zoom" ? "bg-[#EFF6FF]" : session.type === "onsite" ? "bg-[#DCFCE7]" : "bg-[#F3E8FF]"
@@ -1432,7 +1432,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         {!isCourseReadOnly && (
                           <button
                             onClick={openAddSession}
-                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[#E5E7EB] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
+                            className="w-full flex items-center justify-center gap-2 p-4 border-2 border-dashed border-[var(--color-border)] rounded-lg text-sm text-[#6B7280] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
                           >
                             <Plus className="w-4 h-4" />
                             {t("courseDetail.scheduleSession")}
@@ -1481,24 +1481,24 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         <div>
                           <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.performanceOverview")}</h3>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div className="p-4 border border-[#E5E7EB] rounded-lg">
+                            <div className="p-4 border border-[var(--color-border)] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.completionRate")}</p>
                               <p className="text-2xl font-bold text-[#22C55E]">{analytics.completionRate}%</p>
-                              <div className="mt-2 w-full h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div className="h-full bg-[#22C55E] rounded-full" style={{ width: `${analytics.completionRate}%` }} />
                               </div>
                             </div>
-                            <div className="p-4 border border-[#E5E7EB] rounded-lg">
+                            <div className="p-4 border border-[var(--color-border)] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.dropoffRate")}</p>
                               <p className="text-2xl font-bold text-[#EF4444]">{analytics.dropoffRate}%</p>
-                              <div className="mt-2 w-full h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div className="h-full bg-[#EF4444] rounded-full" style={{ width: `${analytics.dropoffRate}%` }} />
                               </div>
                             </div>
-                            <div className="p-4 border border-[#E5E7EB] rounded-lg">
+                            <div className="p-4 border border-[var(--color-border)] rounded-lg">
                               <p className="text-xs text-[#6B7280] mb-1">{t("courseDetail.avgProgress")}</p>
                               <p className="text-2xl font-bold text-[#3B82F6]">{analytics.avgProgress}%</p>
-                              <div className="mt-2 w-full h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div className="mt-2 w-full h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div className="h-full bg-[#3B82F6] rounded-full" style={{ width: `${analytics.avgProgress}%` }} />
                               </div>
                             </div>
@@ -1577,7 +1577,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 type="text"
                                 value={settingsForm.title}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, title: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                               />
                             </div>
                             <div>
@@ -1587,7 +1587,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 dir="rtl"
                                 value={settingsForm.titleAr}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, titleAr: e.target.value }))}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                               />
                             </div>
                             <div className="sm:col-span-2">
@@ -1596,7 +1596,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 value={settingsForm.description}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, description: e.target.value }))}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
                               />
                             </div>
                             <div className="sm:col-span-2">
@@ -1606,7 +1606,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 value={settingsForm.descriptionAr}
                                 onChange={(e) => setSettingsForm((f) => ({ ...f, descriptionAr: e.target.value }))}
                                 rows={3}
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
                               />
                             </div>
                             <div>
@@ -1614,7 +1614,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                               <select
                                 value={settingsForm.deliveryType}
                                 disabled
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               >
                                 <option value="zoom">{t("courseDetail.deliveryOptions.zoom")}</option>
                                 <option value="onsite">{t("courseDetail.deliveryOptions.onsite")}</option>
@@ -1629,7 +1629,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                                 min="1"
                                 value={settingsForm.maxEnrollment}
                                 disabled
-                                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed"
                               />
                             </div>
                             <div>
@@ -1654,7 +1654,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                             <label className="block text-sm font-medium text-[#374151] mb-2">{t("courseDetail.thumbnail")}</label>
                             <div className="flex items-center gap-4">
                               {course.thumbnail ? (
-                                <div className="w-20 h-14 rounded-lg overflow-hidden border border-[#E5E7EB]">
+                                <div className="w-20 h-14 rounded-lg overflow-hidden border border-[var(--color-border)]">
                                   <Image src={course.thumbnail} alt="Thumbnail" width={80} height={56} className="object-cover w-full h-full" unoptimized={course.thumbnail.startsWith("http")} />
                                 </div>
                               ) : (
@@ -1677,7 +1677,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                         </div>
 
                         {/* Review Workflow */}
-                        <div className="border-t border-[#E5E7EB] pt-6">
+                        <div className="border-t border-[var(--color-border)] pt-6">
                           <h3 className="text-base font-semibold text-[#1F2937] mb-3">{t("courseDetail.statusManagement")}</h3>
                           <p className="text-sm text-[#6B7280] mb-4">
                             {t("courseDetail.currentStatus")}:{" "}
@@ -1744,7 +1744,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   type="text"
                   value={moduleForm.title}
                   onChange={(e) => setModuleForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   placeholder={t("courseDetail.moduleTitlePlaceholder")}
                 />
               </div>
@@ -1755,7 +1755,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   dir="rtl"
                   value={moduleForm.titleAr}
                   onChange={(e) => setModuleForm((f) => ({ ...f, titleAr: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                 />
               </div>
               <div>
@@ -1763,7 +1763,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 <select
                   value={moduleForm.type}
                   onChange={(e) => setModuleForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
                 >
                   <option value="video">{t("courseDetail.moduleTypes.video")}</option>
                   <option value="document">{t("courseDetail.moduleTypes.document")}</option>
@@ -1780,7 +1780,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       min="0"
                       value={moduleForm.durationHours}
                       onChange={(e) => setModuleForm((f) => ({ ...f, durationHours: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                       placeholder="1"
                     />
                     <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("courseDetail.hours")}</span>
@@ -1792,7 +1792,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       max="59"
                       value={moduleForm.durationMins}
                       onChange={(e) => setModuleForm((f) => ({ ...f, durationMins: e.target.value }))}
-                      className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                       placeholder="30"
                     />
                     <span className="text-xs text-[#9CA3AF] mt-0.5 block">{t("courseDetail.minutes")}</span>
@@ -1841,7 +1841,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
               </div>
             ) : unassignedMaterials.length === 0 ? (
               <div className="text-center py-8">
-                <FileText className="w-10 h-10 text-[#D1D5DB] mx-auto mb-2" />
+                <FileText className="w-10 h-10 text-[var(--color-border)] mx-auto mb-2" />
                 <p className="text-sm text-[#9CA3AF]">{t("courseDetail.noUnassignedMaterials")}</p>
               </div>
             ) : (
@@ -1859,12 +1859,12 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                       className={`w-full flex items-center gap-3 p-3 rounded-lg border text-start transition-colors ${
                         isSelected
                           ? "border-[#3B82F6] bg-[#EFF6FF]"
-                          : "border-[#E5E7EB] hover:border-[#D1D5DB]"
+                          : "border-[var(--color-border)] hover:border-[var(--color-border)]"
                       }`}
                     >
                       <div
                         className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected ? "border-[#3B82F6] bg-[#3B82F6]" : "border-[#D1D5DB]"
+                          isSelected ? "border-[#3B82F6] bg-[#3B82F6]" : "border-[var(--color-border)]"
                         }`}
                       >
                         {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -1923,7 +1923,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   type="text"
                   value={sessionForm.title}
                   onChange={(e) => setSessionForm((f) => ({ ...f, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                 />
               </div>
               <div>
@@ -1931,7 +1931,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 <select
                   value={sessionForm.type}
                   onChange={(e) => setSessionForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent bg-white"
                 >
                   <option value="zoom">{t("courseDetail.sessionTypes.zoom")}</option>
                   <option value="onsite">{t("courseDetail.sessionTypes.onsite")}</option>
@@ -1953,7 +1953,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     min={0}
                     value={sessionForm.durationHours}
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationHours: Math.max(0, Number(e.target.value)) }))}
-                    className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
                   <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHours")}</span>
                   <input
@@ -1962,7 +1962,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     max={59}
                     value={sessionForm.durationMins}
                     onChange={(e) => setSessionForm((f) => ({ ...f, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))}
-                    className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
                   <span className="text-sm text-[#6B7280]">{t("courseDetail.durationMinutes")}</span>
                 </div>
@@ -1972,11 +1972,11 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.roomName")}</label>
-                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                      <input type="text" value={sessionForm.roomName} onChange={(e) => setSessionForm((f) => ({ ...f, roomName: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.venueAddress")}</label>
-                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                      <input type="text" value={sessionForm.venueAddress} onChange={(e) => setSessionForm((f) => ({ ...f, venueAddress: e.target.value }))} className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                     </div>
                   </div>
                   <div>
@@ -2023,7 +2023,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 mt-4">
@@ -2060,7 +2060,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                   onChange={(e) => setRescheduleData(d => ({ ...d, reason: e.target.value }))}
                   rows={2}
                   placeholder="Why is this lecture being rescheduled?"
-                  className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -2077,16 +2077,16 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
                     type="time"
                     value={rescheduleData.newTime}
                     onChange={(e) => setRescheduleData(d => ({ ...d, newTime: e.target.value }))}
-                    className="w-full px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+                    className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#374151] mb-1">{t("courseDetail.sessionDuration")}</label>
                 <div className="flex items-center gap-2">
-                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                  <input type="number" min={0} value={rescheduleData.durationHours} onChange={(e) => setRescheduleData(d => ({ ...d, durationHours: Math.max(0, Number(e.target.value)) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                   <span className="text-sm text-[#6B7280]">{t("courseDetail.durationHrs")}</span>
-                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[#D1D5DB] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
+                  <input type="number" min={0} max={59} value={rescheduleData.durationMins} onChange={(e) => setRescheduleData(d => ({ ...d, durationMins: Math.max(0, Math.min(59, Number(e.target.value))) }))} className="w-20 px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent" />
                 </div>
               </div>
             </div>
@@ -2118,7 +2118,7 @@ const CourseDetailContent = ({ courseId }: CourseDetailContentProps) => {
           >
             <button
               onClick={() => setPreviewVideo(null)}
-              className="absolute -top-10 right-0 p-1 text-white hover:text-[#D1D5DB] transition-colors"
+              className="absolute -top-10 right-0 p-1 text-white hover:text-[var(--color-border)] transition-colors"
               title="Close"
             >
               <X className="w-6 h-6" />

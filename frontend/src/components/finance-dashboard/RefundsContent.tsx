@@ -132,7 +132,7 @@ const RefundsContent = () => {
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   return (
-                    <div key={index} className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3">
+                    <div key={index} className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3">
                       <div className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className={`w-5 h-5 ${stat.iconColor}`} />
                       </div>
@@ -158,7 +158,7 @@ const RefundsContent = () => {
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit">
                     {tabs.map((tab) => (
@@ -175,7 +175,7 @@ const RefundsContent = () => {
                         <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                           activeTab === tab.key
                             ? "bg-[var(--color-primary)] text-white"
-                            : "bg-[#E5E7EB] text-[#6B7280]"
+                            : "bg-[var(--color-border)] text-[#6B7280]"
                         }`}>
                           {tab.count}
                         </span>

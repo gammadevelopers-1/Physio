@@ -40,24 +40,24 @@ import {
 } from "lucide-react";
 
 const CourseCardSkeleton = () => (
-  <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-    <div className="h-36 bg-[#E5E7EB] animate-pulse" />
+  <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="h-36 bg-[var(--color-border)] animate-pulse" />
     <div className="p-4 space-y-3">
-      <div className="h-5 w-3/4 bg-[#E5E7EB] rounded animate-pulse" />
-      <div className="h-3 w-1/2 bg-[#E5E7EB] rounded animate-pulse" />
+      <div className="h-5 w-3/4 bg-[var(--color-border)] rounded animate-pulse" />
+      <div className="h-3 w-1/2 bg-[var(--color-border)] rounded animate-pulse" />
       <div className="flex gap-3">
-        <div className="h-4 w-20 bg-[#E5E7EB] rounded animate-pulse" />
-        <div className="h-4 w-20 bg-[#E5E7EB] rounded animate-pulse" />
-        <div className="h-4 w-20 bg-[#E5E7EB] rounded animate-pulse" />
+        <div className="h-4 w-20 bg-[var(--color-border)] rounded animate-pulse" />
+        <div className="h-4 w-20 bg-[var(--color-border)] rounded animate-pulse" />
+        <div className="h-4 w-20 bg-[var(--color-border)] rounded animate-pulse" />
       </div>
       <div className="space-y-1">
         <div className="flex justify-between">
-          <div className="h-3 w-16 bg-[#E5E7EB] rounded animate-pulse" />
-          <div className="h-3 w-8 bg-[#E5E7EB] rounded animate-pulse" />
+          <div className="h-3 w-16 bg-[var(--color-border)] rounded animate-pulse" />
+          <div className="h-3 w-8 bg-[var(--color-border)] rounded animate-pulse" />
         </div>
-        <div className="h-1.5 w-full bg-[#E5E7EB] rounded-full animate-pulse" />
+        <div className="h-1.5 w-full bg-[var(--color-border)] rounded-full animate-pulse" />
       </div>
-      <div className="h-9 w-full bg-[#E5E7EB] rounded-lg animate-pulse" />
+      <div className="h-9 w-full bg-[var(--color-border)] rounded-lg animate-pulse" />
     </div>
   </div>
 );
@@ -254,7 +254,7 @@ const CoursesContent = () => {
 
               {/* Stats Summary */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">
                     {t("coursesPage.stats.total")}
                   </p>
@@ -262,7 +262,7 @@ const CoursesContent = () => {
                     {loading ? "—" : total}
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">
                     {t("coursesPage.stats.active")}
                   </p>
@@ -270,7 +270,7 @@ const CoursesContent = () => {
                     {loading ? "—" : activeCourses}
                   </p>
                 </div>
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                   <p className="text-xs text-[#6B7280]">
                     {t("coursesPage.stats.totalEnrollments")}
                   </p>
@@ -281,7 +281,7 @@ const CoursesContent = () => {
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <div className="flex flex-col lg:flex-row gap-4">
                   <div className="flex-1 relative">
                     <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
@@ -290,14 +290,14 @@ const CoursesContent = () => {
                       placeholder={t("coursesPage.searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                      className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                     />
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="all">
                         {t("coursesPage.filters.allStatus")}
@@ -325,7 +325,7 @@ const CoursesContent = () => {
                     <select
                       value={deliveryFilter}
                       onChange={(e) => setDeliveryFilter(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="all">
                         {t("coursesPage.filters.allDelivery")}
@@ -344,7 +344,7 @@ const CoursesContent = () => {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="newest">
                         {t("coursesPage.sort.newest")}
@@ -390,7 +390,7 @@ const CoursesContent = () => {
                   </button>
                 </div>
               ) : courses.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                   <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                     <BookOpen className="w-8 h-8 text-[#9CA3AF]" />
                   </div>
@@ -422,7 +422,7 @@ const CoursesContent = () => {
                     return (
                       <div
                         key={course.id}
-                        className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                        className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden hover:shadow-md transition-shadow flex flex-col"
                       >
                         <div className="relative h-36">
                           <Image
@@ -464,7 +464,7 @@ const CoursesContent = () => {
                             </button>
 
                             {openDropdown === course.id && (
-                              <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[#E5E7EB] shadow-lg z-20" role="menu">
+                              <div className="absolute end-0 top-full mt-1 w-48 bg-white rounded-lg border border-[var(--color-border)] shadow-lg z-20" role="menu">
                                 <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-[#9CA3AF] uppercase tracking-wider">
                                   {t("coursesPage.actions.title")}
                                 </p>
@@ -673,7 +673,7 @@ const CoursesContent = () => {
                                   {course.completionRate}%
                                 </span>
                               </div>
-                              <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                              <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                                 <div
                                   className="h-full bg-[#22C55E] rounded-full transition-all"
                                   style={{
@@ -694,14 +694,14 @@ const CoursesContent = () => {
                             </Link>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
-                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                               aria-label={tA("viewAnalytics")}
                             >
                               <BarChart3 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => router.push(`/${locale}/dashboard/manager/courses/${course.id}`)}
-                              className="p-2 border border-[#E5E7EB] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
+                              className="p-2 border border-[var(--color-border)] rounded-lg text-[#6B7280] hover:bg-[#F9FAFB] transition-colors"
                               aria-label={tA("courseSettings")}
                             >
                               <Settings className="w-4 h-4" />
@@ -728,7 +728,7 @@ const CoursesContent = () => {
                       value={requestChangesNote}
                       onChange={(e) => setRequestChangesNote(e.target.value)}
                       placeholder={t("coursesPage.actions.requestChangesPlaceholder")}
-                      className="w-full border border-[#E5E7EB] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[100px] resize-none"
+                      className="w-full border border-[var(--color-border)] rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] min-h-[100px] resize-none"
                     />
                     <div className="flex justify-end gap-3 mt-4">
                       <button

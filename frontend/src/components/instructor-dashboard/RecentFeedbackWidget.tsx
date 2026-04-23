@@ -46,7 +46,7 @@ const RecentFeedbackWidget = ({
       } else if (i === fullStars && hasHalfStar) {
         stars.push(
           <div key={i} className="relative">
-            <Star className={`${starSize} text-[#E5E7EB]`} />
+            <Star className={`${starSize} text-[var(--color-border)]`} />
             <div className="absolute inset-0 overflow-hidden w-1/2">
               <Star className={`${starSize} text-[#F59E0B] fill-[#F59E0B]`} />
             </div>
@@ -54,7 +54,7 @@ const RecentFeedbackWidget = ({
         );
       } else {
         stars.push(
-          <Star key={i} className={`${starSize} text-[#E5E7EB]`} />
+          <Star key={i} className={`${starSize} text-[var(--color-border)]`} />
         );
       }
     }
@@ -109,7 +109,7 @@ const RecentFeedbackWidget = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB]">
+    <div className="bg-white rounded-xl border border-[var(--color-border)]">
       <div className="p-4 sm:p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -157,7 +157,7 @@ const RecentFeedbackWidget = ({
                 {/* Header: Learner info + Rating */}
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#E5E7EB] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-border)] flex items-center justify-center text-xs font-semibold text-[#4B5563]">
                       {feedback.learnerInitials}
                     </div>
                     <div>

@@ -552,7 +552,7 @@ const AssessmentsContent = () => {
         type="button"
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          checked ? "bg-[#3B82F6]" : "bg-[#D1D5DB]"
+          checked ? "bg-[#3B82F6]" : "bg-[var(--color-border)]"
         }`}
       >
         <span
@@ -603,7 +603,7 @@ const AssessmentsContent = () => {
   ) => (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Time Settings */}
-      <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-lg border border-[var(--color-border)] p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-[#3B82F6]" />
           <h4 className="text-sm font-semibold text-[#1F2937]">
@@ -625,7 +625,7 @@ const AssessmentsContent = () => {
       </div>
 
       {/* Retake Score Policy */}
-      <div className="bg-white rounded-lg border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-lg border border-[var(--color-border)] p-4">
         <div className="flex items-center gap-2 mb-3">
           <RotateCcw className="w-4 h-4 text-[#8B5CF6]" />
           <h4 className="text-sm font-semibold text-[#1F2937]">
@@ -645,7 +645,7 @@ const AssessmentsContent = () => {
             onChange={(e) =>
               setForm({ ...form, retakeScorePolicy: e.target.value })
             }
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+            className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
           >
             <option value="highest">{t("assessmentsPage.retake.policies.highest")}</option>
             <option value="latest">{t("assessmentsPage.retake.policies.latest")}</option>
@@ -665,7 +665,7 @@ const AssessmentsContent = () => {
     if (expandedId !== assessmentId || !settingsForm) return null;
 
     return (
-      <div className="bg-[#F9FAFB] border-t border-[#E5E7EB] px-4 py-4">
+      <div className="bg-[#F9FAFB] border-t border-[var(--color-border)] px-4 py-4">
         <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60 pointer-events-none" : ""}>
           {renderSettingsFields(settingsForm, setSettingsForm, courseDefaults)}
         </fieldset>
@@ -691,7 +691,7 @@ const AssessmentsContent = () => {
               setExpandedId(null);
               setSettingsForm(null);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-[var(--color-border)] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -728,7 +728,7 @@ const AssessmentsContent = () => {
               </div>
 
               {/* Course Selector */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                 <label className="text-sm font-medium text-[#374151] block mb-2">
                   {t("assessmentsPage.selectCourse") || "Select Course"}
                 </label>
@@ -741,7 +741,7 @@ const AssessmentsContent = () => {
                   <select
                     value={selectedCourseId}
                     onChange={(e) => setSelectedCourseId(e.target.value)}
-                    className="w-full sm:w-96 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                    className="w-full sm:w-96 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                   >
                     <option value="">{t("assessmentsPage.allCourses") || "All Courses"}</option>
                     {courses.map((c) => (
@@ -762,7 +762,7 @@ const AssessmentsContent = () => {
                     <>
                       {/* Stats Cards */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#DBEAFE] flex items-center justify-center">
                               <ClipboardList className="w-5 h-5 text-[#3B82F6]" />
@@ -773,7 +773,7 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#DCFCE7] flex items-center justify-center">
                               <Check className="w-5 h-5 text-[#22C55E]" />
@@ -786,7 +786,7 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#EDE9FE] flex items-center justify-center">
                               <Users className="w-5 h-5 text-[#7C3AED]" />
@@ -799,7 +799,7 @@ const AssessmentsContent = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center">
                               <BarChart3 className="w-5 h-5 text-[#D97706]" />
@@ -818,7 +818,7 @@ const AssessmentsContent = () => {
                           {t("assessmentsPage.byCourse") || "Assessments by Course"}
                         </h3>
                         {courses.length === 0 ? (
-                          <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+                          <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                             <BookOpen className="w-8 h-8 text-[#9CA3AF] mx-auto mb-2" />
                             <p className="text-sm text-[#6B7280]">{t("assessmentsPage.noCourses") || "No courses found"}</p>
                           </div>
@@ -832,7 +832,7 @@ const AssessmentsContent = () => {
                                 <button
                                   key={course.id}
                                   onClick={() => setSelectedCourseId(course.id)}
-                                  className="bg-white rounded-xl border border-[#E5E7EB] p-4 text-start hover:border-[#3B82F6] hover:shadow-sm transition-all group"
+                                  className="bg-white rounded-xl border border-[var(--color-border)] p-4 text-start hover:border-[#3B82F6] hover:shadow-sm transition-all group"
                                 >
                                   <h4 className="text-sm font-semibold text-[#1F2937] mb-3 truncate group-hover:text-[#3B82F6] transition-colors">
                                     {course.title}
@@ -882,7 +882,7 @@ const AssessmentsContent = () => {
                   )}
 
                   {/* Course Assessment Defaults (collapsible) */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] mb-6 overflow-hidden">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] mb-6 overflow-hidden">
                     <button
                       onClick={() => setDefaultsOpen(!defaultsOpen)}
                       className="w-full flex items-center justify-between px-4 py-4 hover:bg-[#F9FAFB] transition-colors"
@@ -908,7 +908,7 @@ const AssessmentsContent = () => {
                     </button>
 
                     {defaultsOpen && courseDefaultsForm && (
-                      <div className="border-t border-[#E5E7EB] px-4 py-4 bg-[#F9FAFB]">
+                      <div className="border-t border-[var(--color-border)] px-4 py-4 bg-[#F9FAFB]">
                         <fieldset disabled={!canEdit} className={!canEdit ? "opacity-60 pointer-events-none" : ""}>
                         {renderSettingsFields(
                           {
@@ -955,7 +955,7 @@ const AssessmentsContent = () => {
                   </div>
 
                   {/* Tabs: Assessments | Submissions */}
-                  <div className="flex gap-1 bg-white rounded-xl border border-[#E5E7EB] p-1 mb-6">
+                  <div className="flex gap-1 bg-white rounded-xl border border-[var(--color-border)] p-1 mb-6">
                     <button
                       onClick={() => setActiveTab("assessments")}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -985,17 +985,17 @@ const AssessmentsContent = () => {
                     <>
                       {/* Stats Summary */}
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.total")}</p>
                           <p className="text-2xl font-bold text-[#1F2937] mt-1">{assessments.length}</p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.active")}</p>
                           <p className="text-2xl font-bold text-[#22C55E] mt-1">
                             {assessments.filter((a) => a.status === "published" || a.status === "active").length}
                           </p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3 text-[#3B82F6]" />
                             <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.submissions") || "Submissions"}</p>
@@ -1004,7 +1004,7 @@ const AssessmentsContent = () => {
                             {assessments.reduce((sum, a) => sum + (a.submissionCount ?? 0), 0)}
                           </p>
                         </div>
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                           <div className="flex items-center gap-1">
                             <Flag className="w-3 h-3 text-[#EA580C]" />
                             <p className="text-xs text-[#6B7280]">{t("assessmentsPage.stats.flagged")}</p>
@@ -1016,7 +1016,7 @@ const AssessmentsContent = () => {
                       </div>
 
                       {/* Filters */}
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-6">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-6">
                         <div className="flex flex-col sm:flex-row gap-4">
                           <div className="flex-1 relative">
                             <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF]`} />
@@ -1025,14 +1025,14 @@ const AssessmentsContent = () => {
                               placeholder={t("assessmentsPage.searchPlaceholder")}
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
-                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
+                              className={`w-full ${isRTL ? "pr-10 pl-4" : "pl-10 pr-4"} py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent`}
                             />
                           </div>
                           <div className="flex gap-3">
                             <select
                               value={typeFilter}
                               onChange={(e) => setTypeFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             >
                               <option value="all">{t("assessmentsPage.filters.allTypes")}</option>
                               <option value="quiz">{t("assessmentsPage.filters.quiz")}</option>
@@ -1042,7 +1042,7 @@ const AssessmentsContent = () => {
                             <select
                               value={statusFilter}
                               onChange={(e) => setStatusFilter(e.target.value)}
-                              className="px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                              className="px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                             >
                               <option value="all">{t("assessmentsPage.filters.allStatus")}</option>
                               <option value="draft">{t("assessmentsPage.filters.draft")}</option>
@@ -1055,7 +1055,7 @@ const AssessmentsContent = () => {
 
                       {/* Loading */}
                       {loading && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                           <table className="w-full">
                             <tbody>
                               {Array.from({ length: 5 }).map((_, i) => (
@@ -1068,7 +1068,7 @@ const AssessmentsContent = () => {
 
                       {/* Error */}
                       {error && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <AlertTriangle className="w-8 h-8 text-[#EF4444] mx-auto mb-3" />
                           <p className="text-sm text-[#6B7280] mb-4">{error}</p>
                           <button
@@ -1083,7 +1083,7 @@ const AssessmentsContent = () => {
 
                       {/* Assessments table */}
                       {!loading && !error && filteredAssessments.length > 0 && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                           {/* Desktop Table */}
                           <div className="hidden md:block overflow-x-auto">
                             <table className="w-full table-fixed">
@@ -1096,7 +1096,7 @@ const AssessmentsContent = () => {
                                 <col className="w-[15%]" />
                               </colgroup>
                               <thead>
-                                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                                <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                                   <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.assessment")}</th>
                                   <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.type")}</th>
                                   <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.totalMarks")}</th>
@@ -1105,7 +1105,7 @@ const AssessmentsContent = () => {
                                   <th className="text-start text-xs font-medium text-[#6B7280] px-4 py-3">{t("assessmentsPage.table.actions")}</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-[#E5E7EB]">
+                              <tbody className="divide-y divide-[var(--color-border)]">
                                 {filteredAssessments.map((assessment) => {
                                   const badge = getStatusBadge(assessment.status);
                                   return (
@@ -1209,7 +1209,7 @@ const AssessmentsContent = () => {
                           </div>
 
                           {/* Mobile Cards */}
-                          <div className="md:hidden divide-y divide-[#E5E7EB]">
+                          <div className="md:hidden divide-y divide-[var(--color-border)]">
                             {filteredAssessments.map((assessment) => (
                               <div key={assessment.id}>
                                 <div className="p-4">
@@ -1297,7 +1297,7 @@ const AssessmentsContent = () => {
 
                       {/* Empty state */}
                       {!loading && !error && filteredAssessments.length === 0 && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <div className="w-16 h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mx-auto mb-4">
                             <FileText className="w-8 h-8 text-[#9CA3AF]" />
                           </div>
@@ -1316,14 +1316,14 @@ const AssessmentsContent = () => {
                   {activeTab === "submissions" && (
                     <div className="space-y-6">
                       {/* Assessment Selector */}
-                      <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+                      <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                         <label className="text-sm font-medium text-[#374151] block mb-2">
                           {t("assessmentsPage.submissions.selectAssessment")}
                         </label>
                         <select
                           value={selectedSubmissionAssessment}
                           onChange={(e) => setSelectedSubmissionAssessment(e.target.value)}
-                          className="w-full sm:w-80 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full sm:w-80 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="">{t("assessmentsPage.submissions.selectPlaceholder")}</option>
                           {assessments.map((a) => (
@@ -1333,7 +1333,7 @@ const AssessmentsContent = () => {
                       </div>
 
                       {!selectedSubmissionAssessment && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
                           <p className="text-sm text-[#6B7280]">{t("assessmentsPage.submissions.emptyDesc")}</p>
                         </div>
@@ -1346,18 +1346,18 @@ const AssessmentsContent = () => {
                       )}
 
                       {selectedSubmissionAssessment && !submissionsLoading && submissions.length === 0 && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] p-12 text-center">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] p-12 text-center">
                           <Users className="w-8 h-8 text-[#9CA3AF] mx-auto mb-3" />
                           <p className="text-sm text-[#6B7280]">{t("assessmentsPage.submissions.noSubmissions") || "No submissions yet for this assessment"}</p>
                         </div>
                       )}
 
                       {selectedSubmissionAssessment && !submissionsLoading && submissions.length > 0 && (
-                        <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
+                        <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
                           <div className="overflow-x-auto">
                             <table className="w-full">
                               <thead>
-                                <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                                <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                                   <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.student")}</th>
                                   <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.score")}</th>
                                   <th className="px-4 py-3 text-start text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.status")}</th>
@@ -1365,7 +1365,7 @@ const AssessmentsContent = () => {
                                   <th className="px-4 py-3 text-end text-xs font-semibold text-[#6B7280] uppercase">{t("assessmentsPage.submissions.actions")}</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-[#E5E7EB]">
+                              <tbody className="divide-y divide-[var(--color-border)]">
                                 {(() => {
                                   // Group submissions by student — show ONE primary row per student,
                                   // with retake versions nested/collapsible below.
@@ -1624,7 +1624,7 @@ const AssessmentsContent = () => {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+              <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
                 <h3 className="text-lg font-semibold text-[#1F2937]">{t("assessmentsPage.submissions.details") || "Submission Details"}</h3>
                 <button onClick={() => setViewingSubmission(null)} className="p-1 hover:bg-[#F3F4F6] rounded-lg">
                   <X className="w-5 h-5 text-[#6B7280]" />
@@ -1713,7 +1713,7 @@ const AssessmentsContent = () => {
 
                 {/* Not-submitted notice — replaces the answers section for auto-zero rows */}
                 {isNotSubmitted && (
-                  <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+                  <div className="border-t border-[var(--color-border)] pt-4 mt-4">
                     <div className="p-3 bg-[#FEE2E2] border border-[#FCA5A5] rounded-lg flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-[#DC2626] flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-[#991B1B]">
@@ -1726,7 +1726,7 @@ const AssessmentsContent = () => {
 
                 {/* Student answers — only available after instructor grades, and skip for not-submitted */}
                 {isGraded && !isNotSubmitted && (
-                  <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+                  <div className="border-t border-[var(--color-border)] pt-4 mt-4">
                     <h4 className="text-sm font-semibold text-[#1F2937] mb-3 flex items-center gap-2">
                       <Eye className="w-4 h-4 text-[#3B82F6]" />
                       {t("assessmentsPage.submissions.studentAnswers") || "Student Answers"}
@@ -1747,7 +1747,7 @@ const AssessmentsContent = () => {
                           const marksAwarded = answerObj?.marksAwarded;
                           const isCorrect = answerObj?.isCorrect;
                           return (
-                            <div key={q.id} className="border border-[#E5E7EB] rounded-lg p-3">
+                            <div key={q.id} className="border border-[var(--color-border)] rounded-lg p-3">
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex items-start gap-2 flex-1 min-w-0">
                                   <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-bold flex-shrink-0">
@@ -1809,7 +1809,7 @@ const AssessmentsContent = () => {
                 )}
 
                 {!isGraded && (
-                  <div className="border-t border-[#E5E7EB] pt-4 mt-4">
+                  <div className="border-t border-[var(--color-border)] pt-4 mt-4">
                     <div className="p-3 bg-[#FEF3C7] border border-[#FDE68A] rounded-lg flex items-start gap-2">
                       <AlertTriangle className="w-4 h-4 text-[#D97706] flex-shrink-0 mt-0.5" />
                       <p className="text-sm text-[#92400E]">
@@ -1819,10 +1819,10 @@ const AssessmentsContent = () => {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end p-6 border-t border-[#E5E7EB]">
+              <div className="flex justify-end p-6 border-t border-[var(--color-border)]">
                 <button
                   onClick={() => setViewingSubmission(null)}
-                  className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                  className="px-4 py-2 border border-[var(--color-border)] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
                 >
                   {t("assessmentsPage.submissions.close") || "Close"}
                 </button>
@@ -1856,7 +1856,7 @@ const AssessmentsContent = () => {
                 <select
                   value={overrideForm.studentId}
                   onChange={(e) => setOverrideForm({ ...overrideForm, studentId: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 >
                   <option value="">{t("assessmentsPage.override.selectStudent")}</option>
                   {overrideStudents.map((s) => (
@@ -1879,7 +1879,7 @@ const AssessmentsContent = () => {
                   min={1}
                   value={overrideForm.value}
                   onChange={(e) => setOverrideForm({ ...overrideForm, value: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                 />
               </div>
               {/* Reason */}
@@ -1892,14 +1892,14 @@ const AssessmentsContent = () => {
                   onChange={(e) => setOverrideForm({ ...overrideForm, reason: e.target.value })}
                   rows={3}
                   placeholder={t("assessmentsPage.override.reasonPlaceholder")}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                 />
               </div>
             </div>
             <div className="flex items-center gap-3 justify-end mt-6">
               <button
                 onClick={() => { setOverrideModal(null); setOverrideForm({ studentId: "", overrideType: "time_extension", value: 30, reason: "" }); }}
-                className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="px-4 py-2 border border-[var(--color-border)] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
               >
                 {t("assessmentsPage.override.cancel")}
               </button>
@@ -1920,7 +1920,7 @@ const AssessmentsContent = () => {
       {previewAssessment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--color-border)]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
                   <Eye className="w-5 h-5 text-[#3B82F6]" />
@@ -1942,13 +1942,13 @@ const AssessmentsContent = () => {
                 </div>
               ) : previewQuestions.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="w-12 h-12 text-[#D1D5DB] mx-auto mb-3" />
+                  <FileText className="w-12 h-12 text-[var(--color-border)] mx-auto mb-3" />
                   <p className="text-sm text-[#6B7280]">{t("assessmentsPage.preview.noQuestions") || "No questions added to this assessment yet"}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {previewQuestions.map((q, idx) => (
-                    <div key={q.id} className="border border-[#E5E7EB] rounded-xl p-4">
+                    <div key={q.id} className="border border-[var(--color-border)] rounded-xl p-4">
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
@@ -1980,11 +1980,11 @@ const AssessmentsContent = () => {
                             <div
                               key={oi}
                               className={`flex items-center gap-2 p-2.5 rounded-lg border ${
-                                opt.isCorrect ? "bg-[#DCFCE7] border-[#22C55E]" : "bg-[#F9FAFB] border-[#E5E7EB]"
+                                opt.isCorrect ? "bg-[#DCFCE7] border-[#22C55E]" : "bg-[#F9FAFB] border-[var(--color-border)]"
                               }`}
                             >
                               <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                opt.isCorrect ? "bg-[#22C55E]" : "bg-[#E5E7EB]"
+                                opt.isCorrect ? "bg-[#22C55E]" : "bg-[var(--color-border)]"
                               }`}>
                                 {opt.isCorrect && <Check className="w-3 h-3 text-white" />}
                               </div>
@@ -2058,7 +2058,7 @@ const AssessmentsContent = () => {
                     t("assessmentsPage.retakeModal.reasonPlaceholder") ||
                     "e.g. Student requested another attempt after low score"
                   }
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] resize-none"
+                  className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#7C3AED] resize-none"
                 />
               </div>
             </div>
@@ -2068,7 +2068,7 @@ const AssessmentsContent = () => {
                   setRetakeModal(null);
                   setRetakeForm({ reason: "", newDueDate: "" });
                 }}
-                className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="px-4 py-2 border border-[var(--color-border)] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
               >
                 {t("assessmentsPage.retakeModal.cancel") || "Cancel"}
               </button>
@@ -2115,13 +2115,13 @@ const AssessmentsContent = () => {
                 onChange={(e) => setFlagReason(e.target.value)}
                 rows={3}
                 placeholder={t("assessmentsPage.flag.reasonPlaceholder")}
-                className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EA580C] focus:border-transparent resize-none"
+                className="w-full px-3 py-2 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#EA580C] focus:border-transparent resize-none"
               />
             </div>
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => { setFlagModal(null); setFlagReason(""); }}
-                className="px-4 py-2 border border-[#E5E7EB] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
+                className="px-4 py-2 border border-[var(--color-border)] text-[#374151] text-sm font-medium rounded-lg hover:bg-[#F3F4F6] transition-colors"
               >
                 {t("assessmentsPage.flag.cancel")}
               </button>

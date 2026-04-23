@@ -1198,7 +1198,7 @@ export default function VideoPlayer({
           </button>
 
           {showTranscript && transcript && (
-            <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg border border-[#E5E7EB] max-h-[300px] overflow-y-auto">
+            <div className="mt-2 p-4 bg-[#F9FAFB] rounded-lg border border-[var(--color-border)] max-h-[300px] overflow-y-auto">
               <pre className="text-sm text-[#4B5563] whitespace-pre-wrap font-sans">
                 {transcript}
               </pre>

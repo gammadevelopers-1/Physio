@@ -170,7 +170,7 @@ const CourseManagerNavbar = ({ manager }: CourseManagerNavbarProps) => {
               aria-haspopup="true"
               aria-expanded={isUserMenuOpen}
             >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#E5E7EB]">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[var(--color-border)]">
                 <Image
                   src={manager.avatar || "/images/default-avatar.png"}
                   alt={manager.name}

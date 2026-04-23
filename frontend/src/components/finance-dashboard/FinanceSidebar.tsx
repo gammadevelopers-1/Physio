@@ -82,7 +82,7 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
   return (
     <aside className="w-full lg:w-[280px] flex flex-col gap-4">
       {/* Profile Card */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-6">
         {/* Profile Section */}
         <div className="flex flex-col items-center">
           {/* Avatar with edit button */}
@@ -137,7 +137,7 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
         </div>
 
         {/* Stats Row */}
-        <div className="mt-6 flex justify-around py-4 border-t border-[#E5E7EB]">
+        <div className="mt-6 flex justify-around py-4 border-t border-[var(--color-border)]">
           <div className="text-center">
             <p className="text-xl font-bold text-[#1F2937]">
               {profile.revenue}
@@ -161,13 +161,13 @@ const FinanceSidebar = ({ profile }: FinanceSidebarProps) => {
         </div>
 
         {/* View Profile Button */}
-        <button className="w-full mt-4 py-2.5 px-4 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
+        <button className="w-full mt-4 py-2.5 px-4 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#1F2937] hover:bg-[#F9FAFB] transition-colors">
           {t("sidebar.viewProfile")}
         </button>
       </div>
 
       {/* Navigation Card */}
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] p-4">
+      <div className="bg-white rounded-2xl border border-[var(--color-border)] p-4">
         <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;

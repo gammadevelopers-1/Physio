@@ -30,7 +30,7 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+    <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-center gap-3">
         <div
           className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}
@@ -164,7 +164,7 @@ function CourseRow({
       </td>
       <td className="py-3 px-3">
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full ${course.progress === 100 ? "bg-green-500" : "bg-blue-500"}`}
               style={{ width: `${course.progress}%` }}
@@ -193,7 +193,7 @@ function CourseMobileCard({
   formatDate: (d: string | null) => string;
 }) {
   return (
-    <div className="bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] p-4">
+    <div className="bg-[#F9FAFB] rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-start justify-between mb-2">
         <h4 className="text-sm font-semibold text-[#1F2937] flex-1 min-w-0">
           {isRTL && course.courseTitleAr
@@ -234,7 +234,7 @@ function CourseMobileCard({
 
       {/* Progress bar */}
       <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full ${course.progress === 100 ? "bg-green-500" : "bg-blue-500"}`}
             style={{ width: `${course.progress}%` }}
@@ -310,7 +310,7 @@ const TranscriptContent = () => {
               ) : error ? (
                 <StudentDashboardError message={error} onRetry={refetch} />
               ) : !transcript || transcript.courses.length === 0 ? (
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                   <div className="flex flex-col items-center justify-center py-10 sm:py-16">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#F3F4F6] rounded-full flex items-center justify-center mb-3 sm:mb-4">
                       <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-[#9CA3AF]" />
@@ -326,7 +326,7 @@ const TranscriptContent = () => {
               ) : (
                 <>
                   {/* Student Info */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6 mb-4">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6 mb-4">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-[#F0F7FF] rounded-full flex items-center justify-center">
@@ -375,11 +375,11 @@ const TranscriptContent = () => {
                   </div>
 
                   {/* Course Table (desktop) */}
-                  <div className="bg-white rounded-xl border border-[#E5E7EB] hidden md:block overflow-hidden">
+                  <div className="bg-white rounded-xl border border-[var(--color-border)] hidden md:block overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                          <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
                             <th className="py-3 px-3 text-left text-xs font-medium text-[#6B7280]">
                               {t("transcriptPage.courseTitle")}
                             </th>

@@ -64,7 +64,7 @@ const FavouritesContent = () => {
               </h1>
 
               {/* Favourites Section */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 sm:p-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 sm:p-6">
                 {/* Courses Grid or Empty State */}
                 {favourites.length === 0 ? (
                   // Empty State
@@ -91,7 +91,7 @@ const FavouritesContent = () => {
                     {favourites.map((course) => (
                       <div
                         key={course.id}
-                        className="border border-[#E5E7EB] rounded-xl overflow-hidden relative"
+                        className="border border-[var(--color-border)] rounded-xl overflow-hidden relative"
                       >
                         {/* Remove from Favourites Button */}
                         <button
@@ -134,7 +134,7 @@ const FavouritesContent = () => {
                           </div>
 
                           {/* Progress Bar */}
-                          <div className="h-1.5 sm:h-2 bg-[#E5E7EB] rounded-full overflow-hidden mb-3 sm:mb-4">
+                          <div className="h-1.5 sm:h-2 bg-[var(--color-border)] rounded-full overflow-hidden mb-3 sm:mb-4">
                             <div
                               className={`h-full bg-[#16A34A] rounded-full transition-all duration-300 ${isRTL ? "ms-auto" : ""}`}
                               style={{ width: `${course.progress}%` }}
@@ -144,7 +144,7 @@ const FavouritesContent = () => {
                           {/* View Course Button */}
                           <Link
                             href={`/${locale}/dashboard/student/courses/${course.id}`}
-                            className="block w-full py-1.5 sm:py-2 border border-[#E5E7EB] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
+                            className="block w-full py-1.5 sm:py-2 border border-[var(--color-border)] rounded-lg text-xs sm:text-sm font-medium text-[#1F2937] text-center hover:bg-[#F9FAFB] transition-colors"
                           >
                             {t("favourites.viewCourse")}
                           </Link>

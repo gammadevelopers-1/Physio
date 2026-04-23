@@ -159,7 +159,7 @@ const ComplianceContent = () => {
               {/* Compliance Overview */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 {/* Score Card */}
-                <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+                <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
                   <div className="text-center">
                     <p
                       className={`text-6xl font-bold ${
@@ -211,7 +211,7 @@ const ComplianceContent = () => {
                 </div>
 
                 {/* Category Summary */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-[#E5E7EB] p-5">
+                <div className="lg:col-span-2 bg-white rounded-xl border border-[var(--color-border)] p-5">
                   <h3 className="text-base font-semibold text-[#1F2937] mb-4">
                     {t("compliancePage.categorySummary")}
                   </h3>
@@ -251,14 +251,14 @@ const ComplianceContent = () => {
               </div>
 
               {/* Compliance Matrix */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                <div className="p-5 border-b border-[#E5E7EB]">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="p-5 border-b border-[var(--color-border)]">
                   <h3 className="text-lg font-semibold text-[#1F2937]">
                     {t("compliancePage.complianceMatrix")}
                   </h3>
                 </div>
 
-                <div className="divide-y divide-[#E5E7EB]">
+                <div className="divide-y divide-[var(--color-border)]">
                   {complianceCategories.map((category) => (
                     <div key={category.id}>
                       {/* Category Header */}
@@ -289,7 +289,7 @@ const ComplianceContent = () => {
                         <div className="bg-[#F9FAFB] px-5 pb-5">
                           <table className="w-full">
                             <thead>
-                              <tr className="border-b border-[#E5E7EB]">
+                              <tr className="border-b border-[var(--color-border)]">
                                 <th className={`py-3 text-xs font-medium text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}>
                                   {t("compliancePage.table.clause")}
                                 </th>
@@ -306,7 +306,7 @@ const ComplianceContent = () => {
                             </thead>
                             <tbody>
                               {category.clauses.map((clause) => (
-                                <tr key={clause.id} className="border-b border-[#E5E7EB] last:border-b-0">
+                                <tr key={clause.id} className="border-b border-[var(--color-border)] last:border-b-0">
                                   <td className="py-3">
                                     <div className="flex items-center gap-2">
                                       {getStatusIcon(clause.status)}

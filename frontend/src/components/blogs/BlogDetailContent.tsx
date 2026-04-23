@@ -135,7 +135,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
         </section>
 
         {/* Divider - Full Width */}
-        <div className="mx-16 h-px bg-[#E5E7EB]" />
+        <div className="mx-16 h-px bg-[var(--color-border)]" />
 
         {/* Content Section */}
         <article className={`max-w-[800px] mx-auto px-8 py-12 ${isRTL ? "text-right" : ""}`}>
@@ -197,7 +197,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
 
           {/* Published By — shows only when both the author and the Strapi label are set */}
           {author && publishedByLabel && (
-            <div className="mt-10 pt-8 border-t border-[#E5E7EB]">
+            <div className="mt-10 pt-8 border-t border-[var(--color-border)]">
               <p className="text-sm text-[var(--on-surface-variant)]">
                 {publishedByLabel} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
               </p>
@@ -276,7 +276,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
           )}
 
           {/* Divider */}
-          <div className="w-full h-px bg-[#E5E7EB]" />
+          <div className="w-full h-px bg-[var(--color-border)]" />
         </section>
 
         {/* Content Section */}
@@ -339,7 +339,7 @@ const BlogDetailContent = ({ blogPost, latestBlogs, blogsPage }: BlogDetailConte
 
           {/* Published By */}
           {author && publishedByLabel && (
-            <div className="mt-8 pt-6 border-t border-[#E5E7EB]">
+            <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
               <p className="text-xs text-[var(--on-surface-variant)]">
                 {publishedByLabel} <span className="font-medium text-[var(--on-surface-default)]">{author}</span>
               </p>

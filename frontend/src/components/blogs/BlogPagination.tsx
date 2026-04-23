@@ -27,7 +27,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="h-10 px-4 rounded-full border border-[#E5E7EB] text-xs font-medium disabled:opacity-50"
+          className="h-10 px-4 rounded-full border border-[var(--color-border)] text-xs font-medium disabled:opacity-50"
         >
           <span className="flex items-center gap-1.5" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
             <ArrowLeft className="w-3 h-3" />
@@ -54,7 +54,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="h-10 px-4 rounded-full border border-[#E5E7EB] text-xs font-medium disabled:opacity-50"
+          className="h-10 px-4 rounded-full border border-[var(--color-border)] text-xs font-medium disabled:opacity-50"
         >
           <span className="flex items-center gap-1.5" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
             {t("pagination.continue")}
@@ -70,7 +70,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-5 py-2.5 rounded-full border border-[#E5E7EB] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[#F4F4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-5 py-2.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[#F4F4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="flex items-center gap-2" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
           <ArrowLeft className="w-4 h-4" />
@@ -97,7 +97,7 @@ const BlogPagination = ({ currentPage, totalPages, onPageChange, variant = "desk
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-5 py-2.5 rounded-full border border-[#E5E7EB] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[#F4F4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-5 py-2.5 rounded-full border border-[var(--color-border)] text-sm font-medium text-[var(--on-surface-default)] hover:bg-[#F4F4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span className="flex items-center gap-2" dir="ltr" style={{ display: "inline-flex", direction: "ltr" }}>
           {t("pagination.continue")}

@@ -189,7 +189,7 @@ function ExportModal({
             <select
               value={selectedCourse}
               onChange={(e) => setSelectedCourse(e.target.value)}
-              className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+              className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
             >
               {reportType.requiresCourse ? (
                 <option value="">{t("reports.chooseCourse")}</option>
@@ -240,7 +240,7 @@ function ExportModal({
                 className={`w-full flex items-center gap-4 p-3 border rounded-xl transition-colors ${
                   selectedFormat === fmt.id
                     ? "border-[#3B82F6] bg-[#EFF6FF]"
-                    : "border-[#E5E7EB] hover:border-[#3B82F6] hover:bg-[#EFF6FF]"
+                    : "border-[var(--color-border)] hover:border-[#3B82F6] hover:bg-[#EFF6FF]"
                 }`}
               >
                 <div
@@ -289,7 +289,7 @@ function ExportModal({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+              className="flex-1 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
             >
               {t("reports.cancel")}
             </button>
@@ -425,7 +425,7 @@ const ReportsContent = () => {
                 {REPORT_TYPES.map((rt) => (
                   <div
                     key={rt.id}
-                    className="bg-white rounded-xl border border-[#E5E7EB] p-4"
+                    className="bg-white rounded-xl border border-[var(--color-border)] p-4"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -449,14 +449,14 @@ const ReportsContent = () => {
               </div>
 
               {/* Global Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4">
                 <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 flex flex-col md:flex-row gap-3">
                     {/* Delivery type filter */}
                     <select
                       value={filterDelivery}
                       onChange={(e) => { setFilterDelivery(e.target.value); setFilterCourse(""); }}
-                      className="md:w-40 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="all">{t("reports.allDeliveryTypes")}</option>
                       <option value="zoom">{t("reports.zoom")}</option>
@@ -469,7 +469,7 @@ const ReportsContent = () => {
                       value={filterCourse}
                       onChange={(e) => setFilterCourse(e.target.value)}
                       disabled={loadingCourses}
-                      className="flex-1 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
+                      className="flex-1 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] disabled:opacity-50"
                     >
                       <option value="">{t("reports.allCourses")}</option>
                       {filteredCourses.map((c) => (
@@ -485,7 +485,7 @@ const ReportsContent = () => {
                       onChange={(e) =>
                         setFilterFormat(e.target.value as ReportFormat)
                       }
-                      className="md:w-40 px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                      className="md:w-40 px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm text-[#374151] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                     >
                       <option value="pdf">PDF</option>
                       <option value="csv">CSV</option>
@@ -526,7 +526,7 @@ const ReportsContent = () => {
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className="bg-white rounded-xl border border-[#E5E7EB] p-5 animate-pulse"
+                      className="bg-white rounded-xl border border-[var(--color-border)] p-5 animate-pulse"
                     >
                       <div className="flex items-start gap-4 mb-4">
                         <div className="w-12 h-12 rounded-xl bg-gray-200" />
@@ -562,7 +562,7 @@ const ReportsContent = () => {
                   {REPORT_TYPES.map((rt) => (
                     <div
                       key={rt.id}
-                      className="bg-white rounded-xl border border-[#E5E7EB] p-5 hover:shadow-md transition-shadow"
+                      className="bg-white rounded-xl border border-[var(--color-border)] p-5 hover:shadow-md transition-shadow"
                     >
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-4">
@@ -626,7 +626,7 @@ const ReportsContent = () => {
                         </button>
                         <button
                           onClick={() => setExportModal(rt)}
-                          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+                          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
                         >
                           {t("reports.customize")}
                         </button>

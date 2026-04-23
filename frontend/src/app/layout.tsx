@@ -28,6 +28,8 @@ const THEME_DEFAULTS = {
   surfaceCard: "#e5edf4",
   textPrimary: "#171717",
   textSecondary: "#737373",
+  borderColor: "#e5e7eb",
+  borderSubtle: "#C8D5E1",
 };
 
 export default async function RootLayout({
@@ -43,9 +45,11 @@ export default async function RootLayout({
     surfaceCard: settings?.themeSurfaceCard || THEME_DEFAULTS.surfaceCard,
     textPrimary: settings?.themeTextPrimary || THEME_DEFAULTS.textPrimary,
     textSecondary: settings?.themeTextSecondary || THEME_DEFAULTS.textSecondary,
+    borderColor: settings?.themeBorderColor || THEME_DEFAULTS.borderColor,
+    borderSubtle: settings?.themeBorderSubtle || THEME_DEFAULTS.borderSubtle,
   };
 
-  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};}`;
+  const themeStyle = `:root{--color-primary:${theme.primary};--color-primary-dark:${theme.primaryDark};--color-surface-page:${theme.surfacePage};--color-surface-card:${theme.surfaceCard};--color-text-primary:${theme.textPrimary};--color-text-secondary:${theme.textSecondary};--color-border:${theme.borderColor};--color-border-subtle:${theme.borderSubtle};}`;
 
   return (
     <html lang="en" suppressHydrationWarning>

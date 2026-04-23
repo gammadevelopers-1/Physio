@@ -76,7 +76,7 @@ const SLAPerformanceWidget = () => {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ const SLAPerformanceWidget = () => {
                   {metric.target}
                 </span>
               </div>
-              <div className="h-1 bg-[#E5E7EB] rounded-full">
+              <div className="h-1 bg-[var(--color-border)] rounded-full">
                 <div
                   className={`h-1 ${metric.color} rounded-full transition-all`}
                   style={{ width: `${metric.fill}%` }}

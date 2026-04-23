@@ -76,7 +76,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
   ];
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
                   y1={5 + (90 * (100 - y)) / 100}
                   x2="95"
                   y2={5 + (90 * (100 - y)) / 100}
-                  stroke="#E5E7EB"
+                  stroke="var(--color-border)"
                   strokeWidth="0.3"
                   strokeDasharray="2,2"
                 />
@@ -203,7 +203,7 @@ const RevenueSummaryWidget = ({ data }: RevenueSummaryWidgetProps) => {
                     {gateway.percentage}%
                   </span>
                 </div>
-                <div className="h-1.5 bg-[#E5E7EB] rounded-full overflow-hidden">
+                <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${gateway.color}`}
                     style={{ width: `${gateway.percentage}%` }}

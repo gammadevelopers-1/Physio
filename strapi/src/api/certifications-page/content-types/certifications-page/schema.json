@@ -65,6 +65,7 @@
         "blocks.trainer-form-block",
         "blocks.treatment-gallery-block",
         "blocks.upcoming-events-block",
+        "blocks.image-banner-block",
         "blocks.video-embed"
       ],
       "pluginOptions": {

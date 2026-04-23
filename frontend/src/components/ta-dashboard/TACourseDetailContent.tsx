@@ -159,7 +159,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 <ArrowLeft className="w-4 h-4" />
                 {t("courseDetail.backToCourses")}
               </Link>
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-8 text-center">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-8 text-center">
                 <AlertTriangle className="w-10 h-10 text-[#F59E0B] mx-auto mb-3" />
                 <p className="text-[#6B7280] mb-4">{error}</p>
                 <button
@@ -183,7 +183,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
               </Link>
 
               {/* Course Header — same as instructor */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden mb-6">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden mb-6">
                 <div className="relative h-48 sm:h-56">
                   {course.thumbnail ? (
                     <Image
@@ -222,7 +222,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                 </div>
 
                 {/* Stats Bar */}
-                <div className="p-4 border-t border-[#E5E7EB]">
+                <div className="p-4 border-t border-[var(--color-border)]">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
@@ -273,8 +273,8 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
               </div>
 
               {/* Tabs */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] overflow-hidden">
-                <div className="flex border-b border-[#E5E7EB] overflow-x-auto" role="tablist">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] overflow-hidden">
+                <div className="flex border-b border-[var(--color-border)] overflow-x-auto" role="tablist">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
@@ -366,14 +366,14 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                     <div>
                       {enrollments.length === 0 ? (
                         <div className="text-center py-10">
-                          <Users className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                          <Users className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                           <p className="text-sm text-[#6B7280]">{t("courseDetail.noStudents")}</p>
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full">
                             <thead>
-                              <tr className="border-b border-[#E5E7EB]">
+                              <tr className="border-b border-[var(--color-border)]">
                                 <th className="text-left px-4 py-3 text-xs font-medium text-[#6B7280] uppercase">
                                   {t("courseDetail.name")}
                                 </th>
@@ -397,7 +397,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                   <td className="px-4 py-3 text-sm text-[#6B7280]">{e.studentEmail}</td>
                                   <td className="px-4 py-3">
                                     <div className="flex items-center gap-2">
-                                      <div className="w-20 h-2 bg-[#E5E7EB] rounded-full overflow-hidden">
+                                      <div className="w-20 h-2 bg-[var(--color-border)] rounded-full overflow-hidden">
                                         <div
                                           className="h-full bg-[#3B82F6] rounded-full"
                                           style={{ width: `${e.progress}%` }}
@@ -433,7 +433,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                     <div>
                       {sessions.length === 0 ? (
                         <div className="text-center py-10">
-                          <Calendar className="w-10 h-10 text-[#D1D5DB] mx-auto mb-3" />
+                          <Calendar className="w-10 h-10 text-[var(--color-border)] mx-auto mb-3" />
                           <p className="text-sm text-[#6B7280]">{t("courseDetail.noSessions")}</p>
                         </div>
                       ) : (
@@ -446,7 +446,7 @@ export default function TACourseDetailContent({ courseId }: TACourseDetailConten
                                 className="flex items-center justify-between p-4 bg-[#F9FAFB] rounded-lg"
                               >
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <div className="w-10 h-10 bg-white rounded-lg border border-[#E5E7EB] flex items-center justify-center">
+                                  <div className="w-10 h-10 bg-white rounded-lg border border-[var(--color-border)] flex items-center justify-center">
                                     {sessionTypeIcon(session.type)}
                                   </div>
                                   <div className="min-w-0">

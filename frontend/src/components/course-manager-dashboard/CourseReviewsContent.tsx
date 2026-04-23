@@ -144,7 +144,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               </div>
 
               {/* Aggregate stats */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-5 mb-4">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <p className="text-xs text-[#6B7280] mb-1">{isRTL ? "متوسط التقييم" : "Average rating"}</p>
@@ -154,7 +154,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                         {[1, 2, 3, 4, 5].map((s) => (
                           <Star
                             key={s}
-                            className={`w-4 h-4 ${s <= Math.round(avgRating) ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                            className={`w-4 h-4 ${s <= Math.round(avgRating) ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
                           />
                         ))}
                       </div>
@@ -182,7 +182,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-4 mb-4">
                 <div className="flex flex-wrap items-center gap-3">
                   {/* Search */}
                   <div className="relative flex-1 min-w-[200px]">
@@ -196,7 +196,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                       }}
                       onBlur={() => setSearch(searchInput)}
                       placeholder={isRTL ? "ابحث باسم الطالب أو نص المراجعة..." : "Search by student name or review text..."}
-                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[#D1D5DB] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]`}
+                      className={`w-full ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"} py-2 text-sm border border-[var(--color-border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3B82F6]`}
                     />
                   </div>
 
@@ -206,7 +206,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                     <select
                       value={sort}
                       onChange={(e) => setSort(e.target.value as SortOption)}
-                      className="text-sm border border-[#D1D5DB] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
+                      className="text-sm border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] bg-white"
                     >
                       <option value="newest">{isRTL ? "الأحدث" : "Newest"}</option>
                       <option value="oldest">{isRTL ? "الأقدم" : "Oldest"}</option>
@@ -221,7 +221,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                   <button
                     onClick={() => setStarFilter(null)}
                     className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                      starFilter === null ? "bg-[#1F2937] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]"
+                      starFilter === null ? "bg-[#1F2937] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[var(--color-border)]"
                     }`}
                   >
                     {isRTL ? "الكل" : "All"} ({totalRatings})
@@ -234,7 +234,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                         onClick={() => setStarFilter(starFilter === s ? null : s)}
                         disabled={c === 0}
                         className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                          starFilter === s ? "bg-[#FBBF24] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[#E5E7EB]"
+                          starFilter === s ? "bg-[#FBBF24] text-white" : "bg-[#F3F4F6] text-[#374151] hover:bg-[var(--color-border)]"
                         }`}
                       >
                         {s} <Star className="w-3 h-3 fill-current" /> ({c})
@@ -245,7 +245,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
               </div>
 
               {/* Reviews list */}
-              <div className="bg-white rounded-xl border border-[#E5E7EB] p-5">
+              <div className="bg-white rounded-xl border border-[var(--color-border)] p-5">
                 {loading ? (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-6 h-6 animate-spin text-[#6B7280]" />
@@ -264,7 +264,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                 ) : (
                   <div className="space-y-3">
                     {reviews.map((r) => (
-                      <div key={r.id} className="border border-[#E5E7EB] rounded-lg p-4 bg-[#FAFAFA]">
+                      <div key={r.id} className="border border-[var(--color-border)] rounded-lg p-4 bg-[#FAFAFA]">
                         <div className="flex items-start justify-between mb-2 gap-3">
                           <div>
                             <p className="text-sm font-medium text-[#1F2937]">{r.studentName}</p>
@@ -274,7 +274,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
                             {[1, 2, 3, 4, 5].map((s) => (
                               <Star
                                 key={s}
-                                className={`w-4 h-4 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[#D1D5DB]"}`}
+                                className={`w-4 h-4 ${s <= r.rating ? "fill-[#FBBF24] text-[#FBBF24]" : "text-[var(--color-border)]"}`}
                               />
                             ))}
                           </div>
@@ -289,7 +289,7 @@ export default function CourseReviewsContent({ courseId }: CourseReviewsContentP
 
                 {/* Pagination */}
                 {!loading && reviews.length > 0 && totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-[#E5E7EB]">
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-[var(--color-border)]">
                     <p className="text-xs text-[#6B7280]">
                       {isRTL
                         ? `صفحة ${page} من ${totalPages}`

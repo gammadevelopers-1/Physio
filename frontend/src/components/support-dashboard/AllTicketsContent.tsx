@@ -256,7 +256,7 @@ const AllTicketsContent = () => {
                   return (
                     <div
                       key={index}
-                      className="bg-white rounded-xl border border-[#E5E7EB] p-4 flex items-start gap-3"
+                      className="bg-white rounded-xl border border-[var(--color-border)] p-4 flex items-start gap-3"
                     >
                       <div
                         className={`w-10 h-10 ${stat.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
@@ -277,7 +277,7 @@ const AllTicketsContent = () => {
               </div>
 
               {/* Tickets Table */}
-              <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+              <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
                 {/* Tabs */}
                 <div className="px-5 py-4 border-b border-[#F3F4F6]">
                   <div className="flex gap-1 bg-[#F3F4F6] rounded-lg p-0.5 w-fit overflow-x-auto">
@@ -296,7 +296,7 @@ const AllTicketsContent = () => {
                           className={`text-[11px] px-1.5 py-0.5 rounded-full ${
                             activeTab === tab.key
                               ? "bg-[var(--color-primary)] text-white"
-                              : "bg-[#E5E7EB] text-[#6B7280]"
+                              : "bg-[var(--color-border)] text-[#6B7280]"
                           }`}
                         >
                           {tab.count}
@@ -313,7 +313,7 @@ const AllTicketsContent = () => {
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] focus:outline-none focus:border-[var(--color-primary)] bg-white"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] focus:outline-none focus:border-[var(--color-primary)] bg-white"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allCategories")}
@@ -339,7 +339,7 @@ const AllTicketsContent = () => {
                     <select
                       value={priorityFilter}
                       onChange={(e) => setPriorityFilter(e.target.value)}
-                      className="px-3 py-2 border border-[#E5E7EB] rounded-lg text-[13px] text-[#374151] focus:outline-none focus:border-[var(--color-primary)] bg-white"
+                      className="px-3 py-2 border border-[var(--color-border)] rounded-lg text-[13px] text-[#374151] focus:outline-none focus:border-[var(--color-primary)] bg-white"
                     >
                       <option value="all">
                         {t("allTicketsPage.filters.allPriorities")}
@@ -365,7 +365,7 @@ const AllTicketsContent = () => {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder={t("allTicketsPage.searchPlaceholder")}
-                        className={`w-full py-2 border border-[#E5E7EB] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                        className={`w-full py-2 border border-[var(--color-border)] rounded-lg text-[13px] focus:outline-none focus:border-[var(--color-primary)] ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
                       />
                     </div>
 
@@ -381,7 +381,7 @@ const AllTicketsContent = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#E5E7EB]">
+                      <tr className="border-b border-[var(--color-border)]">
                         <th
                           className={`py-3 px-4 text-[11px] font-semibold text-[#6B7280] uppercase ${isRTL ? "text-right" : "text-left"}`}
                         >
@@ -505,13 +505,13 @@ const AllTicketsContent = () => {
                                       : ticket.id
                                   )
                                 }
-                                className="w-7 h-7 flex items-center justify-center border border-[#E5E7EB] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
+                                className="w-7 h-7 flex items-center justify-center border border-[var(--color-border)] rounded-md hover:bg-[#F9FAFB] text-[#6B7280]"
                               >
                                 <MoreVertical className="w-3.5 h-3.5" />
                               </button>
                               {openActionId === ticket.id && (
                                 <div
-                                  className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
+                                  className={`absolute top-full mt-1 bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 min-w-[160px] z-20 ${isRTL ? "left-0" : "right-0"}`}
                                 >
                                   <button className="flex items-center gap-2 w-full px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F9FAFB]">
                                     <Eye className="w-3.5 h-3.5" />
@@ -545,11 +545,11 @@ const AllTicketsContent = () => {
                     })}
                   </p>
                   <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       <ChevronLeft className="w-4 h-4" />
                       {t("allTicketsPage.pagination.previous")}
                     </button>
-                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB]">
+                    <button className="flex items-center gap-1 px-3 py-1.5 text-[13px] text-[#6B7280] border border-[var(--color-border)] rounded-lg hover:bg-[#F9FAFB]">
                       {t("allTicketsPage.pagination.next")}
                       <ChevronRight className="w-4 h-4" />
                     </button>

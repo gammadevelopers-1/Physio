@@ -34,7 +34,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
   return (
     <div className="space-y-4">
       {/* Basic Info */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-[#1F2937]">
             {t("reviewBasicInfo")}
@@ -84,14 +84,14 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
             <img
               src={state.thumbnail}
               alt="Course thumbnail"
-              className="w-40 h-24 object-cover rounded-lg border border-[#E5E7EB]"
+              className="w-40 h-24 object-cover rounded-lg border border-[var(--color-border)]"
             />
           </div>
         )}
       </div>
 
       {/* Schedule */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-[#1F2937]">
             {t("reviewSchedule")}
@@ -128,7 +128,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
       </div>
 
       {/* Modules */}
-      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6">
+      <div className="bg-white rounded-xl border border-[var(--color-border)] p-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-[#1F2937]">
             {t("reviewModules")} ({state.modules.length})
@@ -149,7 +149,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
             {state.modules.map((mod, idx) => (
               <div
                 key={mod.tempId}
-                className="flex items-center gap-3 p-2.5 border border-[#E5E7EB] rounded-lg"
+                className="flex items-center gap-3 p-2.5 border border-[var(--color-border)] rounded-lg"
               >
                 <span className="text-sm font-medium text-[#9CA3AF] w-6 text-center">
                   {idx + 1}
@@ -175,7 +175,7 @@ const Step4Review = ({ state, dispatch, onSubmit }: Step4Props) => {
         <button
           type="button"
           onClick={() => dispatch({ type: "SET_STEP", step: 3 })}
-          className="px-6 py-2.5 border border-[#E5E7EB] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
+          className="px-6 py-2.5 border border-[var(--color-border)] rounded-lg text-sm font-medium text-[#374151] hover:bg-[#F9FAFB] transition-colors"
         >
           {t("back")}
         </button>

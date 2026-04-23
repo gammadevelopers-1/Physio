@@ -276,8 +276,8 @@ const TASettingsContent = () => {
             </div>
 
             {/* Tabs */}
-            <div className="bg-white rounded-xl border border-[#E5E7EB]">
-              <div className="flex border-b border-[#E5E7EB] overflow-x-auto">
+            <div className="bg-white rounded-xl border border-[var(--color-border)]">
+              <div className="flex border-b border-[var(--color-border)] overflow-x-auto">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -316,7 +316,7 @@ const TASettingsContent = () => {
                             />
                           </div>
                         ) : (
-                          <div className="w-24 h-24 rounded-full bg-[#E5E7EB] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
+                          <div className="w-24 h-24 rounded-full bg-[var(--color-border)] flex items-center justify-center text-2xl font-bold text-[#4B5563]">
                             {initials}
                           </div>
                         )}
@@ -335,7 +335,7 @@ const TASettingsContent = () => {
                             <Pencil className="w-3.5 h-3.5 text-white" />
                           </button>
                           {avatarMenuOpen && (
-                            <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[#E5E7EB] py-1 z-50 min-w-[160px]`}>
+                            <div className={`absolute top-full mt-1 ${isRTL ? "right-0" : "left-0"} bg-white rounded-lg shadow-lg border border-[var(--color-border)] py-1 z-50 min-w-[160px]`}>
                               <button
                                 onClick={() => { avatarInputRef.current?.click(); setAvatarMenuOpen(false); }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#1F2937] hover:bg-[#F3F4F6] transition-colors cursor-pointer"
@@ -381,7 +381,7 @@ const TASettingsContent = () => {
                             onChange={(e) =>
                               setProfileData({ ...profileData, firstName: e.target.value })
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           />
                         </div>
                         <div>
@@ -395,7 +395,7 @@ const TASettingsContent = () => {
                             onChange={(e) =>
                               setProfileData({ ...profileData, lastName: e.target.value })
                             }
-                            className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                            className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                           />
                         </div>
                         <div>
@@ -411,7 +411,7 @@ const TASettingsContent = () => {
                               type="email"
                               value={profileData.email}
                               readOnly
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm bg-[#F9FAFB] text-[#6B7280] cursor-not-allowed ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -430,7 +430,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, phone: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -449,7 +449,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, location: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             />
                           </div>
                         </div>
@@ -467,7 +467,7 @@ const TASettingsContent = () => {
                               onChange={(e) =>
                                 setProfileData({ ...profileData, language: e.target.value })
                               }
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-3" : "pl-10 pr-3"}`}
                             >
                               <option value="en">English</option>
                               <option value="ar">العربية</option>
@@ -489,7 +489,7 @@ const TASettingsContent = () => {
                           setProfileData({ ...profileData, bio: e.target.value })
                         }
                         rows={4}
-                        className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
+                        className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] resize-none"
                       />
                     </div>
 
@@ -534,7 +534,7 @@ const TASettingsContent = () => {
                               placeholder="••••••••"
                               value={currentPassword}
                               onChange={(e) => setCurrentPassword(e.target.value)}
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                             />
                             <button
                               type="button"
@@ -563,7 +563,7 @@ const TASettingsContent = () => {
                               placeholder="••••••••"
                               value={newPassword}
                               onChange={(e) => setNewPassword(e.target.value)}
-                              className={`w-full py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
+                              className={`w-full py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6] ${isRTL ? "pr-10 pl-10" : "pl-10 pr-10"}`}
                             />
                             <button
                               type="button"
@@ -646,7 +646,7 @@ const TASettingsContent = () => {
                               className={`relative w-10 h-5 rounded-full transition-colors ${
                                 notifications[item.key as keyof typeof notifications]
                                   ? "bg-[#3B82F6]"
-                                  : "bg-[#E5E7EB]"
+                                  : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
@@ -667,7 +667,7 @@ const TASettingsContent = () => {
                     </div>
 
                     {/* Push Notifications */}
-                    <div className="pt-6 border-t border-[#E5E7EB]">
+                    <div className="pt-6 border-t border-[var(--color-border)]">
                       <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
                         {t("settings.pushNotifications")}
                       </h4>
@@ -692,7 +692,7 @@ const TASettingsContent = () => {
                               className={`relative w-10 h-5 rounded-full transition-colors ${
                                 notifications[item.key as keyof typeof notifications]
                                   ? "bg-[#3B82F6]"
-                                  : "bg-[#E5E7EB]"
+                                  : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
@@ -713,7 +713,7 @@ const TASettingsContent = () => {
                     </div>
 
                     {/* Digest */}
-                    <div className="pt-6 border-t border-[#E5E7EB]">
+                    <div className="pt-6 border-t border-[var(--color-border)]">
                       <h4 className="text-sm font-semibold text-[#1F2937] mb-4">
                         {t("settings.emailDigest")}
                       </h4>
@@ -737,7 +737,7 @@ const TASettingsContent = () => {
                               className={`relative w-10 h-5 rounded-full transition-colors ${
                                 notifications[item.key as keyof typeof notifications]
                                   ? "bg-[#3B82F6]"
-                                  : "bg-[#E5E7EB]"
+                                  : "bg-[var(--color-border)]"
                               }`}
                             >
                               <span
@@ -758,7 +758,7 @@ const TASettingsContent = () => {
                     </div>
 
                     {/* Save Notifications Button */}
-                    <div className="pt-6 border-t border-[#E5E7EB] flex justify-end">
+                    <div className="pt-6 border-t border-[var(--color-border)] flex justify-end">
                       <button
                         type="button"
                         onClick={handleSaveNotifications}
@@ -788,7 +788,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, dateFormat: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                           <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -805,7 +805,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, timeFormat: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="12h">{t("settings.time12h")}</option>
                           <option value="24h">{t("settings.time24h")}</option>
@@ -821,7 +821,7 @@ const TASettingsContent = () => {
                           onChange={(e) =>
                             setPreferences({ ...preferences, timezone: e.target.value })
                           }
-                          className="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
+                          className="w-full px-3 py-2.5 border border-[var(--color-border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="Asia/Riyadh">Saudi Arabia (UTC+3)</option>
                           <option value="Asia/Dubai">UAE / Gulf (UTC+4)</option>

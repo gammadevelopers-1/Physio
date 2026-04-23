@@ -110,7 +110,7 @@ const TicketsBoardWidget = () => {
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E5E7EB] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[var(--color-border)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#F3F4F6]">
         <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ const TicketsBoardWidget = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-1.5 text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+          className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
         >
           <option value="all">{t("ticketsBoard.filters.allStatuses")}</option>
           <option value="New">{t("ticketsBoard.statuses.new")}</option>
@@ -150,7 +150,7 @@ const TicketsBoardWidget = () => {
         <select
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          className="text-sm border border-[#E5E7EB] rounded-lg px-3 py-1.5 text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+          className="text-sm border border-[var(--color-border)] rounded-lg px-3 py-1.5 text-[#374151] bg-white focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
         >
           <option value="all">
             {t("ticketsBoard.filters.allPriorities")}
@@ -167,7 +167,7 @@ const TicketsBoardWidget = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("ticketsBoard.filters.searchPlaceholder")}
-            className="w-full text-sm border border-[#E5E7EB] rounded-lg pl-9 pr-3 py-1.5 text-[#374151] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
+            className="w-full text-sm border border-[var(--color-border)] rounded-lg pl-9 pr-3 py-1.5 text-[#374151] bg-white placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
           />
         </div>
       </div>
@@ -176,7 +176,7 @@ const TicketsBoardWidget = () => {
       <div>
         <table className="w-full">
           <thead>
-            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+            <tr className="bg-[#F9FAFB] border-b border-[var(--color-border)]">
               <th className="text-left text-[11px] font-semibold text-[#6B7280] uppercase px-3 py-2.5">
                 {t("ticketsBoard.columns.id")}
               </th>
@@ -248,7 +248,7 @@ const TicketsBoardWidget = () => {
                   </span>
                 </td>
                 <td className="px-3 py-3">
-                  <button className="w-7 h-7 flex items-center justify-center rounded-lg border border-[#E5E7EB] hover:bg-[#F3F4F6] transition-colors">
+                  <button className="w-7 h-7 flex items-center justify-center rounded-lg border border-[var(--color-border)] hover:bg-[#F3F4F6] transition-colors">
                     <MoreVertical className="w-3.5 h-3.5 text-[#6B7280]" />
                   </button>
                 </td>
